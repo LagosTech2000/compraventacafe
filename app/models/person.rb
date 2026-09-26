@@ -1,6 +1,5 @@
 # Identity and contact, stored once. Client and Collaborator are roles on top.
-# dni (13 digits) and rtn (14 digits) are unique per person. Whether they are
-# required is still open, so both may be blank.
+# dni (13 digits) and rtn (14 digits) are unique per person and optional.
 class Person < ApplicationRecord
   has_one :client, dependent: :destroy, autosave: true
   has_one :collaborator, dependent: :destroy, autosave: true

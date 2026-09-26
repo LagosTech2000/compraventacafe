@@ -111,8 +111,8 @@ módulo lo pida.
 
 **`dni` tiene 13 dígitos y `rtn` 14** [CONFIRMADO], y cada uno es **único por
 persona** (validación + índice único parcial). Se aceptan con guiones o
-espacios y se guardan solo los dígitos. **Si son obligatorios sigue abierto**:
-por ahora pueden quedar en blanco.
+espacios y se guardan solo los dígitos. **Ninguno es obligatorio**
+[CONFIRMADO]: pueden quedar en blanco.
 
 Los roles se asignan con casillas en el formulario de la persona. Las pantallas
 de personas, clientes y colaboradores viven en el módulo `administration` y usan
@@ -167,7 +167,6 @@ es llenar su carpeta, no crearla.
 | Punto | Qué bloquea | Quién decide |
 | --- | --- | --- |
 | `CONTEXTO_PROYECTO.md` no está en el repo | Cualquier módulo de negocio | Fernando |
-| Si DNI y RTN son obligatorios (¿para todos, o según el rol?) | Validación de presencia en `Person` | Fernando / Cliente |
 | Servicio de correo | Recuperación de contraseña por correo | Fernando |
 | Transferencia del workspace de Render al cliente | Pasar a Render de pago (etapa 3) | Fernando + Render |
 | Si el despliegue espera a que pasen los tests | Configurar el despliegue (etapa 2) | Fernando |
@@ -176,8 +175,9 @@ es llenar su carpeta, no crearla.
 
 Resueltos: versión de Ruby (3.4.x), Ubuntu 24.04 LTS, ambiente WSL, regla del
 último administrador activo (se bloquea), idioma del código (inglés), campos de
-`Person`, personas/clientes/colaboradores en `administration`, formato y
-unicidad de DNI (13 dígitos) y RTN (14 dígitos).
+`Person`, personas/clientes/colaboradores en `administration`, formato,
+unicidad y obligatoriedad de DNI (13 dígitos) y RTN (14 dígitos): ninguno es
+obligatorio.
 
 ## Etapas del proyecto
 

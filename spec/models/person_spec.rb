@@ -8,7 +8,7 @@ RSpec.describe Person do
   end
 
   describe "dni and rtn" do
-    it "are optional (still an open point)" do
+    it "are optional" do
       expect(build(:person, dni: nil, rtn: nil)).to be_valid
       expect(build(:person, dni: "  ", rtn: "")).to be_valid
     end
