@@ -1,0 +1,167 @@
+# compraventacafe
+
+Software a medida de compra y venta de café para "Compra de Café el Rey David".
+Herramienta interna, unos 10 usuarios, UI 100% en español.
+
+## Reglas de trabajo (no negociables)
+
+1. **No se inventan reglas de negocio.** Lo que falte se deja como punto abierto
+   y se pregunta. Ver "Puntos abiertos" abajo.
+2. **Nada que dependa de un punto abierto se construye.** Se pregunta o se
+   detiene el trabajo.
+3. **El código se escribe en inglés; la interfaz, solo en español** vía i18n.
+   Ningún nombre de clase, tabla, columna o ruta lleva español.
+4. **Sin secretos en el repositorio.** En desarrollo, PostgreSQL conecta por
+   socket Unix con autenticación peer. En producción, variables de entorno.
+5. **El desarrollo ocurre dentro de WSL (Ubuntu)**, en `~/code/compraventacafe`,
+   nunca en `/mnt/c` ni en OneDrive. Sin Docker.
+
+## Fuentes de verdad
+
+| Documento | Qué define | Dónde |
+| --- | --- | --- |
+| Contexto técnico — Sistema de café | Decisiones técnicas, versiones y puntos abiertos | `claude.ai/code/artifact/6e691138-7661-4021-b95d-90f906d32172` |
+| `CONTEXTO_PROYECTO.md` | Negocio y orden de los módulos | **Falta en el repo.** Pedirlo antes de construir cualquier módulo. |
+| `docs/AMBIENTE.md` | Cómo montar y operar el ambiente | En el repo |
+
+El doc técnico etiqueta cada afirmación: `[CONFIRMADO]` (decidido por el dueño),
+`[VERIFICADO: fuente]`, `[RECOMENDADO]`, `[RESUELTO]`, `[ABIERTO]`.
+
+## Stack
+
+| Pieza | Decisión |
+| --- | --- |
+| Framework | Rails 8.1.x |
+| Ruby | 3.4.x — ver `.ruby-version` (Render lo lee) |
+| Base de datos | PostgreSQL 18, igual en local y en Render |
+| Frontend | Hotwire + vistas ERB |
+| CSS | Tailwind (`tailwindcss-rails`, binario standalone, sin Node) |
+| Autorización | Pundit |
+| Autenticación | Generador nativo de Rails 8. **No Devise.** |
+| Tests | RSpec (`rspec-rails`), `factory_bot_rails`, `pundit-matchers` |
+| Tareas en segundo plano | Ninguna en la fundación. Sin Solid Queue/Cache/Cable. |
+| Hosting | Render, plan de pago |
+| Repositorio | `github.com/LagosTech2000/compraventacafe` |
+
+## Glosario español ↔ inglés
+
+El único lugar donde vive el español es `config/locales/es.yml`.
+
+| Doc / UI (español) | Código (inglés) |
+| --- | --- |
+| Usuario del sistema | `User` |
+| Persona | `Person` |
+| Cliente | `Client` |
+| Colaborador | `Collaborator` |
+| Permiso | `Permission` |
+| Módulo | `AppModule` (`Module` es palabra reservada de Ruby) |
+| Ver / crear / editar / borrar | `read` / `create` / `update` / `destroy` |
+| Administración | `administration` |
+| Compra y venta de café | `trading` |
+| Fincas | `farms` |
+| Préstamos | `loans` |
+| Reportería | `reports` |
+
+## Modelo de permisos
+
+No hay roles fijos: cada usuario recibe, **por módulo**, permisos separados de
+ver, crear, editar y borrar.
+
+- `AppModule::KEYS` y `AppModule::ACTIONS` son la lista canónica de módulos y
+  acciones. Agregar un módulo = una clave ahí + una entrada en `es.yml` + su
+  namespace de controladores. Nada más.
+- `Permission` es una fila por `(user, module_key)` con cuatro banderas
+  booleanas. Índice único en `[user_id, module_key]`.
+- `User#can?(module_key, action)` es el único punto de decisión.
+- `User#admin` da acceso completo y es quien administra usuarios.
+- Las políticas de Pundit heredan de `ApplicationPolicy`, declaran su
+  `module_key` y delegan todo a `User#can?`. No metas lógica de permisos en
+  controladores ni vistas: pregunta a la política.
+- `ApplicationController` tiene `after_action :verify_authorized`: una acción
+  que olvide autorizar **falla**. Eso es intencional.
+
+### Reglas de usuarios
+
+- Solo un administrador crea usuarios. **No existe registro público**, y hay un
+  spec que lo verifica.
+- Los usuarios se **desactivan, nunca se borran** (conserva el rastro de sus
+  registros). Un usuario inactivo no puede iniciar sesión ni continuar una
+  sesión abierta.
+- **No se puede desactivar ni quitar `admin` al último administrador activo.**
+  Validación en `User`, con mensaje en español.
+- La recuperación de contraseña la hace un administrador desde el panel
+  (`reset_password`). El flujo por correo del generador de Rails está
+  **desconectado del `routes.rb`** porque no hay servicio de correo; los
+  archivos se conservan con un comentario.
+
+## Entidades núcleo
+
+`Person` guarda identidad y contacto una sola vez. `Client` y `Collaborator` son
+roles encima de `Person`, en tablas separadas, para que una misma persona pueda
+ser ambas cosas a la vez y para que cada rol crezca con sus propios campos
+cuando su módulo lo pida.
+
+`User` (quien inicia sesión) es **una entidad aparte** de `Person`. No hay
+relación entre ambas.
+
+Campos iniciales de `Person`: solo identidad y contacto básico. El resto se
+agrega con migraciones cuando cada módulo lo pida.
+
+**`dni` y `rtn` no llevan validación de formato ni de unicidad**: está abierto.
+Solo tienen índices simples.
+
+## Comandos
+
+```bash
+sudo service postgresql start   # si systemd no está activo en WSL
+bin/dev                         # servidor + Tailwind en watch
+bundle exec rspec               # suite completa
+bundle exec rspec spec/policies # solo políticas
+bin/rails db:migrate
+bin/rails db:seed               # requiere ADMIN_EMAIL y ADMIN_PASSWORD
+bin/rubocop
+bin/brakeman --no-pager
+```
+
+El primer administrador se crea con `db:seed` leyendo `ADMIN_EMAIL` y
+`ADMIN_PASSWORD` del entorno. Nunca se escriben credenciales en el repo.
+
+## Interfaz
+
+- Responsive desde el inicio, en todas las pantallas.
+- Estilo híbrido: *clay* (esquinas muy redondeadas, dos sombras) en navegación,
+  tarjetas y botones; tablas y formularios de datos **planos**, porque el sistema
+  maneja tablas de dinero, planillas y reportes.
+- La paleta vive como tokens `@theme` en el archivo de entrada de Tailwind. Es el
+  único lugar a editar cuando se defina la paleta real.
+- El nombre del negocio se lee con `t("negocio.nombre")`. Un solo lugar.
+- Locale `:es` únicamente. Zona horaria `America/Tegucigalpa`.
+
+## Módulos
+
+| Clave | Estado |
+| --- | --- |
+| `administration` | Usuarios, permisos, personas, clientes, colaboradores |
+| `trading` | Portada vacía |
+| `farms` | Portada vacía |
+| `loans` | Portada vacía |
+| `reports` | Portada vacía |
+
+Cada módulo tiene su namespace de controladores. Implementar una funcionalidad
+es llenar su carpeta, no crearla.
+
+## Puntos abiertos
+
+| Punto | Qué bloquea | Quién decide |
+| --- | --- | --- |
+| `CONTEXTO_PROYECTO.md` no está en el repo | Cualquier módulo de negocio | Fernando |
+| Obligatoriedad, unicidad y formato de DNI y RTN | Validaciones de `Person` | Cliente |
+| Servicio de correo | Recuperación de contraseña por correo | Fernando |
+| Transferencia del workspace de Render al cliente | Crear la cuenta de producción | Fernando + Render |
+| Si el despliegue espera a que pasen los tests | Configurar el despliegue | Fernando |
+| Paleta de colores y tipografía | Pulido visual antes de la demo | Fernando |
+| Qué pasa si el cliente rechaza el estilo en la demo | — | Fernando |
+| Si personas/clientes/colaboradores deben salir del módulo `administration` | Permisos de esas pantallas | Fernando |
+
+Resueltos: versión de Ruby (3.4.x), Ubuntu 24.04 LTS, ambiente WSL, regla del
+último administrador activo (se bloquea), idioma del código (inglés).
