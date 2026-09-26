@@ -1,0 +1,32 @@
+<header class="px-4 pt-4 sm:px-6">
+  <nav class="clay mx-auto max-w-6xl px-4 py-3">
+    <div class="flex items-center justify-between gap-4">
+      <%= link_to t("negocio.nombre"), root_path, class: "text-base font-bold text-primary sm:text-lg" %>
+
+      <div class="hidden items-center gap-1 lg:flex">
+        <% readable_module_keys.each do |key| %>
+          <%= link_to AppModule.human_name(key), module_root_path(key), class: nav_link_class(module_root_path(key)) %>
+        <% end %>
+      </div>
+
+      <div class="hidden items-center gap-3 lg:flex">
+        <span class="text-sm text-ink-muted"><%= Current.user.email_address %></span>
+        <%= button_to t(".sign_out"), session_path, method: :delete, class: "btn" %>
+      </div>
+
+      <details class="relative lg:hidden">
+        <summary class="btn list-none"><%= t(".menu") %></summary>
+        <div class="clay absolute right-0 z-10 mt-2 w-64 space-y-1 p-3">
+          <%= link_to t(".home"), root_path, class: nav_link_class(root_path) %>
+          <% readable_module_keys.each do |key| %>
+            <%= link_to AppModule.human_name(key), module_root_path(key), class: nav_link_class(module_root_path(key)) %>
+          <% end %>
+          <div class="border-t border-line pt-3">
+            <p class="mb-2 truncate px-4 text-xs text-ink-muted"><%= Current.user.email_address %></p>
+            <%= button_to t(".sign_out"), session_path, method: :delete, class: "btn w-full" %>
+          </div>
+        </div>
+      </details>
+    </div>
+  </nav>
+</header>

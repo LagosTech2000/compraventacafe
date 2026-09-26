@@ -110,6 +110,10 @@ agrega con migraciones cuando cada módulo lo pida.
 **`dni` y `rtn` no llevan validación de formato ni de unicidad**: está abierto.
 Solo tienen índices simples.
 
+**Todavía no construido.** `Person`, `Client` y `Collaborator` esperan dos
+decisiones: la lista exacta de campos de contacto y en qué módulo de permisos
+viven sus pantallas (ver "Puntos abiertos").
+
 ## Comandos
 
 ```bash
@@ -132,8 +136,12 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_EMAIL` y
 - Estilo híbrido: *clay* (esquinas muy redondeadas, dos sombras) en navegación,
   tarjetas y botones; tablas y formularios de datos **planos**, porque el sistema
   maneja tablas de dinero, planillas y reportes.
-- La paleta vive como tokens `@theme` en el archivo de entrada de Tailwind. Es el
-  único lugar a editar cuando se defina la paleta real.
+- La paleta vive como tokens `@theme` en `app/assets/tailwind/application.css`.
+  Es el único lugar a editar cuando se defina la paleta real; la actual es
+  provisional. Clases de apoyo: `clay`, `btn`, `btn-primary`, `data-table`,
+  `field-label`, `field-input`.
+- `raise_on_missing_translations` está activo en desarrollo y test: una clave
+  que falte en `es.yml` rompe la página o el spec.
 - El nombre del negocio se lee con `t("negocio.nombre")`. Un solo lugar.
 - Locale `:es` únicamente. Zona horaria `America/Tegucigalpa`.
 
@@ -141,7 +149,7 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_EMAIL` y
 
 | Clave | Estado |
 | --- | --- |
-| `administration` | Usuarios, permisos, personas, clientes, colaboradores |
+| `administration` | Usuarios y permisos (solo administradores). Personas, clientes y colaboradores: pendientes |
 | `trading` | Portada vacía |
 | `farms` | Portada vacía |
 | `loans` | Portada vacía |
@@ -162,6 +170,7 @@ es llenar su carpeta, no crearla.
 | Paleta de colores y tipografía | Pulido visual antes de la demo | Fernando |
 | Qué pasa si el cliente rechaza el estilo en la demo | — | Fernando |
 | Si personas/clientes/colaboradores deben salir del módulo `administration` | Permisos de esas pantallas | Fernando |
+| Campos exactos de contacto de `Person` (teléfono, correo, dirección, nombre en uno o varios campos) | Crear `Person`, `Client`, `Collaborator` | Fernando / Cliente |
 
 Resueltos: versión de Ruby (3.4.x), Ubuntu 24.04 LTS, ambiente WSL, regla del
 último administrador activo (se bloquea), idioma del código (inglés).

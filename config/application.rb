@@ -37,6 +37,10 @@ module Compraventacafe
     # config.eager_load_paths << Rails.root.join("extras")
 
     # Don't generate system test files.
+    config.time_zone = "America/Tegucigalpa"
+    config.i18n.available_locales = [ :es ]
+    config.i18n.default_locale = :es
+
     config.generators.system_tests = nil
   end
 end

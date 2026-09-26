@@ -1,14 +1,38 @@
 Rails.application.routes.draw do
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
+  resource :session, only: %i[ new create destroy ]
+  # Password recovery by email is disconnected until there is an email
+  # service. Admins reset passwords from the panel instead.
+  # resources :passwords, param: :token
+
+  root "dashboard#show"
+
+  namespace :administration do
+    root "home#index"
+    resources :users, only: %i[ index show new create edit update ] do
+      member do
+        get :reset_password, action: :edit_password
+        patch :reset_password
+      end
+    end
+  end
+
+  namespace :trading do
+    root "home#index"
+  end
+
+  namespace :farms do
+    root "home#index"
+  end
+
+  namespace :loans do
+    root "home#index"
+  end
+
+  namespace :reports do
+    root "home#index"
+  end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
-
-  # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
-  # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
-  # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
-
-  # Defines the root path route ("/")
-  # root "posts#index"
 end

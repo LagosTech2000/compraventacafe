@@ -1,0 +1,16 @@
+<% content_for :title, t(".title") %>
+
+<h1 class="text-2xl font-bold"><%= t(".welcome") %></h1>
+<p class="mt-1 text-sm text-ink-muted"><%= Current.user.email_address %></p>
+
+<% if @module_keys.any? %>
+  <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <% @module_keys.each do |key| %>
+      <%= link_to module_root_path(key), class: "clay block p-6 transition hover:-translate-y-0.5" do %>
+        <span class="text-lg font-semibold text-primary"><%= AppModule.human_name(key) %></span>
+      <% end %>
+    <% end %>
+  </div>
+<% else %>
+  <p class="clay mt-6 p-6 text-sm text-ink-muted"><%= t(".no_modules") %></p>
+<% end %>

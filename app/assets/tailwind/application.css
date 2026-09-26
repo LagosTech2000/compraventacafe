@@ -1,1 +1,74 @@
 @import "tailwindcss";
+
+/*
+ * Design tokens. PROVISIONAL palette: the real colors and typography are an
+ * open point. This block is the only place to edit when they are defined.
+ */
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --color-canvas: #f4efe9;
+  --color-surface: #fbf8f4;
+  --color-ink: #2b2220;
+  --color-ink-muted: #6f625c;
+  --color-line: #e2d8ce;
+
+  --color-primary: #6b3f2a;
+  --color-primary-hover: #56321f;
+  --color-primary-soft: #efe2d8;
+  --color-on-primary: #ffffff;
+
+  --color-danger: #b42318;
+  --color-danger-soft: #fdeceb;
+  --color-success: #1f7a3d;
+  --color-success-soft: #e7f5ec;
+
+  --radius-clay: 1.5rem;
+  --shadow-clay: 8px 8px 16px rgb(43 34 32 / 0.12), inset -3px -3px 8px rgb(43 34 32 / 0.06);
+}
+
+/* Clay: very rounded corners and two shadows. Navigation, cards, buttons. */
+@utility clay {
+  border-radius: var(--radius-clay);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-clay);
+}
+
+@layer components {
+  .btn {
+    @apply clay inline-flex cursor-pointer items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-ink transition hover:brightness-95;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-on-primary hover:bg-primary-hover;
+  }
+
+  /* Data tables and forms stay flat for fast reading. */
+  .data-table {
+    @apply w-full border-collapse text-left text-sm;
+  }
+
+  .data-table th {
+    @apply border-b border-line px-3 py-2 font-semibold text-ink-muted;
+  }
+
+  .data-table td {
+    @apply border-b border-line px-3 py-2 align-middle;
+  }
+
+  .field-label {
+    @apply mb-1 block text-sm font-medium text-ink;
+  }
+
+  .field-input {
+    @apply block w-full rounded-md border border-line bg-white px-3 py-2 text-sm text-ink focus:border-primary focus:outline-none;
+  }
+
+  .flash-notice {
+    @apply rounded-md bg-success-soft px-4 py-3 text-sm text-success;
+  }
+
+  .flash-alert {
+    @apply rounded-md bg-danger-soft px-4 py-3 text-sm text-danger;
+  }
+}
