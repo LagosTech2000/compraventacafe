@@ -22,8 +22,10 @@ es:
       users: "Usuarios"
       sign_out: "Cerrar sesión"
 
-  authorization:
-    forbidden: "No tienes permiso para hacer eso."
+  shared:
+    flash:
+      dismiss: "Cerrar mensaje"
+
 
   sessions:
     new:
@@ -172,6 +174,15 @@ es:
           has_many: "No se puede eliminar el registro porque existen %{record} dependientes"
 
   errors:
+    show:
+      title: "No se pudo mostrar esta página"
+      home: "Volver al inicio"
+    handled:
+      forbidden: "No tienes permiso para hacer eso."
+      not_found: "El registro que buscas no existe o fue borrado."
+      bad_request: "La solicitud llegó incompleta. Vuelve a intentarlo."
+      expired_form: "El formulario expiró. Recarga la página e inténtalo de nuevo."
+      unexpected: "Ocurrió un error inesperado. Vuelve a intentarlo; si continúa, avisa a un administrador con el código %{reference}."
     format: "%{attribute} %{message}"
     messages:
       accepted: "debe ser aceptado"
@@ -202,6 +213,7 @@ es:
       rtn_format: "debe tener 14 dígitos numéricos, sin letras"
       phone_format: "debe tener 8 dígitos (puede empezar con +504)"
       email_format: "no es un correo válido"
+      password_format: "debe tener al menos 8 caracteres"
       not_in_department: "no pertenece al departamento seleccionado"
       too_long:
         one: "es demasiado largo (1 carácter máximo)"

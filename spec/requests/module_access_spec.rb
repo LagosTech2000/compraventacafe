@@ -18,7 +18,7 @@ RSpec.describe "Module access" do
         sign_in create(:user)
         get path
         expect(response).to redirect_to(root_path)
-        expect(flash[:alert]).to eq(I18n.t("authorization.forbidden"))
+        expect(flash[:alert]).to eq(I18n.t("errors.handled.forbidden"))
       end
     end
   end

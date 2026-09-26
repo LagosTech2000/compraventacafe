@@ -1,18 +1,19 @@
 import { Controller } from "@hotwired/stimulus"
 
 // Replaces the browser's generic validation messages with the Spanish ones
-// each field carries in data-missing-message and data-invalid-message.
+// each field carries (data-missing-message, data-invalid-message), and checks
+// confirmation fields (data-must-match="<id>", data-mismatch-message).
 export default class extends Controller {
   connect() {
     this.element.addEventListener("invalid", this.explain, true)
-    this.element.addEventListener("input", this.reset, true)
-    this.element.addEventListener("change", this.reset, true)
+    this.element.addEventListener("input", this.revalidate, true)
+    this.element.addEventListener("change", this.revalidate, true)
   }
 
   disconnect() {
     this.element.removeEventListener("invalid", this.explain, true)
-    this.element.removeEventListener("input", this.reset, true)
-    this.element.removeEventListener("change", this.reset, true)
+    this.element.removeEventListener("input", this.revalidate, true)
+    this.element.removeEventListener("change", this.revalidate, true)
   }
 
   explain = (event) => {
@@ -22,12 +23,21 @@ export default class extends Controller {
 
     let message = ""
     if (validity.valueMissing) message = dataset.missingMessage
-    else if (validity.patternMismatch || validity.typeMismatch || validity.tooLong) message = dataset.invalidMessage
+    else if (validity.patternMismatch || validity.typeMismatch || validity.tooShort || validity.tooLong) message = dataset.invalidMessage
 
     if (message) field.setCustomValidity(message)
   }
 
-  reset = (event) => {
+  revalidate = (event) => {
     if (typeof event.target.setCustomValidity === "function") event.target.setCustomValidity("")
+    this.checkConfirmations()
+  }
+
+  checkConfirmations() {
+    this.element.querySelectorAll("[data-must-match]").forEach((field) => {
+      const original = this.element.querySelector(`#${CSS.escape(field.dataset.mustMatch)}`)
+      const mismatch = original && field.value !== "" && field.value !== original.value
+      field.setCustomValidity(mismatch ? field.dataset.mismatchMessage : "")
+    })
   }
 }

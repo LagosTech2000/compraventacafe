@@ -8,6 +8,7 @@ module FormFieldsHelper
 
     {
       pattern: format.html_pattern,
+      minlength: format.minlength,
       maxlength: format.maxlength,
       inputmode: format.inputmode,
       required: required || nil,
@@ -16,6 +17,20 @@ module FormFieldsHelper
         missing_message: ("#{label} #{t("errors.messages.blank")}" if required)
       }.compact
     }.compact
+  end
+
+  # A confirmation field that must equal another field of the same form.
+  #   form.password_field :password_confirmation, **confirmation_attributes(User, :password_confirmation, form.field_id(:password))
+  def confirmation_attributes(model_class, attribute, confirms_field_id)
+    label = model_class.human_attribute_name(attribute)
+    {
+      required: true,
+      data: {
+        must_match: confirms_field_id,
+        mismatch_message: "#{label} #{t("errors.messages.confirmation", attribute: model_class.human_attribute_name(attribute.to_s.delete_suffix("_confirmation")))}",
+        missing_message: "#{label} #{t("errors.messages.blank")}"
+      }
+    }
   end
 
   # { department_id => [[municipality_id, name], ...] } for the address picker.

@@ -7,7 +7,8 @@ class User < ApplicationRecord
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
 
-  validates :email_address, presence: true, uniqueness: true, field_format: :email
+  validates :email_address, presence: true, uniqueness: true, field_format: :email, length: { maximum: 254 }
+  validates :password, field_format: :password, allow_nil: true
   validate :keeps_an_active_admin, on: :update
 
   scope :active, -> { where(active: true) }

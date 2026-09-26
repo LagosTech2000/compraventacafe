@@ -37,6 +37,10 @@ module Compraventacafe
     # config.eager_load_paths << Rails.root.join("extras")
 
     # Don't generate system test files.
+    # Show unexpected errors as a Spanish alert instead of an error page.
+    # Off by default so development shows the full trace; on in production.
+    config.x.friendly_errors = false
+
     config.time_zone = "America/Tegucigalpa"
     config.i18n.available_locales = [ :es ]
     config.i18n.default_locale = :es

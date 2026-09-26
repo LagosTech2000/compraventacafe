@@ -12,6 +12,9 @@ Rails.application.configure do
   # Full error reports are disabled.
   config.consider_all_requests_local = false
 
+  # Users see a Spanish alert with a reference code, never a server error page.
+  config.x.friendly_errors = true
+
   # Turn on fragment caching in view templates.
   config.action_controller.perform_caching = true
 

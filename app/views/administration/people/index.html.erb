@@ -17,7 +17,7 @@
 
   <%= form_with url: administration_people_path, method: :get, class: "flex w-full gap-2 sm:ml-auto sm:w-auto" do |form| %>
     <%= form.hidden_field :role, value: @role if @role %>
-    <%= form.search_field :q, value: @query, placeholder: t(".search_placeholder"), aria: { label: t(".search") }, class: "field-input sm:w-64" %>
+    <%= form.search_field :q, value: @query, maxlength: 100, placeholder: t(".search_placeholder"), aria: { label: t(".search") }, class: "field-input sm:w-64" %>
     <%= form.submit t(".search"), name: nil, class: "btn" %>
   <% end %>
 </div>

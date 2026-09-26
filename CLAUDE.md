@@ -141,6 +141,10 @@ mensaje. Reglas actuales:
 | RTN | 14 dígitos | Solo dígitos |
 | Teléfono | 8 dígitos, `+504` opcional | Solo los 8 dígitos; se muestra `9999-0000` con `format_phone` |
 | Correo | Formato de correo | En minúsculas |
+| Contraseña | Mínimo 8 caracteres (máx. 72) al crearla o cambiarla; el login no la valida | Cifrada |
+
+Un campo de confirmación usa `confirmation_attributes`: el navegador avisa si
+no coincide antes de enviar.
 
 **2. Toda dirección es departamento + municipio + dirección.** El modelo incluye
 `Addressable` (columnas `department_id`, `municipality_id`, `address_line`) y
@@ -153,6 +157,28 @@ Los 18 departamentos y 298 municipios viven en
 `HondurasDivisions.load!`, que corre en una migración y antes de la suite de
 tests. Son datos de referencia: los nombres de lugares son la única excepción
 a "el español solo vive en `es.yml`".
+
+**3. El usuario nunca ve una pantalla de error del servidor.** `ErrorHandling`
+(incluido en `ApplicationController`) convierte cada error en una alerta en
+español (`shared/_flash`, con `role="alert"` y botón para cerrarla):
+
+| Error | Qué ve el usuario |
+| --- | --- |
+| Sin permiso, registro inexistente, formulario incompleto | Alerta y vuelve al inicio (páginas) o al formulario (envíos) |
+| Formulario expirado (CSRF) | Alerta para recargar e intentar de nuevo |
+| Error inesperado | Alerta genérica con un **código de referencia** |
+
+- Nunca se muestra el mensaje ni la clase de la excepción. El error completo va
+  al log y a `Rails.error` con el mismo código de referencia (los primeros 8
+  caracteres del `request_id`).
+- Los errores inesperados solo se convierten en alerta si
+  `config.x.friendly_errors` está activo: sí en producción, no en desarrollo
+  (el desarrollador ve la traza). Los specs lo activan donde lo prueban.
+- Una página que falla no redirige a sí misma: se muestra `errors/show` dentro
+  del layout. Si hasta eso falla, Rails sirve las páginas estáticas en español
+  de `public/` (400, 404, 406, 422, 500).
+- No agregues `rescue` en controladores para mostrar errores: agrega el caso
+  en `ErrorHandling`.
 
 ## Comandos
 

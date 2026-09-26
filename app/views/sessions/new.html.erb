@@ -5,15 +5,18 @@
     <p class="text-sm font-semibold text-primary"><%= t("negocio.nombre") %></p>
     <h1 class="mt-1 mb-6 text-2xl font-bold"><%= t(".title") %></h1>
 
-    <%= form_with url: session_url, class: "space-y-5" do |form| %>
+    <%= form_with url: session_url, class: "space-y-5", data: { controller: "form-validation" } do |form| %>
       <div>
         <%= form.label :email_address, t(".email_address"), class: "field-label" %>
-        <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", value: params[:email_address], class: "field-input" %>
+        <%= form.email_field :email_address, autofocus: true, autocomplete: "username", value: params[:email_address], class: "field-input",
+              **field_format_attributes(User, :email_address, :email, required: true) %>
       </div>
 
+      <%# No minimum length here: sign-in must not reveal the password rules. %>
       <div>
         <%= form.label :password, t(".password"), class: "field-label" %>
-        <%= form.password_field :password, required: true, autocomplete: "current-password", maxlength: 72, class: "field-input" %>
+        <%= form.password_field :password, required: true, autocomplete: "current-password", maxlength: 72, class: "field-input",
+              data: { missing_message: "#{t(".password")} #{t("errors.messages.blank")}" } %>
       </div>
 
       <%= form.submit t(".submit"), class: "btn btn-primary w-full" %>
