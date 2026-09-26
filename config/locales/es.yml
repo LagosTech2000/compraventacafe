@@ -157,9 +157,9 @@ es:
         person:
           attributes:
             dni:
-              dni_format: "debe tener 13 dígitos"
+              dni_format: "debe tener 13 dígitos numéricos, sin letras"
             rtn:
-              rtn_format: "debe tener 14 dígitos"
+              rtn_format: "debe tener 14 dígitos numéricos, sin letras"
         user:
           last_active_admin: "No se puede desactivar ni quitar el rol de administrador al último administrador activo."
       messages:

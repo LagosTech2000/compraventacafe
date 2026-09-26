@@ -109,7 +109,7 @@ Campos de `Person` [CONFIRMADO]: `first_names` (Nombres), `last_names`
 apellidos son obligatorios. El resto se agrega con migraciones cuando cada
 módulo lo pida.
 
-**`dni` tiene 13 dígitos y `rtn` 14** [CONFIRMADO], y cada uno es **único por
+**`dni` tiene 13 dígitos y `rtn` 14, solo números** [CONFIRMADO], y cada uno es **único por
 persona** (validación + índice único parcial). Se aceptan con guiones o
 espacios y se guardan solo los dígitos. **Ninguno es obligatorio**
 [CONFIRMADO]: pueden quedar en blanco.

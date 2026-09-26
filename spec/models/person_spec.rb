@@ -26,8 +26,8 @@ RSpec.describe Person do
     it "reject the wrong length or non-digits, in Spanish" do
       person = build(:person, dni: "07042000", rtn: "0704200000968A")
       expect(person).not_to be_valid
-      expect(person.errors[:dni]).to eq([ "debe tener 13 dígitos" ])
-      expect(person.errors[:rtn]).to eq([ "debe tener 14 dígitos" ])
+      expect(person.errors[:dni]).to eq([ "debe tener 13 dígitos numéricos, sin letras" ])
+      expect(person.errors[:rtn]).to eq([ "debe tener 14 dígitos numéricos, sin letras" ])
     end
 
     it "are unique per person" do
