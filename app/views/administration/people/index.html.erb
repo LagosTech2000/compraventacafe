@@ -1,0 +1,52 @@
+<% content_for :title, t(".title") %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+  <% if policy(Person).create? %>
+    <%= link_to t(".new"), new_administration_person_path, class: "btn btn-primary" %>
+  <% end %>
+</div>
+
+<div class="mt-6 flex flex-wrap items-end gap-3">
+  <nav class="flex flex-wrap gap-2" aria-label="<%= t(".filter") %>">
+    <% [ [ nil, t(".all") ], [ "clients", t(".clients") ], [ "collaborators", t(".collaborators") ] ].each do |role, label| %>
+      <%= link_to label, administration_people_path(role: role, q: @query.presence),
+            class: (@role == role ? "btn btn-primary" : "btn"), aria: { current: (@role == role ? "page" : nil) } %>
+    <% end %>
+  </nav>
+
+  <%= form_with url: administration_people_path, method: :get, class: "flex w-full gap-2 sm:ml-auto sm:w-auto" do |form| %>
+    <%= form.hidden_field :role, value: @role if @role %>
+    <%= form.search_field :q, value: @query, placeholder: t(".search_placeholder"), aria: { label: t(".search") }, class: "field-input sm:w-64" %>
+    <%= form.submit t(".search"), name: nil, class: "btn" %>
+  <% end %>
+</div>
+
+<% if @people.any? %>
+  <div class="mt-6 overflow-x-auto rounded-md border border-line bg-surface">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th><%= t(".name") %></th>
+          <th><%= Person.human_attribute_name(:dni) %></th>
+          <th><%= Person.human_attribute_name(:rtn) %></th>
+          <th><%= Person.human_attribute_name(:phone) %></th>
+          <th><%= t(".roles") %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @people.each do |person| %>
+          <tr id="<%= dom_id(person) %>">
+            <td><%= link_to person.full_name, administration_person_path(person), class: "font-medium text-primary underline hover:no-underline" %></td>
+            <td class="whitespace-nowrap"><%= person.dni %></td>
+            <td class="whitespace-nowrap"><%= person.rtn %></td>
+            <td class="whitespace-nowrap"><%= person.phone %></td>
+            <td><%= render "roles", person: person %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <p class="clay mt-6 p-6 text-sm text-ink-muted"><%= t(".empty") %></p>
+<% end %>

@@ -1,0 +1,53 @@
+<%= form_with model: [ :administration, person ], class: "space-y-6" do |form| %>
+  <%= render "shared/form_errors", record: person %>
+
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div>
+      <%= form.label :first_names, class: "field-label" %>
+      <%= form.text_field :first_names, required: true, autofocus: true, class: "field-input" %>
+    </div>
+    <div>
+      <%= form.label :last_names, class: "field-label" %>
+      <%= form.text_field :last_names, required: true, class: "field-input" %>
+    </div>
+    <div>
+      <%= form.label :dni, class: "field-label" %>
+      <%= form.text_field :dni, inputmode: "numeric", class: "field-input" %>
+    </div>
+    <div>
+      <%= form.label :rtn, class: "field-label" %>
+      <%= form.text_field :rtn, inputmode: "numeric", class: "field-input" %>
+    </div>
+    <div>
+      <%= form.label :phone, class: "field-label" %>
+      <%= form.telephone_field :phone, class: "field-input" %>
+    </div>
+    <div>
+      <%= form.label :email, class: "field-label" %>
+      <%= form.email_field :email, class: "field-input" %>
+    </div>
+    <div class="sm:col-span-2">
+      <%= form.label :address, class: "field-label" %>
+      <%= form.text_area :address, rows: 3, class: "field-input" %>
+    </div>
+  </div>
+
+  <fieldset>
+    <legend class="field-label"><%= t(".roles") %></legend>
+    <div class="mt-2 flex flex-wrap gap-6">
+      <label class="flex items-center gap-2 text-sm">
+        <%= form.check_box :client_role, { checked: person.client.present? && !person.client.marked_for_destruction?, class: "size-4 accent-primary" } %>
+        <%= Client.model_name.human %>
+      </label>
+      <label class="flex items-center gap-2 text-sm">
+        <%= form.check_box :collaborator_role, { checked: person.collaborator.present? && !person.collaborator.marked_for_destruction?, class: "size-4 accent-primary" } %>
+        <%= Collaborator.model_name.human %>
+      </label>
+    </div>
+  </fieldset>
+
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= link_to t(".cancel"), person.persisted? ? administration_person_path(person) : administration_people_path, class: "btn" %>
+  </div>
+<% end %>

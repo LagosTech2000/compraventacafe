@@ -47,7 +47,39 @@ es:
   administration:
     home:
       index:
+        people_description: "Personas del negocio: clientes y colaboradores."
         users_description: "Crear usuarios, asignar permisos por módulo y restablecer contraseñas."
+    people:
+      index:
+        title: "Personas"
+        new: "Nueva persona"
+        filter: "Filtrar por rol"
+        all: "Todas"
+        clients: "Clientes"
+        collaborators: "Colaboradores"
+        search: "Buscar"
+        search_placeholder: "Nombre, apellido, DNI o RTN"
+        name: "Nombre"
+        roles: "Roles"
+        empty: "No hay personas que mostrar."
+      show:
+        edit: "Editar"
+        destroy: "Borrar"
+        confirm_destroy: "¿Borrar a %{name}? Esta acción no se puede deshacer."
+        back: "Volver a personas"
+      new:
+        title: "Nueva persona"
+      edit:
+        title: "Editar persona"
+      form:
+        roles: "Roles"
+        cancel: "Cancelar"
+      create:
+        success: "Persona creada."
+      update:
+        success: "Persona actualizada."
+      destroy:
+        success: "Persona borrada."
     users:
       index:
         title: "Usuarios"
@@ -90,6 +122,15 @@ es:
       permission:
         one: "Permiso"
         other: "Permisos"
+      person:
+        one: "Persona"
+        other: "Personas"
+      client:
+        one: "Cliente"
+        other: "Clientes"
+      collaborator:
+        one: "Colaborador"
+        other: "Colaboradores"
     attributes:
       user:
         email_address: "Correo electrónico"
@@ -97,6 +138,14 @@ es:
         password_confirmation: "Confirmar contraseña"
         admin: "Administrador"
         active: "Activo"
+      person:
+        first_names: "Nombres"
+        last_names: "Apellidos"
+        dni: "DNI"
+        rtn: "RTN"
+        phone: "Teléfono"
+        email: "Correo electrónico"
+        address: "Dirección"
       permission:
         module_key: "Módulo"
         can_read: "Ver"

@@ -104,15 +104,17 @@ cuando su módulo lo pida.
 `User` (quien inicia sesión) es **una entidad aparte** de `Person`. No hay
 relación entre ambas.
 
-Campos iniciales de `Person`: solo identidad y contacto básico. El resto se
-agrega con migraciones cuando cada módulo lo pida.
+Campos de `Person` [CONFIRMADO]: `first_names` (Nombres), `last_names`
+(Apellidos), `dni`, `rtn`, `phone`, `email`, `address`. Solo los nombres y
+apellidos son obligatorios. El resto se agrega con migraciones cuando cada
+módulo lo pida.
 
 **`dni` y `rtn` no llevan validación de formato ni de unicidad**: está abierto.
 Solo tienen índices simples.
 
-**Todavía no construido.** `Person`, `Client` y `Collaborator` esperan dos
-decisiones: la lista exacta de campos de contacto y en qué módulo de permisos
-viven sus pantallas (ver "Puntos abiertos").
+Los roles se asignan con casillas en el formulario de la persona. Las pantallas
+de personas, clientes y colaboradores viven en el módulo `administration` y usan
+sus permisos (`PersonPolicy`).
 
 ## Comandos
 
@@ -149,7 +151,7 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_EMAIL` y
 
 | Clave | Estado |
 | --- | --- |
-| `administration` | Usuarios y permisos (solo administradores). Personas, clientes y colaboradores: pendientes |
+| `administration` | Usuarios y permisos (solo administradores); personas, clientes y colaboradores (permisos del módulo) |
 | `trading` | Portada vacía |
 | `farms` | Portada vacía |
 | `loans` | Portada vacía |
@@ -163,14 +165,20 @@ es llenar su carpeta, no crearla.
 | Punto | Qué bloquea | Quién decide |
 | --- | --- | --- |
 | `CONTEXTO_PROYECTO.md` no está en el repo | Cualquier módulo de negocio | Fernando |
-| Obligatoriedad, unicidad y formato de DNI y RTN | Validaciones de `Person` | Cliente |
+| Obligatoriedad, unicidad y formato de DNI y RTN. El largo dado es contradictorio: "DNI 8 dígitos" con ejemplo `0704200000968` (13), y "RTN 9 dígitos" | Validaciones de `Person` | Fernando / Cliente |
 | Servicio de correo | Recuperación de contraseña por correo | Fernando |
-| Transferencia del workspace de Render al cliente | Crear la cuenta de producción | Fernando + Render |
-| Si el despliegue espera a que pasen los tests | Configurar el despliegue | Fernando |
+| Transferencia del workspace de Render al cliente | Pasar a Render de pago (etapa 3) | Fernando + Render |
+| Si el despliegue espera a que pasen los tests | Configurar el despliegue (etapa 2) | Fernando |
 | Paleta de colores y tipografía | Pulido visual antes de la demo | Fernando |
 | Qué pasa si el cliente rechaza el estilo en la demo | — | Fernando |
-| Si personas/clientes/colaboradores deben salir del módulo `administration` | Permisos de esas pantallas | Fernando |
-| Campos exactos de contacto de `Person` (teléfono, correo, dirección, nombre en uno o varios campos) | Crear `Person`, `Client`, `Collaborator` | Fernando / Cliente |
 
 Resueltos: versión de Ruby (3.4.x), Ubuntu 24.04 LTS, ambiente WSL, regla del
-último administrador activo (se bloquea), idioma del código (inglés).
+último administrador activo (se bloquea), idioma del código (inglés), campos de
+`Person`, personas/clientes/colaboradores en `administration`.
+
+## Etapas del proyecto
+
+1. **Desarrollo** hasta una demo principal **súper básica**. La prioridad es
+   avanzar funcionalidad, no infraestructura.
+2. **Tras la demo**: montar la app en Render **gratuito**.
+3. **App completa, para entregar**: Render **de pago**, a costo del cliente.
