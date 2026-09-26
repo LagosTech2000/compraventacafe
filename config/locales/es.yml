@@ -154,6 +154,12 @@ es:
         can_destroy: "Borrar"
     errors:
       models:
+        person:
+          attributes:
+            dni:
+              dni_format: "debe tener 13 dígitos"
+            rtn:
+              rtn_format: "debe tener 14 dígitos"
         user:
           last_active_admin: "No se puede desactivar ni quitar el rol de administrador al último administrador activo."
       messages:

@@ -62,6 +62,13 @@ RSpec.describe "Administration::People" do
       expect(person).to be_collaborator
     end
 
+    it "rejects a duplicate DNI with a Spanish message" do
+      create(:person, dni: "0704200000968")
+      expect { post administration_people_path, params: valid_params }.not_to change(Person, :count)
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("DNI ya está en uso")
+    end
+
     it "shows Spanish errors when names are missing" do
       post administration_people_path, params: { person: { first_names: "", last_names: "" } }
       expect(response).to have_http_status(:unprocessable_content)

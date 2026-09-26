@@ -12,11 +12,11 @@
     </div>
     <div>
       <%= form.label :dni, class: "field-label" %>
-      <%= form.text_field :dni, inputmode: "numeric", class: "field-input" %>
+      <%= form.text_field :dni, inputmode: "numeric", maxlength: 15, class: "field-input" %>
     </div>
     <div>
       <%= form.label :rtn, class: "field-label" %>
-      <%= form.text_field :rtn, inputmode: "numeric", class: "field-input" %>
+      <%= form.text_field :rtn, inputmode: "numeric", maxlength: 16, class: "field-input" %>
     </div>
     <div>
       <%= form.label :phone, class: "field-label" %>

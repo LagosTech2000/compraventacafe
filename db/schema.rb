@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_26_074845) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_26_075251) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -38,9 +38,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_26_074845) do
     t.text "address"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["dni"], name: "index_people_on_dni"
+    t.index ["dni"], name: "index_people_on_dni", unique: true, where: "(dni IS NOT NULL)"
     t.index ["last_names", "first_names"], name: "index_people_on_last_names_and_first_names"
-    t.index ["rtn"], name: "index_people_on_rtn"
+    t.index ["rtn"], name: "index_people_on_rtn", unique: true, where: "(rtn IS NOT NULL)"
   end
 
   create_table "permissions", force: :cascade do |t|
