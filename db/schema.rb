@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_26_075251) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_26_080131) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -28,6 +28,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_26_075251) do
     t.index ["person_id"], name: "index_collaborators_on_person_id", unique: true
   end
 
+  create_table "departments", force: :cascade do |t|
+    t.string "code", null: false
+    t.string "name", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["code"], name: "index_departments_on_code", unique: true
+  end
+
+  create_table "municipalities", force: :cascade do |t|
+    t.bigint "department_id", null: false
+    t.string "code", null: false
+    t.string "name", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["code"], name: "index_municipalities_on_code", unique: true
+    t.index ["department_id"], name: "index_municipalities_on_department_id"
+  end
+
   create_table "people", force: :cascade do |t|
     t.string "first_names", null: false
     t.string "last_names", null: false
@@ -35,11 +53,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_26_075251) do
     t.string "rtn"
     t.string "phone"
     t.string "email"
-    t.text "address"
+    t.text "address_line"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "department_id"
+    t.bigint "municipality_id"
+    t.index ["department_id"], name: "index_people_on_department_id"
     t.index ["dni"], name: "index_people_on_dni", unique: true, where: "(dni IS NOT NULL)"
     t.index ["last_names", "first_names"], name: "index_people_on_last_names_and_first_names"
+    t.index ["municipality_id"], name: "index_people_on_municipality_id"
     t.index ["rtn"], name: "index_people_on_rtn", unique: true, where: "(rtn IS NOT NULL)"
   end
 
@@ -76,6 +98,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_26_075251) do
 
   add_foreign_key "clients", "people"
   add_foreign_key "collaborators", "people"
+  add_foreign_key "municipalities", "departments"
+  add_foreign_key "people", "departments"
+  add_foreign_key "people", "municipalities"
   add_foreign_key "permissions", "users"
   add_foreign_key "sessions", "users"
 end

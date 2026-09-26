@@ -69,6 +69,35 @@ RSpec.describe "Administration::People" do
       expect(response.body).to include("DNI ya está en uso")
     end
 
+    it "saves a structured address" do
+      department = Department.find_by!(code: "08")
+      municipality = Municipality.find_by!(code: "0801")
+      params = valid_params.deep_merge(person: { department_id: department.id, municipality_id: municipality.id, address_line: "Col. Kennedy" })
+      post administration_people_path, params: params
+      expect(Person.last).to have_attributes(department: department, municipality: municipality, address_line: "Col. Kennedy")
+      follow_redirect!
+      expect(response.body).to include("Col. Kennedy, Distrito Central, Francisco Morazán")
+    end
+
+    it "renders the form with browser validations and an empty municipality list" do
+      get new_administration_person_path
+      page = Nokogiri::HTML(response.body)
+      expect(page.at_css("#person_dni")["pattern"]).to be_present
+      expect(page.at_css("#person_dni")["data-invalid-message"]).to eq("DNI debe tener 13 dígitos numéricos, sin letras")
+      expect(page.at_css("#person_first_names")["required"]).to be_present
+      expect(page.at_css("#person_email")["type"]).to eq("email")
+      municipality = page.at_css("select#person_municipality_id")
+      expect(municipality["disabled"]).to be_present
+      expect(municipality.css("option").map(&:text)).to eq([ "Selecciona un municipio" ])
+      expect(page.css("select#person_department_id option").size).to eq(19)
+    end
+
+    it "shows only the department's municipalities when re-rendering" do
+      post administration_people_path, params: { person: { first_names: "", last_names: "", department_id: Department.find_by!(code: "11").id } }
+      options = Nokogiri::HTML(response.body).css("select#person_municipality_id option").map(&:text)
+      expect(options).to eq([ "Selecciona un municipio", "Guanaja", "José Santos Guardiola", "Roatán", "Utila" ])
+    end
+
     it "shows Spanish errors when names are missing" do
       post administration_people_path, params: { person: { first_names: "", last_names: "" } }
       expect(response).to have_http_status(:unprocessable_content)
@@ -84,7 +113,7 @@ RSpec.describe "Administration::People" do
       patch administration_person_path(person), params: { person: { phone: "3333-4444", client_role: "0", collaborator_role: "0" } }
       expect(response).to redirect_to(administration_person_path(person))
       person.reload
-      expect(person.phone).to eq("3333-4444")
+      expect(person.phone).to eq("33334444")
       expect(person).not_to be_client
     end
 

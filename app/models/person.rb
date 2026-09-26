@@ -1,17 +1,21 @@
 # Identity and contact, stored once. Client and Collaborator are roles on top.
 # dni (13 digits) and rtn (14 digits) are unique per person and optional.
 class Person < ApplicationRecord
+  include Addressable
+
   has_one :client, dependent: :destroy, autosave: true
   has_one :collaborator, dependent: :destroy, autosave: true
 
-  normalizes :first_names, :last_names, :phone, :address, with: ->(value) { value.strip.presence }
-  # Accept "0704-2000-00968" or "0704 2000 00968" and store digits only.
-  normalizes :dni, :rtn, with: ->(value) { value.gsub(/[\s-]/, "").presence }
-  normalizes :email, with: ->(value) { value.strip.downcase.presence }
+  normalizes :first_names, :last_names, with: ->(value) { value.squish.presence }
+  normalizes :dni, :rtn, with: FieldFormats::DIGITS
+  normalizes :phone, with: FieldFormats::PHONE
+  normalizes :email, with: FieldFormats::EMAIL
 
-  validates :first_names, :last_names, presence: true
-  validates :dni, format: { with: /\A\d{13}\z/, message: :dni_format }, uniqueness: true, allow_nil: true
-  validates :rtn, format: { with: /\A\d{14}\z/, message: :rtn_format }, uniqueness: true, allow_nil: true
+  validates :first_names, :last_names, presence: true, field_format: :person_name, length: { maximum: 100 }
+  validates :dni, field_format: :dni, uniqueness: true, allow_nil: true
+  validates :rtn, field_format: :rtn, uniqueness: true, allow_nil: true
+  validates :phone, field_format: :phone
+  validates :email, field_format: :email, length: { maximum: 254 }
 
   scope :alphabetical, -> { order(:last_names, :first_names) }
   scope :search, ->(term) {

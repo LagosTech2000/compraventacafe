@@ -41,6 +41,11 @@ es:
       welcome: "Bienvenido"
       no_modules: "Todavía no tienes acceso a ningún módulo. Pídele a un administrador que te asigne permisos."
 
+  addresses:
+    title: "Dirección"
+    department_prompt: "Selecciona un departamento"
+    municipality_prompt: "Selecciona un municipio"
+
   module_home:
     empty: "Este módulo todavía no tiene funciones."
 
@@ -145,7 +150,11 @@ es:
         rtn: "RTN"
         phone: "Teléfono"
         email: "Correo electrónico"
-        address: "Dirección"
+        department: "Departamento"
+        department_id: "Departamento"
+        municipality: "Municipio"
+        municipality_id: "Municipio"
+        address_line: "Dirección"
       permission:
         module_key: "Módulo"
         can_read: "Ver"
@@ -154,12 +163,6 @@ es:
         can_destroy: "Borrar"
     errors:
       models:
-        person:
-          attributes:
-            dni:
-              dni_format: "debe tener 13 dígitos numéricos, sin letras"
-            rtn:
-              rtn_format: "debe tener 14 dígitos numéricos, sin letras"
         user:
           last_active_admin: "No se puede desactivar ni quitar el rol de administrador al último administrador activo."
       messages:
@@ -194,6 +197,12 @@ es:
       required: "debe existir"
       taken: "ya está en uso"
       password_too_long: "es demasiado larga"
+      person_name_format: "solo puede tener letras, espacios, apóstrofos, puntos y guiones"
+      dni_format: "debe tener 13 dígitos numéricos, sin letras"
+      rtn_format: "debe tener 14 dígitos numéricos, sin letras"
+      phone_format: "debe tener 8 dígitos (puede empezar con +504)"
+      email_format: "no es un correo válido"
+      not_in_department: "no pertenece al departamento seleccionado"
       too_long:
         one: "es demasiado largo (1 carácter máximo)"
         other: "es demasiado largo (%{count} caracteres máximo)"

@@ -105,7 +105,7 @@ cuando su módulo lo pida.
 relación entre ambas.
 
 Campos de `Person` [CONFIRMADO]: `first_names` (Nombres), `last_names`
-(Apellidos), `dni`, `rtn`, `phone`, `email`, `address`. Solo los nombres y
+(Apellidos), `dni`, `rtn`, `phone`, `email` y dirección (`Addressable`). Solo los nombres y
 apellidos son obligatorios. El resto se agrega con migraciones cuando cada
 módulo lo pida.
 
@@ -117,6 +117,42 @@ espacios y se guardan solo los dígitos. **Ninguno es obligatorio**
 Los roles se asignan con casillas en el formulario de la persona. Las pantallas
 de personas, clientes y colaboradores viven en el módulo `administration` y usan
 sus permisos (`PersonPolicy`).
+
+## Convenciones de formularios (obligatorias)
+
+**1. Los campos obvios se validan en el modelo y en el formulario.** Nombres,
+DNI, RTN, teléfono y correo usan un formato de `FieldFormats`
+(`app/models/field_formats.rb`):
+
+```ruby
+validates :dni, field_format: :dni                                    # modelo
+form.text_field :dni, **field_format_attributes(Person, :dni, :dni)   # vista
+```
+
+El formulario lleva `data: { controller: "form-validation" }` para que el
+navegador muestre los mensajes en español. Los mensajes viven en `es.yml` bajo
+`errors.messages`. Formato nuevo = una entrada en `FieldFormats::REGISTRY` + su
+mensaje. Reglas actuales:
+
+| Campo | Regla | Se guarda |
+| --- | --- | --- |
+| Nombres / apellidos | Letras, espacios, `'`, `.`, `-` | Sin espacios repetidos |
+| DNI | 13 dígitos | Solo dígitos (se aceptan guiones y espacios) |
+| RTN | 14 dígitos | Solo dígitos |
+| Teléfono | 8 dígitos, `+504` opcional | Solo los 8 dígitos; se muestra `9999-0000` con `format_phone` |
+| Correo | Formato de correo | En minúsculas |
+
+**2. Toda dirección es departamento + municipio + dirección.** El modelo incluye
+`Addressable` (columnas `department_id`, `municipality_id`, `address_line`) y
+el formulario renderiza `shared/address_fields`. Sin departamento, la lista de
+municipios queda vacía y deshabilitada; al elegirlo se filtra
+(`address_controller.js`). Se muestra con `format_address`.
+
+Los 18 departamentos y 298 municipios viven en
+`db/data/honduras_divisions.yml` (códigos del SAT, 2023) y se cargan con
+`HondurasDivisions.load!`, que corre en una migración y antes de la suite de
+tests. Son datos de referencia: los nombres de lugares son la única excepción
+a "el español solo vive en `es.yml`".
 
 ## Comandos
 

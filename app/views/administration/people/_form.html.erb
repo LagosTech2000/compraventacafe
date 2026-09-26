@@ -1,35 +1,36 @@
-<%= form_with model: [ :administration, person ], class: "space-y-6" do |form| %>
+<%= form_with model: [ :administration, person ], class: "space-y-6", data: { controller: "form-validation" } do |form| %>
   <%= render "shared/form_errors", record: person %>
 
   <div class="grid gap-5 sm:grid-cols-2">
     <div>
       <%= form.label :first_names, class: "field-label" %>
-      <%= form.text_field :first_names, required: true, autofocus: true, class: "field-input" %>
+      <%= form.text_field :first_names, autofocus: true, class: "field-input",
+            **field_format_attributes(Person, :first_names, :person_name, required: true) %>
     </div>
     <div>
       <%= form.label :last_names, class: "field-label" %>
-      <%= form.text_field :last_names, required: true, class: "field-input" %>
+      <%= form.text_field :last_names, class: "field-input",
+            **field_format_attributes(Person, :last_names, :person_name, required: true) %>
     </div>
     <div>
       <%= form.label :dni, class: "field-label" %>
-      <%= form.text_field :dni, inputmode: "numeric", maxlength: 15, class: "field-input" %>
+      <%= form.text_field :dni, class: "field-input", **field_format_attributes(Person, :dni, :dni) %>
     </div>
     <div>
       <%= form.label :rtn, class: "field-label" %>
-      <%= form.text_field :rtn, inputmode: "numeric", maxlength: 16, class: "field-input" %>
+      <%= form.text_field :rtn, class: "field-input", **field_format_attributes(Person, :rtn, :rtn) %>
     </div>
     <div>
       <%= form.label :phone, class: "field-label" %>
-      <%= form.telephone_field :phone, class: "field-input" %>
+      <%= form.telephone_field :phone, value: format_phone(person.phone), class: "field-input",
+            **field_format_attributes(Person, :phone, :phone) %>
     </div>
     <div>
       <%= form.label :email, class: "field-label" %>
-      <%= form.email_field :email, class: "field-input" %>
+      <%= form.email_field :email, class: "field-input", **field_format_attributes(Person, :email, :email) %>
     </div>
-    <div class="sm:col-span-2">
-      <%= form.label :address, class: "field-label" %>
-      <%= form.text_area :address, rows: 3, class: "field-input" %>
-    </div>
+
+    <%= render "shared/address_fields", form: form %>
   </div>
 
   <fieldset>

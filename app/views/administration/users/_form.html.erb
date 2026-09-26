@@ -1,10 +1,11 @@
-<%= form_with model: [ :administration, user ], class: "space-y-6" do |form| %>
+<%= form_with model: [ :administration, user ], class: "space-y-6", data: { controller: "form-validation" } do |form| %>
   <%= render "shared/form_errors", record: user %>
 
   <div class="grid gap-5 sm:grid-cols-2">
     <div class="sm:col-span-2">
       <%= form.label :email_address, class: "field-label" %>
-      <%= form.email_field :email_address, required: true, autocomplete: "off", class: "field-input" %>
+      <%= form.email_field :email_address, autocomplete: "off", class: "field-input",
+            **field_format_attributes(User, :email_address, :email, required: true) %>
     </div>
 
     <% if user.new_record? %>

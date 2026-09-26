@@ -58,7 +58,7 @@ module Administration
       end
 
       def person_params
-        params.expect(person: [ :first_names, :last_names, :dni, :rtn, :phone, :email, :address ])
+        params.expect(person: [ :first_names, :last_names, :dni, :rtn, :phone, :email, :department_id, :municipality_id, :address_line ])
       end
 
       def role_params

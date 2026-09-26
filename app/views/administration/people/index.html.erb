@@ -40,7 +40,7 @@
             <td><%= link_to person.full_name, administration_person_path(person), class: "font-medium text-primary underline hover:no-underline" %></td>
             <td class="whitespace-nowrap"><%= person.dni %></td>
             <td class="whitespace-nowrap"><%= person.rtn %></td>
-            <td class="whitespace-nowrap"><%= person.phone %></td>
+            <td class="whitespace-nowrap"><%= format_phone(person.phone) %></td>
             <td><%= render "roles", person: person %></td>
           </tr>
         <% end %>
