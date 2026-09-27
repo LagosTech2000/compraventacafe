@@ -1,0 +1,10 @@
+<%# JSON-like view of a changeset: "field": previous (red, struck) → new (emerald). %>
+<% show_before = event.action != "create" %>
+<% show_after = event.action != "destroy" %>
+<% entries = event.changeset.to_a %>
+<section class="mt-8">
+  <h2 class="mb-3 text-lg font-semibold"><%= t(".title") %></h2>
+  <pre class="overflow-x-auto rounded-md border border-line bg-code-surface p-4 font-mono text-sm leading-relaxed" id="json-diff"><code><span class="text-ink-muted">{</span>
+<% entries.each_with_index do |(attribute, (before, after)), index| %><span data-field="<%= attribute %>">  <span class="text-ink">"<%= audit_attribute_name(event, attribute) %>"</span><span class="text-ink-muted">: </span><% if show_before %><del class="text-diff-removed" title="<%= t(".before") %>"><span class="sr-only"><%= t(".before") %>: </span><%= audit_value(event, attribute, before).to_json %></del><% end %><% if show_before && show_after %><span class="text-ink-muted"> → </span><% end %><% if show_after %><ins class="font-semibold text-diff-added no-underline" title="<%= t(".after") %>"><span class="sr-only"><%= t(".after") %>: </span><%= audit_value(event, attribute, after).to_json %></ins><% end %><span class="text-ink-muted"><%= "," unless index == entries.size - 1 %></span></span>
+<% end %><span class="text-ink-muted">}</span></code></pre>
+</section>

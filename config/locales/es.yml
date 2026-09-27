@@ -252,6 +252,10 @@ es:
         before: "Antes"
         after: "Después"
         back: "Volver a la auditoría"
+      json_diff:
+        title: "Cambios en formato JSON"
+        before: "valor anterior"
+        after: "valor nuevo"
     people:
       index:
         title: "Personas"

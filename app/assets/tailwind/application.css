@@ -23,6 +23,11 @@
   --color-success: #1f7a3d;
   --color-success-soft: #e7f5ec;
 
+  /* Audit diff: removed value (red) and added value (emerald). */
+  --color-diff-removed: #b42318;
+  --color-diff-added: #047857;
+  --color-code-surface: #fdfaf7;
+
   --radius-clay: 1.5rem;
   --shadow-clay: 8px 8px 16px rgb(43 34 32 / 0.12), inset -3px -3px 8px rgb(43 34 32 / 0.06);
 }

@@ -79,6 +79,35 @@ RSpec.describe "Administration::AuditEvents" do
       expect(cells).to include([ "Activo", "Sí", "No" ], [ "Contraseña", "(oculto)", "(oculto)" ])
     end
 
+    it "ends with a JSON-like diff: previous value in red, new one in emerald" do
+      allow(Current).to receive(:user).and_return(admin)
+      purchase = create(:purchase)
+      purchase.update!(price_per_pound: 60)
+      allow(Current).to receive(:user).and_call_original
+
+      get administration_audit_event_path(AuditEvent.find_by!(auditable: purchase, action: "update"))
+      line = Nokogiri::HTML(response.body).at_css("#json-diff [data-field='price_per_pound']")
+      expect(line.text).to include('"Precio por libra (L)"', " → ")
+      expect(line.at_css("del.text-diff-removed").text).to end_with('"58.0"')
+      expect(line.at_css("ins.text-diff-added").text).to end_with('"60.0"')
+    end
+
+    it "shows only new values for a creation and only previous ones for a deletion" do
+      allow(Current).to receive(:user).and_return(admin)
+      zone = create(:zone, name: "El Chilito")
+      zone.destroy!
+      allow(Current).to receive(:user).and_call_original
+
+      get administration_audit_event_path(AuditEvent.find_by!(auditable_type: "Zone", action: "create"))
+      diff = Nokogiri::HTML(response.body).at_css("#json-diff")
+      expect(diff.css("del")).to be_empty
+      expect(diff.at_css("ins").text).to include('"El Chilito"')
+
+      get administration_audit_event_path(AuditEvent.find_by!(auditable_type: "Zone", action: "destroy"))
+      diff = Nokogiri::HTML(response.body).at_css("#json-diff")
+      expect(diff.css("ins")).to be_empty
+    end
+
     it "translates closed lists in the detail" do
       allow(Current).to receive(:user).and_return(admin)
       purchase = create(:purchase, coffee_state: "cherry")

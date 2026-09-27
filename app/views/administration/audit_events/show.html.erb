@@ -42,4 +42,8 @@
   </div>
 <% end %>
 
+<% if @event.changeset.any? %>
+  <%= render "json_diff", event: @event %>
+<% end %>
+
 <p class="mt-6"><%= link_to t(".back"), administration_audit_events_path, class: "text-sm text-primary underline hover:no-underline" %></p>
