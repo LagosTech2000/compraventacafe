@@ -1,4 +1,6 @@
 class User < ApplicationRecord
+  include Auditable
+
   has_secure_password
   has_many :sessions, dependent: :destroy
   has_many :permissions, dependent: :destroy
@@ -26,6 +28,10 @@ class User < ApplicationRecord
     return true if admin?
 
     permission_for(module_key)&.allows?(action) || false
+  end
+
+  def audit_label
+    email_address
   end
 
   def permission_for(module_key)

@@ -9,6 +9,12 @@
       <span class="mt-2 block text-sm text-ink-muted"><%= t(".people_description") %></span>
     <% end %>
   <% end %>
+  <% if policy(AuditEvent).index? %>
+    <%= link_to administration_audit_events_path, class: "clay block p-6 transition hover:-translate-y-0.5" do %>
+      <span class="text-lg font-semibold text-primary"><%= t("administration.audit_events.index.title") %></span>
+      <span class="mt-2 block text-sm text-ink-muted"><%= t(".audit_description") %></span>
+    <% end %>
+  <% end %>
   <% if policy(User).index? %>
     <%= link_to administration_users_path, class: "clay block p-6 transition hover:-translate-y-0.5" do %>
       <span class="text-lg font-semibold text-primary"><%= t("administration.users.index.title") %></span>

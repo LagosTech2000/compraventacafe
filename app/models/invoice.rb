@@ -1,6 +1,8 @@
 # Receipt given to a producer for one or more purchases. It is marked as
 # paid ("cancelada") or pending, and numbered correlatively.
 class Invoice < ApplicationRecord
+  include Auditable
+
   PAYMENT_STATUSES = %w[pending paid].freeze
   PAYMENT_METHODS = %w[cash transfer check].freeze
   # Fixed key for the advisory lock that serializes invoice numbering.
@@ -28,6 +30,10 @@ class Invoice < ApplicationRecord
 
   def display_number
     format("%04d", number)
+  end
+
+  def audit_label
+    "#{display_number} · #{producer.full_name}"
   end
 
   def gross_weight = purchases.sum(&:gross_weight)

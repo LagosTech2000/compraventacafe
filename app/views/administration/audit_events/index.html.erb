@@ -1,0 +1,91 @@
+<% content_for :title, t(".title") %>
+
+<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+<p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+
+<%= form_with url: administration_audit_events_path, method: :get,
+      class: "mt-6 grid gap-4 rounded-md border border-line bg-surface p-4 sm:grid-cols-2 lg:grid-cols-3" do |form| %>
+  <div>
+    <%= form.label :from, t(".from"), class: "field-label" %>
+    <%= form.date_field :from, value: @filter.from, class: "field-input" %>
+  </div>
+  <div>
+    <%= form.label :to, t(".to"), class: "field-label" %>
+    <%= form.date_field :to, value: @filter.to, class: "field-input" %>
+  </div>
+  <div>
+    <%= form.label :user_id, t(".user"), class: "field-label" %>
+    <%= form.select :user_id, options_from_collection_for_select(User.order(:email_address), :id, :email_address, @filter.user_id),
+          { include_blank: t(".all") }, class: "field-input" %>
+  </div>
+  <div>
+    <%= form.label :event_action, t(".action"), class: "field-label" %>
+    <%= form.select :event_action, options_for_select(AuditEvent::ACTIONS.map { |a| [ AuditEvent.human_attribute_name("action/#{a}"), a ] }, @filter.action),
+          { include_blank: t(".all") }, class: "field-input" %>
+  </div>
+  <div>
+    <%= form.label :auditable_type, t(".entity"), class: "field-label" %>
+    <%= form.select :auditable_type,
+          options_for_select(AuditEvent::AUDITED_TYPES.map { |type| [ type.constantize.model_name.human(count: 2), type ] }.sort, @filter.auditable_type),
+          { include_blank: t(".all") }, class: "field-input" %>
+  </div>
+  <div>
+    <%= form.label :q, t(".search"), class: "field-label" %>
+    <%= form.search_field :q, value: @filter.query, maxlength: 100, placeholder: t(".search_placeholder"), class: "field-input" %>
+  </div>
+  <div class="flex flex-wrap gap-3 sm:col-span-2 lg:col-span-3">
+    <%= form.submit t(".filter"), name: nil, class: "btn btn-primary" %>
+    <% if @filter.active? %>
+      <%= link_to t(".clear"), administration_audit_events_path, class: "btn" %>
+    <% end %>
+  </div>
+<% end %>
+
+<% if @events.any? %>
+  <div class="mt-6 overflow-x-auto rounded-md border border-line bg-surface">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th><%= t(".when") %></th>
+          <th><%= t(".user") %></th>
+          <th><%= t(".action") %></th>
+          <th><%= t(".entity") %></th>
+          <th><%= t(".record") %></th>
+          <th><%= t(".changes") %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @events.each do |event| %>
+          <tr id="<%= dom_id(event) %>">
+            <td class="whitespace-nowrap tabular-nums">
+              <%= link_to l(event.created_at, format: :audit), administration_audit_event_path(event), class: "text-primary underline hover:no-underline" %>
+            </td>
+            <td class="break-all"><%= audit_user(event) %></td>
+            <td><%= audit_action_badge(event) %></td>
+            <td class="whitespace-nowrap"><%= event.human_auditable_type %></td>
+            <td><%= event.auditable_label %></td>
+            <td class="text-ink-muted">
+              <%= event.changeset.keys.first(4).map { |attribute| audit_attribute_name(event, attribute) }.join(", ") %><%= "…" if event.changeset.size > 4 %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <nav class="mt-4 flex items-center justify-between gap-3" aria-label="<%= t(".pages") %>">
+    <% if @filter.page > 1 %>
+      <%= link_to t(".previous"), administration_audit_events_path(@filter.to_params.merge(page: @filter.page - 1)), class: "btn" %>
+    <% else %>
+      <span></span>
+    <% end %>
+    <span class="text-sm text-ink-muted"><%= t(".page", page: @filter.page) %></span>
+    <% if @next_page %>
+      <%= link_to t(".next"), administration_audit_events_path(@filter.to_params.merge(page: @filter.page + 1)), class: "btn" %>
+    <% else %>
+      <span></span>
+    <% end %>
+  </nav>
+<% else %>
+  <p class="clay mt-6 p-6 text-sm text-ink-muted"><%= t(".empty") %></p>
+<% end %>

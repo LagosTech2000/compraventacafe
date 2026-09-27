@@ -10,9 +10,26 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_27_185409) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_27_191641) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "audit_events", force: :cascade do |t|
+    t.bigint "user_id"
+    t.string "user_email"
+    t.string "action", null: false
+    t.string "auditable_type"
+    t.bigint "auditable_id"
+    t.string "auditable_label"
+    t.jsonb "changeset", default: {}, null: false
+    t.string "ip_address"
+    t.string "request_id"
+    t.datetime "created_at", null: false
+    t.index ["action"], name: "index_audit_events_on_action"
+    t.index ["auditable_type", "auditable_id"], name: "index_audit_events_on_auditable_type_and_auditable_id"
+    t.index ["created_at"], name: "index_audit_events_on_created_at"
+    t.index ["user_id"], name: "index_audit_events_on_user_id"
+  end
 
   create_table "clients", force: :cascade do |t|
     t.bigint "person_id", null: false
@@ -154,6 +171,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_185409) do
     t.index "lower((name)::text)", name: "index_zones_on_lower_name", unique: true
   end
 
+  add_foreign_key "audit_events", "users", on_delete: :nullify
   add_foreign_key "clients", "people"
   add_foreign_key "collaborators", "people"
   add_foreign_key "invoices", "producers"

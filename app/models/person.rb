@@ -2,6 +2,7 @@
 # dni (13 digits) and rtn (14 digits) are unique per person and optional.
 class Person < ApplicationRecord
   include Addressable
+  include Auditable
 
   has_one :client, dependent: :destroy, autosave: true
   has_one :collaborator, dependent: :destroy, autosave: true
@@ -29,6 +30,8 @@ class Person < ApplicationRecord
   def full_name
     "#{first_names} #{last_names}"
   end
+
+  alias_method :audit_label, :full_name
 
   def client?
     client.present?

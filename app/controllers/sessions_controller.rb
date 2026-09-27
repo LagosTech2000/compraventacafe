@@ -11,13 +11,16 @@ class SessionsController < ApplicationController
 
     if user&.active?
       start_new_session_for user
+      AuditEvent.record!(action: "sign_in", auditable: user)
       redirect_to after_authentication_url
     else
+      AuditEvent.record!(action: "sign_in_failed", label: params[:email_address].to_s.strip.first(254), user: nil)
       redirect_to new_session_path, alert: t("sessions.invalid")
     end
   end
 
   def destroy
+    AuditEvent.record!(action: "sign_out", auditable: Current.user)
     terminate_session
     redirect_to new_session_path, status: :see_other
   end

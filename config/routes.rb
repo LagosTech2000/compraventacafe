@@ -9,6 +9,7 @@ Rails.application.routes.draw do
   namespace :administration do
     root "home#index"
     resources :people
+    resources :audit_events, only: %i[ index show ]
     resources :users, only: %i[ index show new create edit update ] do
       member do
         get :reset_password, action: :edit_password

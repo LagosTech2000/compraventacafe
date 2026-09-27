@@ -1,5 +1,7 @@
 # Role of a Person: someone the business buys coffee from.
 class Producer < ApplicationRecord
+  include Auditable
+
   KINDS = %w[producer intermediary own_farm].freeze
 
   belongs_to :person
@@ -16,6 +18,10 @@ class Producer < ApplicationRecord
   delegate :full_name, to: :person
 
   scope :alphabetical, -> { joins(:person).merge(Person.alphabetical) }
+
+  def audit_label
+    person.full_name
+  end
 
   def human_kind
     self.class.human_attribute_name("kind/#{kind}")

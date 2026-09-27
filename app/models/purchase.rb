@@ -1,5 +1,7 @@
 # One weighing of coffee bought from a producer.
 class Purchase < ApplicationRecord
+  include Auditable
+
   COFFEE_STATES = %w[cherry wet_parchment dry_parchment].freeze
 
   belongs_to :producer
@@ -22,6 +24,10 @@ class Purchase < ApplicationRecord
   scope :on, ->(date) { where(purchased_on: date) }
   scope :uninvoiced, -> { where(invoice_id: nil) }
   scope :chronological, -> { order(:purchased_on, :id) }
+
+  def audit_label
+    "#{id} · #{producer.full_name}"
+  end
 
   def invoiced?
     invoice_id.present?

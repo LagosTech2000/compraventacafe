@@ -212,6 +212,46 @@ es:
       index:
         people_description: "Personas del negocio: clientes y colaboradores."
         users_description: "Crear usuarios, asignar permisos por módulo y restablecer contraseñas."
+        audit_description: "Quién creó, modificó o borró qué, y cuándo."
+    audit_events:
+      system: "Sistema"
+      filtered: "(oculto)"
+      "true": "Sí"
+      "false": "No"
+      index:
+        title: "Auditoría"
+        help: "Registro de todas las acciones del sistema. No se puede modificar ni borrar."
+        from: "Desde"
+        to: "Hasta"
+        user: "Usuario"
+        action: "Acción"
+        entity: "Entidad"
+        search: "Buscar"
+        search_placeholder: "Registro o correo"
+        all: "Todos"
+        filter: "Filtrar"
+        clear: "Quitar filtros"
+        when: "Fecha y hora"
+        record: "Registro"
+        changes: "Campos"
+        empty: "No hay acciones que coincidan con los filtros."
+        pages: "Páginas"
+        previous: "Anterior"
+        next: "Siguiente"
+        page: "Página %{page}"
+      show:
+        title: "Detalle de la acción"
+        when: "Fecha y hora"
+        user: "Usuario"
+        entity: "Entidad"
+        record: "Registro"
+        ip_address: "Dirección IP"
+        request_id: "Referencia de la solicitud"
+        changes: "Cambios"
+        field: "Campo"
+        before: "Antes"
+        after: "Después"
+        back: "Volver a la auditoría"
     people:
       index:
         title: "Personas"
@@ -303,6 +343,9 @@ es:
       invoice:
         one: "Factura"
         other: "Facturas"
+      audit_event:
+        one: "Acción"
+        other: "Acciones"
       collaborator:
         one: "Colaborador"
         other: "Colaboradores"
@@ -313,6 +356,7 @@ es:
         password_confirmation: "Confirmar contraseña"
         admin: "Administrador"
         active: "Activo"
+        password_digest: "Contraseña"
       person:
         first_names: "Nombres"
         last_names: "Apellidos"
@@ -336,6 +380,7 @@ es:
         zone: "Zona"
         zone_id: "Zona"
         person: "Persona"
+        person_id: "Persona"
       purchase:
         purchased_on: "Fecha"
         producer: "Productor"
@@ -343,6 +388,8 @@ es:
         zone: "Zona"
         zone_id: "Zona"
         invoice: "Factura"
+        invoice_id: "Factura"
+        created_by_id: "Registró"
         coffee_state: "Estado del café"
         coffee_state/cherry: "Uva"
         coffee_state/wet_parchment: "Pergamino húmedo"
@@ -359,6 +406,8 @@ es:
         number: "Número"
         issued_on: "Fecha"
         producer: "Productor"
+        producer_id: "Productor"
+        created_by_id: "Facturó"
         purchases: "Compras"
         payment_status: "Estado de pago"
         payment_status/pending: "Pendiente de pago"
@@ -369,7 +418,19 @@ es:
         payment_method/check: "Cheque"
         paid_on: "Fecha de pago"
         total: "Total"
+      audit_event:
+        action/create: "Creó"
+        action/update: "Modificó"
+        action/destroy: "Borró"
+        action/sign_in: "Inició sesión"
+        action/sign_out: "Cerró sesión"
+        action/sign_in_failed: "Intento de sesión fallido"
+      client:
+        person_id: "Persona"
+      collaborator:
+        person_id: "Persona"
       permission:
+        user_id: "Usuario"
         module_key: "Módulo"
         can_read: "Ver"
         can_create: "Crear"
@@ -474,6 +535,7 @@ es:
     am: "a. m."
     pm: "p. m."
     formats:
+      audit: "%d/%m/%Y %H:%M:%S"
       default: "%d/%m/%Y %H:%M"
       long: "%-d de %B de %Y %H:%M"
       short: "%-d de %b %H:%M"

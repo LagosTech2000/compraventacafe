@@ -188,6 +188,23 @@ español (`shared/_flash`, con `role="alert"` y botón para cerrarla):
 - No agregues `rescue` en controladores para mostrar errores: agrega el caso
   en `ErrorHandling`.
 
+**4. Todo cambio de datos queda auditado.** Un modelo nuevo con datos del
+negocio incluye `Auditable` y se agrega a `AuditEvent::AUDITED_TYPES` (un spec
+verifica que coincidan). Cada evento guarda usuario (y su correo como copia),
+acción, registro (con un `audit_label` legible aunque el registro se borre),
+campos antes/después, IP y `request_id` (el mismo del código de referencia de
+los errores).
+
+- Se escribe en la misma transacción que el cambio: si el cambio se revierte,
+  el evento también.
+- Solo se agrega: `AuditEvent#readonly?` impide modificar o borrar eventos.
+- Nunca se guardan secretos: `Auditable::SENSITIVE_ATTRIBUTES` se registra
+  como `[FILTERED]` ("(oculto)" en pantalla).
+- Inicio, cierre e intentos fallidos de sesión se registran en
+  `SessionsController`.
+- La pantalla (Administración → Auditoría) es solo para administradores y
+  filtra por fechas, usuario, acción, entidad y texto, en páginas de 50.
+
 ## Comandos
 
 ```bash
@@ -224,7 +241,7 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_EMAIL` y
 
 | Clave | Estado |
 | --- | --- |
-| `administration` | Usuarios y permisos (solo administradores); personas, clientes y colaboradores (permisos del módulo) |
+| `administration` | Usuarios y permisos, y auditoría (solo administradores); personas, clientes y colaboradores (permisos del módulo) |
 | `trading` | Demo: zonas, productores, compras con cálculo automático, facturas imprimibles (original y copia) con estado de pago, cierre diario |
 | `farms` | Portada vacía |
 | `loans` | Portada vacía |
