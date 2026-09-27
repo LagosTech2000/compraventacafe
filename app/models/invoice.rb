@@ -21,7 +21,7 @@ class Invoice < ApplicationRecord
 
   before_create :assign_number
 
-  scope :recent, -> { order(number: :desc) }
+  scope :newest_first, -> { order(number: :desc) }
   scope :pending, -> { where(payment_status: "pending") }
 
   def paid?

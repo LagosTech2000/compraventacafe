@@ -224,6 +224,10 @@ los errores).
   "shared/filters"` con `filter_text_field` / `filter_date_field` /
   `filter_select` + `shared/pagination`. Los valores inválidos se ignoran.
   Dentro del bloque de filtros usa claves de traducción completas, no `t(".x")`.
+- **Orden**: toda lista muestra primero lo más reciente (`newest_first`,
+  definido en `ApplicationRecord`; compras por fecha de compra, facturas por
+  número). Las listas desplegables y el buscador de productor, que sirven para
+  elegir por nombre, se quedan en orden alfabético.
 - **Listas desplegables**: nunca con la primera opción en blanco. Campo
   opcional: "Sin … asignado" (`shared.select.*`). Campo obligatorio: "Selecciona
   …". Filtro: "Todos".

@@ -8,6 +8,6 @@ class DailyClose < PurchaseSummary
   end
 
   def purchases
-    @purchase_list ||= Purchase.on(date).includes(:invoice, :zone, producer: :person).chronological.to_a
+    @purchase_list ||= Purchase.on(date).includes(:invoice, :zone, producer: :person).newest_first.to_a
   end
 end

@@ -3,6 +3,6 @@ class ZoneFilter < ListFilter
 
   def apply(scope)
     scope = scope.where("name ILIKE ?", like(q)) if q
-    scope.ordered
+    scope.newest_first
   end
 end

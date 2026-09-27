@@ -7,6 +7,6 @@ class ProducerFilter < ListFilter
     scope = scope.merge(Person.search(q)) if q
     scope = scope.where(kind:) if kind
     scope = scope.where(zone_id:) if zone_id
-    scope.includes(:person, :zone).alphabetical
+    scope.includes(:person, :zone).newest_first
   end
 end

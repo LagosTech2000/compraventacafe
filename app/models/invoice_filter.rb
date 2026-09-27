@@ -13,7 +13,7 @@ class InvoiceFilter < ListFilter
     scope = scope.where(id: Purchase.where(zone_id:).select(:invoice_id)) if zone_id
     scope = scope.where(payment_status:) if payment_status
     scope = scope.where(payment_method:) if payment_method
-    scope.includes(:purchases, producer: :person).recent
+    scope.includes(:purchases, producer: :person).newest_first
   end
 
   private

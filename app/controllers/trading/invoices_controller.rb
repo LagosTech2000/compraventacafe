@@ -17,9 +17,12 @@ module Trading
 
       if @producer
         @invoice = @producer.invoices.build(payment_status: "pending")
-        @purchases = @producer.purchases.uninvoiced.chronological
+        @purchases = @producer.purchases.uninvoiced.newest_first
       else
-        @producers_to_invoice = Producer.where(id: Purchase.uninvoiced.select(:producer_id)).includes(:person).alphabetical
+        # Producers whose latest uninvoiced purchase is most recent come first.
+        @producers_to_invoice = Producer.joins(:purchases).merge(Purchase.uninvoiced).group(:id)
+                                        .order(Arel.sql("MAX(purchases.purchased_on) DESC, MAX(purchases.id) DESC"))
+                                        .includes(:person)
       end
     end
 
@@ -33,7 +36,7 @@ module Trading
       else
         @producer = producer
         @invoice = result.invoice
-        @purchases = producer.purchases.uninvoiced.chronological
+        @purchases = producer.purchases.uninvoiced.newest_first
         render :new, status: :unprocessable_content
       end
     end

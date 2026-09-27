@@ -36,7 +36,7 @@
       </tr>
     </thead>
     <tbody>
-      <% invoice.purchases.sort_by(&:id).each do |purchase| %>
+      <% invoice.purchases.sort_by { |p| [ p.purchased_on, p.id ] }.reverse_each do |purchase| %>
         <tr>
           <td class="whitespace-nowrap"><%= l(purchase.purchased_on) %></td>
           <td><%= purchase.human_coffee_state %></td>

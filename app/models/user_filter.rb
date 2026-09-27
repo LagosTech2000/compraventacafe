@@ -7,6 +7,6 @@ class UserFilter < ListFilter
     scope = scope.where("name ILIKE :q OR email_address ILIKE :q", q: like(q)) if q
     scope = scope.where(admin: role == "admin") if role
     scope = scope.where(active: status == "active") if status
-    scope.order(active: :desc, name: :asc)
+    scope.newest_first
   end
 end

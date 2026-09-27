@@ -11,8 +11,6 @@ class AuditEvent < ApplicationRecord
 
   validates :action, inclusion: { in: ACTIONS }
 
-  scope :newest_first, -> { order(created_at: :desc, id: :desc) }
-
   def self.record!(action:, auditable: nil, label: nil, changeset: {}, user: Current.user, ip_address: Current.ip_address)
     create!(
       action:, auditable_type: auditable&.class&.name, auditable_id: auditable&.id,

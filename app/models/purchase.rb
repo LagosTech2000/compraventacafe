@@ -23,7 +23,8 @@ class Purchase < ApplicationRecord
 
   scope :on, ->(date) { where(purchased_on: date) }
   scope :uninvoiced, -> { where(invoice_id: nil) }
-  scope :chronological, -> { order(:purchased_on, :id) }
+  # Most recent purchase date first; same day, last registered first.
+  scope :newest_first, -> { order(purchased_on: :desc, id: :desc) }
 
   def audit_label
     "#{id} · #{producer.full_name}"

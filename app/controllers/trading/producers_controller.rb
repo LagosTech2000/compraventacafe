@@ -9,8 +9,8 @@ module Trading
     end
 
     def show
-      @uninvoiced_purchases = @producer.purchases.uninvoiced.chronological
-      @recent_invoices = @producer.invoices.recent.limit(10)
+      @uninvoiced_purchases = @producer.purchases.uninvoiced.newest_first
+      @recent_invoices = @producer.invoices.newest_first.limit(10)
     end
 
     def new
