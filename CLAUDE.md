@@ -236,14 +236,14 @@ bin/dev                         # servidor + Tailwind en watch
 bundle exec rspec               # suite completa
 bundle exec rspec spec/policies # solo políticas
 bin/rails db:migrate
-bin/rails db:seed               # requiere ADMIN_EMAIL y ADMIN_PASSWORD
+bin/rails db:seed               # requiere ADMIN_NAME, ADMIN_EMAIL y ADMIN_PASSWORD
 bin/rails demo:seed             # datos ficticios para la demo (no en producción)
 bin/rubocop
 bin/brakeman --no-pager
 ```
 
-El primer administrador se crea con `db:seed` leyendo `ADMIN_EMAIL` y
-`ADMIN_PASSWORD` del entorno. Nunca se escriben credenciales en el repo.
+El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
+`ADMIN_EMAIL` y `ADMIN_PASSWORD` del entorno. Nunca se escriben credenciales en el repo.
 
 ## Interfaz
 

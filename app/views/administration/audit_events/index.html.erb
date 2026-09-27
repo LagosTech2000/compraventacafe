@@ -6,7 +6,7 @@
 <%= render layout: "shared/filters", locals: { filter: @filter, url: administration_audit_events_path } do |form| %>
   <%= filter_date_field form, :from, t("shared.filters.from"), value: @filter.from %>
   <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
-  <%= filter_select form, :user_id, t("administration.audit_events.index.user"), User.order(:email_address).pluck(:email_address, :id), selected: @filter.user_id %>
+  <%= filter_select form, :user_id, t("administration.audit_events.index.user"), User.order(:name).pluck(Arel.sql("name || ' (' || email_address || ')'"), :id), selected: @filter.user_id %>
   <%= filter_select form, :event_action, t("administration.audit_events.index.action"),
         AuditEvent::ACTIONS.map { |a| [ AuditEvent.human_attribute_name("action/#{a}"), a ] }, selected: @filter.event_action, all: t("administration.audit_events.index.all_actions") %>
   <%= filter_select form, :auditable_type, t("administration.audit_events.index.entity"),

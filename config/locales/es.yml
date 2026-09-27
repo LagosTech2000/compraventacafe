@@ -66,7 +66,7 @@ es:
   dashboard:
     show:
       title: "Inicio"
-      welcome: "Bienvenido"
+      welcome: "Hola, %{name}"
       no_modules: "Todavía no tienes acceso a ningún módulo. Pídele a un administrador que te asigne permisos."
 
   addresses:
@@ -216,7 +216,7 @@ es:
         producer: "Nombre"
         location: "Ubicación"
         signature: "Firma de quien factura"
-        issued_by: "Facturó: %{email}"
+        issued_by: "Facturado por: %{name}"
         totals: "Totales"
       create:
         success: "Factura creada."
@@ -323,6 +323,7 @@ es:
         status: "Estado"
         actions: "Acciones"
         empty: "No hay usuarios que coincidan con los filtros."
+        search_placeholder: "Nombre o correo"
       show:
         edit: "Editar"
         reset_password: "Restablecer contraseña"
@@ -335,7 +336,7 @@ es:
         title: "Editar usuario"
       edit_password:
         title: "Restablecer contraseña"
-        help: "Define una contraseña nueva para %{email}. Se cerrarán todas sus sesiones abiertas."
+        help: "Define una contraseña nueva para %{name} (%{email}). Se cerrarán todas sus sesiones abiertas."
       form:
         permissions: "Permisos por módulo"
         permissions_help: "Un administrador tiene acceso completo; los permisos por módulo aplican a los demás usuarios."
@@ -388,6 +389,7 @@ es:
         other: "Colaboradores"
     attributes:
       user:
+        name: "Nombre completo"
         email_address: "Correo electrónico"
         password: "Contraseña"
         password_confirmation: "Confirmar contraseña"

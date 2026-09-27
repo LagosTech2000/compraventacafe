@@ -68,11 +68,11 @@ module Administration
       end
 
       def create_params
-        params.expect(user: [ :email_address, :password, :password_confirmation, :admin, permissions_attributes ])
+        params.expect(user: [ :name, :email_address, :password, :password_confirmation, :admin, permissions_attributes ])
       end
 
       def update_params
-        params.expect(user: [ :email_address, :admin, :active, permissions_attributes ])
+        params.expect(user: [ :name, :email_address, :admin, :active, permissions_attributes ])
       end
 
       def password_params

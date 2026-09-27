@@ -1,6 +1,8 @@
 module AuditHelper
   def audit_user(event)
-    event.user_email || t("administration.audit_events.system")
+    return t("administration.audit_events.system") unless event.user_email
+
+    event.user ? "#{event.user.name} (#{event.user_email})" : event.user_email
   end
 
   def audit_attribute_name(event, attribute)

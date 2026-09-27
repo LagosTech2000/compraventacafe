@@ -89,6 +89,7 @@ RSpec.describe "Trading purchase flow" do
     get trading_invoice_path(invoice)
     expect(response.body).to include("ORIGINAL", "COPIA", "Compra de Café el Rey David", "Mata de Plátano, Moroceli", "Firma de quien factura")
     expect(response.body).to include("L 8,241.80")
+    expect(response.body).to include("Facturado por: #{user.name}")
 
     patch trading_invoice_path(invoice), params: { invoice: { payment_method: "cash", paid_on: Time.zone.today } }
     expect(invoice.reload).to be_paid

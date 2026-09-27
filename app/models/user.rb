@@ -8,7 +8,9 @@ class User < ApplicationRecord
   accepts_nested_attributes_for :permissions
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
+  normalizes :name, with: ->(value) { value.squish.presence }
 
+  validates :name, presence: true, field_format: :person_name, length: { maximum: 100 }
   validates :email_address, presence: true, uniqueness: true, field_format: :email, length: { maximum: 254 }
   validates :password, field_format: :password, allow_nil: true
   validate :keeps_an_active_admin, on: :update
@@ -31,7 +33,7 @@ class User < ApplicationRecord
   end
 
   def audit_label
-    email_address
+    "#{name} (#{email_address})"
   end
 
   def permission_for(module_key)

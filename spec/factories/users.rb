@@ -1,5 +1,6 @@
 FactoryBot.define do
   factory :user do
+    name { "Usuario de Prueba" }
     sequence(:email_address) { |n| "user#{n}@example.com" }
     password { AuthenticationHelpers::PASSWORD }
 

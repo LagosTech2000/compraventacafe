@@ -8,7 +8,7 @@ RSpec.describe "Administration::AuditEvents" do
     delete session_path
     post session_path, params: { email_address: "intruso@example.com", password: "x" }
     expect(AuditEvent.pluck(:action, :auditable_label)).to include(
-      [ "sign_in", admin.email_address ], [ "sign_out", admin.email_address ], [ "sign_in_failed", "intruso@example.com" ]
+      [ "sign_in", admin.audit_label ], [ "sign_out", admin.audit_label ], [ "sign_in_failed", "intruso@example.com" ]
     )
     expect(AuditEvent.find_by(action: "sign_in").ip_address).to eq("127.0.0.1")
   end

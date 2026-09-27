@@ -2,7 +2,12 @@
   <%= render "shared/form_errors", record: user %>
 
   <div class="grid gap-5 sm:grid-cols-2">
-    <div class="sm:col-span-2">
+    <div>
+      <%= form.label :name, class: "field-label" %>
+      <%= form.text_field :name, autofocus: true, autocomplete: "off", class: "field-input",
+            **field_format_attributes(User, :name, :person_name, required: true) %>
+    </div>
+    <div>
       <%= form.label :email_address, class: "field-label" %>
       <%= form.email_field :email_address, autocomplete: "off", class: "field-input",
             **field_format_attributes(User, :email_address, :email, required: true) %>

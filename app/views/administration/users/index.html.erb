@@ -6,7 +6,7 @@
 </div>
 
 <%= render layout: "shared/filters", locals: { filter: @filter, url: administration_users_path } do |form| %>
-  <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: User.human_attribute_name(:email_address) %>
+  <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("administration.users.index.search_placeholder") %>
   <%= filter_select form, :role, t("administration.users.index.role"),
         %w[admin regular].map { |r| [ t("administration.user_role.#{r}"), r ] }, selected: @filter.role %>
   <%= filter_select form, :status, t("administration.users.index.status"),
@@ -18,6 +18,7 @@
     <table class="data-table">
       <thead>
         <tr>
+          <th><%= User.human_attribute_name(:name) %></th>
           <th><%= User.human_attribute_name(:email_address) %></th>
           <th><%= t(".role") %></th>
           <th><%= t(".status") %></th>
@@ -27,6 +28,7 @@
       <tbody>
         <% @users.each do |user| %>
           <tr id="<%= dom_id(user) %>" class="<%= "text-ink-muted" unless user.active? %>">
+            <td class="font-medium"><%= user.name %></td>
             <td class="break-all"><%= user.email_address %></td>
             <td><%= t(user.admin? ? "administration.user_role.admin" : "administration.user_role.regular") %></td>
             <td><%= t(user.active? ? "administration.user_status.active" : "administration.user_status.inactive") %></td>

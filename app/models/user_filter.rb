@@ -4,9 +4,9 @@ class UserFilter < ListFilter
   field :status, :choice, in: %w[active inactive]
 
   def apply(scope)
-    scope = scope.where("email_address ILIKE ?", like(q)) if q
+    scope = scope.where("name ILIKE :q OR email_address ILIKE :q", q: like(q)) if q
     scope = scope.where(admin: role == "admin") if role
     scope = scope.where(active: status == "active") if status
-    scope.order(active: :desc, email_address: :asc)
+    scope.order(active: :desc, name: :asc)
   end
 end

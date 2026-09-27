@@ -39,7 +39,7 @@ RSpec.describe "Administration::Users" do
     it "creates a user with per-module permissions" do
       post administration_users_path, params: {
         user: {
-          email_address: "nueva@example.com", password: "clave-larga", password_confirmation: "clave-larga", admin: "0",
+          name: "María José Reyes", email_address: "nueva@example.com", password: "clave-larga", password_confirmation: "clave-larga", admin: "0",
           permissions_attributes: {
             "0" => { module_key: "trading", can_read: "1", can_create: "1", can_update: "0", can_destroy: "0" },
             "1" => { module_key: "farms", can_read: "0", can_create: "0", can_update: "0", can_destroy: "0" }
@@ -48,6 +48,7 @@ RSpec.describe "Administration::Users" do
       }
       expect(response).to redirect_to(administration_users_path)
       user = User.find_by!(email_address: "nueva@example.com")
+      expect(user.name).to eq("María José Reyes")
       expect(user.can?(:trading, :create)).to be(true)
       expect(user.can?(:trading, :update)).to be(false)
       expect(user.can?(:farms, :read)).to be(false)
@@ -88,6 +89,20 @@ RSpec.describe "Administration::Users" do
     it "refuses to remove admin from the last active admin" do
       patch administration_user_path(admin), params: { user: { admin: "0" } }
       expect(admin.reload.admin?).to be(true)
+    end
+
+    it "requires a full name with letters only, in Spanish" do
+      post administration_users_path, params: { user: { name: "", email_address: "sin@example.com", password: "clave-larga", password_confirmation: "clave-larga" } }
+      expect(response.body).to include("Nombre completo no puede estar en blanco")
+      patch administration_user_path(create(:user)), params: { user: { name: "Ana 2" } }
+      expect(response.body).to include("Nombre completo solo puede tener letras")
+    end
+
+    it "shows the name in the list and the navigation" do
+      create(:user, name: "Susana Mejía")
+      get administration_users_path
+      expect(response.body).to include("Susana Mejía")
+      expect(Nokogiri::HTML(response.body).at_css("header nav").text).to include(admin.name)
     end
 
     it "resets a password and ends the user's sessions" do

@@ -1,6 +1,11 @@
 require "rails_helper"
 
 RSpec.describe User do
+  it "requires a full name and squishes its spaces" do
+    expect(build(:user, name: "")).not_to be_valid
+    expect(create(:user, name: "  Ana   María  Paz ").name).to eq("Ana María Paz")
+  end
+
   it "normalizes the email address" do
     user = create(:user, email_address: "  Ana@Example.COM ")
     expect(user.email_address).to eq("ana@example.com")

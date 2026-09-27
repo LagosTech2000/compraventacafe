@@ -1,8 +1,9 @@
-<% content_for :title, @user.email_address %>
+<% content_for :title, @user.name %>
 
 <div class="flex flex-wrap items-start justify-between gap-4">
   <div>
-    <h1 class="break-all text-2xl font-bold"><%= @user.email_address %></h1>
+    <h1 class="text-2xl font-bold"><%= @user.name %></h1>
+    <p class="mt-1 break-all text-sm text-ink-muted"><%= @user.email_address %></p>
     <p class="mt-1 text-sm text-ink-muted">
       <%= t(@user.admin? ? "administration.user_role.admin" : "administration.user_role.regular") %> ·
       <%= t(@user.active? ? "administration.user_status.active" : "administration.user_status.inactive") %>
