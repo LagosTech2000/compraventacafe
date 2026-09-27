@@ -52,6 +52,23 @@ RSpec.describe "Administration::AuditEvents" do
       expect(response.body).to include("No hay acciones que coincidan")
     end
 
+    it "shows the record's id and filters a record's whole history by it" do
+      allow(Current).to receive(:user).and_return(admin)
+      purchase = create(:purchase)
+      purchase.update!(price_per_pound: 60)
+      create(:purchase)
+      allow(Current).to receive(:user).and_call_original
+
+      get administration_audit_event_path(AuditEvent.find_by!(auditable: purchase, action: "update"))
+      fields = Nokogiri::HTML(response.body).css("dl > div").to_h { |d| [ d.at_css("dt").text.strip, d.at_css("dd").text.strip ] }
+      expect(fields["ID del registro"]).to eq(purchase.id.to_s)
+
+      get administration_audit_events_path(auditable_type: "Purchase", auditable_id: purchase.id)
+      rows = Nokogiri::HTML(response.body).css("tbody tr")
+      expect(rows.size).to eq(2)
+      expect(rows.map(&:text)).to all(include("##{purchase.id}"))
+    end
+
     it "ignores garbage in the filters" do
       get administration_audit_events_path(from: "ayer", event_action: "drop table", auditable_type: "Kernel", page: "-3")
       expect(response).to have_http_status(:ok)

@@ -11,6 +11,7 @@
         AuditEvent::ACTIONS.map { |a| [ AuditEvent.human_attribute_name("action/#{a}"), a ] }, selected: @filter.event_action, all: t("administration.audit_events.index.all_actions") %>
   <%= filter_select form, :auditable_type, t("administration.audit_events.index.entity"),
         AuditEvent::AUDITED_TYPES.map { |type| [ type.constantize.model_name.human(count: 2), type ] }.sort, selected: @filter.auditable_type, all: t("administration.audit_events.index.all_entities") %>
+  <%= filter_text_field form, :auditable_id, t("administration.audit_events.index.record_id"), value: @filter.auditable_id %>
   <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("administration.audit_events.index.search_placeholder") %>
 <% end %>
 
@@ -35,7 +36,10 @@
             <td class="break-all"><%= audit_user(event) %></td>
             <td><%= audit_action_badge(event) %></td>
             <td class="whitespace-nowrap"><%= event.human_auditable_type %></td>
-            <td><%= event.auditable_label %></td>
+            <td>
+              <% if event.auditable_id %><span class="tabular-nums text-ink-muted">#<%= event.auditable_id %></span><% end %>
+              <%= event.auditable_label %>
+            </td>
             <td class="text-ink-muted">
               <%= event.changeset.keys.first(4).map { |attribute| audit_attribute_name(event, attribute) }.join(", ") %><%= "…" if event.changeset.size > 4 %>
             </td>

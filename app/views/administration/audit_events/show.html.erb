@@ -8,12 +8,12 @@
 <dl class="mt-6 grid rounded-md border border-line bg-surface sm:grid-cols-2">
   <% {
        when: l(@event.created_at, format: :audit), user: audit_user(@event),
-       entity: @event.human_auditable_type, record: @event.auditable_label,
+       entity: @event.human_auditable_type, record_id: @event.auditable_id, record: @event.auditable_label,
        ip_address: @event.ip_address, request_id: @event.request_id
      }.each do |key, value| %>
     <div class="border-b border-line px-4 py-3">
       <dt class="text-xs font-medium text-ink-muted"><%= t(".#{key}") %></dt>
-      <dd class="mt-1 break-all text-sm"><%= value.presence || "—" %></dd>
+      <dd class="mt-1 break-all text-sm <%= "tabular-nums" if key == :record_id %>"><%= value.presence || "—" %></dd>
     </div>
   <% end %>
 </dl>
