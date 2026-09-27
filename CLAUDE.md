@@ -227,7 +227,9 @@ los errores).
 - **Orden**: toda lista muestra primero lo más reciente (`newest_first`,
   definido en `ApplicationRecord`; compras por fecha de compra, facturas por
   número). Las listas desplegables y el buscador de productor, que sirven para
-  elegir por nombre, se quedan en orden alfabético.
+  elegir por nombre, se quedan en orden alfabético. Excepción: el cierre diario
+  agrupa canceladas, luego pendientes de pago, luego sin facturar (más
+  recientes primero dentro de cada grupo).
 - **Listas desplegables**: nunca con la primera opción en blanco. Campo
   opcional: "Sin … asignado" (`shared.select.*`). Campo obligatorio: "Selecciona
   …". Filtro: "Todos".

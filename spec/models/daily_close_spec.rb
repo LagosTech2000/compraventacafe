@@ -29,4 +29,17 @@ RSpec.describe DailyClose do
     expect(close.pending_total).to eq(pending.total)
     expect(close.uninvoiced_total).to eq(loose.total)
   end
+
+  it "lists paid purchases first, then pending, then not invoiced; newest first within each" do
+    user = create(:user)
+    loose_old, loose_new = create_list(:purchase, 2)
+    pending = create(:purchase)
+    paid_old, paid_new = create_list(:purchase, 2)
+    InvoiceIssuer.new(producer: pending.producer, user:, purchase_ids: [ pending.id ], payment_status: "pending").call
+    [ paid_old, paid_new ].each do |purchase|
+      InvoiceIssuer.new(producer: purchase.producer, user:, purchase_ids: [ purchase.id ], payment_status: "paid", payment_method: "cash").call
+    end
+
+    expect(described_class.new(today).purchases).to eq([ paid_new, paid_old, pending, loose_new, loose_old ])
+  end
 end

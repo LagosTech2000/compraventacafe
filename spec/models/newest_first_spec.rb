@@ -19,7 +19,7 @@ RSpec.describe "Newest first" do
     second_today = create(:purchase)
     result = PurchaseFilter.new(params(from: "", to: "")).apply(Purchase.all)
     expect(result).to eq([ second_today, first_today, old_date ])
-    expect(DailyClose.new(Time.zone.today).purchases).to eq([ second_today, first_today ])
+    expect(PurchaseFilter.new(params).apply(Purchase.all)).to eq([ second_today, first_today ])
   end
 
   it "orders invoices by number, highest first" do
