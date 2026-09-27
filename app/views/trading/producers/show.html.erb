@@ -10,10 +10,10 @@
   </div>
   <div class="flex flex-wrap gap-3">
     <% if policy(Purchase).create? %>
-      <%= link_to t(".new_purchase"), new_trading_purchase_path(producer_id: @producer.id), class: "btn btn-primary" %>
+      <%= page_link_to t(".new_purchase"), new_trading_purchase_path(producer_id: @producer.id), class: "btn btn-primary" %>
     <% end %>
     <% if policy(Invoice).create? && @uninvoiced_purchases.any? %>
-      <%= link_to t(".new_invoice"), new_trading_invoice_path(producer_id: @producer.id), class: "btn" %>
+      <%= page_link_to t(".new_invoice"), new_trading_invoice_path(producer_id: @producer.id), class: "btn" %>
     <% end %>
     <% if policy(@producer).update? %>
       <%= link_to t(".edit"), edit_trading_producer_path(@producer), class: "btn" %>
@@ -21,7 +21,7 @@
   </div>
 </div>
 
-<dl class="mt-6 grid gap-x-6 rounded-md border border-line bg-surface sm:grid-cols-2">
+<dl class="mt-6 grid rounded-md border border-line bg-surface sm:grid-cols-2">
   <% person = @producer.person %>
   <% {
        dni: person.dni, rtn: person.rtn, phone: format_phone(person.phone), email: person.email,
@@ -48,4 +48,6 @@
   <p class="text-sm text-ink-muted"><%= t(".no_invoices") %></p>
 <% end %>
 
-<p class="mt-6"><%= link_to t(".back"), trading_producers_path, class: "text-sm text-primary underline hover:no-underline" %></p>
+<% unless modal_request? %>
+  <p class="mt-6"><%= link_to t(".back"), trading_producers_path, class: "text-sm text-primary underline hover:no-underline" %></p>
+<% end %>

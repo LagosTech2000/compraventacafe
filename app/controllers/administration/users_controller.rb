@@ -4,11 +4,12 @@ module Administration
 
     def index
       authorize User
-      @users = User.order(active: :desc, email_address: :asc)
+      @filter = UserFilter.new(params)
+      @users, @next_page = @filter.results(policy_scope(User))
     end
 
     def show
-      redirect_to edit_administration_user_path(@user)
+      @user.build_missing_permissions
     end
 
     def new
@@ -20,7 +21,7 @@ module Administration
       @user = authorize User.new(create_params)
 
       if @user.save
-        redirect_to administration_users_path, notice: t(".success")
+        close_modal_with notice: t(".success"), fallback: administration_users_path
       else
         @user.build_missing_permissions
         render :new, status: :unprocessable_content
@@ -34,7 +35,7 @@ module Administration
     def update
       if @user.update(update_params)
         @user.sessions.destroy_all unless @user.active?
-        redirect_to administration_users_path, notice: t(".success")
+        close_modal_with notice: t(".success"), fallback: administration_users_path
       else
         @user.build_missing_permissions
         render :edit, status: :unprocessable_content
@@ -51,7 +52,7 @@ module Administration
         render :edit_password, status: :unprocessable_content
       elsif @user.update(password_params)
         @user.sessions.destroy_all
-        redirect_to administration_users_path, notice: t(".success")
+        close_modal_with notice: t(".success"), fallback: administration_users_path
       else
         render :edit_password, status: :unprocessable_content
       end

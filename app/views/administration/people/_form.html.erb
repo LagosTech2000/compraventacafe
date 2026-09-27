@@ -21,6 +21,6 @@
 
   <div class="flex flex-wrap gap-3">
     <%= form.submit class: "btn btn-primary" %>
-    <%= link_to t(".cancel"), person.persisted? ? administration_person_path(person) : administration_people_path, class: "btn" %>
+    <%= cancel_button administration_people_path %>
   </div>
 <% end %>

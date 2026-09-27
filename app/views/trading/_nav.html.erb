@@ -1,3 +1,4 @@
+<% unless modal_request? %>
 <nav class="mb-6 flex flex-wrap gap-2 print:hidden" aria-label="<%= AppModule.human_name("trading") %>">
   <% if policy(Purchase).create? %>
     <%= link_to t("trading.nav.new_purchase"), new_trading_purchase_path, class: "btn btn-primary" %>
@@ -10,3 +11,4 @@
           aria: { current: (current_page?(path) ? "page" : nil) } %>
   <% end %>
 </nav>
+<% end %>

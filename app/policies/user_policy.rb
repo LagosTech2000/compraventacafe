@@ -10,6 +10,12 @@ class UserPolicy < ApplicationPolicy
     false
   end
 
+  class Scope < ApplicationPolicy::Scope
+    def resolve
+      user&.active? && user.admin? ? scope.all : scope.none
+    end
+  end
+
   private
     def admin?
       user.present? && user.active? && user.admin?

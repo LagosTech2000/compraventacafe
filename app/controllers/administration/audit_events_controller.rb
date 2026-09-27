@@ -3,7 +3,7 @@ module Administration
     def index
       authorize AuditEvent
       @filter = AuditEventFilter.new(params)
-      @events, @next_page = @filter.apply(policy_scope(AuditEvent))
+      @events, @next_page = @filter.results(policy_scope(AuditEvent))
     end
 
     def show

@@ -4,13 +4,14 @@
 <div class="flex flex-wrap items-center justify-between gap-4">
   <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
   <% if policy(Producer).create? %>
-    <%= link_to t(".new"), new_trading_producer_path, class: "btn btn-primary" %>
+    <%= modal_link_to t(".new"), new_trading_producer_path, class: "btn btn-primary" %>
   <% end %>
 </div>
 
-<%= form_with url: trading_producers_path, method: :get, class: "mt-6 flex w-full gap-2 sm:w-auto" do |form| %>
-  <%= form.search_field :q, value: @query, maxlength: 100, placeholder: t(".search_placeholder"), aria: { label: t(".search") }, class: "field-input sm:w-72" %>
-  <%= form.submit t(".search"), name: nil, class: "btn" %>
+<%= render layout: "shared/filters", locals: { filter: @filter, url: trading_producers_path } do |form| %>
+  <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("trading.producers.index.search_placeholder") %>
+  <%= filter_select form, :kind, Producer.human_attribute_name(:kind), enum_options(Producer, :kind, Producer::KINDS), selected: @filter.kind %>
+  <%= filter_select form, :zone_id, Producer.human_attribute_name(:zone), Zone.ordered.pluck(:name, :id), selected: @filter.zone_id, all: t("shared.filters.all_zones") %>
 <% end %>
 
 <% if @producers.any? %>
@@ -23,21 +24,24 @@
           <th><%= Producer.human_attribute_name(:zone) %></th>
           <th><%= Producer.human_attribute_name(:farm_name) %></th>
           <th><%= Person.human_attribute_name(:phone) %></th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
         <% @producers.each do |producer| %>
           <tr id="<%= dom_id(producer) %>">
-            <td><%= link_to producer.full_name, trading_producer_path(producer), class: "font-medium text-primary underline hover:no-underline" %></td>
+            <td class="font-medium"><%= producer.full_name %></td>
             <td><%= producer.human_kind %></td>
             <td><%= producer.zone&.name %></td>
             <td><%= producer.farm_name %></td>
             <td class="whitespace-nowrap"><%= format_phone(producer.person.phone) %></td>
+            <td class="text-right"><%= detail_button trading_producer_path(producer) %></td>
           </tr>
         <% end %>
       </tbody>
     </table>
   </div>
+  <%= render "shared/pagination", filter: @filter, next_page: @next_page %>
 <% else %>
   <p class="clay mt-6 p-6 text-sm text-ink-muted"><%= t(".empty") %></p>
 <% end %>

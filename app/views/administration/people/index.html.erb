@@ -3,24 +3,17 @@
 <div class="flex flex-wrap items-center justify-between gap-4">
   <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
   <% if policy(Person).create? %>
-    <%= link_to t(".new"), new_administration_person_path, class: "btn btn-primary" %>
+    <%= modal_link_to t(".new"), new_administration_person_path, class: "btn btn-primary" %>
   <% end %>
 </div>
 
-<div class="mt-6 flex flex-wrap items-end gap-3">
-  <nav class="flex flex-wrap gap-2" aria-label="<%= t(".filter") %>">
-    <% [ [ nil, t(".all") ], [ "clients", t(".clients") ], [ "collaborators", t(".collaborators") ] ].each do |role, label| %>
-      <%= link_to label, administration_people_path(role: role, q: @query.presence),
-            class: (@role == role ? "btn btn-primary" : "btn"), aria: { current: (@role == role ? "page" : nil) } %>
-    <% end %>
-  </nav>
-
-  <%= form_with url: administration_people_path, method: :get, class: "flex w-full gap-2 sm:ml-auto sm:w-auto" do |form| %>
-    <%= form.hidden_field :role, value: @role if @role %>
-    <%= form.search_field :q, value: @query, maxlength: 100, placeholder: t(".search_placeholder"), aria: { label: t(".search") }, class: "field-input sm:w-64" %>
-    <%= form.submit t(".search"), name: nil, class: "btn" %>
-  <% end %>
-</div>
+<%= render layout: "shared/filters", locals: { filter: @filter, url: administration_people_path } do |form| %>
+  <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("administration.people.index.search_placeholder") %>
+  <%= filter_select form, :role, t("administration.people.index.roles"),
+        PersonFilter::ROLES.map { |r| [ t("administration.people.index.#{r}"), r ] }, selected: @filter.role, all: t("administration.people.index.all") %>
+  <%= filter_select form, :department_id, Person.human_attribute_name(:department),
+        Department.ordered.pluck(:name, :id), selected: @filter.department_id %>
+<% end %>
 
 <% if @people.any? %>
   <div class="mt-6 overflow-x-auto rounded-md border border-line bg-surface">
@@ -32,21 +25,24 @@
           <th><%= Person.human_attribute_name(:rtn) %></th>
           <th><%= Person.human_attribute_name(:phone) %></th>
           <th><%= t(".roles") %></th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
         <% @people.each do |person| %>
           <tr id="<%= dom_id(person) %>">
-            <td><%= link_to person.full_name, administration_person_path(person), class: "font-medium text-primary underline hover:no-underline" %></td>
+            <td class="font-medium"><%= person.full_name %></td>
             <td class="whitespace-nowrap"><%= person.dni %></td>
             <td class="whitespace-nowrap"><%= person.rtn %></td>
             <td class="whitespace-nowrap"><%= format_phone(person.phone) %></td>
             <td><%= render "roles", person: person %></td>
+            <td class="text-right"><%= detail_button administration_person_path(person) %></td>
           </tr>
         <% end %>
       </tbody>
     </table>
   </div>
+  <%= render "shared/pagination", filter: @filter, next_page: @next_page %>
 <% else %>
   <p class="clay mt-6 p-6 text-sm text-ink-muted"><%= t(".empty") %></p>
 <% end %>

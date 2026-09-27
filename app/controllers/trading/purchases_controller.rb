@@ -1,13 +1,13 @@
 module Trading
   class PurchasesController < ApplicationController
-    include DateParam
-
     before_action :set_purchase, only: %i[ show edit update destroy ]
 
     def index
       authorize Purchase
-      @date = date_param
-      @daily_close = DailyClose.new(@date)
+      @filter = PurchaseFilter.new(params)
+      filtered = @filter.apply(policy_scope(Purchase))
+      @summary = PurchaseSummary.new(filtered)
+      @purchases, @next_page = @filter.results(policy_scope(Purchase))
     end
 
     def show
@@ -25,7 +25,8 @@ module Trading
       @purchase = authorize Purchase.new(purchase_params.merge(created_by: Current.user))
 
       if @purchase.save
-        redirect_to new_trading_purchase_path, notice: t(".success", producer: @purchase.producer.full_name)
+        # Back to an empty form, with the saved purchase open in the modal.
+        redirect_to new_trading_purchase_path(detail: @purchase.id), notice: t(".success", producer: @purchase.producer.full_name)
       else
         render :new, status: :unprocessable_content
       end
@@ -36,7 +37,7 @@ module Trading
 
     def update
       if @purchase.update(purchase_params)
-        redirect_to trading_purchases_path(date: @purchase.purchased_on), notice: t(".success")
+        close_modal_with notice: t(".success"), fallback: trading_purchase_path(@purchase)
       else
         render :edit, status: :unprocessable_content
       end
@@ -44,7 +45,7 @@ module Trading
 
     def destroy
       @purchase.destroy!
-      redirect_to trading_purchases_path(date: @purchase.purchased_on), notice: t(".success"), status: :see_other
+      close_modal_with notice: t(".success"), fallback: trading_purchases_path
     end
 
     private

@@ -5,7 +5,7 @@
   <%= audit_action_badge(@event) %>
 </div>
 
-<dl class="mt-6 grid gap-x-6 rounded-md border border-line bg-surface sm:grid-cols-2">
+<dl class="mt-6 grid rounded-md border border-line bg-surface sm:grid-cols-2">
   <% {
        when: l(@event.created_at, format: :audit), user: audit_user(@event),
        entity: @event.human_auditable_type, record: @event.auditable_label,
@@ -46,4 +46,6 @@
   <%= render "json_diff", event: @event %>
 <% end %>
 
-<p class="mt-6"><%= link_to t(".back"), administration_audit_events_path, class: "text-sm text-primary underline hover:no-underline" %></p>
+<% unless modal_request? %>
+  <p class="mt-6"><%= link_to t(".back"), administration_audit_events_path, class: "text-sm text-primary underline hover:no-underline" %></p>
+<% end %>

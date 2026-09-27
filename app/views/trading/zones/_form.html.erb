@@ -1,4 +1,5 @@
 <%= form_with model: [ :trading, zone ], class: "max-w-md space-y-5", data: { controller: "form-validation" } do |form| %>
+  <%= hidden_field_tag :picker, "1" if picker_request? %>
   <%= render "shared/form_errors", record: zone %>
   <div>
     <%= form.label :name, class: "field-label" %>
@@ -7,6 +8,6 @@
   </div>
   <div class="flex flex-wrap gap-3">
     <%= form.submit class: "btn btn-primary" %>
-    <%= link_to t(".cancel"), trading_zones_path, class: "btn" %>
+    <%= cancel_button trading_zones_path %>
   </div>
 <% end %>

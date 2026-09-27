@@ -4,10 +4,8 @@ module Trading
 
     def index
       authorize Producer
-      @query = params[:q].to_s.strip
-      producers = policy_scope(Producer).includes(:person, :zone).alphabetical
-      producers = producers.merge(Person.search(@query)) if @query.present?
-      @producers = producers
+      @filter = ProducerFilter.new(params)
+      @producers, @next_page = @filter.results(policy_scope(Producer))
     end
 
     def show
@@ -24,7 +22,9 @@ module Trading
       @producer = authorize Producer.new(producer_params)
 
       if @producer.save
-        redirect_to after_create_path, notice: t(".success")
+        close_modal_with notice: t(".success"), fallback: trading_producer_path(@producer),
+                         event: "producer:created",
+                         detail: { id: @producer.id, label: @producer.picker_label, zone_id: @producer.zone_id }
       else
         render :new, status: :unprocessable_content
       end
@@ -35,7 +35,7 @@ module Trading
 
     def update
       if @producer.update(producer_params)
-        redirect_to trading_producer_path(@producer), notice: t(".success")
+        close_modal_with notice: t(".success"), fallback: trading_producer_path(@producer)
       else
         render :edit, status: :unprocessable_content
       end
@@ -52,15 +52,6 @@ module Trading
           person_attributes: [ :id, :first_names, :last_names, :dni, :rtn, :phone, :email,
                                :department_id, :municipality_id, :address_line ]
         ])
-      end
-
-      # Coming from the purchase form, go back to it with the new producer.
-      def after_create_path
-        if params[:return_to] == "new_purchase"
-          new_trading_purchase_path(producer_id: @producer.id)
-        else
-          trading_producer_path(@producer)
-        end
       end
   end
 end

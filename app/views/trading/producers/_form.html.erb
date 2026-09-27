@@ -1,5 +1,5 @@
 <%= form_with model: [ :trading, producer ], class: "space-y-6", data: { controller: "form-validation" } do |form| %>
-  <%= hidden_field_tag :return_to, params[:return_to] if params[:return_to].present? %>
+  <%= hidden_field_tag :picker, "1" if picker_request? %>
   <%= render "shared/form_errors", record: producer %>
 
   <section>
@@ -11,7 +11,7 @@
       </div>
       <div>
         <%= form.label :zone_id, class: "field-label" %>
-        <%= form.collection_select :zone_id, Zone.ordered, :id, :name, { include_blank: t("trading.purchases.form.zone_prompt") }, class: "field-input" %>
+        <%= form.collection_select :zone_id, Zone.ordered, :id, :name, { include_blank: t("shared.select.no_zone") }, class: "field-input" %>
       </div>
       <div>
         <%= form.label :farm_name, class: "field-label" %>
@@ -31,6 +31,6 @@
 
   <div class="flex flex-wrap gap-3">
     <%= form.submit class: "btn btn-primary" %>
-    <%= link_to t(".cancel"), producer.persisted? ? trading_producer_path(producer) : trading_producers_path, class: "btn" %>
+    <%= cancel_button trading_producers_path %>
   </div>
 <% end %>

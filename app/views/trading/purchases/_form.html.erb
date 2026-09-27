@@ -1,22 +1,26 @@
 <% producers = Producer.includes(:person).alphabetical %>
+<% can_create_producer = policy(Producer).create? %>
+<% can_create_zone = policy(Zone).create? %>
 <%= form_with model: [ :trading, purchase ], class: "space-y-6", data: { controller: "form-validation" } do |form| %>
   <%= render "shared/form_errors", record: purchase %>
 
-  <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-    <div class="sm:col-span-2"
-         data-controller="producer-picker"
-         data-producer-picker-producers-value="<%= producers.to_h { |p| [ p.id, { label: "#{p.full_name}#{" — #{p.person.dni}" if p.person.dni}", zone_id: p.zone_id } ] }.to_json %>"
-         data-producer-picker-missing-message-value="<%= t(".producer_missing") %>">
+  <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+       data-controller="producer-picker"
+       data-producer-picker-producers-value="<%= producers.to_h { |p| [ p.id, { label: p.picker_label, zone_id: p.zone_id } ] }.to_json %>"
+       data-producer-picker-missing-message-value="<%= t(".producer_missing") %>"
+       data-action="producer:created@window->producer-picker#add">
+    <div class="sm:col-span-2">
       <%= form.label :producer_id, for: "producer_search", class: "field-label" %>
       <input type="text" id="producer_search" list="producer_options" autocomplete="off" required
              class="field-input" placeholder="<%= t(".producer_placeholder") %>"
-             value="<%= purchase.producer && "#{purchase.producer.full_name}#{" — #{purchase.producer.person.dni}" if purchase.producer.person.dni}" %>"
+             value="<%= purchase.producer&.picker_label %>"
              data-producer-picker-target="search" data-action="producer-picker#pick"
              data-missing-message="<%= t(".producer_missing") %>" <%= "autofocus" if purchase.producer.nil? %>>
       <datalist id="producer_options" data-producer-picker-target="options"></datalist>
       <%= form.hidden_field :producer_id, data: { producer_picker_target: "id" } %>
-      <%= link_to t(".new_producer"), new_trading_producer_path(return_to: "new_purchase"),
-            class: "mt-1 inline-block text-sm text-primary underline hover:no-underline" if policy(Producer).create? %>
+      <% if can_create_producer %>
+        <%= modal_link_to t(".new_producer"), new_trading_producer_path(picker: 1), class: "btn btn-sm mt-2" %>
+      <% end %>
     </div>
 
     <div>
@@ -24,10 +28,13 @@
       <%= form.date_field :purchased_on, required: true, class: "field-input" %>
     </div>
 
-    <div>
+    <div data-controller="option-picker" data-action="zone:created@window->option-picker#add">
       <%= form.label :zone_id, class: "field-label" %>
-      <%= form.collection_select :zone_id, Zone.ordered, :id, :name, { include_blank: t(".zone_prompt") },
-            class: "field-input", data: { producer_picker_target: "zone" } %>
+      <%= form.collection_select :zone_id, Zone.ordered, :id, :name, { include_blank: t("shared.select.no_zone") },
+            class: "field-input", data: { producer_picker_target: "zone", option_picker_target: "select" } %>
+      <% if can_create_zone %>
+        <%= modal_link_to t(".new_zone"), new_trading_zone_path(picker: 1), class: "btn btn-sm mt-2" %>
+      <% end %>
     </div>
 
     <div>
@@ -67,7 +74,6 @@
           </div>
         <% end %>
       </dl>
-      <p class="mt-2 text-xs text-ink-muted"><%= t(".calculation_help") %></p>
     </div>
   </section>
 
@@ -78,6 +84,6 @@
 
   <div class="flex flex-wrap gap-3">
     <%= form.submit class: "btn btn-primary" %>
-    <%= link_to t(".cancel"), purchase.persisted? ? trading_purchase_path(purchase) : trading_purchases_path, class: "btn" %>
+    <%= cancel_button trading_purchases_path %>
   </div>
 <% end %>

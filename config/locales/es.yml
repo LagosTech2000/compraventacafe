@@ -26,6 +26,31 @@ es:
   shared:
     flash:
       dismiss: "Cerrar mensaje"
+    modal:
+      label: "Ventana"
+      close: "Cerrar"
+    detail: "Detalle"
+    cancel: "Cancelar"
+    select:
+      no_zone: "Sin zona asignada"
+      no_department: "Sin departamento asignado"
+      no_municipality: "Sin municipio asignado"
+      pick_department_first: "Primero selecciona un departamento"
+      payment_method_later: "Por definir"
+      pick_payment_method: "Selecciona la forma de pago"
+    filters:
+      apply: "Filtrar"
+      clear: "Quitar filtros"
+      all: "Todos"
+      all_zones: "Todas las zonas"
+      search: "Buscar"
+      from: "Desde"
+      to: "Hasta"
+    pagination:
+      label: "Páginas"
+      previous: "Anterior"
+      next: "Siguiente"
+      page: "Página %{page}"
 
 
   sessions:
@@ -46,8 +71,6 @@ es:
 
   addresses:
     title: "Dirección"
-    department_prompt: "Selecciona un departamento"
-    municipality_prompt: "Selecciona un municipio"
 
   trading:
     nav:
@@ -80,7 +103,7 @@ es:
         title: "Zonas"
         new: "Nueva zona"
         edit: "Editar"
-        empty: "Todavía no hay zonas."
+        empty: "No hay zonas que coincidan con los filtros."
         help: "Las zonas son los lugares de donde vienen los productores. El precio depende de la zona."
       new:
         title: "Nueva zona"
@@ -99,7 +122,7 @@ es:
         search: "Buscar"
         search_placeholder: "Nombre, apellido, DNI o RTN"
         name: "Nombre"
-        empty: "No hay productores que mostrar."
+        empty: "No hay productores que coincidan con los filtros."
       show:
         edit: "Editar"
         new_purchase: "Nueva compra"
@@ -122,10 +145,13 @@ es:
         success: "Productor actualizado."
     purchases:
       index:
-        title: "Compras del %{date}"
-        new: "Nueva compra"
-        change_date: "Ver fecha"
-        empty: "No hay compras registradas en esta fecha."
+        title: "Compras"
+        producer: "Productor"
+        search_placeholder: "Nombre, DNI o RTN"
+        invoiced: "Facturación"
+        invoiced_yes: "Facturadas"
+        invoiced_no: "Sin facturar"
+        empty: "No hay compras que coincidan con los filtros."
       table:
         number: "N.º"
         producer: "Productor"
@@ -139,6 +165,7 @@ es:
         destroy: "Borrar"
         confirm_destroy: "¿Borrar esta compra? Esta acción no se puede deshacer."
         invoiced_notice: "Esta compra ya está en la factura %{number} y no se puede modificar."
+        view_invoice: "Ver factura %{number}"
         back: "Volver a compras"
       new:
         title: "Nueva compra"
@@ -148,9 +175,8 @@ es:
         producer_placeholder: "Escribe para buscar un productor"
         producer_missing: "Selecciona un productor de la lista"
         new_producer: "¿No está? Registrar productor"
-        zone_prompt: "Selecciona una zona"
+        new_zone: "Nueva zona"
         calculation: "Cálculo"
-        calculation_help: "Mismo cálculo que el Excel actual: 1 lb de tara por cada saco de 165 lb (redondeado hacia arriba) y se descuenta la humedad."
         cancel: "Cancelar"
       create:
         success: "Compra de %{producer} registrada."
@@ -162,8 +188,8 @@ es:
       index:
         title: "Facturas"
         new: "Facturar compras"
-        all: "Todas"
-        empty: "No hay facturas que mostrar."
+        search_placeholder: "Productor o número de factura"
+        empty: "No hay facturas que coincidan con los filtros."
         number: "N.º"
         date: "Fecha"
         producer: "Productor"
@@ -228,9 +254,8 @@ es:
         entity: "Entidad"
         search: "Buscar"
         search_placeholder: "Registro o correo"
-        all: "Todos"
-        filter: "Filtrar"
-        clear: "Quitar filtros"
+        all_actions: "Todas"
+        all_entities: "Todas"
         when: "Fecha y hora"
         record: "Registro"
         changes: "Campos"
@@ -264,11 +289,12 @@ es:
         all: "Todas"
         clients: "Clientes"
         collaborators: "Colaboradores"
+        producers: "Productores"
         search: "Buscar"
         search_placeholder: "Nombre, apellido, DNI o RTN"
         name: "Nombre"
         roles: "Roles"
-        empty: "No hay personas que mostrar."
+        empty: "No hay personas que coincidan con los filtros."
       show:
         edit: "Editar"
         destroy: "Borrar"
@@ -296,6 +322,13 @@ es:
         role: "Tipo"
         status: "Estado"
         actions: "Acciones"
+        empty: "No hay usuarios que coincidan con los filtros."
+      show:
+        edit: "Editar"
+        reset_password: "Restablecer contraseña"
+        permissions: "Permisos por módulo"
+        admin_has_all: "Es administrador: tiene acceso completo a todos los módulos."
+        back: "Volver a usuarios"
       new:
         title: "Nuevo usuario"
       edit:

@@ -205,6 +205,29 @@ los errores).
 - La pantalla (Administración → Auditoría) es solo para administradores y
   filtra por fechas, usuario, acción, entidad y texto, en páginas de 50.
 
+**5. Listas, detalles y ventanas.**
+
+- **Modal reutilizable**: el layout tiene un `<dialog>` con el Turbo Frame
+  `modal` (`ModalSupport`, `modal_controller.js`). Un enlace con
+  `modal_link_to` / `detail_button` abre su página ahí; la página usa el layout
+  `modal` sin navegación. `page_link_to` sale del modal a página completa.
+- Al guardar desde el modal, el controlador llama `close_modal_with`: cierra el
+  modal y refresca la página de atrás con el aviso. Si el modal se abrió desde
+  un campo (`picker=1`), en vez de refrescar emite un evento de ventana
+  (`producer:created`, `zone:created`) y el campo agrega y selecciona la nueva
+  opción, sin perder lo ya escrito en el formulario.
+- En listas, el detalle se abre con el botón **"Detalle"** en el modal; nunca
+  con el id o el nombre subrayado. Los botones "Cancelar" usan `cancel_button`
+  (cierra el modal si está dentro de uno).
+- **Toda lista tiene filtros y paginación**: una subclase de `ListFilter`
+  (`field :q, :text`, `:date`, `:id`, `:choice`) + `render layout:
+  "shared/filters"` con `filter_text_field` / `filter_date_field` /
+  `filter_select` + `shared/pagination`. Los valores inválidos se ignoran.
+  Dentro del bloque de filtros usa claves de traducción completas, no `t(".x")`.
+- **Listas desplegables**: nunca con la primera opción en blanco. Campo
+  opcional: "Sin … asignado" (`shared.select.*`). Campo obligatorio: "Selecciona
+  …". Filtro: "Todos".
+
 ## Comandos
 
 ```bash

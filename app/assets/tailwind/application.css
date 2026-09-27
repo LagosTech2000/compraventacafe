@@ -44,6 +44,10 @@
     @apply clay inline-flex cursor-pointer items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-ink transition hover:brightness-95;
   }
 
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+
   .btn-primary {
     @apply bg-primary text-on-primary hover:bg-primary-hover;
   }

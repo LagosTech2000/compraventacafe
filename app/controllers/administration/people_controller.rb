@@ -1,18 +1,11 @@
 module Administration
   class PeopleController < ApplicationController
-    ROLE_FILTERS = %w[clients collaborators].freeze
-
     before_action :set_person, only: %i[ show edit update destroy ]
 
     def index
       authorize Person
-      @role = params[:role].presence_in(ROLE_FILTERS)
-      @query = params[:q].to_s.strip
-
-      people = policy_scope(Person).includes(:client, :collaborator, :producer).alphabetical
-      people = people.public_send(@role) if @role
-      people = people.search(@query) if @query.present?
-      @people = people
+      @filter = PersonFilter.new(params)
+      @people, @next_page = @filter.results(policy_scope(Person))
     end
 
     def show
@@ -27,7 +20,7 @@ module Administration
       @person.assign_roles(**role_params)
 
       if @person.save
-        redirect_to administration_person_path(@person), notice: t(".success")
+        close_modal_with notice: t(".success"), fallback: administration_person_path(@person)
       else
         render :new, status: :unprocessable_content
       end
@@ -41,15 +34,18 @@ module Administration
       @person.assign_roles(**role_params)
 
       if @person.save
-        redirect_to administration_person_path(@person), notice: t(".success")
+        close_modal_with notice: t(".success"), fallback: administration_person_path(@person)
       else
         render :edit, status: :unprocessable_content
       end
     end
 
     def destroy
-      @person.destroy!
-      redirect_to administration_people_path, notice: t(".success"), status: :see_other
+      if @person.destroy
+        close_modal_with notice: t(".success"), fallback: administration_people_path
+      else
+        redirect_back_or_to administration_people_path, alert: @person.errors.full_messages.to_sentence
+      end
     end
 
     private

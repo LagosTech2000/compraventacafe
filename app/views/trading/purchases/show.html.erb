@@ -4,7 +4,7 @@
 <div class="flex flex-wrap items-start justify-between gap-4">
   <div>
     <h1 class="text-2xl font-bold"><%= t(".title") %> <%= @purchase.id %></h1>
-    <p class="mt-1 text-sm text-ink-muted"><%= link_to @purchase.producer.full_name, trading_producer_path(@purchase.producer), class: "underline" %></p>
+    <p class="mt-1 text-sm text-ink-muted"><%= @purchase.producer.full_name %></p>
   </div>
   <div class="flex flex-wrap gap-3">
     <% if policy(@purchase).update? %>
@@ -21,7 +21,7 @@
   <p class="flash-notice mt-4"><%= t(".invoiced_notice", number: @purchase.invoice.display_number) %></p>
 <% end %>
 
-<dl class="mt-6 grid gap-x-6 rounded-md border border-line bg-surface sm:grid-cols-3">
+<dl class="mt-6 grid rounded-md border border-line bg-surface sm:grid-cols-3">
   <% {
        purchased_on: l(@purchase.purchased_on, format: :long), zone: @purchase.zone&.name, coffee_state: @purchase.human_coffee_state,
        gross_weight: format_pounds(@purchase.gross_weight), sacks: format_pounds(@purchase.sacks), tare: format_pounds(@purchase.tare),
@@ -35,4 +35,10 @@
   <% end %>
 </dl>
 
-<p class="mt-6"><%= link_to t(".back"), trading_purchases_path(date: @purchase.purchased_on), class: "text-sm text-primary underline hover:no-underline" %></p>
+<% if @purchase.invoice && policy(@purchase.invoice).show? %>
+  <p class="mt-4"><%= link_to t(".view_invoice", number: @purchase.invoice.display_number), trading_invoice_path(@purchase.invoice), class: "btn btn-sm" %></p>
+<% end %>
+
+<% unless modal_request? %>
+  <p class="mt-6"><%= link_to t(".back"), trading_purchases_path, class: "text-sm text-primary underline hover:no-underline" %></p>
+<% end %>

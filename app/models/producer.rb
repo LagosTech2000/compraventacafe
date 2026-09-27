@@ -23,6 +23,11 @@ class Producer < ApplicationRecord
     person.full_name
   end
 
+  # How the purchase form's producer search lists this producer.
+  def picker_label
+    [ full_name, person.dni ].compact.join(" — ")
+  end
+
   def human_kind
     self.class.human_attribute_name("kind/#{kind}")
   end

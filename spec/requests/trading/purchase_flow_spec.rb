@@ -24,16 +24,21 @@ RSpec.describe "Trading purchase flow" do
     expect(response).to have_http_status(:unprocessable_content)
   end
 
-  it "registers a producer and returns to the purchase form" do
-    post trading_producers_path, params: {
-      return_to: "new_purchase",
+  it "registers a producer from the purchase form's modal and hands it to the picker" do
+    post trading_producers_path, headers: { "Turbo-Frame" => "modal" }, params: {
+      picker: "1",
       producer: { kind: "intermediary", zone_id: zone.id, farm_name: "El Cerro",
                   person_attributes: { first_names: "Pedro", last_names: "Martínez", phone: "9999-0000" } }
     }
     producer = Producer.last
-    expect(response).to redirect_to(new_trading_purchase_path(producer_id: producer.id))
     expect(producer).to have_attributes(kind: "intermediary", farm_name: "El Cerro", zone: zone)
     expect(producer.person.phone).to eq("99990000")
+
+    result = Nokogiri::HTML(response.body).at_css("turbo-frame#modal [data-controller='modal-result']")
+    expect(result["data-modal-result-event-value"]).to eq("producer:created")
+    expect(JSON.parse(result["data-modal-result-detail-value"])).to eq("id" => producer.id, "label" => "Pedro Martínez", "zone_id" => zone.id)
+    expect(result["data-modal-result-refresh-value"]).to eq("false")
+    expect(flash[:notice]).to be_nil
   end
 
   it "shows nested person errors in Spanish" do
@@ -58,8 +63,13 @@ RSpec.describe "Trading purchase flow" do
       purchase: { producer_id: producer.id, zone_id: zone.id, purchased_on: Time.zone.today, coffee_state: "wet_parchment",
                   gross_weight: "146", humidity_percent: "51", price_per_pound: "58", observations: "Pulpa" }
     }
-    expect(response).to redirect_to(new_trading_purchase_path)
-    expect(Purchase.last).to have_attributes(net_weight: BigDecimal("71.05"), total: BigDecimal("4120.90"), created_by: user)
+    purchase = Purchase.last
+    expect(purchase).to have_attributes(net_weight: BigDecimal("71.05"), total: BigDecimal("4120.90"), created_by: user)
+    expect(response).to redirect_to(new_trading_purchase_path(detail: purchase.id))
+
+    follow_redirect!
+    frame = Nokogiri::HTML(response.body).at_css("dialog turbo-frame#modal")
+    expect(frame["src"]).to eq(trading_purchase_path(purchase))
   end
 
   it "rejects a purchase without producer, in Spanish" do

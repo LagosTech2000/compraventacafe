@@ -1,0 +1,12 @@
+<%# Filter bar for a list. Usage:
+    render layout: "shared/filters", locals: { filter: @filter, url: some_path } do |form| ... end %>
+<%= form_with url: url, method: :get, data: { turbo_frame: "_top" },
+      class: "mt-6 grid gap-4 rounded-md border border-line bg-surface p-4 sm:grid-cols-2 lg:grid-cols-4 print:hidden" do |form| %>
+  <%= yield form %>
+  <div class="flex flex-wrap items-end gap-3 sm:col-span-2 lg:col-span-4">
+    <%= form.submit t("shared.filters.apply"), name: nil, class: "btn btn-primary" %>
+    <% if filter.active? %>
+      <%= link_to t("shared.filters.clear"), url, class: "btn" %>
+    <% end %>
+  </div>
+<% end %>

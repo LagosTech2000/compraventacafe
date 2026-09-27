@@ -4,7 +4,8 @@ module Trading
 
     def index
       authorize Zone
-      @zones = policy_scope(Zone).ordered
+      @filter = ZoneFilter.new(params)
+      @zones, @next_page = @filter.results(policy_scope(Zone))
     end
 
     def new
@@ -15,7 +16,8 @@ module Trading
       @zone = authorize Zone.new(zone_params)
 
       if @zone.save
-        redirect_to trading_zones_path, notice: t(".success")
+        close_modal_with notice: t(".success"), fallback: trading_zones_path,
+                         event: "zone:created", detail: { id: @zone.id, name: @zone.name }
       else
         render :new, status: :unprocessable_content
       end
@@ -26,7 +28,7 @@ module Trading
 
     def update
       if @zone.update(zone_params)
-        redirect_to trading_zones_path, notice: t(".success")
+        close_modal_with notice: t(".success"), fallback: trading_zones_path
       else
         render :edit, status: :unprocessable_content
       end

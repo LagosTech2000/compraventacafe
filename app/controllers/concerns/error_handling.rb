@@ -51,6 +51,9 @@ module ErrorHandling
     def respond_with_error(message, status:, redirect_page_loads: true)
       if !request.format.html?
         head status
+      elsif modal_request?
+        flash.now[:alert] = message
+        render "errors/show", status: status
       elsif !(request.get? || request.head?)
         redirect_back_or_to root_path, alert: message
       elsif redirect_page_loads && request.path != root_path

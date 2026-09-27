@@ -26,6 +26,7 @@ class Person < ApplicationRecord
   }
   scope :clients, -> { joins(:client) }
   scope :collaborators, -> { joins(:collaborator) }
+  scope :producers, -> { joins(:producer) }
 
   def full_name
     "#{first_names} #{last_names}"

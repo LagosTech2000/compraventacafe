@@ -1,15 +1,11 @@
 module Trading
   class InvoicesController < ApplicationController
-    STATUS_FILTERS = Invoice::PAYMENT_STATUSES
-
     before_action :set_invoice, only: %i[ show update ]
 
     def index
       authorize Invoice
-      @status = params[:status].presence_in(STATUS_FILTERS)
-      invoices = policy_scope(Invoice).includes(:purchases, producer: :person).recent
-      invoices = invoices.where(payment_status: @status) if @status
-      @invoices = invoices.limit(200)
+      @filter = InvoiceFilter.new(params)
+      @invoices, @next_page = @filter.results(policy_scope(Invoice))
     end
 
     def show
@@ -44,7 +40,7 @@ module Trading
 
     def update
       if @invoice.mark_paid(**payment_params)
-        redirect_to trading_invoice_path(@invoice), notice: t(".success")
+        close_modal_with notice: t(".success"), fallback: trading_invoice_path(@invoice)
       else
         render :show, status: :unprocessable_content
       end

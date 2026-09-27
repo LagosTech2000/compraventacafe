@@ -8,17 +8,19 @@
         <th class="text-right"><%= Purchase.human_attribute_name(:net_weight) %></th>
         <th class="text-right"><%= Invoice.human_attribute_name(:total) %></th>
         <th><%= t("trading.invoices.index.status") %></th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
       <% invoices.each do |invoice| %>
         <tr id="<%= dom_id(invoice) %>">
-          <td><%= link_to invoice.display_number, trading_invoice_path(invoice), class: "font-medium text-primary underline hover:no-underline" %></td>
+          <td class="font-medium tabular-nums"><%= invoice.display_number %></td>
           <td class="whitespace-nowrap"><%= l(invoice.issued_on) %></td>
           <td class="whitespace-nowrap"><%= invoice.producer.full_name %></td>
           <td class="text-right tabular-nums"><%= format_pounds(invoice.net_weight) %></td>
           <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(invoice.total) %></td>
           <td><%= payment_status_badge(invoice) %></td>
+          <td class="text-right"><%= detail_button trading_invoice_path(invoice) %></td>
         </tr>
       <% end %>
     </tbody>

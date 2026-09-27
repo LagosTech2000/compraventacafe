@@ -64,7 +64,7 @@
       </div>
       <div>
         <%= form.label :payment_method, class: "field-label" %>
-        <%= form.select :payment_method, enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS), { include_blank: true }, class: "field-input" %>
+        <%= form.select :payment_method, enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS), { include_blank: t("shared.select.payment_method_later") }, class: "field-input" %>
       </div>
       <div>
         <%= form.label :paid_on, class: "field-label" %>
@@ -74,7 +74,7 @@
 
     <div class="flex flex-wrap gap-3">
       <%= form.submit t(".submit"), class: "btn btn-primary" %>
-      <%= link_to t(".cancel"), trading_producer_path(@producer), class: "btn" %>
+      <%= cancel_button new_trading_invoice_path %>
     </div>
   <% end %>
 <% end %>

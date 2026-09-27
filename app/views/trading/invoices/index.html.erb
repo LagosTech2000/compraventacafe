@@ -8,16 +8,21 @@
   <% end %>
 </div>
 
-<nav class="mt-6 flex flex-wrap gap-2">
-  <% [ [ nil, t(".all") ], *Invoice::PAYMENT_STATUSES.map { |s| [ s, Invoice.human_attribute_name("payment_status/#{s}") ] } ].each do |status, label| %>
-    <%= link_to label, trading_invoices_path(status: status), class: (@status == status ? "btn btn-primary" : "btn"),
-          aria: { current: (@status == status ? "page" : nil) } %>
-  <% end %>
-</nav>
+<%= render layout: "shared/filters", locals: { filter: @filter, url: trading_invoices_path } do |form| %>
+  <%= filter_date_field form, :from, t("shared.filters.from"), value: @filter.from %>
+  <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
+  <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("trading.invoices.index.search_placeholder") %>
+  <%= filter_select form, :zone_id, Purchase.human_attribute_name(:zone), Zone.ordered.pluck(:name, :id), selected: @filter.zone_id, all: t("shared.filters.all_zones") %>
+  <%= filter_select form, :payment_status, Invoice.human_attribute_name(:payment_status),
+        enum_options(Invoice, :payment_status, Invoice::PAYMENT_STATUSES), selected: @filter.payment_status %>
+  <%= filter_select form, :payment_method, Invoice.human_attribute_name(:payment_method),
+        enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS), selected: @filter.payment_method %>
+<% end %>
 
 <div class="mt-6">
   <% if @invoices.any? %>
     <%= render "table", invoices: @invoices %>
+    <%= render "shared/pagination", filter: @filter, next_page: @next_page %>
   <% else %>
     <p class="clay p-6 text-sm text-ink-muted"><%= t(".empty") %></p>
   <% end %>

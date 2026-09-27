@@ -88,14 +88,15 @@ RSpec.describe "Administration::People" do
       expect(page.at_css("#person_email")["type"]).to eq("email")
       municipality = page.at_css("select#person_municipality_id")
       expect(municipality["disabled"]).to be_present
-      expect(municipality.css("option").map(&:text)).to eq([ "Selecciona un municipio" ])
+      expect(municipality.css("option").map(&:text)).to eq([ "Primero selecciona un departamento" ])
+      expect(page.at_css("select#person_department_id option").text).to eq("Sin departamento asignado")
       expect(page.css("select#person_department_id option").size).to eq(19)
     end
 
     it "shows only the department's municipalities when re-rendering" do
       post administration_people_path, params: { person: { first_names: "", last_names: "", department_id: Department.find_by!(code: "11").id } }
       options = Nokogiri::HTML(response.body).css("select#person_municipality_id option").map(&:text)
-      expect(options).to eq([ "Selecciona un municipio", "Guanaja", "José Santos Guardiola", "Roatán", "Utila" ])
+      expect(options).to eq([ "Sin municipio asignado", "Guanaja", "José Santos Guardiola", "Roatán", "Utila" ])
     end
 
     it "shows Spanish errors when names are missing" do
