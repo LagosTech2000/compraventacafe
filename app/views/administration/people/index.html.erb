@@ -25,7 +25,7 @@
           <th><%= Person.human_attribute_name(:rtn) %></th>
           <th><%= Person.human_attribute_name(:phone) %></th>
           <th><%= t(".roles") %></th>
-          <th></th>
+          <th class="cell-actions"></th>
         </tr>
       </thead>
       <tbody>
@@ -36,7 +36,7 @@
             <td class="whitespace-nowrap"><%= person.rtn %></td>
             <td class="whitespace-nowrap"><%= format_phone(person.phone) %></td>
             <td><%= render "roles", person: person %></td>
-            <td class="text-right"><%= detail_button administration_person_path(person) %></td>
+            <td class="cell-actions"><%= detail_button administration_person_path(person) %></td>
           </tr>
         <% end %>
       </tbody>

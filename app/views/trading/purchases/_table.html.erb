@@ -1,47 +1,63 @@
-<div class="overflow-x-auto rounded-md border border-line bg-surface">
-  <table class="data-table">
-    <thead>
-      <tr>
-        <th><%= t("trading.purchases.table.number") %></th>
-        <th><%= Purchase.human_attribute_name(:purchased_on) %></th>
-        <th><%= t("trading.purchases.table.producer") %></th>
-        <th><%= Purchase.human_attribute_name(:zone) %></th>
-        <th><%= Purchase.human_attribute_name(:coffee_state) %></th>
-        <th class="text-right"><%= Purchase.human_attribute_name(:gross_weight) %></th>
-        <th class="text-right"><%= Purchase.human_attribute_name(:humidity_percent) %></th>
-        <th class="text-right"><%= Purchase.human_attribute_name(:net_weight) %></th>
-        <th class="text-right"><%= Purchase.human_attribute_name(:price_per_pound) %></th>
-        <th class="text-right"><%= Purchase.human_attribute_name(:total) %></th>
-        <th><%= t("trading.purchases.table.invoice") %></th>
-        <th><%= Purchase.human_attribute_name(:observations) %></th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      <% purchases.each do |purchase| %>
-        <tr id="<%= dom_id(purchase) %>">
-          <td class="tabular-nums"><%= purchase.id %></td>
-          <td class="whitespace-nowrap"><%= l(purchase.purchased_on) %></td>
-          <td class="whitespace-nowrap"><%= purchase.producer.full_name %></td>
-          <td><%= purchase.zone&.name %></td>
-          <td class="whitespace-nowrap"><%= purchase.human_coffee_state %></td>
-          <td class="text-right tabular-nums"><%= format_pounds(purchase.gross_weight) %></td>
-          <td class="text-right tabular-nums"><%= format_pounds(purchase.humidity_percent) %></td>
-          <td class="text-right tabular-nums"><%= format_pounds(purchase.net_weight) %></td>
-          <td class="text-right tabular-nums"><%= format_money(purchase.price_per_pound) %></td>
-          <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(purchase.total) %></td>
-          <td class="whitespace-nowrap">
-            <% if purchase.invoice %>
-              <%= purchase.invoice.display_number %>
-              <%= payment_status_badge(purchase.invoice) %>
-            <% else %>
-              <span class="text-ink-muted"><%= t("trading.purchases.table.not_invoiced") %></span>
-            <% end %>
-          </td>
-          <td class="min-w-40"><%= purchase.observations %></td>
-          <td class="text-right"><%= detail_button trading_purchase_path(purchase) %></td>
+<%# Purchases list. Adapts to its container (page or modal):
+    narrow → cards; medium → key columns; wide → every column. Observations stay in the detail. %>
+<div class="@container">
+  <ul class="space-y-3 @3xl:hidden">
+    <% purchases.each do |purchase| %>
+      <li class="data-card" id="<%= dom_id(purchase, :card) %>">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="font-medium"><%= purchase.producer.full_name %></p>
+            <p class="text-xs text-ink-muted">
+              <%= [ l(purchase.purchased_on), purchase.zone&.name, purchase.human_coffee_state ].compact.join(" · ") %>
+            </p>
+          </div>
+          <%= detail_button trading_purchase_path(purchase) %>
+        </div>
+        <dl class="mt-3 grid grid-cols-3 gap-2 text-sm">
+          <div><dt class="text-xs text-ink-muted"><%= t("trading.purchases.table.net") %></dt><dd class="tabular-nums"><%= format_pounds(purchase.net_weight) %></dd></div>
+          <div><dt class="text-xs text-ink-muted"><%= t("trading.purchases.table.price") %></dt><dd class="tabular-nums"><%= format_money(purchase.price_per_pound) %></dd></div>
+          <div><dt class="text-xs text-ink-muted"><%= Purchase.human_attribute_name(:total) %></dt><dd class="font-semibold tabular-nums"><%= format_money(purchase.total) %></dd></div>
+        </dl>
+        <p class="mt-2 text-sm"><%= render "trading/purchases/invoice_state", purchase: purchase %></p>
+      </li>
+    <% end %>
+  </ul>
+
+  <div class="hidden overflow-x-auto rounded-md border border-line bg-surface @3xl:block">
+    <table class="data-table data-table-compact">
+      <thead>
+        <tr>
+          <th class="hidden @5xl:table-cell"><%= t("trading.purchases.table.number") %></th>
+          <th><%= Purchase.human_attribute_name(:purchased_on) %></th>
+          <th><%= t("trading.purchases.table.producer") %></th>
+          <th class="hidden text-right @5xl:table-cell"><%= t("trading.purchases.table.gross") %></th>
+          <th class="hidden text-right @5xl:table-cell"><%= t("trading.purchases.table.humidity") %></th>
+          <th class="text-right"><%= t("trading.purchases.table.net") %></th>
+          <th class="hidden text-right @5xl:table-cell"><%= t("trading.purchases.table.price") %></th>
+          <th class="text-right"><%= Purchase.human_attribute_name(:total) %></th>
+          <th><%= t("trading.purchases.table.invoice") %></th>
+          <th class="cell-actions"><span class="sr-only"><%= t("trading.purchases.table.actions") %></span></th>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        <% purchases.each do |purchase| %>
+          <tr id="<%= dom_id(purchase) %>">
+            <td class="hidden tabular-nums text-ink-muted @5xl:table-cell"><%= purchase.id %></td>
+            <td class="whitespace-nowrap"><%= l(purchase.purchased_on) %></td>
+            <td>
+              <span class="font-medium"><%= purchase.producer.full_name %></span>
+              <span class="block text-xs text-ink-muted"><%= [ purchase.zone&.name, purchase.human_coffee_state ].compact.join(" · ") %></span>
+            </td>
+            <td class="hidden whitespace-nowrap text-right tabular-nums @5xl:table-cell"><%= format_pounds(purchase.gross_weight) %></td>
+            <td class="hidden whitespace-nowrap text-right tabular-nums @5xl:table-cell"><%= format_pounds(purchase.humidity_percent) %></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(purchase.net_weight) %></td>
+            <td class="hidden whitespace-nowrap text-right tabular-nums @5xl:table-cell"><%= format_money(purchase.price_per_pound) %></td>
+            <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(purchase.total) %></td>
+            <td><%= render "trading/purchases/invoice_state", purchase: purchase %></td>
+            <td class="cell-actions"><%= detail_button trading_purchase_path(purchase) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
 </div>

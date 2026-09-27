@@ -25,7 +25,7 @@
           <th><%= t(".entity") %></th>
           <th><%= t(".record") %></th>
           <th><%= t(".changes") %></th>
-          <th></th>
+          <th class="cell-actions"></th>
         </tr>
       </thead>
       <tbody>
@@ -39,7 +39,7 @@
             <td class="text-ink-muted">
               <%= event.changeset.keys.first(4).map { |attribute| audit_attribute_name(event, attribute) }.join(", ") %><%= "…" if event.changeset.size > 4 %>
             </td>
-            <td class="text-right"><%= detail_button administration_audit_event_path(event) %></td>
+            <td class="cell-actions"><%= detail_button administration_audit_event_path(event) %></td>
           </tr>
         <% end %>
       </tbody>

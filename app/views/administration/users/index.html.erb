@@ -22,7 +22,7 @@
           <th><%= User.human_attribute_name(:email_address) %></th>
           <th><%= t(".role") %></th>
           <th><%= t(".status") %></th>
-          <th class="text-right"><%= t(".actions") %></th>
+          <th class="cell-actions"><%= t(".actions") %></th>
         </tr>
       </thead>
       <tbody>
@@ -32,7 +32,7 @@
             <td class="break-all"><%= user.email_address %></td>
             <td><%= t(user.admin? ? "administration.user_role.admin" : "administration.user_role.regular") %></td>
             <td><%= t(user.active? ? "administration.user_status.active" : "administration.user_status.inactive") %></td>
-            <td class="whitespace-nowrap text-right">
+            <td class="cell-actions">
               <%= detail_button administration_user_path(user) %>
               <%= modal_link_to t(".edit"), edit_administration_user_path(user), class: "btn btn-sm" %>
               <%= modal_link_to t(".reset_password"), reset_password_administration_user_path(user), class: "btn btn-sm" %>

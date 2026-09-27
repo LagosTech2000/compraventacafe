@@ -39,6 +39,8 @@ es:
       payment_method_later: "Por definir"
       pick_payment_method: "Selecciona la forma de pago"
     filters:
+      title: "Filtros"
+      active: "activos"
       apply: "Filtrar"
       clear: "Quitar filtros"
       all: "Todos"
@@ -157,6 +159,10 @@ es:
         producer: "Productor"
         invoice: "Factura"
         not_invoiced: "Sin facturar"
+        gross: "Bruto (lb)"
+        humidity: "Hum. (%)"
+        net: "Neto (lb)"
+        price: "Precio/lb"
         actions: "Acciones"
         edit: "Editar"
       show:

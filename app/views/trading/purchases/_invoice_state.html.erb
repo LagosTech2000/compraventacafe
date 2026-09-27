@@ -1,0 +1,9 @@
+<%# Invoice number and payment state of a purchase, or "Sin facturar". %>
+<% if purchase.invoice %>
+  <span class="flex flex-wrap items-center gap-x-2 gap-y-1">
+    <span class="whitespace-nowrap tabular-nums"><%= purchase.invoice.display_number %></span>
+    <%= payment_status_badge(purchase.invoice) %>
+  </span>
+<% else %>
+  <span class="whitespace-nowrap text-ink-muted"><%= t("trading.purchases.table.not_invoiced") %></span>
+<% end %>

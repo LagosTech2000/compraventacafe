@@ -224,6 +224,15 @@ los errores).
   "shared/filters"` con `filter_text_field` / `filter_date_field` /
   `filter_select` + `shared/pagination`. Los valores inválidos se ignoran.
   Dentro del bloque de filtros usa claves de traducción completas, no `t(".x")`.
+- **Tablas que se ven completas**: se adaptan al ancho de su contenedor (sirve
+  igual en página y en modal) con consultas de contenedor de Tailwind
+  (`@container`, `@3xl:`…): en angosto, tarjetas (`.data-card`); en medio, las
+  columnas clave; en ancho, todas. La columna de acciones usa `.cell-actions`
+  (fija a la derecha, nunca se pierde al desplazar). Los detalles largos
+  (observaciones) van solo en la pantalla de detalle.
+- **Filtros en celular**: se pliegan si no hay ninguno activo
+  (`collapsible_filters_controller.js`); "activo" = distinto del valor por
+  defecto.
 - **Orden**: toda lista muestra primero lo más reciente (`newest_first`,
   definido en `ApplicationRecord`; compras por fecha de compra, facturas por
   número). Las listas desplegables y el buscador de productor, que sirven para

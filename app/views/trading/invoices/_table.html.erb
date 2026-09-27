@@ -1,28 +1,50 @@
-<div class="overflow-x-auto rounded-md border border-line bg-surface">
-  <table class="data-table">
-    <thead>
-      <tr>
-        <th><%= t("trading.invoices.index.number") %></th>
-        <th><%= t("trading.invoices.index.date") %></th>
-        <th><%= t("trading.invoices.index.producer") %></th>
-        <th class="text-right"><%= Purchase.human_attribute_name(:net_weight) %></th>
-        <th class="text-right"><%= Invoice.human_attribute_name(:total) %></th>
-        <th><%= t("trading.invoices.index.status") %></th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      <% invoices.each do |invoice| %>
-        <tr id="<%= dom_id(invoice) %>">
-          <td class="font-medium tabular-nums"><%= invoice.display_number %></td>
-          <td class="whitespace-nowrap"><%= l(invoice.issued_on) %></td>
-          <td class="whitespace-nowrap"><%= invoice.producer.full_name %></td>
-          <td class="text-right tabular-nums"><%= format_pounds(invoice.net_weight) %></td>
-          <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(invoice.total) %></td>
-          <td><%= payment_status_badge(invoice) %></td>
-          <td class="text-right"><%= detail_button trading_invoice_path(invoice) %></td>
+<%# Invoices list. Narrow container → cards; otherwise a table. %>
+<div class="@container">
+  <ul class="space-y-3 @2xl:hidden">
+    <% invoices.each do |invoice| %>
+      <li class="data-card" id="<%= dom_id(invoice, :card) %>">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="font-medium"><%= invoice.producer.full_name %></p>
+            <p class="text-xs text-ink-muted"><%= t("trading.invoices.show.invoice") %> <%= invoice.display_number %> · <%= l(invoice.issued_on) %></p>
+          </div>
+          <%= detail_button trading_invoice_path(invoice) %>
+        </div>
+        <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
+          <span class="tabular-nums"><%= format_pounds(invoice.net_weight) %> lb</span>
+          <span class="font-semibold tabular-nums"><%= format_money(invoice.total) %></span>
+          <%= payment_status_badge(invoice) %>
+        </div>
+      </li>
+    <% end %>
+  </ul>
+
+  <div class="hidden overflow-x-auto rounded-md border border-line bg-surface @2xl:block">
+    <table class="data-table data-table-compact">
+      <thead>
+        <tr>
+          <th><%= t("trading.invoices.index.number") %></th>
+          <th><%= t("trading.invoices.index.date") %></th>
+          <th><%= t("trading.invoices.index.producer") %></th>
+          <th class="text-right"><%= t("trading.purchases.table.net") %></th>
+          <th class="text-right"><%= Invoice.human_attribute_name(:total) %></th>
+          <th><%= t("trading.invoices.index.status") %></th>
+          <th class="cell-actions"><span class="sr-only"><%= t("trading.purchases.table.actions") %></span></th>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        <% invoices.each do |invoice| %>
+          <tr id="<%= dom_id(invoice) %>">
+            <td class="font-medium tabular-nums"><%= invoice.display_number %></td>
+            <td class="whitespace-nowrap"><%= l(invoice.issued_on) %></td>
+            <td><%= invoice.producer.full_name %></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(invoice.net_weight) %></td>
+            <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(invoice.total) %></td>
+            <td><%= payment_status_badge(invoice) %></td>
+            <td class="cell-actions"><%= detail_button trading_invoice_path(invoice) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
 </div>

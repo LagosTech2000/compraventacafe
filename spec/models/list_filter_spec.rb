@@ -15,6 +15,13 @@ RSpec.describe ListFilter do
     expect(filter.to_params).to eq("from" => "2026-01-15", "zone_id" => "3", "payment_status" => "paid", "q" => "Ana")
   end
 
+  it "counts as active only what differs from the defaults" do
+    expect(PurchaseFilter.new(params({}))).not_to be_active
+    expect(PurchaseFilter.new(params(from: "", to: ""))).to be_active
+    expect(PurchaseFilter.new(params(zone_id: "3"))).to be_active
+    expect(ZoneFilter.new(params(q: ""))).not_to be_active
+  end
+
   it "pages results" do
     create_list(:zone, 3)
     filter = ZoneFilter.new(params(page: "2"))

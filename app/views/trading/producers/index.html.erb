@@ -24,7 +24,7 @@
           <th><%= Producer.human_attribute_name(:zone) %></th>
           <th><%= Producer.human_attribute_name(:farm_name) %></th>
           <th><%= Person.human_attribute_name(:phone) %></th>
-          <th></th>
+          <th class="cell-actions"></th>
         </tr>
       </thead>
       <tbody>
@@ -35,7 +35,7 @@
             <td><%= producer.zone&.name %></td>
             <td><%= producer.farm_name %></td>
             <td class="whitespace-nowrap"><%= format_phone(producer.person.phone) %></td>
-            <td class="text-right"><%= detail_button trading_producer_path(producer) %></td>
+            <td class="cell-actions"><%= detail_button trading_producer_path(producer) %></td>
           </tr>
         <% end %>
       </tbody>

@@ -26,9 +26,9 @@ class ListFilter
   attr_reader :page
 
   def initialize(params)
+    @defaults = fields.to_h { |name, spec| [ name, parse(default_for(spec), spec) ] }
     @values = fields.to_h do |name, spec|
-      raw = params.key?(name) ? params[name] : spec[:default].then { |d| d.respond_to?(:call) ? d.call : d }
-      [ name, parse(raw, spec) ]
+      [ name, params.key?(name) ? parse(params[name], spec) : @defaults[name] ]
     end
     @page = [ params[:page].to_i, 1 ].max
   end
@@ -44,8 +44,9 @@ class ListFilter
     [ records.first(per_page), records.size > per_page ]
   end
 
+  # True when the user changed something from the defaults.
   def active?
-    @values.values.any?(&:present?)
+    @values.any? { |name, value| value != @defaults[name] }
   end
 
   def to_params
@@ -53,6 +54,10 @@ class ListFilter
   end
 
   private
+    def default_for(spec)
+      spec[:default].respond_to?(:call) ? spec[:default].call : spec[:default]
+    end
+
     def parse(raw, spec)
       value = raw.is_a?(Date) ? raw : raw.to_s.strip
       case spec[:type]

@@ -19,14 +19,14 @@
       <thead>
         <tr>
           <th><%= Zone.human_attribute_name(:name) %></th>
-          <th></th>
+          <th class="cell-actions"></th>
         </tr>
       </thead>
       <tbody>
         <% @zones.each do |zone| %>
           <tr id="<%= dom_id(zone) %>">
             <td><%= zone.name %></td>
-            <td class="text-right">
+            <td class="cell-actions">
               <% if policy(zone).update? %>
                 <%= modal_link_to t(".edit"), edit_trading_zone_path(zone), class: "btn btn-sm" %>
               <% end %>

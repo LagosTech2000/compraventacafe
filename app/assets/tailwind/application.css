@@ -65,6 +65,22 @@
     @apply border-b border-line px-3 py-2 align-middle;
   }
 
+  /* Tighter cells for wide tables (purchases, invoices). */
+  .data-table-compact th,
+  .data-table-compact td {
+    @apply px-2;
+  }
+
+  /* Action column ("Detalle", "Editar") stays visible when a table scrolls. */
+  .data-table .cell-actions {
+    @apply sticky right-0 bg-surface text-right whitespace-nowrap shadow-[-8px_0_8px_-8px_rgb(43_34_32/0.15)];
+  }
+
+  /* Card shown instead of a table row when the container is narrow. */
+  .data-card {
+    @apply rounded-md border border-line bg-surface p-4;
+  }
+
   .field-label {
     @apply mb-1 block text-sm font-medium text-ink;
   }

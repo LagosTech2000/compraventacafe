@@ -14,6 +14,6 @@ module TradingHelper
 
   def payment_status_badge(invoice)
     classes = invoice.paid? ? "bg-success-soft text-success" : "bg-danger-soft text-danger"
-    tag.span(invoice.human_payment_status, class: "rounded-full px-2 py-0.5 text-xs font-medium #{classes}")
+    tag.span(invoice.human_payment_status, class: "whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium #{classes}")
   end
 end
