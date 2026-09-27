@@ -1,0 +1,29 @@
+<%# Steps of a purchase's life and what to do next. Render it with
+    render layout: "trading/lifecycle", locals: { lifecycle: } and pass the
+    next-step buttons in the block. %>
+<% steps = TradingLifecycle::STAGES %>
+<section class="rounded-md border border-line bg-surface p-4 print:hidden" aria-label="<%= t("trading.lifecycle.label") %>">
+  <ol class="flex items-center gap-2 text-xs sm:text-sm">
+    <% steps.each_with_index do |step, index| %>
+      <% status = lifecycle.status(step) %>
+      <li class="flex min-w-0 flex-1 items-center gap-2" <%= "aria-current=step" if status == :next %>>
+        <span class="grid size-7 shrink-0 place-items-center rounded-full text-xs font-bold
+                     <%= { done: "bg-primary text-on-primary", next: "bg-surface text-primary ring-2 ring-primary", upcoming: "bg-canvas text-ink-muted" }[status] %>">
+          <%= status == :done ? "✓" : lifecycle.step_number(step) %>
+        </span>
+        <span class="min-w-0 leading-tight <%= status == :upcoming ? "text-ink-muted" : "font-semibold" %>">
+          <%= t("trading.lifecycle.stages.#{step}") %>
+          <% if status == :next %><span class="block text-xs font-normal text-primary"><%= t("trading.lifecycle.next_badge") %></span><% end %>
+        </span>
+        <% unless index == steps.size - 1 %>
+          <span class="hidden h-0.5 flex-1 rounded sm:block <%= status == :done ? "bg-primary" : "bg-line" %>" aria-hidden="true"></span>
+        <% end %>
+      </li>
+    <% end %>
+  </ol>
+
+  <div class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
+    <p class="text-sm"><%= t("trading.lifecycle.hint.#{lifecycle.stage}") %></p>
+    <div class="flex flex-wrap gap-2"><%= yield %></div>
+  </div>
+</section>

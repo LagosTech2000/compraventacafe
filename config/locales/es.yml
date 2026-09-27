@@ -75,6 +75,17 @@ es:
     title: "Dirección"
 
   trading:
+    lifecycle:
+      label: "Etapas de la compra"
+      next_badge: "Siguiente"
+      stages:
+        registered: "Compra registrada"
+        invoiced: "Facturada"
+        paid: "Cancelada (pagada)"
+      hint:
+        registered: "Siguiente paso: facturar para entregarle el recibo al productor."
+        invoiced: "Siguiente paso: registrar el pago cuando se le pague al productor."
+        paid: "Ciclo completo: la compra está facturada y pagada."
     nav:
       home: "Resumen"
       new_purchase: "Nueva compra"
@@ -86,10 +97,35 @@ es:
     home:
       index:
         today: "Hoy, %{date}"
-        pending_invoices:
-          zero: "No hay facturas pendientes de pago."
-          one: "1 factura pendiente de pago."
-          other: "%{count} facturas pendientes de pago."
+        whats_next: "Qué sigue"
+        whats_next_help: "El flujo del día, en orden. Lo resaltado tiene trabajo pendiente."
+        step: "Paso %{number}"
+        steps:
+          register:
+            title: "Pesar y registrar compras"
+            action: "Nueva compra"
+            status_html:
+              zero: "Todavía no hay compras hoy."
+              one: "1 compra registrada hoy."
+              other: "%{count} compras registradas hoy."
+          invoice:
+            title: "Facturar"
+            action: "Facturar compras"
+            status_html:
+              zero: "No hay compras sin facturar."
+              one: "1 compra sin facturar (%{amount})."
+              other: "%{count} compras sin facturar (%{amount})."
+          pay:
+            title: "Registrar pagos"
+            action: "Ver pendientes"
+            status_html:
+              zero: "No hay facturas pendientes de pago."
+              one: "1 factura pendiente de pago (%{amount})."
+              other: "%{count} facturas pendientes de pago (%{amount})."
+          close:
+            title: "Cerrar el día"
+            action: "Ver cierre diario"
+            status_html: "Total comprado hoy: %{amount}."
     summary:
       purchases: "Compras"
       producers: "Productores"
@@ -172,6 +208,9 @@ es:
         confirm_destroy: "¿Borrar esta compra? Esta acción no se puede deshacer."
         invoiced_notice: "Esta compra ya está en la factura %{number} y no se puede modificar."
         view_invoice: "Ver factura %{number}"
+        invoice_now: "Facturar ahora"
+        register_payment: "Registrar pago de la factura %{number}"
+        another_purchase: "Registrar otra compra"
         back: "Volver a compras"
       new:
         title: "Nueva compra"

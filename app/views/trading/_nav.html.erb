@@ -1,14 +1,17 @@
 <% unless modal_request? %>
-<nav class="mb-6 flex flex-wrap gap-2 print:hidden" aria-label="<%= AppModule.human_name("trading") %>">
+<%# Daily flow first, in the order it happens; catalogs after a divider. %>
+<nav class="mb-6 flex flex-wrap items-center gap-2 print:hidden" aria-label="<%= AppModule.human_name("trading") %>">
+  <%= link_to t("trading.nav.home"), trading_root_path, class: nav_link_class(trading_root_path) + " clay",
+        aria: { current: (current_page?(trading_root_path) ? "page" : nil) } %>
   <% if policy(Purchase).create? %>
     <%= link_to t("trading.nav.new_purchase"), new_trading_purchase_path, class: "btn btn-primary" %>
   <% end %>
-  <% {
-       home: trading_root_path, purchases: trading_purchases_path, invoices: trading_invoices_path,
-       daily_close: trading_daily_close_path, producers: trading_producers_path, zones: trading_zones_path
-     }.each do |key, path| %>
-    <%= link_to t("trading.nav.#{key}"), path, class: nav_link_class(path) + " clay",
-          aria: { current: (current_page?(path) ? "page" : nil) } %>
+  <% { purchases: trading_purchases_path, invoices: trading_invoices_path, daily_close: trading_daily_close_path }.each do |key, path| %>
+    <%= link_to t("trading.nav.#{key}"), path, class: nav_link_class(path) + " clay", aria: { current: (current_page?(path) ? "page" : nil) } %>
+  <% end %>
+  <span class="mx-1 hidden h-6 w-px bg-line sm:block" aria-hidden="true"></span>
+  <% { producers: trading_producers_path, zones: trading_zones_path }.each do |key, path| %>
+    <%= link_to t("trading.nav.#{key}"), path, class: nav_link_class(path) + " clay", aria: { current: (current_page?(path) ? "page" : nil) } %>
   <% end %>
 </nav>
 <% end %>

@@ -122,6 +122,36 @@ RSpec.describe "Trading purchase flow" do
     expect(report.css("a")).to be_empty
   end
 
+  it "guides the next step from the purchase detail" do
+    purchase = create(:purchase)
+    get trading_purchase_path(purchase)
+    page = Nokogiri::HTML(response.body)
+    expect(page.at_css("[aria-current=step]").text).to include("Facturada", "Siguiente")
+    invoice_now = page.css("a").find { |a| a.text == "Facturar ahora" }
+    expect(invoice_now["href"]).to eq(new_trading_invoice_path(producer_id: purchase.producer_id))
+
+    invoice = InvoiceIssuer.new(producer: purchase.producer, user:, purchase_ids: [ purchase.id ], payment_status: "pending").call.invoice
+    get trading_purchase_path(purchase)
+    expect(response.body).to include("Registrar pago de la factura #{invoice.display_number}")
+
+    get trading_invoice_path(invoice)
+    expect(Nokogiri::HTML(response.body).at_css("[aria-current=step]").text).to include("Cancelada")
+    invoice.mark_paid(method: "cash", on: Time.zone.today)
+    get trading_invoice_path(invoice)
+    expect(response.body).to include("Ciclo completo")
+  end
+
+  it "shows what's next on the module home, highlighting pending work" do
+    create_list(:purchase, 2)
+    create(:invoice)
+    get trading_root_path
+    steps = Nokogiri::HTML(response.body).css("ol > li").map { |li| li.text.squish }
+    expect(steps[0]).to include("Paso 1", "3 compras registradas hoy")
+    expect(steps[1]).to include("Paso 2", "2 compras sin facturar")
+    expect(steps[2]).to include("Paso 3", "1 factura pendiente de pago")
+    expect(steps[3]).to include("Paso 4", "Cerrar el día")
+  end
+
   it "keeps a read-only user from registering purchases" do
     reader = create(:user).tap { |u| create(:permission, user: u, module_key: "trading", can_read: true) }
     sign_in reader

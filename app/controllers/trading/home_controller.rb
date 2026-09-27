@@ -3,7 +3,9 @@ module Trading
     def index
       authorize [ :trading, :home ]
       @daily_close = DailyClose.new(Time.zone.today)
-      @pending_invoices_count = policy_scope(Invoice).pending.count
+      @uninvoiced = PurchaseSummary.new(policy_scope(Purchase).uninvoiced)
+      @pending_invoices = policy_scope(Invoice).pending
+      @pending_total = PurchaseSummary.new(Purchase.where(invoice_id: @pending_invoices.select(:id))).total
     end
   end
 end

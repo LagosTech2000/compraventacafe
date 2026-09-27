@@ -301,6 +301,12 @@ es llenar su carpeta, no crearla.
   consultivo (`Invoice::NUMBERING_LOCK_KEY`), mostrado con 4 dígitos.
 - Una compra facturada **no se edita ni se borra** (`PurchasePolicy`). Una
   factura no se borra; solo pasa de pendiente a cancelada.
+- **Ciclo de vida guiado** (`TradingLifecycle`): compra registrada →
+  facturada → cancelada (pagada), como el flujo que describe el cliente. El
+  parcial `trading/_lifecycle` muestra los pasos y el botón del siguiente paso
+  en el detalle de compra, el de factura y al facturar. El Resumen del módulo
+  tiene el panel "Qué sigue" con el trabajo pendiente de cada paso. La
+  retención de fin de temporada no es un paso todavía (punto abierto).
 - `bin/rails demo:seed` carga datos **ficticios** (nunca datos reales del
   Excel del cliente).
 
