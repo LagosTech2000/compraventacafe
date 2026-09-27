@@ -1,0 +1,43 @@
+<% content_for :title, t(".title") %>
+<%= render "trading/nav" %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+  <% if policy(Producer).create? %>
+    <%= link_to t(".new"), new_trading_producer_path, class: "btn btn-primary" %>
+  <% end %>
+</div>
+
+<%= form_with url: trading_producers_path, method: :get, class: "mt-6 flex w-full gap-2 sm:w-auto" do |form| %>
+  <%= form.search_field :q, value: @query, maxlength: 100, placeholder: t(".search_placeholder"), aria: { label: t(".search") }, class: "field-input sm:w-72" %>
+  <%= form.submit t(".search"), name: nil, class: "btn" %>
+<% end %>
+
+<% if @producers.any? %>
+  <div class="mt-6 overflow-x-auto rounded-md border border-line bg-surface">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th><%= t(".name") %></th>
+          <th><%= Producer.human_attribute_name(:kind) %></th>
+          <th><%= Producer.human_attribute_name(:zone) %></th>
+          <th><%= Producer.human_attribute_name(:farm_name) %></th>
+          <th><%= Person.human_attribute_name(:phone) %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @producers.each do |producer| %>
+          <tr id="<%= dom_id(producer) %>">
+            <td><%= link_to producer.full_name, trading_producer_path(producer), class: "font-medium text-primary underline hover:no-underline" %></td>
+            <td><%= producer.human_kind %></td>
+            <td><%= producer.zone&.name %></td>
+            <td><%= producer.farm_name %></td>
+            <td class="whitespace-nowrap"><%= format_phone(producer.person.phone) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <p class="clay mt-6 p-6 text-sm text-ink-muted"><%= t(".empty") %></p>
+<% end %>

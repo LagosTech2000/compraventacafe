@@ -21,7 +21,8 @@ Herramienta interna, unos 10 usuarios, UI 100% en español.
 | Documento | Qué define | Dónde |
 | --- | --- | --- |
 | Contexto técnico — Sistema de café | Decisiones técnicas, versiones y puntos abiertos | `claude.ai/code/artifact/6e691138-7661-4021-b95d-90f906d32172` |
-| `CONTEXTO_PROYECTO.md` | Negocio y orden de los módulos | **Falta en el repo.** Pedirlo antes de construir cualquier módulo. |
+| `docs/CONTEXTO_CAFE_REY_DAVID.md` | Negocio: cuestionario del cliente + su Excel `COSECHA_2026L.xlsm`. Cada dato etiquetado `[VERIFICADO]`, `[CALCULADO]` o `[DESCONOCIDO]` | En el repo. **No se construye sobre un `[DESCONOCIDO]`.** |
+| `docs/PREGUNTAS_CLIENTE.md` | Cuestionario enviado al cliente | En el repo |
 | `docs/AMBIENTE.md` | Cómo montar y operar el ambiente | En el repo |
 
 El doc técnico etiqueta cada afirmación: `[CONFIRMADO]` (decidido por el dueño),
@@ -61,6 +62,13 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Fincas | `farms` |
 | Préstamos | `loans` |
 | Reportería | `reports` |
+| Productor / carrero / finca propia | `Producer` (`kind`: `producer` / `intermediary` / `own_farm`) |
+| Zona | `Zone` |
+| Compra (pesada) | `Purchase` |
+| Uva / pergamino húmedo / pergamino seco | `cherry` / `wet_parchment` / `dry_parchment` |
+| Factura (recibo al productor) | `Invoice` |
+| Cancelada / pendiente de pago (PXP) | `paid` / `pending` |
+| Cierre diario | `DailyClose` |
 
 ## Modelo de permisos
 
@@ -189,6 +197,7 @@ bundle exec rspec               # suite completa
 bundle exec rspec spec/policies # solo políticas
 bin/rails db:migrate
 bin/rails db:seed               # requiere ADMIN_EMAIL y ADMIN_PASSWORD
+bin/rails demo:seed             # datos ficticios para la demo (no en producción)
 bin/rubocop
 bin/brakeman --no-pager
 ```
@@ -216,7 +225,7 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_EMAIL` y
 | Clave | Estado |
 | --- | --- |
 | `administration` | Usuarios y permisos (solo administradores); personas, clientes y colaboradores (permisos del módulo) |
-| `trading` | Portada vacía |
+| `trading` | Demo: zonas, productores, compras con cálculo automático, facturas imprimibles (original y copia) con estado de pago, cierre diario |
 | `farms` | Portada vacía |
 | `loans` | Portada vacía |
 | `reports` | Portada vacía |
@@ -224,11 +233,37 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_EMAIL` y
 Cada módulo tiene su namespace de controladores. Implementar una funcionalidad
 es llenar su carpeta, no crearla.
 
+### Compra y venta (`trading`)
+
+- **Cálculo de la compra**: `PurchaseCalculation`, copia exacta de la macro
+  actual del cliente (tara de 1 lb por saco de 165 lb, redondeado hacia
+  arriba; se descuenta la humedad). Se guarda el resultado en la compra para
+  que el histórico no cambie si la regla cambia. `purchase_calculator_controller.js`
+  lo replica solo como vista previa; el servidor manda.
+- Humedad por defecto 51 % (`PurchaseDefaults`), editable.
+- Una factura agrupa compras sin facturar **del mismo productor**
+  (`InvoiceIssuer`, con bloqueo de filas). Número correlativo con bloqueo
+  consultivo (`Invoice::NUMBERING_LOCK_KEY`), mostrado con 4 dígitos.
+- Una compra facturada **no se edita ni se borra** (`PurchasePolicy`). Una
+  factura no se borra; solo pasa de pendiente a cancelada.
+- `bin/rails demo:seed` carga datos **ficticios** (nunca datos reales del
+  Excel del cliente).
+
 ## Puntos abiertos
 
 | Punto | Qué bloquea | Quién decide |
 | --- | --- | --- |
-| `CONTEXTO_PROYECTO.md` no está en el repo | Cualquier módulo de negocio | Fernando |
+| Cálculo según estado del café (uva / húmedo / seco) y si el 51 % es fijo o medido | Ajustar `PurchaseCalculation` | Cliente |
+| Si se sigue descontando **daño** y cómo se mide | `PurchaseCalculation` | Cliente |
+| Tabla de precios (zona + calidad + bolsa) y categorías de calidad | Precio automático; hoy es manual | Cliente |
+| Retención de fin de temporada | Reporte de retención | Cliente |
+| Préstamos/adelantos: tasa, periodo, cómo se descuentan de la compra | Módulo `loans` y descuento al pagar | Cliente |
+| Si la factura siempre agrupa hasta 4 compras | Hoy no hay límite | Cliente |
+| 160 lb/saco en salidas vs. 165 en compras | Salidas de camión | Cliente |
+| Contratos: moneda, cobro, anticipos del exportador | Ventas / contratos | Cliente |
+| Reporte exacto que piden el contador y el SAR | Reportería | Cliente |
+| Numeración inicial de facturas (el Excel va por ~2,800) | Hoy empieza en 0001 | Cliente |
+| Logo y colores (dijeron que tienen) | Pulido visual | Cliente |
 | Servicio de correo | Recuperación de contraseña por correo | Fernando |
 | Transferencia del workspace de Render al cliente | Pasar a Render de pago (etapa 3) | Fernando + Render |
 | Si el despliegue espera a que pasen los tests | Configurar el despliegue (etapa 2) | Fernando |

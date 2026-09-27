@@ -19,6 +19,11 @@ Rails.application.routes.draw do
 
   namespace :trading do
     root "home#index"
+    resources :purchases
+    resources :invoices, only: %i[ index show new create update ]
+    resources :producers, except: :destroy
+    resources :zones, only: %i[ index new create edit update ]
+    resource :daily_close, only: :show
   end
 
   namespace :farms do

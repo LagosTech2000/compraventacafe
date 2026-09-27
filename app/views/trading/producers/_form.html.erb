@@ -1,0 +1,36 @@
+<%= form_with model: [ :trading, producer ], class: "space-y-6", data: { controller: "form-validation" } do |form| %>
+  <%= hidden_field_tag :return_to, params[:return_to] if params[:return_to].present? %>
+  <%= render "shared/form_errors", record: producer %>
+
+  <section>
+    <h2 class="mb-3 text-lg font-semibold"><%= t(".producer_data") %></h2>
+    <div class="grid gap-5 sm:grid-cols-3">
+      <div>
+        <%= form.label :kind, class: "field-label" %>
+        <%= form.select :kind, enum_options(Producer, :kind, Producer::KINDS), {}, required: true, class: "field-input" %>
+      </div>
+      <div>
+        <%= form.label :zone_id, class: "field-label" %>
+        <%= form.collection_select :zone_id, Zone.ordered, :id, :name, { include_blank: t("trading.purchases.form.zone_prompt") }, class: "field-input" %>
+      </div>
+      <div>
+        <%= form.label :farm_name, class: "field-label" %>
+        <%= form.text_field :farm_name, maxlength: 100, class: "field-input" %>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="mb-3 text-lg font-semibold"><%= Producer.human_attribute_name(:person) %></h2>
+    <%= form.fields_for :person do |person_form| %>
+      <div class="grid gap-5 sm:grid-cols-2">
+        <%= render "shared/person_fields", form: person_form, autofocus: false %>
+      </div>
+    <% end %>
+  </section>
+
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= link_to t(".cancel"), producer.persisted? ? trading_producer_path(producer) : trading_producers_path, class: "btn" %>
+  </div>
+<% end %>

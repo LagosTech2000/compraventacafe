@@ -1,1 +1,12 @@
-<%= render "shared/module_home", module_key: "trading" %>
+<% content_for :title, AppModule.human_name("trading") %>
+
+<h1 class="mb-4 text-2xl font-bold"><%= AppModule.human_name("trading") %></h1>
+<%= render "trading/nav" %>
+
+<h2 class="mb-3 text-lg font-semibold"><%= t(".today", date: l(@daily_close.date, format: :long)) %></h2>
+<%= render "trading/summary", daily_close: @daily_close %>
+
+<p class="mt-6 text-sm">
+  <%= link_to t(".pending_invoices", count: @pending_invoices_count), trading_invoices_path(status: "pending"),
+        class: "text-primary underline hover:no-underline" %>
+</p>

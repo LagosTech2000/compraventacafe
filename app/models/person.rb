@@ -5,6 +5,7 @@ class Person < ApplicationRecord
 
   has_one :client, dependent: :destroy, autosave: true
   has_one :collaborator, dependent: :destroy, autosave: true
+  has_one :producer, dependent: :restrict_with_error
 
   normalizes :first_names, :last_names, with: ->(value) { value.squish.presence }
   normalizes :dni, :rtn, with: FieldFormats::DIGITS
@@ -35,6 +36,10 @@ class Person < ApplicationRecord
 
   def collaborator?
     collaborator.present?
+  end
+
+  def producer?
+    producer.present?
   end
 
   # Adds or removes each role from a form checkbox.

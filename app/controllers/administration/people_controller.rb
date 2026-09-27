@@ -9,7 +9,7 @@ module Administration
       @role = params[:role].presence_in(ROLE_FILTERS)
       @query = params[:q].to_s.strip
 
-      people = policy_scope(Person).includes(:client, :collaborator).alphabetical
+      people = policy_scope(Person).includes(:client, :collaborator, :producer).alphabetical
       people = people.public_send(@role) if @role
       people = people.search(@query) if @query.present?
       @people = people

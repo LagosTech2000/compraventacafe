@@ -1,0 +1,80 @@
+<% content_for :title, t(".title") %>
+<%= render "trading/nav" %>
+
+<h1 class="mb-6 text-2xl font-bold"><%= t(".title") %></h1>
+
+<% if @producer.nil? %>
+  <h2 class="mb-3 text-lg font-semibold"><%= t(".choose_producer") %></h2>
+  <% if @producers_to_invoice.any? %>
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <% @producers_to_invoice.each do |producer| %>
+        <%= link_to producer.full_name, new_trading_invoice_path(producer_id: producer.id), class: "clay block p-4 font-medium text-primary" %>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="clay p-6 text-sm text-ink-muted"><%= t(".nothing_to_invoice") %></p>
+  <% end %>
+<% else %>
+  <%= form_with model: @invoice, url: trading_invoices_path, class: "space-y-6", data: { controller: "form-validation" } do |form| %>
+    <%= hidden_field_tag :producer_id, @producer.id %>
+    <%= render "shared/form_errors", record: @invoice %>
+
+    <section>
+      <h2 class="mb-3 text-lg font-semibold"><%= t(".pick_purchases", producer: @producer.full_name) %></h2>
+      <% if @purchases.any? %>
+        <div class="overflow-x-auto rounded-md border border-line bg-surface">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th class="w-10"></th>
+                <th><%= Purchase.human_attribute_name(:purchased_on) %></th>
+                <th><%= Purchase.human_attribute_name(:coffee_state) %></th>
+                <th class="text-right"><%= Purchase.human_attribute_name(:net_weight) %></th>
+                <th class="text-right"><%= Purchase.human_attribute_name(:price_per_pound) %></th>
+                <th class="text-right"><%= Purchase.human_attribute_name(:total) %></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @purchases.each do |purchase| %>
+                <tr>
+                  <td>
+                    <%= check_box_tag "invoice[purchase_ids][]", purchase.id, true, id: dom_id(purchase, :select), class: "size-4 accent-primary",
+                          aria: { label: "#{l(purchase.purchased_on)} #{format_money(purchase.total)}" } %>
+                  </td>
+                  <td class="whitespace-nowrap"><label for="<%= dom_id(purchase, :select) %>"><%= l(purchase.purchased_on) %></label></td>
+                  <td><%= purchase.human_coffee_state %></td>
+                  <td class="text-right tabular-nums"><%= format_pounds(purchase.net_weight) %></td>
+                  <td class="text-right tabular-nums"><%= format_money(purchase.price_per_pound) %></td>
+                  <td class="text-right font-medium tabular-nums"><%= format_money(purchase.total) %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <p class="text-sm text-ink-muted"><%= t(".no_purchases") %></p>
+      <% end %>
+    </section>
+
+    <fieldset class="grid gap-5 sm:grid-cols-3">
+      <legend class="mb-3 text-lg font-semibold"><%= t(".payment") %></legend>
+      <div>
+        <%= form.label :payment_status, class: "field-label" %>
+        <%= form.select :payment_status, enum_options(Invoice, :payment_status, Invoice::PAYMENT_STATUSES), {}, required: true, class: "field-input" %>
+      </div>
+      <div>
+        <%= form.label :payment_method, class: "field-label" %>
+        <%= form.select :payment_method, enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS), { include_blank: true }, class: "field-input" %>
+      </div>
+      <div>
+        <%= form.label :paid_on, class: "field-label" %>
+        <%= form.date_field :paid_on, class: "field-input" %>
+      </div>
+    </fieldset>
+
+    <div class="flex flex-wrap gap-3">
+      <%= form.submit t(".submit"), class: "btn btn-primary" %>
+      <%= link_to t(".cancel"), trading_producer_path(@producer), class: "btn" %>
+    </div>
+  <% end %>
+<% end %>

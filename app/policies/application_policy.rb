@@ -47,6 +47,14 @@ class ApplicationPolicy
       user.present? && user.can?(module_key, action)
     end
 
+  # Every policy gets its own Scope: records of a module are visible to whoever
+  # can read that module, and to nobody else. Override when a module needs
+  # finer rules.
+  def self.inherited(subclass)
+    super
+    subclass.const_set(:Scope, Class.new(Scope)) unless subclass.const_defined?(:Scope, false)
+  end
+
   class Scope
     def initialize(user, scope)
       @user = user
@@ -54,7 +62,8 @@ class ApplicationPolicy
     end
 
     def resolve
-      raise NoMethodError, "You must define #resolve in #{self.class}"
+      module_key = self.class.module_parent.module_key
+      module_key && user&.can?(module_key, :read) ? scope.all : scope.none
     end
 
     private

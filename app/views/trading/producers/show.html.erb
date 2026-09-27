@@ -1,0 +1,51 @@
+<% content_for :title, @producer.full_name %>
+<%= render "trading/nav" %>
+
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= @producer.full_name %></h1>
+    <p class="mt-1 text-sm text-ink-muted">
+      <%= [ @producer.human_kind, @producer.zone&.name, @producer.farm_name ].compact_blank.join(" · ") %>
+    </p>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <% if policy(Purchase).create? %>
+      <%= link_to t(".new_purchase"), new_trading_purchase_path(producer_id: @producer.id), class: "btn btn-primary" %>
+    <% end %>
+    <% if policy(Invoice).create? && @uninvoiced_purchases.any? %>
+      <%= link_to t(".new_invoice"), new_trading_invoice_path(producer_id: @producer.id), class: "btn" %>
+    <% end %>
+    <% if policy(@producer).update? %>
+      <%= link_to t(".edit"), edit_trading_producer_path(@producer), class: "btn" %>
+    <% end %>
+  </div>
+</div>
+
+<dl class="mt-6 grid gap-x-6 rounded-md border border-line bg-surface sm:grid-cols-2">
+  <% person = @producer.person %>
+  <% {
+       dni: person.dni, rtn: person.rtn, phone: format_phone(person.phone), email: person.email,
+       address_line: format_address(person)
+     }.each do |attribute, value| %>
+    <div class="border-b border-line px-4 py-3">
+      <dt class="text-xs font-medium text-ink-muted"><%= Person.human_attribute_name(attribute) %></dt>
+      <dd class="mt-1 text-sm"><%= value.presence || "—" %></dd>
+    </div>
+  <% end %>
+</dl>
+
+<h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".uninvoiced") %></h2>
+<% if @uninvoiced_purchases.any? %>
+  <%= render "trading/purchases/table", purchases: @uninvoiced_purchases %>
+<% else %>
+  <p class="text-sm text-ink-muted"><%= t(".no_uninvoiced") %></p>
+<% end %>
+
+<h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".recent_invoices") %></h2>
+<% if @recent_invoices.any? %>
+  <%= render "trading/invoices/table", invoices: @recent_invoices %>
+<% else %>
+  <p class="text-sm text-ink-muted"><%= t(".no_invoices") %></p>
+<% end %>
+
+<p class="mt-6"><%= link_to t(".back"), trading_producers_path, class: "text-sm text-primary underline hover:no-underline" %></p>

@@ -1,0 +1,20 @@
+<% content_for :title, t(".title", date: l(@date)) %>
+<%= render "trading/nav" %>
+
+<div class="flex flex-wrap items-end justify-between gap-4">
+  <h1 class="text-2xl font-bold"><%= t(".title", date: l(@date, format: :long)) %></h1>
+  <%= form_with url: trading_purchases_path, method: :get, class: "flex gap-2" do |form| %>
+    <%= form.date_field :date, value: @date, aria: { label: Purchase.human_attribute_name(:purchased_on) }, class: "field-input" %>
+    <%= form.submit t(".change_date"), name: nil, class: "btn" %>
+  <% end %>
+</div>
+
+<div class="mt-6"><%= render "trading/summary", daily_close: @daily_close %></div>
+
+<div class="mt-6">
+  <% if @daily_close.purchases.any? %>
+    <%= render "table", purchases: @daily_close.purchases %>
+  <% else %>
+    <p class="clay p-6 text-sm text-ink-muted"><%= t(".empty") %></p>
+  <% end %>
+</div>

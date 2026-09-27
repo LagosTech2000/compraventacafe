@@ -2,6 +2,7 @@
 es:
   negocio:
     nombre: "Compra de Café el Rey David"
+    ubicacion: "Mata de Plátano, Moroceli"
 
   app_modules:
     administration: "Administración"
@@ -47,6 +48,161 @@ es:
     title: "Dirección"
     department_prompt: "Selecciona un departamento"
     municipality_prompt: "Selecciona un municipio"
+
+  trading:
+    nav:
+      home: "Resumen"
+      new_purchase: "Nueva compra"
+      purchases: "Compras"
+      invoices: "Facturas"
+      daily_close: "Cierre diario"
+      producers: "Productores"
+      zones: "Zonas"
+    home:
+      index:
+        today: "Hoy, %{date}"
+        pending_invoices:
+          zero: "No hay facturas pendientes de pago."
+          one: "1 factura pendiente de pago."
+          other: "%{count} facturas pendientes de pago."
+    summary:
+      purchases: "Compras"
+      producers: "Productores"
+      gross_weight: "Libras brutas"
+      sacks: "Sacos"
+      net_weight: "Libras netas"
+      total: "Total comprado"
+      paid_total: "Pagado"
+      pending_total: "Pendiente de pago"
+      uninvoiced_total: "Sin facturar"
+    zones:
+      index:
+        title: "Zonas"
+        new: "Nueva zona"
+        edit: "Editar"
+        empty: "Todavía no hay zonas."
+        help: "Las zonas son los lugares de donde vienen los productores. El precio depende de la zona."
+      new:
+        title: "Nueva zona"
+      edit:
+        title: "Editar zona"
+      form:
+        cancel: "Cancelar"
+      create:
+        success: "Zona creada."
+      update:
+        success: "Zona actualizada."
+    producers:
+      index:
+        title: "Productores"
+        new: "Nuevo productor"
+        search: "Buscar"
+        search_placeholder: "Nombre, apellido, DNI o RTN"
+        name: "Nombre"
+        empty: "No hay productores que mostrar."
+      show:
+        edit: "Editar"
+        new_purchase: "Nueva compra"
+        new_invoice: "Facturar compras"
+        uninvoiced: "Compras sin facturar"
+        no_uninvoiced: "No tiene compras sin facturar."
+        recent_invoices: "Últimas facturas"
+        no_invoices: "Todavía no tiene facturas."
+        back: "Volver a productores"
+      new:
+        title: "Nuevo productor"
+      edit:
+        title: "Editar productor"
+      form:
+        producer_data: "Datos de compra"
+        cancel: "Cancelar"
+      create:
+        success: "Productor creado."
+      update:
+        success: "Productor actualizado."
+    purchases:
+      index:
+        title: "Compras del %{date}"
+        new: "Nueva compra"
+        change_date: "Ver fecha"
+        empty: "No hay compras registradas en esta fecha."
+      table:
+        number: "N.º"
+        producer: "Productor"
+        invoice: "Factura"
+        not_invoiced: "Sin facturar"
+        actions: "Acciones"
+        edit: "Editar"
+      show:
+        title: "Compra"
+        edit: "Editar"
+        destroy: "Borrar"
+        confirm_destroy: "¿Borrar esta compra? Esta acción no se puede deshacer."
+        invoiced_notice: "Esta compra ya está en la factura %{number} y no se puede modificar."
+        back: "Volver a compras"
+      new:
+        title: "Nueva compra"
+      edit:
+        title: "Editar compra"
+      form:
+        producer_placeholder: "Escribe para buscar un productor"
+        producer_missing: "Selecciona un productor de la lista"
+        new_producer: "¿No está? Registrar productor"
+        zone_prompt: "Selecciona una zona"
+        calculation: "Cálculo"
+        calculation_help: "Mismo cálculo que el Excel actual: 1 lb de tara por cada saco de 165 lb (redondeado hacia arriba) y se descuenta la humedad."
+        cancel: "Cancelar"
+      create:
+        success: "Compra de %{producer} registrada."
+      update:
+        success: "Compra actualizada."
+      destroy:
+        success: "Compra borrada."
+    invoices:
+      index:
+        title: "Facturas"
+        new: "Facturar compras"
+        all: "Todas"
+        empty: "No hay facturas que mostrar."
+        number: "N.º"
+        date: "Fecha"
+        producer: "Productor"
+        status: "Estado"
+      new:
+        title: "Facturar compras"
+        choose_producer: "Productores con compras sin facturar"
+        nothing_to_invoice: "No hay compras sin facturar."
+        pick_purchases: "Compras de %{producer} sin facturar"
+        no_purchases: "Este productor no tiene compras sin facturar."
+        payment: "Pago"
+        submit: "Crear factura"
+        cancel: "Cancelar"
+      show:
+        title: "Factura %{number}"
+        print: "Imprimir"
+        mark_paid: "Marcar como cancelada"
+        paid_on_label: "Fecha de pago"
+        back: "Volver a facturas"
+        original: "ORIGINAL"
+        copy: "COPIA"
+        invoice: "Factura"
+        date: "Fecha"
+        producer: "Nombre"
+        location: "Ubicación"
+        signature: "Firma de quien factura"
+        issued_by: "Facturó: %{email}"
+        totals: "Totales"
+      create:
+        success: "Factura creada."
+      update:
+        success: "Factura marcada como cancelada."
+    daily_closes:
+      show:
+        title: "Cierre diario del %{date}"
+        change_date: "Ver fecha"
+        print: "Imprimir"
+        purchases: "Compras del día"
+        empty: "No hay compras registradas en esta fecha."
 
   module_home:
     empty: "Este módulo todavía no tiene funciones."
@@ -135,6 +291,18 @@ es:
       client:
         one: "Cliente"
         other: "Clientes"
+      producer:
+        one: "Productor"
+        other: "Productores"
+      zone:
+        one: "Zona"
+        other: "Zonas"
+      purchase:
+        one: "Compra"
+        other: "Compras"
+      invoice:
+        one: "Factura"
+        other: "Facturas"
       collaborator:
         one: "Colaborador"
         other: "Colaboradores"
@@ -157,6 +325,50 @@ es:
         municipality: "Municipio"
         municipality_id: "Municipio"
         address_line: "Dirección"
+      zone:
+        name: "Nombre"
+      producer:
+        kind: "Tipo"
+        kind/producer: "Productor"
+        kind/intermediary: "Carrero (intermediario)"
+        kind/own_farm: "Finca propia"
+        farm_name: "Finca"
+        zone: "Zona"
+        zone_id: "Zona"
+        person: "Persona"
+      purchase:
+        purchased_on: "Fecha"
+        producer: "Productor"
+        producer_id: "Productor"
+        zone: "Zona"
+        zone_id: "Zona"
+        invoice: "Factura"
+        coffee_state: "Estado del café"
+        coffee_state/cherry: "Uva"
+        coffee_state/wet_parchment: "Pergamino húmedo"
+        coffee_state/dry_parchment: "Pergamino seco"
+        gross_weight: "Peso bruto (lb)"
+        humidity_percent: "Humedad (%)"
+        price_per_pound: "Precio por libra (L)"
+        sacks: "Sacos"
+        tare: "Tara (lb)"
+        net_weight: "Peso neto (lb)"
+        total: "Total"
+        observations: "Observaciones / calidad"
+      invoice:
+        number: "Número"
+        issued_on: "Fecha"
+        producer: "Productor"
+        purchases: "Compras"
+        payment_status: "Estado de pago"
+        payment_status/pending: "Pendiente de pago"
+        payment_status/paid: "Cancelada"
+        payment_method: "Forma de pago"
+        payment_method/cash: "Efectivo"
+        payment_method/transfer: "Transferencia"
+        payment_method/check: "Cheque"
+        paid_on: "Fecha de pago"
+        total: "Total"
       permission:
         module_key: "Módulo"
         can_read: "Ver"
@@ -165,6 +377,15 @@ es:
         can_destroy: "Borrar"
     errors:
       models:
+        purchase:
+          attributes:
+            invoice:
+              other_producer: "pertenece a otro productor"
+        invoice:
+          attributes:
+            purchases:
+              other_producer: "deben ser todas del mismo productor"
+              unavailable: "ya no están disponibles: otra persona las facturó o fueron borradas. Revisa la lista."
         user:
           last_active_admin: "No se puede desactivar ni quitar el rol de administrador al último administrador activo."
       messages:
@@ -258,6 +479,15 @@ es:
       short: "%-d de %b %H:%M"
 
   number:
+    currency:
+      format:
+        format: "%u%n"
+        unit: "L "
+        delimiter: ","
+        separator: "."
+        precision: 2
+        significant: false
+        strip_insignificant_zeros: false
     format:
       delimiter: ","
       precision: 2

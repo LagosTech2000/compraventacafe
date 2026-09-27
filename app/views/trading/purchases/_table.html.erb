@@ -1,0 +1,43 @@
+<div class="overflow-x-auto rounded-md border border-line bg-surface">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th><%= t("trading.purchases.table.number") %></th>
+        <th><%= t("trading.purchases.table.producer") %></th>
+        <th><%= Purchase.human_attribute_name(:zone) %></th>
+        <th><%= Purchase.human_attribute_name(:coffee_state) %></th>
+        <th class="text-right"><%= Purchase.human_attribute_name(:gross_weight) %></th>
+        <th class="text-right"><%= Purchase.human_attribute_name(:humidity_percent) %></th>
+        <th class="text-right"><%= Purchase.human_attribute_name(:net_weight) %></th>
+        <th class="text-right"><%= Purchase.human_attribute_name(:price_per_pound) %></th>
+        <th class="text-right"><%= Purchase.human_attribute_name(:total) %></th>
+        <th><%= t("trading.purchases.table.invoice") %></th>
+        <th><%= Purchase.human_attribute_name(:observations) %></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% purchases.each do |purchase| %>
+        <tr id="<%= dom_id(purchase) %>">
+          <td><%= link_to purchase.id, trading_purchase_path(purchase), class: "text-primary underline hover:no-underline" %></td>
+          <td class="whitespace-nowrap"><%= purchase.producer.full_name %></td>
+          <td><%= purchase.zone&.name %></td>
+          <td class="whitespace-nowrap"><%= purchase.human_coffee_state %></td>
+          <td class="text-right tabular-nums"><%= format_pounds(purchase.gross_weight) %></td>
+          <td class="text-right tabular-nums"><%= format_pounds(purchase.humidity_percent) %></td>
+          <td class="text-right tabular-nums"><%= format_pounds(purchase.net_weight) %></td>
+          <td class="text-right tabular-nums"><%= format_money(purchase.price_per_pound) %></td>
+          <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(purchase.total) %></td>
+          <td class="whitespace-nowrap">
+            <% if purchase.invoice %>
+              <%= link_to purchase.invoice.display_number, trading_invoice_path(purchase.invoice), class: "text-primary underline hover:no-underline" %>
+              <%= payment_status_badge(purchase.invoice) %>
+            <% else %>
+              <span class="text-ink-muted"><%= t("trading.purchases.table.not_invoiced") %></span>
+            <% end %>
+          </td>
+          <td class="min-w-40"><%= purchase.observations %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

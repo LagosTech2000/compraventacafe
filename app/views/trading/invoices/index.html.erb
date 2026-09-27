@@ -1,0 +1,24 @@
+<% content_for :title, t(".title") %>
+<%= render "trading/nav" %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+  <% if policy(Invoice).create? %>
+    <%= link_to t(".new"), new_trading_invoice_path, class: "btn btn-primary" %>
+  <% end %>
+</div>
+
+<nav class="mt-6 flex flex-wrap gap-2">
+  <% [ [ nil, t(".all") ], *Invoice::PAYMENT_STATUSES.map { |s| [ s, Invoice.human_attribute_name("payment_status/#{s}") ] } ].each do |status, label| %>
+    <%= link_to label, trading_invoices_path(status: status), class: (@status == status ? "btn btn-primary" : "btn"),
+          aria: { current: (@status == status ? "page" : nil) } %>
+  <% end %>
+</nav>
+
+<div class="mt-6">
+  <% if @invoices.any? %>
+    <%= render "table", invoices: @invoices %>
+  <% else %>
+    <p class="clay p-6 text-sm text-ink-muted"><%= t(".empty") %></p>
+  <% end %>
+</div>

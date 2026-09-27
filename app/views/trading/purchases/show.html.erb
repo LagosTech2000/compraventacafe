@@ -1,0 +1,38 @@
+<% content_for :title, t(".title") %>
+<%= render "trading/nav" %>
+
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %> <%= @purchase.id %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= link_to @purchase.producer.full_name, trading_producer_path(@purchase.producer), class: "underline" %></p>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <% if policy(@purchase).update? %>
+      <%= link_to t(".edit"), edit_trading_purchase_path(@purchase), class: "btn btn-primary" %>
+    <% end %>
+    <% if policy(@purchase).destroy? %>
+      <%= button_to t(".destroy"), trading_purchase_path(@purchase), method: :delete, class: "btn",
+            form: { data: { turbo_confirm: t(".confirm_destroy") } } %>
+    <% end %>
+  </div>
+</div>
+
+<% if @purchase.invoice %>
+  <p class="flash-notice mt-4"><%= t(".invoiced_notice", number: @purchase.invoice.display_number) %></p>
+<% end %>
+
+<dl class="mt-6 grid gap-x-6 rounded-md border border-line bg-surface sm:grid-cols-3">
+  <% {
+       purchased_on: l(@purchase.purchased_on, format: :long), zone: @purchase.zone&.name, coffee_state: @purchase.human_coffee_state,
+       gross_weight: format_pounds(@purchase.gross_weight), sacks: format_pounds(@purchase.sacks), tare: format_pounds(@purchase.tare),
+       humidity_percent: format_pounds(@purchase.humidity_percent), net_weight: format_pounds(@purchase.net_weight),
+       price_per_pound: format_money(@purchase.price_per_pound), total: format_money(@purchase.total), observations: @purchase.observations
+     }.each do |attribute, value| %>
+    <div class="border-b border-line px-4 py-3">
+      <dt class="text-xs font-medium text-ink-muted"><%= Purchase.human_attribute_name(attribute) %></dt>
+      <dd class="mt-1 text-sm"><%= value.presence || "—" %></dd>
+    </div>
+  <% end %>
+</dl>
+
+<p class="mt-6"><%= link_to t(".back"), trading_purchases_path(date: @purchase.purchased_on), class: "text-sm text-primary underline hover:no-underline" %></p>

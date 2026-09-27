@@ -2,6 +2,9 @@
   <% if person.client? %>
     <span class="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-medium text-primary"><%= Client.model_name.human %></span>
   <% end %>
+  <% if person.producer? %>
+    <span class="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-medium text-primary"><%= Producer.model_name.human %></span>
+  <% end %>
   <% if person.collaborator? %>
     <span class="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-medium text-primary"><%= Collaborator.model_name.human %></span>
   <% end %>

@@ -1,0 +1,31 @@
+<% content_for :title, t(".title") %>
+<%= render "trading/nav" %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+  <% if policy(Zone).create? %>
+    <%= link_to t(".new"), new_trading_zone_path, class: "btn btn-primary" %>
+  <% end %>
+</div>
+<p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+
+<% if @zones.any? %>
+  <div class="mt-6 overflow-x-auto rounded-md border border-line bg-surface">
+    <table class="data-table">
+      <tbody>
+        <% @zones.each do |zone| %>
+          <tr id="<%= dom_id(zone) %>">
+            <td><%= zone.name %></td>
+            <td class="text-right">
+              <% if policy(zone).update? %>
+                <%= link_to t(".edit"), edit_trading_zone_path(zone), class: "text-primary underline hover:no-underline" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <p class="clay mt-6 p-6 text-sm text-ink-muted"><%= t(".empty") %></p>
+<% end %>

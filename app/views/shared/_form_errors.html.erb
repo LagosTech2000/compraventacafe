@@ -2,7 +2,7 @@
   <div class="flash-alert" id="form-errors">
     <p class="font-semibold"><%= t("errors.template.header", count: record.errors.count) %></p>
     <ul class="mt-1 list-disc pl-5">
-      <% record.errors.full_messages.each do |message| %>
+      <% form_error_messages(record).each do |message| %>
         <li><%= message %></li>
       <% end %>
     </ul>

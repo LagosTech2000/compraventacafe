@@ -1,0 +1,12 @@
+<%= form_with model: [ :trading, zone ], class: "max-w-md space-y-5", data: { controller: "form-validation" } do |form| %>
+  <%= render "shared/form_errors", record: zone %>
+  <div>
+    <%= form.label :name, class: "field-label" %>
+    <%= form.text_field :name, autofocus: true, required: true, maxlength: 100, class: "field-input",
+          data: { missing_message: "#{Zone.human_attribute_name(:name)} #{t("errors.messages.blank")}" } %>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= link_to t(".cancel"), trading_zones_path, class: "btn" %>
+  </div>
+<% end %>

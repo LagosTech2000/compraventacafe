@@ -33,6 +33,18 @@ module FormFieldsHelper
     }
   end
 
+  # Full messages, naming nested attributes ("person.first_names") with the
+  # associated model's translation instead of a humanized English key.
+  def form_error_messages(record)
+    record.errors.map do |error|
+      association, attribute = error.attribute.to_s.split(".", 2)
+      reflection = attribute && record.class.reflect_on_association(association)
+      next error.full_message unless reflection
+
+      t("errors.format", attribute: reflection.klass.human_attribute_name(attribute), message: error.message)
+    end.uniq
+  end
+
   # { department_id => [[municipality_id, name], ...] } for the address picker.
   def municipalities_by_department
     @municipalities_by_department ||= Municipality.order(:name).pluck(:department_id, :id, :name)

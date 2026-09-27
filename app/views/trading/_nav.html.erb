@@ -1,0 +1,12 @@
+<nav class="mb-6 flex flex-wrap gap-2 print:hidden" aria-label="<%= AppModule.human_name("trading") %>">
+  <% if policy(Purchase).create? %>
+    <%= link_to t("trading.nav.new_purchase"), new_trading_purchase_path, class: "btn btn-primary" %>
+  <% end %>
+  <% {
+       home: trading_root_path, purchases: trading_purchases_path, invoices: trading_invoices_path,
+       daily_close: trading_daily_close_path, producers: trading_producers_path, zones: trading_zones_path
+     }.each do |key, path| %>
+    <%= link_to t("trading.nav.#{key}"), path, class: nav_link_class(path) + " clay",
+          aria: { current: (current_page?(path) ? "page" : nil) } %>
+  <% end %>
+</nav>
