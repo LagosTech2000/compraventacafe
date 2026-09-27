@@ -42,4 +42,13 @@ RSpec.describe DailyClose do
 
     expect(described_class.new(today).purchases).to eq([ paid_new, paid_old, pending, loose_new, loose_old ])
   end
+
+  it "groups purchases by payment state for the printed report, skipping empty states" do
+    user = create(:user)
+    paid = create(:purchase)
+    loose = create(:purchase)
+    InvoiceIssuer.new(producer: paid.producer, user:, purchase_ids: [ paid.id ], payment_status: "paid", payment_method: "cash").call
+
+    expect(described_class.new(today).groups).to eq([ [ "paid", [ paid ] ], [ "uninvoiced", [ loose ] ] ])
+  end
 end

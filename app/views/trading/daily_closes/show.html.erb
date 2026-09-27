@@ -1,6 +1,7 @@
 <% content_for :title, t(".title", date: l(@daily_close.date)) %>
 <%= render "trading/nav" %>
 
+<div class="print:hidden">
 <div class="flex flex-wrap items-end justify-between gap-4">
   <h1 class="text-2xl font-bold"><%= t(".title", date: l(@daily_close.date, format: :long)) %></h1>
   <div class="flex flex-wrap gap-2 print:hidden">
@@ -20,3 +21,6 @@
 <% else %>
   <p class="clay p-6 text-sm text-ink-muted"><%= t(".empty") %></p>
 <% end %>
+</div>
+
+<%= render "report", daily_close: @daily_close %>

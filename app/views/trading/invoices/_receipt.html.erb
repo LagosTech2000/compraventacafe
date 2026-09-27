@@ -43,8 +43,8 @@
           <td class="text-right tabular-nums"><%= format_pounds(purchase.gross_weight) %></td>
           <td class="text-right tabular-nums"><%= format_pounds(purchase.humidity_percent) %></td>
           <td class="text-right tabular-nums"><%= format_pounds(purchase.net_weight) %></td>
-          <td class="text-right tabular-nums"><%= format_money(purchase.price_per_pound) %></td>
-          <td class="text-right tabular-nums"><%= format_money(purchase.total) %></td>
+          <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(purchase.price_per_pound) %></td>
+          <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(purchase.total) %></td>
         </tr>
       <% end %>
     </tbody>
@@ -55,7 +55,7 @@
         <td></td>
         <td class="text-right tabular-nums"><%= format_pounds(invoice.net_weight) %></td>
         <td></td>
-        <td class="text-right tabular-nums"><%= format_money(invoice.total) %></td>
+        <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(invoice.total) %></td>
       </tr>
     </tfoot>
   </table>

@@ -229,6 +229,23 @@ es:
       update:
         success: "Factura marcada como cancelada."
     daily_closes:
+      report:
+        title: "Cierre diario"
+        coffee_state: "Estado"
+        subtotal: "Subtotal"
+        generated: "Generado por %{name} el %{time}"
+        groups:
+          paid: "Canceladas"
+          pending: "Pendientes de pago"
+          uninvoiced: "Sin facturar"
+        units: "Pesos en libras; precios y montos en Lempiras."
+        columns:
+          gross_weight: "Bruto"
+          humidity_percent: "Hum. %"
+          net_weight: "Neto"
+          price_per_pound: "L/lb"
+          total: "Total"
+          invoice: "Fact."
       show:
         title: "Cierre diario del %{date}"
         change_date: "Ver fecha"

@@ -97,3 +97,19 @@
     @apply rounded-md bg-danger-soft px-4 py-3 text-sm text-danger;
   }
 }
+
+/* Printed pages: letter-friendly margins and "page / pages" at the bottom. */
+@page {
+  margin: 12mm 10mm 14mm;
+
+  @bottom-right {
+    content: counter(page) " / " counter(pages);
+    font-size: 8pt;
+  }
+}
+
+@media print {
+  body {
+    background: white;
+  }
+}

@@ -110,6 +110,18 @@ RSpec.describe "Trading purchase flow" do
     expect(response).to have_http_status(:ok)
   end
 
+  it "prints the daily close as a report grouped by payment state with subtotals" do
+    create(:purchase, gross_weight: 146)
+    create(:invoice).purchases.first.invoice.mark_paid(method: "cash", on: Time.zone.today)
+    get trading_daily_close_path
+
+    report = Nokogiri::HTML(response.body).at_css("section.print\\:block")
+    expect(report.text).to include("Compra de Café el Rey David", "Cierre diario", "Canceladas (1)", "Sin facturar (1)", "Subtotal")
+    expect(report.text).not_to include("Pendientes de pago")
+    expect(report.text).to include("Generado por #{user.name}")
+    expect(report.css("a")).to be_empty
+  end
+
   it "keeps a read-only user from registering purchases" do
     reader = create(:user).tap { |u| create(:permission, user: u, module_key: "trading", can_read: true) }
     sign_in reader
