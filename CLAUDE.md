@@ -15,7 +15,7 @@ Herramienta interna, unos 10 usuarios, UI 100% en español.
    socket Unix con autenticación peer. En producción, variables de entorno.
 5. **Cada commit se notifica a Fernando**: mostrar el mensaje completo del
    commit (título y cuerpo, con su hash) y una descripción corta de lo que
-   cambia.
+   cambia. Los mensajes de commit **no llevan** la línea `Co-Authored-By`.
 6. **El desarrollo ocurre dentro de WSL (Ubuntu)**, en `~/code/compraventacafe`,
    nunca en `/mnt/c` ni en OneDrive. Sin Docker.
 
