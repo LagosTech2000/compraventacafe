@@ -26,8 +26,9 @@ class Purchase < ApplicationRecord
   # Most recent purchase date first; same day, last registered first.
   scope :newest_first, -> { order(purchased_on: :desc, id: :desc) }
 
+  # The id is shown next to it in the audit log; the producer names it.
   def audit_label
-    "#{id} · #{producer.full_name}"
+    producer.full_name
   end
 
   def invoiced?

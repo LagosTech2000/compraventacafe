@@ -46,7 +46,7 @@ RSpec.describe "Administration::AuditEvents" do
                                            from: Time.zone.today.iso8601, to: Time.zone.today.iso8601)
       rows = Nokogiri::HTML(response.body).css("tbody tr")
       expect(rows.size).to eq(1)
-      expect(rows.first.text).to include("Pueblo Nuevo", "otra@example.com", "Creó", "Zona")
+      expect(rows.first.text.squish).to include("#{other.name} creó la zona", "(Pueblo Nuevo)")
 
       get administration_audit_events_path(auditable_type: "Invoice")
       expect(response.body).to include("No hay acciones que coincidan")
@@ -67,6 +67,39 @@ RSpec.describe "Administration::AuditEvents" do
       rows = Nokogiri::HTML(response.body).css("tbody tr")
       expect(rows.size).to eq(2)
       expect(rows.map(&:text)).to all(include("##{purchase.id}"))
+    end
+
+    it "describes each event in one sentence" do
+      allow(Current).to receive(:user).and_return(admin)
+      purchase = create(:purchase, producer: create(:producer, person: create(:person, first_names: "Ana", last_names: "Paz")))
+      purchase.update!(price_per_pound: 60)
+      purchase.destroy!
+      allow(Current).to receive(:user).and_call_original
+      post session_path, params: { email_address: "nadie@example.com", password: "x" }
+      sign_in admin
+
+      sentences = AuditEvent.newest_first.map { |event| helper_sentence(event) }
+      at = ->(event) { "el #{I18n.l(event.created_at.to_date)} a las #{I18n.l(event.created_at, format: :time_only)}" }
+      update = AuditEvent.find_by!(auditable: purchase, action: "update")
+
+      expect(sentences).to include(
+        "#{admin.name} creó la compra ##{purchase.id} (Ana Paz) #{at.(AuditEvent.find_by!(auditable_type: "Purchase", action: "create"))}.",
+        "#{admin.name} borró la compra ##{purchase.id} (Ana Paz) #{at.(AuditEvent.find_by!(auditable_type: "Purchase", action: "destroy"))}.",
+        "Intento fallido de iniciar sesión con «nadie@example.com» #{at.(AuditEvent.find_by!(action: "sign_in_failed"))}.",
+        "#{admin.name} inició sesión #{at.(AuditEvent.where(action: "sign_in").last)}."
+      )
+
+      update_sentence = helper_sentence(update)
+      expect(update_sentence).to start_with("#{admin.name} modificó la compra ##{purchase.id} (Ana Paz): ")
+      expect(update_sentence).to include("Precio por libra (L)", "Total", at.(update))
+
+      get administration_audit_event_path(update)
+      expect(Nokogiri::HTML(response.body).at_css("#audit-sentence").text).to include("modificó la compra")
+    end
+
+    it "names the system when nobody was signed in" do
+      zone = create(:zone, name: "Las Labranzas")
+      expect(helper_sentence(AuditEvent.find_by!(auditable: zone))).to start_with("El sistema creó la zona ##{zone.id} (Las Labranzas)")
     end
 
     it "ignores garbage in the filters" do
@@ -133,4 +166,8 @@ RSpec.describe "Administration::AuditEvents" do
       expect(response.body).to include("Uva")
     end
   end
+end
+
+def helper_sentence(event)
+  ApplicationController.new.view_context.audit_sentence(event)
 end

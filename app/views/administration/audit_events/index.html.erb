@@ -20,12 +20,9 @@
     <table class="data-table">
       <thead>
         <tr>
-          <th><%= t(".when") %></th>
-          <th><%= t(".user") %></th>
-          <th><%= t(".action") %></th>
-          <th><%= t(".entity") %></th>
-          <th><%= t(".record") %></th>
-          <th><%= t(".changes") %></th>
+          <th><%= t("administration.audit_events.index.when") %></th>
+          <th><%= t("administration.audit_events.index.description") %></th>
+          <th><%= t("administration.audit_events.index.action") %></th>
           <th class="cell-actions"></th>
         </tr>
       </thead>
@@ -33,16 +30,8 @@
         <% @events.each do |event| %>
           <tr id="<%= dom_id(event) %>">
             <td class="whitespace-nowrap tabular-nums"><%= l(event.created_at, format: :audit) %></td>
-            <td class="break-all"><%= audit_user(event) %></td>
+            <td class="min-w-72"><%= audit_sentence(event) %></td>
             <td><%= audit_action_badge(event) %></td>
-            <td class="whitespace-nowrap"><%= event.human_auditable_type %></td>
-            <td>
-              <% if event.auditable_id %><span class="tabular-nums text-ink-muted">#<%= event.auditable_id %></span><% end %>
-              <%= event.auditable_label %>
-            </td>
-            <td class="text-ink-muted">
-              <%= event.changeset.keys.first(4).map { |attribute| audit_attribute_name(event, attribute) }.join(", ") %><%= "…" if event.changeset.size > 4 %>
-            </td>
             <td class="cell-actions"><%= detail_button administration_audit_event_path(event) %></td>
           </tr>
         <% end %>
