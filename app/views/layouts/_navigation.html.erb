@@ -14,29 +14,33 @@
         <% end %>
       </div>
 
-      <div class="hidden items-center gap-3 lg:flex">
-        <span class="flex items-center gap-2 text-sm text-ink-muted" title="<%= Current.user.email_address %>">
-          <span class="grid size-8 place-items-center rounded-full bg-primary-soft text-xs font-bold text-primary" aria-hidden="true">
-            <%= Current.user.name.split.first(2).map { |part| part[0] }.join.upcase %>
-          </span>
-          <span class="max-w-40 truncate"><%= Current.user.name %></span>
-        </span>
-        <%= button_to t(".sign_out"), session_path, method: :delete, class: "btn btn-sm" %>
-      </div>
+      <div class="flex items-center gap-2 lg:gap-3">
+        <%= help_guide_button %>
 
-      <details class="relative lg:hidden">
-        <summary class="btn list-none"><%= t(".menu") %></summary>
-        <div class="glass absolute right-0 z-10 mt-2 w-72 space-y-1 p-3">
-          <%= link_to t(".home"), root_path, class: "#{nav_link_class(root_path)} w-full" %>
-          <% readable_module_keys.each do |key| %>
-            <%= link_to AppModule.human_name(key), module_root_path(key), class: "#{nav_link_class(module_root_path(key))} w-full" %>
-          <% end %>
-          <div class="mt-2 border-t border-line pt-3">
-            <p class="mb-2 truncate px-3.5 text-xs text-ink-muted"><%= Current.user.name %></p>
-            <%= button_to t(".sign_out"), session_path, method: :delete, class: "btn w-full" %>
-          </div>
+        <div class="hidden items-center gap-3 lg:flex">
+          <span class="flex items-center gap-2 text-sm text-ink-muted" title="<%= Current.user.email_address %>">
+            <span class="grid size-8 place-items-center rounded-full bg-primary-soft text-xs font-bold text-primary" aria-hidden="true">
+              <%= Current.user.name.split.first(2).map { |part| part[0] }.join.upcase %>
+            </span>
+            <span class="max-w-40 truncate"><%= Current.user.name %></span>
+          </span>
+          <%= button_to t(".sign_out"), session_path, method: :delete, class: "btn btn-sm" %>
         </div>
-      </details>
+
+        <details class="relative lg:hidden">
+          <summary class="btn list-none"><%= t(".menu") %></summary>
+          <div class="glass absolute right-0 z-10 mt-2 w-72 space-y-1 p-3">
+            <%= link_to t(".home"), root_path, class: "#{nav_link_class(root_path)} w-full" %>
+            <% readable_module_keys.each do |key| %>
+              <%= link_to AppModule.human_name(key), module_root_path(key), class: "#{nav_link_class(module_root_path(key))} w-full" %>
+            <% end %>
+            <div class="mt-2 border-t border-line pt-3">
+              <p class="mb-2 truncate px-3.5 text-xs text-ink-muted"><%= Current.user.name %></p>
+              <%= button_to t(".sign_out"), session_path, method: :delete, class: "btn w-full" %>
+            </div>
+          </div>
+        </details>
+      </div>
     </div>
   </nav>
 </header>

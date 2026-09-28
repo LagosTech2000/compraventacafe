@@ -244,6 +244,17 @@ los errores).
   elegir por nombre, se quedan en orden alfabético. Excepción: el cierre diario
   agrupa canceladas, luego pendientes de pago, luego sin facturar (más
   recientes primero dentro de cada grupo).
+- **Guías de ayuda (`HelpGuide`)**: toda pantalla tiene un botón "?"
+  (`help_guide_button`) que abre su guía en un panel lateral propio
+  (`<dialog id="help-guide">`), distinto del modal y encima de él si ambos
+  están abiertos. Va en la navegación, junto a la × del modal y en el login.
+  El texto vive en `es.yml` bajo `help_guides.screens.<ruta del controlador>.<acción>`
+  (`new`/`create`/`edit`/`update` usan `form`), con `title`, `summary`,
+  `steps` y `tips` opcionales. **Pantalla nueva = su guía**: un spec falla si
+  una ruta GET no la tiene. Procesos que cruzan pantallas van en
+  `help_guides.processes` y se ponen con
+  `help_guide_button HelpGuide.process(:nombre), label: true`. Las guías solo
+  describen lo que el sistema ya hace; nunca reglas de negocio abiertas.
 - **Listas desplegables**: nunca con la primera opción en blanco. Campo
   opcional: "Sin … asignado" (`shared.select.*`). Campo obligatorio: "Selecciona
   …". Filtro: "Todos".
