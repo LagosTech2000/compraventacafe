@@ -5,9 +5,9 @@
 <div class="flex flex-wrap items-end justify-between gap-4">
   <h1 class="text-2xl font-bold"><%= t(".title", date: l(@daily_close.date, format: :long)) %></h1>
   <div class="flex flex-wrap gap-2 print:hidden">
-    <%= form_with url: trading_daily_close_path, method: :get, class: "flex gap-2" do |form| %>
-      <%= form.date_field :date, value: @daily_close.date, aria: { label: Purchase.human_attribute_name(:purchased_on) }, class: "field-input" %>
-      <%= form.submit t(".change_date"), name: nil, class: "btn" %>
+    <%= form_with url: trading_daily_close_path, method: :get, class: "flex gap-2", data: { controller: "auto-submit" } do |form| %>
+      <%= form.date_field :date, value: @daily_close.date, aria: { label: Purchase.human_attribute_name(:purchased_on) }, class: "field-input",
+            data: { action: "change->auto-submit#submit" } %>
     <% end %>
     <div data-controller="print"><button type="button" class="btn" data-action="print#print"><%= t(".print") %></button></div>
   </div>

@@ -287,7 +287,6 @@ es:
           invoice: "Fact."
       show:
         title: "Cierre diario del %{date}"
-        change_date: "Ver fecha"
         print: "Imprimir"
         purchases: "Compras del día"
         empty: "No hay compras registradas en esta fecha."

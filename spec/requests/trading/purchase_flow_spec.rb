@@ -121,6 +121,14 @@ RSpec.describe "Trading purchase flow" do
     expect(response).to have_http_status(:ok)
   end
 
+  it "opens the daily close on today and changes date without a button" do
+    get trading_daily_close_path
+    form = Nokogiri::HTML(response.body).at_css("form[data-controller='auto-submit']")
+    expect(form.at_css("input[type=date]")["value"]).to eq(Time.zone.today.iso8601)
+    expect(form.at_css("input[type=date]")["data-action"]).to eq("change->auto-submit#submit")
+    expect(form.css("input[type=submit], button")).to be_empty
+  end
+
   it "prints the daily close as a report grouped by payment state with subtotals" do
     create(:purchase, gross_weight: 146)
     create(:invoice).purchases.first.invoice.mark_paid(method: "cash", on: Time.zone.today)
