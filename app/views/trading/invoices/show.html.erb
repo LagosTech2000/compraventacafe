@@ -43,8 +43,10 @@
 <div class="space-y-6 print:space-y-4">
   <%= render "receipt", invoice: @invoice, label: t(".original") %>
   <% unless modal_request? %>
-    <div class="hidden border-t-2 border-dashed border-ink print:block"></div>
-    <%= render "receipt", invoice: @invoice, label: t(".copy") %>
+    <%# Printed on its own sheet(s): no cutting needed. %>
+    <div class="print:break-before-page">
+      <%= render "receipt", invoice: @invoice, label: t(".copy") %>
+    </div>
   <% end %>
 </div>
 

@@ -317,4 +317,9 @@
     letter-spacing: 0;
     color: black;
   }
+
+  /* Totals print once, at the end; a <tfoot> would repeat on every page. */
+  tfoot {
+    display: table-row-group;
+  }
 }

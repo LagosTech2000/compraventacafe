@@ -95,6 +95,17 @@ RSpec.describe "Trading purchase flow" do
     expect(invoice.reload).to be_paid
   end
 
+  it "prints the original and the copy on separate pages, each saying which one it is" do
+    invoice = create(:invoice)
+    get trading_invoice_path(invoice)
+    page = Nokogiri::HTML(response.body)
+    copy = page.at_css("div.print\\:break-before-page article")
+    expect(copy.text).to include("COPIA")
+    markers = page.css("thead tr.print\\:table-row").map { |row| row.text.squish }
+    expect(markers).to eq([ "Factura #{invoice.display_number} · ORIGINAL", "Factura #{invoice.display_number} · COPIA" ])
+    expect(response.body).not_to include("border-dashed")
+  end
+
   it "does not let an invoiced purchase be edited" do
     purchase = create(:invoice).purchases.first
     patch trading_purchase_path(purchase), params: { purchase: { price_per_pound: 1 } }
