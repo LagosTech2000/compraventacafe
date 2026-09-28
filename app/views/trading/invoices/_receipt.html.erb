@@ -1,5 +1,5 @@
 <%# One printed copy of an invoice. `label` is ORIGINAL or COPIA. %>
-<article class="rounded-md border border-line bg-white p-5 print:break-inside-avoid print:rounded-none print:border-ink">
+<article class="rounded-2xl border border-line bg-white p-5 shadow-[0_1px_2px_rgb(29_21_18/0.04)] print:p-3 print:shadow-none print:break-inside-avoid print:rounded-none print:border-ink">
   <header class="flex flex-wrap items-start justify-between gap-2">
     <div>
       <p class="text-lg font-bold"><%= t("negocio.nombre") %></p>
@@ -12,7 +12,7 @@
     </div>
   </header>
 
-  <dl class="mt-4 grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-3">
+  <dl class="mt-4 print:mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-3">
     <div><dt class="inline font-semibold"><%= t("trading.invoices.show.producer") %>:</dt> <dd class="inline"><%= invoice.producer.full_name %></dd></div>
     <div><dt class="inline font-semibold"><%= t("trading.invoices.show.date") %>:</dt> <dd class="inline"><%= l(invoice.issued_on) %></dd></div>
     <div><dt class="inline font-semibold"><%= t("trading.invoices.show.location") %>:</dt>
@@ -23,7 +23,7 @@
     <% end %>
   </dl>
 
-  <table class="data-table mt-4">
+  <table class="data-table mt-4 print:mt-2">
     <thead>
       <tr>
         <th><%= Purchase.human_attribute_name(:purchased_on) %></th>
@@ -65,7 +65,7 @@
     <p class="mt-3 text-sm"><span class="font-semibold"><%= Purchase.human_attribute_name(:observations) %>:</span> <%= observations.join("; ") %></p>
   <% end %>
 
-  <footer class="mt-10 flex flex-wrap items-end justify-between gap-4 text-sm">
+  <footer class="mt-10 print:mt-6 flex flex-wrap items-end justify-between gap-4 text-sm">
     <div class="w-64 border-t border-ink pt-1 text-center"><%= t("trading.invoices.show.signature") %></div>
     <p class="text-xs text-ink-muted"><%= t("trading.invoices.show.issued_by", name: invoice.created_by.name) %></p>
   </footer>

@@ -33,6 +33,6 @@ module ModalSupport
       end
 
       flash[:notice] = notice unless picker_request?
-      render "shared/modal_result", locals: { event:, detail:, refresh: !picker_request? }
+      render "shared/modal_result", layout: false, locals: { event:, detail:, refresh: !picker_request? }
     end
 end

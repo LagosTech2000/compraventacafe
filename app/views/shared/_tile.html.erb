@@ -1,0 +1,13 @@
+<%# Clay card linking to a section: icon, title and optional description. %>
+<%= link_to path, class: "tile group flex items-start gap-4" do %>
+  <span class="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary-soft text-primary transition group-hover:bg-primary group-hover:text-on-primary">
+    <%= icon(icon_name, css: "size-6") %>
+  </span>
+  <span class="min-w-0">
+    <span class="block text-base font-semibold text-ink"><%= title %></span>
+    <% if local_assigns[:description] %>
+      <span class="mt-1 block text-sm text-ink-muted"><%= description %></span>
+    <% end %>
+  </span>
+  <span class="ml-auto self-center text-ink-muted transition group-hover:translate-x-0.5 group-hover:text-primary" aria-hidden="true">→</span>
+<% end %>

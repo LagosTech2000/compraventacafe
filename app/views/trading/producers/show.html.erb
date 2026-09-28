@@ -21,7 +21,7 @@
   </div>
 </div>
 
-<dl class="mt-6 grid rounded-md border border-line bg-surface sm:grid-cols-2">
+<dl class="mt-6 grid panel sm:grid-cols-2">
   <% person = @producer.person %>
   <% {
        dni: person.dni, rtn: person.rtn, phone: format_phone(person.phone), email: person.email,
@@ -49,5 +49,5 @@
 <% end %>
 
 <% unless modal_request? %>
-  <p class="mt-6"><%= link_to t(".back"), trading_producers_path, class: "text-sm text-primary underline hover:no-underline" %></p>
+  <p class="mt-6"><%= link_to t(".back"), trading_producers_path, class: "text-sm link" %></p>
 <% end %>

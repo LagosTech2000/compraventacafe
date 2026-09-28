@@ -2,7 +2,7 @@
     render layout: "trading/lifecycle", locals: { lifecycle: } and pass the
     next-step buttons in the block. %>
 <% steps = TradingLifecycle::STAGES %>
-<section class="rounded-md border border-line bg-surface p-4 print:hidden" aria-label="<%= t("trading.lifecycle.label") %>">
+<section class="panel p-4 print:hidden" aria-label="<%= t("trading.lifecycle.label") %>">
   <ol class="flex items-center gap-2 text-xs sm:text-sm">
     <% steps.each_with_index do |step, index| %>
       <% status = lifecycle.status(step) %>

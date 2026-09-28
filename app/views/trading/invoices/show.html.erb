@@ -13,7 +13,7 @@
   <% end %>
 </div>
 
-<div class="mb-6">
+<div class="mb-6 print:hidden">
   <%= render layout: "trading/lifecycle", locals: { lifecycle: TradingLifecycle.for_invoice(@invoice) } do %>
     <% if policy(@invoice).update? %>
       <%= form_with model: @invoice, url: trading_invoice_path(@invoice), method: :patch,
@@ -49,5 +49,5 @@
 </div>
 
 <% unless modal_request? %>
-  <p class="mt-6 print:hidden"><%= link_to t(".back"), trading_invoices_path, class: "text-sm text-primary underline hover:no-underline" %></p>
+  <p class="mt-6 print:hidden"><%= link_to t(".back"), trading_invoices_path, class: "text-sm link" %></p>
 <% end %>

@@ -13,7 +13,10 @@ Herramienta interna, unos 10 usuarios, UI 100% en español.
    Ningún nombre de clase, tabla, columna o ruta lleva español.
 4. **Sin secretos en el repositorio.** En desarrollo, PostgreSQL conecta por
    socket Unix con autenticación peer. En producción, variables de entorno.
-5. **El desarrollo ocurre dentro de WSL (Ubuntu)**, en `~/code/compraventacafe`,
+5. **Cada commit se notifica a Fernando**: mostrar el mensaje completo del
+   commit (título y cuerpo, con su hash) y una descripción corta de lo que
+   cambia.
+6. **El desarrollo ocurre dentro de WSL (Ubuntu)**, en `~/code/compraventacafe`,
    nunca en `/mnt/c` ni en OneDrive. Sin Docker.
 
 ## Fuentes de verdad
@@ -268,8 +271,21 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
   maneja tablas de dinero, planillas y reportes.
 - La paleta vive como tokens `@theme` en `app/assets/tailwind/application.css`.
   Es el único lugar a editar cuando se defina la paleta real; la actual es
-  provisional. Clases de apoyo: `clay`, `btn`, `btn-primary`, `data-table`,
-  `field-label`, `field-input`.
+  provisional. Tipografía: Inter, alojada en la app (`app/assets/fonts`), sin
+  servicios externos.
+- **Componentes de estilo** (úsalos en vez de repetir clases): `btn`,
+  `btn-primary`, `btn-sm` (píldoras clay); `nav-pill` / `nav-pill-active`
+  (vía `nav_link_class`; dentro de `.subnav` el activo va en tono suave);
+  `glass` (encabezado fijo translúcido); `tile` (tarjeta que enlaza, con
+  `shared/_tile` e `icon`); `stat` (cifras); `panel` (contenedor plano de
+  tablas, detalles y filtros); `data-table`, `data-card`, `cell-actions`;
+  `field-label`, `field-input`; `badge` + `badge-success` / `badge-danger` /
+  `badge-neutral`; `empty-state`; `link`; `flash-notice` / `flash-alert`;
+  `modal`. Los formularios de página completa usan `form_surface_class`.
+- Íconos: `icon(:nombre)` (`IconsHelper`), decorativos y ocultos a lectores
+  de pantalla; el texto al lado lleva el significado.
+- Impresión: `print:` oculta lo interactivo y las tablas se compactan en
+  papel; la factura cabe con original y copia en una hoja.
 - `raise_on_missing_translations` está activo en desarrollo y test: una clave
   que falte en `es.yml` rompe la página o el spec.
 - El nombre del negocio se lee con `t("negocio.nombre")`. Un solo lugar.

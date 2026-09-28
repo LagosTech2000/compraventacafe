@@ -19,7 +19,7 @@
 <% if @user.admin? %>
   <p class="text-sm text-ink-muted"><%= t(".admin_has_all") %></p>
 <% else %>
-  <div class="overflow-x-auto rounded-md border border-line bg-surface">
+  <div class="overflow-x-auto panel">
     <table class="data-table">
       <thead>
         <tr>
@@ -44,5 +44,5 @@
 <% end %>
 
 <% unless modal_request? %>
-  <p class="mt-6"><%= link_to t(".back"), administration_users_path, class: "text-sm text-primary underline hover:no-underline" %></p>
+  <p class="mt-6"><%= link_to t(".back"), administration_users_path, class: "text-sm link" %></p>
 <% end %>

@@ -24,6 +24,6 @@
     <%= render "table", invoices: @invoices %>
     <%= render "shared/pagination", filter: @filter, next_page: @next_page %>
   <% else %>
-    <p class="clay p-6 text-sm text-ink-muted"><%= t(".empty") %></p>
+    <p class="empty-state"><%= t(".empty") %></p>
   <% end %>
 </div>

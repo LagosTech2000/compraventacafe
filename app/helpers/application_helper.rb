@@ -24,6 +24,11 @@ module ApplicationHelper
     link_to label, path, options.merge(data: { **options.fetch(:data, {}), turbo_frame: "_top" })
   end
 
+  # Forms sit on a card on full pages; inside the modal they already do.
+  def form_surface_class(extra = "")
+    [ (modal_request? ? nil : "panel p-5 sm:p-6"), extra ].compact_blank.join(" ")
+  end
+
   # "Cancelar": closes the modal when inside it, otherwise goes back to `path`.
   def cancel_button(path, label: t("shared.cancel"))
     if modal_request?
@@ -33,12 +38,9 @@ module ApplicationHelper
     end
   end
 
-  def nav_link_class(path)
-    base = "block rounded-2xl px-4 py-2 text-sm font-medium transition"
-    if current_page?(path) || request.path.start_with?("#{path}/")
-      "#{base} bg-primary text-on-primary"
-    else
-      "#{base} text-ink hover:bg-primary-soft"
-    end
+  # Active on its page and, unless exact, on the pages below it.
+  def nav_link_class(path, exact: false)
+    active = current_page?(path) || (!exact && request.path.start_with?("#{path}/"))
+    active ? "nav-pill nav-pill-active" : "nav-pill"
   end
 end

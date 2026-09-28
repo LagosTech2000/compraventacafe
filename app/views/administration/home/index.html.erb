@@ -1,24 +1,18 @@
 <% content_for :title, AppModule.human_name("administration") %>
 
-<h1 class="text-2xl font-bold"><%= AppModule.human_name("administration") %></h1>
+<h1 class="text-2xl font-bold sm:text-3xl"><%= AppModule.human_name("administration") %></h1>
 
 <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
   <% if policy(Person).index? %>
-    <%= link_to administration_people_path, class: "clay block p-6 transition hover:-translate-y-0.5" do %>
-      <span class="text-lg font-semibold text-primary"><%= t("administration.people.index.title") %></span>
-      <span class="mt-2 block text-sm text-ink-muted"><%= t(".people_description") %></span>
-    <% end %>
+    <%= render "shared/tile", path: administration_people_path, icon_name: :people,
+          title: t("administration.people.index.title"), description: t(".people_description") %>
   <% end %>
   <% if policy(AuditEvent).index? %>
-    <%= link_to administration_audit_events_path, class: "clay block p-6 transition hover:-translate-y-0.5" do %>
-      <span class="text-lg font-semibold text-primary"><%= t("administration.audit_events.index.title") %></span>
-      <span class="mt-2 block text-sm text-ink-muted"><%= t(".audit_description") %></span>
-    <% end %>
+    <%= render "shared/tile", path: administration_audit_events_path, icon_name: :history,
+          title: t("administration.audit_events.index.title"), description: t(".audit_description") %>
   <% end %>
   <% if policy(User).index? %>
-    <%= link_to administration_users_path, class: "clay block p-6 transition hover:-translate-y-0.5" do %>
-      <span class="text-lg font-semibold text-primary"><%= t("administration.users.index.title") %></span>
-      <span class="mt-2 block text-sm text-ink-muted"><%= t(".users_description") %></span>
-    <% end %>
+    <%= render "shared/tile", path: administration_users_path, icon_name: :shield,
+          title: t("administration.users.index.title"), description: t(".users_description") %>
   <% end %>
 </div>

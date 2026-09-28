@@ -1,55 +1,192 @@
 @import "tailwindcss";
 
+/* Inter, self-hosted (SIL Open Font License, see fonts/Inter-LICENSE.txt). */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("InterVariable.woff2") format("woff2");
+}
+
 /*
  * Design tokens. PROVISIONAL palette: the real colors and typography are an
  * open point. This block is the only place to edit when they are defined.
  */
 @theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
-  --color-canvas: #f4efe9;
-  --color-surface: #fbf8f4;
-  --color-ink: #2b2220;
-  --color-ink-muted: #6f625c;
-  --color-line: #e2d8ce;
+  --color-canvas: #f6f1ec;
+  --color-surface: #fffdfb;
+  --color-surface-2: #faf5f0;
+  --color-ink: #1d1512;
+  --color-ink-muted: #6e615a;
+  --color-line: #ebe2da;
 
-  --color-primary: #6b3f2a;
-  --color-primary-hover: #56321f;
-  --color-primary-soft: #efe2d8;
+  --color-primary: #6f4128;
+  --color-primary-hover: #5a331f;
+  --color-primary-soft: #f5e9df;
   --color-on-primary: #ffffff;
+  --color-accent: #c8873a;
 
   --color-danger: #b42318;
-  --color-danger-soft: #fdeceb;
-  --color-success: #1f7a3d;
-  --color-success-soft: #e7f5ec;
+  --color-danger-soft: #fdeeec;
+  --color-success: #17774a;
+  --color-success-soft: #e6f4ec;
 
   /* Audit diff: removed value (red) and added value (emerald). */
   --color-diff-removed: #b42318;
   --color-diff-added: #047857;
-  --color-code-surface: #fdfaf7;
+  --color-code-surface: #fcf8f4;
 
-  --radius-clay: 1.5rem;
-  --shadow-clay: 8px 8px 16px rgb(43 34 32 / 0.12), inset -3px -3px 8px rgb(43 34 32 / 0.06);
+  /* Clay: very rounded corners and two shadows (outer depth + inner light). */
+  --radius-clay: 1.25rem;
+  --shadow-clay: 0 1px 2px rgb(29 21 18 / 0.04), 0 12px 32px -14px rgb(29 21 18 / 0.2), inset 0 1px 0 rgb(255 255 255 / 0.9);
+  --shadow-clay-sm: 0 1px 2px rgb(29 21 18 / 0.06), 0 6px 14px -8px rgb(29 21 18 / 0.22), inset 0 1px 0 rgb(255 255 255 / 0.85);
+  --shadow-clay-lift: 0 2px 4px rgb(29 21 18 / 0.05), 0 20px 40px -16px rgb(29 21 18 / 0.28), inset 0 1px 0 rgb(255 255 255 / 0.9);
+  --shadow-primary: 0 8px 18px -8px rgb(111 65 40 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.2);
 }
 
-/* Clay: very rounded corners and two shadows. Navigation, cards, buttons. */
 @utility clay {
   border-radius: var(--radius-clay);
   background-color: var(--color-surface);
   box-shadow: var(--shadow-clay);
 }
 
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    background-image:
+      radial-gradient(1100px 520px at 0% -8%, rgb(111 65 40 / 0.09), transparent 70%),
+      radial-gradient(900px 480px at 100% 0%, rgb(200 135 58 / 0.08), transparent 70%);
+    background-attachment: fixed;
+  }
+
+  h1 {
+    letter-spacing: -0.02em;
+  }
+
+  h2 {
+    letter-spacing: -0.01em;
+  }
+
+  ::selection {
+    background: rgb(200 135 58 / 0.3);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  input[type="checkbox"] {
+    accent-color: var(--color-primary);
+  }
+}
+
 @layer components {
+  /* Buttons (clay pills). */
   .btn {
-    @apply clay inline-flex cursor-pointer items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-ink transition hover:brightness-95;
+    @apply inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-full bg-surface px-4.5 text-sm font-semibold whitespace-nowrap text-ink ring-1 ring-line/80 transition duration-150 select-none hover:-translate-y-px active:translate-y-0 disabled:pointer-events-none disabled:opacity-50;
+    box-shadow: var(--shadow-clay-sm);
+  }
+
+  .btn:hover {
+    box-shadow: var(--shadow-clay);
   }
 
   .btn-sm {
-    @apply px-3 py-1.5 text-xs;
+    @apply h-8 px-3 text-xs;
   }
 
   .btn-primary {
-    @apply bg-primary text-on-primary hover:bg-primary-hover;
+    @apply bg-primary text-on-primary ring-primary hover:brightness-110;
+    background-image: linear-gradient(180deg, rgb(255 255 255 / 0.1), transparent);
+    box-shadow: var(--shadow-primary);
+  }
+
+  .btn-primary:hover {
+    box-shadow: var(--shadow-primary);
+  }
+
+  /* Navigation pills. */
+  .nav-pill {
+    @apply inline-flex h-9 items-center rounded-full px-3.5 text-sm font-medium whitespace-nowrap text-ink/80 transition hover:bg-primary-soft hover:text-ink;
+  }
+
+  .nav-pill-active {
+    @apply bg-primary text-on-primary hover:bg-primary hover:text-on-primary;
+    box-shadow: var(--shadow-primary);
+  }
+
+  /* Inside a section's sub-menu the current page is marked softly, so it
+     never competes with the primary action button next to it. */
+  .subnav .nav-pill-active {
+    @apply bg-primary-soft text-primary hover:bg-primary-soft hover:text-primary;
+    box-shadow: inset 0 0 0 1px rgb(111 65 40 / 0.15);
+  }
+
+  /* Translucent sticky header. */
+  .glass {
+    @apply rounded-[var(--radius-clay)] bg-surface/80 ring-1 ring-white/60 backdrop-blur-xl;
+    box-shadow: var(--shadow-clay);
+  }
+
+  /* Interactive clay card (module shortcuts, next steps). */
+  .tile {
+    @apply clay block p-5 ring-1 ring-line/60 transition duration-200 hover:-translate-y-0.5;
+  }
+
+  .tile:hover {
+    box-shadow: var(--shadow-clay-lift);
+  }
+
+  /* Summary figures. */
+  .stat {
+    @apply clay p-4 ring-1 ring-line/60;
+  }
+
+  .stat dt {
+    @apply text-[0.7rem] font-semibold tracking-wide text-ink-muted uppercase;
+  }
+
+  .stat dd {
+    @apply mt-1 text-xl font-bold tracking-tight tabular-nums;
+  }
+
+  /* Flat container for data: tables, details, filters. */
+  .panel {
+    @apply rounded-2xl border border-line bg-surface shadow-[0_1px_2px_rgb(29_21_18/0.04)];
+  }
+
+  .empty-state {
+    @apply rounded-2xl border border-dashed border-line bg-surface/60 px-6 py-10 text-center text-sm text-ink-muted;
+  }
+
+  .link {
+    @apply font-medium text-primary underline decoration-primary/30 underline-offset-2 transition hover:decoration-primary;
+  }
+
+  /* Status badges. */
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ring-1 ring-inset before:size-1.5 before:rounded-full before:bg-current before:content-[''];
+  }
+
+  .badge-success {
+    @apply bg-success-soft text-success ring-success/20;
+  }
+
+  .badge-danger {
+    @apply bg-danger-soft text-danger ring-danger/20;
+  }
+
+  .badge-neutral {
+    @apply bg-primary-soft text-primary ring-primary/15;
   }
 
   /* Data tables and forms stay flat for fast reading. */
@@ -58,43 +195,97 @@
   }
 
   .data-table th {
-    @apply border-b border-line px-3 py-2 font-semibold text-ink-muted;
+    @apply border-b border-line bg-surface-2 px-3 py-2.5 text-[0.7rem] font-semibold tracking-wide text-ink-muted uppercase;
   }
 
   .data-table td {
-    @apply border-b border-line px-3 py-2 align-middle;
+    @apply border-b border-line/70 bg-surface px-3 py-3 align-middle transition-colors;
+  }
+
+  .data-table tbody tr:last-child td {
+    @apply border-b-0;
+  }
+
+  .data-table tbody tr:hover td {
+    @apply bg-surface-2;
   }
 
   /* Tighter cells for wide tables (purchases, invoices). */
   .data-table-compact th,
   .data-table-compact td {
-    @apply px-2;
+    @apply px-2.5;
   }
 
   /* Action column ("Detalle", "Editar") stays visible when a table scrolls. */
   .data-table .cell-actions {
-    @apply sticky right-0 bg-surface text-right whitespace-nowrap shadow-[-8px_0_8px_-8px_rgb(43_34_32/0.15)];
+    @apply sticky right-0 text-right whitespace-nowrap shadow-[-10px_0_10px_-10px_rgb(29_21_18/0.18)];
   }
 
   /* Card shown instead of a table row when the container is narrow. */
   .data-card {
-    @apply rounded-md border border-line bg-surface p-4;
+    @apply rounded-2xl border border-line bg-surface p-4 shadow-[0_1px_2px_rgb(29_21_18/0.04)];
   }
 
   .field-label {
-    @apply mb-1 block text-sm font-medium text-ink;
+    @apply mb-1.5 block text-sm font-medium text-ink/85;
   }
 
   .field-input {
-    @apply block w-full rounded-md border border-line bg-white px-3 py-2 text-sm text-ink focus:border-primary focus:outline-none;
+    @apply block min-h-10 w-full rounded-xl border border-line bg-white px-3.5 py-2 text-sm text-ink shadow-[0_1px_1px_rgb(29_21_18/0.04)] transition placeholder:text-ink-muted/60 focus:border-primary focus:ring-4 focus:ring-primary/15 focus:outline-none disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-ink-muted;
+  }
+
+  .flash-notice,
+  .flash-alert {
+    @apply rounded-2xl border px-4 py-3 text-sm;
   }
 
   .flash-notice {
-    @apply rounded-md bg-success-soft px-4 py-3 text-sm text-success;
+    @apply border-success/20 bg-success-soft text-success;
   }
 
   .flash-alert {
-    @apply rounded-md bg-danger-soft px-4 py-3 text-sm text-danger;
+    @apply border-danger/20 bg-danger-soft text-danger;
+  }
+
+  /* App-wide modal (see ModalSupport): fades and rises in. */
+  .modal {
+    @apply m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-4xl overflow-y-auto rounded-[var(--radius-clay)] bg-surface p-0 text-ink ring-1 ring-line/70;
+    box-shadow: var(--shadow-clay-lift);
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+    transition: opacity 0.18s ease, transform 0.18s ease, overlay 0.18s allow-discrete, display 0.18s allow-discrete;
+  }
+
+  .modal[open] {
+    opacity: 1;
+    transform: none;
+  }
+
+  @starting-style {
+    .modal[open] {
+      opacity: 0;
+      transform: translateY(12px) scale(0.98);
+    }
+  }
+
+  .modal::backdrop {
+    background: rgb(29 21 18 / 0.35);
+    backdrop-filter: blur(4px);
+  }
+
+  /* Thin scrollbars for horizontally scrolling tables and bars. */
+  .overflow-x-auto {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line) transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
   }
 }
 
@@ -111,5 +302,19 @@
 @media print {
   body {
     background: white;
+  }
+
+  /* Paper keeps tables compact: the invoice's original and copy share a sheet. */
+  .data-table th,
+  .data-table td {
+    background: none !important;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .data-table th {
+    font-size: 8.5pt;
+    text-transform: none;
+    letter-spacing: 0;
+    color: black;
   }
 }

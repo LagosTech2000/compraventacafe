@@ -38,7 +38,7 @@
   <p class="mt-3 text-sm text-ink-muted"><%= t(".invoiced_notice", number: @purchase.invoice.display_number) %></p>
 <% end %>
 
-<dl class="mt-6 grid rounded-md border border-line bg-surface sm:grid-cols-3">
+<dl class="mt-6 grid panel sm:grid-cols-3">
   <% {
        purchased_on: l(@purchase.purchased_on, format: :long), zone: @purchase.zone&.name, coffee_state: @purchase.human_coffee_state,
        gross_weight: format_pounds(@purchase.gross_weight), sacks: format_pounds(@purchase.sacks), tare: format_pounds(@purchase.tare),
@@ -53,5 +53,5 @@
 </dl>
 
 <% unless modal_request? %>
-  <p class="mt-6"><%= link_to t(".back"), trading_purchases_path, class: "text-sm text-primary underline hover:no-underline" %></p>
+  <p class="mt-6"><%= link_to t(".back"), trading_purchases_path, class: "text-sm link" %></p>
 <% end %>

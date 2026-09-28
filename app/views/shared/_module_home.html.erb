@@ -1,4 +1,7 @@
 <% content_for :title, AppModule.human_name(module_key) %>
 
-<h1 class="text-2xl font-bold"><%= AppModule.human_name(module_key) %></h1>
-<p class="clay mt-6 p-6 text-sm text-ink-muted"><%= t("module_home.empty") %></p>
+<div class="flex items-center gap-3">
+  <span class="grid size-11 place-items-center rounded-2xl bg-primary-soft text-primary"><%= icon(module_key, css: "size-6") %></span>
+  <h1 class="text-2xl font-bold sm:text-3xl"><%= AppModule.human_name(module_key) %></h1>
+</div>
+<p class="empty-state mt-6"><%= t("module_home.empty") %></p>

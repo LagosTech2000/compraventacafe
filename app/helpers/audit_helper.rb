@@ -49,10 +49,7 @@ module AuditHelper
   end
 
   def audit_action_badge(event)
-    classes = {
-      "create" => "bg-success-soft text-success", "destroy" => "bg-danger-soft text-danger",
-      "sign_in_failed" => "bg-danger-soft text-danger"
-    }.fetch(event.action, "bg-primary-soft text-primary")
-    tag.span(event.human_action, class: "whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium #{classes}")
+    variant = { "create" => "badge-success", "destroy" => "badge-danger", "sign_in_failed" => "badge-danger" }
+    tag.span(event.human_action, class: "badge #{variant.fetch(event.action, "badge-neutral")}")
   end
 end

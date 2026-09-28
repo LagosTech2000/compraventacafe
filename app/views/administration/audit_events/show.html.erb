@@ -6,7 +6,7 @@
 </div>
 <p class="mt-3 text-base" id="audit-sentence"><%= audit_sentence(@event) %></p>
 
-<dl class="mt-6 grid rounded-md border border-line bg-surface sm:grid-cols-2">
+<dl class="mt-6 grid panel sm:grid-cols-2">
   <% {
        when: l(@event.created_at, format: :audit), user: audit_user(@event),
        entity: @event.human_auditable_type, record_id: @event.auditable_id, record: @event.auditable_label,
@@ -21,7 +21,7 @@
 
 <% if @event.changeset.any? %>
   <h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".changes") %></h2>
-  <div class="overflow-x-auto rounded-md border border-line bg-surface">
+  <div class="overflow-x-auto panel">
     <table class="data-table">
       <thead>
         <tr>
@@ -48,5 +48,5 @@
 <% end %>
 
 <% unless modal_request? %>
-  <p class="mt-6"><%= link_to t(".back"), administration_audit_events_path, class: "text-sm text-primary underline hover:no-underline" %></p>
+  <p class="mt-6"><%= link_to t(".back"), administration_audit_events_path, class: "text-sm link" %></p>
 <% end %>

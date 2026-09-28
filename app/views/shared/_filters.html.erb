@@ -1,7 +1,7 @@
 <%# Filter bar for a list. Usage:
     render layout: "shared/filters", locals: { filter: @filter, url: some_path } do |form| ... end
     On narrow screens it folds away (open when a filter is active). %>
-<details class="group mt-6 rounded-md border border-line bg-surface print:hidden"
+<details class="group mt-6 panel print:hidden"
          data-controller="collapsible-filters" data-collapsible-filters-active-value="<%= filter.active? %>">
   <summary class="flex cursor-pointer list-none items-center justify-between gap-2 p-4 font-medium sm:hidden">
     <span><%= t("shared.filters.title") %><%= " · #{t("shared.filters.active")}" if filter.active? %></span>

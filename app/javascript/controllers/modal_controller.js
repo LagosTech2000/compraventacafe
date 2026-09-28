@@ -13,7 +13,11 @@ export default class extends Controller {
     this.element.close()
   }
 
+  // Runs on the dialog's "close" event, which can arrive after the closing
+  // animation. If another modal was opened meanwhile, leave it alone.
   reset() {
+    if (this.element.open || this.frameTarget.hasAttribute("busy")) return
+
     this.frameTarget.removeAttribute("src")
     this.frameTarget.innerHTML = ""
   }

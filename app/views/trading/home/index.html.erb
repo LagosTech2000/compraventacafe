@@ -1,6 +1,9 @@
 <% content_for :title, AppModule.human_name("trading") %>
 
-<h1 class="mb-4 text-2xl font-bold"><%= AppModule.human_name("trading") %></h1>
+<div class="mb-5 flex items-center gap-3">
+  <span class="grid size-11 place-items-center rounded-2xl bg-primary-soft text-primary"><%= icon(:trading, css: "size-6") %></span>
+  <h1 class="text-2xl font-bold sm:text-3xl"><%= AppModule.human_name("trading") %></h1>
+</div>
 <%= render "trading/nav" %>
 
 <h2 class="mb-1 text-lg font-semibold"><%= t(".whats_next") %></h2>
@@ -18,8 +21,11 @@
        { key: "close", count: nil, amount: @daily_close.total,
          path: trading_daily_close_path, allowed: policy([ :trading, :daily_close ]).show?, pending: false }
      ].each_with_index do |step, index| %>
-    <li class="clay flex flex-col p-4 <%= "ring-2 ring-primary" if step[:pending] %>">
-      <p class="text-xs font-semibold uppercase tracking-wide text-primary"><%= t(".step", number: index + 1) %></p>
+    <li class="clay flex flex-col p-5 <%= step[:pending] ? "ring-2 ring-primary" : "ring-1 ring-line/60" %>">
+      <p class="flex items-center gap-2 text-[0.7rem] font-semibold uppercase tracking-wide text-primary">
+        <span class="grid size-6 place-items-center rounded-full <%= step[:pending] ? "bg-primary text-on-primary" : "bg-primary-soft" %>"><%= index + 1 %></span>
+        <%= t(".step", number: index + 1) %>
+      </p>
       <p class="mt-1 font-semibold"><%= t(".steps.#{step[:key]}.title") %></p>
       <p class="mt-1 flex-1 text-sm text-ink-muted">
         <%= t(".steps.#{step[:key]}.status_html", count: step[:count],

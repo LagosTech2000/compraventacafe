@@ -7,9 +7,9 @@
        paid_total: format_money(daily_close.paid_total), pending_total: format_money(daily_close.pending_total),
        uninvoiced_total: format_money(daily_close.uninvoiced_total)
      }.each do |key, value| %>
-    <div class="clay p-4">
-      <dt class="text-xs font-medium text-ink-muted"><%= t("trading.summary.#{key}") %></dt>
-      <dd class="mt-1 text-lg font-bold tabular-nums"><%= value %></dd>
+    <div class="stat">
+      <dt><%= t("trading.summary.#{key}") %></dt>
+      <dd><%= value %></dd>
     </div>
   <% end %>
 </dl>

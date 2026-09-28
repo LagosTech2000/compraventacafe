@@ -16,7 +16,7 @@
 <% end %>
 
 <% if @events.any? %>
-  <div class="mt-6 overflow-x-auto rounded-md border border-line bg-surface">
+  <div class="mt-6 overflow-x-auto panel">
     <table class="data-table">
       <thead>
         <tr>
@@ -40,5 +40,5 @@
   </div>
   <%= render "shared/pagination", filter: @filter, next_page: @next_page %>
 <% else %>
-  <p class="clay mt-6 p-6 text-sm text-ink-muted"><%= t(".empty") %></p>
+  <p class="empty-state mt-6"><%= t(".empty") %></p>
 <% end %>

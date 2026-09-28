@@ -19,12 +19,12 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="min-h-screen bg-canvas font-sans text-ink">
+  <body class="min-h-screen font-sans text-ink print:min-h-0">
     <% if authenticated? %>
       <%= render "layouts/navigation" %>
     <% end %>
 
-    <main class="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:py-10 print:max-w-none print:p-0">
+    <main class="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:py-8 print:max-w-none print:p-0">
       <%= render "shared/flash" %>
 
       <%= yield %>
@@ -33,7 +33,7 @@
     <%# Reusable modal: links with data-turbo-frame="modal" open here (ModalSupport). %>
     <dialog data-controller="modal" aria-label="<%= t("shared.modal.label") %>"
             data-action="turbo:frame-load->modal#open turbo:frame-missing->modal#fallback close->modal#reset click->modal#closeOnBackdrop"
-            class="m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-4xl overflow-y-auto rounded-[var(--radius-clay)] bg-surface p-0 text-ink shadow-[var(--shadow-clay)] backdrop:bg-ink/40 print:hidden">
+            class="modal print:hidden">
       <%# Padding lives on the frame so only clicks on the backdrop hit the dialog itself. %>
       <%= tag.turbo_frame id: "modal", src: content_for(:modal_src).presence, class: "block p-5 sm:p-8", data: { modal_target: "frame" } %>
     </dialog>

@@ -1,4 +1,4 @@
-<%= form_with model: [ :trading, producer ], class: "space-y-6", data: { controller: "form-validation" } do |form| %>
+<%= form_with model: [ :trading, producer ], class: form_surface_class("space-y-6"), data: { controller: "form-validation" } do |form| %>
   <%= hidden_field_tag :picker, "1" if picker_request? %>
   <%= render "shared/form_errors", record: producer %>
 

@@ -1,7 +1,7 @@
 <% producers = Producer.includes(:person).alphabetical %>
 <% can_create_producer = policy(Producer).create? %>
 <% can_create_zone = policy(Zone).create? %>
-<%= form_with model: [ :trading, purchase ], class: "space-y-6", data: { controller: "form-validation" } do |form| %>
+<%= form_with model: [ :trading, purchase ], class: form_surface_class("space-y-6"), data: { controller: "form-validation" } do |form| %>
   <%= render "shared/form_errors", record: purchase %>
 
   <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
