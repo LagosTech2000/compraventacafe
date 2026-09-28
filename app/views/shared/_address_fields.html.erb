@@ -1,0 +1,34 @@
+<%# Convention: every address is department + municipality + address line. %>
+<%# Usage: render "shared/address_fields", form: form %>
+<% record = form.object %>
+<% municipalities = record.department_id ? municipalities_by_department.fetch(record.department_id, []) : [] %>
+
+<fieldset class="grid gap-5 sm:col-span-2 sm:grid-cols-2"
+          data-controller="address"
+          data-address-municipalities-value="<%= municipalities_by_department.to_json %>"
+          data-address-none-value="<%= t("shared.select.no_municipality") %>"
+          data-address-locked-value="<%= t("shared.select.pick_department_first") %>">
+  <legend class="mb-2 text-sm font-semibold"><%= t("addresses.title") %></legend>
+
+  <div>
+    <%= form.label :department_id, record.class.human_attribute_name(:department), class: "field-label" %>
+    <%= form.collection_select :department_id, Department.ordered, :id, :name,
+          { include_blank: t("shared.select.no_department") },
+          class: "field-input", data: { address_target: "department", action: "address#change" } %>
+  </div>
+
+  <div>
+    <%= form.label :municipality_id, record.class.human_attribute_name(:municipality), class: "field-label" %>
+    <%# A disabled select is not submitted; this keeps an emptied municipality from being ignored. %>
+    <%= form.hidden_field :municipality_id, value: "", id: nil %>
+    <%= form.select :municipality_id, municipalities.map(&:reverse),
+          { include_blank: t(municipalities.empty? ? "shared.select.pick_department_first" : "shared.select.no_municipality") },
+          class: "field-input disabled:bg-canvas disabled:text-ink-muted", disabled: municipalities.empty?,
+          data: { address_target: "municipality" } %>
+  </div>
+
+  <div class="sm:col-span-2">
+    <%= form.label :address_line, record.class.human_attribute_name(:address_line), class: "field-label" %>
+    <%= form.text_area :address_line, rows: 2, maxlength: Addressable::ADDRESS_LINE_MAX, class: "field-input" %>
+  </div>
+</fieldset>

@@ -1,0 +1,42 @@
+<% content_for :title, t(".title") %>
+<%= render "trading/nav" %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+  <% if policy(Zone).create? %>
+    <%= modal_link_to t(".new"), new_trading_zone_path, class: "btn btn-primary" %>
+  <% end %>
+</div>
+<p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+
+<%= render layout: "shared/filters", locals: { filter: @filter, url: trading_zones_path } do |form| %>
+  <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: Zone.human_attribute_name(:name) %>
+<% end %>
+
+<% if @zones.any? %>
+  <div class="mt-6 overflow-x-auto panel">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th><%= Zone.human_attribute_name(:name) %></th>
+          <th class="cell-actions"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @zones.each do |zone| %>
+          <tr id="<%= dom_id(zone) %>">
+            <td><%= zone.name %></td>
+            <td class="cell-actions">
+              <% if policy(zone).update? %>
+                <%= modal_link_to t(".edit"), edit_trading_zone_path(zone), class: "btn btn-sm" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <%= render "shared/pagination", filter: @filter, next_page: @next_page %>
+<% else %>
+  <p class="empty-state mt-6"><%= t(".empty") %></p>
+<% end %>

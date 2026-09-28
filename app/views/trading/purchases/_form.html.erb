@@ -1,0 +1,89 @@
+<% producers = Producer.includes(:person).alphabetical %>
+<% can_create_producer = policy(Producer).create? %>
+<% can_create_zone = policy(Zone).create? %>
+<%= form_with model: [ :trading, purchase ], class: form_surface_class("space-y-6"), data: { controller: "form-validation" } do |form| %>
+  <%= render "shared/form_errors", record: purchase %>
+
+  <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+       data-controller="producer-picker"
+       data-producer-picker-producers-value="<%= producers.to_h { |p| [ p.id, { label: p.picker_label, zone_id: p.zone_id } ] }.to_json %>"
+       data-producer-picker-missing-message-value="<%= t(".producer_missing") %>"
+       data-action="producer:created@window->producer-picker#add">
+    <div class="sm:col-span-2">
+      <%= form.label :producer_id, for: "producer_search", class: "field-label" %>
+      <input type="text" id="producer_search" list="producer_options" autocomplete="off" required
+             class="field-input" placeholder="<%= t(".producer_placeholder") %>"
+             value="<%= purchase.producer&.picker_label %>"
+             data-producer-picker-target="search" data-action="producer-picker#pick"
+             data-missing-message="<%= t(".producer_missing") %>" <%= "autofocus" if purchase.producer.nil? %>>
+      <datalist id="producer_options" data-producer-picker-target="options"></datalist>
+      <%= form.hidden_field :producer_id, data: { producer_picker_target: "id" } %>
+      <% if can_create_producer %>
+        <%= modal_link_to t(".new_producer"), new_trading_producer_path(picker: 1), class: "btn btn-sm mt-2" %>
+      <% end %>
+    </div>
+
+    <div>
+      <%= form.label :purchased_on, class: "field-label" %>
+      <%= form.date_field :purchased_on, required: true, class: "field-input" %>
+    </div>
+
+    <div data-controller="option-picker" data-action="zone:created@window->option-picker#add">
+      <%= form.label :zone_id, class: "field-label" %>
+      <%= form.collection_select :zone_id, Zone.ordered, :id, :name, { include_blank: t("shared.select.no_zone") },
+            class: "field-input", data: { producer_picker_target: "zone", option_picker_target: "select" } %>
+      <% if can_create_zone %>
+        <%= modal_link_to t(".new_zone"), new_trading_zone_path(picker: 1), class: "btn btn-sm mt-2" %>
+      <% end %>
+    </div>
+
+    <div>
+      <%= form.label :coffee_state, class: "field-label" %>
+      <%= form.select :coffee_state, enum_options(Purchase, :coffee_state, Purchase::COFFEE_STATES), {}, required: true, class: "field-input" %>
+    </div>
+  </div>
+
+  <section class="grid gap-5 sm:grid-cols-3"
+           data-controller="purchase-calculator"
+           data-purchase-calculator-sack-weight-value="<%= PurchaseCalculation::SACK_WEIGHT %>"
+           data-purchase-calculator-tare-per-sack-value="<%= PurchaseCalculation::TARE_PER_SACK %>">
+    <div>
+      <%= form.label :gross_weight, class: "field-label" %>
+      <%= form.number_field :gross_weight, required: true, min: 0.01, max: 99_999.99, step: 0.01, inputmode: "decimal",
+            class: "field-input text-lg", autofocus: purchase.producer.present?,
+            data: { purchase_calculator_target: "gross", action: "purchase-calculator#update" } %>
+    </div>
+    <div>
+      <%= form.label :humidity_percent, class: "field-label" %>
+      <%= form.number_field :humidity_percent, required: true, min: 0, max: 99.99, step: 0.01, inputmode: "decimal",
+            class: "field-input text-lg", data: { purchase_calculator_target: "humidity", action: "purchase-calculator#update" } %>
+    </div>
+    <div>
+      <%= form.label :price_per_pound, class: "field-label" %>
+      <%= form.number_field :price_per_pound, required: true, min: 0.01, max: 99_999.99, step: 0.01, inputmode: "decimal",
+            class: "field-input text-lg", data: { purchase_calculator_target: "price", action: "purchase-calculator#update" } %>
+    </div>
+
+    <div class="clay p-4 sm:col-span-3">
+      <p class="text-sm font-semibold"><%= t(".calculation") %></p>
+      <dl class="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <% %i[sacks tare net_weight total].each do |attribute| %>
+          <div>
+            <dt class="text-xs text-ink-muted"><%= Purchase.human_attribute_name(attribute) %></dt>
+            <dd class="text-xl font-bold tabular-nums" data-purchase-calculator-target="<%= attribute.to_s.camelize(:lower) %>">—</dd>
+          </div>
+        <% end %>
+      </dl>
+    </div>
+  </section>
+
+  <div>
+    <%= form.label :observations, class: "field-label" %>
+    <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+  </div>
+
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= cancel_button trading_purchases_path %>
+  </div>
+<% end %>

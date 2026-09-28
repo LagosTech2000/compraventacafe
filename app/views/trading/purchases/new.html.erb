@@ -1,0 +1,9 @@
+<% content_for :title, t(".title") %>
+<%# After saving, the purchase just registered opens in the modal. %>
+<% if params[:detail].to_s.match?(/\A\d+\z/) %>
+  <% content_for :modal_src, trading_purchase_path(params[:detail]) %>
+<% end %>
+<%= render "trading/nav" %>
+
+<h1 class="mb-6 text-2xl font-bold"><%= t(".title") %></h1>
+<%= render "form", purchase: @purchase %>

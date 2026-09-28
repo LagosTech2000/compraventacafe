@@ -1,0 +1,18 @@
+<% content_for :title, AppModule.human_name("administration") %>
+
+<h1 class="text-2xl font-bold sm:text-3xl"><%= AppModule.human_name("administration") %></h1>
+
+<div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  <% if policy(Person).index? %>
+    <%= render "shared/tile", path: administration_people_path, icon_name: :people,
+          title: t("administration.people.index.title"), description: t(".people_description") %>
+  <% end %>
+  <% if policy(AuditEvent).index? %>
+    <%= render "shared/tile", path: administration_audit_events_path, icon_name: :history,
+          title: t("administration.audit_events.index.title"), description: t(".audit_description") %>
+  <% end %>
+  <% if policy(User).index? %>
+    <%= render "shared/tile", path: administration_users_path, icon_name: :shield,
+          title: t("administration.users.index.title"), description: t(".users_description") %>
+  <% end %>
+</div>

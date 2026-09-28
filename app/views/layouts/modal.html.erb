@@ -1,0 +1,9 @@
+<%# Pages loaded into the "modal" Turbo Frame (see ModalSupport). %>
+<turbo-frame id="modal">
+  <div class="-mt-2 -mr-2 mb-1 flex justify-end sm:-mt-4 sm:-mr-4">
+    <button type="button" data-action="modal#close" aria-label="<%= t("shared.modal.close") %>"
+            class="grid size-9 cursor-pointer place-items-center rounded-full text-2xl leading-none text-ink-muted transition hover:bg-surface-2 hover:text-ink">&times;</button>
+  </div>
+  <%= render "shared/flash" %>
+  <%= yield %>
+</turbo-frame>

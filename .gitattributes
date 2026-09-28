@@ -1,0 +1,25 @@
+# Normalizar a LF en el repositorio. El desarrollo real ocurre dentro de WSL
+# (Linux) y los scripts de shell no funcionan con finales de linea CRLF.
+* text=auto eol=lf
+
+*.sh      text eol=lf
+*.rb      text eol=lf
+*.erb     text eol=lf
+*.yml     text eol=lf
+*.yaml    text eol=lf
+*.json    text eol=lf
+*.md      text eol=lf
+Gemfile   text eol=lf
+Rakefile  text eol=lf
+*.ps1     text eol=crlf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
+config/credentials/*.yml.enc diff=rails_credentials
+config/credentials.yml.enc diff=rails_credentials

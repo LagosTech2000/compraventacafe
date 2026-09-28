@@ -1,0 +1,44 @@
+<% content_for :title, t(".title") %>
+
+<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+<p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+
+<%= render layout: "shared/filters", locals: { filter: @filter, url: administration_audit_events_path } do |form| %>
+  <%= filter_date_field form, :from, t("shared.filters.from"), value: @filter.from %>
+  <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
+  <%= filter_select form, :user_id, t("administration.audit_events.index.user"), User.order(:name).pluck(Arel.sql("name || ' (' || email_address || ')'"), :id), selected: @filter.user_id %>
+  <%= filter_select form, :event_action, t("administration.audit_events.index.action"),
+        AuditEvent::ACTIONS.map { |a| [ AuditEvent.human_attribute_name("action/#{a}"), a ] }, selected: @filter.event_action, all: t("administration.audit_events.index.all_actions") %>
+  <%= filter_select form, :auditable_type, t("administration.audit_events.index.entity"),
+        AuditEvent::AUDITED_TYPES.map { |type| [ type.constantize.model_name.human(count: 2), type ] }.sort, selected: @filter.auditable_type, all: t("administration.audit_events.index.all_entities") %>
+  <%= filter_text_field form, :auditable_id, t("administration.audit_events.index.record_id"), value: @filter.auditable_id %>
+  <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("administration.audit_events.index.search_placeholder") %>
+<% end %>
+
+<% if @events.any? %>
+  <div class="mt-6 overflow-x-auto panel">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th><%= t("administration.audit_events.index.when") %></th>
+          <th><%= t("administration.audit_events.index.description") %></th>
+          <th><%= t("administration.audit_events.index.action") %></th>
+          <th class="cell-actions"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @events.each do |event| %>
+          <tr id="<%= dom_id(event) %>">
+            <td class="whitespace-nowrap tabular-nums"><%= l(event.created_at, format: :audit) %></td>
+            <td class="min-w-72"><%= audit_sentence(event) %></td>
+            <td><%= audit_action_badge(event) %></td>
+            <td class="cell-actions"><%= detail_button administration_audit_event_path(event) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <%= render "shared/pagination", filter: @filter, next_page: @next_page %>
+<% else %>
+  <p class="empty-state mt-6"><%= t(".empty") %></p>
+<% end %>

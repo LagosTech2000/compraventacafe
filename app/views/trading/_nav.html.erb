@@ -1,0 +1,25 @@
+<% unless modal_request? %>
+<%# Daily flow first, in the order it happens; catalogs after a divider.
+    One bar that scrolls sideways on phones instead of wrapping. %>
+<%# Module header on every page of the module; each page keeps its own h1. %>
+<div class="mb-5 flex items-center gap-3 print:hidden">
+  <span class="grid size-11 place-items-center rounded-2xl bg-primary-soft text-primary"><%= icon(:trading, css: "size-6") %></span>
+  <p class="text-2xl font-bold tracking-tight sm:text-3xl"><%= AppModule.human_name("trading") %></p>
+</div>
+<nav class="mb-6 print:hidden" aria-label="<%= AppModule.human_name("trading") %>">
+  <div class="subnav clay flex items-center gap-1 overflow-x-auto p-1.5 ring-1 ring-line/60" data-controller="scroll-to-current">
+    <%= link_to t("trading.nav.home"), trading_root_path, class: nav_link_class(trading_root_path, exact: true),
+          aria: { current: (current_page?(trading_root_path) ? "page" : nil) } %>
+    <% if policy(Purchase).create? %>
+      <%= link_to t("trading.nav.new_purchase"), new_trading_purchase_path, class: "btn btn-primary h-9 shrink-0" %>
+    <% end %>
+    <% { purchases: trading_purchases_path, invoices: trading_invoices_path, daily_close: trading_daily_close_path }.each do |key, path| %>
+      <%= link_to t("trading.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>
+    <% end %>
+    <span class="mx-1 h-6 w-px shrink-0 bg-line" aria-hidden="true"></span>
+    <% { producers: trading_producers_path, zones: trading_zones_path }.each do |key, path| %>
+      <%= link_to t("trading.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>
+    <% end %>
+  </div>
+</nav>
+<% end %>

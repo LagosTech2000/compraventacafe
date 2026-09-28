@@ -1,0 +1,39 @@
+<% content_for :title, AppModule.human_name("trading") %>
+
+<%= render "trading/nav" %>
+<h1 class="sr-only"><%= t("trading.nav.home") %></h1>
+
+<h2 class="mb-1 text-lg font-semibold"><%= t(".whats_next") %></h2>
+<p class="mb-3 text-sm text-ink-muted"><%= t(".whats_next_help") %></p>
+
+<%# The daily flow, in order. Each card says what is pending and links to do it. %>
+<ol class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+  <% [
+       { key: "register", count: @daily_close.purchases_count, amount: nil,
+         path: new_trading_purchase_path, allowed: policy(Purchase).create?, pending: false },
+       { key: "invoice", count: @uninvoiced.purchases_count, amount: @uninvoiced.total,
+         path: new_trading_invoice_path, allowed: policy(Invoice).create?, pending: @uninvoiced.purchases_count.positive? },
+       { key: "pay", count: @pending_invoices.count, amount: @pending_total,
+         path: trading_invoices_path(payment_status: "pending"), allowed: policy(Invoice).index?, pending: @pending_invoices.exists? },
+       { key: "close", count: nil, amount: @daily_close.total,
+         path: trading_daily_close_path, allowed: policy([ :trading, :daily_close ]).show?, pending: false }
+     ].each_with_index do |step, index| %>
+    <li class="clay flex flex-col p-5 <%= step[:pending] ? "ring-2 ring-primary" : "ring-1 ring-line/60" %>">
+      <p class="flex items-center gap-2 text-[0.7rem] font-semibold uppercase tracking-wide text-primary">
+        <span class="grid size-6 place-items-center rounded-full <%= step[:pending] ? "bg-primary text-on-primary" : "bg-primary-soft" %>"><%= index + 1 %></span>
+        <%= t(".step", number: index + 1) %>
+      </p>
+      <p class="mt-1 font-semibold"><%= t(".steps.#{step[:key]}.title") %></p>
+      <p class="mt-1 flex-1 text-sm text-ink-muted">
+        <%= t(".steps.#{step[:key]}.status_html", count: step[:count],
+              amount: step[:amount] && tag.span(format_money(step[:amount]), class: "whitespace-nowrap")) %>
+      </p>
+      <% if step[:allowed] %>
+        <%= link_to t(".steps.#{step[:key]}.action"), step[:path], class: "btn btn-sm mt-3 self-start #{"btn-primary" if step[:pending]}" %>
+      <% end %>
+    </li>
+  <% end %>
+</ol>
+
+<h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".today", date: l(@daily_close.date, format: :long)) %></h2>
+<%= render "trading/summary", daily_close: @daily_close %>

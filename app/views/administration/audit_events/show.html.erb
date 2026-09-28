@@ -1,0 +1,52 @@
+<% content_for :title, t(".title") %>
+
+<div class="flex flex-wrap items-center gap-3">
+  <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+  <%= audit_action_badge(@event) %>
+</div>
+<p class="mt-3 text-base" id="audit-sentence"><%= audit_sentence(@event) %></p>
+
+<dl class="mt-6 grid panel sm:grid-cols-2">
+  <% {
+       when: l(@event.created_at, format: :audit), user: audit_user(@event),
+       entity: @event.human_auditable_type, record_id: @event.auditable_id, record: @event.auditable_label,
+       ip_address: @event.ip_address, request_id: @event.request_id
+     }.each do |key, value| %>
+    <div class="border-b border-line px-4 py-3">
+      <dt class="text-xs font-medium text-ink-muted"><%= t(".#{key}") %></dt>
+      <dd class="mt-1 break-all text-sm <%= "tabular-nums" if key == :record_id %>"><%= value.presence || "—" %></dd>
+    </div>
+  <% end %>
+</dl>
+
+<% if @event.changeset.any? %>
+  <h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".changes") %></h2>
+  <div class="overflow-x-auto panel">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th><%= t(".field") %></th>
+          <th><%= t(".before") %></th>
+          <th><%= t(".after") %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @event.changeset.each do |attribute, (before, after)| %>
+          <tr>
+            <td class="font-medium"><%= audit_attribute_name(@event, attribute) %></td>
+            <td class="text-ink-muted"><%= audit_value(@event, attribute, before) %></td>
+            <td><%= audit_value(@event, attribute, after) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>
+
+<% if @event.changeset.any? %>
+  <%= render "json_diff", event: @event %>
+<% end %>
+
+<% unless modal_request? %>
+  <p class="mt-6"><%= link_to t(".back"), administration_audit_events_path, class: "text-sm link" %></p>
+<% end %>

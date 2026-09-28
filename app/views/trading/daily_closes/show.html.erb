@@ -1,0 +1,26 @@
+<% content_for :title, t(".title", date: l(@daily_close.date)) %>
+<%= render "trading/nav" %>
+
+<div class="print:hidden">
+<div class="flex flex-wrap items-end justify-between gap-4">
+  <h1 class="text-2xl font-bold"><%= t(".title", date: l(@daily_close.date, format: :long)) %></h1>
+  <div class="flex flex-wrap gap-2 print:hidden">
+    <%= form_with url: trading_daily_close_path, method: :get, class: "flex gap-2", data: { controller: "auto-submit" } do |form| %>
+      <%= form.date_field :date, value: @daily_close.date, aria: { label: Purchase.human_attribute_name(:purchased_on) }, class: "field-input",
+            data: { action: "change->auto-submit#submit" } %>
+    <% end %>
+    <div data-controller="print"><button type="button" class="btn" data-action="print#print"><%= t(".print") %></button></div>
+  </div>
+</div>
+
+<div class="mt-6"><%= render "trading/summary", daily_close: @daily_close %></div>
+
+<h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".purchases") %></h2>
+<% if @daily_close.purchases.any? %>
+  <%= render "trading/purchases/table", purchases: @daily_close.purchases %>
+<% else %>
+  <p class="empty-state"><%= t(".empty") %></p>
+<% end %>
+</div>
+
+<%= render "report", daily_close: @daily_close %>

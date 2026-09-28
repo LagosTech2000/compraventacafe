@@ -1,0 +1,55 @@
+<% content_for :title, t(".title", number: @invoice.display_number) %>
+<%= render "trading/nav" %>
+
+<div class="mb-6 flex flex-wrap items-start justify-between gap-4 print:hidden">
+  <h1 class="text-2xl font-bold"><%= t(".title", number: @invoice.display_number) %></h1>
+  <% if modal_request? %>
+    <%# Printing needs the full page: it holds the original and the copy. %>
+    <%= page_link_to t(".print"), trading_invoice_path(@invoice), class: "btn" %>
+  <% else %>
+    <div data-controller="print">
+      <button type="button" class="btn" data-action="print#print"><%= t(".print") %></button>
+    </div>
+  <% end %>
+</div>
+
+<div class="mb-6 print:hidden">
+  <%= render layout: "trading/lifecycle", locals: { lifecycle: TradingLifecycle.for_invoice(@invoice) } do %>
+    <% if policy(@invoice).update? %>
+      <%= form_with model: @invoice, url: trading_invoice_path(@invoice), method: :patch,
+            class: "flex flex-wrap items-end gap-3", data: { controller: "form-validation" } do |form| %>
+        <div>
+          <%= form.label :payment_method, class: "field-label" %>
+          <%= form.select :payment_method, enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS), { include_blank: t("shared.select.pick_payment_method") }, required: true, class: "field-input",
+                data: { missing_message: "#{Invoice.human_attribute_name(:payment_method)} #{t("errors.messages.blank")}" } %>
+        </div>
+        <div>
+          <%= form.label :paid_on, t("trading.invoices.show.paid_on_label"), class: "field-label" %>
+          <%= form.date_field :paid_on, value: @invoice.paid_on || Time.zone.today, required: true, class: "field-input" %>
+        </div>
+        <%= form.submit t("trading.invoices.show.mark_paid"), class: "btn btn-primary" %>
+      <% end %>
+    <% elsif @invoice.paid? %>
+      <% if modal_request? %>
+        <%= page_link_to t("trading.invoices.show.print"), trading_invoice_path(@invoice), class: "btn btn-primary" %>
+      <% else %>
+        <span data-controller="print"><button type="button" class="btn btn-primary" data-action="print#print"><%= t("trading.invoices.show.print") %></button></span>
+      <% end %>
+    <% end %>
+  <% end %>
+  <%= render "shared/form_errors", record: @invoice %>
+</div>
+
+<div class="space-y-6 print:space-y-4">
+  <%= render "receipt", invoice: @invoice, label: t(".original") %>
+  <% unless modal_request? %>
+    <%# Printed on its own sheet(s): no cutting needed. %>
+    <div class="print:break-before-page">
+      <%= render "receipt", invoice: @invoice, label: t(".copy") %>
+    </div>
+  <% end %>
+</div>
+
+<% unless modal_request? %>
+  <p class="mt-6 print:hidden"><%= link_to t(".back"), trading_invoices_path, class: "text-sm link" %></p>
+<% end %>

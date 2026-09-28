@@ -1,0 +1,16 @@
+<%# Notices and alerts. Alerts use role="alert" so screen readers announce them. %>
+<% messages = { notice: notice, alert: alert }.compact_blank %>
+<% if messages.any? %>
+  <div class="mb-6 space-y-2">
+    <% messages.each do |kind, message| %>
+      <div id="<%= kind %>" data-controller="dismissible"
+           class="<%= kind == :alert ? "flash-alert" : "flash-notice" %> flex items-start gap-3"
+           role="<%= kind == :alert ? "alert" : "status" %>">
+        <%= icon(kind == :alert ? :alert : :check, css: "mt-0.5 size-5 shrink-0") %>
+        <p class="flex-1"><%= message %></p>
+        <button type="button" data-action="dismissible#dismiss" class="-my-1 -mr-1 shrink-0 cursor-pointer rounded-full px-2 py-1 text-lg leading-none opacity-60 transition hover:bg-black/5 hover:opacity-100"
+                aria-label="<%= t("shared.flash.dismiss") %>">&times;</button>
+      </div>
+    <% end %>
+  </div>
+<% end %>

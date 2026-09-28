@@ -1,0 +1,11 @@
+<span class="flex flex-wrap gap-1">
+  <% if person.client? %>
+    <span class="badge badge-neutral"><%= Client.model_name.human %></span>
+  <% end %>
+  <% if person.producer? %>
+    <span class="badge badge-neutral"><%= Producer.model_name.human %></span>
+  <% end %>
+  <% if person.collaborator? %>
+    <span class="badge badge-neutral"><%= Collaborator.model_name.human %></span>
+  <% end %>
+</span>

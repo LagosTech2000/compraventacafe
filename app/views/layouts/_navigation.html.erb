@@ -1,0 +1,42 @@
+<header class="sticky top-0 z-30 px-3 pt-3 sm:px-6 print:hidden">
+  <nav class="glass mx-auto max-w-6xl px-3 py-2.5 sm:px-4">
+    <div class="flex items-center justify-between gap-3">
+      <%= link_to root_path, class: "flex min-w-0 items-center gap-2.5 rounded-full pr-2 font-bold text-ink" do %>
+        <span class="grid size-9 shrink-0 place-items-center rounded-full bg-primary text-on-primary" style="box-shadow: var(--shadow-primary)">
+          <%= icon(:bean, css: "size-5") %>
+        </span>
+        <span class="line-clamp-2 max-w-44 text-sm leading-tight"><%= t("negocio.nombre") %></span>
+      <% end %>
+
+      <div class="hidden items-center gap-1 lg:flex">
+        <% readable_module_keys.each do |key| %>
+          <%= link_to AppModule.human_name(key), module_root_path(key), class: nav_link_class(module_root_path(key)) %>
+        <% end %>
+      </div>
+
+      <div class="hidden items-center gap-3 lg:flex">
+        <span class="flex items-center gap-2 text-sm text-ink-muted" title="<%= Current.user.email_address %>">
+          <span class="grid size-8 place-items-center rounded-full bg-primary-soft text-xs font-bold text-primary" aria-hidden="true">
+            <%= Current.user.name.split.first(2).map { |part| part[0] }.join.upcase %>
+          </span>
+          <span class="max-w-40 truncate"><%= Current.user.name %></span>
+        </span>
+        <%= button_to t(".sign_out"), session_path, method: :delete, class: "btn btn-sm" %>
+      </div>
+
+      <details class="relative lg:hidden">
+        <summary class="btn list-none"><%= t(".menu") %></summary>
+        <div class="glass absolute right-0 z-10 mt-2 w-72 space-y-1 p-3">
+          <%= link_to t(".home"), root_path, class: "#{nav_link_class(root_path)} w-full" %>
+          <% readable_module_keys.each do |key| %>
+            <%= link_to AppModule.human_name(key), module_root_path(key), class: "#{nav_link_class(module_root_path(key))} w-full" %>
+          <% end %>
+          <div class="mt-2 border-t border-line pt-3">
+            <p class="mb-2 truncate px-3.5 text-xs text-ink-muted"><%= Current.user.name %></p>
+            <%= button_to t(".sign_out"), session_path, method: :delete, class: "btn w-full" %>
+          </div>
+        </div>
+      </details>
+    </div>
+  </nav>
+</header>

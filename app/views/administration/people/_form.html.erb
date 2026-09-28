@@ -1,0 +1,26 @@
+<%= form_with model: [ :administration, person ], class: form_surface_class("space-y-6"), data: { controller: "form-validation" } do |form| %>
+  <%= render "shared/form_errors", record: person %>
+
+  <div class="grid gap-5 sm:grid-cols-2">
+    <%= render "shared/person_fields", form: form %>
+  </div>
+
+  <fieldset>
+    <legend class="field-label"><%= t(".roles") %></legend>
+    <div class="mt-2 flex flex-wrap gap-6">
+      <label class="flex items-center gap-2 text-sm">
+        <%= form.check_box :client_role, { checked: person.client.present? && !person.client.marked_for_destruction?, class: "size-4 accent-primary" } %>
+        <%= Client.model_name.human %>
+      </label>
+      <label class="flex items-center gap-2 text-sm">
+        <%= form.check_box :collaborator_role, { checked: person.collaborator.present? && !person.collaborator.marked_for_destruction?, class: "size-4 accent-primary" } %>
+        <%= Collaborator.model_name.human %>
+      </label>
+    </div>
+  </fieldset>
+
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= cancel_button administration_people_path %>
+  </div>
+<% end %>

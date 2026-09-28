@@ -1,0 +1,692 @@
+# Único lugar donde vive el español de la aplicación.
+es:
+  negocio:
+    nombre: "Compra de Café el Rey David"
+    ubicacion: "Mata de Plátano, Moroceli"
+
+  app_modules:
+    administration: "Administración"
+    trading: "Compra y venta de café"
+    farms: "Fincas"
+    loans: "Préstamos"
+    reports: "Reportería"
+    actions:
+      read: "Ver"
+      create: "Crear"
+      update: "Editar"
+      destroy: "Borrar"
+
+  layouts:
+    navigation:
+      menu: "Menú"
+      home: "Inicio"
+      users: "Usuarios"
+      sign_out: "Cerrar sesión"
+
+  shared:
+    flash:
+      dismiss: "Cerrar mensaje"
+    modal:
+      label: "Ventana"
+      close: "Cerrar"
+    detail: "Detalle"
+    cancel: "Cancelar"
+    select:
+      no_zone: "Sin zona asignada"
+      no_department: "Sin departamento asignado"
+      no_municipality: "Sin municipio asignado"
+      pick_department_first: "Primero selecciona un departamento"
+      payment_method_later: "Por definir"
+      pick_payment_method: "Selecciona la forma de pago"
+    filters:
+      title: "Filtros"
+      active: "activos"
+      apply: "Filtrar"
+      clear: "Quitar filtros"
+      all: "Todos"
+      all_zones: "Todas las zonas"
+      search: "Buscar"
+      from: "Desde"
+      to: "Hasta"
+    pagination:
+      label: "Páginas"
+      previous: "Anterior"
+      next: "Siguiente"
+      page: "Página %{page}"
+
+
+  sessions:
+    new:
+      title: "Iniciar sesión"
+      email_address: "Correo electrónico"
+      password: "Contraseña"
+      submit: "Entrar"
+      forgot_password: "¿Olvidaste tu contraseña? Pídele a un administrador que la restablezca."
+    invalid: "Correo o contraseña incorrectos."
+    rate_limited: "Demasiados intentos. Espera unos minutos y vuelve a intentarlo."
+
+  dashboard:
+    show:
+      title: "Inicio"
+      welcome: "Hola, %{name}"
+      no_modules: "Todavía no tienes acceso a ningún módulo. Pídele a un administrador que te asigne permisos."
+
+  addresses:
+    title: "Dirección"
+
+  trading:
+    lifecycle:
+      label: "Etapas de la compra"
+      next_badge: "Siguiente"
+      stages:
+        registered: "Compra registrada"
+        invoiced: "Facturada"
+        paid: "Cancelada (pagada)"
+      hint:
+        registered: "Siguiente paso: facturar para entregarle el recibo al productor."
+        invoiced: "Siguiente paso: registrar el pago cuando se le pague al productor."
+        paid: "Ciclo completo: la compra está facturada y pagada."
+    nav:
+      home: "Resumen"
+      new_purchase: "Nueva compra"
+      purchases: "Compras"
+      invoices: "Facturas"
+      daily_close: "Cierre diario"
+      producers: "Productores"
+      zones: "Zonas"
+    home:
+      index:
+        today: "Hoy, %{date}"
+        whats_next: "Qué sigue"
+        whats_next_help: "El flujo del día, en orden. Lo resaltado tiene trabajo pendiente."
+        step: "Paso %{number}"
+        steps:
+          register:
+            title: "Pesar y registrar compras"
+            action: "Nueva compra"
+            status_html:
+              zero: "Todavía no hay compras hoy."
+              one: "1 compra registrada hoy."
+              other: "%{count} compras registradas hoy."
+          invoice:
+            title: "Facturar"
+            action: "Facturar compras"
+            status_html:
+              zero: "No hay compras sin facturar."
+              one: "1 compra sin facturar (%{amount})."
+              other: "%{count} compras sin facturar (%{amount})."
+          pay:
+            title: "Registrar pagos"
+            action: "Ver pendientes"
+            status_html:
+              zero: "No hay facturas pendientes de pago."
+              one: "1 factura pendiente de pago (%{amount})."
+              other: "%{count} facturas pendientes de pago (%{amount})."
+          close:
+            title: "Cerrar el día"
+            action: "Ver cierre diario"
+            status_html: "Total comprado hoy: %{amount}."
+    summary:
+      purchases: "Compras"
+      producers: "Productores"
+      gross_weight: "Libras brutas"
+      sacks: "Sacos"
+      net_weight: "Libras netas"
+      total: "Total comprado"
+      paid_total: "Pagado"
+      pending_total: "Pendiente de pago"
+      uninvoiced_total: "Sin facturar"
+    zones:
+      index:
+        title: "Zonas"
+        new: "Nueva zona"
+        edit: "Editar"
+        empty: "No hay zonas que coincidan con los filtros."
+        help: "Las zonas son los lugares de donde vienen los productores. El precio depende de la zona."
+      new:
+        title: "Nueva zona"
+      edit:
+        title: "Editar zona"
+      form:
+        cancel: "Cancelar"
+      create:
+        success: "Zona creada."
+      update:
+        success: "Zona actualizada."
+    producers:
+      index:
+        title: "Productores"
+        new: "Nuevo productor"
+        search: "Buscar"
+        search_placeholder: "Nombre, apellido, DNI o RTN"
+        name: "Nombre"
+        empty: "No hay productores que coincidan con los filtros."
+      show:
+        edit: "Editar"
+        new_purchase: "Nueva compra"
+        new_invoice: "Facturar compras"
+        uninvoiced: "Compras sin facturar"
+        no_uninvoiced: "No tiene compras sin facturar."
+        recent_invoices: "Últimas facturas"
+        no_invoices: "Todavía no tiene facturas."
+        back: "Volver a productores"
+      new:
+        title: "Nuevo productor"
+      edit:
+        title: "Editar productor"
+      form:
+        producer_data: "Datos de compra"
+        cancel: "Cancelar"
+      create:
+        success: "Productor creado."
+      update:
+        success: "Productor actualizado."
+    purchases:
+      index:
+        title: "Compras"
+        producer: "Productor"
+        search_placeholder: "Nombre, DNI o RTN"
+        invoiced: "Facturación"
+        invoiced_yes: "Facturadas"
+        invoiced_no: "Sin facturar"
+        empty: "No hay compras que coincidan con los filtros."
+      table:
+        number: "N.º"
+        producer: "Productor"
+        invoice: "Factura"
+        not_invoiced: "Sin facturar"
+        gross: "Bruto (lb)"
+        humidity: "Hum. (%)"
+        net: "Neto (lb)"
+        price: "Precio/lb"
+        actions: "Acciones"
+        edit: "Editar"
+      show:
+        title: "Compra"
+        edit: "Editar"
+        destroy: "Borrar"
+        confirm_destroy: "¿Borrar esta compra? Esta acción no se puede deshacer."
+        invoiced_notice: "Esta compra ya está en la factura %{number} y no se puede modificar."
+        view_invoice: "Ver factura %{number}"
+        invoice_now: "Facturar ahora"
+        register_payment: "Registrar pago de la factura %{number}"
+        another_purchase: "Registrar otra compra"
+        back: "Volver a compras"
+      new:
+        title: "Nueva compra"
+      edit:
+        title: "Editar compra"
+      form:
+        producer_placeholder: "Escribe para buscar un productor"
+        producer_missing: "Selecciona un productor de la lista"
+        new_producer: "¿No está? Registrar productor"
+        new_zone: "Nueva zona"
+        calculation: "Cálculo"
+        cancel: "Cancelar"
+      create:
+        success: "Compra de %{producer} registrada."
+      update:
+        success: "Compra actualizada."
+      destroy:
+        success: "Compra borrada."
+    invoices:
+      index:
+        title: "Facturas"
+        new: "Facturar compras"
+        search_placeholder: "Productor o número de factura"
+        empty: "No hay facturas que coincidan con los filtros."
+        number: "N.º"
+        date: "Fecha"
+        producer: "Productor"
+        status: "Estado"
+      new:
+        title: "Facturar compras"
+        choose_producer: "Productores con compras sin facturar"
+        nothing_to_invoice: "No hay compras sin facturar."
+        pick_purchases: "Compras de %{producer} sin facturar"
+        no_purchases: "Este productor no tiene compras sin facturar."
+        payment: "Pago"
+        submit: "Crear factura"
+        cancel: "Cancelar"
+      show:
+        title: "Factura %{number}"
+        print: "Imprimir"
+        mark_paid: "Marcar como cancelada"
+        paid_on_label: "Fecha de pago"
+        back: "Volver a facturas"
+        original: "ORIGINAL"
+        copy: "COPIA"
+        invoice: "Factura"
+        date: "Fecha"
+        producer: "Nombre"
+        location: "Ubicación"
+        signature: "Firma de quien factura"
+        issued_by: "Facturado por: %{name}"
+        totals: "Totales"
+      create:
+        success: "Factura creada."
+      update:
+        success: "Factura marcada como cancelada."
+    daily_closes:
+      report:
+        title: "Cierre diario"
+        coffee_state: "Estado"
+        subtotal: "Subtotal"
+        generated: "Generado por %{name} el %{time}"
+        groups:
+          paid: "Canceladas"
+          pending: "Pendientes de pago"
+          uninvoiced: "Sin facturar"
+        units: "Pesos en libras; precios y montos en Lempiras."
+        columns:
+          gross_weight: "Bruto"
+          humidity_percent: "Hum. %"
+          net_weight: "Neto"
+          price_per_pound: "L/lb"
+          total: "Total"
+          invoice: "Fact."
+      show:
+        title: "Cierre diario del %{date}"
+        print: "Imprimir"
+        purchases: "Compras del día"
+        empty: "No hay compras registradas en esta fecha."
+
+  module_home:
+    empty: "Este módulo todavía no tiene funciones."
+
+  administration:
+    home:
+      index:
+        people_description: "Personas del negocio: clientes y colaboradores."
+        users_description: "Crear usuarios, asignar permisos por módulo y restablecer contraseñas."
+        audit_description: "Quién creó, modificó o borró qué, y cuándo."
+    audit_events:
+      system: "Sistema"
+      system_actor: "El sistema"
+      entities:
+        user: "el usuario"
+        permission: "el permiso"
+        person: "la persona"
+        client: "el cliente"
+        collaborator: "el colaborador"
+        producer: "el productor"
+        zone: "la zona"
+        purchase: "la compra"
+        invoice: "la factura"
+      sentence:
+        create: "%{actor} creó %{record} el %{date} a las %{time}."
+        update: "%{actor} modificó %{record}: %{fields}, el %{date} a las %{time}."
+        destroy: "%{actor} borró %{record} el %{date} a las %{time}."
+        sign_in: "%{actor} inició sesión el %{date} a las %{time}."
+        sign_out: "%{actor} cerró sesión el %{date} a las %{time}."
+        sign_in_failed: "Intento fallido de iniciar sesión con «%{record}» el %{date} a las %{time}."
+      filtered: "(oculto)"
+      "true": "Sí"
+      "false": "No"
+      index:
+        title: "Auditoría"
+        help: "Registro de todas las acciones del sistema. No se puede modificar ni borrar."
+        from: "Desde"
+        to: "Hasta"
+        user: "Usuario"
+        action: "Acción"
+        entity: "Entidad"
+        search: "Buscar"
+        search_placeholder: "Registro o correo"
+        all_actions: "Todas"
+        all_entities: "Todas"
+        when: "Fecha y hora"
+        record: "Registro"
+        record_id: "ID del registro"
+        changes: "Campos"
+        description: "Descripción"
+        empty: "No hay acciones que coincidan con los filtros."
+        pages: "Páginas"
+        previous: "Anterior"
+        next: "Siguiente"
+        page: "Página %{page}"
+      show:
+        title: "Detalle de la acción"
+        when: "Fecha y hora"
+        user: "Usuario"
+        entity: "Entidad"
+        record_id: "ID del registro"
+        record: "Registro"
+        ip_address: "Dirección IP"
+        request_id: "Referencia de la solicitud"
+        changes: "Cambios"
+        field: "Campo"
+        before: "Antes"
+        after: "Después"
+        back: "Volver a la auditoría"
+      json_diff:
+        title: "Cambios en formato JSON"
+        before: "valor anterior"
+        after: "valor nuevo"
+    people:
+      index:
+        title: "Personas"
+        new: "Nueva persona"
+        filter: "Filtrar por rol"
+        all: "Todas"
+        clients: "Clientes"
+        collaborators: "Colaboradores"
+        producers: "Productores"
+        search: "Buscar"
+        search_placeholder: "Nombre, apellido, DNI o RTN"
+        name: "Nombre"
+        roles: "Roles"
+        empty: "No hay personas que coincidan con los filtros."
+      show:
+        edit: "Editar"
+        destroy: "Borrar"
+        confirm_destroy: "¿Borrar a %{name}? Esta acción no se puede deshacer."
+        back: "Volver a personas"
+      new:
+        title: "Nueva persona"
+      edit:
+        title: "Editar persona"
+      form:
+        roles: "Roles"
+        cancel: "Cancelar"
+      create:
+        success: "Persona creada."
+      update:
+        success: "Persona actualizada."
+      destroy:
+        success: "Persona borrada."
+    users:
+      index:
+        title: "Usuarios"
+        new: "Nuevo usuario"
+        edit: "Editar"
+        reset_password: "Restablecer contraseña"
+        role: "Tipo"
+        status: "Estado"
+        actions: "Acciones"
+        empty: "No hay usuarios que coincidan con los filtros."
+        search_placeholder: "Nombre o correo"
+      show:
+        edit: "Editar"
+        reset_password: "Restablecer contraseña"
+        permissions: "Permisos por módulo"
+        admin_has_all: "Es administrador: tiene acceso completo a todos los módulos."
+        back: "Volver a usuarios"
+      new:
+        title: "Nuevo usuario"
+      edit:
+        title: "Editar usuario"
+      edit_password:
+        title: "Restablecer contraseña"
+        help: "Define una contraseña nueva para %{name} (%{email}). Se cerrarán todas sus sesiones abiertas."
+      form:
+        permissions: "Permisos por módulo"
+        permissions_help: "Un administrador tiene acceso completo; los permisos por módulo aplican a los demás usuarios."
+        module: "Módulo"
+        cancel: "Cancelar"
+      create:
+        success: "Usuario creado."
+      update:
+        success: "Usuario actualizado."
+      reset_password:
+        success: "Contraseña restablecida. El usuario debe iniciar sesión de nuevo."
+    user_role:
+      admin: "Administrador"
+      regular: "Usuario"
+    user_status:
+      active: "Activo"
+      inactive: "Inactivo"
+
+  activerecord:
+    models:
+      user:
+        one: "Usuario"
+        other: "Usuarios"
+      permission:
+        one: "Permiso"
+        other: "Permisos"
+      person:
+        one: "Persona"
+        other: "Personas"
+      client:
+        one: "Cliente"
+        other: "Clientes"
+      producer:
+        one: "Productor"
+        other: "Productores"
+      zone:
+        one: "Zona"
+        other: "Zonas"
+      purchase:
+        one: "Compra"
+        other: "Compras"
+      invoice:
+        one: "Factura"
+        other: "Facturas"
+      audit_event:
+        one: "Acción"
+        other: "Acciones"
+      collaborator:
+        one: "Colaborador"
+        other: "Colaboradores"
+    attributes:
+      user:
+        name: "Nombre completo"
+        email_address: "Correo electrónico"
+        password: "Contraseña"
+        password_confirmation: "Confirmar contraseña"
+        admin: "Administrador"
+        active: "Activo"
+        password_digest: "Contraseña"
+      person:
+        first_names: "Nombres"
+        last_names: "Apellidos"
+        dni: "DNI"
+        rtn: "RTN"
+        phone: "Teléfono"
+        email: "Correo electrónico"
+        department: "Departamento"
+        department_id: "Departamento"
+        municipality: "Municipio"
+        municipality_id: "Municipio"
+        address_line: "Dirección"
+      zone:
+        name: "Nombre"
+      producer:
+        kind: "Tipo"
+        kind/producer: "Productor"
+        kind/intermediary: "Carrero (intermediario)"
+        kind/own_farm: "Finca propia"
+        farm_name: "Finca"
+        zone: "Zona"
+        zone_id: "Zona"
+        person: "Persona"
+        person_id: "Persona"
+      purchase:
+        purchased_on: "Fecha"
+        producer: "Productor"
+        producer_id: "Productor"
+        zone: "Zona"
+        zone_id: "Zona"
+        invoice: "Factura"
+        invoice_id: "Factura"
+        created_by_id: "Registró"
+        coffee_state: "Estado del café"
+        coffee_state/cherry: "Uva"
+        coffee_state/wet_parchment: "Pergamino húmedo"
+        coffee_state/dry_parchment: "Pergamino seco"
+        gross_weight: "Peso bruto (lb)"
+        humidity_percent: "Humedad (%)"
+        price_per_pound: "Precio por libra (L)"
+        sacks: "Sacos"
+        tare: "Tara (lb)"
+        net_weight: "Peso neto (lb)"
+        total: "Total"
+        observations: "Observaciones / calidad"
+      invoice:
+        number: "Número"
+        issued_on: "Fecha"
+        producer: "Productor"
+        producer_id: "Productor"
+        created_by_id: "Facturó"
+        purchases: "Compras"
+        payment_status: "Estado de pago"
+        payment_status/pending: "Pendiente de pago"
+        payment_status/paid: "Cancelada"
+        payment_method: "Forma de pago"
+        payment_method/cash: "Efectivo"
+        payment_method/transfer: "Transferencia"
+        payment_method/check: "Cheque"
+        paid_on: "Fecha de pago"
+        total: "Total"
+      audit_event:
+        action/create: "Creó"
+        action/update: "Modificó"
+        action/destroy: "Borró"
+        action/sign_in: "Inició sesión"
+        action/sign_out: "Cerró sesión"
+        action/sign_in_failed: "Intento de sesión fallido"
+      client:
+        person_id: "Persona"
+      collaborator:
+        person_id: "Persona"
+      permission:
+        user_id: "Usuario"
+        module_key: "Módulo"
+        can_read: "Ver"
+        can_create: "Crear"
+        can_update: "Editar"
+        can_destroy: "Borrar"
+    errors:
+      models:
+        purchase:
+          attributes:
+            invoice:
+              other_producer: "pertenece a otro productor"
+        invoice:
+          attributes:
+            purchases:
+              other_producer: "deben ser todas del mismo productor"
+              unavailable: "ya no están disponibles: otra persona las facturó o fueron borradas. Revisa la lista."
+        user:
+          last_active_admin: "No se puede desactivar ni quitar el rol de administrador al último administrador activo."
+      messages:
+        record_invalid: "La validación falló: %{errors}"
+        restrict_dependent_destroy:
+          has_one: "No se puede eliminar el registro porque existe un %{record} dependiente"
+          has_many: "No se puede eliminar el registro porque existen %{record} dependientes"
+
+  errors:
+    show:
+      title: "No se pudo mostrar esta página"
+      home: "Volver al inicio"
+    handled:
+      forbidden: "No tienes permiso para hacer eso."
+      not_found: "El registro que buscas no existe o fue borrado."
+      bad_request: "La solicitud llegó incompleta. Vuelve a intentarlo."
+      expired_form: "El formulario expiró. Recarga la página e inténtalo de nuevo."
+      unexpected: "Ocurrió un error inesperado. Vuelve a intentarlo; si continúa, avisa a un administrador con el código %{reference}."
+    format: "%{attribute} %{message}"
+    messages:
+      accepted: "debe ser aceptado"
+      blank: "no puede estar en blanco"
+      confirmation: "no coincide con %{attribute}"
+      empty: "no puede estar vacío"
+      equal_to: "debe ser igual a %{count}"
+      even: "debe ser un número par"
+      exclusion: "está reservado"
+      greater_than: "debe ser mayor que %{count}"
+      greater_than_or_equal_to: "debe ser mayor o igual que %{count}"
+      in: "debe estar en %{count}"
+      inclusion: "no está incluido en la lista"
+      invalid: "no es válido"
+      less_than: "debe ser menor que %{count}"
+      less_than_or_equal_to: "debe ser menor o igual que %{count}"
+      model_invalid: "La validación falló: %{errors}"
+      not_a_number: "no es un número"
+      not_an_integer: "debe ser un entero"
+      odd: "debe ser un número impar"
+      other_than: "debe ser distinto de %{count}"
+      present: "debe estar en blanco"
+      required: "debe existir"
+      taken: "ya está en uso"
+      password_too_long: "es demasiado larga"
+      person_name_format: "solo puede tener letras, espacios, apóstrofos, puntos y guiones"
+      dni_format: "debe tener 13 dígitos numéricos, sin letras"
+      rtn_format: "debe tener 14 dígitos numéricos, sin letras"
+      phone_format: "debe tener 8 dígitos (puede empezar con +504)"
+      email_format: "no es un correo válido"
+      password_format: "debe tener al menos 8 caracteres"
+      not_in_department: "no pertenece al departamento seleccionado"
+      too_long:
+        one: "es demasiado largo (1 carácter máximo)"
+        other: "es demasiado largo (%{count} caracteres máximo)"
+      too_short:
+        one: "es demasiado corto (1 carácter mínimo)"
+        other: "es demasiado corto (%{count} caracteres mínimo)"
+      wrong_length:
+        one: "no tiene la longitud correcta (1 carácter exactos)"
+        other: "no tiene la longitud correcta (%{count} caracteres exactos)"
+    template:
+      header:
+        one: "No se pudo guardar: 1 error"
+        other: "No se pudo guardar: %{count} errores"
+      body: "Revisa los siguientes campos:"
+
+  helpers:
+    select:
+      prompt: "Selecciona"
+    submit:
+      create: "Crear %{model}"
+      submit: "Guardar %{model}"
+      update: "Guardar cambios"
+
+  date:
+    abbr_day_names: [dom, lun, mar, mié, jue, vie, sáb]
+    abbr_month_names: [~, ene, feb, mar, abr, may, jun, jul, ago, sep, oct, nov, dic]
+    day_names: [domingo, lunes, martes, miércoles, jueves, viernes, sábado]
+    month_names: [~, enero, febrero, marzo, abril, mayo, junio, julio, agosto, septiembre, octubre, noviembre, diciembre]
+    formats:
+      default: "%d/%m/%Y"
+      long: "%-d de %B de %Y"
+      short: "%-d de %b"
+    order: [day, month, year]
+
+  time:
+    am: "a. m."
+    pm: "p. m."
+    formats:
+      audit: "%d/%m/%Y %H:%M:%S"
+      time_only: "%H:%M:%S"
+      default: "%d/%m/%Y %H:%M"
+      long: "%-d de %B de %Y %H:%M"
+      short: "%-d de %b %H:%M"
+
+  number:
+    currency:
+      format:
+        format: "%u%n"
+        unit: "L "
+        delimiter: ","
+        separator: "."
+        precision: 2
+        significant: false
+        strip_insignificant_zeros: false
+    format:
+      delimiter: ","
+      precision: 2
+      separator: "."
+      significant: false
+      strip_insignificant_zeros: false
+    human:
+      format:
+        delimiter: ""
+        precision: 3
+        significant: true
+        strip_insignificant_zeros: true
+
+  support:
+    array:
+      last_word_connector: " y "
+      two_words_connector: " y "
+      words_connector: ", "

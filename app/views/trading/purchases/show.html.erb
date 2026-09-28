@@ -1,0 +1,57 @@
+<% content_for :title, t(".title") %>
+<%= render "trading/nav" %>
+
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %> <%= @purchase.id %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= @purchase.producer.full_name %></p>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <% if policy(@purchase).update? %>
+      <%= link_to t(".edit"), edit_trading_purchase_path(@purchase), class: "btn btn-primary" %>
+    <% end %>
+    <% if policy(@purchase).destroy? %>
+      <%= button_to t(".destroy"), trading_purchase_path(@purchase), method: :delete, class: "btn",
+            form: { data: { turbo_confirm: t(".confirm_destroy") } } %>
+    <% end %>
+  </div>
+</div>
+
+<div class="mt-4">
+  <%= render layout: "trading/lifecycle", locals: { lifecycle: TradingLifecycle.for_purchase(@purchase) } do %>
+    <% if @purchase.invoice.nil? %>
+      <% if policy(Invoice).create? %>
+        <%= page_link_to t("trading.purchases.show.invoice_now"), new_trading_invoice_path(producer_id: @purchase.producer_id), class: "btn btn-primary" %>
+      <% end %>
+    <% elsif !@purchase.invoice.paid? && policy(@purchase.invoice).update? %>
+      <%= link_to t("trading.purchases.show.register_payment", number: @purchase.invoice.display_number), trading_invoice_path(@purchase.invoice), class: "btn btn-primary" %>
+    <% elsif policy(@purchase.invoice).show? %>
+      <%= link_to t("trading.purchases.show.view_invoice", number: @purchase.invoice.display_number), trading_invoice_path(@purchase.invoice), class: "btn" %>
+    <% end %>
+    <% if policy(Purchase).create? %>
+      <%= page_link_to t("trading.purchases.show.another_purchase"), new_trading_purchase_path, class: "btn" %>
+    <% end %>
+  <% end %>
+</div>
+
+<% if @purchase.invoice %>
+  <p class="mt-3 text-sm text-ink-muted"><%= t(".invoiced_notice", number: @purchase.invoice.display_number) %></p>
+<% end %>
+
+<dl class="mt-6 grid panel sm:grid-cols-3">
+  <% {
+       purchased_on: l(@purchase.purchased_on, format: :long), zone: @purchase.zone&.name, coffee_state: @purchase.human_coffee_state,
+       gross_weight: format_pounds(@purchase.gross_weight), sacks: format_pounds(@purchase.sacks), tare: format_pounds(@purchase.tare),
+       humidity_percent: format_pounds(@purchase.humidity_percent), net_weight: format_pounds(@purchase.net_weight),
+       price_per_pound: format_money(@purchase.price_per_pound), total: format_money(@purchase.total), observations: @purchase.observations
+     }.each do |attribute, value| %>
+    <div class="border-b border-line px-4 py-3">
+      <dt class="text-xs font-medium text-ink-muted"><%= Purchase.human_attribute_name(attribute) %></dt>
+      <dd class="mt-1 text-sm"><%= value.presence || "—" %></dd>
+    </div>
+  <% end %>
+</dl>
+
+<% unless modal_request? %>
+  <p class="mt-6"><%= link_to t(".back"), trading_purchases_path, class: "text-sm link" %></p>
+<% end %>

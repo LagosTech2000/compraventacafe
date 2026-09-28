@@ -1,0 +1,8 @@
+<%# Rendered without layout after a save in the modal: closes it and announces
+    the result. The notice shows once, on the refreshed page, not in here. %>
+<turbo-frame id="modal">
+  <div data-controller="modal-result"
+       data-modal-result-event-value="<%= event %>"
+       data-modal-result-detail-value="<%= detail.to_json %>"
+       data-modal-result-refresh-value="<%= refresh %>"></div>
+</turbo-frame>

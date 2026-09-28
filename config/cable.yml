@@ -1,0 +1,9 @@
+development:
+  adapter: async
+
+test:
+  adapter: test
+
+production:
+  # No broadcasting in the foundation, so no Redis or Solid Cable.
+  adapter: async
