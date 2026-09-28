@@ -7,6 +7,7 @@ bundle install
 bin/rails assets:precompile
 bin/rails assets:clean
 bin/rails db:migrate
+bin/rails honduras_divisions:load
 
 # Creates the first administrator once ADMIN_NAME, ADMIN_EMAIL and
 # ADMIN_PASSWORD are set in Render. Idempotent (see db/seeds.rb).

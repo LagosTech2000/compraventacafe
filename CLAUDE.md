@@ -165,8 +165,10 @@ municipios queda vacía y deshabilitada; al elegirlo se filtra
 
 Los 18 departamentos y 298 municipios viven en
 `db/data/honduras_divisions.yml` (códigos del SAT, 2023) y se cargan con
-`HondurasDivisions.load!`, que corre en una migración y antes de la suite de
-tests. Son datos de referencia: los nombres de lugares son la única excepción
+`HondurasDivisions.load!` (idempotente), que corre en una migración, antes de
+la suite de tests y con `bin/rails honduras_divisions:load` en
+`bin/render-build.sh` y `bin/setup`. La migración sola no basta: en una base
+nueva `db:migrate` carga `db/schema.rb` y se salta las migraciones. Son datos de referencia: los nombres de lugares son la única excepción
 a "el español solo vive en `es.yml`".
 
 **3. El usuario nunca ve una pantalla de error del servidor.** `ErrorHandling`
