@@ -164,7 +164,7 @@ RSpec.describe "Trading purchase flow" do
     create_list(:purchase, 2)
     create(:invoice)
     get trading_root_path
-    steps = Nokogiri::HTML(response.body).css("ol > li").map { |li| li.text.squish }
+    steps = Nokogiri::HTML(response.body).css("main ol > li").map { |li| li.text.squish }
     expect(steps[0]).to include("Paso 1", "3 compras registradas hoy")
     expect(steps[1]).to include("Paso 2", "2 compras sin facturar")
     expect(steps[2]).to include("Paso 3", "1 factura pendiente de pago")

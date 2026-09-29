@@ -1,1 +1,25 @@
-<%= render "shared/module_home", module_key: "loans" %>
+<% content_for :title, AppModule.human_name("loans") %>
+<%= render "loans/nav" %>
+<h1 class="sr-only"><%= t("loans.nav.home") %></h1>
+
+<dl class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+  <% {
+       open_loans: @balances.size,
+       principal_owed: format_money(@balances.values.sum(&:principal_owed)),
+       interest_owed: format_money(@balances.values.sum(&:interest_owed)),
+       overdue_loans: @overdue.size
+     }.each do |key, value| %>
+    <div class="stat">
+      <dt><%= t(".stats.#{key}") %></dt>
+      <dd><%= value %></dd>
+    </div>
+  <% end %>
+</dl>
+
+<h2 class="mt-8 mb-1 text-lg font-semibold"><%= t(".overdue") %></h2>
+<p class="mb-3 text-sm text-ink-muted"><%= t(".overdue_help") %></p>
+<% if @overdue.any? %>
+  <%= render "loans/loans/table", loans: @overdue, balances: @balances %>
+<% else %>
+  <p class="empty-state"><%= t(".no_overdue") %></p>
+<% end %>

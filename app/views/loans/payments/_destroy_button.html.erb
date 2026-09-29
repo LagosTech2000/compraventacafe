@@ -1,0 +1,4 @@
+<% if policy(payment).destroy? %>
+  <%= button_to t("loans.payments.table.destroy"), loans_loan_payment_path(payment.loan, payment), method: :delete, class: "btn btn-sm",
+        form: { data: { turbo_confirm: t("loans.payments.table.confirm_destroy") } } %>
+<% end %>

@@ -7,5 +7,7 @@ RSpec.describe DemoData do
     expect(Person.pluck(:last_names)).to all(start_with("Demo"))
     expect(Purchase.on(Time.zone.today).uninvoiced.count).to eq(Purchase.on(Time.zone.today).count)
     expect(Invoice.count).to be_positive
+    expect(Loan.pluck(:paid_off_on).compact.size).to eq(2)
+    expect(Loan.overdue.count).to eq(1)
   end
 end

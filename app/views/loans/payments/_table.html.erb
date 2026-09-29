@@ -1,0 +1,46 @@
+<%# Payments of one loan, newest first. Only the latest can be removed. %>
+<div class="@container">
+  <ul class="space-y-3 @2xl:hidden">
+    <% payments.each do |payment| %>
+      <li class="data-card" id="<%= dom_id(payment, :card) %>">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="font-semibold tabular-nums"><%= format_money(payment.amount) %></p>
+            <p class="text-xs text-ink-muted"><%= [ l(payment.paid_on), payment.human_payment_method ].join(" · ") %></p>
+          </div>
+          <%= render "loans/payments/destroy_button", payment: payment %>
+        </div>
+        <p class="mt-2 text-xs text-ink-muted">
+          <%= t("loans.payments.table.split", interest: format_money(payment.interest_amount), principal: format_money(payment.principal_amount)) %>
+        </p>
+      </li>
+    <% end %>
+  </ul>
+
+  <div class="hidden overflow-x-auto panel @2xl:block">
+    <table class="data-table data-table-compact">
+      <thead>
+        <tr>
+          <th><%= LoanPayment.human_attribute_name(:paid_on) %></th>
+          <th><%= LoanPayment.human_attribute_name(:payment_method) %></th>
+          <th class="text-right"><%= LoanPayment.human_attribute_name(:amount) %></th>
+          <th class="text-right"><%= LoanPayment.human_attribute_name(:interest_amount) %></th>
+          <th class="text-right"><%= LoanPayment.human_attribute_name(:principal_amount) %></th>
+          <th class="cell-actions"><span class="sr-only"><%= t("loans.payments.table.actions") %></span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% payments.each do |payment| %>
+          <tr id="<%= dom_id(payment) %>">
+            <td class="whitespace-nowrap"><%= l(payment.paid_on) %></td>
+            <td><%= payment.human_payment_method %></td>
+            <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(payment.amount) %></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(payment.interest_amount) %></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(payment.principal_amount) %></td>
+            <td class="cell-actions"><%= render "loans/payments/destroy_button", payment: payment %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

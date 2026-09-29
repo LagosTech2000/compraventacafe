@@ -291,8 +291,511 @@ es:
         purchases: "Compras del día"
         empty: "No hay compras registradas en esta fecha."
 
+  loans:
+    nav:
+      home: "Resumen"
+      new_loan: "Nuevo préstamo"
+      loans: "Préstamos"
+      credit_accounts: "Estados de cuenta"
+    score:
+      label: "Score de pago"
+      categories:
+        excellent: "Excelente"
+        good: "Bueno"
+        fair: "Regular"
+        risk: "Riesgo"
+        no_history: "Sin historial"
+    home:
+      index:
+        stats:
+          open_loans: "Préstamos por cobrar"
+          principal_owed: "Capital por cobrar"
+          interest_owed: "Interés acumulado"
+          overdue_loans: "Préstamos vencidos"
+        overdue: "Préstamos vencidos"
+        overdue_help: "Pasaron su fecha límite y todavía deben. Los más atrasados primero."
+        no_overdue: "No hay préstamos vencidos."
+    loans:
+      table:
+        number: "N.º"
+        dates: "Del %{from} al %{to}"
+        rate: "Tasa mensual"
+        owed: "Debe hoy"
+        actions: "Acciones"
+      index:
+        title: "Préstamos"
+        search_placeholder: "Nombre, apellido, DNI o RTN"
+        empty: "No hay préstamos que coincidan con los filtros."
+      show:
+        title: "Préstamo %{number}"
+        edit: "Editar"
+        destroy: "Borrar"
+        confirm_destroy: "¿Borrar este préstamo? Esta acción no se puede deshacer."
+        owed_today_html: "Debe hoy: %{amount} (capital más interés)."
+        paid_off_on: "Pagado por completo el %{date}."
+        new_payment: "Registrar abono"
+        credit_account: "Estado de cuenta"
+        frozen_notice: "Este préstamo ya tiene abonos: no se puede editar ni borrar."
+        principal: "Monto prestado"
+        rate: "Tasa de interés mensual"
+        principal_owed: "Capital pendiente"
+        interest_owed: "Interés acumulado a hoy"
+        principal_paid: "Capital pagado"
+        interest_paid: "Interés pagado"
+        payments: "Abonos"
+        no_payments: "Todavía no tiene abonos."
+        back: "Volver a préstamos"
+      new:
+        title: "Nuevo préstamo"
+      edit:
+        title: "Editar préstamo"
+      form:
+        person_placeholder: "Escribe para buscar una persona"
+        person_missing: "Selecciona una persona de la lista"
+        new_person: "¿No está? Registrar persona"
+        rate_help: "Porcentaje por mes. El interés corre por día (mes de 30 días) sobre el capital pendiente."
+      create:
+        success: "Préstamo a %{person} registrado."
+      update:
+        success: "Préstamo actualizado."
+      destroy:
+        success: "Préstamo borrado."
+    payments:
+      table:
+        split: "Interés %{interest} · Capital %{principal}"
+        actions: "Acciones"
+        destroy: "Quitar"
+        confirm_destroy: "¿Quitar este abono? Solo se puede quitar el último."
+      new:
+        title: "Registrar abono"
+        loan: "Préstamo %{number} · %{person}"
+        principal_owed: "Capital pendiente"
+        interest_owed: "Interés acumulado"
+        total_owed: "Debe hoy"
+        as_of_today: "Calculado a hoy. Si el abono lleva otra fecha, el sistema recalcula el interés a esa fecha al guardar."
+        submit: "Registrar abono"
+      create:
+        success: "Abono registrado."
+      destroy:
+        success: "Abono quitado."
+    credit_accounts:
+      index:
+        title: "Estados de cuenta"
+        help: "Cada persona a la que se le ha prestado, con lo que debe hoy y su score de pago."
+        person: "Persona"
+        search_placeholder: "Nombre, apellido, DNI o RTN"
+        standing: "Situación"
+        standings:
+          owing: "Con saldo pendiente"
+          overdue: "Con préstamos vencidos"
+        open_loans: "Préstamos por cobrar"
+        overdue_loans: "Vencidos"
+        total_owed: "Debe hoy"
+        actions: "Acciones"
+        empty: "No hay personas que coincidan con los filtros."
+      show:
+        title: "Estado de cuenta de %{name}"
+        new_loan: "Nuevo préstamo"
+        print: "Imprimir"
+        score_basis:
+          one: "%{on_time} de 1 préstamo pagado a tiempo."
+          other: "%{on_time} de %{count} préstamos pagados a tiempo."
+        score_none: "Todavía no tiene préstamos pagados ni vencidos."
+        totals:
+          lent: "Total prestado"
+          principal_paid: "Capital pagado"
+          interest_paid: "Interés pagado"
+          principal_owed: "Capital pendiente"
+          interest_owed: "Interés acumulado"
+          total_owed: "Debe hoy"
+        as_of_today: "Saldos calculados a hoy."
+        loans: "Préstamos"
+        history: "Historial crediticio"
+        columns:
+          date: "Fecha"
+          movement: "Movimiento"
+          amount: "Monto"
+          interest: "A interés"
+          principal: "A capital"
+        movements:
+          loan: "Préstamo %{number} otorgado"
+          payment: "Abono al préstamo %{number}"
+        back: "Volver a estados de cuenta"
+
   module_home:
     empty: "Este módulo todavía no tiene funciones."
+
+  # Guías de ayuda del botón "?" (HelpGuide). Una por pantalla en "screens"
+  # (ruta del controlador + acción; "form" sirve para crear y editar) y una
+  # por proceso en "processes". Solo describen lo que el sistema ya hace.
+  help_guides:
+    ui:
+      label: "Guía de ayuda"
+      open: "Ayuda: %{title}"
+      eyebrow: "Guía de ayuda"
+      steps: "Paso a paso"
+      tips: "Ten en cuenta"
+      close: "Cerrar la guía"
+      how_it_works: "¿Cómo funciona?"
+    general:
+      title: "Cómo usar el sistema"
+      summary: "El sistema está dividido en módulos. Solo ves los módulos y botones para los que tienes permiso."
+      steps:
+        - "Entra a un módulo desde el Inicio o desde el menú de arriba (en el celular, el botón «Menú»)."
+        - "En las listas, usa «Filtros» para buscar y «Detalle» para abrir un registro en una ventana."
+        - "Los botones «Nuevo…» y «Editar» abren un formulario; al guardar, la lista se actualiza sola."
+        - "Toca el botón «?» en cualquier pantalla para ver cómo se usa."
+      tips:
+        - "Si no ves un módulo o un botón, pídele a un administrador que te dé el permiso."
+        - "Si aparece un error con un código de referencia, pásale ese código a un administrador."
+    processes:
+      purchase_lifecycle:
+        title: "Etapas de una compra"
+        summary: "Cada compra pasa por tres etapas, en este orden. La barra de etapas muestra en cuál está y el botón del siguiente paso."
+        steps:
+          - "Compra registrada: se pesa el café y se registra la compra (Nueva compra). El sistema calcula sacos, tara, peso neto y total."
+          - "Facturada: se agrupan en una factura las compras sin facturar de un mismo productor (Facturar compras) y se le entrega el recibo."
+          - "Cancelada (pagada): cuando se le paga al productor, se abre la factura y se marca como cancelada con la forma y la fecha de pago."
+        tips:
+          - "Una compra facturada ya no se puede editar ni borrar."
+          - "Una factura no se borra: solo pasa de pendiente de pago a cancelada."
+          - "La factura también se puede crear ya cancelada, si el pago se hace en el momento."
+      loan_interest:
+        title: "Cómo se calcula el interés"
+        summary: "Interés simple, con la tasa mensual de cada préstamo, sobre lo que todavía se debe."
+        steps:
+          - "Cada día corre interés sobre el capital pendiente: capital × tasa mensual × días ÷ 30."
+          - "Cuando la persona abona, el abono paga primero el interés acumulado."
+          - "Lo que sobra del abono baja el capital, y desde ese día el interés corre sobre el capital nuevo."
+          - "Cuando el capital y el interés llegan a cero, el préstamo queda pagado."
+        tips:
+          - "Ejemplo: L 10,000 al 3 % mensual; a los 30 días abona L 5,000. Van L 300 a interés y L 4,700 a capital; el mes siguiente el interés es sobre L 5,300."
+          - "Después de la fecha límite el interés sigue corriendo con la misma tasa; no hay recargo por mora."
+          - "Cada abono guarda cuánto fue a interés y a capital."
+      payer_score:
+        title: "Score de pago"
+        summary: "Qué tan buen pagador es la persona: el porcentaje de sus préstamos que pagó completos a tiempo."
+        steps:
+          - "Cuentan los préstamos ya pagados y los que pasaron su fecha límite sin pagarse."
+          - "Un préstamo pagado completo hasta su fecha límite cuenta como pagado a tiempo."
+          - "Score = préstamos pagados a tiempo ÷ préstamos que cuentan × 100."
+        tips:
+          - "85 a 100: Excelente. 70 a 84: Bueno. 50 a 69: Regular. 0 a 49: Riesgo."
+          - "Los préstamos que todavía no vencen no cuentan hasta que se paguen o venzan."
+          - "Sin préstamos que cuenten, aparece «Sin historial»."
+    screens:
+      sessions:
+        form:
+          title: "Iniciar sesión"
+          summary: "Entra con el correo y la contraseña que te dio un administrador."
+          steps:
+            - "Escribe tu correo electrónico."
+            - "Escribe tu contraseña."
+            - "Toca «Entrar»."
+          tips:
+            - "No hay registro público: solo un administrador crea usuarios."
+            - "Si olvidaste la contraseña, pídele a un administrador que la restablezca."
+            - "Después de varios intentos fallidos hay que esperar unos minutos."
+      dashboard:
+        show:
+          title: "Inicio"
+          summary: "Muestra los módulos a los que tienes acceso."
+          steps:
+            - "Toca la tarjeta de un módulo para entrar."
+            - "Para volver aquí, toca el logo de arriba a la izquierda."
+            - "Para salir, usa «Cerrar sesión» (en el celular, dentro de «Menú»)."
+          tips:
+            - "Si no ves ningún módulo, pídele a un administrador que te asigne permisos."
+      administration:
+        home:
+          index:
+            title: "Administración"
+            summary: "Desde aquí se manejan las personas del negocio y, si eres administrador, los usuarios y la auditoría."
+            steps:
+              - "Personas: clientes y colaboradores del negocio."
+              - "Usuarios: quién entra al sistema y qué puede hacer en cada módulo."
+              - "Auditoría: el registro de todo lo que se ha creado, modificado o borrado."
+        people:
+          index:
+            title: "Personas"
+            summary: "Lista de las personas del negocio. Una misma persona puede ser cliente, colaborador y productor a la vez."
+            steps:
+              - "Busca por nombre, apellido, DNI o RTN en «Filtros»; también puedes filtrar por rol y departamento."
+              - "Toca «Detalle» para ver los datos de una persona."
+              - "Toca «Nueva persona» para registrar a alguien."
+          show:
+            title: "Detalle de la persona"
+            summary: "Datos de identidad, contacto, dirección y roles de la persona."
+            steps:
+              - "Toca «Editar» para cambiar sus datos o sus roles."
+              - "Toca «Borrar» para eliminarla; el sistema pide confirmación."
+            tips:
+              - "Una persona que es productor no se puede borrar."
+          form:
+            title: "Registrar o editar una persona"
+            summary: "Solo los nombres y los apellidos son obligatorios."
+            steps:
+              - "Escribe nombres y apellidos."
+              - "Si los tienes, agrega DNI, RTN, teléfono y correo."
+              - "Para la dirección, elige primero el departamento; después se habilita el municipio."
+              - "Marca los roles: cliente, colaborador o ambos."
+              - "Toca el botón de guardar."
+            tips:
+              - "DNI: 13 dígitos. RTN: 14 dígitos. Se pueden escribir con guiones o espacios."
+              - "El DNI y el RTN no se pueden repetir entre personas."
+              - "Teléfono: 8 dígitos, con o sin +504."
+        users:
+          index:
+            title: "Usuarios"
+            summary: "Las personas que pueden entrar al sistema. Solo los administradores ven esta pantalla."
+            steps:
+              - "Busca por nombre o correo, o filtra por tipo y estado, en «Filtros»."
+              - "Toca «Detalle» para ver los permisos de un usuario."
+              - "Toca «Nuevo usuario» para darle acceso a alguien."
+            tips:
+              - "Los usuarios no se borran: se desactivan para conservar el registro de lo que hicieron."
+          show:
+            title: "Detalle del usuario"
+            summary: "Muestra el tipo, el estado y los permisos por módulo del usuario."
+            steps:
+              - "Toca «Editar» para cambiar sus datos, permisos o estado."
+              - "Toca «Restablecer contraseña» si la olvidó."
+          form:
+            title: "Crear o editar un usuario"
+            summary: "Cada usuario tiene permisos separados de ver, crear, editar y borrar en cada módulo."
+            steps:
+              - "Escribe el nombre completo y el correo electrónico."
+              - "Al crearlo, define una contraseña de al menos 8 caracteres y confírmala."
+              - "Marca «Administrador» solo si debe tener acceso completo y manejar usuarios."
+              - "En la tabla de permisos, marca qué puede hacer en cada módulo."
+              - "Para quitarle el acceso, edítalo y desmarca «Activo»."
+            tips:
+              - "Un usuario inactivo no puede entrar, y si tenía una sesión abierta, se cierra."
+              - "No se puede desactivar ni quitar el rol de administrador al último administrador activo."
+          edit_password:
+            title: "Restablecer contraseña"
+            summary: "Define una contraseña nueva para el usuario cuando la olvidó."
+            steps:
+              - "Escribe la contraseña nueva (al menos 8 caracteres)."
+              - "Escríbela otra vez para confirmarla."
+              - "Guarda y díctale la contraseña al usuario."
+            tips:
+              - "Se cierran todas las sesiones abiertas del usuario: debe entrar de nuevo."
+        audit_events:
+          index:
+            title: "Auditoría"
+            summary: "Registro de todo lo que se crea, modifica o borra, y de cada inicio y cierre de sesión. No se puede modificar ni borrar."
+            steps:
+              - "Usa «Filtros» para buscar por fechas, usuario, acción, entidad o texto."
+              - "Toca «Detalle» para ver qué campos cambiaron, con su valor antes y después."
+            tips:
+              - "Las contraseñas nunca se muestran: aparecen como «(oculto)»."
+          show:
+            title: "Detalle de la acción"
+            summary: "Quién hizo el cambio, cuándo, desde qué dirección IP y qué campos cambiaron."
+            steps:
+              - "Revisa la tabla de cambios: cada campo con su valor antes y después."
+              - "La referencia de la solicitud es el mismo código que aparece en los mensajes de error."
+      trading:
+        home:
+          index:
+            title: "Resumen de compra y venta"
+            summary: "El trabajo del día en cuatro pasos. Lo resaltado tiene trabajo pendiente."
+            steps:
+              - "Pesar y registrar compras: cada pesada es una compra."
+              - "Facturar: agrupa las compras sin facturar de un productor en una factura."
+              - "Registrar pagos: marca como canceladas las facturas que ya se pagaron."
+              - "Cerrar el día: revisa e imprime el cierre diario."
+            tips:
+              - "Usa las pestañas de arriba para ir a compras, facturas, productores, zonas o el cierre diario."
+        purchases:
+          index:
+            title: "Compras"
+            summary: "Lista de compras. Al entrar muestra solo las de hoy."
+            steps:
+              - "Cambia las fechas en «Filtros» para ver otros días; también puedes filtrar por productor, zona, estado del café y facturación."
+              - "Toca «Detalle» para ver el cálculo de una compra."
+              - "Toca «Editar» para corregir una compra que todavía no está facturada."
+          show:
+            title: "Detalle de la compra"
+            summary: "Muestra el cálculo completo de la compra y en qué etapa está."
+            steps:
+              - "Revisa la barra de etapas: registrada, facturada o cancelada."
+              - "Usa el botón del siguiente paso: facturar ahora o registrar el pago de su factura."
+              - "Si todavía no está facturada, puedes editarla o borrarla."
+            tips:
+              - "Una compra facturada ya no se puede editar ni borrar."
+          form:
+            title: "Registrar o editar una compra"
+            summary: "Registra una pesada. El sistema calcula sacos, tara, peso neto y total mientras escribes."
+            steps:
+              - "Escribe el nombre del productor y elígelo de la lista. Si no existe, toca «¿No está? Registrar productor»."
+              - "Revisa la fecha y la zona (se llena con la zona del productor) y elige el estado del café."
+              - "Escribe el peso bruto, la humedad y el precio por libra."
+              - "Revisa el cálculo y toca el botón de guardar."
+            tips:
+              - "Tara: 1 libra por cada saco de 165 libras, redondeado hacia arriba."
+              - "Peso neto = (peso bruto − tara) menos el porcentaje de humedad."
+              - "El cálculo que se guarda es el del sistema; el de la pantalla es una vista previa."
+        invoices:
+          index:
+            title: "Facturas"
+            summary: "Lista de facturas, las más recientes primero."
+            steps:
+              - "Filtra por fechas, productor o número, zona, estado de pago y forma de pago."
+              - "Toca «Detalle» para ver una factura, imprimirla o registrar su pago."
+              - "Toca «Facturar compras» para crear una factura nueva."
+          form:
+            title: "Facturar compras"
+            summary: "Una factura agrupa compras sin facturar de un mismo productor."
+            steps:
+              - "Elige el productor de la lista de productores con compras sin facturar."
+              - "Deja marcadas las compras que van en la factura."
+              - "En «Pago», elige si queda pendiente de pago o ya cancelada."
+              - "Si ya está cancelada, elige la forma y la fecha de pago."
+              - "Toca «Crear factura»."
+            tips:
+              - "Las compras facturadas ya no se pueden editar ni borrar."
+          show:
+            title: "Factura"
+            summary: "El recibo para el productor, con original y copia."
+            steps:
+              - "Toca «Imprimir»: el original y la copia salen en hojas separadas."
+              - "Cuando se le pague al productor, elige la forma de pago y la fecha, y toca «Marcar como cancelada»."
+            tips:
+              - "Desde la ventana de detalle, «Imprimir» abre la factura en página completa."
+              - "Una factura no se borra; una vez cancelada, ya no cambia."
+        producers:
+          index:
+            title: "Productores"
+            summary: "Productores, carreros (intermediarios) y fincas propias a quienes se les compra café."
+            steps:
+              - "Busca por nombre, apellido, DNI o RTN; también puedes filtrar por tipo y zona."
+              - "Toca «Detalle» para ver sus compras sin facturar y sus últimas facturas."
+              - "Toca «Nuevo productor» para registrar uno."
+          show:
+            title: "Detalle del productor"
+            summary: "Sus datos, las compras que tiene sin facturar y sus últimas facturas."
+            steps:
+              - "Toca «Nueva compra» para registrarle una compra."
+              - "Toca «Facturar compras» para facturar lo que tiene pendiente."
+              - "Toca «Editar» para cambiar sus datos."
+          form:
+            title: "Registrar o editar un productor"
+            summary: "Datos de compra del productor y sus datos personales."
+            steps:
+              - "Elige el tipo: productor, carrero (intermediario) o finca propia."
+              - "Elige su zona y, si aplica, el nombre de la finca."
+              - "Escribe nombres y apellidos; el resto de datos es opcional."
+              - "Toca el botón de guardar."
+            tips:
+              - "Si lo registras desde una compra, al guardar queda elegido en esa compra sin perder lo que ya escribiste."
+              - "Cada productor también aparece en Administración → Personas."
+        zones:
+          index:
+            title: "Zonas"
+            summary: "Los lugares de donde vienen los productores."
+            steps:
+              - "Busca una zona por nombre en «Filtros»."
+              - "Toca «Nueva zona» para agregar una, o «Editar» para cambiarle el nombre."
+          form:
+            title: "Crear o editar una zona"
+            summary: "Una zona solo tiene nombre."
+            steps:
+              - "Escribe el nombre de la zona."
+              - "Toca el botón de guardar."
+            tips:
+              - "Si la creas desde una compra, al guardar queda elegida en esa compra."
+        daily_closes:
+          show:
+            title: "Cierre diario"
+            summary: "Resumen y detalle de las compras de un día."
+            steps:
+              - "Elige la fecha: el cierre se actualiza solo."
+              - "Revisa los totales: comprado, pagado, pendiente de pago y sin facturar."
+              - "Toca «Imprimir» para sacar el reporte."
+            tips:
+              - "El reporte agrupa las compras en canceladas, pendientes de pago y sin facturar."
+      farms:
+        home:
+          index:
+            title: "Fincas"
+            summary: "Este módulo todavía no tiene funciones."
+            steps:
+              - "Cuando esté listo, aquí se van a manejar las fincas propias."
+      loans:
+        home:
+          index:
+            title: "Resumen de préstamos"
+            summary: "Lo que hay por cobrar hoy y los préstamos vencidos."
+            steps:
+              - "Revisa las cifras: préstamos por cobrar, capital, interés acumulado y vencidos."
+              - "En «Préstamos vencidos» toca «Detalle» para ver un préstamo y registrarle un abono."
+              - "Usa las pestañas de arriba para prestar, ver todos los préstamos o los estados de cuenta."
+        loans:
+          index:
+            title: "Préstamos"
+            summary: "Todos los préstamos, los más recientes primero, con lo que debe hoy cada uno."
+            steps:
+              - "Filtra por fechas del préstamo, por persona o por estado: al día, vencido o pagado."
+              - "Toca «Detalle» para ver el préstamo, sus abonos y registrar uno nuevo."
+              - "Toca «Nuevo préstamo» para prestar."
+          show:
+            title: "Detalle del préstamo"
+            summary: "Cuánto se prestó, cuánto debe hoy y cada abono con lo que fue a interés y a capital."
+            steps:
+              - "Revisa «Debe hoy»: el capital pendiente más el interés acumulado hasta hoy."
+              - "Toca «Registrar abono» cuando la persona pague."
+              - "Toca «Estado de cuenta» para ver todos los préstamos de esa persona y su score."
+            tips:
+              - "Un préstamo con abonos ya no se puede editar ni borrar."
+              - "Solo se puede quitar el último abono, por si se registró mal."
+          form:
+            title: "Registrar o editar un préstamo"
+            summary: "Se le puede prestar a cualquier persona: clientes, colaboradores o productores."
+            steps:
+              - "Escribe el nombre de la persona y elígela de la lista. Si no existe, toca «¿No está? Registrar persona»."
+              - "Escribe el monto y la tasa de interés mensual de este préstamo."
+              - "Revisa la fecha del préstamo y elige la fecha límite para pagar."
+              - "Toca el botón de guardar."
+            tips:
+              - "La tasa se define en cada préstamo; puede ser 0 si no cobra interés."
+              - "La fecha límite cuenta para el score de pago de la persona."
+        payments:
+          form:
+            title: "Registrar un abono"
+            summary: "Registra un pago de la persona. El sistema lo reparte entre interés y capital."
+            steps:
+              - "Revisa lo que debe hoy: capital, interés y total."
+              - "Revisa la fecha del abono y escribe el monto."
+              - "Elige la forma de pago y toca «Registrar abono»."
+            tips:
+              - "El abono paga primero el interés acumulado; lo que sobra baja el capital."
+              - "No puede ser mayor que lo que se debe a esa fecha."
+              - "No puede llevar una fecha anterior al último abono."
+              - "Si el abono cubre todo, el préstamo queda pagado."
+        credit_accounts:
+          index:
+            title: "Estados de cuenta"
+            summary: "Cada persona a la que se le ha prestado, con lo que debe hoy y su score de pago."
+            steps:
+              - "Busca por nombre, DNI o RTN, o filtra por quienes tienen saldo o préstamos vencidos."
+              - "Toca «Detalle» para ver el estado de cuenta completo de la persona."
+          show:
+            title: "Estado de cuenta"
+            summary: "Todo lo de una persona: totales, score de pago, sus préstamos y su historial crediticio."
+            steps:
+              - "Revisa el score de pago y cuántos préstamos pagó a tiempo."
+              - "Revisa los totales: prestado, pagado y lo que debe hoy."
+              - "En «Historial crediticio» está cada préstamo otorgado y cada abono, lo más reciente primero."
+              - "Toca «Imprimir» para entregarle una copia, o «Nuevo préstamo» para prestarle otra vez."
+      reports:
+        home:
+          index:
+            title: "Reportería"
+            summary: "Este módulo todavía no tiene funciones."
+            steps:
+              - "Cuando esté listo, aquí van a estar los reportes."
 
   administration:
     home:
@@ -313,6 +816,8 @@ es:
         zone: "la zona"
         purchase: "la compra"
         invoice: "la factura"
+        loan: "el préstamo"
+        loan_payment: "el abono"
       sentence:
         create: "%{actor} creó %{record} el %{date} a las %{time}."
         update: "%{actor} modificó %{record}: %{fields}, el %{date} a las %{time}."
@@ -469,6 +974,12 @@ es:
       collaborator:
         one: "Colaborador"
         other: "Colaboradores"
+      loan:
+        one: "Préstamo"
+        other: "Préstamos"
+      loan_payment:
+        one: "Abono"
+        other: "Abonos"
     attributes:
       user:
         name: "Nombre completo"
@@ -550,6 +1061,33 @@ es:
         person_id: "Persona"
       collaborator:
         person_id: "Persona"
+      loan:
+        person: "Persona"
+        person_id: "Persona"
+        created_by_id: "Registró"
+        principal: "Monto prestado (L)"
+        monthly_interest_rate: "Tasa de interés mensual (%)"
+        disbursed_on: "Fecha del préstamo"
+        due_on: "Fecha límite"
+        paid_off_on: "Pagado el"
+        observations: "Observaciones"
+        status: "Estado"
+        status/active: "Al día"
+        status/overdue: "Vencido"
+        status/paid_off: "Pagado"
+      loan_payment:
+        loan: "Préstamo"
+        loan_id: "Préstamo"
+        created_by_id: "Registró"
+        paid_on: "Fecha del abono"
+        amount: "Monto (L)"
+        interest_amount: "A interés"
+        principal_amount: "A capital"
+        payment_method: "Forma de pago"
+        payment_method/cash: "Efectivo"
+        payment_method/transfer: "Transferencia"
+        payment_method/check: "Cheque"
+        observations: "Observaciones"
       permission:
         user_id: "Usuario"
         module_key: "Módulo"
@@ -568,6 +1106,16 @@ es:
             purchases:
               other_producer: "deben ser todas del mismo productor"
               unavailable: "ya no están disponibles: otra persona las facturó o fueron borradas. Revisa la lista."
+        loan:
+          attributes:
+            due_on:
+              before_disbursement: "no puede ser antes de la fecha del préstamo"
+        loan_payment:
+          attributes:
+            paid_on:
+              before_last_payment: "no puede ser antes de la fecha del préstamo ni del último abono"
+            amount:
+              over_balance: "es mayor que lo que se debe a esa fecha (%{owed})"
         user:
           last_active_admin: "No se puede desactivar ni quitar el rol de administrador al último administrador activo."
       messages:

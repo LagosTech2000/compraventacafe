@@ -5,19 +5,19 @@
   <%= render "shared/form_errors", record: purchase %>
 
   <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
-       data-controller="producer-picker"
-       data-producer-picker-producers-value="<%= producers.to_h { |p| [ p.id, { label: p.picker_label, zone_id: p.zone_id } ] }.to_json %>"
-       data-producer-picker-missing-message-value="<%= t(".producer_missing") %>"
-       data-action="producer:created@window->producer-picker#add">
+       data-controller="record-picker"
+       data-record-picker-records-value="<%= producers.to_h { |p| [ p.id, { label: p.picker_label, zone_id: p.zone_id } ] }.to_json %>"
+       data-record-picker-missing-message-value="<%= t(".producer_missing") %>"
+       data-action="producer:created@window->record-picker#add">
     <div class="sm:col-span-2">
       <%= form.label :producer_id, for: "producer_search", class: "field-label" %>
       <input type="text" id="producer_search" list="producer_options" autocomplete="off" required
              class="field-input" placeholder="<%= t(".producer_placeholder") %>"
              value="<%= purchase.producer&.picker_label %>"
-             data-producer-picker-target="search" data-action="producer-picker#pick"
+             data-record-picker-target="search" data-action="record-picker#pick"
              data-missing-message="<%= t(".producer_missing") %>" <%= "autofocus" if purchase.producer.nil? %>>
-      <datalist id="producer_options" data-producer-picker-target="options"></datalist>
-      <%= form.hidden_field :producer_id, data: { producer_picker_target: "id" } %>
+      <datalist id="producer_options" data-record-picker-target="options"></datalist>
+      <%= form.hidden_field :producer_id, data: { record_picker_target: "id" } %>
       <% if can_create_producer %>
         <%= modal_link_to t(".new_producer"), new_trading_producer_path(picker: 1), class: "btn btn-sm mt-2" %>
       <% end %>
@@ -31,7 +31,7 @@
     <div data-controller="option-picker" data-action="zone:created@window->option-picker#add">
       <%= form.label :zone_id, class: "field-label" %>
       <%= form.collection_select :zone_id, Zone.ordered, :id, :name, { include_blank: t("shared.select.no_zone") },
-            class: "field-input", data: { producer_picker_target: "zone", option_picker_target: "select" } %>
+            class: "field-input", data: { record_picker_target: "zone", option_picker_target: "select" } %>
       <% if can_create_zone %>
         <%= modal_link_to t(".new_zone"), new_trading_zone_path(picker: 1), class: "btn btn-sm mt-2" %>
       <% end %>

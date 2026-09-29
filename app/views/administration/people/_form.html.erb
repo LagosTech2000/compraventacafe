@@ -1,4 +1,5 @@
 <%= form_with model: [ :administration, person ], class: form_surface_class("space-y-6"), data: { controller: "form-validation" } do |form| %>
+  <%= hidden_field_tag :picker, "1" if picker_request? %>
   <%= render "shared/form_errors", record: person %>
 
   <div class="grid gap-5 sm:grid-cols-2">

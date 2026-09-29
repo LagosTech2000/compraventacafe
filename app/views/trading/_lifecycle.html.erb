@@ -24,6 +24,9 @@
 
   <div class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
     <p class="text-sm"><%= t("trading.lifecycle.hint.#{lifecycle.stage}") %></p>
-    <div class="flex flex-wrap gap-2"><%= yield %></div>
+    <div class="flex flex-wrap gap-2">
+      <%= yield %>
+      <%= help_guide_button HelpGuide.process(:purchase_lifecycle), label: true %>
+    </div>
   </div>
 </section>

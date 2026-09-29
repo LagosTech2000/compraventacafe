@@ -20,7 +20,8 @@ module Administration
       @person.assign_roles(**role_params)
 
       if @person.save
-        close_modal_with notice: t(".success"), fallback: administration_person_path(@person)
+        close_modal_with notice: t(".success"), fallback: administration_person_path(@person),
+                         event: "person:created", detail: { id: @person.id, label: @person.picker_label }
       else
         render :new, status: :unprocessable_content
       end

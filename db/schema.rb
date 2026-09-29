@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_27_201340) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_29_002452) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -67,6 +67,38 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_201340) do
     t.index ["number"], name: "index_invoices_on_number", unique: true
     t.index ["payment_status"], name: "index_invoices_on_payment_status"
     t.index ["producer_id"], name: "index_invoices_on_producer_id"
+  end
+
+  create_table "loan_payments", force: :cascade do |t|
+    t.bigint "loan_id", null: false
+    t.bigint "created_by_id", null: false
+    t.date "paid_on", null: false
+    t.decimal "amount", precision: 14, scale: 2, null: false
+    t.decimal "interest_amount", precision: 14, scale: 2, null: false
+    t.decimal "principal_amount", precision: 14, scale: 2, null: false
+    t.string "payment_method", null: false
+    t.text "observations"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_loan_payments_on_created_by_id"
+    t.index ["loan_id"], name: "index_loan_payments_on_loan_id"
+  end
+
+  create_table "loans", force: :cascade do |t|
+    t.bigint "person_id", null: false
+    t.bigint "created_by_id", null: false
+    t.decimal "principal", precision: 14, scale: 2, null: false
+    t.decimal "monthly_interest_rate", precision: 5, scale: 2, null: false
+    t.date "disbursed_on", null: false
+    t.date "due_on", null: false
+    t.date "paid_off_on"
+    t.text "observations"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_loans_on_created_by_id"
+    t.index ["disbursed_on"], name: "index_loans_on_disbursed_on"
+    t.index ["due_on"], name: "index_loans_on_due_on"
+    t.index ["person_id"], name: "index_loans_on_person_id"
   end
 
   create_table "municipalities", force: :cascade do |t|
@@ -177,6 +209,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_201340) do
   add_foreign_key "collaborators", "people"
   add_foreign_key "invoices", "producers"
   add_foreign_key "invoices", "users", column: "created_by_id"
+  add_foreign_key "loan_payments", "loans"
+  add_foreign_key "loan_payments", "users", column: "created_by_id"
+  add_foreign_key "loans", "people"
+  add_foreign_key "loans", "users", column: "created_by_id"
   add_foreign_key "municipalities", "departments"
   add_foreign_key "people", "departments"
   add_foreign_key "people", "municipalities"

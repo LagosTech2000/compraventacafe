@@ -273,6 +273,35 @@
     backdrop-filter: blur(4px);
   }
 
+  /* Round "?" button that opens a help guide (HelpGuidesHelper). */
+  .help-button {
+    @apply grid size-10 shrink-0 cursor-pointer place-items-center rounded-full bg-surface text-primary ring-1 ring-line/80 transition duration-150 hover:-translate-y-px hover:bg-primary-soft active:translate-y-0;
+    box-shadow: var(--shadow-clay-sm);
+  }
+
+  /* Help guide: a panel that slides in from the right, unlike the centered
+     modal, so it reads as help and not as part of the task. */
+  .help-guide {
+    @apply fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-dvh w-[min(28rem,calc(100%-1.5rem))] max-w-none overflow-y-auto rounded-l-[var(--radius-clay)] border-l-4 border-primary bg-surface p-0 text-ink;
+    box-shadow: var(--shadow-clay-lift);
+    transform: translateX(100%);
+    transition: transform 0.22s ease, overlay 0.22s allow-discrete, display 0.22s allow-discrete;
+  }
+
+  .help-guide[open] {
+    transform: none;
+  }
+
+  @starting-style {
+    .help-guide[open] {
+      transform: translateX(100%);
+    }
+  }
+
+  .help-guide::backdrop {
+    background: rgb(29 21 18 / 0.2);
+  }
+
   /* Thin scrollbars for horizontally scrolling tables and bars. */
   .overflow-x-auto {
     scrollbar-width: thin;

@@ -1,0 +1,47 @@
+<% content_for :title, t(".title") %>
+<%= render "loans/nav" %>
+
+<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+<p class="mt-1 text-sm text-ink-muted"><%= t(".loan", number: @loan.id, person: @loan.person.full_name) %></p>
+
+<dl class="mt-4 grid grid-cols-3 gap-3">
+  <% { principal_owed: @balance.principal_owed, interest_owed: @balance.interest_owed, total_owed: @balance.total_owed }.each do |key, value| %>
+    <div class="stat">
+      <dt><%= t(".#{key}") %></dt>
+      <dd><%= format_money(value) %></dd>
+    </div>
+  <% end %>
+</dl>
+<p class="mt-2 mb-6 text-xs text-ink-muted"><%= t(".as_of_today") %></p>
+
+<%= form_with model: @payment, url: loans_loan_payments_path(@loan), class: form_surface_class("space-y-6"), data: { controller: "form-validation" } do |form| %>
+  <%= render "shared/form_errors", record: @payment %>
+
+  <div class="grid gap-5 sm:grid-cols-3">
+    <div>
+      <%= form.label :paid_on, class: "field-label" %>
+      <%= form.date_field :paid_on, required: true, class: "field-input" %>
+    </div>
+    <div>
+      <%= form.label :amount, class: "field-label" %>
+      <%= form.number_field :amount, required: true, min: 0.01, max: Loan::MAX_AMOUNT - 0.01, step: 0.01, inputmode: "decimal",
+            autofocus: true, class: "field-input text-lg" %>
+    </div>
+    <div>
+      <%= form.label :payment_method, class: "field-label" %>
+      <%= form.select :payment_method, enum_options(LoanPayment, :payment_method, LoanPayment::PAYMENT_METHODS),
+            { include_blank: t("shared.select.pick_payment_method") }, required: true, class: "field-input",
+            data: { missing_message: "#{LoanPayment.human_attribute_name(:payment_method)} #{t("errors.messages.blank")}" } %>
+    </div>
+  </div>
+
+  <div>
+    <%= form.label :observations, class: "field-label" %>
+    <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+  </div>
+
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit t(".submit"), class: "btn btn-primary" %>
+    <%= cancel_button loans_loan_path(@loan) %>
+  </div>
+<% end %>

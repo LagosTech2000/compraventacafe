@@ -72,6 +72,9 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Factura (recibo al productor) | `Invoice` |
 | Cancelada / pendiente de pago (PXP) | `paid` / `pending` |
 | Cierre diario | `DailyClose` |
+| Préstamo / abono | `Loan` / `LoanPayment` |
+| Estado de cuenta / historial crediticio | `CreditAccount` |
+| Score de pago | `PayerScore` |
 
 ## Modelo de permisos
 
@@ -165,8 +168,10 @@ municipios queda vacía y deshabilitada; al elegirlo se filtra
 
 Los 18 departamentos y 298 municipios viven en
 `db/data/honduras_divisions.yml` (códigos del SAT, 2023) y se cargan con
-`HondurasDivisions.load!`, que corre en una migración y antes de la suite de
-tests. Son datos de referencia: los nombres de lugares son la única excepción
+`HondurasDivisions.load!` (idempotente), que corre en una migración, antes de
+la suite de tests y con `bin/rails honduras_divisions:load` en
+`bin/render-build.sh` y `bin/setup`. La migración sola no basta: en una base
+nueva `db:migrate` carga `db/schema.rb` y se salta las migraciones. Son datos de referencia: los nombres de lugares son la única excepción
 a "el español solo vive en `es.yml`".
 
 **3. El usuario nunca ve una pantalla de error del servidor.** `ErrorHandling`
@@ -242,6 +247,17 @@ los errores).
   elegir por nombre, se quedan en orden alfabético. Excepción: el cierre diario
   agrupa canceladas, luego pendientes de pago, luego sin facturar (más
   recientes primero dentro de cada grupo).
+- **Guías de ayuda (`HelpGuide`)**: toda pantalla tiene un botón "?"
+  (`help_guide_button`) que abre su guía en un panel lateral propio
+  (`<dialog id="help-guide">`), distinto del modal y encima de él si ambos
+  están abiertos. Va en la navegación, junto a la × del modal y en el login.
+  El texto vive en `es.yml` bajo `help_guides.screens.<ruta del controlador>.<acción>`
+  (`new`/`create`/`edit`/`update` usan `form`), con `title`, `summary`,
+  `steps` y `tips` opcionales. **Pantalla nueva = su guía**: un spec falla si
+  una ruta GET no la tiene. Procesos que cruzan pantallas van en
+  `help_guides.processes` y se ponen con
+  `help_guide_button HelpGuide.process(:nombre), label: true`. Las guías solo
+  describen lo que el sistema ya hace; nunca reglas de negocio abiertas.
 - **Listas desplegables**: nunca con la primera opción en blanco. Campo
   opcional: "Sin … asignado" (`shared.select.*`). Campo obligatorio: "Selecciona
   …". Filtro: "Todos".
@@ -298,7 +314,7 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 | `administration` | Usuarios y permisos, y auditoría (solo administradores); personas, clientes y colaboradores (permisos del módulo) |
 | `trading` | Demo: zonas, productores, compras con cálculo automático, facturas imprimibles (original y copia) con estado de pago, cierre diario |
 | `farms` | Portada vacía |
-| `loans` | Portada vacía |
+| `loans` | Fase 1: préstamos a cualquier persona con interés simple, abonos, estados de cuenta con historial crediticio y score de pago |
 | `reports` | Portada vacía |
 
 Cada módulo tiene su namespace de controladores. Implementar una funcionalidad
@@ -326,6 +342,33 @@ es llenar su carpeta, no crearla.
 - `bin/rails demo:seed` carga datos **ficticios** (nunca datos reales del
   Excel del cliente).
 
+### Préstamos (`loans`) — fase 1
+
+Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
+
+- Se le presta a **cualquier `Person`** (cliente, colaborador, productor…).
+  La persona se elige con el buscador `record_picker_controller.js` y se puede
+  crear desde el formulario (`person:created`).
+- **Interés simple con tasa mensual definida en cada préstamo**
+  (`monthly_interest_rate`; puede ser 0). Corre por día sobre el **capital
+  pendiente**: `capital × tasa × días ÷ 30` (`LoanBalance`).
+- Un abono paga **primero el interés acumulado** y lo que sobra baja el
+  capital. Cada abono guarda su reparto (`interest_amount`,
+  `principal_amount`) para que el histórico no cambie si la regla cambia.
+- Después de la fecha límite el interés sigue con la misma tasa; **no hay
+  recargo por mora** (no está definido).
+- Los abonos van en orden de fecha y no superan lo que se debe a esa fecha.
+  Al quedar en cero, el préstamo se marca pagado (`paid_off_on`).
+- Un préstamo con abonos no se edita ni se borra; un abono no se edita y
+  **solo se quita el último** (`LoanPolicy`, `LoanPaymentPolicy`).
+- **Score de pago** (`PayerScore`): préstamos pagados completos hasta su
+  fecha límite ÷ préstamos ya pagados o vencidos × 100. 85+ Excelente, 70+
+  Bueno, 50+ Regular, menos Riesgo; sin préstamos que cuenten, "Sin historial".
+- `CreditAccount` arma el estado de cuenta de una persona: totales, sus
+  préstamos con saldo a hoy, historial de préstamos y abonos, y score.
+- El pago con café (descontar de la compra) **no está construido**: es punto
+  abierto.
+
 ## Puntos abiertos
 
 | Punto | Qué bloquea | Quién decide |
@@ -334,7 +377,7 @@ es llenar su carpeta, no crearla.
 | Si se sigue descontando **daño** y cómo se mide | `PurchaseCalculation` | Cliente |
 | Tabla de precios (zona + calidad + bolsa) y categorías de calidad | Precio automático; hoy es manual | Cliente |
 | Retención de fin de temporada | Reporte de retención | Cliente |
-| Préstamos/adelantos: tasa, periodo, cómo se descuentan de la compra | Módulo `loans` y descuento al pagar | Cliente |
+| Préstamos: cómo se descuentan de la compra (pago con café), recargo por mora | Descuento del préstamo al pagar la compra; mora | Cliente |
 | Si la factura siempre agrupa hasta 4 compras | Hoy no hay límite | Cliente |
 | 160 lb/saco en salidas vs. 165 en compras | Salidas de camión | Cliente |
 | Contratos: moneda, cobro, anticipos del exportador | Ventas / contratos | Cliente |
@@ -351,7 +394,9 @@ Resueltos: versión de Ruby (3.4.x), Ubuntu 24.04 LTS, ambiente WSL, regla del
 último administrador activo (se bloquea), idioma del código (inglés), campos de
 `Person`, personas/clientes/colaboradores en `administration`, formato,
 unicidad y obligatoriedad de DNI (13 dígitos) y RTN (14 dígitos): ninguno es
-obligatorio.
+obligatorio. Préstamos fase 1: tasa mensual por préstamo, interés simple
+por día sobre saldo, abono a interés y luego capital, score por puntualidad
+(Fernando, 2026-09-28).
 
 ## Etapas del proyecto
 
