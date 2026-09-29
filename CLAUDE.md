@@ -24,9 +24,15 @@ Herramienta interna, unos 10 usuarios, UI 100% en español.
 | Documento | Qué define | Dónde |
 | --- | --- | --- |
 | Contexto técnico — Sistema de café | Decisiones técnicas, versiones y puntos abiertos | `claude.ai/code/artifact/6e691138-7661-4021-b95d-90f906d32172` |
-| `docs/CONTEXTO_CAFE_REY_DAVID.md` | Negocio: cuestionario del cliente + su Excel `COSECHA_2026L.xlsm`. Cada dato etiquetado `[VERIFICADO]`, `[CALCULADO]` o `[DESCONOCIDO]` | En el repo. **No se construye sobre un `[DESCONOCIDO]`.** |
-| `docs/PREGUNTAS_CLIENTE.md` | Cuestionario enviado al cliente | En el repo |
-| `docs/AMBIENTE.md` | Cómo montar y operar el ambiente | En el repo |
+| `docs/2026-09-27/CONTEXTO_CAFE_REY_DAVID.md` | Negocio: cuestionario del cliente + su Excel `COSECHA_2026L.xlsm`. Cada dato etiquetado `[VERIFICADO]`, `[CALCULADO]` o `[DESCONOCIDO]` | En el repo. **No se construye sobre un `[DESCONOCIDO]`.** |
+| `docs/2026-09-26/PREGUNTAS_CLIENTE.md` | Primer cuestionario (ya respondido; sus respuestas están en el contexto) | En el repo |
+| `docs/2026-09-28/PREGUNTAS_PRESTAMOS.md` | Preguntas de préstamos y pago con café (pendientes de respuesta) | En el repo |
+| `docs/2026-09-28/PREGUNTAS_COMPRAVENTA.md` | Preguntas pendientes de compra y venta: quintal oro, cálculo por estado, calidad, precio, retención, salidas, contratos (pendientes de respuesta) | En el repo |
+| `docs/2026-09-26/AMBIENTE.md` | Cómo montar y operar el ambiente | En el repo |
+
+`docs/` se organiza en carpetas `AAAA-MM-DD` por **fecha de creación** del
+archivo: la carpeta más reciente tiene lo más nuevo. Un documento nuevo va en
+la carpeta del día en que se crea; al editarlo después, no se mueve.
 
 El doc técnico etiqueta cada afirmación: `[CONFIRMADO]` (decidido por el dueño),
 `[VERIFICADO: fuente]`, `[RECOMENDADO]`, `[RESUELTO]`, `[ABIERTO]`.
