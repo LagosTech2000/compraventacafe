@@ -15,5 +15,5 @@ cd ~/code/compraventacafe
 bash scripts/bootstrap.sh
 ```
 
-- Montaje y operacion del ambiente: [`docs/AMBIENTE.md`](docs/AMBIENTE.md)
+- Montaje y operacion del ambiente: `docs/2026-09-26/AMBIENTE.md` (solo en local, no se sube al repositorio)
 - Convenciones, modelo de permisos y puntos abiertos: [`CLAUDE.md`](CLAUDE.md)
