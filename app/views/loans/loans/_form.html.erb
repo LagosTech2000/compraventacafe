@@ -1,0 +1,52 @@
+<% people = Person.alphabetical %>
+<%= form_with model: [ :loans, loan ], class: form_surface_class("space-y-6"), data: { controller: "form-validation" } do |form| %>
+  <%= render "shared/form_errors", record: loan %>
+
+  <div data-controller="record-picker"
+       data-record-picker-records-value="<%= people.to_h { |person| [ person.id, { label: person.picker_label } ] }.to_json %>"
+       data-record-picker-missing-message-value="<%= t(".person_missing") %>"
+       data-action="person:created@window->record-picker#add">
+    <%= form.label :person_id, for: "person_search", class: "field-label" %>
+    <input type="text" id="person_search" list="person_options" autocomplete="off" required
+           class="field-input" placeholder="<%= t(".person_placeholder") %>"
+           value="<%= loan.person&.picker_label %>"
+           data-record-picker-target="search" data-action="record-picker#pick"
+           data-missing-message="<%= t(".person_missing") %>" <%= "autofocus" if loan.person.nil? %>>
+    <datalist id="person_options" data-record-picker-target="options"></datalist>
+    <%= form.hidden_field :person_id, data: { record_picker_target: "id" } %>
+    <% if policy(Person).create? %>
+      <%= modal_link_to t(".new_person"), new_administration_person_path(picker: 1), class: "btn btn-sm mt-2" %>
+    <% end %>
+  </div>
+
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div>
+      <%= form.label :principal, class: "field-label" %>
+      <%= form.number_field :principal, required: true, min: 0.01, max: Loan::MAX_AMOUNT - 0.01, step: 0.01, inputmode: "decimal",
+            class: "field-input text-lg", autofocus: loan.person.present? %>
+    </div>
+    <div>
+      <%= form.label :monthly_interest_rate, class: "field-label" %>
+      <%= form.number_field :monthly_interest_rate, required: true, min: 0, max: 99.99, step: 0.01, inputmode: "decimal", class: "field-input text-lg" %>
+      <p class="mt-1 text-xs text-ink-muted"><%= t(".rate_help") %></p>
+    </div>
+    <div>
+      <%= form.label :disbursed_on, class: "field-label" %>
+      <%= form.date_field :disbursed_on, required: true, class: "field-input" %>
+    </div>
+    <div>
+      <%= form.label :due_on, class: "field-label" %>
+      <%= form.date_field :due_on, required: true, class: "field-input" %>
+    </div>
+  </div>
+
+  <div>
+    <%= form.label :observations, class: "field-label" %>
+    <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+  </div>
+
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= cancel_button loans_loans_path %>
+  </div>
+<% end %>

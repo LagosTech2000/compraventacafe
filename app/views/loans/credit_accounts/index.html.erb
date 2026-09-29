@@ -1,0 +1,65 @@
+<% content_for :title, t(".title") %>
+<%= render "loans/nav" %>
+
+<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+<p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+
+<%= render layout: "shared/filters", locals: { filter: @filter, url: loans_credit_accounts_path } do |form| %>
+  <%= filter_text_field form, :q, t("loans.credit_accounts.index.person"), value: @filter.q, placeholder: t("loans.credit_accounts.index.search_placeholder") %>
+  <%= filter_select form, :standing, t("loans.credit_accounts.index.standing"),
+        CreditAccountFilter::STANDINGS.map { |value| [ t("loans.credit_accounts.index.standings.#{value}"), value ] }, selected: @filter.standing %>
+<% end %>
+
+<div class="mt-6">
+  <% if @accounts.any? %>
+    <div class="@container">
+      <ul class="space-y-3 @3xl:hidden">
+        <% @accounts.each do |account| %>
+          <li class="data-card" id="<%= dom_id(account.person, :card) %>">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="font-medium"><%= account.person.full_name %></p>
+                <p class="mt-1"><%= payer_score_badge(account.score) %></p>
+              </div>
+              <%= detail_button loans_credit_account_path(account.person) %>
+            </div>
+            <dl class="mt-3 grid grid-cols-2 gap-2 text-sm">
+              <div><dt class="text-xs text-ink-muted"><%= t("loans.credit_accounts.index.open_loans") %></dt><dd class="tabular-nums"><%= account.open_loans.size %></dd></div>
+              <div><dt class="text-xs text-ink-muted"><%= t("loans.credit_accounts.index.total_owed") %></dt><dd class="font-semibold tabular-nums"><%= format_money(account.total_owed) %></dd></div>
+            </dl>
+          </li>
+        <% end %>
+      </ul>
+
+      <div class="hidden overflow-x-auto panel @3xl:block">
+        <table class="data-table data-table-compact">
+          <thead>
+            <tr>
+              <th><%= t("loans.credit_accounts.index.person") %></th>
+              <th class="text-right"><%= t("loans.credit_accounts.index.open_loans") %></th>
+              <th class="text-right"><%= t("loans.credit_accounts.index.overdue_loans") %></th>
+              <th class="text-right"><%= t("loans.credit_accounts.index.total_owed") %></th>
+              <th><%= t("loans.score.label") %></th>
+              <th class="cell-actions"><span class="sr-only"><%= t("loans.credit_accounts.index.actions") %></span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @accounts.each do |account| %>
+              <tr id="<%= dom_id(account.person) %>">
+                <td class="font-medium"><%= account.person.full_name %></td>
+                <td class="text-right tabular-nums"><%= account.open_loans.size %></td>
+                <td class="text-right tabular-nums"><%= account.overdue_loans.size %></td>
+                <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(account.total_owed) %></td>
+                <td><%= payer_score_badge(account.score) %></td>
+                <td class="cell-actions"><%= detail_button loans_credit_account_path(account.person) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <%= render "shared/pagination", filter: @filter, next_page: @next_page %>
+  <% else %>
+    <p class="empty-state"><%= t(".empty") %></p>
+  <% end %>
+</div>

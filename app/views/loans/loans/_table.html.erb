@@ -1,0 +1,56 @@
+<%# Loans list. `balances` maps each loan to its LoanBalance for today.
+    Narrow → cards; medium → key columns; wide → every column. %>
+<div class="@container">
+  <ul class="space-y-3 @3xl:hidden">
+    <% loans.each do |loan| %>
+      <% balance = balances.fetch(loan) %>
+      <li class="data-card" id="<%= dom_id(loan, :card) %>">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="font-medium"><%= loan.person.full_name %></p>
+            <p class="text-xs text-ink-muted"><%= t("loans.loans.table.dates", from: l(loan.disbursed_on), to: l(loan.due_on)) %></p>
+          </div>
+          <%= detail_button loans_loan_path(loan) %>
+        </div>
+        <dl class="mt-3 grid grid-cols-2 gap-2 text-sm">
+          <div><dt class="text-xs text-ink-muted"><%= Loan.human_attribute_name(:principal) %></dt><dd class="tabular-nums"><%= format_money(loan.principal) %></dd></div>
+          <div><dt class="text-xs text-ink-muted"><%= t("loans.loans.table.owed") %></dt><dd class="font-semibold tabular-nums"><%= format_money(balance.total_owed) %></dd></div>
+        </dl>
+        <p class="mt-2 text-sm"><%= loan_status_badge(loan) %></p>
+      </li>
+    <% end %>
+  </ul>
+
+  <div class="hidden overflow-x-auto panel @3xl:block">
+    <table class="data-table data-table-compact">
+      <thead>
+        <tr>
+          <th class="hidden @5xl:table-cell"><%= t("loans.loans.table.number") %></th>
+          <th><%= Loan.human_attribute_name(:person) %></th>
+          <th><%= Loan.human_attribute_name(:disbursed_on) %></th>
+          <th><%= Loan.human_attribute_name(:due_on) %></th>
+          <th class="hidden text-right @5xl:table-cell"><%= t("loans.loans.table.rate") %></th>
+          <th class="hidden text-right @5xl:table-cell"><%= Loan.human_attribute_name(:principal) %></th>
+          <th class="text-right"><%= t("loans.loans.table.owed") %></th>
+          <th><%= Loan.human_attribute_name(:status) %></th>
+          <th class="cell-actions"><span class="sr-only"><%= t("loans.loans.table.actions") %></span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% loans.each do |loan| %>
+          <tr id="<%= dom_id(loan) %>">
+            <td class="hidden tabular-nums text-ink-muted @5xl:table-cell"><%= loan.id %></td>
+            <td class="font-medium"><%= loan.person.full_name %></td>
+            <td class="whitespace-nowrap"><%= l(loan.disbursed_on) %></td>
+            <td class="whitespace-nowrap"><%= l(loan.due_on) %></td>
+            <td class="hidden whitespace-nowrap text-right tabular-nums @5xl:table-cell"><%= format_rate(loan.monthly_interest_rate) %></td>
+            <td class="hidden whitespace-nowrap text-right tabular-nums @5xl:table-cell"><%= format_money(loan.principal) %></td>
+            <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(balances.fetch(loan).total_owed) %></td>
+            <td><%= loan_status_badge(loan) %></td>
+            <td class="cell-actions"><%= detail_button loans_loan_path(loan) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

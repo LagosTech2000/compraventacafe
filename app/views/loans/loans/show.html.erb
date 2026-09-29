@@ -1,0 +1,73 @@
+<% content_for :title, t(".title", number: @loan.id) %>
+<%= render "loans/nav" %>
+
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title", number: @loan.id) %></h1>
+    <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
+      <%= @loan.person.full_name %> <%= loan_status_badge(@loan) %>
+    </p>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <% if policy(@loan).update? %>
+      <%= link_to t(".edit"), edit_loans_loan_path(@loan), class: "btn" %>
+    <% end %>
+    <% if policy(@loan).destroy? %>
+      <%= button_to t(".destroy"), loans_loan_path(@loan), method: :delete, class: "btn",
+            form: { data: { turbo_confirm: t(".confirm_destroy") } } %>
+    <% end %>
+  </div>
+</div>
+
+<section class="panel mt-4 flex flex-wrap items-center justify-between gap-3 p-4">
+  <p class="text-sm">
+    <% if @loan.paid_off? %>
+      <%= t(".paid_off_on", date: l(@loan.paid_off_on, format: :long)) %>
+    <% else %>
+      <%= t(".owed_today_html", amount: tag.strong(format_money(@balance.total_owed), class: "tabular-nums")) %>
+    <% end %>
+  </p>
+  <div class="flex flex-wrap gap-2">
+    <% if policy(LoanPayment.new(loan: @loan)).create? %>
+      <%= modal_link_to t(".new_payment"), new_loans_loan_payment_path(@loan), class: "btn btn-primary" %>
+    <% end %>
+    <% if policy([ :loans, :credit_account ]).show? %>
+      <%= page_link_to t(".credit_account"), loans_credit_account_path(@loan.person), class: "btn" %>
+    <% end %>
+    <%= help_guide_button HelpGuide.process(:loan_interest), label: true %>
+  </div>
+</section>
+
+<% if @loan.payments.exists? %>
+  <p class="mt-3 text-sm text-ink-muted"><%= t(".frozen_notice") %></p>
+<% end %>
+
+<dl class="mt-6 grid panel sm:grid-cols-3">
+  <% {
+       t(".principal") => format_money(@loan.principal),
+       t(".rate") => format_rate(@loan.monthly_interest_rate),
+       Loan.human_attribute_name(:disbursed_on) => l(@loan.disbursed_on, format: :long),
+       Loan.human_attribute_name(:due_on) => l(@loan.due_on, format: :long),
+       t(".principal_owed") => format_money(@balance.principal_owed),
+       t(".interest_owed") => format_money(@balance.interest_owed),
+       t(".principal_paid") => format_money(@balance.principal_paid),
+       t(".interest_paid") => format_money(@balance.interest_paid),
+       Loan.human_attribute_name(:observations) => @loan.observations
+     }.each do |label, value| %>
+    <div class="border-b border-line px-4 py-3">
+      <dt class="text-xs font-medium text-ink-muted"><%= label %></dt>
+      <dd class="mt-1 text-sm"><%= value.presence || "—" %></dd>
+    </div>
+  <% end %>
+</dl>
+
+<h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".payments") %></h2>
+<% if @payments.any? %>
+  <%= render "loans/payments/table", payments: @payments %>
+<% else %>
+  <p class="empty-state"><%= t(".no_payments") %></p>
+<% end %>
+
+<% unless modal_request? %>
+  <p class="mt-6"><%= link_to t(".back"), loans_loans_path, class: "text-sm link" %></p>
+<% end %>

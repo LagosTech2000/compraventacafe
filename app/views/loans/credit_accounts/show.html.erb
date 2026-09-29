@@ -1,0 +1,82 @@
+<% person = @account.person %>
+<% content_for :title, t(".title", name: person.full_name) %>
+<%= render "loans/nav" %>
+
+<div class="flex flex-wrap items-start justify-between gap-4 print:hidden">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title", name: person.full_name) %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= [ person.dni, format_phone(person.phone) ].compact_blank.join(" · ") %></p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <% if policy(Loan).create? %>
+      <%= page_link_to t(".new_loan"), new_loans_loan_path(person_id: person.id), class: "btn btn-primary" %>
+    <% end %>
+    <% if modal_request? %>
+      <%= page_link_to t(".print"), loans_credit_account_path(person), class: "btn" %>
+    <% else %>
+      <div data-controller="print"><button type="button" class="btn" data-action="print#print"><%= t(".print") %></button></div>
+    <% end %>
+  </div>
+</div>
+<p class="hidden text-lg font-bold print:block"><%= t(".title", name: person.full_name) %> · <%= l(Time.zone.today, format: :long) %></p>
+
+<section class="panel mt-6 flex flex-wrap items-center justify-between gap-4 p-4">
+  <div>
+    <p class="text-xs font-medium text-ink-muted"><%= t("loans.score.label") %></p>
+    <p class="mt-1 text-lg"><%= payer_score_badge(@account.score) %></p>
+    <p class="mt-1 text-xs text-ink-muted">
+      <% if @account.score.value %>
+        <%= t(".score_basis", on_time: @account.score.on_time_count, count: @account.score.evaluated_count) %>
+      <% else %>
+        <%= t(".score_none") %>
+      <% end %>
+    </p>
+  </div>
+  <%= help_guide_button HelpGuide.process(:payer_score), label: true %>
+</section>
+
+<dl class="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-3">
+  <% {
+       lent: @account.lent, principal_paid: @account.principal_paid, interest_paid: @account.interest_paid,
+       principal_owed: @account.principal_owed, interest_owed: @account.interest_owed, total_owed: @account.total_owed
+     }.each do |key, value| %>
+    <div class="stat">
+      <dt><%= t(".totals.#{key}") %></dt>
+      <dd><%= format_money(value) %></dd>
+    </div>
+  <% end %>
+</dl>
+<p class="mt-2 text-xs text-ink-muted"><%= t(".as_of_today") %></p>
+
+<h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".loans") %></h2>
+<%= render "loans/loans/table", loans: @account.loans, balances: @account.loans.to_h { |loan| [ loan, @account.balance(loan) ] } %>
+
+<h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".history") %></h2>
+<div class="overflow-x-auto panel">
+  <table class="data-table data-table-compact">
+    <thead>
+      <tr>
+        <th><%= t(".columns.date") %></th>
+        <th><%= t(".columns.movement") %></th>
+        <th class="text-right"><%= t(".columns.amount") %></th>
+        <th class="text-right"><%= t(".columns.interest") %></th>
+        <th class="text-right"><%= t(".columns.principal") %></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @account.movements.each do |movement| %>
+        <tr>
+          <td class="whitespace-nowrap"><%= l(movement.date) %></td>
+          <td><%= t(".movements.#{movement.kind}", number: movement.loan.id) %></td>
+          <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(movement.amount) %></td>
+          <td class="whitespace-nowrap text-right tabular-nums"><%= movement.interest ? format_money(movement.interest) : "—" %></td>
+          <td class="whitespace-nowrap text-right tabular-nums"><%= movement.principal ? format_money(movement.principal) : "—" %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<% unless modal_request? %>
+  <p class="mt-6 print:hidden"><%= link_to t(".back"), loans_credit_accounts_path, class: "text-sm link" %></p>
+<% end %>

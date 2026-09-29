@@ -33,6 +33,10 @@ Rails.application.routes.draw do
 
   namespace :loans do
     root "home#index"
+    resources :loans do
+      resources :payments, only: %i[ new create destroy ]
+    end
+    resources :credit_accounts, only: %i[ index show ]
   end
 
   namespace :reports do

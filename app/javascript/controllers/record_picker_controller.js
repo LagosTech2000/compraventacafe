@@ -1,16 +1,17 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Searchable producer picker: a text input backed by a <datalist> (works on
-// phones too). Choosing an entry fills the hidden producer_id and, when the
-// zone is still empty, the producer's usual zone. A producer created in the
-// modal ("producer:created") is added and selected.
+// Searchable picker (producers in a purchase, people in a loan): a text
+// input backed by a <datalist> (works on phones too). Choosing an entry
+// fills the hidden id and, when the record has a zone and the zone field is
+// still empty, that zone. A record created in the modal (an event such as
+// "producer:created", wired in the view to #add) is added and selected.
 export default class extends Controller {
   static targets = ["search", "options", "id", "zone"]
-  static values = { producers: Object, missingMessage: String }
+  static values = { records: Object, missingMessage: String }
 
   connect() {
     this.byLabel = new Map()
-    for (const [id, { label, zone_id }] of Object.entries(this.producersValue)) this.register(id, label, zone_id)
+    for (const [id, { label, zone_id }] of Object.entries(this.recordsValue)) this.register(id, label, zone_id)
   }
 
   pick() {
