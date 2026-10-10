@@ -1,4 +1,5 @@
-# One day of purchases: its totals and the purchases themselves.
+# One day of purchases: its totals and the purchases themselves. Voided
+# purchases are left out.
 class DailyClose < PurchaseSummary
   # Paid first, then pending payment, then not invoiced yet.
   PAYMENT_ORDER = Arel.sql(<<~SQL.squish)
@@ -9,7 +10,7 @@ class DailyClose < PurchaseSummary
 
   def initialize(date)
     @date = date
-    super(Purchase.on(date))
+    super(Purchase.active.on(date))
   end
 
   PAYMENT_STATES = %w[paid pending uninvoiced].freeze
@@ -28,7 +29,7 @@ class DailyClose < PurchaseSummary
 
   # Grouped by payment state, newest first within each group.
   def purchases
-    @purchase_list ||= Purchase.on(date).left_joins(:invoice).order(PAYMENT_ORDER).merge(Purchase.newest_first)
+    @purchase_list ||= Purchase.active.on(date).left_joins(:invoice).order(PAYMENT_ORDER).merge(Purchase.newest_first)
                                .preload(:invoice, :zone, producer: :person).to_a
   end
 end

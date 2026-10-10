@@ -1,0 +1,73 @@
+<% content_for :title, t(".title") %>
+<%= render "loans/nav" %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+  <% if policy(Supply).create? %>
+    <%= modal_link_to t(".new"), new_loans_supply_path, class: "btn btn-primary" %>
+  <% end %>
+</div>
+<p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+
+<%= render layout: "shared/filters", locals: { filter: @filter, url: loans_supplies_path } do |form| %>
+  <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: Supply.human_attribute_name(:name) %>
+  <%= filter_select form, :status, t("loans.supplies.index.status"),
+        SupplyFilter::STATUSES.map { |status| [ t("loans.supplies.index.statuses.#{status}"), status ] }, selected: @filter.status %>
+<% end %>
+
+<% if @supplies.any? %>
+  <div class="@container mt-6">
+    <ul class="space-y-3 @2xl:hidden">
+      <% @supplies.each do |supply| %>
+        <li class="data-card" id="<%= dom_id(supply, :card) %>">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="font-medium"><%= supply.name %></p>
+              <p class="text-xs text-ink-muted"><%= t(".per_unit", price: format_money(supply.default_price), unit: supply.unit) %></p>
+            </div>
+            <% if policy(supply).update? %>
+              <%= modal_link_to t(".edit"), edit_loans_supply_path(supply), class: "btn btn-sm" %>
+            <% end %>
+          </div>
+          <% unless supply.active? %><p class="mt-2"><span class="badge badge-neutral"><%= t(".badges.inactive") %></span></p><% end %>
+        </li>
+      <% end %>
+    </ul>
+
+    <div class="hidden overflow-x-auto panel @2xl:block">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th><%= Supply.human_attribute_name(:name) %></th>
+            <th><%= Supply.human_attribute_name(:unit) %></th>
+            <th class="text-right"><%= Supply.human_attribute_name(:default_price) %></th>
+            <th><%= t(".status") %></th>
+            <th class="cell-actions"><span class="sr-only"><%= t(".actions") %></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @supplies.each do |supply| %>
+            <tr id="<%= dom_id(supply) %>">
+              <td class="font-medium"><%= supply.name %></td>
+              <td><%= supply.unit %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(supply.default_price) %></td>
+              <td>
+                <span class="badge <%= supply.active? ? "badge-success" : "badge-neutral" %>">
+                  <%= t(".badges.#{supply.active? ? "active" : "inactive"}") %>
+                </span>
+              </td>
+              <td class="cell-actions">
+                <% if policy(supply).update? %>
+                  <%= modal_link_to t(".edit"), edit_loans_supply_path(supply), class: "btn btn-sm" %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <%= render "shared/pagination", filter: @filter, next_page: @next_page %>
+<% else %>
+  <p class="empty-state mt-6"><%= t(".empty") %></p>
+<% end %>

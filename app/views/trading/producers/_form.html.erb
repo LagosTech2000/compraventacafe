@@ -9,9 +9,14 @@
         <%= form.label :kind, class: "field-label" %>
         <%= form.select :kind, enum_options(Producer, :kind, Producer::KINDS), {}, required: true, class: "field-input" %>
       </div>
-      <div>
+      <%# A zone created here (in a modal on top) is added and selected. %>
+      <div data-controller="option-picker" data-action="zone:created@window->option-picker#add">
         <%= form.label :zone_id, class: "field-label" %>
-        <%= form.collection_select :zone_id, Zone.ordered, :id, :name, { include_blank: t("shared.select.no_zone") }, class: "field-input" %>
+        <%= form.collection_select :zone_id, Zone.ordered, :id, :name, { include_blank: t("shared.select.no_zone") },
+              class: "field-input", data: { option_picker_target: "select" } %>
+        <% if policy(Zone).create? %>
+          <%= modal_link_to t(".new_zone"), new_trading_zone_path(picker: 1), class: "btn btn-sm mt-2" %>
+        <% end %>
       </div>
       <div>
         <%= form.label :farm_name, class: "field-label" %>

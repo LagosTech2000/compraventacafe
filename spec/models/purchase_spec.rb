@@ -25,6 +25,50 @@ RSpec.describe Purchase do
     %w[cherry wet_parchment dry_parchment].each { |state| expect(build(:purchase, coffee_state: state)).to be_valid }
   end
 
+  it "uses humidity and damage in parchment, and the yield in cherry" do
+    parchment = create(:purchase, coffee_state: "dry_parchment", humidity_percent: 12, damage_percent: 2, yield_factor: 0.5)
+    expect(parchment).to have_attributes(yield_factor: nil, net_weight: BigDecimal("125.05"))
+
+    cherry = create(:purchase, coffee_state: "cherry", gross_weight: 1000, humidity_percent: 51, damage_percent: 2, yield_factor: 0.186)
+    expect(cherry).to have_attributes(humidity_percent: nil, damage_percent: nil, net_weight: BigDecimal("184.70"))
+  end
+
+  it "requires the inputs of its coffee state, in Spanish" do
+    expect(build(:purchase, coffee_state: "cherry", yield_factor: nil).tap(&:valid?).errors.full_messages).to include("Rendimiento no es un número")
+    expect(build(:purchase, damage_percent: nil).tap(&:valid?).errors.full_messages).to include("Daño (%) no es un número")
+    expect(build(:purchase, coffee_state: "cherry", yield_factor: 1.5)).not_to be_valid
+  end
+
+  it "keeps its stored results when saved without changing the inputs" do
+    purchase = create(:purchase)
+    purchase.update_columns(net_weight: 1, total: 1)
+    purchase.update!(observations: "Revisada")
+    expect(purchase.reload).to have_attributes(net_weight: 1, total: 1)
+  end
+
+  it "belongs to the season of its date" do
+    expect(create(:purchase, purchased_at: Date.new(2026, 8, 31)).season_year).to eq(2025)
+    expect(create(:purchase, purchased_at: Date.new(2026, 9, 1)).season).to eq(Season.new(2026))
+  end
+
+  it "shows its net weight in quintals" do
+    expect(build(:purchase, net_weight: 250).quintals).to eq(2)
+  end
+
+  it "is voided by a user and leaves every list of pending work" do
+    user = create(:user)
+    purchase = create(:purchase)
+    purchase.void!(user)
+    expect(purchase.reload).to have_attributes(voided?: true, voided_by: user)
+    expect(Purchase.uninvoiced).not_to include(purchase)
+    expect(Purchase.active).not_to include(purchase)
+  end
+
+  it "cannot be voided once invoiced" do
+    purchase = create(:invoice).purchases.first
+    expect { purchase.void!(create(:user)) }.to raise_error(ActiveRecord::RecordInvalid, /facturada no se puede anular/)
+  end
+
   it "labels coffee states in Spanish" do
     expect(build(:purchase, coffee_state: "cherry").human_coffee_state).to eq("Uva")
   end

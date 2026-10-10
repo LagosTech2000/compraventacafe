@@ -10,6 +10,7 @@ class PurchaseSummary
   def gross_weight = total_of(:gross_weight)
   def sacks = total_of(:sacks)
   def net_weight = total_of(:net_weight)
+  def quintals = PurchaseCalculation.quintals(net_weight)
   def total = total_of(:total)
 
   def paid_total = total_of(:total, @purchases.joins(:invoice).where(invoices: { payment_status: "paid" }))

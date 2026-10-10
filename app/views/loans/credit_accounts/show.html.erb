@@ -67,7 +67,8 @@
       <% @account.movements.each do |movement| %>
         <tr>
           <td class="whitespace-nowrap"><%= l(movement.date) %></td>
-          <td><%= t(".movements.#{movement.kind}", number: movement.loan.id) %></td>
+          <% kind = movement.kind == :payment && movement.record.with_coffee? ? :coffee_payment : movement.kind %>
+          <td><%= t(".movements.#{kind}", number: movement.loan.id, purchase: movement.record.try(:purchase_id)) %></td>
           <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(movement.amount) %></td>
           <td class="whitespace-nowrap text-right tabular-nums"><%= movement.interest ? format_money(movement.interest) : "—" %></td>
           <td class="whitespace-nowrap text-right tabular-nums"><%= movement.principal ? format_money(movement.principal) : "—" %></td>

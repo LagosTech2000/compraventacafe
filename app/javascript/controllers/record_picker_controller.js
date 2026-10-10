@@ -2,9 +2,10 @@ import { Controller } from "@hotwired/stimulus"
 
 // Searchable picker (producers in a purchase, people in a loan): a text
 // input backed by a <datalist> (works on phones too). Choosing an entry
-// fills the hidden id and, when the record has a zone and the zone field is
-// still empty, that zone. A record created in the modal (an event such as
-// "producer:created", wired in the view to #add) is added and selected.
+// fills the hidden id and, with a zone field, switches it to the record's
+// zone (a zone filled for the previous record is cleared if the new one has
+// none; one picked by hand stays). A record created in the modal (an event
+// such as "producer:created", wired in the view to #add) is added and selected.
 export default class extends Controller {
   static targets = ["search", "options", "id", "zone"]
   static values = { records: Object, missingMessage: String }
@@ -12,6 +13,8 @@ export default class extends Controller {
   connect() {
     this.byLabel = new Map()
     for (const [id, { label, zone_id }] of Object.entries(this.recordsValue)) this.register(id, label, zone_id)
+    this.pickedId = this.idTarget.value
+    this.autoZone = this.hasZoneTarget ? this.zoneTarget.value : ""
   }
 
   pick() {
@@ -19,8 +22,19 @@ export default class extends Controller {
     this.idTarget.value = match ? match.id : ""
     this.searchTarget.setCustomValidity(match || this.searchTarget.value === "" ? "" : this.missingMessageValue)
 
-    if (match && match.zoneId && this.hasZoneTarget && this.zoneTarget.value === "") {
-      this.zoneTarget.value = String(match.zoneId)
+    if (match && match.id !== this.pickedId) this.fillZone(match.zoneId)
+    if (match) this.pickedId = match.id
+  }
+
+  fillZone(zoneId) {
+    if (!this.hasZoneTarget) return
+
+    const previousAutoZone = this.autoZone
+    this.autoZone = zoneId ? String(zoneId) : ""
+    if (zoneId) {
+      this.zoneTarget.value = this.autoZone
+    } else if (this.zoneTarget.value === previousAutoZone) {
+      this.zoneTarget.value = ""
     }
   }
 

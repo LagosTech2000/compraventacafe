@@ -1,7 +1,12 @@
 <% producers = Producer.includes(:person).alphabetical %>
 <% can_create_producer = policy(Producer).create? %>
 <% can_create_zone = policy(Zone).create? %>
-<%= form_with model: [ :trading, purchase ], class: form_surface_class("space-y-6"), data: { controller: "form-validation" } do |form| %>
+<%= form_with model: [ :trading, purchase ], class: form_surface_class("space-y-6"),
+      data: { controller: "form-validation purchase-calculator",
+              purchase_calculator_sack_weight_value: PurchaseCalculation::SACK_WEIGHT,
+              purchase_calculator_tare_per_sack_value: PurchaseCalculation::TARE_PER_SACK,
+              purchase_calculator_quintal_weight_value: PurchaseCalculation::QUINTAL_WEIGHT,
+              purchase_calculator_defaults_value: PurchaseDefaults.by_coffee_state.to_json } do |form| %>
   <%= render "shared/form_errors", record: purchase %>
 
   <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
@@ -24,8 +29,8 @@
     </div>
 
     <div>
-      <%= form.label :purchased_on, class: "field-label" %>
-      <%= form.date_field :purchased_on, required: true, class: "field-input" %>
+      <%= form.label :purchased_at, class: "field-label" %>
+      <%= form.datetime_local_field :purchased_at, required: true, class: "field-input" %>
     </div>
 
     <div data-controller="option-picker" data-action="zone:created@window->option-picker#add">
@@ -39,24 +44,37 @@
 
     <div>
       <%= form.label :coffee_state, class: "field-label" %>
-      <%= form.select :coffee_state, enum_options(Purchase, :coffee_state, Purchase::COFFEE_STATES), {}, required: true, class: "field-input" %>
+      <%= form.select :coffee_state, enum_options(Purchase, :coffee_state, Purchase::COFFEE_STATES), {}, required: true, class: "field-input",
+            data: { purchase_calculator_target: "coffeeState", action: "purchase-calculator#changeCoffeeState" } %>
     </div>
   </div>
 
-  <section class="grid gap-5 sm:grid-cols-3"
-           data-controller="purchase-calculator"
-           data-purchase-calculator-sack-weight-value="<%= PurchaseCalculation::SACK_WEIGHT %>"
-           data-purchase-calculator-tare-per-sack-value="<%= PurchaseCalculation::TARE_PER_SACK %>">
+  <%# Parchment uses humidity and damage; cherry uses the yield instead.
+      The fields that do not apply are hidden and disabled (not sent). %>
+  <section class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
     <div>
       <%= form.label :gross_weight, class: "field-label" %>
       <%= form.number_field :gross_weight, required: true, min: 0.01, max: 99_999.99, step: 0.01, inputmode: "decimal",
             class: "field-input text-lg", autofocus: purchase.producer.present?,
             data: { purchase_calculator_target: "gross", action: "purchase-calculator#update" } %>
     </div>
-    <div>
+    <div data-purchase-calculator-target="parchmentField" <%= "hidden" if purchase.cherry? %>>
       <%= form.label :humidity_percent, class: "field-label" %>
       <%= form.number_field :humidity_percent, required: true, min: 0, max: 99.99, step: 0.01, inputmode: "decimal",
-            class: "field-input text-lg", data: { purchase_calculator_target: "humidity", action: "purchase-calculator#update" } %>
+            disabled: purchase.cherry?, class: "field-input text-lg",
+            data: { purchase_calculator_target: "humidity", action: "purchase-calculator#update" } %>
+    </div>
+    <div data-purchase-calculator-target="parchmentField" <%= "hidden" if purchase.cherry? %>>
+      <%= form.label :damage_percent, class: "field-label" %>
+      <%= form.number_field :damage_percent, required: true, min: 0, max: 99.99, step: 0.01, inputmode: "decimal",
+            disabled: purchase.cherry?, class: "field-input text-lg",
+            data: { purchase_calculator_target: "damage", action: "purchase-calculator#update" } %>
+    </div>
+    <div data-purchase-calculator-target="cherryField" <%= "hidden" unless purchase.cherry? %>>
+      <%= form.label :yield_factor, class: "field-label" %>
+      <%= form.number_field :yield_factor, required: true, min: 0.0001, max: 1, step: 0.0001, inputmode: "decimal",
+            disabled: !purchase.cherry?, class: "field-input text-lg",
+            data: { purchase_calculator_target: "yield", action: "purchase-calculator#update" } %>
     </div>
     <div>
       <%= form.label :price_per_pound, class: "field-label" %>
@@ -64,11 +82,13 @@
             class: "field-input text-lg", data: { purchase_calculator_target: "price", action: "purchase-calculator#update" } %>
     </div>
 
-    <div class="clay p-4 sm:col-span-3">
+    <div class="clay p-4 sm:col-span-2 lg:col-span-4">
       <p class="text-sm font-semibold"><%= t(".calculation") %></p>
-      <dl class="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <% %i[sacks tare net_weight total].each do |attribute| %>
-          <div>
+      <dl class="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <% %i[sacks tare damage_weight net_weight quintals total].each do |attribute| %>
+          <%# Damage only applies to parchment: hidden with its inputs for cherry. %>
+          <% parchment_only = attribute == :damage_weight %>
+          <div <%= tag.attributes(hidden: parchment_only && purchase.cherry?, data: { purchase_calculator_target: ("parchmentField" if parchment_only) }) %>>
             <dt class="text-xs text-ink-muted"><%= Purchase.human_attribute_name(attribute) %></dt>
             <dd class="text-xl font-bold tabular-nums" data-purchase-calculator-target="<%= attribute.to_s.camelize(:lower) %>">—</dd>
           </div>

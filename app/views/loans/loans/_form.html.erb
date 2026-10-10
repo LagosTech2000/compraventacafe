@@ -19,12 +19,70 @@
     <% end %>
   </div>
 
-  <div class="grid gap-5 sm:grid-cols-2">
+  <%# What is lent: cash, supplies or both. The principal is their sum. %>
+  <section class="space-y-4" aria-labelledby="loan-composition"
+           data-controller="loan-composition"
+           data-loan-composition-supplies-value="<%= Supply.ordered.to_h { |supply| [ supply.id, supply.picker_data ] }.to_json %>"
+           data-action="supply:created@window->loan-composition#addSupply">
     <div>
-      <%= form.label :principal, class: "field-label" %>
-      <%= form.number_field :principal, required: true, min: 0.01, max: Loan::MAX_AMOUNT - 0.01, step: 0.01, inputmode: "decimal",
-            class: "field-input text-lg", autofocus: loan.person.present? %>
+      <h2 id="loan-composition" class="text-lg font-semibold"><%= t(".what_is_lent") %></h2>
+      <p class="text-sm text-ink-muted"><%= t(".what_is_lent_help") %></p>
     </div>
+
+    <div class="max-w-xs">
+      <%= form.label :cash_amount, class: "field-label" %>
+      <%= form.number_field :cash_amount, min: 0, max: Loan::MAX_AMOUNT - 0.01, step: 0.01, inputmode: "decimal",
+            class: "field-input text-lg", autofocus: loan.person.present?,
+            data: { loan_composition_target: "cash", action: "loan-composition#update" } %>
+    </div>
+
+    <div>
+      <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <h3 class="font-semibold"><%= t(".supplies") %></h3>
+        <div class="flex flex-wrap gap-2">
+          <% if policy(Supply).create? %>
+            <%= modal_link_to t(".new_supply"), new_loans_supply_path(picker: 1), class: "btn btn-sm" %>
+          <% end %>
+          <button type="button" class="btn btn-sm btn-primary" data-action="loan-composition#add"><%= t(".add_supply") %></button>
+        </div>
+      </div>
+      <div class="space-y-3" data-loan-composition-target="items">
+        <%= form.fields_for :supply_items do |item_form| %>
+          <%= render "loans/loans/supply_item_fields", form: item_form %>
+        <% end %>
+      </div>
+      <p class="empty-state" data-loan-composition-target="empty" <%= "hidden" if loan.kept_supply_items.any? %>><%= t(".no_supplies") %></p>
+      <template data-loan-composition-target="template">
+        <%= form.fields_for :supply_items, LoanSupply.new, child_index: "NEW_RECORD" do |item_form| %>
+          <%= render "loans/loans/supply_item_fields", form: item_form %>
+        <% end %>
+      </template>
+    </div>
+
+    <div class="clay p-4">
+      <dl class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div>
+          <dt class="text-xs text-ink-muted"><%= t(".summary.cash") %></dt>
+          <dd class="text-xl font-bold tabular-nums" data-loan-composition-target="cashTotal">—</dd>
+        </div>
+        <div>
+          <dt class="text-xs text-ink-muted"><%= t(".summary.supplies") %></dt>
+          <dd class="text-xl font-bold tabular-nums" data-loan-composition-target="suppliesTotal">—</dd>
+        </div>
+        <div>
+          <dt class="text-xs text-ink-muted"><%= t(".summary.principal") %></dt>
+          <dd class="text-xl font-bold tabular-nums text-primary" data-loan-composition-target="principal">—</dd>
+        </div>
+        <div>
+          <dt class="text-xs text-ink-muted"><%= Loan.human_attribute_name(:kind) %></dt>
+          <dd class="mt-1" data-loan-composition-target="kind"
+              data-labels="<%= Loan::KINDS.to_h { |kind| [ kind, Loan.human_attribute_name("kind/#{kind}") ] }.to_json %>">—</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <div class="grid gap-5 sm:grid-cols-3">
     <div>
       <%= form.label :monthly_interest_rate, class: "field-label" %>
       <%= form.number_field :monthly_interest_rate, required: true, min: 0, max: 99.99, step: 0.01, inputmode: "decimal", class: "field-input text-lg" %>

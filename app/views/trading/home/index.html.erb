@@ -37,3 +37,6 @@
 
 <h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".today", date: l(@daily_close.date, format: :long)) %></h2>
 <%= render "trading/summary", daily_close: @daily_close %>
+
+<h2 class="mt-8 mb-3 text-lg font-semibold"><%= format_season_dates(@season) %></h2>
+<%= render "trading/summary", daily_close: @season_summary %>

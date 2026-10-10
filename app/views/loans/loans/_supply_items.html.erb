@@ -1,0 +1,29 @@
+<%# Supplies lent in a loan, with the price each was lent at. %>
+<div class="overflow-x-auto panel">
+  <table class="data-table data-table-compact">
+    <thead>
+      <tr>
+        <th><%= LoanSupply.human_attribute_name(:supply) %></th>
+        <th class="text-right"><%= LoanSupply.human_attribute_name(:quantity) %></th>
+        <th class="text-right"><%= LoanSupply.human_attribute_name(:unit_price) %></th>
+        <th class="text-right"><%= LoanSupply.human_attribute_name(:total) %></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% loan.supply_items.includes(:supply).each do |item| %>
+        <tr id="<%= dom_id(item) %>">
+          <td class="font-medium"><%= item.supply.name %></td>
+          <td class="whitespace-nowrap text-right tabular-nums"><%= format_quantity(item.quantity, item.supply.unit) %></td>
+          <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(item.unit_price) %></td>
+          <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(item.total) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+    <tfoot>
+      <tr class="font-semibold">
+        <td colspan="3"><%= t("loans.loans.show.supplies_amount") %></td>
+        <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(loan.supplies_amount) %></td>
+      </tr>
+    </tfoot>
+  </table>
+</div>

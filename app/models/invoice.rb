@@ -11,6 +11,7 @@ class Invoice < ApplicationRecord
   belongs_to :producer
   belongs_to :created_by, class_name: "User"
   has_many :purchases, dependent: :restrict_with_error
+  has_many :loan_payments, through: :purchases
 
   validates :issued_on, presence: true
   validates :payment_status, inclusion: { in: PAYMENT_STATUSES }
@@ -39,6 +40,9 @@ class Invoice < ApplicationRecord
   def gross_weight = purchases.sum(&:gross_weight)
   def net_weight = purchases.sum(&:net_weight)
   def total = purchases.sum(&:total)
+  # Loan payments made with these purchases are taken off what is paid.
+  def loan_payments_total = purchases.sum(&:loan_payments_total)
+  def amount_to_pay = total - loan_payments_total
 
   def mark_paid(method:, on:)
     update(payment_status: "paid", payment_method: method, paid_on: on)

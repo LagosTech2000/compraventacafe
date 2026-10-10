@@ -22,7 +22,15 @@ RSpec.describe "Trading policies" do
     it "freezes an invoiced purchase, even for an admin" do
       purchase = create(:invoice).purchases.first
       expect(described_class.new(full, purchase)).to forbid_actions(%i[edit update destroy])
-      expect(described_class.new(create(:user, :admin), purchase)).to forbid_actions(%i[edit update destroy])
+      expect(described_class.new(create(:user, :admin), purchase)).to forbid_actions(%i[edit update destroy void])
+    end
+
+    it "voids with the delete permission, only what is neither invoiced nor voided" do
+      purchase = create(:purchase)
+      expect(described_class.new(full, purchase)).to permit_action(:void)
+      expect(described_class.new(trader(can_read: true, can_update: true), purchase)).to forbid_action(:void)
+      purchase.void!(full)
+      expect(described_class.new(full, purchase)).to forbid_actions(%i[edit update destroy void])
     end
   end
 

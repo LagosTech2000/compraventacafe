@@ -2,7 +2,7 @@ FactoryBot.define do
   factory :loan do
     person
     association :created_by, factory: :user
-    principal { 10_000 }
+    cash_amount { 10_000 }
     monthly_interest_rate { 3 }
     disbursed_on { Time.zone.today - 60 }
     due_on { Time.zone.today + 60 }
@@ -14,5 +14,13 @@ FactoryBot.define do
     paid_on { Time.zone.today }
     amount { 1_000 }
     payment_method { "cash" }
+  end
+end
+
+FactoryBot.define do
+  factory :supply do
+    sequence(:name) { |n| "Abono #{n}" }
+    unit { "saco" }
+    default_price { 1_000 }
   end
 end

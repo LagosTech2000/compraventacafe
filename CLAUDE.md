@@ -77,10 +77,17 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Zona | `Zone` |
 | Compra (pesada) | `Purchase` |
 | Uva / pergamino húmedo / pergamino seco | `cherry` / `wet_parchment` / `dry_parchment` |
+| Humedad / daño / rendimiento | `humidity_percent` / `damage_percent` / `yield_factor` |
+| Quintales (QQ) | `quintals` |
+| Temporada | `Season` (`season_year` en la compra) |
+| Compra anulada | `voided` (`voided_at`, `voided_by`) |
 | Factura (recibo al productor) | `Invoice` |
 | Cancelada / pendiente de pago (PXP) | `paid` / `pending` |
 | Cierre diario | `DailyClose` |
 | Préstamo / abono | `Loan` / `LoanPayment` |
+| Insumo / insumo del préstamo | `Supply` / `LoanSupply` |
+| Préstamo en efectivo / en insumos / mixto | `Loan#kind`: `cash` / `supplies` / `mixed` |
+| Pago con café (abonar préstamos con una compra) | `PurchaseLoanSettlement`; abono con `payment_method: "coffee"` |
 | Estado de cuenta / historial crediticio | `CreditAccount` |
 | Score de pago | `PayerScore` |
 
@@ -227,6 +234,9 @@ los errores).
   `modal` (`ModalSupport`, `modal_controller.js`). Un enlace con
   `modal_link_to` / `detail_button` abre su página ahí; la página usa el layout
   `modal` sin navegación. `page_link_to` sale del modal a página completa.
+  Los modales se apilan: un `modal_link_to` dentro de un modal abre el
+  siguiente (`modal_2`, `modal_3`, `ModalSupport::MODAL_FRAMES`) encima, sin
+  perder el de abajo (p. ej. "Nueva zona" desde "Nuevo productor").
 - Al guardar desde el modal, el controlador llama `close_modal_with`: cierra el
   modal y refresca la página de atrás con el aviso. Si el modal se abrió desde
   un campo (`picker=1`), en vez de refrescar emite un evento de ventana
@@ -250,7 +260,7 @@ los errores).
   (`collapsible_filters_controller.js`); "activo" = distinto del valor por
   defecto.
 - **Orden**: toda lista muestra primero lo más reciente (`newest_first`,
-  definido en `ApplicationRecord`; compras por fecha de compra, facturas por
+  definido en `ApplicationRecord`; compras por fecha y hora de compra, facturas por
   número). Las listas desplegables y el buscador de productor, que sirven para
   elegir por nombre, se quedan en orden alfabético. Excepción: el cierre diario
   agrupa canceladas, luego pendientes de pago, luego sin facturar (más
@@ -320,9 +330,9 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 | Clave | Estado |
 | --- | --- |
 | `administration` | Usuarios y permisos, y auditoría (solo administradores); personas, clientes y colaboradores (permisos del módulo) |
-| `trading` | Demo: zonas, productores, compras con cálculo automático, facturas imprimibles (original y copia) con estado de pago, cierre diario |
+| `trading` | Demo: zonas, productores (con pestañas y QQ por temporada), compras con cálculo por estado del café y anulación, facturas imprimibles (original y copia) con estado de pago, cierre diario |
 | `farms` | Portada vacía |
-| `loans` | Fase 1: préstamos a cualquier persona con interés simple, abonos, estados de cuenta con historial crediticio y score de pago |
+| `loans` | Préstamos en efectivo, insumos o mixtos a cualquier persona con interés simple, catálogo de insumos, abonos (también con café desde una compra), estados de cuenta con historial crediticio y score de pago |
 | `reports` | Portada vacía |
 
 Cada módulo tiene su namespace de controladores. Implementar una funcionalidad
@@ -330,12 +340,40 @@ es llenar su carpeta, no crearla.
 
 ### Compra y venta (`trading`)
 
-- **Cálculo de la compra**: `PurchaseCalculation`, copia exacta de la macro
-  actual del cliente (tara de 1 lb por saco de 165 lb, redondeado hacia
-  arriba; se descuenta la humedad). Se guarda el resultado en la compra para
-  que el histórico no cambie si la regla cambia. `purchase_calculator_controller.js`
-  lo replica solo como vista previa; el servidor manda.
-- Humedad por defecto 51 % (`PurchaseDefaults`), editable.
+- **Cálculo de la compra** (`PurchaseCalculation`) [CONFIRMADO, Fernando,
+  2026-10-10]. Tara de la macro del cliente: 1 lb por saco de 165 lb,
+  redondeado hacia arriba. Después, según el estado del café:
+  - Pergamino húmedo y seco: `(bruto − tara) × (1 − humedad%) × (1 − daño%)`.
+    El daño es un porcentaje que se resta al peso neto (suele ser 2–2.5 %).
+  - Uva: `(bruto − tara) × rendimiento`. No lleva humedad ni daño.
+  - Quintales (QQ) = peso neto ÷ 125. Total = peso neto × precio por libra.
+- Se guarda el resultado en la compra y **solo se recalcula si cambia una
+  entrada** (`Purchase::CALCULATION_INPUTS`), para que el histórico no cambie
+  si la regla cambia. `purchase_calculator_controller.js` lo replica solo
+  como vista previa; el servidor manda.
+- Valores iniciales (`PurchaseDefaults`), todos editables: humedad 51 % en
+  pergamino húmedo y 12 % en seco, daño 0 %, rendimiento 0.186 en uva. Al
+  cambiar el estado en el formulario se ponen los del nuevo estado y se
+  ocultan los campos que no aplican. Al cambiar de productor, la zona pasa a
+  la del nuevo productor.
+- **Temporada** (`Season`) [CONFIRMADO]: empieza cada 1 de septiembre y
+  lleva el año en que empieza (la 2026 va del 2026-09-01 al 2027-08-31).
+  Cada compra guarda su `season_year`, calculado de la fecha de compra.
+- **Fecha y hora de la compra** (`purchased_at`): el formulario empieza con
+  la hora actual y es editable. Toda pantalla e impreso la muestra con hora.
+  Los filtros por fecha y el cierre diario cubren el día completo en hora de
+  Tegucigalpa (`Purchase.on`, que acepta una fecha o un rango).
+- **Anular compra** [CONFIRMADO]: una compra sin facturar se anula (no se
+  borra) con el permiso de borrar (`PurchasePolicy#void?`). Queda registrada
+  con quién y cuándo, pero sale de listas, totales, cierre diario y
+  facturación (`Purchase.active`; `uninvoiced` ya la excluye). Las listas de
+  compras la muestran solo con "Mostrar anuladas". No se edita, no se borra y
+  no se puede deshacer.
+- La página del productor tiene cifras fijas (QQ, compras y total de la
+  temporada, QQ de todas) y pestañas: compras (por temporada), facturas y
+  datos personales.
+- En "Facturar compras" se puede anular una compra o registrar una nueva para
+  ese productor en un modal; al guardar, la lista se refresca.
 - Una factura agrupa compras sin facturar **del mismo productor**
   (`InvoiceIssuer`, con bloqueo de filas). Número correlativo con bloqueo
   consultivo (`Invoice::NUMBERING_LOCK_KEY`), mostrado con 4 dígitos.
@@ -374,18 +412,44 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
   Bueno, 50+ Regular, menos Riesgo; sin préstamos que cuenten, "Sin historial".
 - `CreditAccount` arma el estado de cuenta de una persona: totales, sus
   préstamos con saldo a hoy, historial de préstamos y abonos, y score.
-- El pago con café (descontar de la compra) **no está construido**: es punto
-  abierto.
+- **Insumos** (`Supply`) [CONFIRMADO, Fernando, 2026-10-10]: catálogo del
+  módulo (Préstamos → Insumos) con nombre, unidad y precio predeterminado.
+  No se borran: se desactivan y dejan de salir al prestar.
+- **Préstamos mixtos** [CONFIRMADO]: un préstamo lleva efectivo
+  (`cash_amount`, puede ser 0) y líneas de insumos (`LoanSupply`: cantidad ×
+  precio unitario). El precio empieza en el predeterminado, se puede cambiar
+  y se guarda en la línea. **Capital = efectivo + valor de los insumos**, y
+  el interés corre sobre todo el capital. El capital no se escribe: lo
+  calcula `Loan` (`loan_composition_controller.js` es solo vista previa).
+- **Pago con café** [Fernando delegó la regla, 2026-10-10; diseño propuesto
+  en esta sesión, pendiente de confirmar]: desde el detalle de una compra se
+  abonan o saldan los préstamos de la persona del productor
+  (`PurchaseLoanSettlement`, pantalla `trading/loan_settlements`). Reglas:
+  - Cada abono es un `LoanPayment` normal con forma de pago "Con café" y
+    `purchase_id`: paga interés primero y luego capital, y salda el préstamo
+    si cubre todo a esa fecha. Fecha del abono: hoy por defecto, editable.
+  - La suma de abonos de una compra no pasa del total de la compra. Se puede
+    abonar mientras la compra no esté anulada ni su factura pagada.
+  - Todos los abonos de una vez se guardan o ninguno (transacción, bloqueo
+    de la compra).
+  - Una compra con abonos no se edita, anula ni borra; para cambiarla se
+    quita el abono (solo el último de cada préstamo, regla existente).
+  - La factura muestra el total de compras, cada abono restado y el **total
+    a pagar** al productor. El total de la factura (café comprado) no cambia.
+  - Requiere crear en `loans` y ver en `trading`
+    (`PurchaseLoanSettlementPolicy`). Sin permiso de préstamos, la compra no
+    muestra deudas.
 
 ## Puntos abiertos
 
 | Punto | Qué bloquea | Quién decide |
 | --- | --- | --- |
-| Cálculo según estado del café (uva / húmedo / seco) y si el 51 % es fijo o medido | Ajustar `PurchaseCalculation` | Cliente |
-| Si se sigue descontando **daño** y cómo se mide | `PurchaseCalculation` | Cliente |
 | Tabla de precios (zona + calidad + bolsa) y categorías de calidad | Precio automático; hoy es manual | Cliente |
 | Retención de fin de temporada | Reporte de retención | Cliente |
-| Préstamos: cómo se descuentan de la compra (pago con café), recargo por mora | Descuento del préstamo al pagar la compra; mora | Cliente |
+| Reportes por temporada (qué muestran) | Reportería por temporada; la temporada ya se guarda | Cliente |
+| Préstamos: recargo por mora | Mora | Cliente |
+| Pago con café: confirmar las reglas propuestas (ver Préstamos) | Ajustes al abono con compra | Fernando / Cliente |
+| Inventario de insumos (existencias, costo de compra) | Control de bodega de insumos | Cliente |
 | Si la factura siempre agrupa hasta 4 compras | Hoy no hay límite | Cliente |
 | 160 lb/saco en salidas vs. 165 en compras | Salidas de camión | Cliente |
 | Contratos: moneda, cobro, anticipos del exportador | Ventas / contratos | Cliente |
@@ -404,7 +468,9 @@ Resueltos: versión de Ruby (3.4.x), Ubuntu 24.04 LTS, ambiente WSL, regla del
 unicidad y obligatoriedad de DNI (13 dígitos) y RTN (14 dígitos): ninguno es
 obligatorio. Préstamos fase 1: tasa mensual por préstamo, interés simple
 por día sobre saldo, abono a interés y luego capital, score por puntualidad
-(Fernando, 2026-09-28).
+(Fernando, 2026-09-28). Cálculo por estado del café (uva con rendimiento,
+pergamino con humedad 51 %/12 % y daño), QQ = neto ÷ 125, temporada desde el
+1 de septiembre y anulación de compras (Fernando, 2026-10-10).
 
 ## Etapas del proyecto
 

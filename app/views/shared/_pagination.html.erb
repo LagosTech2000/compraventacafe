@@ -1,14 +1,15 @@
-<%# Previous / next links that keep the list's filters. %>
+<%# Previous / next links that keep the list's filters (and extra_params, e.g. a tab). %>
+<% query = filter.to_params.merge(local_assigns.fetch(:extra_params, {})) %>
 <% if filter.page > 1 || next_page %>
   <nav class="mt-4 flex items-center justify-between gap-3 print:hidden" aria-label="<%= t("shared.pagination.label") %>">
     <% if filter.page > 1 %>
-      <%= link_to t("shared.pagination.previous"), url_for(filter.to_params.merge(page: filter.page - 1)), class: "btn" %>
+      <%= link_to t("shared.pagination.previous"), url_for(query.merge(page: filter.page - 1)), class: "btn" %>
     <% else %>
       <span></span>
     <% end %>
     <span class="text-sm text-ink-muted"><%= t("shared.pagination.page", page: filter.page) %></span>
     <% if next_page %>
-      <%= link_to t("shared.pagination.next"), url_for(filter.to_params.merge(page: filter.page + 1)), class: "btn" %>
+      <%= link_to t("shared.pagination.next"), url_for(query.merge(page: filter.page + 1)), class: "btn" %>
     <% else %>
       <span></span>
     <% end %>

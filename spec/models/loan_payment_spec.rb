@@ -2,7 +2,7 @@ require "rails_helper"
 
 RSpec.describe LoanPayment do
   let(:start) { Date.new(2026, 1, 1) }
-  let(:loan) { create(:loan, principal: 1_000, monthly_interest_rate: 3, disbursed_on: start, due_on: start + 60) }
+  let(:loan) { create(:loan, cash_amount: 1_000, monthly_interest_rate: 3, disbursed_on: start, due_on: start + 60) }
 
   it "marks the loan paid off when a payment covers everything" do
     create(:loan_payment, loan:, paid_on: start + 30, amount: 1_030)

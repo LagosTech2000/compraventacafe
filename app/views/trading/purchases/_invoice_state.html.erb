@@ -1,5 +1,7 @@
-<%# Invoice number and payment state of a purchase, or "Sin facturar". %>
-<% if purchase.invoice %>
+<%# Invoice number and payment state of a purchase, "Sin facturar" or "Anulada". %>
+<% if purchase.voided? %>
+  <span class="badge badge-neutral"><%= t("trading.purchases.table.voided") %></span>
+<% elsif purchase.invoice %>
   <span class="flex flex-wrap items-center gap-x-2 gap-y-1">
     <span class="whitespace-nowrap tabular-nums"><%= purchase.invoice.display_number %></span>
     <%= payment_status_badge(purchase.invoice) %>

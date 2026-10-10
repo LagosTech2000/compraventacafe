@@ -32,7 +32,7 @@ RSpec.describe ListFilter do
 
   describe PurchaseFilter do
     it "shows today by default, and everything once the dates are cleared" do
-      create(:purchase, purchased_on: Time.zone.today - 3)
+      create(:purchase, purchased_at: Time.zone.today - 3)
       today = create(:purchase)
       expect(PurchaseFilter.new(params({})).apply(Purchase.all)).to eq([ today ])
       expect(PurchaseFilter.new(params(from: "", to: "")).apply(Purchase.all).size).to eq(2)
@@ -73,6 +73,7 @@ RSpec.describe ListFilter do
 
     producer = create(:producer, kind: "own_farm")
     expect(ProducerFilter.new(params(kind: "own_farm")).apply(Producer.all)).to eq([ producer ])
+    expect(ProducerFilter.new(params(q: producer.person.first_names)).apply(Producer.all).to_a).to eq([ producer ])
     expect(PersonFilter.new(params(role: "producers")).apply(Person.all)).to eq([ producer.person ])
 
     create(:zone, name: "Buenas Noches")

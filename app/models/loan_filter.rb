@@ -3,12 +3,14 @@ class LoanFilter < ListFilter
   field :to, :date
   field :q, :text
   field :status, :choice, in: Loan::STATUSES
+  field :kind, :choice, in: Loan::KINDS
 
   def apply(scope)
     scope = scope.where(disbursed_on: from..) if from
     scope = scope.where(disbursed_on: ..to) if to
     scope = scope.where(person_id: Person.search(q).select(:id)) if q
     scope = scope.with_status(status) if status
-    scope.includes(:person, :payments).newest_first
+    scope = scope.of_kind(kind) if kind
+    scope.includes(:person, :payments, :supply_items).newest_first
   end
 end

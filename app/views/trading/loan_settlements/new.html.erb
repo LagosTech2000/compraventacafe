@@ -1,0 +1,92 @@
+<% content_for :title, t(".title") %>
+<%= render "trading/nav" %>
+<% purchase = @settlement.purchase %>
+<% available = purchase.available_for_loans %>
+
+<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+<p class="mt-1 text-sm text-ink-muted">
+  <%= t(".subtitle", number: purchase.id, person: @settlement.person.full_name, date: l(purchase.purchased_at)) %>
+</p>
+
+<dl class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+  <% {
+       purchase_total: format_money(purchase.total),
+       already_paid: format_money(purchase.total - available),
+       available: format_money(available),
+       total_owed: format_money(@settlement.total_owed)
+     }.each do |key, value| %>
+    <div class="stat">
+      <dt><%= t(".stats.#{key}") %></dt>
+      <dd><%= value %></dd>
+    </div>
+  <% end %>
+</dl>
+
+<%= form_with model: @settlement, url: trading_purchase_loan_settlement_path(purchase), scope: :purchase_loan_settlement,
+      class: form_surface_class("mt-6 space-y-6"),
+      data: { controller: "form-validation loan-settlement",
+              loan_settlement_available_value: available.to_s,
+              loan_settlement_over_message_value: t(".over_available", available: format_money(available)),
+              loan_settlement_reload_url_value: new_trading_purchase_loan_settlement_path(purchase) } do |form| %>
+  <%= render "shared/form_errors", record: @settlement %>
+
+  <div class="max-w-xs">
+    <%= form.label :paid_on, t(".paid_on"), class: "field-label" %>
+    <%= form.date_field :paid_on, value: @settlement.paid_on, required: true, class: "field-input",
+          data: { action: "loan-settlement#reload" } %>
+    <p class="mt-1 text-xs text-ink-muted"><%= t(".paid_on_help") %></p>
+  </div>
+
+  <section aria-labelledby="open-loans">
+    <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+      <h2 id="open-loans" class="text-lg font-semibold"><%= t(".open_loans") %></h2>
+      <button type="button" class="btn btn-sm" data-action="loan-settlement#fillAll"><%= t(".fill_all") %></button>
+    </div>
+    <div class="space-y-3">
+      <% @settlement.open_loans.each do |loan| %>
+        <% owed = @settlement.balance(loan).total_owed %>
+        <div class="data-card grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,14rem)] sm:items-end" id="<%= dom_id(loan, :settlement) %>">
+          <div class="min-w-0">
+            <p class="font-medium">
+              <%= t(".loan", number: loan.id) %>
+              <span class="ml-1 inline-flex flex-wrap gap-1 align-middle"><%= loan_status_badge(loan) %> <%= loan_kind_badge(loan) %></span>
+            </p>
+            <p class="text-xs text-ink-muted"><%= t("loans.loans.table.dates", from: l(loan.disbursed_on), to: l(loan.due_on)) %></p>
+            <p class="mt-1 text-sm"><%= t(".owed_html", amount: tag.strong(format_money(owed), class: "tabular-nums")) %></p>
+          </div>
+          <button type="button" class="btn btn-sm" data-action="loan-settlement#fill" data-owed="<%= owed %>"
+                  data-target-id="<%= dom_id(loan, :amount) %>"><%= t(".settle") %></button>
+          <div>
+            <%= label_tag dom_id(loan, :amount), t(".amount"), class: "field-label" %>
+            <%= number_field_tag "purchase_loan_settlement[amounts][#{loan.id}]", @settlement.amount_for(loan), id: dom_id(loan, :amount),
+                  min: 0, max: owed, step: 0.01, inputmode: "decimal", placeholder: "0.00", class: "field-input text-lg",
+                  data: { loan_settlement_target: "amount", action: "loan-settlement#update" } %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </section>
+
+  <div class="clay p-4">
+    <dl class="grid grid-cols-2 gap-3">
+      <div>
+        <dt class="text-xs text-ink-muted"><%= t(".summary.to_loans") %></dt>
+        <dd class="text-xl font-bold tabular-nums" data-loan-settlement-target="total">—</dd>
+      </div>
+      <div>
+        <dt class="text-xs text-ink-muted"><%= t(".summary.to_producer") %></dt>
+        <dd class="text-xl font-bold tabular-nums text-primary" data-loan-settlement-target="remaining">—</dd>
+      </div>
+    </dl>
+  </div>
+
+  <div>
+    <%= form.label :observations, class: "field-label" %>
+    <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+  </div>
+
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit t(".submit"), class: "btn btn-primary" %>
+    <%= cancel_button trading_purchase_path(purchase) %>
+  </div>
+<% end %>

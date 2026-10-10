@@ -8,7 +8,7 @@ RSpec.describe DailyClose do
     create(:purchase, producer:, gross_weight: 146, humidity_percent: 51, price_per_pound: 58)
     create(:purchase, producer:, gross_weight: 330, humidity_percent: 51, price_per_pound: 58)
     create(:purchase, gross_weight: 100, humidity_percent: 51, price_per_pound: 58)
-    create(:purchase, purchased_on: today - 1)
+    create(:purchase, purchased_at: today - 1)
 
     close = described_class.new(today)
     expect(close.purchases_count).to eq(3)

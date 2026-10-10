@@ -2,21 +2,29 @@
 # principal (LoanBalance#split) and the split is stored. Payments go in date
 # order; only the latest one can be removed, so the stored splits of the
 # others stay right.
+#
+# A payment can also come from a coffee purchase of the same person ("pago
+# con café", see PurchaseLoanSettlement): its method is "coffee" and it
+# points to the purchase, whose money it takes.
 class LoanPayment < ApplicationRecord
   include Auditable
 
+  # Methods chosen by hand; "coffee" only comes from a purchase.
   PAYMENT_METHODS = %w[cash transfer check].freeze
+  COFFEE = "coffee".freeze
 
   belongs_to :loan
   belongs_to :created_by, class_name: "User"
+  belongs_to :purchase, optional: true
 
   normalizes :observations, with: FieldFormats::STRIP
 
   validates :paid_on, presence: true
-  validates :payment_method, inclusion: { in: PAYMENT_METHODS }
+  validates :payment_method, inclusion: { in: PAYMENT_METHODS + [ COFFEE ] }
   validates :amount, numericality: { greater_than: 0, less_than: Loan::MAX_AMOUNT }
   validates :observations, length: { maximum: 500 }
-  validate :in_date_order, :within_balance, on: :create
+  validate :in_date_order, :within_balance, :purchase_can_pay, on: :create
+  validate :coffee_comes_from_purchase
 
   before_validation :split, on: :create
   after_create :settle_loan
@@ -35,6 +43,10 @@ class LoanPayment < ApplicationRecord
 
   def human_payment_method
     self.class.human_attribute_name("payment_method/#{payment_method}")
+  end
+
+  def with_coffee?
+    payment_method == COFFEE
   end
 
   private
@@ -66,6 +78,24 @@ class LoanPayment < ApplicationRecord
 
       owed = ActiveSupport::NumberHelper.number_to_currency(balance_on_payment_date.total_owed)
       errors.add(:amount, :over_balance, owed:)
+    end
+
+    def coffee_comes_from_purchase
+      errors.add(:payment_method, :coffee_without_purchase) if with_coffee? != purchase.present?
+    end
+
+    # The purchase must be the same person's, still unpaid, and have money
+    # left after the payments it already made.
+    def purchase_can_pay
+      return unless purchase && loan && amount
+
+      if purchase.producer.person_id != loan.person_id
+        errors.add(:purchase, :other_person)
+      elsif !purchase.accepts_loan_payments?
+        errors.add(:purchase, :closed)
+      elsif amount > purchase.available_for_loans
+        errors.add(:amount, :over_purchase, available: ActiveSupport::NumberHelper.number_to_currency(purchase.available_for_loans))
+      end
     end
 
     def settle_loan
