@@ -73,6 +73,7 @@ RSpec.describe ListFilter do
 
     producer = create(:producer, kind: "own_farm")
     expect(ProducerFilter.new(params(kind: "own_farm")).apply(Producer.all)).to eq([ producer ])
+    expect(ProducerFilter.new(params(q: producer.person.first_names)).apply(Producer.all).to_a).to eq([ producer ])
     expect(PersonFilter.new(params(role: "producers")).apply(Person.all)).to eq([ producer.person ])
 
     create(:zone, name: "Buenas Noches")

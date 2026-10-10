@@ -280,6 +280,14 @@ RSpec.describe "Trading purchase flow" do
     expect(DailyClose.new(Time.zone.today).purchases).to eq([ late ])
   end
 
+  it "searches producers by name, DNI or RTN" do
+    producer = create(:producer, person: create(:person, first_names: "Josiel", last_names: "Duarte"))
+    create(:producer)
+    get trading_producers_path(q: "josiel", kind: "", zone_id: "")
+    expect(response).to have_http_status(:ok)
+    expect(Nokogiri::HTML(response.body).css("tbody tr").map { |row| row["id"] }).to eq([ "producer_#{producer.id}" ])
+  end
+
   describe "producer page" do
     it "pins the quintals and splits purchases, invoices and personal data into tabs" do
       producer = create(:producer)
