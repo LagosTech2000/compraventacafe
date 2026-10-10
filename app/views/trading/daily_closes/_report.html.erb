@@ -2,7 +2,7 @@
     keeps the interactive view. Grouped by payment state with subtotals. %>
 <% columns = %i[gross_weight humidity_percent net_weight price_per_pound total] %>
 <%# Same widths in every group so the columns line up across the page. %>
-<% widths = %w[5% 20% 12% 16% 8% 7% 8% 7% 11% 6%] %>
+<% widths = %w[5% 6% 18% 11% 15% 8% 6% 8% 7% 11% 5%] %>
 <section class="hidden text-[9pt] leading-snug text-black print:block">
   <header class="flex items-start justify-between border-b-2 border-black pb-2">
     <div>
@@ -56,6 +56,7 @@
       <thead>
         <tr class="border-y border-black text-left whitespace-nowrap">
           <th class="py-1 pr-1"><%= t("trading.purchases.table.number") %></th>
+          <th class="py-1 pr-1"><%= t(".time") %></th>
           <th class="py-1 pr-1"><%= t("trading.purchases.table.producer") %></th>
           <th class="py-1 pr-1"><%= Purchase.human_attribute_name(:zone) %></th>
           <th class="py-1 pr-1"><%= t(".coffee_state") %></th>
@@ -69,6 +70,7 @@
         <% purchases.each do |purchase| %>
           <tr class="border-b border-gray-300 break-inside-avoid">
             <td class="py-0.5 pr-1 tabular-nums"><%= purchase.id %></td>
+            <td class="py-0.5 pr-1 tabular-nums"><%= l(purchase.purchased_at, format: :hour) %></td>
             <td class="py-0.5 pr-1"><%= purchase.producer.full_name %></td>
             <td class="py-0.5 pr-1"><%= purchase.zone&.name %></td>
             <td class="py-0.5 pr-1"><%= purchase.human_coffee_state %></td>
@@ -83,7 +85,7 @@
       </tbody>
       <tfoot>
         <tr class="border-t border-black font-bold">
-          <td class="py-1 pr-1" colspan="4"><%= t(".subtotal") %></td>
+          <td class="py-1 pr-1" colspan="5"><%= t(".subtotal") %></td>
           <td class="whitespace-nowrap py-1 pl-1 text-right tabular-nums"><%= format_pounds(purchases.sum(&:gross_weight)) %></td>
           <td></td>
           <td class="whitespace-nowrap py-1 pl-1 text-right tabular-nums"><%= format_pounds(purchases.sum(&:net_weight)) %></td>

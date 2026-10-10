@@ -35,7 +35,7 @@
         <th colspan="7" class="text-left font-bold"><%= t("trading.invoices.show.invoice") %> <%= invoice.display_number %> · <%= label %></th>
       </tr>
       <tr>
-        <th><%= Purchase.human_attribute_name(:purchased_on) %></th>
+        <th><%= Purchase.human_attribute_name(:purchased_at) %></th>
         <th><%= Purchase.human_attribute_name(:coffee_state) %></th>
         <th class="text-right"><%= Purchase.human_attribute_name(:gross_weight) %></th>
         <th class="text-right"><%= Purchase.human_attribute_name(:humidity_percent) %></th>
@@ -45,9 +45,9 @@
       </tr>
     </thead>
     <tbody>
-      <% invoice.purchases.sort_by { |p| [ p.purchased_on, p.id ] }.reverse_each do |purchase| %>
+      <% invoice.purchases.sort_by { |p| [ p.purchased_at, p.id ] }.reverse_each do |purchase| %>
         <tr class="break-inside-avoid">
-          <td class="whitespace-nowrap"><%= l(purchase.purchased_on) %></td>
+          <td class="whitespace-nowrap"><%= l(purchase.purchased_at) %></td>
           <td><%= purchase.human_coffee_state %></td>
           <td class="text-right tabular-nums"><%= format_pounds(purchase.gross_weight) %></td>
           <td class="text-right tabular-nums"><%= format_pounds(purchase.humidity_percent) %></td>

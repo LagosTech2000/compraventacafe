@@ -86,6 +86,9 @@ es:
         registered: "Siguiente paso: facturar para entregarle el recibo al productor."
         invoiced: "Siguiente paso: registrar el pago cuando se le pague al productor."
         paid: "Ciclo completo: la compra está facturada y pagada."
+    season:
+      name: "Temporada %{year}"
+      dates: "%{name}: del %{from} al %{to}"
     nav:
       home: "Resumen"
       new_purchase: "Nueva compra"
@@ -132,6 +135,7 @@ es:
       gross_weight: "Libras brutas"
       sacks: "Sacos"
       net_weight: "Libras netas"
+      quintals: "Quintales (QQ)"
       total: "Total comprado"
       paid_total: "Pagado"
       pending_total: "Pendiente de pago"
@@ -165,10 +169,19 @@ es:
         edit: "Editar"
         new_purchase: "Nueva compra"
         new_invoice: "Facturar compras"
-        uninvoiced: "Compras sin facturar"
-        no_uninvoiced: "No tiene compras sin facturar."
-        recent_invoices: "Últimas facturas"
-        no_invoices: "Todavía no tiene facturas."
+        figures:
+          season_quintals: "QQ de la temporada"
+          season_purchases: "Compras de la temporada"
+          season_total: "Comprado en la temporada"
+          all_time_quintals: "QQ de todas las temporadas"
+        tabs:
+          label: "Secciones del productor"
+          purchases: "Compras"
+          invoices: "Facturas"
+          info: "Datos personales"
+        all_seasons: "Todas las temporadas"
+        no_purchases: "No hay compras que coincidan con los filtros."
+        no_invoices: "No hay facturas que coincidan con los filtros."
         back: "Volver a productores"
       new:
         title: "Nuevo productor"
@@ -190,6 +203,8 @@ es:
         invoiced: "Facturación"
         invoiced_yes: "Facturadas"
         invoiced_no: "Sin facturar"
+        show_voided: "Mostrar anuladas"
+        new: "Nueva compra"
         empty: "No hay compras que coincidan con los filtros."
       table:
         number: "N.º"
@@ -199,14 +214,20 @@ es:
         gross: "Bruto (lb)"
         humidity: "Hum. (%)"
         net: "Neto (lb)"
+        quintals: "QQ"
         price: "Precio/lb"
         actions: "Acciones"
         edit: "Editar"
+        void: "Anular"
+        voided: "Anulada"
       show:
         title: "Compra"
         edit: "Editar"
         destroy: "Borrar"
         confirm_destroy: "¿Borrar esta compra? Esta acción no se puede deshacer."
+        void: "Anular"
+        confirm_void: "¿Anular esta compra? Deja de contar en listas, totales y facturación, pero queda registrada. No se puede deshacer."
+        voided_notice: "Compra anulada el %{date} por %{name}. No cuenta en listas, totales ni facturación."
         invoiced_notice: "Esta compra ya está en la factura %{number} y no se puede modificar."
         view_invoice: "Ver factura %{number}"
         invoice_now: "Facturar ahora"
@@ -230,6 +251,8 @@ es:
         success: "Compra actualizada."
       destroy:
         success: "Compra borrada."
+      void:
+        success: "Compra anulada."
     invoices:
       index:
         title: "Facturas"
@@ -245,6 +268,7 @@ es:
         choose_producer: "Productores con compras sin facturar"
         nothing_to_invoice: "No hay compras sin facturar."
         pick_purchases: "Compras de %{producer} sin facturar"
+        new_purchase: "Nueva compra para este productor"
         no_purchases: "Este productor no tiene compras sin facturar."
         payment: "Pago"
         submit: "Crear factura"
@@ -272,6 +296,7 @@ es:
       report:
         title: "Cierre diario"
         coffee_state: "Estado"
+        time: "Hora"
         subtotal: "Subtotal"
         generated: "Generado por %{name} el %{time}"
         groups:
@@ -288,6 +313,7 @@ es:
           invoice: "Fact."
       show:
         title: "Cierre diario del %{date}"
+        date: "Fecha"
         print: "Imprimir"
         purchases: "Compras del día"
         empty: "No hay compras registradas en esta fecha."
@@ -608,6 +634,7 @@ es:
               - "Registrar pagos: marca como canceladas las facturas que ya se pagaron."
               - "Cerrar el día: revisa e imprime el cierre diario."
             tips:
+              - "Abajo están los totales de hoy y los de la temporada actual (del 1 de septiembre al 31 de agosto)."
               - "Usa las pestañas de arriba para ir a compras, facturas, productores, zonas o el cierre diario."
         purchases:
           index:
@@ -616,27 +643,37 @@ es:
             steps:
               - "Cambia las fechas en «Filtros» para ver otros días; también puedes filtrar por productor, zona, estado del café y facturación."
               - "Toca «Detalle» para ver el cálculo de una compra."
-              - "Toca «Editar» para corregir una compra que todavía no está facturada."
+              - "Toca «Anular» para sacar una compra que todavía no está facturada de las listas y los totales."
+              - "Toca «Nueva compra» para registrar una sin salir de la lista."
+            tips:
+              - "Las compras anuladas no aparecen; marca «Mostrar anuladas» en «Filtros» para verlas."
+              - "Los totales de arriba nunca cuentan las compras anuladas."
           show:
             title: "Detalle de la compra"
             summary: "Muestra el cálculo completo de la compra y en qué etapa está."
             steps:
               - "Revisa la barra de etapas: registrada, facturada o cancelada."
               - "Usa el botón del siguiente paso: facturar ahora o registrar el pago de su factura."
-              - "Si todavía no está facturada, puedes editarla o borrarla."
+              - "Si todavía no está facturada, puedes editarla, anularla o borrarla."
             tips:
-              - "Una compra facturada ya no se puede editar ni borrar."
+              - "Recién registrada la compra, el botón «Facturar ahora» queda seleccionado: presiona Enter para facturar."
+              - "Una compra facturada ya no se puede editar, anular ni borrar."
+              - "Una compra anulada queda registrada, pero no cuenta en listas, totales ni facturación."
           form:
             title: "Registrar o editar una compra"
-            summary: "Registra una pesada. El sistema calcula sacos, tara, peso neto y total mientras escribes."
+            summary: "Registra una pesada. El sistema calcula sacos, tara, peso neto, quintales y total mientras escribes."
             steps:
               - "Escribe el nombre del productor y elígelo de la lista. Si no existe, toca «¿No está? Registrar productor»."
-              - "Revisa la fecha y la zona (se llena con la zona del productor) y elige el estado del café."
-              - "Escribe el peso bruto, la humedad y el precio por libra."
+              - "Revisa la fecha y hora (empieza con la hora actual) y la zona (se cambia a la zona del productor que elijas) y elige el estado del café."
+              - "Escribe el peso bruto y el precio por libra. En pergamino, revisa la humedad y el daño; en uva, el rendimiento."
               - "Revisa el cálculo y toca el botón de guardar."
             tips:
+              - "Al cambiar el estado del café se ponen sus valores iniciales: humedad 51 % en pergamino húmedo, 12 % en pergamino seco; rendimiento 0.186 en uva. Puedes cambiarlos."
               - "Tara: 1 libra por cada saco de 165 libras, redondeado hacia arriba."
-              - "Peso neto = (peso bruto − tara) menos el porcentaje de humedad."
+              - "Pergamino: peso neto = (peso bruto − tara) menos el porcentaje de humedad, y a eso se le resta el porcentaje de daño. «Restado por daño» muestra cuántas libras quita el daño."
+              - "Uva: peso neto = (peso bruto − tara) × rendimiento."
+              - "Quintales (QQ) = peso neto ÷ 125. Total = peso neto × precio por libra."
+              - "Cada compra queda en la temporada de su fecha: la temporada empieza el 1 de septiembre."
               - "El cálculo que se guarda es el del sistema; el de la pantalla es una vista previa."
         invoices:
           index:
@@ -656,7 +693,9 @@ es:
               - "Si ya está cancelada, elige la forma y la fecha de pago."
               - "Toca «Crear factura»."
             tips:
-              - "Las compras facturadas ya no se pueden editar ni borrar."
+              - "Si falta una compra, toca «Nueva compra para este productor»: se registra en una ventana y aparece en la lista."
+              - "Si una compra no va, toca «Anular» en su fila: sale de la lista y de los totales."
+              - "Las compras facturadas ya no se pueden editar, anular ni borrar."
           show:
             title: "Factura"
             summary: "El recibo para el productor, con original y copia."
@@ -676,11 +715,14 @@ es:
               - "Toca «Nuevo productor» para registrar uno."
           show:
             title: "Detalle del productor"
-            summary: "Sus datos, las compras que tiene sin facturar y sus últimas facturas."
+            summary: "Los quintales que ha vendido y, en pestañas, sus compras, sus facturas y sus datos personales."
             steps:
-              - "Toca «Nueva compra» para registrarle una compra."
-              - "Toca «Facturar compras» para facturar lo que tiene pendiente."
-              - "Toca «Editar» para cambiar sus datos."
+              - "Arriba están fijos los quintales (QQ), las compras y el total de la temporada actual, y los QQ de todas las temporadas."
+              - "En «Compras» ves sus compras de la temporada actual; en «Filtros» puedes elegir otra temporada o todas."
+              - "En «Facturas» ves sus facturas y en «Datos personales», su DNI, teléfono y dirección."
+              - "Toca «Nueva compra» para registrarle una compra o «Facturar compras» para facturar lo pendiente."
+            tips:
+              - "Los QQ y totales no cuentan las compras anuladas."
           form:
             title: "Registrar o editar un productor"
             summary: "Datos de compra del productor y sus datos personales."
@@ -1015,7 +1057,7 @@ es:
         person: "Persona"
         person_id: "Persona"
       purchase:
-        purchased_on: "Fecha"
+        purchased_at: "Fecha y hora"
         producer: "Productor"
         producer_id: "Productor"
         zone: "Zona"
@@ -1029,12 +1071,20 @@ es:
         coffee_state/dry_parchment: "Pergamino seco"
         gross_weight: "Peso bruto (lb)"
         humidity_percent: "Humedad (%)"
+        damage_percent: "Daño (%)"
+        damage_weight: "Restado por daño (lb)"
+        yield_factor: "Rendimiento"
         price_per_pound: "Precio por libra (L)"
         sacks: "Sacos"
         tare: "Tara (lb)"
         net_weight: "Peso neto (lb)"
+        quintals: "Quintales (QQ)"
         total: "Total"
         observations: "Observaciones / calidad"
+        season_year: "Temporada"
+        voided_at: "Anulada el"
+        voided_by: "Anuló"
+        voided_by_id: "Anuló"
       invoice:
         number: "Número"
         issued_on: "Fecha"
@@ -1099,6 +1149,7 @@ es:
     errors:
       models:
         purchase:
+          voided_invoiced: "Una compra facturada no se puede anular."
           attributes:
             invoice:
               other_producer: "pertenece a otro productor"
@@ -1207,6 +1258,7 @@ es:
     formats:
       audit: "%d/%m/%Y %H:%M:%S"
       time_only: "%H:%M:%S"
+      hour: "%H:%M"
       default: "%d/%m/%Y %H:%M"
       long: "%-d de %B de %Y %H:%M"
       short: "%-d de %b %H:%M"

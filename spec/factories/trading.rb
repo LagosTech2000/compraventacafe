@@ -11,10 +11,12 @@ FactoryBot.define do
   factory :purchase do
     producer
     association :created_by, factory: :user
-    purchased_on { Time.zone.today }
+    purchased_at { Time.current }
     coffee_state { "wet_parchment" }
     gross_weight { 146 }
-    humidity_percent { 51 }
+    humidity_percent { coffee_state == "cherry" ? nil : 51 }
+    damage_percent { coffee_state == "cherry" ? nil : 0 }
+    yield_factor { coffee_state == "cherry" ? 0.186 : nil }
     price_per_pound { 58 }
   end
 

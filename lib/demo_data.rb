@@ -29,11 +29,18 @@ class DemoData
       end
     end
 
+    # A working hour of that day, never later than now.
+    def moment_of(date)
+      [ date.in_time_zone.change(hour: @random.rand(7..16), min: @random.rand(60)), Time.current ].min
+    end
+
     def day_of_purchases(producers, date)
       producers.sample(8, random: @random).map do |producer|
+        coffee_state = %w[wet_parchment wet_parchment wet_parchment dry_parchment cherry].sample(random: @random)
+        inputs = PurchaseDefaults.inputs_for(coffee_state)
+        inputs[:damage_percent] = [ 0, 2, 2.2, 2.5 ].sample(random: @random) if inputs.key?(:damage_percent)
         Purchase.create!(
-          producer:, zone: producer.zone, purchased_on: date, created_by: @user,
-          coffee_state: "wet_parchment", humidity_percent: 51,
+          producer:, zone: producer.zone, purchased_at: moment_of(date), created_by: @user, coffee_state:, **inputs,
           gross_weight: @random.rand(40..330), price_per_pound: [ 55, 56, 57, 58 ].sample(random: @random)
         )
       end
@@ -66,7 +73,7 @@ class DemoData
 
     # Leaves today's purchases uninvoiced; older ones get invoices, some paid.
     def invoice_older_purchases(purchases)
-      purchases.reject { |p| p.purchased_on == Time.zone.today }.group_by(&:producer).each_with_index do |(producer, list), i|
+      purchases.reject { |p| p.purchased_at.to_date == Time.zone.today }.group_by(&:producer).each_with_index do |(producer, list), i|
         paid = i.even?
         InvoiceIssuer.new(producer:, user: @user, purchase_ids: list.map(&:id),
                           payment_status: paid ? "paid" : "pending", payment_method: ("cash" if paid)).call

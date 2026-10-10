@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_29_002452) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_10_180000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -154,14 +154,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_002452) do
   end
 
   create_table "purchases", force: :cascade do |t|
-    t.date "purchased_on", null: false
     t.bigint "producer_id", null: false
     t.bigint "zone_id"
     t.bigint "invoice_id"
     t.bigint "created_by_id", null: false
     t.string "coffee_state", null: false
     t.decimal "gross_weight", precision: 10, scale: 2, null: false
-    t.decimal "humidity_percent", precision: 5, scale: 2, null: false
+    t.decimal "humidity_percent", precision: 5, scale: 2
     t.decimal "price_per_pound", precision: 10, scale: 2, null: false
     t.decimal "sacks", precision: 10, scale: 4, null: false
     t.decimal "tare", precision: 10, scale: 2, null: false
@@ -170,10 +169,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_002452) do
     t.text "observations"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "damage_percent", precision: 5, scale: 2
+    t.decimal "yield_factor", precision: 6, scale: 4
+    t.integer "season_year", null: false
+    t.datetime "voided_at"
+    t.bigint "voided_by_id"
+    t.datetime "purchased_at", null: false
     t.index ["created_by_id"], name: "index_purchases_on_created_by_id"
     t.index ["invoice_id"], name: "index_purchases_on_invoice_id"
     t.index ["producer_id"], name: "index_purchases_on_producer_id"
-    t.index ["purchased_on"], name: "index_purchases_on_purchased_on"
+    t.index ["purchased_at"], name: "index_purchases_on_purchased_at"
+    t.index ["season_year"], name: "index_purchases_on_season_year"
+    t.index ["voided_at"], name: "index_purchases_on_voided_at"
+    t.index ["voided_by_id"], name: "index_purchases_on_voided_by_id"
     t.index ["zone_id"], name: "index_purchases_on_zone_id"
   end
 
@@ -222,6 +230,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_002452) do
   add_foreign_key "purchases", "invoices"
   add_foreign_key "purchases", "producers"
   add_foreign_key "purchases", "users", column: "created_by_id"
+  add_foreign_key "purchases", "users", column: "voided_by_id"
   add_foreign_key "purchases", "zones"
   add_foreign_key "sessions", "users"
 end

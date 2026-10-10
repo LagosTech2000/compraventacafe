@@ -21,7 +21,7 @@ module Trading
       else
         # Producers whose latest uninvoiced purchase is most recent come first.
         @producers_to_invoice = Producer.joins(:purchases).merge(Purchase.uninvoiced).group(:id)
-                                        .order(Arel.sql("MAX(purchases.purchased_on) DESC, MAX(purchases.id) DESC"))
+                                        .order(Arel.sql("MAX(purchases.purchased_at) DESC, MAX(purchases.id) DESC"))
                                         .includes(:person)
       end
     end

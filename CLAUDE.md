@@ -77,6 +77,10 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Zona | `Zone` |
 | Compra (pesada) | `Purchase` |
 | Uva / pergamino húmedo / pergamino seco | `cherry` / `wet_parchment` / `dry_parchment` |
+| Humedad / daño / rendimiento | `humidity_percent` / `damage_percent` / `yield_factor` |
+| Quintales (QQ) | `quintals` |
+| Temporada | `Season` (`season_year` en la compra) |
+| Compra anulada | `voided` (`voided_at`, `voided_by`) |
 | Factura (recibo al productor) | `Invoice` |
 | Cancelada / pendiente de pago (PXP) | `paid` / `pending` |
 | Cierre diario | `DailyClose` |
@@ -253,7 +257,7 @@ los errores).
   (`collapsible_filters_controller.js`); "activo" = distinto del valor por
   defecto.
 - **Orden**: toda lista muestra primero lo más reciente (`newest_first`,
-  definido en `ApplicationRecord`; compras por fecha de compra, facturas por
+  definido en `ApplicationRecord`; compras por fecha y hora de compra, facturas por
   número). Las listas desplegables y el buscador de productor, que sirven para
   elegir por nombre, se quedan en orden alfabético. Excepción: el cierre diario
   agrupa canceladas, luego pendientes de pago, luego sin facturar (más
@@ -323,7 +327,7 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 | Clave | Estado |
 | --- | --- |
 | `administration` | Usuarios y permisos, y auditoría (solo administradores); personas, clientes y colaboradores (permisos del módulo) |
-| `trading` | Demo: zonas, productores, compras con cálculo automático, facturas imprimibles (original y copia) con estado de pago, cierre diario |
+| `trading` | Demo: zonas, productores (con pestañas y QQ por temporada), compras con cálculo por estado del café y anulación, facturas imprimibles (original y copia) con estado de pago, cierre diario |
 | `farms` | Portada vacía |
 | `loans` | Fase 1: préstamos a cualquier persona con interés simple, abonos, estados de cuenta con historial crediticio y score de pago |
 | `reports` | Portada vacía |
@@ -333,12 +337,40 @@ es llenar su carpeta, no crearla.
 
 ### Compra y venta (`trading`)
 
-- **Cálculo de la compra**: `PurchaseCalculation`, copia exacta de la macro
-  actual del cliente (tara de 1 lb por saco de 165 lb, redondeado hacia
-  arriba; se descuenta la humedad). Se guarda el resultado en la compra para
-  que el histórico no cambie si la regla cambia. `purchase_calculator_controller.js`
-  lo replica solo como vista previa; el servidor manda.
-- Humedad por defecto 51 % (`PurchaseDefaults`), editable.
+- **Cálculo de la compra** (`PurchaseCalculation`) [CONFIRMADO, Fernando,
+  2026-10-10]. Tara de la macro del cliente: 1 lb por saco de 165 lb,
+  redondeado hacia arriba. Después, según el estado del café:
+  - Pergamino húmedo y seco: `(bruto − tara) × (1 − humedad%) × (1 − daño%)`.
+    El daño es un porcentaje que se resta al peso neto (suele ser 2–2.5 %).
+  - Uva: `(bruto − tara) × rendimiento`. No lleva humedad ni daño.
+  - Quintales (QQ) = peso neto ÷ 125. Total = peso neto × precio por libra.
+- Se guarda el resultado en la compra y **solo se recalcula si cambia una
+  entrada** (`Purchase::CALCULATION_INPUTS`), para que el histórico no cambie
+  si la regla cambia. `purchase_calculator_controller.js` lo replica solo
+  como vista previa; el servidor manda.
+- Valores iniciales (`PurchaseDefaults`), todos editables: humedad 51 % en
+  pergamino húmedo y 12 % en seco, daño 0 %, rendimiento 0.186 en uva. Al
+  cambiar el estado en el formulario se ponen los del nuevo estado y se
+  ocultan los campos que no aplican. Al cambiar de productor, la zona pasa a
+  la del nuevo productor.
+- **Temporada** (`Season`) [CONFIRMADO]: empieza cada 1 de septiembre y
+  lleva el año en que empieza (la 2026 va del 2026-09-01 al 2027-08-31).
+  Cada compra guarda su `season_year`, calculado de la fecha de compra.
+- **Fecha y hora de la compra** (`purchased_at`): el formulario empieza con
+  la hora actual y es editable. Toda pantalla e impreso la muestra con hora.
+  Los filtros por fecha y el cierre diario cubren el día completo en hora de
+  Tegucigalpa (`Purchase.on`, que acepta una fecha o un rango).
+- **Anular compra** [CONFIRMADO]: una compra sin facturar se anula (no se
+  borra) con el permiso de borrar (`PurchasePolicy#void?`). Queda registrada
+  con quién y cuándo, pero sale de listas, totales, cierre diario y
+  facturación (`Purchase.active`; `uninvoiced` ya la excluye). Las listas de
+  compras la muestran solo con "Mostrar anuladas". No se edita, no se borra y
+  no se puede deshacer.
+- La página del productor tiene cifras fijas (QQ, compras y total de la
+  temporada, QQ de todas) y pestañas: compras (por temporada), facturas y
+  datos personales.
+- En "Facturar compras" se puede anular una compra o registrar una nueva para
+  ese productor en un modal; al guardar, la lista se refresca.
 - Una factura agrupa compras sin facturar **del mismo productor**
   (`InvoiceIssuer`, con bloqueo de filas). Número correlativo con bloqueo
   consultivo (`Invoice::NUMBERING_LOCK_KEY`), mostrado con 4 dígitos.
@@ -384,10 +416,9 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
 
 | Punto | Qué bloquea | Quién decide |
 | --- | --- | --- |
-| Cálculo según estado del café (uva / húmedo / seco) y si el 51 % es fijo o medido | Ajustar `PurchaseCalculation` | Cliente |
-| Si se sigue descontando **daño** y cómo se mide | `PurchaseCalculation` | Cliente |
 | Tabla de precios (zona + calidad + bolsa) y categorías de calidad | Precio automático; hoy es manual | Cliente |
 | Retención de fin de temporada | Reporte de retención | Cliente |
+| Reportes por temporada (qué muestran) | Reportería por temporada; la temporada ya se guarda | Cliente |
 | Préstamos: cómo se descuentan de la compra (pago con café), recargo por mora | Descuento del préstamo al pagar la compra; mora | Cliente |
 | Si la factura siempre agrupa hasta 4 compras | Hoy no hay límite | Cliente |
 | 160 lb/saco en salidas vs. 165 en compras | Salidas de camión | Cliente |
@@ -407,7 +438,9 @@ Resueltos: versión de Ruby (3.4.x), Ubuntu 24.04 LTS, ambiente WSL, regla del
 unicidad y obligatoriedad de DNI (13 dígitos) y RTN (14 dígitos): ninguno es
 obligatorio. Préstamos fase 1: tasa mensual por préstamo, interés simple
 por día sobre saldo, abono a interés y luego capital, score por puntualidad
-(Fernando, 2026-09-28).
+(Fernando, 2026-09-28). Cálculo por estado del café (uva con rendimiento,
+pergamino con humedad 51 %/12 % y daño), QQ = neto ÷ 125, temporada desde el
+1 de septiembre y anulación de compras (Fernando, 2026-10-10).
 
 ## Etapas del proyecto
 

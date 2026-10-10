@@ -8,9 +8,25 @@ module Trading
       @producers, @next_page = @filter.results(policy_scope(Producer))
     end
 
+    TABS = %w[purchases invoices info].freeze
+
+    # Pinned figures on top, then one tab at a time: purchases, invoices or
+    # the producer's personal data.
     def show
-      @uninvoiced_purchases = @producer.purchases.uninvoiced.newest_first
-      @recent_invoices = @producer.invoices.newest_first.limit(10)
+      @tab = params[:tab].presence_in(TABS) || TABS.first
+      @season = Season.current
+      @season_summary = PurchaseSummary.new(@producer.purchases.active.in_season(@season))
+      @all_time_summary = PurchaseSummary.new(@producer.purchases.active)
+      @has_uninvoiced = @producer.purchases.uninvoiced.exists?
+
+      case @tab
+      when "purchases"
+        @filter = ProducerPurchaseFilter.new(params)
+        @purchases, @next_page = @filter.results(@producer.purchases)
+      when "invoices"
+        @filter = ProducerInvoiceFilter.new(params)
+        @invoices, @next_page = @filter.results(@producer.invoices)
+      end
     end
 
     def new

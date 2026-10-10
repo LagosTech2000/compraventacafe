@@ -6,6 +6,8 @@ module Trading
       @uninvoiced = PurchaseSummary.new(policy_scope(Purchase).uninvoiced)
       @pending_invoices = policy_scope(Invoice).pending
       @pending_total = PurchaseSummary.new(Purchase.where(invoice_id: @pending_invoices.select(:id))).total
+      @season = Season.current
+      @season_summary = PurchaseSummary.new(policy_scope(Purchase).active.in_season(@season))
     end
   end
 end

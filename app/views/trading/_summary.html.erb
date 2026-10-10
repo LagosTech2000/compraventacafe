@@ -3,7 +3,8 @@
   <% {
        purchases: daily_close.purchases_count, producers: daily_close.producers_count,
        gross_weight: format_pounds(daily_close.gross_weight), sacks: format_pounds(daily_close.sacks),
-       net_weight: format_pounds(daily_close.net_weight), total: format_money(daily_close.total),
+       net_weight: format_pounds(daily_close.net_weight), quintals: format_pounds(daily_close.quintals),
+       total: format_money(daily_close.total),
        paid_total: format_money(daily_close.paid_total), pending_total: format_money(daily_close.pending_total),
        uninvoiced_total: format_money(daily_close.uninvoiced_total)
      }.each do |key, value| %>

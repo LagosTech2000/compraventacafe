@@ -12,7 +12,7 @@
     <% if policy(Purchase).create? %>
       <%= page_link_to t(".new_purchase"), new_trading_purchase_path(producer_id: @producer.id), class: "btn btn-primary" %>
     <% end %>
-    <% if policy(Invoice).create? && @uninvoiced_purchases.any? %>
+    <% if policy(Invoice).create? && @has_uninvoiced %>
       <%= page_link_to t(".new_invoice"), new_trading_invoice_path(producer_id: @producer.id), class: "btn" %>
     <% end %>
     <% if policy(@producer).update? %>
@@ -21,31 +21,77 @@
   </div>
 </div>
 
-<dl class="mt-6 grid panel sm:grid-cols-2">
-  <% person = @producer.person %>
-  <% {
-       dni: person.dni, rtn: person.rtn, phone: format_phone(person.phone), email: person.email,
-       address_line: format_address(person)
-     }.each do |attribute, value| %>
-    <div class="border-b border-line px-4 py-3">
-      <dt class="text-xs font-medium text-ink-muted"><%= Person.human_attribute_name(attribute) %></dt>
-      <dd class="mt-1 text-sm"><%= value.presence || "—" %></dd>
-    </div>
+<%# Pinned figures: what the producer has sold, whatever the tab. %>
+<section class="mt-6" aria-labelledby="producer-figures">
+  <h2 id="producer-figures" class="mb-3 text-sm font-semibold text-ink-muted"><%= format_season_dates(@season) %></h2>
+  <% figures = {
+       season_quintals: format_pounds(@season_summary.quintals),
+       season_purchases: @season_summary.purchases_count,
+       season_total: format_money(@season_summary.total),
+       all_time_quintals: format_pounds(@all_time_summary.quintals)
+     } %>
+  <dl class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <% figures.each do |key, value| %>
+      <div class="stat">
+        <dt><%= t(".figures.#{key}") %></dt>
+        <dd><%= value %></dd>
+      </div>
+    <% end %>
+  </dl>
+</section>
+
+<nav class="mt-6 flex flex-wrap gap-1 border-b border-line pb-2 print:hidden" aria-label="<%= t(".tabs.label") %>">
+  <% Trading::ProducersController::TABS.each do |tab| %>
+    <%= link_to t(".tabs.#{tab}"), trading_producer_path(@producer, tab:),
+          class: tab == @tab ? "nav-pill nav-pill-active" : "nav-pill", aria: { current: (tab == @tab ? "page" : nil) } %>
   <% end %>
-</dl>
+</nav>
 
-<h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".uninvoiced") %></h2>
-<% if @uninvoiced_purchases.any? %>
-  <%= render "trading/purchases/table", purchases: @uninvoiced_purchases %>
-<% else %>
-  <p class="text-sm text-ink-muted"><%= t(".no_uninvoiced") %></p>
-<% end %>
-
-<h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".recent_invoices") %></h2>
-<% if @recent_invoices.any? %>
-  <%= render "trading/invoices/table", invoices: @recent_invoices %>
-<% else %>
-  <p class="text-sm text-ink-muted"><%= t(".no_invoices") %></p>
+<% case @tab %>
+<% when "purchases" %>
+  <%= render layout: "shared/filters", locals: { filter: @filter, url: trading_producer_path(@producer, tab: "purchases") } do |form| %>
+    <%= hidden_field_tag :tab, "purchases", id: nil %>
+    <%= filter_select form, :season_year, Purchase.human_attribute_name(:season_year), season_options(@producer.purchases),
+          selected: @filter.season_year, all: t("trading.producers.show.all_seasons") %>
+    <%= filter_select form, :invoiced, t("trading.purchases.index.invoiced"),
+          PurchaseFilter::INVOICED.map { |v| [ t("trading.purchases.index.invoiced_#{v}"), v ] }, selected: @filter.invoiced %>
+    <%= filter_check_box form, :show_voided, t("trading.purchases.index.show_voided"), checked: @filter.show_voided.present? %>
+  <% end %>
+  <div class="mt-6">
+    <% if @purchases.any? %>
+      <%= render "trading/purchases/table", purchases: @purchases %>
+      <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "purchases" } %>
+    <% else %>
+      <p class="empty-state"><%= t(".no_purchases") %></p>
+    <% end %>
+  </div>
+<% when "invoices" %>
+  <%= render layout: "shared/filters", locals: { filter: @filter, url: trading_producer_path(@producer, tab: "invoices") } do |form| %>
+    <%= hidden_field_tag :tab, "invoices", id: nil %>
+    <%= filter_select form, :payment_status, Invoice.human_attribute_name(:payment_status),
+          enum_options(Invoice, :payment_status, Invoice::PAYMENT_STATUSES), selected: @filter.payment_status %>
+  <% end %>
+  <div class="mt-6">
+    <% if @invoices.any? %>
+      <%= render "trading/invoices/table", invoices: @invoices %>
+      <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "invoices" } %>
+    <% else %>
+      <p class="empty-state"><%= t(".no_invoices") %></p>
+    <% end %>
+  </div>
+<% when "info" %>
+  <dl class="mt-6 grid panel sm:grid-cols-2">
+    <% person = @producer.person %>
+    <% {
+         dni: person.dni, rtn: person.rtn, phone: format_phone(person.phone), email: person.email,
+         address_line: format_address(person)
+       }.each do |attribute, value| %>
+      <div class="border-b border-line px-4 py-3">
+        <dt class="text-xs font-medium text-ink-muted"><%= Person.human_attribute_name(attribute) %></dt>
+        <dd class="mt-1 text-sm"><%= value.presence || "—" %></dd>
+      </div>
+    <% end %>
+  </dl>
 <% end %>
 
 <% unless modal_request? %>

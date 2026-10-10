@@ -20,7 +20,9 @@ Rails.application.routes.draw do
 
   namespace :trading do
     root "home#index"
-    resources :purchases
+    resources :purchases do
+      patch :void, on: :member
+    end
     resources :invoices, only: %i[ index show new create update ]
     resources :producers, except: :destroy
     resources :zones, only: %i[ index new create edit update ]

@@ -54,14 +54,15 @@ RSpec.describe "Trading purchase flow" do
     expect(page.at_css("#purchase_producer_id")["value"]).to eq(producer.id.to_s)
     expect(page.at_css("#purchase_zone_id option[selected]").text).to eq("Buenas Noches")
     expect(page.at_css("#purchase_humidity_percent")["value"]).to eq("51")
-    expect(page.at_css("#purchase_purchased_on")["value"]).to eq(Time.zone.today.iso8601)
+    expect(page.at_css("#purchase_purchased_at")["type"]).to eq("datetime-local")
+    expect(page.at_css("#purchase_purchased_at")["value"]).to start_with("#{Time.zone.today.iso8601}T")
   end
 
   it "registers a purchase with the calculation and who entered it" do
     producer = create(:producer)
     post trading_purchases_path, params: {
-      purchase: { producer_id: producer.id, zone_id: zone.id, purchased_on: Time.zone.today, coffee_state: "wet_parchment",
-                  gross_weight: "146", humidity_percent: "51", price_per_pound: "58", observations: "Pulpa" }
+      purchase: { producer_id: producer.id, zone_id: zone.id, purchased_at: Time.zone.today, coffee_state: "wet_parchment",
+                  gross_weight: "146", humidity_percent: "51", damage_percent: "0", price_per_pound: "58", observations: "Pulpa" }
     }
     purchase = Purchase.last
     expect(purchase).to have_attributes(net_weight: BigDecimal("71.05"), total: BigDecimal("4120.90"), created_by: user)
@@ -69,11 +70,15 @@ RSpec.describe "Trading purchase flow" do
 
     follow_redirect!
     frame = Nokogiri::HTML(response.body).at_css("dialog turbo-frame#modal")
-    expect(frame["src"]).to eq(trading_purchase_path(purchase))
+    expect(frame["src"]).to eq(trading_purchase_path(purchase, created: 1))
+
+    # The detail of the purchase just registered focuses "Facturar ahora": Enter invoices.
+    get trading_purchase_path(purchase, created: 1), headers: { "Turbo-Frame" => "modal" }
+    expect(Nokogiri::HTML(response.body).at_css("a[autofocus]").text).to eq("Facturar ahora")
   end
 
   it "rejects a purchase without producer, in Spanish" do
-    post trading_purchases_path, params: { purchase: { gross_weight: "146", humidity_percent: "51", price_per_pound: "58", coffee_state: "cherry", purchased_on: Time.zone.today } }
+    post trading_purchases_path, params: { purchase: { gross_weight: "146", humidity_percent: "51", price_per_pound: "58", coffee_state: "cherry", purchased_at: Time.zone.today } }
     expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include("Productor debe existir")
   end
@@ -114,7 +119,7 @@ RSpec.describe "Trading purchase flow" do
   end
 
   it "shows the daily close and the purchases of a date" do
-    create(:purchase, purchased_on: Date.new(2026, 1, 15), gross_weight: 146)
+    create(:purchase, purchased_at: Date.new(2026, 1, 15), gross_weight: 146)
     get trading_daily_close_path(date: "2026-01-15")
     expect(response.body).to include("15 de enero de 2026", "146.00", "L 4,120.90")
     get trading_purchases_path(date: "no-es-fecha")
@@ -178,4 +183,127 @@ RSpec.describe "Trading purchase flow" do
     expect(response.body).not_to include(new_trading_purchase_path)
     expect { post trading_purchases_path, params: { purchase: { gross_weight: 1 } } }.not_to change(Purchase, :count)
   end
+
+  describe "coffee states" do
+    it "registers cherry with the yield and shows its quintals" do
+      producer = create(:producer)
+      post trading_purchases_path, params: {
+        purchase: { producer_id: producer.id, purchased_at: Time.zone.today, coffee_state: "cherry",
+                    gross_weight: "1000", yield_factor: "0.186", price_per_pound: "10" }
+      }
+      purchase = Purchase.last
+      expect(purchase).to have_attributes(humidity_percent: nil, yield_factor: BigDecimal("0.186"), net_weight: BigDecimal("184.70"))
+
+      get trading_purchase_path(purchase)
+      expect(response.body).to include("Rendimiento", "0.186", "Quintales (QQ)", "1.48")
+    end
+
+    it "gives the calculator the defaults of each state and hides the fields that do not apply" do
+      get new_trading_purchase_path
+      page = Nokogiri::HTML(response.body)
+      defaults = JSON.parse(page.at_css("form[data-purchase-calculator-defaults-value]")["data-purchase-calculator-defaults-value"])
+      expect(defaults).to eq("cherry" => { "yield_factor" => "0.186" },
+                             "wet_parchment" => { "humidity_percent" => 51, "damage_percent" => 0 },
+                             "dry_parchment" => { "humidity_percent" => 12, "damage_percent" => 0 })
+      expect(page.at_css("#purchase_damage_percent")["value"]).to eq("0")
+      expect(page.at_css("#purchase_yield_factor")["disabled"]).to be_present
+      expect(page.at_css("#purchase_yield_factor").ancestors("div").first.key?("hidden")).to be(true)
+    end
+  end
+
+  describe "voiding" do
+    it "voids a purchase and hides it from the list unless asked for" do
+      purchase = create(:purchase)
+      patch void_trading_purchase_path(purchase), headers: { "HTTP_REFERER" => trading_purchases_url }
+      expect(response).to redirect_to(trading_purchases_url)
+      expect(purchase.reload).to have_attributes(voided?: true, voided_by: user)
+
+      get trading_purchases_path
+      expect(response.body).not_to include(dom_id_for(purchase))
+      get trading_purchases_path(show_voided: "1")
+      expect(response.body).to include(dom_id_for(purchase), "Anulada")
+    end
+
+    it "leaves voided purchases out of the totals, the daily close and invoicing" do
+      kept = create(:purchase)
+      create(:purchase, producer: kept.producer).void!(user)
+
+      expect(DailyClose.new(Time.zone.today).purchases).to eq([ kept ])
+      get new_trading_invoice_path(producer_id: kept.producer_id)
+      expect(Nokogiri::HTML(response.body).css("input[name='invoice[purchase_ids][]']").map { |i| i["value"] }).to eq([ kept.id.to_s ])
+    end
+
+    it "voids and adds purchases from the invoicing screen" do
+      purchase = create(:purchase)
+      get new_trading_invoice_path(producer_id: purchase.producer_id)
+      page = Nokogiri::HTML(response.body)
+      void_button = page.css("button").find { |b| b.text == "Anular" }
+      expect(page.at_css("form##{void_button["form"]}")["action"]).to eq(void_trading_purchase_path(purchase))
+      new_purchase = page.css("a").find { |a| a.text == "Nueva compra para este productor" }
+      expect(new_purchase["href"]).to eq(new_trading_purchase_path(producer_id: purchase.producer_id))
+      expect(new_purchase["data-turbo-frame"]).to eq("modal")
+    end
+
+    it "closes the modal and refreshes the page behind when a purchase is registered in it" do
+      producer = create(:producer)
+      post trading_purchases_path, headers: { "Turbo-Frame" => "modal" }, params: {
+        purchase: { producer_id: producer.id, purchased_at: Time.zone.today, coffee_state: "wet_parchment",
+                    gross_weight: "146", humidity_percent: "51", damage_percent: "2", price_per_pound: "58" }
+      }
+      result = Nokogiri::HTML(response.body).at_css("turbo-frame#modal [data-controller='modal-result']")
+      expect(result["data-modal-result-refresh-value"]).to eq("true")
+    end
+  end
+
+  it "registers the moment of the purchase and shows it with its time everywhere" do
+    producer = create(:producer)
+    post trading_purchases_path, params: {
+      purchase: { producer_id: producer.id, purchased_at: "#{Time.zone.today.iso8601}T07:45", coffee_state: "wet_parchment",
+                  gross_weight: "146", humidity_percent: "51", damage_percent: "0", price_per_pound: "58" }
+    }
+    purchase = Purchase.last
+    expect(purchase.purchased_at).to eq(Time.zone.today.in_time_zone.change(hour: 7, min: 45))
+    stamp = "#{I18n.l(Time.zone.today)} 07:45"
+
+    get trading_purchases_path
+    expect(response.body).to include(stamp)
+    get trading_purchase_path(purchase)
+    expect(response.body).to include("07:45")
+    get new_trading_invoice_path(producer_id: producer.id)
+    expect(response.body).to include(stamp)
+  end
+
+  it "counts a purchase late in the day in that day's list and close" do
+    late = create(:purchase, purchased_at: Time.zone.today.in_time_zone.change(hour: 23, min: 50))
+    create(:purchase, purchased_at: Time.zone.today.in_time_zone.yesterday.change(hour: 23, min: 50))
+    expect(PurchaseFilter.new(ActionController::Parameters.new).apply(Purchase.all)).to eq([ late ])
+    expect(DailyClose.new(Time.zone.today).purchases).to eq([ late ])
+  end
+
+  describe "producer page" do
+    it "pins the quintals and splits purchases, invoices and personal data into tabs" do
+      producer = create(:producer)
+      create(:purchase, producer:, net_weight: 0, gross_weight: 1000, humidity_percent: 51) # 486.57 lb net
+      create(:purchase, producer:, purchased_at: Season.current.starts_on - 1)
+      create(:purchase, producer:).void!(user)
+
+      get trading_producer_path(producer)
+      page = Nokogiri::HTML(response.body)
+      stats = page.css("dl .stat").to_h { |stat| [ stat.at_css("dt").text, stat.at_css("dd").text ] }
+      expect(stats).to include("QQ de la temporada" => "3.89", "Compras de la temporada" => "1")
+      expect(stats["QQ de todas las temporadas"]).to eq("4.46")
+      expect(page.css("nav a[aria-current=page]").map(&:text)).to include("Compras")
+      expect(page.css("[id^=purchase_]").size).to eq(1)
+
+      get trading_producer_path(producer, season_year: "", tab: "purchases")
+      expect(Nokogiri::HTML(response.body).css("tr[id^=purchase_]").size).to eq(2)
+
+      get trading_producer_path(producer, tab: "info")
+      expect(response.body).to include("DNI")
+      get trading_producer_path(producer, tab: "invoices")
+      expect(response.body).to include("No hay facturas que coincidan con los filtros.")
+    end
+  end
+
+  def dom_id_for(purchase) = "id=\"purchase_#{purchase.id}\""
 end

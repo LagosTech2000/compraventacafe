@@ -23,18 +23,25 @@
     <%= render "shared/form_errors", record: @invoice %>
 
     <section>
-      <h2 class="mb-3 text-lg font-semibold"><%= t(".pick_purchases", producer: @producer.full_name) %></h2>
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <h2 class="text-lg font-semibold"><%= t(".pick_purchases", producer: @producer.full_name) %></h2>
+        <% if policy(Purchase).create? %>
+          <%= modal_link_to t(".new_purchase"), new_trading_purchase_path(producer_id: @producer.id), class: "btn btn-sm" %>
+        <% end %>
+      </div>
       <% if @purchases.any? %>
         <div class="overflow-x-auto panel">
           <table class="data-table">
             <thead>
               <tr>
                 <th class="w-10"></th>
-                <th><%= Purchase.human_attribute_name(:purchased_on) %></th>
+                <th><%= Purchase.human_attribute_name(:purchased_at) %></th>
                 <th><%= Purchase.human_attribute_name(:coffee_state) %></th>
                 <th class="text-right"><%= Purchase.human_attribute_name(:net_weight) %></th>
+                <th class="text-right"><%= t("trading.purchases.table.quintals") %></th>
                 <th class="text-right"><%= Purchase.human_attribute_name(:price_per_pound) %></th>
                 <th class="text-right"><%= Purchase.human_attribute_name(:total) %></th>
+                <th class="cell-actions"><span class="sr-only"><%= t("trading.purchases.table.actions") %></span></th>
               </tr>
             </thead>
             <tbody>
@@ -42,13 +49,23 @@
                 <tr>
                   <td>
                     <%= check_box_tag "invoice[purchase_ids][]", purchase.id, true, id: dom_id(purchase, :select), class: "size-4 accent-primary",
-                          aria: { label: "#{l(purchase.purchased_on)} #{format_money(purchase.total)}" } %>
+                          aria: { label: "#{l(purchase.purchased_at)} #{format_money(purchase.total)}" } %>
                   </td>
-                  <td class="whitespace-nowrap"><label for="<%= dom_id(purchase, :select) %>"><%= l(purchase.purchased_on) %></label></td>
+                  <td class="whitespace-nowrap"><label for="<%= dom_id(purchase, :select) %>"><%= l(purchase.purchased_at) %></label></td>
                   <td><%= purchase.human_coffee_state %></td>
                   <td class="text-right tabular-nums"><%= format_pounds(purchase.net_weight) %></td>
+                  <td class="text-right tabular-nums"><%= format_pounds(purchase.quintals) %></td>
                   <td class="text-right tabular-nums"><%= format_money(purchase.price_per_pound) %></td>
                   <td class="text-right font-medium tabular-nums"><%= format_money(purchase.total) %></td>
+                  <td class="cell-actions">
+                    <div class="flex justify-end gap-2">
+                      <%= detail_button trading_purchase_path(purchase) %>
+                      <%# Forms can't nest: the button submits its own form, outside this one. %>
+                      <% if policy(purchase).void? %>
+                        <%= button_tag t("trading.purchases.table.void"), type: "submit", form: dom_id(purchase, :void), class: "btn btn-sm" %>
+                      <% end %>
+                    </div>
+                  </td>
                 </tr>
               <% end %>
             </tbody>
@@ -79,5 +96,12 @@
       <%= form.submit t(".submit"), class: "btn btn-primary" %>
       <%= cancel_button new_trading_invoice_path %>
     </div>
+  <% end %>
+
+  <% @purchases.each do |purchase| %>
+    <% if policy(purchase).void? %>
+      <%= form_with url: void_trading_purchase_path(purchase), method: :patch, id: dom_id(purchase, :void), hidden: true,
+            data: { turbo_confirm: t("trading.purchases.show.confirm_void") } do %><% end %>
+    <% end %>
   <% end %>
 <% end %>

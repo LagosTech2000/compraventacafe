@@ -14,7 +14,7 @@ RSpec.describe "Newest first" do
   end
 
   it "orders purchases by purchase date, then by last registered" do
-    old_date = create(:purchase, purchased_on: Time.zone.today - 5)
+    old_date = create(:purchase, purchased_at: Time.zone.today - 5)
     first_today = create(:purchase)
     second_today = create(:purchase)
     result = PurchaseFilter.new(params(from: "", to: "")).apply(Purchase.all)
