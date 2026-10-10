@@ -100,6 +100,16 @@ RSpec.describe "Trading purchase flow" do
     expect(invoice.reload).to be_paid
   end
 
+  it "does not print the notice of the invoice just created" do
+    producer = create(:producer)
+    purchase = create(:purchase, producer:)
+    post trading_invoices_path, params: { producer_id: producer.id, invoice: { purchase_ids: [ purchase.id ], payment_status: "pending" } }
+    follow_redirect!
+    notice = Nokogiri::HTML(response.body).at_css("#notice")
+    expect(notice.text).to include("Factura creada.")
+    expect(notice.ancestors("div").first["class"]).to include("print:hidden")
+  end
+
   it "prints the original and the copy on separate pages, each saying which one it is" do
     invoice = create(:invoice)
     get trading_invoice_path(invoice)

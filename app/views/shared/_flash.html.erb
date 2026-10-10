@@ -1,7 +1,8 @@
-<%# Notices and alerts. Alerts use role="alert" so screen readers announce them. %>
+<%# Notices and alerts. Alerts use role="alert" so screen readers announce them.
+    They never print: they are about the screen, not the document. %>
 <% messages = { notice: notice, alert: alert }.compact_blank %>
 <% if messages.any? %>
-  <div class="mb-6 space-y-2">
+  <div class="mb-6 space-y-2 print:hidden">
     <% messages.each do |kind, message| %>
       <div id="<%= kind %>" data-controller="dismissible"
            class="<%= kind == :alert ? "flash-alert" : "flash-notice" %> flex items-start gap-3"
