@@ -37,6 +37,7 @@ es:
       no_municipality: "Sin municipio asignado"
       pick_department_first: "Primero selecciona un departamento"
       payment_method_later: "Por definir"
+      pick_supply: "Selecciona un insumo"
       pick_payment_method: "Selecciona la forma de pago"
     filters:
       title: "Filtros"
@@ -174,6 +175,7 @@ es:
           season_purchases: "Compras de la temporada"
           season_total: "Comprado en la temporada"
           all_time_quintals: "QQ de todas las temporadas"
+          loans_owed: "Debe en préstamos hoy"
         tabs:
           label: "Secciones del productor"
           purchases: "Compras"
@@ -253,6 +255,46 @@ es:
         success: "Compra borrada."
       void:
         success: "Compra anulada."
+      loans:
+        title: "Préstamos"
+        owes_html:
+          one: "%{person} debe %{amount} en 1 préstamo."
+          other: "%{person} debe %{amount} en %{count} préstamos."
+        no_debt: "%{person} ya no debe préstamos."
+        settle: "Abonar con esta compra"
+        credit_account: "Estado de cuenta"
+        loan: "Préstamo %{number}"
+        totals:
+          total: "Total de la compra"
+          to_loans: "Abonado a préstamos"
+          to_pay: "A pagar al productor"
+        frozen: "Una compra que abonó a préstamos no se edita, anula ni borra. Para cambiarla, quita primero sus abonos (de cada préstamo solo se puede quitar el último)."
+    loan_settlements:
+      new:
+        title: "Abonar préstamos con esta compra"
+        subtitle: "Compra %{number} de %{person}, %{date}."
+        stats:
+          purchase_total: "Total de la compra"
+          already_paid: "Ya abonado a préstamos"
+          available: "Disponible para abonar"
+          total_owed: "Debe en préstamos"
+        over_available: "Los abonos no pueden pasar de %{available}, lo que le queda a la compra."
+        paid_on: "Fecha del abono"
+        paid_on_help: "El interés se calcula hasta esta fecha. Al cambiarla se actualiza lo que debe."
+        open_loans: "Préstamos por cobrar"
+        fill_all: "Abonar todo lo posible"
+        loan: "Préstamo %{number}"
+        owed_html: "Debe a la fecha: %{amount}"
+        settle: "Saldar"
+        amount: "Monto a abonar (L)"
+        summary:
+          to_loans: "Va a préstamos"
+          to_producer: "Queda para el productor"
+        submit: "Registrar abonos"
+      create:
+        success:
+          one: "Abono de %{amount} registrado con la compra."
+          other: "%{count} abonos por %{amount} registrados con la compra."
     invoices:
       index:
         title: "Facturas"
@@ -268,6 +310,8 @@ es:
         choose_producer: "Productores con compras sin facturar"
         nothing_to_invoice: "No hay compras sin facturar."
         pick_purchases: "Compras de %{producer} sin facturar"
+        owes_html: "%{person} debe %{amount} en préstamos. Para descontarlo, abre el «Detalle» de una compra y toca «Abonar con esta compra»."
+        to_loans: "%{amount} a préstamos"
         new_purchase: "Nueva compra para este productor"
         no_purchases: "Este productor no tiene compras sin facturar."
         payment: "Pago"
@@ -288,6 +332,9 @@ es:
         signature: "Firma de quien factura"
         issued_by: "Facturado por: %{name}"
         totals: "Totales"
+        purchases_total: "Total de compras"
+        loan_payment: "Abono a préstamo N.º %{number}"
+        amount_to_pay: "Total a pagar"
       create:
         success: "Factura creada."
       update:
@@ -324,6 +371,7 @@ es:
       new_loan: "Nuevo préstamo"
       loans: "Préstamos"
       credit_accounts: "Estados de cuenta"
+      supplies: "Insumos"
     score:
       label: "Score de pago"
       categories:
@@ -363,7 +411,9 @@ es:
         new_payment: "Registrar abono"
         credit_account: "Estado de cuenta"
         frozen_notice: "Este préstamo ya tiene abonos: no se puede editar ni borrar."
-        principal: "Monto prestado"
+        principal: "Capital (efectivo + insumos)"
+        supplies: "Insumos prestados"
+        supplies_amount: "Valor de los insumos"
         rate: "Tasa de interés mensual"
         principal_owed: "Capital pendiente"
         interest_owed: "Interés acumulado a hoy"
@@ -381,6 +431,17 @@ es:
         person_missing: "Selecciona una persona de la lista"
         new_person: "¿No está? Registrar persona"
         rate_help: "Porcentaje por mes. El interés corre por día (mes de 30 días) sobre el capital pendiente."
+        what_is_lent: "Qué se presta"
+        what_is_lent_help: "Efectivo, insumos o los dos. El capital del préstamo es la suma, y el interés corre sobre todo el capital."
+        supplies: "Insumos"
+        new_supply: "Nuevo insumo"
+        add_supply: "Agregar insumo"
+        remove_supply: "Quitar"
+        no_supplies: "Sin insumos. Toca «Agregar insumo» para prestar en especie (por ejemplo, sacos de abono)."
+        summary:
+          cash: "Efectivo"
+          supplies: "Insumos"
+          principal: "Capital del préstamo"
       create:
         success: "Préstamo a %{person} registrado."
       update:
@@ -390,6 +451,7 @@ es:
     payments:
       table:
         split: "Interés %{interest} · Capital %{principal}"
+        with_purchase: "%{method} · compra %{number}"
         actions: "Acciones"
         destroy: "Quitar"
         confirm_destroy: "¿Quitar este abono? Solo se puede quitar el último."
@@ -405,6 +467,36 @@ es:
         success: "Abono registrado."
       destroy:
         success: "Abono quitado."
+    supplies:
+      index:
+        title: "Insumos"
+        new: "Nuevo insumo"
+        help: "Lo que se presta en especie (abono, fungicida...), con su precio predeterminado. Al prestarlo se puede cambiar el precio."
+        status: "Estado"
+        statuses:
+          active: "Activos"
+          inactive: "Inactivos"
+        badges:
+          active: "Activo"
+          inactive: "Inactivo"
+        per_unit: "%{price} por %{unit}"
+        edit: "Editar"
+        actions: "Acciones"
+        empty: "No hay insumos que coincidan con los filtros."
+      new:
+        title: "Nuevo insumo"
+      edit:
+        title: "Editar insumo"
+      form:
+        name_placeholder: "Ej.: Abono 18-46-0"
+        unit_placeholder: "Ej.: saco"
+        unit_suggestions: [saco, quintal, bolsa, libra, galón, litro, unidad]
+        price_help: "Se pone solo al agregarlo a un préstamo; ahí se puede cambiar."
+        active_help: "Un insumo inactivo ya no aparece al prestar. Los préstamos que ya lo tienen no cambian."
+      create:
+        success: "Insumo creado."
+      update:
+        success: "Insumo actualizado."
     credit_accounts:
       index:
         title: "Estados de cuenta"
@@ -447,6 +539,7 @@ es:
         movements:
           loan: "Préstamo %{number} otorgado"
           payment: "Abono al préstamo %{number}"
+          coffee_payment: "Abono con café al préstamo %{number} (compra %{purchase})"
         back: "Volver a estados de cuenta"
 
   module_home:
@@ -656,6 +749,7 @@ es:
               - "Usa el botón del siguiente paso: facturar ahora o registrar el pago de su factura."
               - "Si todavía no está facturada, puedes editarla, anularla o borrarla."
             tips:
+              - "Si el productor debe préstamos, aparece cuánto debe y el botón «Abonar con esta compra» para descontarlo del pago."
               - "Recién registrada la compra, el botón «Facturar ahora» queda seleccionado: presiona Enter para facturar."
               - "Una compra facturada ya no se puede editar, anular ni borrar."
               - "Una compra anulada queda registrada, pero no cuenta en listas, totales ni facturación."
@@ -675,6 +769,21 @@ es:
               - "Quintales (QQ) = peso neto ÷ 125. Total = peso neto × precio por libra."
               - "Cada compra queda en la temporada de su fecha: la temporada empieza el 1 de septiembre."
               - "El cálculo que se guarda es el del sistema; el de la pantalla es una vista previa."
+        loan_settlements:
+          form:
+            title: "Abonar préstamos con una compra"
+            summary: "Descuenta de lo que se le paga al productor un abono a sus préstamos (pago con café)."
+            steps:
+              - "Revisa lo que tiene la compra disponible y lo que debe en préstamos."
+              - "Revisa la fecha del abono: el interés se calcula hasta esa fecha."
+              - "En cada préstamo escribe el monto, o toca «Saldar» para pagarlo completo con lo que alcance."
+              - "«Abonar todo lo posible» reparte la compra entre los préstamos, empezando por el que vence primero."
+              - "Revisa cuánto va a préstamos y cuánto le queda al productor, y toca «Registrar abonos»."
+            tips:
+              - "Cada abono paga primero el interés y luego el capital, igual que un abono en efectivo."
+              - "La factura muestra los abonos y el total a pagar al productor."
+              - "Se puede abonar mientras la compra no esté anulada ni su factura pagada."
+              - "Una compra con abonos ya no se edita, anula ni borra; para cambiarla, quita el abono desde su detalle."
         invoices:
           index:
             title: "Facturas"
@@ -701,6 +810,7 @@ es:
             summary: "El recibo para el productor, con original y copia."
             steps:
               - "Toca «Imprimir»: el original y la copia salen en hojas separadas."
+              - "Si se abonaron préstamos con sus compras, la factura los resta y muestra el total a pagar."
               - "Cuando se le pague al productor, elige la forma de pago y la fecha, y toca «Marcar como cancelada»."
             tips:
               - "Desde la ventana de detalle, «Imprimir» abre la factura en página completa."
@@ -785,7 +895,7 @@ es:
               - "Toca «Nuevo préstamo» para prestar."
           show:
             title: "Detalle del préstamo"
-            summary: "Cuánto se prestó, cuánto debe hoy y cada abono con lo que fue a interés y a capital."
+            summary: "Cuánto se prestó (efectivo e insumos), cuánto debe hoy y cada abono con lo que fue a interés y a capital."
             steps:
               - "Revisa «Debe hoy»: el capital pendiente más el interés acumulado hasta hoy."
               - "Toca «Registrar abono» cuando la persona pague."
@@ -793,15 +903,21 @@ es:
             tips:
               - "Un préstamo con abonos ya no se puede editar ni borrar."
               - "Solo se puede quitar el último abono, por si se registró mal."
+              - "Los abonos «Con café» se hicieron desde una compra: dicen de qué compra salieron."
           form:
             title: "Registrar o editar un préstamo"
-            summary: "Se le puede prestar a cualquier persona: clientes, colaboradores o productores."
+            summary: "Se le puede prestar a cualquier persona: clientes, colaboradores o productores. Se presta efectivo, insumos o los dos."
             steps:
               - "Escribe el nombre de la persona y elígela de la lista. Si no existe, toca «¿No está? Registrar persona»."
-              - "Escribe el monto y la tasa de interés mensual de este préstamo."
-              - "Revisa la fecha del préstamo y elige la fecha límite para pagar."
+              - "En «Qué se presta», escribe el efectivo (déjalo en 0 si solo son insumos)."
+              - "Para prestar insumos, toca «Agregar insumo», elígelo y escribe la cantidad. El precio se pone solo y lo puedes cambiar."
+              - "Revisa el resumen: efectivo, insumos y capital del préstamo."
+              - "Escribe la tasa de interés mensual, revisa la fecha del préstamo y elige la fecha límite."
               - "Toca el botón de guardar."
             tips:
+              - "El capital es el efectivo más el valor de los insumos; el interés corre sobre todo el capital."
+              - "Si el insumo no está en la lista, toca «Nuevo insumo»: se abre encima y al guardarlo queda en la línea."
+              - "Para quitar una línea de insumo, toca «Quitar»."
               - "La tasa se define en cada préstamo; puede ser 0 si no cobra interés."
               - "La fecha límite cuenta para el score de pago de la persona."
         payments:
@@ -817,6 +933,26 @@ es:
               - "No puede ser mayor que lo que se debe a esa fecha."
               - "No puede llevar una fecha anterior al último abono."
               - "Si el abono cubre todo, el préstamo queda pagado."
+        supplies:
+          index:
+            title: "Insumos"
+            summary: "Lo que se presta en especie, como sacos de abono, con su precio predeterminado."
+            steps:
+              - "Busca por nombre o filtra por activos e inactivos en «Filtros»."
+              - "Toca «Nuevo insumo» para agregar uno, o «Editar» para cambiar su nombre, unidad o precio."
+            tips:
+              - "Cambiar el precio predeterminado no cambia los préstamos que ya se hicieron."
+              - "Un insumo que ya no se presta se desactiva; no se borra."
+          form:
+            title: "Crear o editar un insumo"
+            summary: "Nombre, unidad en que se presta y precio predeterminado por unidad."
+            steps:
+              - "Escribe el nombre, por ejemplo «Abono 18-46-0»."
+              - "Escribe la unidad, por ejemplo «saco»; puedes elegir una de las sugeridas."
+              - "Escribe el precio por unidad que se pone al prestarlo."
+              - "Toca el botón de guardar."
+            tips:
+              - "Si lo creas desde un préstamo, al guardar queda elegido en ese préstamo."
         credit_accounts:
           index:
             title: "Estados de cuenta"
@@ -861,6 +997,8 @@ es:
         invoice: "la factura"
         loan: "el préstamo"
         loan_payment: "el abono"
+        supply: "el insumo"
+        loan_supply: "el insumo del préstamo"
       sentence:
         create: "%{actor} creó %{record} el %{date} a las %{time}."
         update: "%{actor} modificó %{record}: %{fields}, el %{date} a las %{time}."
@@ -1023,6 +1161,12 @@ es:
       loan_payment:
         one: "Abono"
         other: "Abonos"
+      supply:
+        one: "Insumo"
+        other: "Insumos"
+      loan_supply:
+        one: "Insumo del préstamo"
+        other: "Insumos del préstamo"
     attributes:
       user:
         name: "Nombre completo"
@@ -1116,7 +1260,13 @@ es:
         person: "Persona"
         person_id: "Persona"
         created_by_id: "Registró"
-        principal: "Monto prestado (L)"
+        principal: "Capital (L)"
+        cash_amount: "Efectivo (L)"
+        supply_items: "Insumos"
+        kind: "Tipo"
+        kind/cash: "Efectivo"
+        kind/supplies: "Insumos"
+        kind/mixed: "Mixto"
         monthly_interest_rate: "Tasa de interés mensual (%)"
         disbursed_on: "Fecha del préstamo"
         due_on: "Fecha límite"
@@ -1138,7 +1288,23 @@ es:
         payment_method/cash: "Efectivo"
         payment_method/transfer: "Transferencia"
         payment_method/check: "Cheque"
+        payment_method/coffee: "Con café"
+        purchase: "Compra"
+        purchase_id: "Compra"
         observations: "Observaciones"
+      supply:
+        name: "Nombre"
+        unit: "Unidad"
+        default_price: "Precio predeterminado (L)"
+        active: "Activo"
+      loan_supply:
+        loan: "Préstamo"
+        loan_id: "Préstamo"
+        supply: "Insumo"
+        supply_id: "Insumo"
+        quantity: "Cantidad"
+        unit_price: "Precio unitario (L)"
+        total: "Subtotal"
       permission:
         user_id: "Usuario"
         module_key: "Módulo"
@@ -1159,6 +1325,7 @@ es:
               other_producer: "deben ser todas del mismo productor"
               unavailable: "ya no están disponibles: otra persona las facturó o fueron borradas. Revisa la lista."
         loan:
+          nothing_lent: "Agrega efectivo, insumos o ambos: el préstamo no puede quedar en cero."
           attributes:
             due_on:
               before_disbursement: "no puede ser antes de la fecha del préstamo"
@@ -1168,6 +1335,12 @@ es:
               before_last_payment: "no puede ser antes de la fecha del préstamo ni del último abono"
             amount:
               over_balance: "es mayor que lo que se debe a esa fecha (%{owed})"
+              over_purchase: "es mayor que lo que le queda a la compra (%{available})"
+            payment_method:
+              coffee_without_purchase: "«Con café» solo se registra desde una compra"
+            purchase:
+              other_person: "es de otra persona"
+              closed: "ya no se puede usar: está anulada, ya se le pagó al productor o no le queda dinero"
         user:
           last_active_admin: "No se puede desactivar ni quitar el rol de administrador al último administrador activo."
       messages:
@@ -1175,6 +1348,20 @@ es:
         restrict_dependent_destroy:
           has_one: "No se puede eliminar el registro porque existe un %{record} dependiente"
           has_many: "No se puede eliminar el registro porque existen %{record} dependientes"
+
+  activemodel:
+    attributes:
+      purchase_loan_settlement:
+        paid_on: "Fecha del abono"
+        observations: "Observaciones"
+    errors:
+      models:
+        purchase_loan_settlement:
+          nothing_to_pay: "Escribe cuánto abonar al menos a un préstamo."
+          negative_amount: "Los montos no pueden ser negativos."
+          over_purchase: "Los abonos suman más de lo que le queda a la compra (%{available})."
+          unknown_loan: "Uno de los préstamos ya no está por cobrar. Cierra la ventana y vuelve a abrirla."
+          loan_error: "Préstamo %{loan}: %{detail}"
 
   errors:
     show:

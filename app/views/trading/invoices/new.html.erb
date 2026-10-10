@@ -29,6 +29,11 @@
           <%= modal_link_to t(".new_purchase"), new_trading_purchase_path(producer_id: @producer.id), class: "btn btn-sm" %>
         <% end %>
       </div>
+      <% if @settlement && policy(Loan).index? && @settlement.open_loans.any? %>
+        <p class="mb-3 flash-alert" role="status">
+          <%= t(".owes_html", person: @producer.full_name, amount: tag.strong(format_money(@settlement.total_owed), class: "tabular-nums")) %>
+        </p>
+      <% end %>
       <% if @purchases.any? %>
         <div class="overflow-x-auto panel">
           <table class="data-table">
@@ -56,7 +61,14 @@
                   <td class="text-right tabular-nums"><%= format_pounds(purchase.net_weight) %></td>
                   <td class="text-right tabular-nums"><%= format_pounds(purchase.quintals) %></td>
                   <td class="text-right tabular-nums"><%= format_money(purchase.price_per_pound) %></td>
-                  <td class="text-right font-medium tabular-nums"><%= format_money(purchase.total) %></td>
+                  <td class="text-right font-medium tabular-nums">
+                    <%= format_money(purchase.total) %>
+                    <% if purchase.loan_payments.any? %>
+                      <span class="block text-xs font-normal text-ink-muted">
+                        <%= t(".to_loans", amount: format_money(purchase.loan_payments_total)) %>
+                      </span>
+                    <% end %>
+                  </td>
                   <td class="cell-actions">
                     <div class="flex justify-end gap-2">
                       <%= detail_button trading_purchase_path(purchase) %>

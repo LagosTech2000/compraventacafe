@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_10_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_11_090000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -80,8 +80,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_10_180000) do
     t.text "observations"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "purchase_id"
     t.index ["created_by_id"], name: "index_loan_payments_on_created_by_id"
     t.index ["loan_id"], name: "index_loan_payments_on_loan_id"
+    t.index ["purchase_id"], name: "index_loan_payments_on_purchase_id"
+  end
+
+  create_table "loan_supplies", force: :cascade do |t|
+    t.bigint "loan_id", null: false
+    t.bigint "supply_id", null: false
+    t.decimal "quantity", precision: 10, scale: 2, null: false
+    t.decimal "unit_price", precision: 12, scale: 2, null: false
+    t.decimal "total", precision: 14, scale: 2, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["loan_id"], name: "index_loan_supplies_on_loan_id"
+    t.index ["supply_id"], name: "index_loan_supplies_on_supply_id"
   end
 
   create_table "loans", force: :cascade do |t|
@@ -95,6 +109,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_10_180000) do
     t.text "observations"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "cash_amount", precision: 14, scale: 2, default: "0.0", null: false
     t.index ["created_by_id"], name: "index_loans_on_created_by_id"
     t.index ["disbursed_on"], name: "index_loans_on_disbursed_on"
     t.index ["due_on"], name: "index_loans_on_due_on"
@@ -194,6 +209,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_10_180000) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "supplies", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "unit", null: false
+    t.decimal "default_price", precision: 12, scale: 2, null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((name)::text)", name: "index_supplies_on_lower_name", unique: true
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email_address", null: false
     t.string "password_digest", null: false
@@ -218,7 +243,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_10_180000) do
   add_foreign_key "invoices", "producers"
   add_foreign_key "invoices", "users", column: "created_by_id"
   add_foreign_key "loan_payments", "loans"
+  add_foreign_key "loan_payments", "purchases"
   add_foreign_key "loan_payments", "users", column: "created_by_id"
+  add_foreign_key "loan_supplies", "loans"
+  add_foreign_key "loan_supplies", "supplies"
   add_foreign_key "loans", "people"
   add_foreign_key "loans", "users", column: "created_by_id"
   add_foreign_key "municipalities", "departments"

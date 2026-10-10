@@ -2,7 +2,7 @@ require "rails_helper"
 
 RSpec.describe LoanBalance do
   let(:start) { Date.new(2026, 1, 1) }
-  let(:loan) { create(:loan, principal: 10_000, monthly_interest_rate: 3, disbursed_on: start, due_on: start + 120) }
+  let(:loan) { create(:loan, cash_amount: 10_000, monthly_interest_rate: 3, disbursed_on: start, due_on: start + 120) }
 
   it "runs interest daily on the principal: principal × monthly rate × days / 30" do
     balance = described_class.new(loan, as_of: start + 45)

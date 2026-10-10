@@ -85,6 +85,9 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Cancelada / pendiente de pago (PXP) | `paid` / `pending` |
 | Cierre diario | `DailyClose` |
 | Préstamo / abono | `Loan` / `LoanPayment` |
+| Insumo / insumo del préstamo | `Supply` / `LoanSupply` |
+| Préstamo en efectivo / en insumos / mixto | `Loan#kind`: `cash` / `supplies` / `mixed` |
+| Pago con café (abonar préstamos con una compra) | `PurchaseLoanSettlement`; abono con `payment_method: "coffee"` |
 | Estado de cuenta / historial crediticio | `CreditAccount` |
 | Score de pago | `PayerScore` |
 
@@ -329,7 +332,7 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 | `administration` | Usuarios y permisos, y auditoría (solo administradores); personas, clientes y colaboradores (permisos del módulo) |
 | `trading` | Demo: zonas, productores (con pestañas y QQ por temporada), compras con cálculo por estado del café y anulación, facturas imprimibles (original y copia) con estado de pago, cierre diario |
 | `farms` | Portada vacía |
-| `loans` | Fase 1: préstamos a cualquier persona con interés simple, abonos, estados de cuenta con historial crediticio y score de pago |
+| `loans` | Préstamos en efectivo, insumos o mixtos a cualquier persona con interés simple, catálogo de insumos, abonos (también con café desde una compra), estados de cuenta con historial crediticio y score de pago |
 | `reports` | Portada vacía |
 
 Cada módulo tiene su namespace de controladores. Implementar una funcionalidad
@@ -409,8 +412,33 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
   Bueno, 50+ Regular, menos Riesgo; sin préstamos que cuenten, "Sin historial".
 - `CreditAccount` arma el estado de cuenta de una persona: totales, sus
   préstamos con saldo a hoy, historial de préstamos y abonos, y score.
-- El pago con café (descontar de la compra) **no está construido**: es punto
-  abierto.
+- **Insumos** (`Supply`) [CONFIRMADO, Fernando, 2026-10-10]: catálogo del
+  módulo (Préstamos → Insumos) con nombre, unidad y precio predeterminado.
+  No se borran: se desactivan y dejan de salir al prestar.
+- **Préstamos mixtos** [CONFIRMADO]: un préstamo lleva efectivo
+  (`cash_amount`, puede ser 0) y líneas de insumos (`LoanSupply`: cantidad ×
+  precio unitario). El precio empieza en el predeterminado, se puede cambiar
+  y se guarda en la línea. **Capital = efectivo + valor de los insumos**, y
+  el interés corre sobre todo el capital. El capital no se escribe: lo
+  calcula `Loan` (`loan_composition_controller.js` es solo vista previa).
+- **Pago con café** [Fernando delegó la regla, 2026-10-10; diseño propuesto
+  en esta sesión, pendiente de confirmar]: desde el detalle de una compra se
+  abonan o saldan los préstamos de la persona del productor
+  (`PurchaseLoanSettlement`, pantalla `trading/loan_settlements`). Reglas:
+  - Cada abono es un `LoanPayment` normal con forma de pago "Con café" y
+    `purchase_id`: paga interés primero y luego capital, y salda el préstamo
+    si cubre todo a esa fecha. Fecha del abono: hoy por defecto, editable.
+  - La suma de abonos de una compra no pasa del total de la compra. Se puede
+    abonar mientras la compra no esté anulada ni su factura pagada.
+  - Todos los abonos de una vez se guardan o ninguno (transacción, bloqueo
+    de la compra).
+  - Una compra con abonos no se edita, anula ni borra; para cambiarla se
+    quita el abono (solo el último de cada préstamo, regla existente).
+  - La factura muestra el total de compras, cada abono restado y el **total
+    a pagar** al productor. El total de la factura (café comprado) no cambia.
+  - Requiere crear en `loans` y ver en `trading`
+    (`PurchaseLoanSettlementPolicy`). Sin permiso de préstamos, la compra no
+    muestra deudas.
 
 ## Puntos abiertos
 
@@ -419,7 +447,9 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
 | Tabla de precios (zona + calidad + bolsa) y categorías de calidad | Precio automático; hoy es manual | Cliente |
 | Retención de fin de temporada | Reporte de retención | Cliente |
 | Reportes por temporada (qué muestran) | Reportería por temporada; la temporada ya se guarda | Cliente |
-| Préstamos: cómo se descuentan de la compra (pago con café), recargo por mora | Descuento del préstamo al pagar la compra; mora | Cliente |
+| Préstamos: recargo por mora | Mora | Cliente |
+| Pago con café: confirmar las reglas propuestas (ver Préstamos) | Ajustes al abono con compra | Fernando / Cliente |
+| Inventario de insumos (existencias, costo de compra) | Control de bodega de insumos | Cliente |
 | Si la factura siempre agrupa hasta 4 compras | Hoy no hay límite | Cliente |
 | 160 lb/saco en salidas vs. 165 en compras | Salidas de camión | Cliente |
 | Contratos: moneda, cobro, anticipos del exportador | Ventas / contratos | Cliente |

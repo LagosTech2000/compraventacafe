@@ -9,7 +9,7 @@ class CreditAccount
   def initialize(person, today: Time.zone.today)
     @person = person
     @today = today
-    @loans = person.loans.includes(:payments).newest_first.to_a
+    @loans = person.loans.includes(:payments, :supply_items).newest_first.to_a
   end
 
   def balance(loan)

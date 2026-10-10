@@ -10,7 +10,7 @@ module Loans
 
     def show
       @balance = @loan.balance
-      @payments = @loan.payments.newest_first
+      @payments = @loan.payments.includes(:purchase).newest_first
     end
 
     def new
@@ -49,7 +49,8 @@ module Loans
       end
 
       def loan_params
-        params.expect(loan: [ :person_id, :principal, :monthly_interest_rate, :disbursed_on, :due_on, :observations ])
+        params.expect(loan: [ :person_id, :cash_amount, :monthly_interest_rate, :disbursed_on, :due_on, :observations,
+                              supply_items_attributes: [ [ :id, :supply_id, :quantity, :unit_price, :_destroy ] ] ])
       end
   end
 end

@@ -70,6 +70,27 @@
   </table>
   </div>
 
+  <%# Loans paid with these purchases ("pago con café") come off what the producer receives. %>
+  <% coffee_payments = invoice.purchases.flat_map(&:loan_payments).sort_by(&:id) %>
+  <% if coffee_payments.any? %>
+    <dl class="mt-3 ml-auto w-full max-w-sm text-sm print:mt-2">
+      <div class="flex justify-between gap-4 py-0.5">
+        <dt><%= t("trading.invoices.show.purchases_total") %></dt>
+        <dd class="tabular-nums"><%= format_money(invoice.total) %></dd>
+      </div>
+      <% coffee_payments.each do |payment| %>
+        <div class="flex justify-between gap-4 py-0.5">
+          <dt><%= t("trading.invoices.show.loan_payment", number: payment.loan_id) %></dt>
+          <dd class="tabular-nums">− <%= format_money(payment.amount) %></dd>
+        </div>
+      <% end %>
+      <div class="flex justify-between gap-4 border-t border-ink py-1 font-bold">
+        <dt><%= t("trading.invoices.show.amount_to_pay") %></dt>
+        <dd class="tabular-nums"><%= format_money(invoice.amount_to_pay) %></dd>
+      </div>
+    </dl>
+  <% end %>
+
   <% observations = invoice.purchases.filter_map(&:observations) %>
   <% if observations.any? %>
     <p class="mt-3 text-sm"><span class="font-semibold"><%= Purchase.human_attribute_name(:observations) %>:</span> <%= observations.join("; ") %></p>

@@ -17,7 +17,8 @@ module Trading
 
       if @producer
         @invoice = @producer.invoices.build(payment_status: "pending")
-        @purchases = @producer.purchases.uninvoiced.newest_first
+        @purchases = @producer.purchases.uninvoiced.includes(:loan_payments).newest_first
+        @settlement = PurchaseLoanSettlement.new(purchase: @purchases.first, user: Current.user) if @purchases.any?
       else
         # Producers whose latest uninvoiced purchase is most recent come first.
         @producers_to_invoice = Producer.joins(:purchases).merge(Purchase.uninvoiced).group(:id)
@@ -51,7 +52,7 @@ module Trading
 
     private
       def set_invoice
-        @invoice = authorize Invoice.includes(:created_by, purchases: :zone, producer: [ :person, :zone ]).find(params[:id])
+        @invoice = authorize Invoice.includes(:created_by, purchases: [ :zone, :loan_payments ], producer: [ :person, :zone ]).find(params[:id])
       end
 
       def issue_params

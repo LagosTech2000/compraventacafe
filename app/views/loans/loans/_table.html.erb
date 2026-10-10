@@ -16,7 +16,7 @@
           <div><dt class="text-xs text-ink-muted"><%= Loan.human_attribute_name(:principal) %></dt><dd class="tabular-nums"><%= format_money(loan.principal) %></dd></div>
           <div><dt class="text-xs text-ink-muted"><%= t("loans.loans.table.owed") %></dt><dd class="font-semibold tabular-nums"><%= format_money(balance.total_owed) %></dd></div>
         </dl>
-        <p class="mt-2 text-sm"><%= loan_status_badge(loan) %></p>
+        <p class="mt-2 flex flex-wrap gap-2 text-sm"><%= loan_status_badge(loan) %> <%= loan_kind_badge(loan) %></p>
       </li>
     <% end %>
   </ul>
@@ -30,6 +30,7 @@
           <th><%= Loan.human_attribute_name(:disbursed_on) %></th>
           <th><%= Loan.human_attribute_name(:due_on) %></th>
           <th class="hidden text-right @5xl:table-cell"><%= t("loans.loans.table.rate") %></th>
+          <th class="hidden @5xl:table-cell"><%= Loan.human_attribute_name(:kind) %></th>
           <th class="hidden text-right @5xl:table-cell"><%= Loan.human_attribute_name(:principal) %></th>
           <th class="text-right"><%= t("loans.loans.table.owed") %></th>
           <th><%= Loan.human_attribute_name(:status) %></th>
@@ -44,6 +45,7 @@
             <td class="whitespace-nowrap"><%= l(loan.disbursed_on) %></td>
             <td class="whitespace-nowrap"><%= l(loan.due_on) %></td>
             <td class="hidden whitespace-nowrap text-right tabular-nums @5xl:table-cell"><%= format_rate(loan.monthly_interest_rate) %></td>
+            <td class="hidden @5xl:table-cell"><%= loan_kind_badge(loan) %></td>
             <td class="hidden whitespace-nowrap text-right tabular-nums @5xl:table-cell"><%= format_money(loan.principal) %></td>
             <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(balances.fetch(loan).total_owed) %></td>
             <td><%= loan_status_badge(loan) %></td>

@@ -22,6 +22,8 @@ Rails.application.routes.draw do
     root "home#index"
     resources :purchases do
       patch :void, on: :member
+      # Pay the producer's loans with this purchase ("pago con café").
+      resource :loan_settlement, only: %i[ new create ]
     end
     resources :invoices, only: %i[ index show new create update ]
     resources :producers, except: :destroy
@@ -39,6 +41,7 @@ Rails.application.routes.draw do
       resources :payments, only: %i[ new create destroy ]
     end
     resources :credit_accounts, only: %i[ index show ]
+    resources :supplies, only: %i[ index new create edit update ]
   end
 
   namespace :reports do

@@ -49,21 +49,35 @@ class DemoData
     # One loan in each state, so the loans module and the payer score have
     # something to show: paid on time, paid late, overdue and current.
     def loans(people)
+      supplies = demo_supplies
       today = Time.zone.today
       [
-        { days_ago: 90, term: 60, principal: 5_000, paid_after: 50 },
-        { days_ago: 80, term: 30, principal: 3_000, paid_after: 45 },
-        { days_ago: 70, term: 40, principal: 8_000, partial_after: 20 },
-        { days_ago: 15, term: 60, principal: 12_000, partial_after: 10 }
+        { days_ago: 90, term: 60, cash: 5_000, paid_after: 50 },
+        { days_ago: 80, term: 30, cash: 3_000, paid_after: 45 },
+        { days_ago: 70, term: 40, cash: 3_000, supplies: { "Abono 18-46-0" => 4 }, partial_after: 20 },
+        { days_ago: 15, term: 60, cash: 0, supplies: { "Urea 46 %" => 6, "Fungicida cúprico" => 2 }, partial_after: 10 }
       ].each_with_index do |plan, index|
-        loan = Loan.create!(person: people[index], created_by: @user, principal: plan[:principal], monthly_interest_rate: 3,
+        items = plan.fetch(:supplies, {}).map do |name, quantity|
+          { supply: supplies.fetch(name), quantity:, unit_price: supplies.fetch(name).default_price }
+        end
+        loan = Loan.create!(person: people[index], created_by: @user, cash_amount: plan[:cash], monthly_interest_rate: 3,
+                            supply_items_attributes: items,
                             disbursed_on: today - plan[:days_ago], due_on: today - plan[:days_ago] + plan[:term])
         if plan[:paid_after]
           paid_on = loan.disbursed_on + plan[:paid_after]
           pay(loan, paid_on, loan.balance(as_of: paid_on).total_owed)
         else
-          pay(loan, loan.disbursed_on + plan[:partial_after], plan[:principal] / 4)
+          pay(loan, loan.disbursed_on + plan[:partial_after], (loan.principal / 4).round(2))
         end
+      end
+    end
+
+    # Fictitious catalog of supplies lent in kind.
+    def demo_supplies
+      {
+        "Abono 18-46-0" => [ "saco", 1_250 ], "Urea 46 %" => [ "saco", 1_100 ], "Fungicida cúprico" => [ "litro", 380 ]
+      }.to_h do |name, (unit, price)|
+        [ name, Supply.find_or_create_by!(name:) { |supply| supply.assign_attributes(unit:, default_price: price) } ]
       end
     end
 

@@ -12,6 +12,8 @@ class Purchase < ApplicationRecord
   belongs_to :invoice, optional: true
   belongs_to :created_by, class_name: "User"
   belongs_to :voided_by, class_name: "User", optional: true
+  # Loan payments made with this purchase's money ("pago con café").
+  has_many :loan_payments, dependent: :restrict_with_error
 
   normalizes :observations, with: FieldFormats::STRIP
 
@@ -78,6 +80,26 @@ class Purchase < ApplicationRecord
 
   def human_coffee_state
     self.class.human_attribute_name("coffee_state/#{coffee_state}")
+  end
+
+  def loan_payments_total
+    loan_payments.sum(&:amount)
+  end
+
+  # What the producer is paid: the purchase minus the loan payments it made.
+  def amount_to_pay
+    total - loan_payments_total
+  end
+
+  # Counted in the database, so payments saved a moment ago are included.
+  def available_for_loans
+    total - loan_payments.sum(:amount)
+  end
+
+  # Its money can still go to a loan: not voided, not yet paid out, and
+  # something left.
+  def accepts_loan_payments?
+    persisted? && !voided? && !invoice&.paid? && available_for_loans.positive?
   end
 
   # Takes the purchase out of every list and total without deleting it.

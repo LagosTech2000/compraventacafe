@@ -30,7 +30,8 @@
        season_total: format_money(@season_summary.total),
        all_time_quintals: format_pounds(@all_time_summary.quintals)
      } %>
-  <dl class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+  <% figures[:loans_owed] = format_money(@credit_account.total_owed) if policy(Loan).index? %>
+  <dl class="grid grid-cols-2 gap-3 <%= figures.size > 4 ? "lg:grid-cols-5" : "lg:grid-cols-4" %>">
     <% figures.each do |key, value| %>
       <div class="stat">
         <dt><%= t(".figures.#{key}") %></dt>

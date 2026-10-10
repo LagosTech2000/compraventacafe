@@ -8,6 +8,7 @@
   <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
   <%= filter_text_field form, :q, Loan.human_attribute_name(:person), value: @filter.q, placeholder: t("loans.loans.index.search_placeholder") %>
   <%= filter_select form, :status, Loan.human_attribute_name(:status), enum_options(Loan, :status, Loan::STATUSES), selected: @filter.status %>
+  <%= filter_select form, :kind, Loan.human_attribute_name(:kind), enum_options(Loan, :kind, Loan::KINDS), selected: @filter.kind %>
 <% end %>
 
 <div class="mt-6">

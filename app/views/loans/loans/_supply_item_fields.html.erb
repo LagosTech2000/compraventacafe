@@ -1,0 +1,36 @@
+<%# One supply line of the loan form. Rendered for each saved line and once
+    inside a <template> (index NEW_RECORD) that the form copies to add lines. %>
+<% item = form.object %>
+<div class="data-card grid gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto_auto] sm:items-end"
+     data-loan-composition-target="item" <%= "hidden" if item.marked_for_destruction? %>>
+  <%= form.hidden_field :id if item.persisted? %>
+  <%= form.hidden_field :_destroy, value: item.marked_for_destruction? ? "1" : "0", data: { loan_composition_target: "destroy" } %>
+  <div>
+    <%= form.label :supply_id, class: "field-label" %>
+    <%= form.select :supply_id, supply_options_for(item), { prompt: t("shared.select.pick_supply") },
+          required: true, class: "field-input",
+          data: { loan_composition_target: "supply", action: "loan-composition#pickSupply",
+                  missing_message: "#{LoanSupply.human_attribute_name(:supply)} #{t("errors.messages.blank")}" } %>
+  </div>
+  <div>
+    <%= form.label :quantity, class: "field-label" do %>
+      <%= LoanSupply.human_attribute_name(:quantity) %>
+      <span class="font-normal text-ink-muted" data-loan-composition-target="unit"><%= item.supply&.unit %></span>
+    <% end %>
+    <%= form.number_field :quantity, required: true, min: 0.01, max: 99_999.99, step: 0.01, inputmode: "decimal", class: "field-input",
+          data: { loan_composition_target: "quantity", action: "loan-composition#update" } %>
+  </div>
+  <div>
+    <%= form.label :unit_price, class: "field-label" %>
+    <%= form.number_field :unit_price, required: true, min: 0.01, max: Supply::MAX_PRICE - 0.01, step: 0.01, inputmode: "decimal", class: "field-input",
+          data: { loan_composition_target: "price", action: "loan-composition#update" } %>
+  </div>
+  <div class="sm:text-right">
+    <p class="field-label"><%= LoanSupply.human_attribute_name(:total) %></p>
+    <p class="py-2 text-lg font-semibold tabular-nums" data-loan-composition-target="lineTotal">
+      <%= item.total ? format_money(item.total) : "—" %>
+    </p>
+  </div>
+  <button type="button" class="btn btn-sm self-center sm:self-end sm:mb-1" data-action="loan-composition#remove"
+          aria-label="<%= t("loans.loans.form.remove_supply") %>"><%= t("loans.loans.form.remove_supply") %></button>
+</div>

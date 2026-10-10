@@ -5,7 +5,7 @@
   <div>
     <h1 class="text-2xl font-bold"><%= t(".title", number: @loan.id) %></h1>
     <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
-      <%= @loan.person.full_name %> <%= loan_status_badge(@loan) %>
+      <%= @loan.person.full_name %> <%= loan_status_badge(@loan) %> <%= loan_kind_badge(@loan) %>
     </p>
   </div>
   <div class="flex flex-wrap gap-3">
@@ -45,6 +45,8 @@
 <dl class="mt-6 grid panel sm:grid-cols-3">
   <% {
        t(".principal") => format_money(@loan.principal),
+       Loan.human_attribute_name(:cash_amount) => format_money(@loan.cash_amount),
+       t(".supplies_amount") => format_money(@loan.supplies_amount),
        t(".rate") => format_rate(@loan.monthly_interest_rate),
        Loan.human_attribute_name(:disbursed_on) => l(@loan.disbursed_on, format: :long),
        Loan.human_attribute_name(:due_on) => l(@loan.due_on, format: :long),
@@ -60,6 +62,11 @@
     </div>
   <% end %>
 </dl>
+
+<% if @loan.supply_items.any? %>
+  <h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".supplies") %></h2>
+  <%= render "loans/loans/supply_items", loan: @loan %>
+<% end %>
 
 <h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".payments") %></h2>
 <% if @payments.any? %>

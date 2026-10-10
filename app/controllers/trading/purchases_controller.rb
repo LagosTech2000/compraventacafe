@@ -11,6 +11,8 @@ module Trading
     end
 
     def show
+      @loan_payments = @purchase.loan_payments.includes(:loan).chronological
+      @settlement = PurchaseLoanSettlement.new(purchase: @purchase, user: Current.user)
     end
 
     def new

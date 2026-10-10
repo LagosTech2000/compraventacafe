@@ -18,6 +18,7 @@ module Trading
       @season_summary = PurchaseSummary.new(@producer.purchases.active.in_season(@season))
       @all_time_summary = PurchaseSummary.new(@producer.purchases.active)
       @has_uninvoiced = @producer.purchases.uninvoiced.exists?
+      @credit_account = CreditAccount.new(@producer.person)
 
       case @tab
       when "purchases"

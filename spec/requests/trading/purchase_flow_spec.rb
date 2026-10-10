@@ -323,5 +323,58 @@ RSpec.describe "Trading purchase flow" do
     end
   end
 
+  describe "paying loans with a purchase" do
+    let(:loans_user) do
+      user.tap { |u| create(:permission, user: u, module_key: "loans", can_read: true, can_create: true, can_update: true, can_destroy: true) }
+    end
+    let(:producer) { create(:producer) }
+    let!(:loan) { create(:loan, person: producer.person, cash_amount: 1_000, monthly_interest_rate: 0) }
+
+    before { loans_user }
+
+    it "shows the debt on the purchase, settles it and takes it off the invoice" do
+      purchase = create(:purchase, producer:)
+      get trading_purchase_path(purchase)
+      expect(Nokogiri::HTML(response.body).at_css("#purchase-loans").parent.text.squish).to include("debe L 1,000.00 en 1 préstamo")
+      link = Nokogiri::HTML(response.body).css("a").find { |a| a.text == "Abonar con esta compra" }
+      expect(link["href"]).to eq(new_trading_purchase_loan_settlement_path(purchase))
+
+      get new_trading_purchase_loan_settlement_path(purchase), headers: { "Turbo-Frame" => "modal_2" }
+      expect(response.body).to include("Préstamo #{loan.id}", "Saldar", "Disponible para abonar")
+
+      post trading_purchase_loan_settlement_path(purchase), headers: { "Turbo-Frame" => "modal_2" },
+           params: { purchase_loan_settlement: { paid_on: Time.zone.today.iso8601, amounts: { loan.id.to_s => "1000" } } }
+      expect(Nokogiri::HTML(response.body).at_css("[data-controller='modal-result']")).to be_present
+      expect(loan.reload).to be_paid_off
+      expect(flash[:notice]).to eq("Abono de L 1,000.00 registrado con la compra.")
+
+      get trading_purchase_path(purchase)
+      expect(response.body).to include("A pagar al productor", "L 3,120.90")
+
+      post trading_invoices_path, params: { producer_id: producer.id, invoice: { purchase_ids: [ purchase.id ], payment_status: "pending" } }
+      get trading_invoice_path(Invoice.last)
+      expect(response.body).to include("Abono a préstamo N.º #{loan.id}", "Total a pagar", "L 3,120.90")
+
+      get loans_loan_path(loan)
+      expect(response.body).to include("Con café · compra #{purchase.id}")
+    end
+
+    it "shows the settlement errors in Spanish" do
+      purchase = create(:purchase, producer:)
+      post trading_purchase_loan_settlement_path(purchase), params: { purchase_loan_settlement: { amounts: { loan.id.to_s => "" } } }
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("Escribe cuánto abonar al menos a un préstamo.")
+    end
+
+    it "takes both modules: without loans permission there is no button nor access" do
+      Permission.where(user:, module_key: "loans").delete_all
+      purchase = create(:purchase, producer:)
+      get trading_purchase_path(purchase)
+      expect(Nokogiri::HTML(response.body).css("a").map(&:text)).not_to include("Abonar con esta compra")
+      post trading_purchase_loan_settlement_path(purchase), params: { purchase_loan_settlement: { amounts: { loan.id.to_s => "10" } } }
+      expect(LoanPayment.count).to eq(0)
+    end
+  end
+
   def dom_id_for(purchase) = "id=\"purchase_#{purchase.id}\""
 end
