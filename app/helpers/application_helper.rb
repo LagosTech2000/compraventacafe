@@ -14,9 +14,10 @@ module ApplicationHelper
     modal_link_to t("shared.detail"), path, class: "btn btn-sm"
   end
 
-  # Link that opens its page in the modal (forms, details).
+  # Link that opens its page in the modal (forms, details). Inside a modal it
+  # opens a second one on top.
   def modal_link_to(label, path, **options)
-    link_to label, path, options.merge(data: { **options.fetch(:data, {}), turbo_frame: ModalSupport::MODAL_FRAME })
+    link_to label, path, options.merge(data: { **options.fetch(:data, {}), turbo_frame: next_modal_frame })
   end
 
   # Link that leaves the modal and loads a full page.

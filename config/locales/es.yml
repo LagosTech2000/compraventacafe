@@ -176,6 +176,7 @@ es:
         title: "Editar productor"
       form:
         producer_data: "Datos de compra"
+        new_zone: "Nueva zona"
         cancel: "Cancelar"
       create:
         success: "Productor creado."
@@ -685,7 +686,7 @@ es:
             summary: "Datos de compra del productor y sus datos personales."
             steps:
               - "Elige el tipo: productor, carrero (intermediario) o finca propia."
-              - "Elige su zona y, si aplica, el nombre de la finca."
+              - "Elige su zona y, si aplica, el nombre de la finca. Si la zona no existe, toca «Nueva zona»: se abre encima y al guardarla queda elegida."
               - "Escribe nombres y apellidos; el resto de datos es opcional."
               - "Toca el botón de guardar."
             tips:

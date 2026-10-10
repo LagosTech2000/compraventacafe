@@ -34,13 +34,16 @@
       <%= yield %>
     </main>
 
-    <%# Reusable modal: links with data-turbo-frame="modal" open here (ModalSupport). %>
-    <dialog data-controller="modal" aria-label="<%= t("shared.modal.label") %>"
-            data-action="turbo:frame-load->modal#open turbo:frame-missing->modal#fallback close->modal#reset click->modal#closeOnBackdrop"
-            class="modal print:hidden">
-      <%# Padding lives on the frame so only clicks on the backdrop hit the dialog itself. %>
-      <%= tag.turbo_frame id: "modal", src: content_for(:modal_src).presence, class: "block p-5 sm:p-8", data: { modal_target: "frame" } %>
-    </dialog>
+    <%# Reusable modals: links with data-turbo-frame="modal" open here (ModalSupport).
+        The later ones stack on top, for links opened from inside a modal. %>
+    <% ModalSupport::MODAL_FRAMES.each_with_index do |frame_id, index| %>
+      <dialog data-controller="modal" aria-label="<%= t("shared.modal.label") %>"
+              data-action="turbo:frame-load->modal#open turbo:frame-missing->modal#fallback close->modal#reset click->modal#closeOnBackdrop"
+              class="modal print:hidden">
+        <%# Padding lives on the frame so only clicks on the backdrop hit the dialog itself. %>
+        <%= tag.turbo_frame id: frame_id, src: (content_for(:modal_src).presence if index.zero?), class: "block p-5 sm:p-8", data: { modal_target: "frame" } %>
+      </dialog>
+    <% end %>
 
     <%# Help guides (HelpGuidesHelper): a side panel of its own, on top of the modal when both are open. %>
     <dialog id="help-guide" data-controller="help-dialog" aria-label="<%= t("help_guides.ui.label") %>"

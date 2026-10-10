@@ -35,6 +35,30 @@ RSpec.describe "Modal frame" do
     end
   end
 
+  it "stacks a modal opened from inside a modal on top of it" do
+    page = Nokogiri::HTML(response_body_for(new_trading_producer_path(picker: 1), modal))
+    zone_link = page.css("a").find { |a| a.text == "Nueva zona" }
+    expect(zone_link["data-turbo-frame"]).to eq("modal_2")
+
+    get new_trading_zone_path(picker: 1), headers: { "Turbo-Frame" => "modal_2" }
+    expect(Nokogiri::HTML(response.body).at_css("turbo-frame#modal_2 form")).to be_present
+
+    post trading_zones_path, params: { picker: "1", zone: { name: "Pueblo Nuevo" } }, headers: { "Turbo-Frame" => "modal_2" }
+    result = Nokogiri::HTML(response.body).at_css("turbo-frame#modal_2 [data-controller='modal-result']")
+    expect(result["data-modal-result-event-value"]).to eq("zone:created")
+  end
+
+  it "has a dialog for each stacked modal" do
+    get root_path
+    frames = Nokogiri::HTML(response.body).css("dialog[data-controller='modal'] turbo-frame").map { |frame| frame["id"] }
+    expect(frames).to eq(ModalSupport::MODAL_FRAMES)
+  end
+
+  def response_body_for(path, headers)
+    get(path, headers:)
+    response.body
+  end
+
   it "closes and refreshes the page behind after a normal save" do
     post trading_zones_path, params: { zone: { name: "Pueblo Nuevo" } }, headers: modal
     result = Nokogiri::HTML(response.body).at_css("[data-controller='modal-result']")

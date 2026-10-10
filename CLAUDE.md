@@ -227,6 +227,9 @@ los errores).
   `modal` (`ModalSupport`, `modal_controller.js`). Un enlace con
   `modal_link_to` / `detail_button` abre su página ahí; la página usa el layout
   `modal` sin navegación. `page_link_to` sale del modal a página completa.
+  Los modales se apilan: un `modal_link_to` dentro de un modal abre el
+  siguiente (`modal_2`, `modal_3`, `ModalSupport::MODAL_FRAMES`) encima, sin
+  perder el de abajo (p. ej. "Nueva zona" desde "Nuevo productor").
 - Al guardar desde el modal, el controlador llama `close_modal_with`: cierra el
   modal y refresca la página de atrás con el aviso. Si el modal se abrió desde
   un campo (`picker=1`), en vez de refrescar emite un evento de ventana
