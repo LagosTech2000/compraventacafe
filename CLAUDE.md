@@ -70,7 +70,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Módulo | `AppModule` (`Module` es palabra reservada de Ruby) |
 | Ver / crear / editar / borrar | `read` / `create` / `update` / `destroy` |
 | Administración | `administration` |
-| Compra y venta de café | `trading` |
+| Compra de café | `trading` |
 | Fincas | `farms` |
 | Préstamos | `loans` |
 | Reportería | `reports` |
@@ -356,7 +356,11 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 Cada módulo tiene su namespace de controladores. Implementar una funcionalidad
 es llenar su carpeta, no crearla.
 
-### Compra y venta (`trading`)
+### Compra de café (`trading`)
+
+En la interfaz el módulo se llama **«Compra de café»**: las ventas irán en
+un módulo aparte, más adelante (Fernando, 2026-10-11). Solo cambiaron los
+textos; la clave y el código siguen siendo `trading`.
 
 - **Cálculo de la compra** (`PurchaseCalculation`) [CONFIRMADO, Fernando,
   2026-10-10]. Tara de la macro del cliente: 1 lb por saco de 165 lb,

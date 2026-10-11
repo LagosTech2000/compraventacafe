@@ -6,7 +6,7 @@ es:
 
   app_modules:
     administration: "Administración"
-    trading: "Compra y venta de café"
+    trading: "Compra de café"
     farms: "Fincas"
     loans: "Préstamos"
     reports: "Reportería"
@@ -1759,7 +1759,7 @@ es:
       trading:
         home:
           index:
-            title: "Resumen de compra y venta"
+            title: "Resumen de compra de café"
             summary: "El trabajo del día en cuatro pasos. Lo resaltado tiene trabajo pendiente."
             steps:
               - "Pesar y registrar compras: cada pesada es una compra."

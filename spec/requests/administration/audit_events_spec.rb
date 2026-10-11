@@ -21,7 +21,7 @@ RSpec.describe "Administration::AuditEvents" do
     }
     event = AuditEvent.find_by!(auditable_type: "Permission", action: "create")
     expect(event.user).to eq(admin)
-    expect(event.auditable_label).to eq("#{user.email_address}: Compra y venta de café")
+    expect(event.auditable_label).to eq("#{user.email_address}: Compra de café")
     expect(event.request_id).to be_present
   end
 
