@@ -1,0 +1,6 @@
+<%= filter_text_field form, :q, t("reports.filters.producer"), value: filter.q, placeholder: t("trading.invoices.index.search_placeholder") %>
+<%= filter_select form, :payment_status, t("reports.filters.payment_status"), enum_options(Invoice, :payment_status, Invoice::PAYMENT_STATUSES),
+      selected: filter.payment_status %>
+<%= filter_select form, :payment_method, t("reports.filters.payment_method"), enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS),
+      selected: filter.payment_method %>
+<%= filter_select form, :zone_id, t("reports.filters.zone"), Zone.ordered.pluck(:name, :id), selected: filter.zone_id, all: t("shared.filters.all_zones") %>

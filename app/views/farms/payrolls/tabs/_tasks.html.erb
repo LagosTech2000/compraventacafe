@@ -1,0 +1,66 @@
+<%# Tasks paid by task: their value is split in equal parts among who did them. %>
+<p class="mt-4 text-sm text-ink-muted"><%= t("farms.payrolls.tasks.help") %></p>
+<%= render layout: "shared/filters", locals: { filter: @filter, url: farms_payroll_path(payroll, tab: "tasks") } do |form| %>
+  <%= hidden_field_tag :tab, "tasks", id: nil %>
+  <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: PayrollTask.human_attribute_name(:name) %>
+  <%= filter_select form, :status, t("farms.payrolls.tasks.status"),
+        PayrollTaskFilter::STATUSES.map { |status| [ t("farms.payrolls.tasks.statuses.#{status}"), status ] }, selected: @filter.status %>
+<% end %>
+<div class="mt-6">
+  <% if @tasks.any? %>
+    <div class="@container">
+      <ul class="space-y-3 @2xl:hidden">
+        <% @tasks.each do |task| %>
+          <li class="data-card" id="<%= dom_id(task, :card) %>">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="font-medium"><%= task.name %></p>
+                <p class="text-xs text-ink-muted"><%= task.completed? ? t("farms.payrolls.tasks.completed_on", date: l(task.completed_on)) : t("farms.payrolls.tasks.statuses.pending") %></p>
+                <p class="mt-1 font-semibold tabular-nums"><%= format_money(task.amount) %></p>
+                <p class="text-xs text-ink-muted"><%= t("farms.payrolls.tasks.participants", count: task.participants.size) %></p>
+              </div>
+              <%= render "farms/payrolls/task_actions", payroll:, task: %>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+      <div class="hidden overflow-x-auto panel @2xl:block">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th><%= PayrollTask.human_attribute_name(:name) %></th>
+              <th><%= PayrollTask.human_attribute_name(:completed_on) %></th>
+              <th class="text-right"><%= PayrollTask.human_attribute_name(:amount) %></th>
+              <th><%= PayrollTask.human_attribute_name(:members) %></th>
+              <th class="text-right"><%= t("farms.payrolls.tasks.share") %></th>
+              <th class="cell-actions"><span class="sr-only"><%= t("farms.payrolls.table.actions") %></span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @tasks.each do |task| %>
+              <% shares = task.shares %>
+              <tr id="<%= dom_id(task) %>">
+                <td class="font-medium"><%= task.name %></td>
+                <td class="whitespace-nowrap">
+                  <% if task.completed? %>
+                    <%= l(task.completed_on) %>
+                    <% if task.paid? %><span class="badge badge-success ml-1"><%= t("farms.payrolls.tasks.paid") %></span><% end %>
+                  <% else %>
+                    <span class="badge badge-neutral"><%= t("farms.payrolls.tasks.statuses.pending") %></span>
+                  <% end %>
+                </td>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(task.amount) %></td>
+                <td><%= shares.keys.map(&:full_name).join(", ").presence || "—" %></td>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= shares.any? ? format_money(shares.values.min) : "—" %></td>
+                <td class="cell-actions"><%= render "farms/payrolls/task_actions", payroll:, task: %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "tasks" } %>
+  <% else %>
+    <p class="empty-state"><%= t("farms.payrolls.tasks.empty") %></p>
+  <% end %>
+</div>

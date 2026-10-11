@@ -21,6 +21,31 @@ RSpec.describe "Loans flow" do
     expect(loan.payments.last.interest_amount).to eq(30)
   end
 
+  it "opens a printable receipt for each payment, with the balance right after it" do
+    loan = create(:loan, person:, cash_amount: 1_000, monthly_interest_rate: 0, disbursed_on: Time.zone.today - 10)
+    post loans_loan_payments_path(loan), params: { loan_payment: { paid_on: Time.zone.today - 5, amount: "300", payment_method: "cash" } },
+                                         headers: { "Turbo-Frame" => "modal" }
+    first = loan.payments.last
+    expect(response.body).to include(%(data-modal-result-visit-value="#{loans_loan_path(loan, receipt: first.id)}"))
+
+    get loans_loan_path(loan, receipt: first.id)
+    expect(Nokogiri::HTML(response.body).at_css("turbo-frame#modal")["src"]).to eq(loans_loan_payment_path(loan, first))
+    create(:loan_payment, loan:, amount: 200)
+
+    get loans_loan_payment_path(loan, first)
+    page = Nokogiri::HTML(response.body)
+    expect(page.css("article").size).to eq(2) # original and copy
+    expect(page.text).to include("ORIGINAL", "COPIA", "Recibo de abono #{first.display_number}", person.full_name,
+                                 "L 300.00", "L 700.00") # what was owed right after it, not today
+
+    get loans_loan_payment_path(loan, first), headers: { "Turbo-Frame" => "modal" }
+    expect(Nokogiri::HTML(response.body).css("article").size).to eq(1)
+
+    loan.payments.last.update_columns(amount: 1_000, principal_amount: 700)
+    get loans_loan_payment_path(loan, loan.payments.last)
+    expect(response.body).to include("Préstamo saldado")
+  end
+
   it "shows the error in Spanish when a payment is too large" do
     loan = create(:loan, cash_amount: 100, monthly_interest_rate: 0)
     post loans_loan_payments_path(loan), params: { loan_payment: { paid_on: Time.zone.today, amount: "200", payment_method: "cash" } }

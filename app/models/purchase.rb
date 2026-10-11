@@ -1,11 +1,16 @@
-# One weighing of coffee bought from a producer.
+# Coffee bought from a producer: its weight (in one figure or by weighings),
+# the calculation from it and where it is in its lifecycle.
 class Purchase < ApplicationRecord
   include Auditable
 
   COFFEE_STATES = %w[cherry wet_parchment dry_parchment].freeze
+  # The gross weight is typed in one figure, or is the sum of weighings
+  # (PurchaseWeighing), each with the sacks counted on the scale.
+  WEIGHT_MODES = %w[single weighings].freeze
   # What the calculation reads. Results are recalculated only when one of
   # these changes, so a stored purchase keeps its numbers if the rule changes.
-  CALCULATION_INPUTS = %w[coffee_state gross_weight humidity_percent damage_percent yield_factor price_per_pound].freeze
+  # By weighings, the counted sacks are an input too.
+  CALCULATION_INPUTS = %w[coffee_state weight_mode gross_weight humidity_percent damage_percent yield_factor price_per_pound].freeze
 
   belongs_to :producer
   belongs_to :zone, optional: true
@@ -14,11 +19,15 @@ class Purchase < ApplicationRecord
   belongs_to :voided_by, class_name: "User", optional: true
   # Loan payments made with this purchase's money ("pago con café").
   has_many :loan_payments, dependent: :restrict_with_error
+  has_many :weighings, -> { order(:id) }, class_name: "PurchaseWeighing", dependent: :destroy, inverse_of: :purchase
+  accepts_nested_attributes_for :weighings, allow_destroy: true, reject_if: :blank_weighing?
 
   normalizes :observations, with: FieldFormats::STRIP
 
   validates :purchased_at, presence: true
   validates :coffee_state, inclusion: { in: COFFEE_STATES }
+  validates :weight_mode, inclusion: { in: WEIGHT_MODES }
+  validate :weighings_present, if: :by_weighings?
   validates :gross_weight, numericality: { greater_than: 0, less_than: 100_000 }
   validates :price_per_pound, numericality: { greater_than: 0, less_than: 100_000 }
   with_options if: :recalculate? do
@@ -32,6 +41,8 @@ class Purchase < ApplicationRecord
   validate :invoice_belongs_to_same_producer
   validate :voided_not_invoiced
 
+  # First: by weighings, the gross weight and sacks come from them.
+  before_validation :sum_weighings
   before_validation :clear_unused_inputs, if: :recalculate?
   before_validation :calculate, if: :recalculate?
   before_validation :assign_season
@@ -67,6 +78,15 @@ class Purchase < ApplicationRecord
 
   def cherry?
     coffee_state == "cherry"
+  end
+
+  def by_weighings?
+    weight_mode == "weighings"
+  end
+
+  # Weighings that stay after saving (the form may mark some for removal).
+  def kept_weighings
+    weighings.reject(&:marked_for_destruction?)
   end
 
   def season
@@ -109,7 +129,28 @@ class Purchase < ApplicationRecord
 
   private
     def recalculate?
-      new_record? || CALCULATION_INPUTS.any? { |input| will_save_change_to_attribute?(input) }
+      inputs = by_weighings? ? CALCULATION_INPUTS + %w[sacks] : CALCULATION_INPUTS
+      new_record? || inputs.any? { |input| will_save_change_to_attribute?(input) }
+    end
+
+    def blank_weighing?(attributes)
+      attributes["id"].blank? && attributes.values_at("gross_weight", "sacks").all?(&:blank?)
+    end
+
+    # By weighings, the gross weight and the sacks are their sums (never
+    # typed). Switched back to one figure, its old weighings are removed.
+    def sum_weighings
+      if by_weighings?
+        kept = kept_weighings
+        self.gross_weight = kept.sum { |weighing| weighing.gross_weight.to_d }
+        self.sacks = kept.sum { |weighing| weighing.sacks.to_i }
+      elsif will_save_change_to_weight_mode?
+        weighings.each(&:mark_for_destruction)
+      end
+    end
+
+    def weighings_present
+      errors.add(:weighings, :blank) if kept_weighings.empty?
     end
 
     # Cherry has no humidity nor damage; parchment has no yield.
@@ -127,7 +168,8 @@ class Purchase < ApplicationRecord
       return unless gross_weight.present? && price_per_pound.present? && inputs.all?(&:present?)
 
       calculation = PurchaseCalculation.new(coffee_state:, gross_weight:, price_per_pound:,
-                                            humidity_percent:, damage_percent:, yield_factor:)
+                                            humidity_percent:, damage_percent:, yield_factor:,
+                                            counted_sacks: (sacks if by_weighings?))
       self.sacks = calculation.sacks
       self.tare = calculation.tare
       self.net_weight = calculation.net_weight

@@ -1,0 +1,37 @@
+<% payroll = expense.payroll %>
+<%= form_with model: expense, url: expense.persisted? ? farms_payroll_expense_path(payroll, expense) : farms_payroll_expenses_path(payroll),
+      scope: :payroll_expense, class: form_surface_class("max-w-2xl space-y-5"), data: { controller: "form-validation" } do |form| %>
+  <%= render "shared/form_errors", record: expense %>
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div>
+      <%= form.label :spent_on, class: "field-label" %>
+      <%= form.date_field :spent_on, required: true, class: "field-input" %>
+    </div>
+    <div data-controller="option-picker" data-action="expense_category:created@window->option-picker#add">
+      <%= form.label :expense_category_id, class: "field-label" %>
+      <% categories = ExpenseCategory.active.ordered.to_a | [ expense.category ].compact %>
+      <%= form.collection_select :expense_category_id, categories, :id, :name, { prompt: t("shared.select.pick_category") }, required: true,
+            class: "field-input", data: { option_picker_target: "select",
+                                          missing_message: "#{PayrollExpense.human_attribute_name(:category)} #{t("errors.messages.blank")}" } %>
+      <% if policy(ExpenseCategory).create? %>
+        <%= modal_link_to t("farms.expenses.form.new_category"), new_farms_expense_category_path(picker: 1), class: "btn btn-sm mt-2" %>
+      <% end %>
+    </div>
+  </div>
+  <div class="grid gap-5 sm:grid-cols-3">
+    <div class="sm:col-span-2">
+      <%= form.label :description, class: "field-label" %>
+      <%= form.text_field :description, autofocus: true, required: true, maxlength: 200, class: "field-input",
+            data: { missing_message: "#{PayrollExpense.human_attribute_name(:description)} #{t("errors.messages.blank")}" } %>
+    </div>
+    <div>
+      <%= form.label :amount, class: "field-label" %>
+      <%= form.number_field :amount, required: true, min: 0.01, max: Payroll::MAX_AMOUNT - 0.01, step: 0.01, inputmode: "decimal",
+            placeholder: "0.00", class: "field-input text-lg" %>
+    </div>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= cancel_button farms_payroll_path(payroll, tab: "expenses") %>
+  </div>
+<% end %>

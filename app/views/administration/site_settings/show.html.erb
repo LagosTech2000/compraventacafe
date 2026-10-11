@@ -1,0 +1,56 @@
+<% content_for :title, t(".title") %>
+<% setting = @site_setting %>
+
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 max-w-2xl text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <% if policy(setting).update? %>
+    <%= modal_link_to t(".edit"), edit_administration_site_setting_path, class: "btn btn-primary" %>
+  <% end %>
+</div>
+
+<div class="mt-6 grid gap-6 lg:grid-cols-2">
+  <section class="panel p-5" aria-labelledby="site-values">
+    <h2 id="site-values" class="mb-4 text-lg font-semibold"><%= t(".values") %></h2>
+    <dl class="space-y-4 text-sm">
+      <div>
+        <dt class="text-xs font-semibold tracking-wide text-ink-muted uppercase"><%= SiteSetting.human_attribute_name(:business_name) %></dt>
+        <dd class="mt-1 text-base font-medium"><%= setting.business_name %></dd>
+      </div>
+      <div>
+        <dt class="text-xs font-semibold tracking-wide text-ink-muted uppercase"><%= SiteSetting.human_attribute_name(:location) %></dt>
+        <dd class="mt-1"><%= setting.location.presence || "—" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs font-semibold tracking-wide text-ink-muted uppercase"><%= SiteSetting.human_attribute_name(:logo) %></dt>
+        <dd class="mt-1">
+          <% if setting.logo? %>
+            <%= setting.logo_filename %> · <%= number_to_human_size(setting.logo_byte_size) %>
+          <% else %>
+            <span class="text-ink-muted"><%= t(".no_logo") %></span>
+          <% end %>
+        </dd>
+      </div>
+    </dl>
+    <% unless setting.persisted? %>
+      <p class="mt-4 text-xs text-ink-muted"><%= t(".defaults") %></p>
+    <% end %>
+  </section>
+
+  <section class="panel p-5" aria-labelledby="site-preview">
+    <h2 id="site-preview" class="mb-4 text-lg font-semibold"><%= t(".preview") %></h2>
+    <p class="mb-2 text-xs font-semibold tracking-wide text-ink-muted uppercase"><%= t(".navbar") %></p>
+    <div class="glass flex items-center gap-2.5 px-3 py-2.5">
+      <%= business_logo(:nav) %>
+      <span class="line-clamp-2 max-w-44 text-sm leading-tight font-bold"><%= setting.business_name %></span>
+    </div>
+    <p class="mt-5 mb-2 text-xs font-semibold tracking-wide text-ink-muted uppercase"><%= t(".sign_in") %></p>
+    <div class="flex flex-col items-center rounded-2xl bg-canvas p-5 text-center">
+      <%= business_logo(:sign_in) %>
+      <p class="mt-3 text-lg font-bold"><%= setting.business_name %></p>
+      <p class="text-sm text-ink-muted"><%= setting.location %></p>
+    </div>
+  </section>
+</div>

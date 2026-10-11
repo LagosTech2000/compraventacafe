@@ -56,3 +56,6 @@ group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
 end
+
+# Report exports (no longer a default gem since Ruby 3.4).
+gem "csv", "~> 3.3"

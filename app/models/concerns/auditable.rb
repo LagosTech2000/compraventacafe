@@ -9,6 +9,10 @@ module Auditable
   SENSITIVE_ATTRIBUTES = %w[password_digest].freeze
 
   included do
+    # Attributes a model keeps out of the log (e.g. a file's bytes); the
+    # change shows through its other attributes (file name, size).
+    class_attribute :audit_skipped_attributes, default: [], instance_writer: false
+
     after_create { record_audit("create", saved_changes) }
     after_update { record_audit("update", saved_changes) }
     after_destroy { record_audit("destroy", attributes.transform_values { |value| [ value, nil ] }) }
@@ -27,7 +31,7 @@ module Auditable
     end
 
     def audit_changeset(changes)
-      changes.except(*IGNORED_ATTRIBUTES).to_h do |attribute, (before, after)|
+      changes.except(*IGNORED_ATTRIBUTES, *audit_skipped_attributes).to_h do |attribute, (before, after)|
         if SENSITIVE_ATTRIBUTES.include?(attribute)
           [ attribute, [ before && AuditEvent::FILTERED, after && AuditEvent::FILTERED ] ]
         else

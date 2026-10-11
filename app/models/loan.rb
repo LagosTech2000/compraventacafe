@@ -103,8 +103,10 @@ class Loan < ApplicationRecord
       attributes["id"].blank? && attributes.values_at("supply_id", "quantity").all?(&:blank?)
     end
 
-    # The principal is never typed: it is the cash plus the supplies.
+    # The principal is never typed: it is the cash plus the supplies. Cash
+    # left blank (supplies only) is 0.
     def compute_principal
+      self.cash_amount = 0 if cash_amount.nil?
       self.principal = cash_amount.to_d + supplies_amount
     end
 

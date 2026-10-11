@@ -1,0 +1,9 @@
+<div class="flex justify-end gap-2">
+  <% if policy(expense).update? %>
+    <%= modal_link_to t("farms.payrolls.members.edit"), edit_farms_payroll_expense_path(payroll, expense), class: "btn btn-sm" %>
+  <% end %>
+  <% if policy(expense).destroy? %>
+    <%= button_to t("farms.payrolls.members.remove"), farms_payroll_expense_path(payroll, expense), method: :delete, class: "btn btn-sm",
+          form: { data: { turbo_confirm: t("farms.payrolls.expenses.confirm_remove") } } %>
+  <% end %>
+</div>

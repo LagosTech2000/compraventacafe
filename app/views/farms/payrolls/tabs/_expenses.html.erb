@@ -1,0 +1,56 @@
+<%= render layout: "shared/filters", locals: { filter: @filter, url: farms_payroll_path(payroll, tab: "expenses") } do |form| %>
+  <%= hidden_field_tag :tab, "expenses", id: nil %>
+  <%= filter_date_field form, :from, t("shared.filters.from"), value: @filter.from %>
+  <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
+  <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: PayrollExpense.human_attribute_name(:description) %>
+  <%= filter_select form, :expense_category_id, PayrollExpense.human_attribute_name(:category),
+        ExpenseCategory.ordered.pluck(:name, :id), selected: @filter.expense_category_id, all: t("farms.payrolls.expenses.all_categories") %>
+<% end %>
+<div class="mt-6">
+  <p class="mb-3 text-sm"><%= t("farms.payrolls.expenses.filtered_total_html", amount: tag.strong(format_money(@filtered_total), class: "tabular-nums")) %></p>
+  <% if @expenses.any? %>
+    <div class="@container">
+      <ul class="space-y-3 @2xl:hidden">
+        <% @expenses.each do |expense| %>
+          <li class="data-card" id="<%= dom_id(expense, :card) %>">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="font-medium"><%= expense.description %></p>
+                <p class="text-xs text-ink-muted"><%= l(expense.spent_on) %> · <%= expense.category.name %></p>
+                <p class="mt-1 font-semibold tabular-nums"><%= format_money(expense.amount) %></p>
+              </div>
+              <%= render "farms/payrolls/expense_actions", payroll:, expense: %>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+      <div class="hidden overflow-x-auto panel @2xl:block">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th><%= PayrollExpense.human_attribute_name(:spent_on) %></th>
+              <th><%= PayrollExpense.human_attribute_name(:category) %></th>
+              <th><%= PayrollExpense.human_attribute_name(:description) %></th>
+              <th class="text-right"><%= PayrollExpense.human_attribute_name(:amount) %></th>
+              <th class="cell-actions"><span class="sr-only"><%= t("farms.payrolls.table.actions") %></span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @expenses.each do |expense| %>
+              <tr id="<%= dom_id(expense) %>">
+                <td class="whitespace-nowrap"><%= l(expense.spent_on) %></td>
+                <td><%= expense.category.name %></td>
+                <td><%= expense.description %></td>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(expense.amount) %></td>
+                <td class="cell-actions"><%= render "farms/payrolls/expense_actions", payroll:, expense: %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "expenses" } %>
+  <% else %>
+    <p class="empty-state"><%= t("farms.payrolls.expenses.empty") %></p>
+  <% end %>
+</div>

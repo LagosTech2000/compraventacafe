@@ -1,0 +1,5 @@
+<%# Farm and payroll filters shared by the farms reports. %>
+<%= filter_select form, :farm_id, t("reports.filters.farm"), Farm.order(:name).pluck(:name, :id), selected: filter.farm_id %>
+<%= filter_select form, :payroll_id, t("reports.filters.payroll"),
+      Payroll.joins(:farm).order("farms.name", "payrolls.name").pluck(Arel.sql("payrolls.name || ' · ' || farms.name"), "payrolls.id"),
+      selected: filter.payroll_id %>

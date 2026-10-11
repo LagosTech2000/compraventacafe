@@ -1,0 +1,75 @@
+<% fixed = payroll.persisted? && payroll.payments.exists? %>
+<%= form_with model: [ :farms, payroll ], class: form_surface_class("max-w-3xl space-y-6"),
+      data: { controller: "form-validation payroll-form" } do |form| %>
+  <%= render "shared/form_errors", record: payroll %>
+
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div data-controller="option-picker" data-action="farm:created@window->option-picker#add">
+      <%= form.label :farm_id, class: "field-label" %>
+      <% farms = Farm.active.ordered.to_a | [ payroll.farm ].compact %>
+      <%= form.collection_select :farm_id, farms, :id, :name, { prompt: t("shared.select.pick_farm") }, required: true, class: "field-input",
+            autofocus: payroll.farm.nil?, data: { option_picker_target: "select",
+                                                  missing_message: "#{Payroll.human_attribute_name(:farm)} #{t("errors.messages.blank")}" } %>
+      <% if policy(Farm).create? %>
+        <%= modal_link_to t(".new_farm"), new_farms_farm_path(picker: 1), class: "btn btn-sm mt-2" %>
+      <% end %>
+    </div>
+    <div>
+      <%= form.label :name, class: "field-label" %>
+      <%= form.text_field :name, required: true, maxlength: 100, class: "field-input", placeholder: t(".name_placeholder"),
+            autofocus: payroll.farm.present?,
+            data: { missing_message: "#{Payroll.human_attribute_name(:name)} #{t("errors.messages.blank")}" } %>
+    </div>
+  </div>
+
+  <fieldset>
+    <legend class="field-label"><%= Payroll.human_attribute_name(:kind) %></legend>
+    <div class="grid gap-3 sm:grid-cols-3">
+      <% Payroll::KINDS.each do |kind| %>
+        <label class="data-card flex cursor-pointer gap-3 has-[:checked]:ring-2 has-[:checked]:ring-primary">
+          <%= form.radio_button :kind, kind, disabled: fixed, class: "mt-1 size-4 accent-primary",
+                data: { payroll_form_target: "kind", action: "payroll-form#update" } %>
+          <span>
+            <span class="block font-medium"><%= Payroll.human_attribute_name("kind/#{kind}") %></span>
+            <span class="block text-xs text-ink-muted"><%= t(".kinds.#{kind}") %></span>
+          </span>
+        </label>
+      <% end %>
+    </div>
+  </fieldset>
+
+  <div class="grid gap-5 sm:grid-cols-3">
+    <div>
+      <%= form.label :pay_frequency, class: "field-label" %>
+      <%= form.select :pay_frequency, enum_options(Payroll, :pay_frequency, PayPeriod::FREQUENCIES), {}, required: true,
+            class: "field-input" %>
+    </div>
+    <div>
+      <%= form.label :starts_on, class: "field-label" %>
+      <%= form.date_field :starts_on, required: true, class: "field-input" %>
+    </div>
+    <div>
+      <%= form.label :ends_on, class: "field-label" %>
+      <%= form.date_field :ends_on, class: "field-input" %>
+      <p class="mt-1 text-xs text-ink-muted"><%= t(".ends_on_help") %></p>
+    </div>
+  </div>
+  <p class="-mt-3 text-xs text-ink-muted"><%= fixed ? t(".fixed_help") : t(".frequency_help") %></p>
+
+  <div class="max-w-xs" data-payroll-form-target="harvestField" <%= "hidden" unless payroll.harvest? %>>
+    <%= form.label :can_price, class: "field-label" %>
+    <%= form.number_field :can_price, required: true, disabled: !payroll.harvest?, min: 0.01, max: 99_999.99, step: 0.01,
+          inputmode: "decimal", placeholder: "0.00", class: "field-input text-lg" %>
+    <p class="mt-1 text-xs text-ink-muted"><%= t(".can_price_help") %></p>
+  </div>
+
+  <div>
+    <%= form.label :observations, class: "field-label" %>
+    <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+  </div>
+
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= cancel_button payroll.persisted? ? farms_payroll_path(payroll) : farms_payrolls_path %>
+  </div>
+<% end %>

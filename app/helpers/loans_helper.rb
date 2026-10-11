@@ -22,11 +22,17 @@ module LoansHelper
     supplies.map { |supply| [ supply.name, supply.id ] }
   end
 
-  # "Efectivo", or "Con café · compra 72" for a payment made with a purchase.
+  # "Efectivo", "Con café · compra 72" for a payment made with a purchase, or
+  # "Descuento de planilla · Corte 2026" for one taken from a payroll.
   def payment_method_label(payment)
-    return payment.human_payment_method unless payment.purchase_id
-
-    t("loans.payments.table.with_purchase", method: payment.human_payment_method, number: payment.purchase_id)
+    if payment.purchase_id
+      t("loans.payments.table.with_purchase", method: payment.human_payment_method, number: payment.purchase_id)
+    elsif payment.payroll_payment_line
+      t("loans.payments.table.with_payroll", method: payment.human_payment_method,
+                                             payroll: payment.payroll_payment_line.payment.payroll.name)
+    else
+      payment.human_payment_method
+    end
   end
 
   def loan_kind_badge(loan)

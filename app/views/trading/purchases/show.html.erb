@@ -61,6 +61,7 @@
   <% {
        purchased_at: l(@purchase.purchased_at, format: :long), season_year: format_season(@purchase.season),
        zone: @purchase.zone&.name, coffee_state: @purchase.human_coffee_state,
+       weight_mode: Purchase.human_attribute_name("weight_mode/#{@purchase.weight_mode}"),
        gross_weight: format_pounds(@purchase.gross_weight), sacks: format_pounds(@purchase.sacks), tare: format_pounds(@purchase.tare),
        **inputs, net_weight: format_pounds(@purchase.net_weight), quintals: format_pounds(@purchase.quintals),
        price_per_pound: format_money(@purchase.price_per_pound), total: format_money(@purchase.total), observations: @purchase.observations
@@ -71,6 +72,32 @@
     </div>
   <% end %>
 </dl>
+
+<% if @purchase.by_weighings? %>
+  <section class="mt-6" aria-labelledby="purchase-weighings">
+    <h2 id="purchase-weighings" class="mb-3 text-lg font-semibold"><%= Purchase.human_attribute_name(:weighings) %></h2>
+    <div class="panel overflow-x-auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col" class="text-right"><%= PurchaseWeighing.human_attribute_name(:gross_weight) %></th>
+            <th scope="col" class="text-right"><%= PurchaseWeighing.human_attribute_name(:sacks) %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @purchase.weighings.each.with_index(1) do |weighing, number| %>
+            <tr>
+              <td><%= number %></td>
+              <td class="text-right tabular-nums"><%= format_pounds(weighing.gross_weight) %></td>
+              <td class="text-right tabular-nums"><%= weighing.sacks %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+<% end %>
 
 <% unless modal_request? %>
   <p class="mt-6"><%= link_to t(".back"), trading_purchases_path, class: "text-sm link" %></p>

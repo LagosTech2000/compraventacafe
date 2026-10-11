@@ -11,7 +11,8 @@ class LoanPaymentPolicy < ApplicationPolicy
     false
   end
 
+  # A payroll deduction goes away with its payroll payment, not alone.
   def destroy?
-    super && record.is_a?(LoanPayment) && record.latest?
+    super && record.is_a?(LoanPayment) && record.latest? && !record.from_payroll?
   end
 end

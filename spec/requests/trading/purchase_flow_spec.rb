@@ -77,6 +77,44 @@ RSpec.describe "Trading purchase flow" do
     expect(Nokogiri::HTML(response.body).at_css("a[autofocus]").text).to eq("Facturar ahora")
   end
 
+  it "registers a purchase by weighings and shows them on its detail" do
+    producer = create(:producer)
+    post trading_purchases_path, params: {
+      purchase: { producer_id: producer.id, purchased_at: Time.zone.now, coffee_state: "wet_parchment", weight_mode: "weighings",
+                  gross_weight: "", humidity_percent: "51", damage_percent: "0", price_per_pound: "58",
+                  weighings_attributes: { "0" => { gross_weight: "300", sacks: "2" }, "1" => { gross_weight: "300", sacks: "2" },
+                                          "2" => { gross_weight: "300", sacks: "2" }, "3" => { gross_weight: "", sacks: "" } } }
+    }
+    purchase = Purchase.last
+    expect(purchase).to have_attributes(weight_mode: "weighings", gross_weight: 900, sacks: 6, tare: 6)
+    expect(purchase.weighings.count).to eq(3)
+
+    get edit_trading_purchase_path(purchase)
+    page = Nokogiri::HTML(response.body)
+    expect(page.at_css("input#purchase_gross_weight")["readonly"]).to be_present
+    expect(page.css("input[name^='purchase[weighings_attributes]'][name$='[sacks]']").size).to eq(4) # 3 + template
+
+    get trading_purchase_path(purchase)
+    expect(response.body).to include("Por pesadas", "Pesadas")
+  end
+
+  it "filters purchases and invoices by the seasons that have purchases" do
+    old = create(:purchase, purchased_at: Time.zone.local(2025, 10, 1, 9))
+    current = create(:purchase, purchased_at: Time.zone.local(2026, 9, 15, 9))
+    old_invoice = InvoiceIssuer.new(producer: old.producer, user:, purchase_ids: [ old.id ], payment_status: "pending").call.invoice
+
+    get trading_purchases_path(season_year: 2025, from: "", to: "")
+    expect(response.body).to include(dom_id_for(old))
+    expect(response.body).not_to include(dom_id_for(current))
+    options = Nokogiri::HTML(response.body).css("select#season_year option").map(&:text)
+    expect(options).to eq([ "Todas las temporadas", "Temporada 2026", "Temporada 2025" ])
+
+    get trading_invoices_path(season_year: 2026)
+    expect(response.body).not_to include(trading_invoice_path(old_invoice))
+    get trading_invoices_path(season_year: 2025)
+    expect(response.body).to include(trading_invoice_path(old_invoice))
+  end
+
   it "rejects a purchase without producer, in Spanish" do
     post trading_purchases_path, params: { purchase: { gross_weight: "146", humidity_percent: "51", price_per_pound: "58", coffee_state: "cherry", purchased_at: Time.zone.today } }
     expect(response).to have_http_status(:unprocessable_content)

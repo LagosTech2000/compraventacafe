@@ -1,0 +1,130 @@
+<% report = @report %>
+<% content_for :title, "#{report.title} · #{AppModule.human_name("reports")}" %>
+<% saved_reports = policy_scope(SavedReport).ordered.to_a %>
+<% period = report.period %>
+<% previous = period.previous %>
+
+<div class="mb-5 flex items-center gap-3 print:hidden">
+  <span class="grid size-11 place-items-center rounded-2xl bg-primary-soft text-primary"><%= icon(:reports, css: "size-6") %></span>
+  <p class="text-2xl font-bold tracking-tight sm:text-3xl"><%= AppModule.human_name("reports") %></p>
+</div>
+
+<%# What to see: a report, a suggested one or one of my saved filters. %>
+<section class="clay grid gap-4 p-4 ring-1 ring-line/60 sm:grid-cols-3 print:hidden" aria-label="<%= t("reports.show.pickers") %>"
+         data-controller="navigate-select">
+  <div>
+    <label for="report_type" class="field-label"><%= t("reports.show.report_type") %></label>
+    <select id="report_type" class="field-input" data-action="navigate-select#go"><%= report_type_options(report) %></select>
+  </div>
+  <div>
+    <label for="report_preset" class="field-label"><%= t("reports.show.presets") %></label>
+    <select id="report_preset" class="field-input" data-action="navigate-select#go">
+      <option value=""><%= t("reports.show.pick_preset") %></option>
+      <%= report_preset_options %>
+    </select>
+  </div>
+  <div>
+    <label for="saved_report" class="field-label"><%= t("reports.show.saved") %></label>
+    <div class="flex gap-2">
+      <select id="saved_report" class="field-input min-w-0 flex-1" data-action="navigate-select#go" <%= "disabled" if saved_reports.empty? %>>
+        <option value=""><%= saved_reports.empty? ? t("reports.show.no_saved") : t("reports.show.pick_saved") %></option>
+        <%= saved_report_options(saved_reports) %>
+      </select>
+      <% if saved_reports.any? %>
+        <%= modal_link_to t("reports.show.manage_saved"), reports_saved_reports_path, class: "btn shrink-0", title: t("reports.show.manage_saved_title") %>
+      <% end %>
+    </div>
+  </div>
+</section>
+
+<div class="mt-6 flex flex-wrap items-start justify-between gap-4">
+  <div class="min-w-0">
+    <h1 class="text-2xl font-bold"><%= report.title %></h1>
+    <p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= report.class.description %></p>
+    <p class="mt-2 text-sm">
+      <span class="font-semibold"><%= format_report_period(period) %></span>
+      <% if previous %>
+        <span class="text-ink-muted">· <%= t("reports.show.compared_with", period: format_report_period(previous)) %></span>
+      <% end %>
+    </p>
+  </div>
+  <div class="flex flex-wrap gap-2 print:hidden" data-controller="print">
+    <% if policy(SavedReport).create? %>
+      <%= modal_link_to t("reports.show.save"), new_reports_saved_report_path(report_key: report.key, filters: report.filter.to_params.except("page")),
+            class: "btn btn-primary" %>
+    <% end %>
+    <%= link_to t("reports.show.export"), report_path_for(report.class, report.filter.to_params.except("page").merge(format: :csv)),
+          class: "btn", data: { turbo: false } %>
+    <button type="button" class="btn" data-action="print#print"><%= t("reports.show.print") %></button>
+  </div>
+</div>
+
+<%= render layout: "shared/filters", locals: { filter: report.filter, url: report_path_for(report.class) } do |form| %>
+  <div data-controller="report-period" class="contents">
+    <div>
+      <%= form.label :period, t("reports.filters.period"), class: "field-label" %>
+      <%= form.select :period, report_period_options(period.key), {}, class: "field-input",
+            data: { report_period_target: "select", action: "report-period#change" } %>
+    </div>
+    <div data-report-period-target="dates" class="contents">
+      <%= filter_date_field form, :from, t("shared.filters.from"), value: report.filter.from %>
+      <%= filter_date_field form, :to, t("shared.filters.to"), value: report.filter.to %>
+    </div>
+  </div>
+  <%= render "reports/reports/filters/#{report.key}", form:, report:, filter: report.filter %>
+  <% if report.groupings.any? %>
+    <%= filter_select form, :group, t("reports.filters.group"), report_group_options(report), selected: report.filter.group,
+          all: t("reports.filters.no_group") %>
+  <% end %>
+  <%= hidden_field_tag :sort, report.filter.sort, id: nil if report.filter.sort %>
+  <%= hidden_field_tag :dir, report.filter.dir, id: nil if report.filter.dir %>
+<% end %>
+
+<%# Figures of the whole result, against the period before. %>
+<section class="mt-6" aria-labelledby="report-figures">
+  <h2 id="report-figures" class="sr-only"><%= t("reports.show.figures") %></h2>
+  <dl class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+    <% report.kpis.each do |kpi| %>
+      <div class="stat">
+        <dt><%= t("reports.types.#{report.key}.kpis.#{kpi.key}") %></dt>
+        <dd class="truncate text-lg" title="<%= format_report_value(kpi.value || 0, kpi.type) %>"><%= format_report_value(kpi.value || 0, kpi.type) %></dd>
+        <% if (change = report_kpi_change(kpi)) %><p class="mt-1"><%= change %></p><% end %>
+      </div>
+    <% end %>
+  </dl>
+</section>
+
+<%# Charts: open by default, they can be folded away. They load on their own
+    so the table does not wait for them. %>
+<details open class="group mt-6 panel print:border-0">
+  <summary class="flex cursor-pointer list-none items-center justify-between gap-2 p-4 font-semibold print:hidden">
+    <span><%= t("reports.show.charts") %></span>
+    <span class="flex items-center gap-2 text-sm font-normal text-ink-muted">
+      <span class="group-open:hidden"><%= t("reports.show.show_charts") %></span>
+      <span class="hidden group-open:inline"><%= t("reports.show.hide_charts") %></span>
+      <span class="transition group-open:rotate-180" aria-hidden="true">▾</span>
+    </span>
+  </summary>
+  <%= turbo_frame_tag "report-charts", src: reports_report_charts_path(report.key, report.filter.to_params.except("page")),
+        class: "block px-4 pb-4" do %>
+    <div class="grid gap-4 lg:grid-cols-2" aria-busy="true">
+      <% 2.times do %><div class="h-72 animate-pulse rounded-xl bg-surface-2"></div><% end %>
+    </div>
+  <% end %>
+</details>
+
+<%# The rows: page by page as the list scrolls. %>
+<section class="mt-6" aria-labelledby="report-rows-title">
+  <div class="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+    <h2 id="report-rows-title" class="text-lg font-semibold">
+      <%= report.grouped? ? t("reports.show.grouped_by", group: t("reports.groups.#{report.grouping.key}")) : t("reports.show.rows") %>
+    </h2>
+    <p class="text-sm text-ink-muted" id="report-count"><%= render "reports/reports/count", report:, shown: @rows.size %></p>
+  </div>
+  <% if @rows.any? %>
+    <%= render "reports/reports/table", report:, rows: @rows %>
+    <%= render "reports/reports/more", report:, more: @more %>
+  <% else %>
+    <p class="empty-state"><%= t("reports.show.empty") %></p>
+  <% end %>
+</section>

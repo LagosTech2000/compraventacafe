@@ -38,9 +38,12 @@ class ListFilter
     scope
   end
 
-  # [records of this page, whether there is a next page]
+  # [records of this page, whether there is a next page]. The scope can be
+  # a relation or an array (lists computed in Ruby, like pay periods).
   def results(scope, per_page: PER_PAGE)
-    records = apply(scope).offset((page - 1) * per_page).limit(per_page + 1).to_a
+    filtered = apply(scope)
+    skip = (page - 1) * per_page
+    records = filtered.is_a?(Array) ? filtered.drop(skip).first(per_page + 1) : filtered.offset(skip).limit(per_page + 1).to_a
     [ records.first(per_page), records.size > per_page ]
   end
 

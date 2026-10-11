@@ -1,0 +1,2 @@
+<% loaded = (report.filter.page - 1) * Report::PER_PAGE + shown %>
+<%= t("reports.show.count", shown: number_with_delimiter(loaded), total: number_with_delimiter(report.total_count)) %>

@@ -1,0 +1,49 @@
+<%# The charts of a report, loaded into the "report-charts" frame of its page. %>
+<%= turbo_frame_tag "report-charts" do %>
+  <% if @report.total_count.zero? %>
+    <p class="empty-state"><%= t("reports.charts.empty") %></p>
+  <% else %>
+    <div class="grid gap-4 lg:grid-cols-2 print:block">
+      <% @report.charts.each do |chart| %>
+        <figure class="min-w-0 rounded-xl border border-line bg-surface p-4 break-inside-avoid print:mb-4 <%= "lg:col-span-2" if chart.options[:wide] %>">
+          <figcaption class="mb-3">
+            <span class="block font-semibold"><%= report_chart_title(@report, chart) %></span>
+            <span class="block text-xs text-ink-muted"><%= report_chart_help(@report, chart) %></span>
+          </figcaption>
+          <% if chart.type == :heatmap %>
+            <%= render "reports/reports/heatmap", values: chart.datasets.first[:data] %>
+          <% else %>
+            <div class="relative h-72" data-controller="report-chart" data-report-chart-config-value="<%= report_chart_config(@report, chart) %>">
+              <canvas role="img" aria-label="<%= report_chart_title(@report, chart) %>"></canvas>
+            </div>
+            <% if chart.type != :scatter && chart.labels.any? %>
+              <details class="mt-2 text-sm print:hidden">
+                <summary class="cursor-pointer text-xs font-medium text-primary"><%= t("reports.charts.data") %></summary>
+                <div class="mt-2 max-h-64 overflow-auto">
+                  <table class="data-table data-table-compact">
+                    <thead>
+                      <tr>
+                        <th></th>
+                        <% chart.datasets.each do |set| %><th class="text-right"><%= set[:label] %></th><% end %>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% chart.labels.each_with_index do |label, index| %>
+                        <tr>
+                          <th scope="row" class="text-left font-normal normal-case tracking-normal"><%= label %></th>
+                          <% chart.datasets.each do |set| %>
+                            <td class="whitespace-nowrap text-right tabular-nums"><%= format_report_value(set[:data][index], (set[:format] || :number).to_sym) %></td>
+                          <% end %>
+                        </tr>
+                      <% end %>
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+            <% end %>
+          <% end %>
+        </figure>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

@@ -1,0 +1,54 @@
+<% payroll = task.payroll %>
+<% members = payroll.members.includes(:person).select { |member| member.active? || task.participants.map(&:payroll_member_id).include?(member.id) }.sort_by(&:sort_key) %>
+<% chosen = task.kept_participants.map(&:payroll_member_id) %>
+<%= form_with model: task, url: task.persisted? ? farms_payroll_task_path(payroll, task) : farms_payroll_tasks_path(payroll),
+      scope: :payroll_task, class: form_surface_class("max-w-3xl space-y-5"), data: { controller: "form-validation task-split" } do |form| %>
+  <%= render "shared/form_errors", record: task %>
+  <div class="grid gap-5 sm:grid-cols-3">
+    <div class="sm:col-span-2">
+      <%= form.label :name, class: "field-label" %>
+      <%= form.text_field :name, autofocus: true, required: true, maxlength: 150, class: "field-input", placeholder: t("farms.tasks.form.name_placeholder"),
+            data: { missing_message: "#{PayrollTask.human_attribute_name(:name)} #{t("errors.messages.blank")}" } %>
+    </div>
+    <div>
+      <%= form.label :amount, class: "field-label" %>
+      <%= form.number_field :amount, required: true, min: 0.01, max: Payroll::MAX_AMOUNT - 0.01, step: 0.01, inputmode: "decimal",
+            placeholder: "0.00", class: "field-input text-lg", data: { task_split_target: "amount", action: "task-split#update" } %>
+    </div>
+  </div>
+
+  <fieldset>
+    <legend class="field-label"><%= PayrollTask.human_attribute_name(:members) %></legend>
+    <% if members.any? %>
+      <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        <%= hidden_field_tag "payroll_task[member_ids][]", "", id: nil %>
+        <% members.each do |member| %>
+          <label class="flex min-h-11 cursor-pointer items-center gap-2 text-sm">
+            <%= check_box_tag "payroll_task[member_ids][]", member.id, chosen.include?(member.id), id: dom_id(member, :task),
+                  class: "size-4 accent-primary", data: { task_split_target: "member", action: "task-split#update" } %>
+            <%= member.full_name %>
+          </label>
+        <% end %>
+      </div>
+      <p class="mt-2 text-sm"><%= t("farms.tasks.form.share") %> <strong class="tabular-nums" data-task-split-target="share">—</strong></p>
+    <% else %>
+      <p class="empty-state"><%= t("farms.tasks.form.no_members") %></p>
+    <% end %>
+  </fieldset>
+
+  <div class="max-w-xs">
+    <%= form.label :completed_on, class: "field-label" %>
+    <%= form.date_field :completed_on, min: payroll.starts_on, max: payroll.ends_on, class: "field-input" %>
+    <p class="mt-1 text-xs text-ink-muted"><%= t("farms.tasks.form.completed_help") %></p>
+  </div>
+
+  <div>
+    <%= form.label :observations, class: "field-label" %>
+    <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+  </div>
+
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= cancel_button farms_payroll_path(payroll, tab: "tasks") %>
+  </div>
+<% end %>

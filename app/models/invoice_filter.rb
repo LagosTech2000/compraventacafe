@@ -1,6 +1,7 @@
 class InvoiceFilter < ListFilter
   field :from, :date
   field :to, :date
+  field :season_year, :id
   field :q, :text
   field :zone_id, :id
   field :payment_status, :choice, in: Invoice::PAYMENT_STATUSES
@@ -10,6 +11,8 @@ class InvoiceFilter < ListFilter
     scope = scope.where(issued_on: from..) if from
     scope = scope.where(issued_on: ..to) if to
     scope = search(scope) if q
+    # The season of its purchases (an invoice groups purchases of one producer).
+    scope = scope.where(id: Purchase.where(season_year:).select(:invoice_id)) if season_year
     scope = scope.where(id: Purchase.where(zone_id:).select(:invoice_id)) if zone_id
     scope = scope.where(payment_status:) if payment_status
     scope = scope.where(payment_method:) if payment_method

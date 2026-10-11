@@ -6,25 +6,32 @@
 # A payment can also come from a coffee purchase of the same person ("pago
 # con café", see PurchaseLoanSettlement): its method is "coffee" and it
 # points to the purchase, whose money it takes.
+#
+# And from a payroll payment (farms module): method "payroll", pointing to
+# the payment line of the person whose pay it takes. Those are removed with
+# the payroll payment, not one by one.
 class LoanPayment < ApplicationRecord
   include Auditable
 
-  # Methods chosen by hand; "coffee" only comes from a purchase.
+  # Methods chosen by hand; "coffee" only comes from a purchase and
+  # "payroll" from a payroll payment.
   PAYMENT_METHODS = %w[cash transfer check].freeze
   COFFEE = "coffee".freeze
+  PAYROLL = "payroll".freeze
 
   belongs_to :loan
   belongs_to :created_by, class_name: "User"
   belongs_to :purchase, optional: true
+  belongs_to :payroll_payment_line, optional: true
 
   normalizes :observations, with: FieldFormats::STRIP
 
   validates :paid_on, presence: true
-  validates :payment_method, inclusion: { in: PAYMENT_METHODS + [ COFFEE ] }
+  validates :payment_method, inclusion: { in: PAYMENT_METHODS + [ COFFEE, PAYROLL ] }
   validates :amount, numericality: { greater_than: 0, less_than: Loan::MAX_AMOUNT }
   validates :observations, length: { maximum: 500 }
   validate :in_date_order, :within_balance, :purchase_can_pay, on: :create
-  validate :coffee_comes_from_purchase
+  validate :coffee_comes_from_purchase, :payroll_comes_from_payroll
 
   before_validation :split, on: :create
   after_create :settle_loan
@@ -47,6 +54,23 @@ class LoanPayment < ApplicationRecord
 
   def with_coffee?
     payment_method == COFFEE
+  end
+
+  def from_payroll?
+    payment_method == PAYROLL
+  end
+
+  # Receipt number: the id, with 4 digits like invoices.
+  def display_number
+    format("%04d", id)
+  end
+
+  # What the loan owed right after this payment, on its date (later payments
+  # do not count): the stored splits of this one and the ones before it.
+  def balance_after
+    through = loan.payments.chronological.to_a
+    through = through.first(through.index(self) + 1)
+    LoanBalance.new(loan, as_of: paid_on, payments: through)
   end
 
   private
@@ -82,6 +106,10 @@ class LoanPayment < ApplicationRecord
 
     def coffee_comes_from_purchase
       errors.add(:payment_method, :coffee_without_purchase) if with_coffee? != purchase.present?
+    end
+
+    def payroll_comes_from_payroll
+      errors.add(:payment_method, :payroll_without_payment) if from_payroll? != payroll_payment_line.present?
     end
 
     # The purchase must be the same person's, still unpaid, and have money

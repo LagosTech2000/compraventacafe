@@ -11,9 +11,9 @@ module FiltersHelper
   end
 
   # choices: [[label, value], ...]; the blank option means "no filter".
-  def filter_select(form, name, label, choices, selected:, all: t("shared.filters.all"))
+  def filter_select(form, name, label, choices, selected:, all: t("shared.filters.all"), **html_options)
     filter_field(form, name, label) do
-      form.select name, options_for_select(choices, selected), { include_blank: all }, class: "field-input"
+      form.select name, options_for_select(choices, selected), { include_blank: all }, class: "field-input", **html_options
     end
   end
 

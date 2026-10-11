@@ -1,0 +1,12 @@
+<% rows.each do |row| %>
+  <tr>
+    <% columns.each do |column| %>
+      <td class="<%= report_cell_class(column) %>"><%= report_cell(column, row) %></td>
+    <% end %>
+    <% if report.detail? %>
+      <td class="cell-actions print:hidden">
+        <% if (path = report_detail_path(report, row)) %><%= detail_button path %><% end %>
+      </td>
+    <% end %>
+  </tr>
+<% end %>

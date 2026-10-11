@@ -52,6 +52,7 @@ El doc técnico etiqueta cada afirmación: `[CONFIRMADO]` (decidido por el dueñ
 | Autenticación | Generador nativo de Rails 8. **No Devise.** |
 | Tests | RSpec (`rspec-rails`), `factory_bot_rails`, `pundit-matchers` |
 | Tareas en segundo plano | Ninguna en la fundación. Sin Solid Queue/Cache/Cable. |
+| Gráficos | Chart.js 4.4.7, build UMD oficial en `vendor/javascript/chart.umd.min.js` (importmap, sin Node) |
 | Hosting | Render, plan de pago |
 | Repositorio | `github.com/LagosTech2000/compraventacafe` |
 
@@ -69,7 +70,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Módulo | `AppModule` (`Module` es palabra reservada de Ruby) |
 | Ver / crear / editar / borrar | `read` / `create` / `update` / `destroy` |
 | Administración | `administration` |
-| Compra y venta de café | `trading` |
+| Compra de café | `trading` |
 | Fincas | `farms` |
 | Préstamos | `loans` |
 | Reportería | `reports` |
@@ -90,6 +91,22 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Pago con café (abonar préstamos con una compra) | `PurchaseLoanSettlement`; abono con `payment_method: "coffee"` |
 | Estado de cuenta / historial crediticio | `CreditAccount` |
 | Score de pago | `PayerScore` |
+| Recibo de abono | `loans/payments#show` (`LoanPayment#display_number`) |
+| Finca | `Farm` |
+| Planilla (por día / por obra o tarea / corte por lata) | `Payroll` (`kind`: `daily` / `task` / `harvest`) |
+| Rol de planilla / salario por día / salario propio | `PayrollRole` / `daily_wage` / `PayrollMember#daily_wage_override` |
+| Empleado de planilla | `PayrollMember` (una `Person` con rol `Collaborator`) |
+| Asistencia (día completo / medio día) | `PayrollAttendance` (`day_fraction` 1 / 0.5) |
+| Latas cortadas / precio de la lata | `HarvestEntry` (`cans`) / `Payroll#can_price` |
+| Caporal (en corte: no corta, salario por día) | `PayrollMember#paid_by_day?` (tiene rol o salario propio) |
+| Tarea (obra) / participante | `PayrollTask` / `PayrollTaskParticipant` |
+| Semanal / quincenal / mensual | `pay_frequency`: `weekly` / `biweekly` / `monthly` (`PayPeriod`) |
+| Pago de planilla / planilla de pago | `PayrollPayment` + `PayrollPaymentLine` (`PayrollPaymentIssuer`) |
+| Descuento de planilla (abono a préstamo) | `LoanPayment` con `payment_method: "payroll"` |
+| Gasto de planilla / categoría de gasto | `PayrollExpense` / `ExpenseCategory` |
+| Reporte / reporte sugerido / filtro guardado ("Mis filtros") | `Report` (`app/reports/`) / `ReportPreset` / `SavedReport` |
+| Período del reporte (hoy, este mes, temporada…) | `ReportPeriod` |
+| Cifras del reporte / agrupar por | `Report.kpi` / `Report.group` |
 
 ## Modelo de permisos
 
@@ -290,6 +307,7 @@ bundle exec rspec spec/policies # solo políticas
 bin/rails db:migrate
 bin/rails db:seed               # requiere ADMIN_NAME, ADMIN_EMAIL y ADMIN_PASSWORD
 bin/rails demo:seed             # datos ficticios para la demo (no en producción)
+bin/rails demo:reports          # un año ficticio de operación (sep 2025 a hoy) para ver los reportes; tarda ~2 min
 bin/rubocop
 bin/brakeman --no-pager
 ```
@@ -322,23 +340,34 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
   papel; la factura cabe con original y copia en una hoja.
 - `raise_on_missing_translations` está activo en desarrollo y test: una clave
   que falte en `es.yml` rompe la página o el spec.
-- El nombre del negocio se lee con `t("negocio.nombre")`. Un solo lugar.
+- El nombre del negocio, su ubicación y su logo se configuran en
+  Administración → Configuración del sitio (`SiteSetting`, solo
+  administradores) y se leen con `business_name`, `business_location` y
+  `business_logo` (`SiteHelper`). Mientras no se guarde, salen de
+  `es.yml` (`negocio.*`). El logo se guarda en la base (no hay
+  almacenamiento de archivos en el servidor), se sirve en `/site_logo`
+  (público, por el inicio de sesión) y solo acepta PNG, JPG, WebP o GIF
+  de hasta 1 MB, revisados por su contenido; SVG no.
 - Locale `:es` únicamente. Zona horaria `America/Tegucigalpa`.
 
 ## Módulos
 
 | Clave | Estado |
 | --- | --- |
-| `administration` | Usuarios y permisos, y auditoría (solo administradores); personas, clientes y colaboradores (permisos del módulo) |
+| `administration` | Usuarios y permisos, auditoría y configuración del sitio (solo administradores); personas, clientes y colaboradores (permisos del módulo) |
 | `trading` | Demo: zonas, productores (con pestañas y QQ por temporada), compras con cálculo por estado del café y anulación, facturas imprimibles (original y copia) con estado de pago, cierre diario |
-| `farms` | Portada vacía |
-| `loans` | Préstamos en efectivo, insumos o mixtos a cualquier persona con interés simple, catálogo de insumos, abonos (también con café desde una compra), estados de cuenta con historial crediticio y score de pago |
-| `reports` | Portada vacía |
+| `farms` | Fincas, planillas por día, por obra y de corte por lata, con roles y salarios, asistencia o latas por día, pagos por período (semanal, quincenal, mensual) con descuento a préstamos, planilla de pago imprimible y gastos por planilla |
+| `loans` | Préstamos en efectivo, insumos o mixtos a cualquier persona con interés simple, catálogo de insumos, abonos (también con café desde una compra o descontados en planilla) con recibo imprimible, estados de cuenta con historial crediticio y score de pago |
+| `reports` | Una pantalla para todos los reportes del sistema (compras, facturas, productores, préstamos, abonos, insumos, planillas, pagos por empleado, latas, gastos, personas y entradas/salidas de dinero) con filtros, cifras comparadas, gráficos, tabla con carga continua, reportes sugeridos, filtros guardados por usuario y exportación CSV |
 
 Cada módulo tiene su namespace de controladores. Implementar una funcionalidad
 es llenar su carpeta, no crearla.
 
-### Compra y venta (`trading`)
+### Compra de café (`trading`)
+
+En la interfaz el módulo se llama **«Compra de café»**: las ventas irán en
+un módulo aparte, más adelante (Fernando, 2026-10-11). Solo cambiaron los
+textos; la clave y el código siguen siendo `trading`.
 
 - **Cálculo de la compra** (`PurchaseCalculation`) [CONFIRMADO, Fernando,
   2026-10-10]. Tara de la macro del cliente: 1 lb por saco de 165 lb,
@@ -347,6 +376,12 @@ es llenar su carpeta, no crearla.
     El daño es un porcentaje que se resta al peso neto (suele ser 2–2.5 %).
   - Uva: `(bruto − tara) × rendimiento`. No lleva humedad ni daño.
   - Quintales (QQ) = peso neto ÷ 125. Total = peso neto × precio por libra.
+- **Forma de pesar** (`Purchase#weight_mode`) [CONFIRMADO, Fernando,
+  2026-10-10]: `single` (peso bruto directo; sacos = bruto ÷ 165 y tara como
+  arriba) o `weighings` (por pesadas, `PurchaseWeighing`: peso + sacos
+  contados, enteros). Por pesadas, el bruto y los sacos son la suma (el
+  bruto no se escribe, el campo queda de solo lectura) y la **tara = 1 lb ×
+  sacos contados**. Al volver a peso directo se borran las pesadas.
 - Se guarda el resultado en la compra y **solo se recalcula si cambia una
   entrada** (`Purchase::CALCULATION_INPUTS`), para que el histórico no cambie
   si la regla cambia. `purchase_calculator_controller.js` lo replica solo
@@ -359,6 +394,9 @@ es llenar su carpeta, no crearla.
 - **Temporada** (`Season`) [CONFIRMADO]: empieza cada 1 de septiembre y
   lleva el año en que empieza (la 2026 va del 2026-09-01 al 2027-08-31).
   Cada compra guarda su `season_year`, calculado de la fecha de compra.
+  Compras y facturas se filtran por temporada (solo las que tienen compras;
+  una factura cae en la temporada de sus compras). Elegir una temporada
+  borra las fechas del filtro (`season_filter_controller.js`).
 - **Fecha y hora de la compra** (`purchased_at`): el formulario empieza con
   la hora actual y es editable. Toda pantalla e impreso la muestra con hora.
   Los filtros por fecha y el cierre diario cubren el día completo en hora de
@@ -419,7 +457,8 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
   (`cash_amount`, puede ser 0) y líneas de insumos (`LoanSupply`: cantidad ×
   precio unitario). El precio empieza en el predeterminado, se puede cambiar
   y se guarda en la línea. **Capital = efectivo + valor de los insumos**, y
-  el interés corre sobre todo el capital. El capital no se escribe: lo
+  el interés corre sobre todo el capital. El efectivo vacío cuenta como 0
+  (el formulario muestra `0.00` solo como placeholder). El capital no se escribe: lo
   calcula `Loan` (`loan_composition_controller.js` es solo vista previa).
 - **Pago con café** [Fernando delegó la regla, 2026-10-10; diseño propuesto
   en esta sesión, pendiente de confirmar]: desde el detalle de una compra se
@@ -440,16 +479,130 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
     (`PurchaseLoanSettlementPolicy`). Sin permiso de préstamos, la compra no
     muestra deudas.
 
+- **Recibo de abono**: cada abono tiene su recibo imprimible (original y
+  copia en una hoja) con el saldo que quedó a la fecha del abono. Al
+  registrar un abono se abre solo en el modal (`close_modal_with visit:`).
+
+### Fincas (`farms`) — fase 1
+
+Reglas decididas por Fernando el 2026-10-10 [CONFIRMADO]:
+
+- Varias fincas (`Farm`); cada una con muchas planillas (`Payroll`), cada una
+  con nombre, fechas (fin opcional) y tipo:
+  - **Por día** (`daily`): días de asistencia × salario por día. El salario
+    sale del **rol** del empleado en esa planilla (`PayrollRole`) o de su
+    **salario propio**, que manda sobre el del rol. La asistencia se marca
+    por día: completo (1), medio (½) o ausente (sin registro).
+  - **Por obra / tarea** (`task`): el valor de la tarea se divide en **partes
+    iguales** entre quienes la hicieron (L 1,000 entre 4 = L 250 c/u); se
+    paga en el período de la fecha en que se terminó. Una obra puede durar
+    un día o unas horas: planilla con la misma fecha de inicio y fin. Los centavos que sobran van uno a uno a los primeros
+    por apellido (decisión de implementación).
+  - **Corte de café** (`harvest`): latas por empleado por día × precio de la
+    lata de la planilla. Los **caporales** no cortan: tienen salario fijo
+    por día (Fernando, 2026-10-10). En corte, quien tiene rol o salario
+    propio gana por día con asistencia (`PayrollMember#paid_by_day?`), y
+    los cortadores van sin rol y ganan por latas. La asistencia se marca
+    igual que en la planilla por día (completo, medio, ausente), y las
+    pantallas los muestran en grillas separadas. Un empleado con latas no
+    pasa a ganar por día, ni al revés. Cada línea de pago guarda cómo se
+    ganó (`PayrollPaymentLine#basis`).
+- Empleados = personas con rol **Colaborador** (`PayrollMember`).
+- **Períodos** (`PayPeriod`): semanal (cierra el sábado), quincenal (1–15 y
+  16–fin de mes) o mensual (fin de mes). El primero empieza en la fecha de
+  inicio y el último termina en la de fin. **Un período nunca termina el
+  mismo día que empieza** (Fernando: "se paga el sábado lo trabajado durante
+  la semana"): una planilla que empieza un sábado paga ese día con el
+  sábado siguiente. Solo una planilla que termina ese mismo día (obra de un
+  día) tiene un período de un día. Los períodos por venir se listan como
+  "Próximo" hasta la fecha de fin (sin fecha de fin, solo el siguiente). El último día de un período es su día de
+  pago: desde ese día está "por pagar" (`PayPeriod#due?`).
+- **Editar una planilla**: la frecuencia y las fechas se pueden cambiar
+  siempre; los períodos pagados se quedan como se pagaron y los que faltan
+  se recalculan con la configuración nueva (un período sin pagar que choca
+  con uno pagado termina el día antes). Las fechas no pueden dejar fuera
+  días con trabajo o pagos registrados, y con pagos el tipo ya no cambia.
+  Salarios, roles y precio de la lata cambian lo que se calcula para los
+  períodos sin pagar; lo pagado queda guardado.
+- **Pago de un período** (`PayrollPaymentIssuer`): guarda lo calculado
+  (`PayrollCalculation`) por empleado; al pagar se puede **abonar a
+  préstamos** desde el salario, monto manual por préstamo, nunca más de lo
+  que gana (abono normal con forma "Descuento de planilla"; requiere crear
+  en `loans`). Un período pagado queda cerrado (asistencia, latas y tareas).
+  Solo se quita el pago del último período, con sus abonos.
+- **Sin séptimo día, décimo, IHSS ni otras deducciones o bonos** por ahora.
+- **Gastos** por planilla con fecha, categoría (catálogo `ExpenseCategory`,
+  se desactiva, no se borra), descripción y monto. Costo total de la
+  planilla = pagado (bruto) + gastos.
+- El Resumen del módulo muestra los períodos terminados sin pagar.
+
+### Reportería (`reports`)
+
+Pedido por Fernando el 2026-10-11: reportes globales (no de un módulo) con
+gráficos, filtros útiles para el dueño, carga continua, reportes sugeridos y
+filtros guardados por usuario. Los reportes solo **resumen datos que el
+sistema ya guarda**; no agregan reglas de negocio.
+
+- **Una pantalla** (`reports/reports#show`, `/reports/:key`): arriba se elige
+  el reporte, un reporte sugerido o uno de «Mis filtros»; después vienen los
+  filtros, las cifras, los gráficos (plegables, abiertos por defecto) y la
+  tabla.
+- **Un reporte = una clase en `app/reports/`** que hereda de `Report` y
+  declara `filter`, `column`, `measure`, `group`, `kpi` y `detail`, y
+  define `scope`, `apply_filters` y `charts` con los constructores de la
+  base (`over_time`, `over_time_by`, `breakdown`, `pareto`, `age_buckets`,
+  `weekday_hours`). Reporte nuevo = su clase + su lugar en `Report.catalog` +
+  su parcial de filtros (`reports/reports/filters/_<key>`) + sus textos en
+  `reports.types.<key>`.
+- Todo se calcula **en la base de datos sobre todos los registros
+  filtrados**, no sobre las filas cargadas. Las fechas con hora (compras) se
+  agrupan en hora de Tegucigalpa.
+- **Período** (`ReportPeriod`): hoy, ayer, esta semana, semana pasada, este
+  mes, mes pasado, últimos 30 o 90 días, esta temporada, temporada pasada,
+  las últimas 5 temporadas, este año, año pasado, todo o personalizado. Los
+  períodos llegan hasta hoy, y **las cifras se comparan con el mismo tramo
+  del período anterior** (este mes hasta hoy contra el mes pasado hasta el
+  mismo día). Un filtro guardado guarda la clave del período, no las fechas:
+  «Este mes» siempre es el mes en curso.
+- **Agrupar por** (día, semana, mes, productor, zona, estado, finca…)
+  convierte la tabla en sumas por grupo. Los encabezados ordenan.
+- **Tabla con carga continua**: 50 filas por página; la siguiente llega como
+  turbo stream cuando el botón «Cargar más» se acerca a la pantalla
+  (`infinite_scroll_controller.js`). Los gráficos cargan aparte, en su
+  propio frame (`reports/reports#charts`), para que la tabla no los espere.
+- **Gráficos** (`report_chart_controller.js`): barras, apiladas,
+  horizontales, líneas, combinados con segundo eje, Pareto, dona,
+  dispersión y mapa de calor (HTML). Bajo cada uno, «Ver los datos» muestra
+  sus números.
+- **Permisos**: un reporte pide ver Reportería **y** ver el módulo de donde
+  salen sus datos (`ReportPolicy`, `Report.module_keys`). Personas y
+  Entradas y salidas cruzan módulos y piden los tres. Guardar filtros solo
+  pide ver Reportería: son de cada usuario y nadie más los ve.
+- **Reportes sugeridos** (`ReportPreset`): preguntas frecuentes ya filtradas
+  (compras sin facturar, facturas pendientes, préstamos vencidos,
+  productores que dejaron de vender…).
+- **Exportar**: CSV con todas las filas filtradas (hasta 50,000), con BOM
+  para que Excel lea los acentos.
+- **Entradas y salidas de dinero**: salen facturas canceladas (total menos
+  abonos con café), préstamos en efectivo (los insumos no son dinero),
+  planillas (lo entregado) y gastos; entran los abonos en efectivo,
+  transferencia o cheque (con café o por planilla no se mueve dinero). Las
+  ventas de café todavía no existen en el sistema.
+- `config/brakeman.ignore` marca como falsos positivos el SQL de la base de
+  reportes: el orden y las columnas salen de lo que el reporte declara en
+  código, nunca de un parámetro.
+
 ## Puntos abiertos
 
 | Punto | Qué bloquea | Quién decide |
 | --- | --- | --- |
 | Tabla de precios (zona + calidad + bolsa) y categorías de calidad | Precio automático; hoy es manual | Cliente |
 | Retención de fin de temporada | Reporte de retención | Cliente |
-| Reportes por temporada (qué muestran) | Reportería por temporada; la temporada ya se guarda | Cliente |
+| Reportes por temporada (qué muestran) | El reporte de temporada que pida el cliente; los reportes generales ya filtran por temporada | Cliente |
 | Préstamos: recargo por mora | Mora | Cliente |
 | Pago con café: confirmar las reglas propuestas (ver Préstamos) | Ajustes al abono con compra | Fernando / Cliente |
 | Inventario de insumos (existencias, costo de compra) | Control de bodega de insumos | Cliente |
+| Planillas: séptimo día, décimo, IHSS u otras deducciones o bonos | Cálculo legal de planillas | Cliente |
 | Si la factura siempre agrupa hasta 4 compras | Hoy no hay límite | Cliente |
 | 160 lb/saco en salidas vs. 165 en compras | Salidas de camión | Cliente |
 | Contratos: moneda, cobro, anticipos del exportador | Ventas / contratos | Cliente |
@@ -468,7 +621,10 @@ Resueltos: versión de Ruby (3.4.x), Ubuntu 24.04 LTS, ambiente WSL, regla del
 unicidad y obligatoriedad de DNI (13 dígitos) y RTN (14 dígitos): ninguno es
 obligatorio. Préstamos fase 1: tasa mensual por préstamo, interés simple
 por día sobre saldo, abono a interés y luego capital, score por puntualidad
-(Fernando, 2026-09-28). Cálculo por estado del café (uva con rendimiento,
+(Fernando, 2026-09-28). Fincas fase 1: tipos de planilla, roles y salario propio, asistencia por
+día, quincena 1–15 / 16–fin de mes, obra en partes iguales, latas por día,
+descuento manual a préstamos, gastos con categoría (Fernando, 2026-10-10).
+Cálculo por estado del café (uva con rendimiento,
 pergamino con humedad 51 %/12 % y daño), QQ = neto ÷ 125, temporada desde el
 1 de septiembre y anulación de compras (Fernando, 2026-10-10).
 

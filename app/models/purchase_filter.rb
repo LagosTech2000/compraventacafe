@@ -5,6 +5,7 @@ class PurchaseFilter < ListFilter
 
   field :from, :date, default: -> { Time.zone.today }
   field :to, :date, default: -> { Time.zone.today }
+  field :season_year, :id
   field :q, :text
   field :zone_id, :id
   field :coffee_state, :choice, in: Purchase::COFFEE_STATES
@@ -13,6 +14,7 @@ class PurchaseFilter < ListFilter
 
   def apply(scope)
     scope = scope.on(from..to) if from || to
+    scope = scope.where(season_year:) if season_year
     scope = scope.where(producer_id: Producer.joins(:person).merge(Person.search(q)).select(:id)) if q
     scope = scope.where(zone_id:) if zone_id
     scope = scope.where(coffee_state:) if coffee_state

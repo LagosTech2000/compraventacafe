@@ -1,0 +1,6 @@
+<%= filter_text_field form, :q, t("reports.filters.person"), value: filter.q, placeholder: t("reports.filters.person_placeholder") %>
+<%= filter_select form, :status, t("reports.filters.loan_status"),
+      LoansReport::STATUSES.map { |key| [ t("reports.filters.loan_statuses.#{key}"), key ] }, selected: filter.status %>
+<%= filter_select form, :kind, t("reports.filters.loan_kind"), enum_options(Loan, :kind, Loan::KINDS), selected: filter.kind %>
+<%= filter_select form, :due, t("reports.filters.due"), LoansReport::DUES.map { |key| [ t("reports.filters.dues.#{key}"), key ] },
+      selected: filter.due %>

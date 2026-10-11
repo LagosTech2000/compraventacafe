@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_11_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_11_160000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -53,6 +53,39 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_090000) do
     t.index ["code"], name: "index_departments_on_code", unique: true
   end
 
+  create_table "expense_categories", force: :cascade do |t|
+    t.string "name", null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((name)::text)", name: "index_expense_categories_on_lower_name", unique: true
+  end
+
+  create_table "farms", force: :cascade do |t|
+    t.string "name", null: false
+    t.bigint "department_id"
+    t.bigint "municipality_id"
+    t.text "address_line"
+    t.text "observations"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((name)::text)", name: "index_farms_on_lower_name", unique: true
+    t.index ["department_id"], name: "index_farms_on_department_id"
+    t.index ["municipality_id"], name: "index_farms_on_municipality_id"
+  end
+
+  create_table "harvest_entries", force: :cascade do |t|
+    t.bigint "payroll_member_id", null: false
+    t.date "worked_on", null: false
+    t.decimal "cans", precision: 8, scale: 2, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["payroll_member_id", "worked_on"], name: "index_harvest_entries_on_payroll_member_id_and_worked_on", unique: true
+    t.index ["payroll_member_id"], name: "index_harvest_entries_on_payroll_member_id"
+    t.index ["worked_on"], name: "index_harvest_entries_on_worked_on"
+  end
+
   create_table "invoices", force: :cascade do |t|
     t.integer "number", null: false
     t.bigint "producer_id", null: false
@@ -64,6 +97,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_090000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["created_by_id"], name: "index_invoices_on_created_by_id"
+    t.index ["issued_on"], name: "index_invoices_on_issued_on"
     t.index ["number"], name: "index_invoices_on_number", unique: true
     t.index ["payment_status"], name: "index_invoices_on_payment_status"
     t.index ["producer_id"], name: "index_invoices_on_producer_id"
@@ -81,8 +115,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_090000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "purchase_id"
+    t.bigint "payroll_payment_line_id"
     t.index ["created_by_id"], name: "index_loan_payments_on_created_by_id"
     t.index ["loan_id"], name: "index_loan_payments_on_loan_id"
+    t.index ["paid_on"], name: "index_loan_payments_on_paid_on"
+    t.index ["payroll_payment_line_id"], name: "index_loan_payments_on_payroll_payment_line_id"
     t.index ["purchase_id"], name: "index_loan_payments_on_purchase_id"
   end
 
@@ -124,6 +161,126 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_090000) do
     t.datetime "updated_at", null: false
     t.index ["code"], name: "index_municipalities_on_code", unique: true
     t.index ["department_id"], name: "index_municipalities_on_department_id"
+  end
+
+  create_table "payroll_attendances", force: :cascade do |t|
+    t.bigint "payroll_member_id", null: false
+    t.date "worked_on", null: false
+    t.decimal "day_fraction", precision: 3, scale: 2, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["payroll_member_id", "worked_on"], name: "index_payroll_attendances_on_payroll_member_id_and_worked_on", unique: true
+    t.index ["payroll_member_id"], name: "index_payroll_attendances_on_payroll_member_id"
+    t.index ["worked_on"], name: "index_payroll_attendances_on_worked_on"
+  end
+
+  create_table "payroll_expenses", force: :cascade do |t|
+    t.bigint "payroll_id", null: false
+    t.bigint "expense_category_id", null: false
+    t.bigint "created_by_id", null: false
+    t.date "spent_on", null: false
+    t.string "description", null: false
+    t.decimal "amount", precision: 14, scale: 2, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_payroll_expenses_on_created_by_id"
+    t.index ["expense_category_id"], name: "index_payroll_expenses_on_expense_category_id"
+    t.index ["payroll_id"], name: "index_payroll_expenses_on_payroll_id"
+    t.index ["spent_on"], name: "index_payroll_expenses_on_spent_on"
+  end
+
+  create_table "payroll_members", force: :cascade do |t|
+    t.bigint "payroll_id", null: false
+    t.bigint "person_id", null: false
+    t.bigint "payroll_role_id"
+    t.decimal "daily_wage_override", precision: 10, scale: 2
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["payroll_id", "person_id"], name: "index_payroll_members_on_payroll_id_and_person_id", unique: true
+    t.index ["payroll_id"], name: "index_payroll_members_on_payroll_id"
+    t.index ["payroll_role_id"], name: "index_payroll_members_on_payroll_role_id"
+    t.index ["person_id"], name: "index_payroll_members_on_person_id"
+  end
+
+  create_table "payroll_payment_lines", force: :cascade do |t|
+    t.bigint "payroll_payment_id", null: false
+    t.bigint "payroll_member_id", null: false
+    t.decimal "quantity", precision: 10, scale: 2, null: false
+    t.decimal "rate", precision: 10, scale: 2
+    t.decimal "gross_amount", precision: 14, scale: 2, null: false
+    t.decimal "loans_amount", precision: 14, scale: 2, default: "0.0", null: false
+    t.decimal "net_amount", precision: 14, scale: 2, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "basis", null: false
+    t.index ["payroll_member_id"], name: "index_payroll_payment_lines_on_payroll_member_id"
+    t.index ["payroll_payment_id"], name: "index_payroll_payment_lines_on_payroll_payment_id"
+  end
+
+  create_table "payroll_payments", force: :cascade do |t|
+    t.bigint "payroll_id", null: false
+    t.bigint "created_by_id", null: false
+    t.date "period_starts_on", null: false
+    t.date "period_ends_on", null: false
+    t.date "paid_on", null: false
+    t.decimal "gross_total", precision: 14, scale: 2, null: false
+    t.decimal "loans_total", precision: 14, scale: 2, null: false
+    t.decimal "net_total", precision: 14, scale: 2, null: false
+    t.text "observations"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_payroll_payments_on_created_by_id"
+    t.index ["paid_on"], name: "index_payroll_payments_on_paid_on"
+    t.index ["payroll_id", "period_starts_on"], name: "index_payroll_payments_on_payroll_id_and_period_starts_on", unique: true
+    t.index ["payroll_id"], name: "index_payroll_payments_on_payroll_id"
+  end
+
+  create_table "payroll_roles", force: :cascade do |t|
+    t.bigint "payroll_id", null: false
+    t.string "name", null: false
+    t.decimal "daily_wage", precision: 10, scale: 2, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "payroll_id, lower((name)::text)", name: "index_payroll_roles_on_payroll_and_lower_name", unique: true
+    t.index ["payroll_id"], name: "index_payroll_roles_on_payroll_id"
+  end
+
+  create_table "payroll_task_participants", force: :cascade do |t|
+    t.bigint "payroll_task_id", null: false
+    t.bigint "payroll_member_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["payroll_member_id"], name: "index_payroll_task_participants_on_payroll_member_id"
+    t.index ["payroll_task_id", "payroll_member_id"], name: "index_task_participants_on_task_and_member", unique: true
+    t.index ["payroll_task_id"], name: "index_payroll_task_participants_on_payroll_task_id"
+  end
+
+  create_table "payroll_tasks", force: :cascade do |t|
+    t.bigint "payroll_id", null: false
+    t.string "name", null: false
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.date "completed_on"
+    t.text "observations"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["payroll_id"], name: "index_payroll_tasks_on_payroll_id"
+  end
+
+  create_table "payrolls", force: :cascade do |t|
+    t.bigint "farm_id", null: false
+    t.bigint "created_by_id", null: false
+    t.string "name", null: false
+    t.string "kind", null: false
+    t.string "pay_frequency", null: false
+    t.date "starts_on", null: false
+    t.date "ends_on"
+    t.decimal "can_price", precision: 10, scale: 2
+    t.text "observations"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_payrolls_on_created_by_id"
+    t.index ["farm_id"], name: "index_payrolls_on_farm_id"
   end
 
   create_table "people", force: :cascade do |t|
@@ -168,6 +325,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_090000) do
     t.index ["zone_id"], name: "index_producers_on_zone_id"
   end
 
+  create_table "purchase_weighings", force: :cascade do |t|
+    t.bigint "purchase_id", null: false
+    t.decimal "gross_weight", precision: 10, scale: 2, null: false
+    t.integer "sacks", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["purchase_id"], name: "index_purchase_weighings_on_purchase_id"
+  end
+
   create_table "purchases", force: :cascade do |t|
     t.bigint "producer_id", null: false
     t.bigint "zone_id"
@@ -190,6 +356,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_090000) do
     t.datetime "voided_at"
     t.bigint "voided_by_id"
     t.datetime "purchased_at", null: false
+    t.string "weight_mode", default: "single", null: false
     t.index ["created_by_id"], name: "index_purchases_on_created_by_id"
     t.index ["invoice_id"], name: "index_purchases_on_invoice_id"
     t.index ["producer_id"], name: "index_purchases_on_producer_id"
@@ -200,6 +367,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_090000) do
     t.index ["zone_id"], name: "index_purchases_on_zone_id"
   end
 
+  create_table "saved_reports", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "report_key", null: false
+    t.string "name", null: false
+    t.jsonb "params", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "user_id, lower((name)::text)", name: "index_saved_reports_on_user_and_lower_name", unique: true
+    t.index ["user_id"], name: "index_saved_reports_on_user_id"
+  end
+
   create_table "sessions", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "ip_address"
@@ -207,6 +385,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_090000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_sessions_on_user_id"
+  end
+
+  create_table "site_settings", force: :cascade do |t|
+    t.string "business_name", null: false
+    t.string "location"
+    t.binary "logo_data"
+    t.string "logo_content_type"
+    t.string "logo_filename"
+    t.integer "logo_byte_size"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "supplies", force: :cascade do |t|
@@ -240,9 +429,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_090000) do
   add_foreign_key "audit_events", "users", on_delete: :nullify
   add_foreign_key "clients", "people"
   add_foreign_key "collaborators", "people"
+  add_foreign_key "farms", "departments"
+  add_foreign_key "farms", "municipalities"
+  add_foreign_key "harvest_entries", "payroll_members"
   add_foreign_key "invoices", "producers"
   add_foreign_key "invoices", "users", column: "created_by_id"
   add_foreign_key "loan_payments", "loans"
+  add_foreign_key "loan_payments", "payroll_payment_lines"
   add_foreign_key "loan_payments", "purchases"
   add_foreign_key "loan_payments", "users", column: "created_by_id"
   add_foreign_key "loan_supplies", "loans"
@@ -250,15 +443,34 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_090000) do
   add_foreign_key "loans", "people"
   add_foreign_key "loans", "users", column: "created_by_id"
   add_foreign_key "municipalities", "departments"
+  add_foreign_key "payroll_attendances", "payroll_members"
+  add_foreign_key "payroll_expenses", "expense_categories"
+  add_foreign_key "payroll_expenses", "payrolls"
+  add_foreign_key "payroll_expenses", "users", column: "created_by_id"
+  add_foreign_key "payroll_members", "payroll_roles"
+  add_foreign_key "payroll_members", "payrolls"
+  add_foreign_key "payroll_members", "people"
+  add_foreign_key "payroll_payment_lines", "payroll_members"
+  add_foreign_key "payroll_payment_lines", "payroll_payments"
+  add_foreign_key "payroll_payments", "payrolls"
+  add_foreign_key "payroll_payments", "users", column: "created_by_id"
+  add_foreign_key "payroll_roles", "payrolls"
+  add_foreign_key "payroll_task_participants", "payroll_members"
+  add_foreign_key "payroll_task_participants", "payroll_tasks"
+  add_foreign_key "payroll_tasks", "payrolls"
+  add_foreign_key "payrolls", "farms"
+  add_foreign_key "payrolls", "users", column: "created_by_id"
   add_foreign_key "people", "departments"
   add_foreign_key "people", "municipalities"
   add_foreign_key "permissions", "users"
   add_foreign_key "producers", "people"
   add_foreign_key "producers", "zones"
+  add_foreign_key "purchase_weighings", "purchases"
   add_foreign_key "purchases", "invoices"
   add_foreign_key "purchases", "producers"
   add_foreign_key "purchases", "users", column: "created_by_id"
   add_foreign_key "purchases", "users", column: "voided_by_id"
   add_foreign_key "purchases", "zones"
+  add_foreign_key "saved_reports", "users"
   add_foreign_key "sessions", "users"
 end

@@ -18,10 +18,11 @@ module TradingHelper
                               from: l(season.starts_on, format: :long), to: l(season.ends_on, format: :long))
   end
 
-  # [[label, year], ...] of the seasons a set of purchases spans, plus the
-  # current one, newest first.
-  def season_options(purchases)
-    years = purchases.distinct.pluck(:season_year) | [ Season.current.year ]
+  # [[label, year], ...] of the seasons a set of purchases spans (plus the
+  # current one, unless include_current is false), newest first.
+  def season_options(purchases, include_current: true)
+    years = purchases.distinct.pluck(:season_year)
+    years |= [ Season.current.year ] if include_current
     years.sort.reverse.map { |year| [ format_season(Season.new(year)), year ] }
   end
 

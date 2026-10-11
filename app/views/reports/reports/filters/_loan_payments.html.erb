@@ -1,0 +1,4 @@
+<%= filter_text_field form, :q, t("reports.filters.person"), value: filter.q, placeholder: t("reports.filters.person_placeholder") %>
+<%= filter_select form, :payment_method, t("reports.filters.payment_method"),
+      enum_options(LoanPayment, :payment_method, LoanPaymentsReport::METHODS), selected: filter.payment_method %>
+<%= filter_select form, :created_by_id, t("reports.filters.created_by"), User.order(:name).pluck(:name, :id), selected: filter.created_by_id %>

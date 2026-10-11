@@ -49,14 +49,54 @@
     </div>
   </div>
 
+  <%# The gross weight in one figure, or by weighings: then it is their sum
+      (read only) and the tare comes from the sacks counted in them. %>
+  <fieldset>
+    <legend class="field-label"><%= Purchase.human_attribute_name(:weight_mode) %></legend>
+    <div class="flex flex-wrap gap-x-6 gap-y-2">
+      <% Purchase::WEIGHT_MODES.each do |mode| %>
+        <label class="flex min-h-11 cursor-pointer items-center gap-2 text-sm font-medium">
+          <%= form.radio_button :weight_mode, mode, class: "size-4 accent-primary",
+                data: { purchase_calculator_target: "weightMode", action: "purchase-calculator#changeWeightMode" } %>
+          <%= Purchase.human_attribute_name("weight_mode/#{mode}") %>
+        </label>
+      <% end %>
+    </div>
+  </fieldset>
+
+  <section aria-labelledby="purchase-weighings" class="space-y-3" data-purchase-calculator-target="weighingsSection"
+           <%= "hidden" unless purchase.by_weighings? %>>
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div>
+        <h2 id="purchase-weighings" class="font-semibold"><%= Purchase.human_attribute_name(:weighings) %></h2>
+        <p class="text-sm text-ink-muted"><%= t(".weighings_help") %></p>
+      </div>
+      <button type="button" class="btn btn-sm btn-primary" data-action="purchase-calculator#addWeighing"><%= t(".add_weighing") %></button>
+    </div>
+    <div class="space-y-3" data-purchase-calculator-target="weighings">
+      <%= form.fields_for :weighings do |weighing_form| %>
+        <%= render "trading/purchases/weighing_fields", form: weighing_form, enabled: purchase.by_weighings? %>
+      <% end %>
+    </div>
+    <template data-purchase-calculator-target="weighingTemplate">
+      <%= form.fields_for :weighings, PurchaseWeighing.new, child_index: "NEW_RECORD" do |weighing_form| %>
+        <%= render "trading/purchases/weighing_fields", form: weighing_form, enabled: true %>
+      <% end %>
+    </template>
+  </section>
+
   <%# Parchment uses humidity and damage; cherry uses the yield instead.
       The fields that do not apply are hidden and disabled (not sent). %>
   <section class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
     <div>
       <%= form.label :gross_weight, class: "field-label" %>
       <%= form.number_field :gross_weight, required: true, min: 0.01, max: 99_999.99, step: 0.01, inputmode: "decimal",
-            class: "field-input text-lg", autofocus: purchase.producer.present?,
+            class: "field-input text-lg read-only:bg-surface-2", autofocus: purchase.producer.present? && !purchase.by_weighings?,
+            readonly: purchase.by_weighings?,
             data: { purchase_calculator_target: "gross", action: "purchase-calculator#update" } %>
+      <p class="mt-1 text-xs text-ink-muted" data-purchase-calculator-target="grossHelp" <%= "hidden" unless purchase.by_weighings? %>>
+        <%= t(".gross_from_weighings") %>
+      </p>
     </div>
     <div data-purchase-calculator-target="parchmentField" <%= "hidden" if purchase.cherry? %>>
       <%= form.label :humidity_percent, class: "field-label" %>

@@ -7,11 +7,19 @@ module Loans
       @balance = @loan.balance
     end
 
+    # Its receipt: original and copy, printed on one sheet.
+    def show
+      @payment = authorize @loan.payments.find(params[:id])
+      @balance_after = @payment.balance_after
+    end
+
     def create
       @payment = authorize @loan.payments.build(payment_params.merge(created_by: Current.user))
 
       if @payment.save
-        close_modal_with notice: t(".success"), fallback: loans_loan_path(@loan)
+        # Back on the loan, with the new payment's receipt open to print it.
+        receipt = loans_loan_path(@loan, receipt: @payment.id)
+        close_modal_with notice: t(".success"), fallback: receipt, visit: receipt
       else
         @balance = @loan.balance
         render :new, status: :unprocessable_content

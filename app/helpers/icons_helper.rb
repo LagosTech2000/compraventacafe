@@ -13,7 +13,8 @@ module IconsHelper
     check: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
     help: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
     alert: '<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
-    bean: '<path d="M10.5 3.5c-4 1-7 5.5-6 10s5.5 7.5 9.5 6.5 7-5.5 6-10-5.5-7.5-9.5-6.5z"/><path d="M8.5 19.5c1-3 3-4.5 4-7.5s0-5.5 1-8.5"/>'
+    bean: '<path d="M10.5 3.5c-4 1-7 5.5-6 10s5.5 7.5 9.5 6.5 7-5.5 6-10-5.5-7.5-9.5-6.5z"/><path d="M8.5 19.5c1-3 3-4.5 4-7.5s0-5.5 1-8.5"/>',
+    settings: '<path d="M21 4h-7"/><path d="M10 4H3"/><path d="M21 12h-9"/><path d="M8 12H3"/><path d="M21 20h-5"/><path d="M12 20H3"/><path d="M14 2v4"/><path d="M8 10v4"/><path d="M16 18v4"/>'
   }.freeze
 
   def icon(name, css: "size-5")

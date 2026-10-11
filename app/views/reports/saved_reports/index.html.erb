@@ -1,0 +1,26 @@
+<% content_for :title, t(".title") %>
+<h1 class="text-xl font-bold"><%= t(".title") %></h1>
+<p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+
+<% if @saved_reports.any? %>
+  <ul class="mt-4 space-y-2">
+    <% @saved_reports.each do |saved| %>
+      <% report = saved.report_class %>
+      <li class="data-card flex flex-wrap items-center justify-between gap-3" id="<%= dom_id(saved) %>">
+        <div class="min-w-0">
+          <p class="font-medium"><%= saved.name %></p>
+          <p class="text-xs text-ink-muted"><%= report&.title %></p>
+        </div>
+        <div class="flex gap-2">
+          <% if report && policy(report).show? %>
+            <%= page_link_to t(".open"), reports_report_path(report.key, saved.params), class: "btn btn-sm" %>
+          <% end %>
+          <%= button_to t(".destroy"), reports_saved_report_path(saved), method: :delete, class: "btn btn-sm",
+                form: { data: { turbo_confirm: t(".confirm_destroy", name: saved.name) } } %>
+        </div>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <p class="empty-state mt-4"><%= t(".empty") %></p>
+<% end %>

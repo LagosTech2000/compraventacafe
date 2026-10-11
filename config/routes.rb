@@ -5,11 +5,14 @@ Rails.application.routes.draw do
   # resources :passwords, param: :token
 
   root "dashboard#show"
+  # The business's logo, public (the sign-in page shows it too).
+  resource :site_logo, only: :show
 
   namespace :administration do
     root "home#index"
     resources :people
     resources :audit_events, only: %i[ index show ]
+    resource :site_setting, only: %i[ show edit update ]
     resources :users, only: %i[ index show new create edit update ] do
       member do
         get :reset_password, action: :edit_password
@@ -33,19 +36,33 @@ Rails.application.routes.draw do
 
   namespace :farms do
     root "home#index"
+    resources :farms, only: %i[ index show new create edit update ]
+    resources :payrolls do
+      resources :roles, only: %i[ new create edit update destroy ]
+      resources :members, only: %i[ new create edit update destroy ]
+      resource :timesheet, only: %i[ show update ]
+      resources :tasks, only: %i[ new create edit update destroy ]
+      resources :payments, only: %i[ new create show destroy ]
+      resources :expenses, only: %i[ new create edit update destroy ]
+    end
+    resources :expense_categories, only: %i[ index new create edit update ]
   end
 
   namespace :loans do
     root "home#index"
     resources :loans do
-      resources :payments, only: %i[ new create destroy ]
+      resources :payments, only: %i[ new create show destroy ]
     end
     resources :credit_accounts, only: %i[ index show ]
     resources :supplies, only: %i[ index new create edit update ]
   end
 
+  # One screen for every report: /reports/purchases?period=this_month...
   namespace :reports do
-    root "home#index"
+    root "reports#show"
+    resources :saved_reports, only: %i[ index new create destroy ]
+    get ":id/charts", to: "reports#charts", as: :report_charts
+    get ":id", to: "reports#show", as: :report
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

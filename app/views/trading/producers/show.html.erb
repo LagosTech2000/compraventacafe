@@ -53,7 +53,7 @@
   <%= render layout: "shared/filters", locals: { filter: @filter, url: trading_producer_path(@producer, tab: "purchases") } do |form| %>
     <%= hidden_field_tag :tab, "purchases", id: nil %>
     <%= filter_select form, :season_year, Purchase.human_attribute_name(:season_year), season_options(@producer.purchases),
-          selected: @filter.season_year, all: t("trading.producers.show.all_seasons") %>
+          selected: @filter.season_year, all: t("shared.filters.all_seasons") %>
     <%= filter_select form, :invoiced, t("trading.purchases.index.invoiced"),
           PurchaseFilter::INVOICED.map { |v| [ t("trading.purchases.index.invoiced_#{v}"), v ] }, selected: @filter.invoiced %>
     <%= filter_check_box form, :show_voided, t("trading.purchases.index.show_voided"), checked: @filter.show_voided.present? %>

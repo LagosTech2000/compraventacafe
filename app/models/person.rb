@@ -8,6 +8,7 @@ class Person < ApplicationRecord
   has_one :collaborator, dependent: :destroy, autosave: true
   has_one :producer, dependent: :restrict_with_error
   has_many :loans, dependent: :restrict_with_error
+  has_many :payroll_members, dependent: :restrict_with_error
 
   normalizes :first_names, :last_names, with: ->(value) { value.squish.presence }
   normalizes :dni, :rtn, with: FieldFormats::DIGITS

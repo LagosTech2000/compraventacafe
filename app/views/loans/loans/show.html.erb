@@ -1,4 +1,8 @@
 <% content_for :title, t(".title", number: @loan.id) %>
+<%# Right after a payment: its receipt opens in the modal, ready to print. %>
+<% if params[:receipt].to_s.match?(/\A\d+\z/) %>
+  <% content_for :modal_src, loans_loan_payment_path(@loan, params[:receipt]) %>
+<% end %>
 <%= render "loans/nav" %>
 
 <div class="flex flex-wrap items-start justify-between gap-4">

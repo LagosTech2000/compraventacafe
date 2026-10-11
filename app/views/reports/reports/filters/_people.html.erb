@@ -1,0 +1,5 @@
+<%= filter_text_field form, :q, t("reports.filters.person"), value: filter.q, placeholder: t("reports.filters.person_placeholder") %>
+<%= filter_select form, :role, t("reports.filters.role"), PeopleReport::ROLES.map { |key| [ t("reports.types.people.roles.#{key}"), key ] },
+      selected: filter.role %>
+<%= filter_select form, :activity, t("reports.filters.activity"),
+      PeopleReport::ACTIVITIES.map { |key| [ t("reports.filters.activities.#{key}"), key ] }, selected: filter.activity %>

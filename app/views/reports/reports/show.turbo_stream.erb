@@ -1,0 +1,5 @@
+<% columns = @report.table_columns %>
+<%= turbo_stream.append "report-rows" do %><%= render "reports/reports/rows", report: @report, rows: @rows, columns: %><% end %>
+<%= turbo_stream.append "report-cards" do %><%= render "reports/reports/cards", report: @report, rows: @rows, columns: %><% end %>
+<%= turbo_stream.update "report-count" do %><%= render "reports/reports/count", report: @report, shown: @rows.size %><% end %>
+<%= turbo_stream.replace "report-more" do %><%= render "reports/reports/more", report: @report, more: @more %><% end %>

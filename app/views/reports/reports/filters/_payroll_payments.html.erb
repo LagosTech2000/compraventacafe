@@ -1,0 +1,2 @@
+<%= render "reports/reports/filters/farm_fields", form:, filter: %>
+<%= filter_select form, :kind, t("reports.filters.payroll_kind"), enum_options(Payroll, :kind, Payroll::KINDS), selected: filter.kind %>

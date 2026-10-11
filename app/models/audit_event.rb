@@ -3,7 +3,7 @@
 class AuditEvent < ApplicationRecord
   ACTIONS = %w[create update destroy sign_in sign_out sign_in_failed].freeze
   # Keep in sync with the models that include Auditable (a spec checks it).
-  AUDITED_TYPES = %w[User Permission Person Client Collaborator Producer Zone Purchase Invoice Loan LoanPayment Supply LoanSupply].freeze
+  AUDITED_TYPES = %w[User Permission Person Client Collaborator Producer Zone Purchase Invoice Loan LoanPayment Supply LoanSupply PurchaseWeighing Farm ExpenseCategory Payroll PayrollRole PayrollMember PayrollAttendance HarvestEntry PayrollTask PayrollTaskParticipant PayrollPayment PayrollPaymentLine PayrollExpense SavedReport SiteSetting].freeze
   FILTERED = "[FILTERED]".freeze
 
   belongs_to :user, optional: true
