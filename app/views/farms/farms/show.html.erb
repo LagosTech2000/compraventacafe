@@ -1,0 +1,52 @@
+<% content_for :title, @farm.name %>
+<%= render "farms/nav" %>
+
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= @farm.name %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= format_address(@farm).presence || "—" %></p>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <% if policy(Payroll).create? && @farm.active? %>
+      <%= modal_link_to t(".new_payroll"), new_farms_payroll_path(farm_id: @farm.id), class: "btn btn-primary" %>
+    <% end %>
+    <% if policy(@farm).update? %>
+      <%= modal_link_to t(".edit"), edit_farms_farm_path(@farm), class: "btn" %>
+    <% end %>
+  </div>
+</div>
+
+<%# The farm's accounts: all its payrolls, whatever the filter. %>
+<dl class="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+  <% gross = @all_payrolls.sum(&:gross_paid) %>
+  <% expenses = @all_payrolls.sum(&:expenses_total) %>
+  <% { payrolls: @all_payrolls.size, gross_paid: format_money(gross), expenses: format_money(expenses), total_cost: format_money(gross + expenses) }.each do |key, value| %>
+    <div class="stat">
+      <dt><%= t("farms.accounts.#{key}") %></dt>
+      <dd><%= value %></dd>
+    </div>
+  <% end %>
+</dl>
+
+<% if @farm.observations.present? %>
+  <p class="mt-4 text-sm"><span class="font-semibold"><%= Farm.human_attribute_name(:observations) %>:</span> <%= @farm.observations %></p>
+<% end %>
+
+<h2 class="mt-8 text-lg font-semibold"><%= t(".payrolls") %></h2>
+<%= render layout: "shared/filters", locals: { filter: @filter, url: farms_farm_path(@farm) } do |form| %>
+  <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: Payroll.human_attribute_name(:name) %>
+  <%= filter_select form, :kind, Payroll.human_attribute_name(:kind), enum_options(Payroll, :kind, Payroll::KINDS), selected: @filter.kind %>
+  <%= filter_select form, :status, Payroll.human_attribute_name(:status), enum_options(Payroll, :status, Payroll::STATUSES), selected: @filter.status %>
+<% end %>
+<div class="mt-6">
+  <% if @payrolls.any? %>
+    <%= render "farms/payrolls/table", payrolls: @payrolls %>
+    <%= render "shared/pagination", filter: @filter, next_page: @next_page %>
+  <% else %>
+    <p class="empty-state"><%= t(".no_payrolls") %></p>
+  <% end %>
+</div>
+
+<% unless modal_request? %>
+  <p class="mt-6"><%= link_to t(".back"), farms_farms_path, class: "text-sm link" %></p>
+<% end %>

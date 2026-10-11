@@ -1,0 +1,26 @@
+<% content_for :title, t(".title") %>
+<%= render "farms/nav" %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+  <% if policy(Payroll).create? %>
+    <%= modal_link_to t(".new"), new_farms_payroll_path, class: "btn btn-primary" %>
+  <% end %>
+</div>
+
+<%= render layout: "shared/filters", locals: { filter: @filter, url: farms_payrolls_path } do |form| %>
+  <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: Payroll.human_attribute_name(:name) %>
+  <%= filter_select form, :farm_id, Payroll.human_attribute_name(:farm), Farm.ordered.pluck(:name, :id), selected: @filter.farm_id,
+        all: t("farms.payrolls.index.all_farms") %>
+  <%= filter_select form, :kind, Payroll.human_attribute_name(:kind), enum_options(Payroll, :kind, Payroll::KINDS), selected: @filter.kind %>
+  <%= filter_select form, :status, Payroll.human_attribute_name(:status), enum_options(Payroll, :status, Payroll::STATUSES), selected: @filter.status %>
+<% end %>
+
+<div class="mt-6">
+  <% if @payrolls.any? %>
+    <%= render "table", payrolls: @payrolls %>
+    <%= render "shared/pagination", filter: @filter, next_page: @next_page %>
+  <% else %>
+    <p class="empty-state"><%= t(".empty") %></p>
+  <% end %>
+</div>

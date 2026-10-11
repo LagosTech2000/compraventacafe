@@ -1,0 +1,55 @@
+<%# Pay periods, newest first: what each amounts to and whether it was paid. %>
+<p class="mt-4 text-sm text-ink-muted"><%= t("farms.payrolls.periods.help_#{payroll.kind}") %></p>
+<%= render layout: "shared/filters", locals: { filter: @filter, url: farms_payroll_path(payroll, tab: "periods") } do |form| %>
+  <%= hidden_field_tag :tab, "periods", id: nil %>
+  <%= filter_select form, :status, t("farms.payrolls.periods.status"),
+        PayrollPeriodFilter::STATUSES.map { |status| [ t("farms.payrolls.periods.statuses.#{status}"), status ] }, selected: @filter.status %>
+<% end %>
+<% can_pay = policy(PayrollPayment.new(payroll:)).create? %>
+<div class="mt-6">
+  <% if @rows.any? %>
+    <div class="@container">
+      <ul class="space-y-3 @2xl:hidden">
+        <% @rows.each do |row| %>
+          <li class="data-card">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <p class="font-medium"><%= format_period(row.period) %></p>
+                <p class="mt-1 font-semibold tabular-nums"><%= row.status == "upcoming" ? "—" : format_money(row.gross_total) %></p>
+              </div>
+              <%= period_status_badge(row) %>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-2"><%= render "farms/payrolls/period_actions", payroll:, row:, can_pay: %></div>
+          </li>
+        <% end %>
+      </ul>
+      <div class="hidden overflow-x-auto panel @2xl:block">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th><%= t("farms.payrolls.periods.period") %></th>
+              <th><%= t("farms.payrolls.periods.status") %></th>
+              <th class="text-right"><%= t("farms.payrolls.periods.amount") %></th>
+              <th class="cell-actions"><span class="sr-only"><%= t("farms.payrolls.table.actions") %></span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @rows.each do |row| %>
+              <tr id="period_<%= row.period.to_param %>">
+                <td class="whitespace-nowrap font-medium"><%= format_period(row.period) %></td>
+                <td><%= period_status_badge(row) %></td>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= row.status == "upcoming" ? "—" : format_money(row.gross_total) %></td>
+                <td class="cell-actions">
+                  <div class="flex justify-end gap-2"><%= render "farms/payrolls/period_actions", payroll:, row:, can_pay: %></div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "periods" } %>
+  <% else %>
+    <p class="empty-state"><%= t("farms.payrolls.periods.empty") %></p>
+  <% end %>
+</div>

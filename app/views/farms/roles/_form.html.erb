@@ -1,0 +1,22 @@
+<%= form_with model: [ :farms, role.payroll, role ], url: role.persisted? ? farms_payroll_role_path(role.payroll, role) : farms_payroll_roles_path(role.payroll),
+      class: form_surface_class("max-w-xl space-y-5"), data: { controller: "form-validation" } do |form| %>
+  <%= hidden_field_tag :picker, "1" if picker_request? %>
+  <%= render "shared/form_errors", record: role %>
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div>
+      <%= form.label :name, class: "field-label" %>
+      <%= form.text_field :name, autofocus: true, required: true, maxlength: 100, class: "field-input", placeholder: t("farms.roles.form.name_placeholder"),
+            data: { missing_message: "#{PayrollRole.human_attribute_name(:name)} #{t("errors.messages.blank")}" } %>
+    </div>
+    <div>
+      <%= form.label :daily_wage, class: "field-label" %>
+      <%= form.number_field :daily_wage, required: true, min: 0.01, max: 99_999.99, step: 0.01, inputmode: "decimal", placeholder: "0.00",
+            class: "field-input" %>
+    </div>
+  </div>
+  <p class="text-xs text-ink-muted"><%= t("farms.roles.form.help") %></p>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= cancel_button farms_payroll_path(role.payroll, tab: "members") %>
+  </div>
+<% end %>

@@ -33,6 +33,16 @@ Rails.application.routes.draw do
 
   namespace :farms do
     root "home#index"
+    resources :farms, only: %i[ index show new create edit update ]
+    resources :payrolls do
+      resources :roles, only: %i[ new create edit update destroy ]
+      resources :members, only: %i[ new create edit update destroy ]
+      resource :timesheet, only: %i[ show update ]
+      resources :tasks, only: %i[ new create edit update destroy ]
+      resources :payments, only: %i[ new create show destroy ]
+      resources :expenses, only: %i[ new create edit update destroy ]
+    end
+    resources :expense_categories, only: %i[ index new create edit update ]
   end
 
   namespace :loans do

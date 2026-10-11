@@ -1,0 +1,104 @@
+# The work of a pay period as grids of members × days: attendance (full or
+# half day) for members paid by day, cans picked for the pickers of a
+# harvest payroll (its foremen are paid by day). Saving it creates, changes
+# or removes the day records, all or nothing. A paid period is closed.
+class PayrollTimesheet
+  include ActiveModel::Model
+
+  attr_reader :payroll, :period
+
+  def self.model_name = ActiveModel::Name.new(self, nil, "PayrollTimesheet")
+
+  def initialize(payroll, period)
+    @payroll = payroll
+    @period = period
+  end
+
+  def harvest? = payroll.harvest?
+  def dates = period.dates.to_a
+  def members = @members ||= payroll.members_for(period)
+  def payment = @payment ||= payroll.payments.find_by(period_starts_on: period.starts_on)
+  def closed? = payment.present?
+
+  # [basis, members] for each grid: pickers by cans first, then by day.
+  def groups
+    members.group_by(&:basis).sort_by { |basis, _| basis == "harvest" ? 0 : 1 }
+  end
+
+  # Day fraction (attendance) or cans, nil when nothing was recorded.
+  def value(member, date)
+    raw = @submitted&.dig(member.id.to_s, date.iso8601)
+    return parse(raw) unless raw.nil?
+
+    records[[ member.id, date ]]&.public_send(column(member))
+  end
+
+  def total_for(member)
+    dates.sum { |date| value(member, date) || 0 }
+  end
+
+  def total_for_date(date, members = self.members)
+    members.sum { |member| value(member, date) || 0 }
+  end
+
+  def rate_for(member) = member.paid_by_day? ? member.daily_wage : payroll.can_price
+
+  def amount_for(member)
+    rate = rate_for(member)
+    (total_for(member) * rate.to_d).round(2) if rate
+  end
+
+  # values: { "member_id" => { "2026-10-05" => "1" } }; only the cells sent
+  # are touched. Blank or 0 removes the day.
+  def update(values)
+    @submitted = values.to_h.transform_values(&:to_h)
+    errors.add(:base, :closed) and return false if closed?
+
+    ActiveRecord::Base.transaction do
+      members.each do |member|
+        dates.each do |date|
+          raw = @submitted.dig(member.id.to_s, date.iso8601)
+          save_cell(member, date, raw) unless raw.nil?
+        end
+      end
+      raise ActiveRecord::Rollback if errors.any?
+    end
+    errors.empty?
+  end
+
+  private
+    def column(member) = member.paid_by_day? ? :day_fraction : :cans
+    def model(member) = member.paid_by_day? ? PayrollAttendance : HarvestEntry
+
+    def records
+      @records ||= [ PayrollAttendance, HarvestEntry ].flat_map do |model|
+        model.where(payroll_member_id: members.map(&:id), worked_on: period.dates).to_a
+      end.index_by { |record| [ record.payroll_member_id, record.worked_on ] }
+    end
+
+    def save_cell(member, date, raw)
+      quantity = parse(raw)
+      record = records[[ member.id, date ]]
+      if quantity.nil? || quantity.zero?
+        record&.destroy!
+      elsif record
+        record.update(column(member) => quantity) || copy_errors(record, member, date)
+      else
+        record = model(member).new(member:, worked_on: date, column(member) => quantity)
+        record.save || copy_errors(record, member, date)
+      end
+    end
+
+    def copy_errors(record, member, date)
+      record.errors.full_messages.each do |message|
+        errors.add(:base, :cell, person: member.full_name, date: I18n.l(date, format: :short_day), detail: message)
+      end
+    end
+
+    def parse(raw)
+      text = raw.to_s.strip.delete(",")
+      BigDecimal(text) unless text.empty?
+    rescue ArgumentError
+      BigDecimal("-1")
+    end
+end

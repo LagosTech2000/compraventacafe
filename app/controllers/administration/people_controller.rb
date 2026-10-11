@@ -11,8 +11,10 @@ module Administration
     def show
     end
 
+    # role=collaborator comes checked (e.g. adding someone to a payroll).
     def new
       @person = authorize Person.new
+      @person.build_collaborator if params[:role] == "collaborator"
     end
 
     def create

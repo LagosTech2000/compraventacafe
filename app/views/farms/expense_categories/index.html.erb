@@ -1,0 +1,35 @@
+<% content_for :title, t(".title") %>
+<%= render "farms/nav" %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+  <% if policy(ExpenseCategory).create? %>
+    <%= modal_link_to t(".new"), new_farms_expense_category_path, class: "btn btn-primary" %>
+  <% end %>
+</div>
+<p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+
+<%= render layout: "shared/filters", locals: { filter: @filter, url: farms_expense_categories_path } do |form| %>
+  <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: ExpenseCategory.human_attribute_name(:name) %>
+  <%= filter_select form, :status, t("farms.farms.index.status"),
+        ExpenseCategoryFilter::STATUSES.map { |status| [ t("farms.statuses.#{status}"), status ] }, selected: @filter.status %>
+<% end %>
+
+<% if @categories.any? %>
+  <ul class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <% @categories.each do |category| %>
+      <li class="data-card flex items-center justify-between gap-3" id="<%= dom_id(category) %>">
+        <div>
+          <p class="font-medium"><%= category.name %></p>
+          <% unless category.active? %><span class="badge badge-neutral"><%= t("farms.statuses.inactive") %></span><% end %>
+        </div>
+        <% if policy(category).update? %>
+          <%= modal_link_to t(".edit"), edit_farms_expense_category_path(category), class: "btn btn-sm" %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+  <%= render "shared/pagination", filter: @filter, next_page: @next_page %>
+<% else %>
+  <p class="empty-state mt-6"><%= t(".empty") %></p>
+<% end %>

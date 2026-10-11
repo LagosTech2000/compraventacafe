@@ -1,0 +1,25 @@
+<%= form_with model: [ :farms, farm ], class: form_surface_class("max-w-2xl space-y-5"), data: { controller: "form-validation" } do |form| %>
+  <%= hidden_field_tag :picker, "1" if picker_request? %>
+  <%= render "shared/form_errors", record: farm %>
+  <div>
+    <%= form.label :name, class: "field-label" %>
+    <%= form.text_field :name, autofocus: true, required: true, maxlength: 100, class: "field-input",
+          data: { missing_message: "#{Farm.human_attribute_name(:name)} #{t("errors.messages.blank")}" } %>
+  </div>
+  <%= render "shared/address_fields", form: form %>
+  <div>
+    <%= form.label :observations, class: "field-label" %>
+    <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+  </div>
+  <% if farm.persisted? %>
+    <label class="flex items-center gap-2 text-sm font-medium">
+      <%= form.check_box :active, class: "size-4 accent-primary" %>
+      <%= Farm.human_attribute_name(:active) %>
+    </label>
+    <p class="-mt-3 text-xs text-ink-muted"><%= t("farms.farms.form.active_help") %></p>
+  <% end %>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= cancel_button farms_farms_path %>
+  </div>
+<% end %>

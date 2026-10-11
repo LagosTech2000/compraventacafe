@@ -1,0 +1,71 @@
+<%# One grid of members × days paid the same way: by day (attendance) or by cans. %>
+<% by_day = basis == "daily" %>
+<% scope = "farms.timesheets.show" %>
+<section class="mt-4" data-controller="timesheet">
+  <% if heading %><h2 class="mb-2 text-lg font-semibold"><%= heading %></h2><% end %>
+  <div class="panel overflow-x-auto">
+    <table class="data-table data-table-compact">
+      <thead>
+        <tr>
+          <th class="sticky left-0 z-10 bg-surface-2"><%= PayrollMember.human_attribute_name(:person) %></th>
+          <% dates.each do |date| %>
+            <th class="text-center <%= "text-primary" if date == today %>">
+              <span class="block whitespace-nowrap"><%= l(date, format: :short_day) %></span>
+              <% if editable && by_day %>
+                <button type="button" class="link text-[0.65rem] normal-case" data-action="timesheet#fillColumn" data-date="<%= date.iso8601 %>"
+                        aria-label="<%= t("#{scope}.fill_day_label", date: l(date, format: :long)) %>"><%= t("#{scope}.fill_day") %></button>
+              <% end %>
+            </th>
+          <% end %>
+          <th class="text-right"><%= t("#{scope}.total.#{basis}") %></th>
+          <th class="text-right"><%= t("#{scope}.amount") %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% members.each do |member| %>
+          <% rate = timesheet.rate_for(member) %>
+          <tr data-timesheet-target="row" data-rate="<%= rate %>">
+            <th scope="row" class="sticky left-0 z-10 bg-surface text-left font-medium whitespace-nowrap">
+              <%= member.full_name %>
+              <% if by_day && member.role %><span class="block text-xs font-normal text-ink-muted"><%= member.role.name %></span><% end %>
+              <% unless rate %><span class="block text-xs font-normal text-danger"><%= t("#{scope}.no_wage") %></span><% end %>
+            </th>
+            <% dates.each do |date| %>
+              <% value = timesheet.value(member, date) %>
+              <% name = "work[#{member.id}][#{date.iso8601}]" %>
+              <% label = t("#{scope}.cell_label", person: member.full_name, date: l(date, format: :long)) %>
+              <td class="px-1 text-center">
+                <% if by_day %>
+                  <%= select_tag name, options_for_select(t("#{scope}.fractions").map { |key, text| [ text, key.to_s == "none" ? "" : key.to_s.tr("_", ".") ] },
+                                                          value ? (value == 1 ? "1" : "0.5") : ""),
+                        id: nil, disabled: !editable, aria: { label: }, class: "field-input w-14 px-1 text-center",
+                        data: { date: date.iso8601, action: "timesheet#update" } %>
+                <% else %>
+                  <%= number_field_tag name, value && number_with_precision(value, precision: 2, strip_insignificant_zeros: true),
+                        id: nil, min: 0, max: 999.99, step: 0.01, inputmode: "decimal", disabled: !editable, aria: { label: },
+                        class: "field-input w-16 px-1 text-center tabular-nums", data: { date: date.iso8601, action: "timesheet#update" } %>
+                <% end %>
+              </td>
+            <% end %>
+            <td class="text-right font-medium tabular-nums" data-timesheet-target="rowTotal"><%= number_with_precision(timesheet.total_for(member), precision: 2, strip_insignificant_zeros: true) %></td>
+            <td class="whitespace-nowrap text-right tabular-nums" data-timesheet-target="rowAmount"><%= (amount = timesheet.amount_for(member)) ? format_money(amount) : "—" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+      <tfoot>
+        <tr class="font-semibold">
+          <th scope="row" class="sticky left-0 z-10 bg-surface-2 text-left"><%= t("#{scope}.totals") %></th>
+          <% dates.each do |date| %>
+            <td class="text-center tabular-nums" data-timesheet-target="dateTotal" data-date="<%= date.iso8601 %>">
+              <%= number_with_precision(timesheet.total_for_date(date, members), precision: 2, strip_insignificant_zeros: true) %>
+            </td>
+          <% end %>
+          <td></td>
+          <td class="whitespace-nowrap text-right tabular-nums" data-timesheet-target="grandTotal">
+            <%= format_money(members.sum { |member| timesheet.amount_for(member) || 0 }) %>
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</section>

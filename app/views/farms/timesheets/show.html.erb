@@ -1,0 +1,78 @@
+<% content_for :title, t(".title.#{@payroll.kind}") %>
+<%= render "farms/nav" %>
+<% timesheet = @timesheet %>
+<% period = timesheet.period %>
+<% periods = @payroll.periods %>
+<% index = periods.index(period) %>
+<% day = @day %>
+<% dates = day ? [ day ] : timesheet.dates %>
+<% harvest = timesheet.harvest? %>
+<% editable = !timesheet.closed? && policy(@payroll).record_work? %>
+<% today = Time.zone.today %>
+
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title.#{@payroll.kind}") %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= link_to @payroll.name, farms_payroll_path(@payroll), class: "link" %> · <%= @payroll.farm.name %></p>
+  </div>
+  <% if timesheet.payment %>
+    <%= link_to t(".pay_sheet"), farms_payroll_payment_path(@payroll, timesheet.payment), class: "btn" %>
+  <% elsif policy(PayrollPayment.new(payroll: @payroll)).create? %>
+    <%= link_to t(".pay"), new_farms_payroll_payment_path(@payroll, period: period.to_param), class: "btn" %>
+  <% end %>
+</div>
+
+<%# Period: previous / next, or any of them from the list. %>
+<div class="panel mt-6 flex flex-wrap items-end gap-3 p-4">
+  <% if index && index.positive? %>
+    <%= link_to t(".previous"), farms_payroll_timesheet_path(@payroll, period: periods[index - 1].to_param), class: "btn btn-sm" %>
+  <% end %>
+  <%= form_with url: farms_payroll_timesheet_path(@payroll), method: :get, data: { controller: "auto-submit", turbo_frame: "_top" } do |form| %>
+    <%= form.label :period, t(".period"), class: "field-label" %>
+    <%= form.select :period, options_for_select(periods.reverse.map { |p| [ format_period(p), p.to_param ] }, period.to_param), {},
+          class: "field-input", data: { action: "auto-submit#submit" } %>
+  <% end %>
+  <% if index && index < periods.size - 1 %>
+    <%= link_to t(".next"), farms_payroll_timesheet_path(@payroll, period: periods[index + 1].to_param), class: "btn btn-sm" %>
+  <% end %>
+  <span class="ml-auto"><%= period_status_badge(Payroll::PeriodRow.new(period, timesheet.payment, 0)) %></span>
+</div>
+
+<%# One day at a time (handy on a phone) or the whole period. %>
+<nav class="mt-4 flex flex-wrap gap-1" aria-label="<%= t(".days") %>">
+  <%= link_to t(".whole_period"), farms_payroll_timesheet_path(@payroll, period: period.to_param),
+        class: day ? "nav-pill" : "nav-pill nav-pill-active", aria: { current: (day ? nil : "page") } %>
+  <% timesheet.dates.each do |date| %>
+    <%= link_to l(date, format: :short_day), farms_payroll_timesheet_path(@payroll, period: period.to_param, day: date.iso8601),
+          class: "#{date == day ? "nav-pill nav-pill-active" : "nav-pill"} #{"font-bold" if date == today}",
+          aria: { current: (date == day ? "page" : nil) } %>
+  <% end %>
+</nav>
+
+<% if timesheet.closed? %>
+  <p class="mt-4 flash-notice" role="status"><%= t(".closed") %></p>
+<% else %>
+  <p class="mt-4 text-sm text-ink-muted"><%= t(".help.#{@payroll.kind}") %></p>
+<% end %>
+
+<%= render "shared/form_errors", record: timesheet %>
+
+<% if timesheet.members.any? %>
+  <%= form_with url: farms_payroll_timesheet_path(@payroll, period: period.to_param, day: day&.iso8601), method: :patch,
+        class: "mt-4", data: { controller: "form-validation" } do |form| %>
+    <% timesheet.groups.each do |basis, members| %>
+      <%= render "farms/timesheets/grid", timesheet:, basis:, members:, dates:, editable:, today:,
+            heading: (t(".groups.#{basis}") if harvest) %>
+    <% end %>
+    <% if editable %>
+      <div class="mt-4 flex flex-wrap gap-3">
+        <%= form.submit t(".save"), class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  <% end %>
+<% else %>
+  <p class="empty-state mt-6"><%= t(".no_members") %></p>
+  <% if policy(PayrollMember.new(payroll: @payroll)).create? %>
+    <p class="mt-3"><%= modal_link_to t(".add_members"), new_farms_payroll_member_path(@payroll), class: "btn btn-primary" %></p>
+  <% end %>
+<% end %>

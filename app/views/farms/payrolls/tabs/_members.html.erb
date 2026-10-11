@@ -1,0 +1,105 @@
+<% unless payroll.task? %>
+  <section class="mt-6" aria-labelledby="payroll-roles">
+    <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+      <div>
+        <h2 id="payroll-roles" class="text-lg font-semibold"><%= t("farms.payrolls.members.roles") %></h2>
+        <p class="text-sm text-ink-muted"><%= t("farms.payrolls.members.roles_help.#{payroll.kind}") %></p>
+      </div>
+      <% if policy(PayrollRole.new(payroll:)).create? %>
+        <%= modal_link_to t("farms.payrolls.members.new_role"), new_farms_payroll_role_path(payroll), class: "btn btn-sm" %>
+      <% end %>
+    </div>
+    <% if payroll.roles.any? %>
+      <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <% payroll.roles.each do |role| %>
+          <li class="data-card flex items-center justify-between gap-3" id="<%= dom_id(role) %>">
+            <div>
+              <p class="font-medium"><%= role.name %></p>
+              <p class="text-sm tabular-nums text-ink-muted"><%= t("farms.payrolls.members.per_day", amount: format_money(role.daily_wage)) %></p>
+            </div>
+            <div class="flex gap-2">
+              <% if policy(role).update? %>
+                <%= modal_link_to t("farms.payrolls.members.edit"), edit_farms_payroll_role_path(payroll, role), class: "btn btn-sm" %>
+              <% end %>
+              <% if policy(role).destroy? %>
+                <%= button_to t("farms.payrolls.members.remove"), farms_payroll_role_path(payroll, role), method: :delete, class: "btn btn-sm",
+                      form: { data: { turbo_confirm: t("farms.payrolls.members.confirm_remove_role") } } %>
+              <% end %>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="empty-state"><%= t("farms.payrolls.members.no_roles.#{payroll.kind}") %></p>
+    <% end %>
+  </section>
+<% end %>
+
+<section class="mt-8" aria-labelledby="payroll-members">
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <h2 id="payroll-members" class="text-lg font-semibold"><%= t("farms.payrolls.members.members") %></h2>
+    <% if policy(PayrollMember.new(payroll:)).create? %>
+      <%= modal_link_to t("farms.payrolls.members.new_member"), new_farms_payroll_member_path(payroll), class: "btn btn-sm btn-primary" %>
+    <% end %>
+  </div>
+  <%= render layout: "shared/filters", locals: { filter: @filter, url: farms_payroll_path(payroll, tab: "members") } do |form| %>
+    <%= hidden_field_tag :tab, "members", id: nil %>
+    <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("farms.payrolls.members.search_placeholder") %>
+    <%= filter_select form, :status, t("farms.payrolls.members.status"),
+          PayrollMemberFilter::STATUSES.map { |status| [ t("farms.statuses.#{status}"), status ] }, selected: @filter.status %>
+  <% end %>
+  <div class="mt-6">
+    <% if @members.any? %>
+      <div class="@container">
+        <ul class="space-y-3 @2xl:hidden">
+          <% @members.each do |member| %>
+            <li class="data-card" id="<%= dom_id(member, :card) %>">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="font-medium"><%= member.full_name %></p>
+                  <% unless payroll.task? %><p class="text-xs text-ink-muted"><%= member_wage(member) %></p><% end %>
+                </div>
+                <%= render "farms/payrolls/member_actions", payroll:, member: %>
+              </div>
+              <% unless member.active? %><p class="mt-2"><span class="badge badge-neutral"><%= t("farms.statuses.inactive") %></span></p><% end %>
+            </li>
+          <% end %>
+        </ul>
+        <div class="hidden overflow-x-auto panel @2xl:block">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th><%= PayrollMember.human_attribute_name(:person) %></th>
+                <% unless payroll.task? %>
+                  <th><%= PayrollMember.human_attribute_name(:role) %></th>
+                  <th class="text-right"><%= t("farms.payrolls.members.daily_wage") %></th>
+                <% end %>
+                <th><%= t("farms.payrolls.members.status") %></th>
+                <th class="cell-actions"><span class="sr-only"><%= t("farms.payrolls.table.actions") %></span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @members.each do |member| %>
+                <tr id="<%= dom_id(member) %>">
+                  <td class="font-medium"><%= member.full_name %></td>
+                  <% unless payroll.task? %>
+                    <td><%= member.role&.name || "—" %></td>
+                    <td class="whitespace-nowrap text-right tabular-nums">
+                      <%= member.daily_wage ? format_money(member.daily_wage) : (payroll.harvest? ? t("farms.members.by_cans") : "—") %>
+                      <% if member.own_wage? %><span class="badge badge-neutral ml-1"><%= t("farms.members.own_wage") %></span><% end %>
+                    </td>
+                  <% end %>
+                  <td><span class="badge <%= member.active? ? "badge-success" : "badge-neutral" %>"><%= t("farms.statuses.#{member.active? ? "active" : "inactive"}") %></span></td>
+                  <td class="cell-actions"><%= render "farms/payrolls/member_actions", payroll:, member: %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "members" } %>
+    <% else %>
+      <p class="empty-state"><%= t("farms.payrolls.members.empty") %></p>
+    <% end %>
+  </div>
+</section>

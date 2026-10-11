@@ -38,6 +38,9 @@ es:
       pick_department_first: "Primero selecciona un departamento"
       payment_method_later: "Por definir"
       pick_supply: "Selecciona un insumo"
+      pick_farm: "Selecciona una finca"
+      pick_category: "Selecciona una categoría"
+      no_role: "Sin rol asignado"
       pick_payment_method: "Selecciona la forma de pago"
     filters:
       title: "Filtros"
@@ -456,6 +459,7 @@ es:
       table:
         split: "Interés %{interest} · Capital %{principal}"
         with_purchase: "%{method} · compra %{number}"
+        with_payroll: "%{method} · %{payroll}"
         actions: "Acciones"
         destroy: "Quitar"
         confirm_destroy: "¿Quitar este abono? Solo se puede quitar el último."
@@ -569,6 +573,358 @@ es:
           coffee_payment: "Abono con café al préstamo %{number} (compra %{purchase})"
         back: "Volver a estados de cuenta"
 
+  farms:
+    nav:
+      home: "Resumen"
+      new_payroll: "Nueva planilla"
+      payrolls: "Planillas"
+      farms: "Fincas"
+      expense_categories: "Categorías de gastos"
+    period: "%{from} – %{to}"
+    period_statuses:
+      paid: "Pagado"
+      to_pay: "Por pagar"
+      in_progress: "En curso"
+      upcoming: "Próximo"
+    statuses:
+      active: "Activos"
+      inactive: "Inactivos"
+    units:
+      daily:
+        one: "día"
+        other: "días"
+      harvest:
+        one: "lata"
+        other: "latas"
+      task:
+        one: "tarea"
+        other: "tareas"
+    work_times_rate: "%{quantity} %{unit} × %{rate}"
+    members:
+      own_wage: "Salario propio"
+      by_cans: "Por latas"
+      new:
+        title: "Agregar empleado a la planilla"
+      edit:
+        title: "Editar empleado de la planilla"
+      form:
+        person_placeholder: "Escribe para buscar un colaborador"
+        person_missing: "Selecciona un colaborador de la lista"
+        person_help: "Solo aparecen las personas con el rol de colaborador."
+        new_person: "¿No está? Registrar colaborador"
+        new_role: "Nuevo rol"
+        harvest_help: "Los cortadores van sin rol ni salario: ganan por latas. Los caporales no cortan: dales el rol de caporal (o un salario propio) y ganan su salario por cada día que vienen."
+        override_help:
+          daily: "Opcional. Si lo escribes, este empleado gana este salario por día en vez del de su rol."
+          harvest: "Opcional. Con salario propio, gana por día y no por latas, en vez del salario de su rol."
+        active_help: "Un empleado inactivo deja de aparecer en la asistencia; lo ya registrado se conserva."
+        remove: "Quitar de la planilla"
+        confirm_remove: "¿Quitar a este empleado? Solo se puede si no tiene nada registrado; si ya trabajó, desactívalo."
+      create:
+        success: "%{person} agregado a la planilla."
+      update:
+        success: "Empleado actualizado."
+      destroy:
+        success: "Empleado quitado de la planilla."
+        in_use: "No se puede quitar: ya tiene trabajo o pagos registrados. Desactívalo en su lugar."
+    accounts:
+      payrolls: "Planillas"
+      gross_paid: "Pagado en planillas"
+      loans_paid: "De eso, a préstamos"
+      expenses: "Gastos"
+      total_cost: "Costo total"
+      to_pay: "Por pagar"
+    home:
+      index:
+        stats:
+          farms: "Fincas activas"
+          active_payrolls: "Planillas activas"
+          periods_to_pay: "Períodos por pagar"
+          amount_to_pay: "Monto por pagar"
+        to_pay: "Por pagar"
+        to_pay_help: "Períodos que terminan hoy o antes y no se han pagado: el último día del período es el día de pago. Lo más viejo primero."
+        period: "Período"
+        people: "Personas"
+        amount: "Monto"
+        actions: "Acciones"
+        open: "Abrir planilla"
+        pay: "Pagar"
+        nothing_to_pay: "Todo al día: no hay períodos terminados sin pagar."
+        active_payrolls: "Planillas activas"
+        no_active_payrolls: "No hay planillas activas. Toca «Nueva planilla» para crear una."
+    farms:
+      index:
+        title: "Fincas"
+        new: "Nueva finca"
+        status: "Estado"
+        location: "Ubicación"
+        actions: "Acciones"
+        edit: "Editar"
+        empty: "No hay fincas con esos filtros."
+      show:
+        new_payroll: "Nueva planilla"
+        edit: "Editar"
+        payrolls: "Planillas de la finca"
+        no_payrolls: "Esta finca no tiene planillas con esos filtros."
+        back: "Volver a fincas"
+      new:
+        title: "Nueva finca"
+      edit:
+        title: "Editar finca"
+      form:
+        active_help: "Una finca inactiva no aparece al crear planillas; sus planillas se conservan."
+      create:
+        success: "Finca registrada."
+      update:
+        success: "Finca actualizada."
+    payrolls:
+      table:
+        open: "Abrir"
+        dates: "Fechas"
+        no_end: "sin fecha de fin"
+        actions: "Acciones"
+      index:
+        title: "Planillas"
+        new: "Nueva planilla"
+        all_farms: "Todas las fincas"
+        empty: "No hay planillas con esos filtros."
+      show:
+        new_task: "Nueva tarea"
+        timesheet:
+          daily: "Asistencia"
+          harvest: "Latas"
+        new_expense: "Registrar gasto"
+        edit: "Editar"
+        destroy: "Borrar"
+        confirm_destroy: "¿Borrar esta planilla? Solo se puede mientras no tenga empleados, tareas, pagos ni gastos."
+        accounts: "Cuentas de la planilla"
+        tabs:
+          label: "Secciones de la planilla"
+          periods: "Períodos de pago"
+          members: "Empleados"
+          tasks: "Tareas"
+          expenses: "Gastos"
+        back: "Volver a planillas"
+      periods:
+        help_daily: "Cada período se paga con los días de asistencia × el salario por día de cada empleado."
+        help_harvest: "Cada período se paga con las latas cortadas × el precio de la lata; los caporales, con sus días × su salario por día."
+        help_task: "Cada período paga las tareas terminadas en él, divididas en partes iguales entre quienes las hicieron."
+        status: "Estado"
+        statuses:
+          to_pay: "Sin pagar"
+          paid: "Pagados"
+          upcoming: "Próximos"
+        period: "Período"
+        amount: "Monto"
+        timesheet_daily: "Asistencia"
+        timesheet_harvest: "Latas"
+        pay: "Pagar"
+        pay_sheet: "Planilla de pago"
+        empty: "No hay períodos con esos filtros. El primero empieza en la fecha de inicio de la planilla."
+      members:
+        roles: "Roles"
+        roles_help:
+          daily: "Cada rol tiene su salario por día. Un empleado puede tener además un salario propio que manda sobre el del rol."
+          harvest: "Roles con salario fijo por día, como el caporal: quien tiene un rol no corta, gana por día. Los cortadores van sin rol y ganan por latas."
+        new_role: "Nuevo rol"
+        per_day: "%{amount} por día"
+        no_roles:
+          daily: "Sin roles. Crea uno (por ejemplo, «Jornalero» o «Caporal») con su salario por día."
+          harvest: "Sin roles. Crea «Caporal» con su salario por día para los que no cortan."
+        confirm_remove_role: "¿Borrar este rol? Solo se puede si ningún empleado lo tiene."
+        members: "Empleados"
+        new_member: "Agregar empleado"
+        search_placeholder: "Nombre o DNI"
+        status: "Estado"
+        daily_wage: "Salario por día"
+        account: "Estado de cuenta"
+        edit: "Editar"
+        remove: "Quitar"
+        empty: "No hay empleados con esos filtros."
+      tasks:
+        help: "El valor de cada tarea se divide en partes iguales entre quienes la hicieron, y se paga en el período en que se terminó."
+        status: "Estado"
+        statuses:
+          pending: "Pendientes"
+          completed: "Terminadas"
+        completed_on: "Terminada el %{date}"
+        participants:
+          one: "1 participante"
+          other: "%{count} participantes"
+        share: "Parte de cada uno"
+        paid: "Pagada"
+        confirm_remove: "¿Borrar esta tarea?"
+        empty: "No hay tareas con esos filtros."
+      expenses:
+        all_categories: "Todas las categorías"
+        filtered_total_html: "Total de los gastos filtrados: %{amount}"
+        confirm_remove: "¿Borrar este gasto?"
+        empty: "No hay gastos con esos filtros."
+      new:
+        title: "Nueva planilla"
+      edit:
+        title: "Editar planilla"
+      form:
+        new_farm: "Nueva finca"
+        name_placeholder: "Por ejemplo: Limpia de lote 3, Corte 2026"
+        kinds:
+          daily: "Se paga por día trabajado × salario por día (por rol o propio)."
+          task: "Por obra: cada tarea tiene un valor que se divide en partes iguales. Puede durar un solo día."
+          harvest: "Corte de café: se paga por lata cortada."
+        ends_on_help: "Opcional. Déjala vacía si no tiene fecha de fin."
+        frequency_help: "Semanal: se paga cada sábado. Quincenal: el 15 y el último día del mes. Mensual: el último día del mes."
+        fixed_help: "La planilla ya tiene pagos: el tipo ya no se cambia. Si cambias la frecuencia o las fechas, los períodos pagados se quedan como están y los que faltan por pagar se recalculan."
+        can_price_help: "Lo que se paga por cada lata cortada en esta planilla."
+      create:
+        success: "Planilla creada. Ahora agrega a sus empleados."
+      update:
+        success: "Planilla actualizada."
+      destroy:
+        success: "Planilla borrada."
+        in_use: "No se puede borrar: ya tiene empleados, tareas, pagos o gastos."
+    roles:
+      new:
+        title: "Nuevo rol"
+      edit:
+        title: "Editar rol"
+      form:
+        name_placeholder: "Por ejemplo: Jornalero, Caporal"
+        help: "Cambiar el salario de un rol cambia lo que se calcula para los períodos sin pagar; lo ya pagado no cambia."
+      create:
+        success: "Rol creado."
+      update:
+        success: "Rol actualizado."
+      destroy:
+        success: "Rol borrado."
+        in_use: "No se puede borrar: hay empleados con este rol."
+    timesheets:
+      show:
+        title:
+          daily: "Asistencia"
+          harvest: "Latas cortadas"
+        pay: "Pagar este período"
+        pay_sheet: "Planilla de pago"
+        previous: "← Anterior"
+        next: "Siguiente →"
+        period: "Período"
+        days: "Días del período"
+        whole_period: "Todo el período"
+        closed: "Este período ya se pagó: lo registrado ya no se cambia."
+        help:
+          daily: "Marca cada día: 1 (día completo), ½ (medio día) o — (no vino). «Todos» marca el día completo para todos."
+          harvest: "Escribe las latas que cortó cada persona cada día. Deja vacío si no cortó. A los caporales márcales 1, ½ o — como asistencia."
+        fill_day: "Todos"
+        fill_day_label: "Día completo para todos el %{date}"
+        cell_label: "%{person}, %{date}"
+        fractions:
+          none: "—"
+          "1": "1"
+          "0_5": "½"
+        no_wage: "Sin salario: asígnale un rol o un salario propio"
+        total:
+          daily: "Días"
+          harvest: "Latas"
+        groups:
+          harvest: "Cortadores (por latas)"
+          daily: "Caporales (salario por día)"
+        amount: "A pagar"
+        totals: "Totales"
+        save: "Guardar"
+        no_members: "Esta planilla no tiene empleados activos."
+        add_members: "Agregar empleado"
+      update:
+        success: "Guardado."
+    tasks:
+      new:
+        title: "Nueva tarea"
+      edit:
+        title: "Editar tarea"
+      form:
+        name_placeholder: "Por ejemplo: Chapia del lote 2"
+        share: "Le toca a cada uno:"
+        no_members: "La planilla no tiene empleados activos. Agrégalos primero."
+        completed_help: "Déjala vacía mientras la tarea no esté terminada. Se paga en el período de esta fecha."
+      create:
+        success: "Tarea registrada."
+      update:
+        success: "Tarea actualizada."
+      destroy:
+        success: "Tarea borrada."
+    payments:
+      loan_observation: "Descontado en planilla %{payroll}"
+      new:
+        title: "Pagar período"
+        not_ended: "Este período todavía no termina (termina el %{date}). Al pagarlo, lo registrado en él ya no se podrá cambiar."
+        nothing_to_pay: "No hay nada que pagar en este período: no se registró trabajo."
+        paid_on: "Fecha de pago"
+        paid_on_help: "Los abonos a préstamos llevan esta fecha: el interés se calcula hasta ella."
+        lines: "Lo que gana cada empleado"
+        gross: "Gana"
+        loans: "A préstamos"
+        net: "Recibe"
+        open_loans: "Préstamos por cobrar"
+        loan: "Préstamo %{number}"
+        owed: "Debe %{amount}"
+        settle: "Saldar"
+        deduct: "Descontar"
+        over_pay: "Lo descontado a esta persona no puede pasar de lo que gana."
+        summary:
+          gross: "Total de la planilla"
+          loans: "A préstamos"
+          net: "Total a entregar"
+        submit: "Registrar pago"
+        confirm: "¿Registrar el pago? Lo registrado en este período ya no se podrá cambiar."
+      create:
+        success: "Pago registrado. Total a entregar: %{amount}."
+      show:
+        title: "Planilla de pago · %{payroll}"
+        back_to_payroll: "Volver a la planilla"
+        print: "Imprimir"
+        destroy: "Quitar pago"
+        confirm_destroy: "¿Quitar este pago? También se quitan sus abonos a préstamos y el período vuelve a quedar abierto."
+        sheet: "Planilla de pago"
+        period: "Período"
+        work: "Trabajo"
+        gross: "Gana"
+        loans: "A préstamos"
+        net: "Recibe"
+        signature: "Firma"
+        totals: "Totales"
+        paid_by_signature: "Firma de quien paga"
+        registered_by: "Registrado por: %{name}"
+      destroy:
+        success: "Pago quitado. El período vuelve a estar abierto."
+    expenses:
+      new:
+        title: "Registrar gasto"
+      edit:
+        title: "Editar gasto"
+      form:
+        new_category: "Nueva categoría"
+      create:
+        success: "Gasto registrado."
+      update:
+        success: "Gasto actualizado."
+      destroy:
+        success: "Gasto borrado."
+    expense_categories:
+      index:
+        title: "Categorías de gastos"
+        new: "Nueva categoría"
+        help: "Sirven para agrupar los gastos de las planillas (transporte, herramientas, alimentación...)."
+        edit: "Editar"
+        empty: "No hay categorías con esos filtros."
+      new:
+        title: "Nueva categoría de gasto"
+      edit:
+        title: "Editar categoría de gasto"
+      form:
+        name_placeholder: "Por ejemplo: Transporte"
+        active_help: "Una categoría inactiva ya no aparece al registrar gastos; los gastos que la usan se conservan."
+      create:
+        success: "Categoría registrada."
+      update:
+        success: "Categoría actualizada."
   module_home:
     empty: "Este módulo todavía no tiene funciones."
 
@@ -904,10 +1260,162 @@ es:
       farms:
         home:
           index:
-            title: "Fincas"
-            summary: "Este módulo todavía no tiene funciones."
+            title: "Resumen de fincas"
+            summary: "Lo que hay que pagar y las planillas activas."
             steps:
-              - "Cuando esté listo, aquí se van a manejar las fincas propias."
+              - "Revisa «Por pagar»: períodos que terminan hoy o antes y no se han pagado, con su monto."
+              - "Toca «Pagar» para pagar un período, o «Abrir planilla» para revisarla antes."
+              - "Toca «Nueva planilla» para crear una."
+            tips:
+              - "Semanal se paga cada sábado; quincenal, el 15 y el último día del mes; mensual, el último día del mes."
+        farms:
+          index:
+            title: "Fincas"
+            summary: "Las fincas del negocio. Cada una tiene sus planillas."
+            steps:
+              - "Busca por nombre o filtra por activas e inactivas en «Filtros»."
+              - "Toca «Detalle» para ver la finca, sus planillas y lo que han costado."
+              - "Toca «Nueva finca» para registrar una."
+            tips:
+              - "Una finca no se borra: se desactiva y deja de aparecer al crear planillas."
+          show:
+            title: "Detalle de la finca"
+            summary: "La finca, lo que han costado sus planillas y la lista de sus planillas."
+            steps:
+              - "Revisa las cifras: pagado en planillas, gastos y costo total de la finca."
+              - "Filtra sus planillas por tipo o estado y ábrelas desde la lista."
+              - "Toca «Nueva planilla» para crear una en esta finca."
+          form:
+            title: "Registrar o editar una finca"
+            summary: "Nombre y ubicación de la finca."
+            steps:
+              - "Escribe el nombre."
+              - "Elige departamento y municipio y escribe la dirección."
+              - "Toca el botón de guardar."
+        payrolls:
+          index:
+            title: "Planillas"
+            summary: "Todas las planillas. Al entrar muestra las activas."
+            steps:
+              - "Filtra por nombre, finca, tipo o estado en «Filtros»."
+              - "Toca «Abrir» para ver la planilla: períodos de pago, empleados, tareas y gastos."
+              - "Toca «Nueva planilla» para crear una."
+          show:
+            title: "Planilla"
+            summary: "Todo de una planilla: sus cuentas arriba y, en pestañas, los períodos de pago, los empleados, las tareas (por obra) y los gastos."
+            steps:
+              - "Arriba están las cuentas: pagado, lo que fue a préstamos, gastos, costo total y lo que falta por pagar."
+              - "En «Empleados» crea los roles con su salario por día y agrega a los colaboradores que trabajan."
+              - "Registra el trabajo: «Asistencia» (por día), «Latas» (corte de café) o «Nueva tarea» (por obra)."
+              - "En «Períodos de pago» toca «Pagar» cuando termine un período."
+              - "Registra los gastos con «Registrar gasto»."
+            tips:
+              - "Un período pagado queda cerrado: su asistencia, latas o tareas ya no se cambian."
+              - "Solo se puede quitar el pago del último período."
+          form:
+            title: "Crear o editar una planilla"
+            summary: "Una planilla de una finca: su nombre, cómo se paga y cada cuánto."
+            steps:
+              - "Elige la finca (o créala con «Nueva finca») y escribe el nombre."
+              - "Elige el tipo: por día, por obra (tarea) o corte de café (por lata)."
+              - "Elige cada cuánto se paga y la fecha de inicio. La fecha de fin es opcional."
+              - "En corte de café, escribe el precio de la lata."
+              - "Toca el botón de guardar y después agrega a los empleados."
+            tips:
+              - "Semanal: períodos que terminan cada sábado. Quincenal: del 1 al 15 y del 16 al fin de mes. Mensual: el mes completo."
+              - "El primer período empieza en la fecha de inicio y va hasta el siguiente día de pago. Si la planilla empieza un sábado (o un 15, o fin de mes), ese día se paga con el período siguiente."
+              - "Los períodos por venir aparecen como «Próximo» hasta la fecha de fin."
+              - "Una obra de un día (o de unas horas): pon la misma fecha de inicio y de fin. Ese día se paga."
+              - "Al cambiar la frecuencia o las fechas, los períodos sin pagar se recalculan; los pagados se quedan como están."
+              - "Las fechas no pueden dejar fuera días con trabajo o pagos ya registrados. Con pagos, el tipo ya no se cambia."
+        roles:
+          form:
+            title: "Crear o editar un rol"
+            summary: "Un rol de la planilla con su salario por día. En corte de café, el rol es para los caporales, que no cortan y ganan por día."
+            steps:
+              - "Escribe el nombre del rol y su salario por día."
+              - "Toca el botón de guardar."
+            tips:
+              - "Un empleado con salario propio gana ese salario en vez del de su rol."
+              - "Lo ya pagado no cambia si cambias el salario."
+        members:
+          form:
+            title: "Agregar o editar un empleado"
+            summary: "Un colaborador que trabaja en la planilla."
+            steps:
+              - "Busca al colaborador por nombre o DNI y elígelo. Si no existe, toca «¿No está? Registrar colaborador»."
+              - "En planillas por día, elige su rol o escribe un salario propio. En corte de café, los cortadores van sin rol (ganan por latas) y los caporales con su rol o salario (ganan por día)."
+              - "Toca el botón de guardar."
+            tips:
+              - "El salario propio manda sobre el del rol."
+              - "Si ya trabajó, no se quita: se desactiva y deja de aparecer en la asistencia."
+        timesheets:
+          show:
+            title: "Asistencia o latas"
+            summary: "Lo que trabajó cada empleado cada día del período: días (planillas por día) o latas (corte de café). En corte, los caporales van aparte con su asistencia."
+            steps:
+              - "Elige el período con «Anterior», «Siguiente» o la lista."
+              - "Por día: marca 1, ½ o —. «Todos» marca el día completo para todos. En corte: escribe las latas."
+              - "Toca «Guardar». Los totales de cada persona y de cada día se ven mientras escribes."
+            tips:
+              - "En el celular, elige un día arriba para ver solo esa columna."
+              - "Un período pagado ya no se puede cambiar."
+              - "Para pagar, toca «Pagar este período»."
+        tasks:
+          form:
+            title: "Registrar o editar una tarea"
+            summary: "Una tarea de una planilla por obra: su valor se divide en partes iguales entre quienes la hicieron."
+            steps:
+              - "Escribe el nombre de la tarea y su valor."
+              - "Marca a los empleados que la hicieron: se muestra cuánto le toca a cada uno."
+              - "Cuando esté terminada, escribe la fecha. Se paga en el período de esa fecha."
+              - "Toca el botón de guardar."
+            tips:
+              - "Ejemplo: una tarea de L 1,000 hecha entre 4 personas da L 250 a cada una."
+              - "Si la división no da exacta, los centavos que sobran van uno a uno a los primeros de la lista."
+              - "Una tarea pagada ya no se edita ni se borra."
+        payments:
+          form:
+            title: "Pagar un período"
+            summary: "Lo que gana cada empleado en el período y, si debe préstamos, cuánto descontarle."
+            steps:
+              - "Revisa lo que gana cada empleado: días, latas o tareas."
+              - "Si alguien debe, escribe cuánto descontarle de cada préstamo o toca «Saldar»."
+              - "Revisa los totales: planilla, a préstamos y a entregar."
+              - "Toca «Registrar pago» y luego imprime la planilla de pago para las firmas."
+            tips:
+              - "Lo descontado no puede pasar de lo que gana la persona."
+              - "Cada descuento es un abono al préstamo: paga primero el interés y luego el capital."
+              - "Al pagar, el período queda cerrado."
+          show:
+            title: "Planilla de pago"
+            summary: "Lo que se pagó en un período, con una línea por empleado para su firma."
+            steps:
+              - "Toca «Imprimir» y que cada empleado firme al recibir."
+            tips:
+              - "Solo se puede quitar el pago del último período; también se quitan sus abonos a préstamos."
+        expenses:
+          form:
+            title: "Registrar o editar un gasto"
+            summary: "Un gasto de la planilla, para su contabilidad."
+            steps:
+              - "Revisa la fecha y elige la categoría (o crea una con «Nueva categoría»)."
+              - "Escribe la descripción y el monto."
+              - "Toca el botón de guardar."
+        expense_categories:
+          index:
+            title: "Categorías de gastos"
+            summary: "Las categorías para agrupar los gastos de las planillas."
+            steps:
+              - "Busca por nombre o filtra por activas e inactivas."
+              - "Toca «Nueva categoría» para crear una."
+            tips:
+              - "Una categoría no se borra: se desactiva."
+          form:
+            title: "Crear o editar una categoría de gasto"
+            summary: "El nombre de la categoría."
+            steps:
+              - "Escribe el nombre y toca el botón de guardar."
       loans:
         home:
           index:
@@ -1043,6 +1551,18 @@ es:
         supply: "el insumo"
         loan_supply: "el insumo del préstamo"
         purchase_weighing: "la pesada"
+        farm: "la finca"
+        expense_category: "la categoría de gasto"
+        payroll: "la planilla"
+        payroll_role: "el rol de planilla"
+        payroll_member: "el empleado de planilla"
+        payroll_attendance: "la asistencia"
+        harvest_entry: "las latas del día"
+        payroll_task: "la tarea"
+        payroll_task_participant: "el participante de la tarea"
+        payroll_payment: "el pago de planilla"
+        payroll_payment_line: "la línea de pago de planilla"
+        payroll_expense: "el gasto de planilla"
       sentence:
         create: "%{actor} creó %{record} el %{date} a las %{time}."
         update: "%{actor} modificó %{record}: %{fields}, el %{date} a las %{time}."
@@ -1214,6 +1734,42 @@ es:
       purchase_weighing:
         one: "Pesada"
         other: "Pesadas"
+      farm:
+        one: "Finca"
+        other: "Fincas"
+      expense_category:
+        one: "Categoría de gasto"
+        other: "Categorías de gasto"
+      payroll:
+        one: "Planilla"
+        other: "Planillas"
+      payroll_role:
+        one: "Rol de planilla"
+        other: "Roles de planilla"
+      payroll_member:
+        one: "Empleado de planilla"
+        other: "Empleados de planilla"
+      payroll_attendance:
+        one: "Asistencia"
+        other: "Asistencias"
+      harvest_entry:
+        one: "Latas del día"
+        other: "Latas del día"
+      payroll_task:
+        one: "Tarea"
+        other: "Tareas"
+      payroll_task_participant:
+        one: "Participante de tarea"
+        other: "Participantes de tarea"
+      payroll_payment:
+        one: "Pago de planilla"
+        other: "Pagos de planilla"
+      payroll_payment_line:
+        one: "Línea de pago de planilla"
+        other: "Líneas de pago de planilla"
+      payroll_expense:
+        one: "Gasto de planilla"
+        other: "Gastos de planilla"
     attributes:
       user:
         name: "Nombre completo"
@@ -1340,6 +1896,7 @@ es:
         payment_method/transfer: "Transferencia"
         payment_method/check: "Cheque"
         payment_method/coffee: "Con café"
+        payment_method/payroll: "Descuento de planilla"
         purchase: "Compra"
         purchase_id: "Compra"
         observations: "Observaciones"
@@ -1348,6 +1905,96 @@ es:
         unit: "Unidad"
         default_price: "Precio predeterminado (L)"
         active: "Activo"
+      farm:
+        name: "Nombre"
+        department: "Departamento"
+        department_id: "Departamento"
+        municipality: "Municipio"
+        municipality_id: "Municipio"
+        address_line: "Dirección"
+        observations: "Observaciones"
+        active: "Activa"
+      expense_category:
+        name: "Nombre"
+        active: "Activa"
+      payroll:
+        farm: "Finca"
+        farm_id: "Finca"
+        name: "Nombre"
+        kind: "Tipo"
+        kind/daily: "Por día"
+        kind/task: "Por obra (tarea)"
+        kind/harvest: "Corte de café (por lata)"
+        pay_frequency: "Se paga"
+        pay_frequency/weekly: "Semanal (sábado)"
+        pay_frequency/biweekly: "Quincenal (15 y fin de mes)"
+        pay_frequency/monthly: "Mensual (fin de mes)"
+        starts_on: "Fecha de inicio"
+        ends_on: "Fecha de fin"
+        can_price: "Precio de la lata (L)"
+        observations: "Observaciones"
+        status: "Estado"
+        status/active: "Activa"
+        status/finished: "Terminada"
+        created_by_id: "Creó"
+      payroll_role:
+        payroll_id: "Planilla"
+        name: "Rol"
+        daily_wage: "Salario por día (L)"
+      payroll_member:
+        payroll_id: "Planilla"
+        person: "Colaborador"
+        person_id: "Colaborador"
+        role: "Rol"
+        payroll_role_id: "Rol"
+        daily_wage_override: "Salario propio por día (L)"
+        active: "Activo"
+      payroll_attendance:
+        payroll_member_id: "Empleado"
+        worked_on: "Día"
+        day_fraction: "Asistencia"
+      harvest_entry:
+        payroll_member_id: "Empleado"
+        worked_on: "Día"
+        cans: "Latas"
+      payroll_task:
+        payroll_id: "Planilla"
+        name: "Tarea"
+        amount: "Valor de la tarea (L)"
+        completed_on: "Fecha en que se terminó"
+        observations: "Observaciones"
+        members: "Quiénes la hicieron"
+      payroll_task_participant:
+        payroll_task_id: "Tarea"
+        payroll_member_id: "Empleado"
+        member: "Empleado"
+      payroll_payment:
+        payroll_id: "Planilla"
+        period_starts_on: "Inicio del período"
+        period_ends_on: "Fin del período"
+        paid_on: "Fecha de pago"
+        gross_total: "Total de la planilla"
+        loans_total: "A préstamos"
+        net_total: "Total entregado"
+        observations: "Observaciones"
+        created_by_id: "Registró"
+      payroll_payment_line:
+        payroll_payment_id: "Pago de planilla"
+        payroll_member_id: "Empleado"
+        basis: "Forma de pago"
+        quantity: "Cantidad"
+        rate: "Tarifa"
+        gross_amount: "Gana"
+        loans_amount: "A préstamos"
+        net_amount: "Recibe"
+      payroll_expense:
+        payroll_id: "Planilla"
+        category: "Categoría"
+        expense_category_id: "Categoría"
+        spent_on: "Fecha"
+        description: "Descripción"
+        amount: "Monto (L)"
+        created_by_id: "Registró"
       purchase/weighings:
         gross_weight: "Peso de la pesada (lb)"
         sacks: "Sacos de la pesada"
@@ -1373,6 +2020,57 @@ es:
         can_destroy: "Borrar"
     errors:
       models:
+        payroll:
+          attributes:
+            ends_on:
+              before_start: "no puede ser antes de la fecha de inicio"
+              before_recorded: "no puede ser antes del %{date}: ese día ya hay trabajo o un pago registrado"
+            kind:
+              fixed_once_paid: "ya no se puede cambiar: la planilla tiene pagos"
+            starts_on:
+              after_recorded: "no puede ser después del %{date}: ese día ya hay trabajo o un pago registrado"
+        payroll_member:
+          no_daily_wage: "Asígnale un rol o un salario propio: en una planilla por día cada empleado necesita su salario."
+          has_cans: "Ya tiene latas registradas: no puede pasar a ganar por día. Quita sus latas primero."
+          has_attendance: "Ya tiene días registrados como caporal: necesita un rol o un salario propio para seguir ganando por día."
+          attributes:
+            person:
+              not_collaborator: "debe tener el rol de colaborador"
+            person_id:
+              taken: "ya está en esta planilla"
+            role:
+              other_payroll: "es de otra planilla"
+        payroll_attendance:
+          not_paid_by_day: "Este empleado gana por latas, no por día."
+          attributes:
+            worked_on:
+              outside_payroll: "está fuera de las fechas de la planilla"
+              period_paid: "es de un período ya pagado"
+        harvest_entry:
+          paid_by_day: "Este empleado gana por día: no se le anotan latas."
+          attributes:
+            worked_on:
+              outside_payroll: "está fuera de las fechas de la planilla"
+              period_paid: "es de un período ya pagado"
+        payroll_task:
+          no_participants: "Marca quiénes hicieron la tarea antes de darla por terminada."
+          paid: "La tarea ya se pagó: no se puede cambiar ni borrar."
+          attributes:
+            completed_on:
+              outside_payroll: "está fuera de las fechas de la planilla"
+              period_paid: "es de un período ya pagado"
+        payroll_task_participant:
+          attributes:
+            member:
+              other_payroll: "es de otra planilla"
+        payroll_payment_line:
+          attributes:
+            loans_amount:
+              over_pay: "no puede pasar de lo que gana"
+        payroll_expense:
+          attributes:
+            category:
+              inactive: "está inactiva"
         purchase:
           voided_invoiced: "Una compra facturada no se puede anular."
           attributes:
@@ -1399,6 +2097,7 @@ es:
               over_purchase: "es mayor que lo que le queda a la compra (%{available})"
             payment_method:
               coffee_without_purchase: "«Con café» solo se registra desde una compra"
+              payroll_without_payment: "«Descuento de planilla» solo se registra al pagar una planilla"
             purchase:
               other_person: "es de otra persona"
               closed: "ya no se puede usar: está anulada, ya se le pagó al productor o no le queda dinero"
@@ -1412,11 +2111,24 @@ es:
 
   activemodel:
     attributes:
+      payroll_payment_issuer:
+        paid_on: "Fecha de pago"
+        observations: "Observaciones"
       purchase_loan_settlement:
         paid_on: "Fecha del abono"
         observations: "Observaciones"
     errors:
       models:
+        payroll_payment_issuer:
+          already_paid: "Este período ya se pagó."
+          nothing_to_pay: "No hay nada que pagar en este período."
+          negative_amount: "Los descuentos no pueden ser negativos."
+          unknown_loan: "Uno de los préstamos ya no está por cobrar. Vuelve a abrir la pantalla."
+          over_pay: "A %{person} se le descuenta más de lo que gana (%{pay})."
+          loan_error: "Préstamo %{loan}: %{detail}"
+        payroll_timesheet:
+          closed: "Este período ya se pagó: no se puede cambiar."
+          cell: "%{person}, %{date}: %{detail}"
         purchase_loan_settlement:
           nothing_to_pay: "Escribe cuánto abonar al menos a un préstamo."
           negative_amount: "Los montos no pueden ser negativos."
@@ -1498,6 +2210,7 @@ es:
       default: "%d/%m/%Y"
       long: "%-d de %B de %Y"
       short: "%-d de %b"
+      short_day: "%a %-d/%m"
     order: [day, month, year]
 
   time:

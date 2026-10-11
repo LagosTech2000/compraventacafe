@@ -91,6 +91,18 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Estado de cuenta / historial crediticio | `CreditAccount` |
 | Score de pago | `PayerScore` |
 | Recibo de abono | `loans/payments#show` (`LoanPayment#display_number`) |
+| Finca | `Farm` |
+| Planilla (por día / por obra o tarea / corte por lata) | `Payroll` (`kind`: `daily` / `task` / `harvest`) |
+| Rol de planilla / salario por día / salario propio | `PayrollRole` / `daily_wage` / `PayrollMember#daily_wage_override` |
+| Empleado de planilla | `PayrollMember` (una `Person` con rol `Collaborator`) |
+| Asistencia (día completo / medio día) | `PayrollAttendance` (`day_fraction` 1 / 0.5) |
+| Latas cortadas / precio de la lata | `HarvestEntry` (`cans`) / `Payroll#can_price` |
+| Caporal (en corte: no corta, salario por día) | `PayrollMember#paid_by_day?` (tiene rol o salario propio) |
+| Tarea (obra) / participante | `PayrollTask` / `PayrollTaskParticipant` |
+| Semanal / quincenal / mensual | `pay_frequency`: `weekly` / `biweekly` / `monthly` (`PayPeriod`) |
+| Pago de planilla / planilla de pago | `PayrollPayment` + `PayrollPaymentLine` (`PayrollPaymentIssuer`) |
+| Descuento de planilla (abono a préstamo) | `LoanPayment` con `payment_method: "payroll"` |
+| Gasto de planilla / categoría de gasto | `PayrollExpense` / `ExpenseCategory` |
 
 ## Modelo de permisos
 
@@ -332,8 +344,8 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 | --- | --- |
 | `administration` | Usuarios y permisos, y auditoría (solo administradores); personas, clientes y colaboradores (permisos del módulo) |
 | `trading` | Demo: zonas, productores (con pestañas y QQ por temporada), compras con cálculo por estado del café y anulación, facturas imprimibles (original y copia) con estado de pago, cierre diario |
-| `farms` | Portada vacía |
-| `loans` | Préstamos en efectivo, insumos o mixtos a cualquier persona con interés simple, catálogo de insumos, abonos (también con café desde una compra) con recibo imprimible, estados de cuenta con historial crediticio y score de pago |
+| `farms` | Fincas, planillas por día, por obra y de corte por lata, con roles y salarios, asistencia o latas por día, pagos por período (semanal, quincenal, mensual) con descuento a préstamos, planilla de pago imprimible y gastos por planilla |
+| `loans` | Préstamos en efectivo, insumos o mixtos a cualquier persona con interés simple, catálogo de insumos, abonos (también con café desde una compra o descontados en planilla) con recibo imprimible, estados de cuenta con historial crediticio y score de pago |
 | `reports` | Portada vacía |
 
 Cada módulo tiene su namespace de controladores. Implementar una funcionalidad
@@ -455,6 +467,59 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
   copia en una hoja) con el saldo que quedó a la fecha del abono. Al
   registrar un abono se abre solo en el modal (`close_modal_with visit:`).
 
+### Fincas (`farms`) — fase 1
+
+Reglas decididas por Fernando el 2026-10-10 [CONFIRMADO]:
+
+- Varias fincas (`Farm`); cada una con muchas planillas (`Payroll`), cada una
+  con nombre, fechas (fin opcional) y tipo:
+  - **Por día** (`daily`): días de asistencia × salario por día. El salario
+    sale del **rol** del empleado en esa planilla (`PayrollRole`) o de su
+    **salario propio**, que manda sobre el del rol. La asistencia se marca
+    por día: completo (1), medio (½) o ausente (sin registro).
+  - **Por obra / tarea** (`task`): el valor de la tarea se divide en **partes
+    iguales** entre quienes la hicieron (L 1,000 entre 4 = L 250 c/u); se
+    paga en el período de la fecha en que se terminó. Una obra puede durar
+    un día o unas horas: planilla con la misma fecha de inicio y fin. Los centavos que sobran van uno a uno a los primeros
+    por apellido (decisión de implementación).
+  - **Corte de café** (`harvest`): latas por empleado por día × precio de la
+    lata de la planilla. Los **caporales** no cortan: tienen salario fijo
+    por día (Fernando, 2026-10-10). En corte, quien tiene rol o salario
+    propio gana por día con asistencia (`PayrollMember#paid_by_day?`), y
+    los cortadores van sin rol y ganan por latas. La asistencia se marca
+    igual que en la planilla por día (completo, medio, ausente), y las
+    pantallas los muestran en grillas separadas. Un empleado con latas no
+    pasa a ganar por día, ni al revés. Cada línea de pago guarda cómo se
+    ganó (`PayrollPaymentLine#basis`).
+- Empleados = personas con rol **Colaborador** (`PayrollMember`).
+- **Períodos** (`PayPeriod`): semanal (cierra el sábado), quincenal (1–15 y
+  16–fin de mes) o mensual (fin de mes). El primero empieza en la fecha de
+  inicio y el último termina en la de fin. **Un período nunca termina el
+  mismo día que empieza** (Fernando: "se paga el sábado lo trabajado durante
+  la semana"): una planilla que empieza un sábado paga ese día con el
+  sábado siguiente. Solo una planilla que termina ese mismo día (obra de un
+  día) tiene un período de un día. Los períodos por venir se listan como
+  "Próximo" hasta la fecha de fin (sin fecha de fin, solo el siguiente). El último día de un período es su día de
+  pago: desde ese día está "por pagar" (`PayPeriod#due?`).
+- **Editar una planilla**: la frecuencia y las fechas se pueden cambiar
+  siempre; los períodos pagados se quedan como se pagaron y los que faltan
+  se recalculan con la configuración nueva (un período sin pagar que choca
+  con uno pagado termina el día antes). Las fechas no pueden dejar fuera
+  días con trabajo o pagos registrados, y con pagos el tipo ya no cambia.
+  Salarios, roles y precio de la lata cambian lo que se calcula para los
+  períodos sin pagar; lo pagado queda guardado.
+- **Pago de un período** (`PayrollPaymentIssuer`): guarda lo calculado
+  (`PayrollCalculation`) por empleado; al pagar se puede **abonar a
+  préstamos** desde el salario, monto manual por préstamo, nunca más de lo
+  que gana (abono normal con forma "Descuento de planilla"; requiere crear
+  en `loans`). Un período pagado queda cerrado (asistencia, latas y tareas).
+  Solo se quita el pago del último período, con sus abonos.
+- **Sin séptimo día, décimo, IHSS ni otras deducciones o bonos** por ahora.
+- **Gastos** por planilla con fecha, categoría (catálogo `ExpenseCategory`,
+  se desactiva, no se borra), descripción y monto. Costo total de la
+  planilla = pagado (bruto) + gastos.
+- El Resumen del módulo muestra los períodos terminados sin pagar.
+
 ## Puntos abiertos
 
 | Punto | Qué bloquea | Quién decide |
@@ -465,6 +530,7 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
 | Préstamos: recargo por mora | Mora | Cliente |
 | Pago con café: confirmar las reglas propuestas (ver Préstamos) | Ajustes al abono con compra | Fernando / Cliente |
 | Inventario de insumos (existencias, costo de compra) | Control de bodega de insumos | Cliente |
+| Planillas: séptimo día, décimo, IHSS u otras deducciones o bonos | Cálculo legal de planillas | Cliente |
 | Si la factura siempre agrupa hasta 4 compras | Hoy no hay límite | Cliente |
 | 160 lb/saco en salidas vs. 165 en compras | Salidas de camión | Cliente |
 | Contratos: moneda, cobro, anticipos del exportador | Ventas / contratos | Cliente |
@@ -483,7 +549,10 @@ Resueltos: versión de Ruby (3.4.x), Ubuntu 24.04 LTS, ambiente WSL, regla del
 unicidad y obligatoriedad de DNI (13 dígitos) y RTN (14 dígitos): ninguno es
 obligatorio. Préstamos fase 1: tasa mensual por préstamo, interés simple
 por día sobre saldo, abono a interés y luego capital, score por puntualidad
-(Fernando, 2026-09-28). Cálculo por estado del café (uva con rendimiento,
+(Fernando, 2026-09-28). Fincas fase 1: tipos de planilla, roles y salario propio, asistencia por
+día, quincena 1–15 / 16–fin de mes, obra en partes iguales, latas por día,
+descuento manual a préstamos, gastos con categoría (Fernando, 2026-10-10).
+Cálculo por estado del café (uva con rendimiento,
 pergamino con humedad 51 %/12 % y daño), QQ = neto ÷ 125, temporada desde el
 1 de septiembre y anulación de compras (Fernando, 2026-10-10).
 

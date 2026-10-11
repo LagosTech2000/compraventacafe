@@ -1,1 +1,82 @@
-<%= render "shared/module_home", module_key: "farms" %>
+<% content_for :title, AppModule.human_name("farms") %>
+<%= render "farms/nav" %>
+<h1 class="sr-only"><%= t("farms.nav.home") %></h1>
+
+<dl class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+  <% {
+       farms: @farms_count,
+       active_payrolls: @active_payrolls.size,
+       periods_to_pay: @to_pay.size,
+       amount_to_pay: format_money(@to_pay.sum { |_, _, calculation| calculation.gross_total })
+     }.each do |key, value| %>
+    <div class="stat">
+      <dt><%= t(".stats.#{key}") %></dt>
+      <dd><%= value %></dd>
+    </div>
+  <% end %>
+</dl>
+
+<h2 class="mt-8 mb-1 text-lg font-semibold"><%= t(".to_pay") %></h2>
+<p class="mb-3 text-sm text-ink-muted"><%= t(".to_pay_help") %></p>
+<% if @to_pay.any? %>
+  <div class="@container">
+    <ul class="space-y-3 @2xl:hidden">
+      <% @to_pay.each do |payroll, period, calculation| %>
+        <li class="data-card">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="font-medium"><%= payroll.name %></p>
+              <p class="text-xs text-ink-muted"><%= payroll.farm.name %> · <%= format_period(period) %></p>
+              <p class="mt-1 font-semibold tabular-nums"><%= format_money(calculation.gross_total) %></p>
+            </div>
+            <% if policy(PayrollPayment.new(payroll:)).create? %>
+              <%= page_link_to t(".pay"), new_farms_payroll_payment_path(payroll, period: period.to_param), class: "btn btn-sm btn-primary" %>
+            <% end %>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+    <div class="hidden overflow-x-auto panel @2xl:block">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th><%= Payroll.model_name.human %></th>
+            <th><%= Payroll.human_attribute_name(:farm) %></th>
+            <th><%= t(".period") %></th>
+            <th class="text-right"><%= t(".people") %></th>
+            <th class="text-right"><%= t(".amount") %></th>
+            <th class="cell-actions"><span class="sr-only"><%= t(".actions") %></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @to_pay.each do |payroll, period, calculation| %>
+            <tr>
+              <td class="font-medium"><%= payroll.name %></td>
+              <td><%= payroll.farm.name %></td>
+              <td class="whitespace-nowrap"><%= format_period(period) %></td>
+              <td class="text-right tabular-nums"><%= calculation.lines.size %></td>
+              <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(calculation.gross_total) %></td>
+              <td class="cell-actions">
+                <div class="flex justify-end gap-2">
+                  <%= link_to t(".open"), farms_payroll_path(payroll), class: "btn btn-sm" %>
+                  <% if policy(PayrollPayment.new(payroll:)).create? %>
+                    <%= link_to t(".pay"), new_farms_payroll_payment_path(payroll, period: period.to_param), class: "btn btn-sm btn-primary" %>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% else %>
+  <p class="empty-state"><%= t(".nothing_to_pay") %></p>
+<% end %>
+
+<h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".active_payrolls") %></h2>
+<% if @active_payrolls.any? %>
+  <%= render "farms/payrolls/table", payrolls: @active_payrolls %>
+<% else %>
+  <p class="empty-state"><%= t(".no_active_payrolls") %></p>
+<% end %>

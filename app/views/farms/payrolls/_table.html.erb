@@ -1,0 +1,47 @@
+<%# Payrolls with their farm, kind, pay frequency and dates. %>
+<div class="@container">
+  <ul class="space-y-3 @2xl:hidden">
+    <% payrolls.each do |payroll| %>
+      <li class="data-card" id="<%= dom_id(payroll, :card) %>">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="font-medium"><%= payroll.name %></p>
+            <p class="text-xs text-ink-muted"><%= payroll.farm.name %> · <%= payroll.human_pay_frequency %></p>
+          </div>
+          <%= link_to t("farms.payrolls.table.open"), farms_payroll_path(payroll), class: "btn btn-sm" %>
+        </div>
+        <p class="mt-2 flex flex-wrap gap-1"><%= payroll_kind_badge(payroll) %> <%= payroll_status_badge(payroll) %></p>
+      </li>
+    <% end %>
+  </ul>
+  <div class="hidden overflow-x-auto panel @2xl:block">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th><%= Payroll.human_attribute_name(:name) %></th>
+          <th><%= Payroll.human_attribute_name(:farm) %></th>
+          <th><%= Payroll.human_attribute_name(:kind) %></th>
+          <th class="hidden @4xl:table-cell"><%= Payroll.human_attribute_name(:pay_frequency) %></th>
+          <th class="hidden @4xl:table-cell"><%= t("farms.payrolls.table.dates") %></th>
+          <th><%= Payroll.human_attribute_name(:status) %></th>
+          <th class="cell-actions"><span class="sr-only"><%= t("farms.payrolls.table.actions") %></span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% payrolls.each do |payroll| %>
+          <tr id="<%= dom_id(payroll) %>">
+            <td class="font-medium"><%= payroll.name %></td>
+            <td><%= payroll.farm.name %></td>
+            <td><%= payroll_kind_badge(payroll) %></td>
+            <td class="hidden @4xl:table-cell"><%= payroll.human_pay_frequency %></td>
+            <td class="hidden whitespace-nowrap @4xl:table-cell">
+              <%= l(payroll.starts_on) %> – <%= payroll.ends_on ? l(payroll.ends_on) : t("farms.payrolls.table.no_end") %>
+            </td>
+            <td><%= payroll_status_badge(payroll) %></td>
+            <td class="cell-actions"><%= link_to t("farms.payrolls.table.open"), farms_payroll_path(payroll), class: "btn btn-sm" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

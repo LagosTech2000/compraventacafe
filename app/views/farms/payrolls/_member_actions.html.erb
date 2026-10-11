@@ -1,0 +1,8 @@
+<div class="flex justify-end gap-2">
+  <% if policy([ :loans, :credit_account ]).show? %>
+    <%= modal_link_to t("farms.payrolls.members.account"), loans_credit_account_path(member.person), class: "btn btn-sm" %>
+  <% end %>
+  <% if policy(member).update? %>
+    <%= modal_link_to t("farms.payrolls.members.edit"), edit_farms_payroll_member_path(payroll, member), class: "btn btn-sm" %>
+  <% end %>
+</div>

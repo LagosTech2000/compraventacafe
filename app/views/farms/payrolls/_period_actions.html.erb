@@ -1,0 +1,10 @@
+<%# An upcoming period has nothing to record or pay yet. %>
+<% unless payroll.task? || row.status == "upcoming" %>
+  <%= link_to t("farms.payrolls.periods.timesheet_#{payroll.kind}"), farms_payroll_timesheet_path(payroll, period: row.period.to_param), class: "btn btn-sm" %>
+<% end %>
+<% if row.paid? %>
+  <%= link_to t("farms.payrolls.periods.pay_sheet"), farms_payroll_payment_path(payroll, row.payment), class: "btn btn-sm" %>
+<% elsif can_pay && row.gross_total.positive? && row.status != "upcoming" %>
+  <%= link_to t("farms.payrolls.periods.pay"), new_farms_payroll_payment_path(payroll, period: row.period.to_param),
+        class: "btn btn-sm #{"btn-primary" if row.status == "to_pay"}" %>
+<% end %>
