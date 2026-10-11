@@ -46,6 +46,7 @@ es:
       clear: "Quitar filtros"
       all: "Todos"
       all_zones: "Todas las zonas"
+      all_seasons: "Todas las temporadas"
       search: "Buscar"
       from: "Desde"
       to: "Hasta"
@@ -181,7 +182,6 @@ es:
           purchases: "Compras"
           invoices: "Facturas"
           info: "Datos personales"
-        all_seasons: "Todas las temporadas"
         no_purchases: "No hay compras que coincidan con los filtros."
         no_invoices: "No hay facturas que coincidan con los filtros."
         back: "Volver a productores"
@@ -734,11 +734,12 @@ es:
             title: "Compras"
             summary: "Lista de compras. Al entrar muestra solo las de hoy."
             steps:
-              - "Cambia las fechas en «Filtros» para ver otros días; también puedes filtrar por productor, zona, estado del café y facturación."
+              - "Cambia las fechas en «Filtros» para ver otros días; también puedes filtrar por temporada, productor, zona, estado del café y facturación."
               - "Toca «Detalle» para ver el cálculo de una compra."
               - "Toca «Anular» para sacar una compra que todavía no está facturada de las listas y los totales."
               - "Toca «Nueva compra» para registrar una sin salir de la lista."
             tips:
+              - "Al elegir una temporada se borran las fechas, para ver la temporada completa. Solo salen las temporadas que tienen compras."
               - "Las compras anuladas no aparecen; marca «Mostrar anuladas» en «Filtros» para verlas."
               - "Los totales de arriba nunca cuentan las compras anuladas."
           show:
@@ -789,7 +790,7 @@ es:
             title: "Facturas"
             summary: "Lista de facturas, las más recientes primero."
             steps:
-              - "Filtra por fechas, productor o número, zona, estado de pago y forma de pago."
+              - "Filtra por fechas, temporada (la de sus compras), productor o número, zona, estado de pago y forma de pago."
               - "Toca «Detalle» para ver una factura, imprimirla o registrar su pago."
               - "Toca «Facturar compras» para crear una factura nueva."
           form:

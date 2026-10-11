@@ -359,6 +359,9 @@ es llenar su carpeta, no crearla.
 - **Temporada** (`Season`) [CONFIRMADO]: empieza cada 1 de septiembre y
   lleva el año en que empieza (la 2026 va del 2026-09-01 al 2027-08-31).
   Cada compra guarda su `season_year`, calculado de la fecha de compra.
+  Compras y facturas se filtran por temporada (solo las que tienen compras;
+  una factura cae en la temporada de sus compras). Elegir una temporada
+  borra las fechas del filtro (`season_filter_controller.js`).
 - **Fecha y hora de la compra** (`purchased_at`): el formulario empieza con
   la hora actual y es editable. Toda pantalla e impreso la muestra con hora.
   Los filtros por fecha y el cierre diario cubren el día completo en hora de
