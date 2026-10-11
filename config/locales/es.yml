@@ -638,7 +638,7 @@ es:
       index:
         stats:
           farms: "Fincas activas"
-          active_payrolls: "Planillas activas"
+          active_payrolls: "Planillas activas o por iniciar"
           periods_to_pay: "Períodos por pagar"
           amount_to_pay: "Monto por pagar"
         to_pay: "Por pagar"
@@ -650,8 +650,8 @@ es:
         open: "Abrir planilla"
         pay: "Pagar"
         nothing_to_pay: "Todo al día: no hay períodos terminados sin pagar."
-        active_payrolls: "Planillas activas"
-        no_active_payrolls: "No hay planillas activas. Toca «Nueva planilla» para crear una."
+        active_payrolls: "Planillas activas o por iniciar"
+        no_active_payrolls: "No hay planillas activas ni por iniciar. Toca «Nueva planilla» para crear una."
     farms:
       index:
         title: "Fincas"
@@ -687,6 +687,7 @@ es:
         title: "Planillas"
         new: "Nueva planilla"
         all_farms: "Todas las fincas"
+        unfinished: "Activas y por iniciar"
         empty: "No hay planillas con esos filtros."
       show:
         new_task: "Nueva tarea"
@@ -1952,7 +1953,7 @@ es:
         payrolls:
           index:
             title: "Planillas"
-            summary: "Todas las planillas. Al entrar muestra las activas."
+            summary: "Todas las planillas. Al entrar muestra las activas y las que todavía no empiezan («Por iniciar»)."
             steps:
               - "Filtra por nombre, finca, tipo o estado en «Filtros»."
               - "Toca «Abrir» para ver la planilla: períodos de pago, empleados, tareas y gastos."
@@ -2627,6 +2628,7 @@ es:
         observations: "Observaciones"
         status: "Estado"
         status/active: "Activa"
+        status/upcoming: "Por iniciar"
         status/finished: "Terminada"
         created_by_id: "Creó"
       payroll_role:

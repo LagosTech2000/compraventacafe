@@ -13,7 +13,7 @@
   <%= filter_select form, :farm_id, Payroll.human_attribute_name(:farm), Farm.ordered.pluck(:name, :id), selected: @filter.farm_id,
         all: t("farms.payrolls.index.all_farms") %>
   <%= filter_select form, :kind, Payroll.human_attribute_name(:kind), enum_options(Payroll, :kind, Payroll::KINDS), selected: @filter.kind %>
-  <%= filter_select form, :status, Payroll.human_attribute_name(:status), enum_options(Payroll, :status, Payroll::STATUSES), selected: @filter.status %>
+  <%= filter_select form, :status, Payroll.human_attribute_name(:status), payroll_status_options, selected: @filter.status %>
 <% end %>
 
 <div class="mt-6">

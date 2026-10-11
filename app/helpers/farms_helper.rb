@@ -12,6 +12,11 @@ module FarmsHelper
     tag.span(payroll.human_status, class: "badge #{payroll.status == "active" ? "badge-success" : "badge-neutral"}")
   end
 
+  # Filter choices: "Activas y por iniciar" (the default), then each status.
+  def payroll_status_options
+    [ [ t("farms.payrolls.index.unfinished"), "unfinished" ] ] + enum_options(Payroll, :status, Payroll::STATUSES)
+  end
+
   def period_status_badge(row)
     css = { "paid" => "badge-success", "to_pay" => "badge-danger", "in_progress" => "badge-neutral", "upcoming" => "badge-neutral" }.fetch(row.status)
     tag.span(t("farms.period_statuses.#{row.status}"), class: "badge #{css}")

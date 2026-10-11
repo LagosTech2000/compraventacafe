@@ -53,6 +53,27 @@ RSpec.describe "Farms flow" do
     expect([ PayrollPayment.count, loan.payments.count ]).to eq([ 0, 0 ])
   end
 
+  it "creates a payroll that starts later, opens it and keeps it in the lists until it ends" do
+    farm = create(:farm)
+    post farms_payrolls_path, params: { payroll: { farm_id: farm.id, name: "Abono de noviembre", kind: "daily", pay_frequency: "weekly",
+                                                   starts_on: today + 20, ends_on: today + 40 } },
+                              headers: { "Turbo-Frame" => "modal" }
+    payroll = Payroll.find_by!(name: "Abono de noviembre")
+    expect(response.body).to include(farms_payroll_path(payroll, tab: "members"))
+    expect(payroll.status).to eq("upcoming")
+
+    get farms_payrolls_path
+    expect(response.body).to include("Abono de noviembre", "Por iniciar")
+    get farms_payrolls_path(status: "active")
+    expect(response.body).not_to include("Abono de noviembre")
+    get farms_payrolls_path(status: "upcoming")
+    expect(response.body).to include("Abono de noviembre")
+    get farms_root_path
+    expect(response.body).to include("Abono de noviembre")
+    get farms_payroll_path(payroll)
+    expect(response).to have_http_status(:ok)
+  end
+
   it "shows the new periods right after editing the payroll in the modal" do
     payroll = create(:payroll, pay_frequency: "weekly", starts_on: Date.new(2026, 9, 1))
     patch farms_payroll_path(payroll), params: { payroll: { pay_frequency: "monthly" } }, headers: { "Turbo-Frame" => "modal" }

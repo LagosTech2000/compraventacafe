@@ -43,7 +43,9 @@ module Farms
       @payroll = authorize Payroll.new(payroll_params.merge(created_by: Current.user))
 
       if @payroll.save
-        close_modal_with notice: t(".success"), fallback: farms_payroll_path(@payroll, tab: "members")
+        # Straight to the new payroll, to add its members next.
+        members = farms_payroll_path(@payroll, tab: "members")
+        close_modal_with notice: t(".success"), fallback: members, visit: members
       else
         render :new, status: :unprocessable_content
       end

@@ -15,7 +15,8 @@ class Payroll < ApplicationRecord
   include Auditable
 
   KINDS = %w[daily task harvest].freeze
-  STATUSES = %w[active finished].freeze
+  # Not started yet ("upcoming"), running ("active") or past its end date.
+  STATUSES = %w[active upcoming finished].freeze
   MAX_AMOUNT = 10_000_000
 
   belongs_to :farm
@@ -44,7 +45,10 @@ class Payroll < ApplicationRecord
 
   scope :newest_first, -> { order(starts_on: :desc, id: :desc) }
   scope :active, ->(today = Time.zone.today) { where(starts_on: ..today).where("ends_on IS NULL OR ends_on >= ?", today) }
+  scope :upcoming, ->(today = Time.zone.today) { where(starts_on: (today + 1)..) }
   scope :finished, ->(today = Time.zone.today) { where(ends_on: ...today) }
+  # Running or about to start: what is still being worked on.
+  scope :unfinished, ->(today = Time.zone.today) { where("payrolls.ends_on IS NULL OR payrolls.ends_on >= ?", today) }
 
   def audit_label
     "#{name} · #{farm&.name}"
@@ -56,6 +60,8 @@ class Payroll < ApplicationRecord
   def human_pay_frequency = self.class.human_attribute_name("pay_frequency/#{pay_frequency}")
 
   def status(today = Time.zone.today)
+    return "upcoming" if starts_on > today
+
     ends_on && ends_on < today ? "finished" : "active"
   end
 
