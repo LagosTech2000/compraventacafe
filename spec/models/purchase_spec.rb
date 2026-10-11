@@ -6,6 +6,45 @@ RSpec.describe Purchase do
     expect(purchase.reload).to have_attributes(sacks: BigDecimal("0.8848"), tare: 1, net_weight: BigDecimal("71.05"), total: BigDecimal("4120.90"))
   end
 
+  describe "by weighings" do
+    def weighings(*pairs) = pairs.map { |gross, sacks| { gross_weight: gross, sacks: } }
+
+    it "sums the weighings into the gross weight and the sacks, with 1 lb of tare per counted sack" do
+      purchase = create(:purchase, weight_mode: "weighings", gross_weight: 1, humidity_percent: 51,
+                                   weighings_attributes: weighings([ 300, 2 ], [ 300, 2 ], [ 300, 2 ]))
+      expect(purchase.reload).to have_attributes(gross_weight: 900, sacks: 6, tare: 6, net_weight: BigDecimal("438.06"))
+      expect(purchase.weighings.size).to eq(3)
+    end
+
+    it "recalculates when a weighing changes, is added or removed" do
+      purchase = create(:purchase, weight_mode: "weighings", weighings_attributes: weighings([ 300, 2 ], [ 300, 2 ]))
+      first, second = purchase.weighings.to_a
+
+      purchase.update!(weighings_attributes: [ { id: first.id, sacks: 3 } ])
+      expect(purchase.reload).to have_attributes(gross_weight: 600, sacks: 5, tare: 5)
+
+      purchase.update!(weighings_attributes: [ { id: second.id, _destroy: "1" }, { gross_weight: 150, sacks: 1 } ])
+      expect(purchase.reload).to have_attributes(gross_weight: 450, sacks: 4, tare: 4)
+    end
+
+    it "requires at least one weighing, each with weight and sacks, in Spanish" do
+      purchase = build(:purchase, weight_mode: "weighings")
+      expect(purchase.tap(&:valid?).errors.full_messages).to include("Pesadas faltan: agrega al menos una pesada")
+
+      purchase = build(:purchase, weight_mode: "weighings", weighings_attributes: weighings([ 0, 1.5 ]))
+      expect(purchase.tap(&:valid?).errors.full_messages).to include(
+        "Peso de la pesada (lb) debe ser mayor que 0", "Sacos de la pesada debe ser un entero"
+      )
+    end
+
+    it "drops the weighings and goes back to the usual tare when switched to one figure" do
+      purchase = create(:purchase, weight_mode: "weighings", weighings_attributes: weighings([ 300, 2 ]))
+      purchase.update!(weight_mode: "single", gross_weight: 146)
+      expect(purchase.reload).to have_attributes(sacks: BigDecimal("0.8848"), tare: 1, net_weight: BigDecimal("71.05"))
+      expect(PurchaseWeighing.count).to eq(0)
+    end
+  end
+
   it "recalculates when the inputs change" do
     purchase = create(:purchase)
     purchase.update!(price_per_pound: 60)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_11_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_11_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -168,6 +168,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_090000) do
     t.index ["zone_id"], name: "index_producers_on_zone_id"
   end
 
+  create_table "purchase_weighings", force: :cascade do |t|
+    t.bigint "purchase_id", null: false
+    t.decimal "gross_weight", precision: 10, scale: 2, null: false
+    t.integer "sacks", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["purchase_id"], name: "index_purchase_weighings_on_purchase_id"
+  end
+
   create_table "purchases", force: :cascade do |t|
     t.bigint "producer_id", null: false
     t.bigint "zone_id"
@@ -190,6 +199,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_090000) do
     t.datetime "voided_at"
     t.bigint "voided_by_id"
     t.datetime "purchased_at", null: false
+    t.string "weight_mode", default: "single", null: false
     t.index ["created_by_id"], name: "index_purchases_on_created_by_id"
     t.index ["invoice_id"], name: "index_purchases_on_invoice_id"
     t.index ["producer_id"], name: "index_purchases_on_producer_id"
@@ -255,6 +265,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_090000) do
   add_foreign_key "permissions", "users"
   add_foreign_key "producers", "people"
   add_foreign_key "producers", "zones"
+  add_foreign_key "purchase_weighings", "purchases"
   add_foreign_key "purchases", "invoices"
   add_foreign_key "purchases", "producers"
   add_foreign_key "purchases", "users", column: "created_by_id"

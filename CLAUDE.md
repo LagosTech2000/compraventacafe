@@ -347,6 +347,12 @@ es llenar su carpeta, no crearla.
     El daño es un porcentaje que se resta al peso neto (suele ser 2–2.5 %).
   - Uva: `(bruto − tara) × rendimiento`. No lleva humedad ni daño.
   - Quintales (QQ) = peso neto ÷ 125. Total = peso neto × precio por libra.
+- **Forma de pesar** (`Purchase#weight_mode`) [CONFIRMADO, Fernando,
+  2026-10-10]: `single` (peso bruto directo; sacos = bruto ÷ 165 y tara como
+  arriba) o `weighings` (por pesadas, `PurchaseWeighing`: peso + sacos
+  contados, enteros). Por pesadas, el bruto y los sacos son la suma (el
+  bruto no se escribe, el campo queda de solo lectura) y la **tara = 1 lb ×
+  sacos contados**. Al volver a peso directo se borran las pesadas.
 - Se guarda el resultado en la compra y **solo se recalcula si cambia una
   entrada** (`Purchase::CALCULATION_INPUTS`), para que el histórico no cambie
   si la regla cambia. `purchase_calculator_controller.js` lo replica solo

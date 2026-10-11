@@ -1,0 +1,25 @@
+<%# One weighing of the purchase form: its weight and the sacks counted.
+    Rendered for each saved weighing and once inside a <template> (index
+    NEW_RECORD) that the form copies to add weighings. Disabled (not sent)
+    while the purchase is entered in one figure. %>
+<% weighing = form.object %>
+<div class="data-card grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-3"
+     data-purchase-calculator-target="weighing" <%= "hidden" if weighing.marked_for_destruction? %>>
+  <%= form.hidden_field :id, disabled: !enabled if weighing.persisted? %>
+  <%= form.hidden_field :_destroy, value: weighing.marked_for_destruction? ? "1" : "0", disabled: !enabled,
+        data: { purchase_calculator_target: "weighingDestroy" } %>
+  <div>
+    <%= form.label :gross_weight, class: "field-label" %>
+    <%= form.number_field :gross_weight, required: true, min: 0.01, max: 99_999.99, step: 0.01, inputmode: "decimal",
+          disabled: !enabled, class: "field-input text-lg",
+          data: { purchase_calculator_target: "weighingGross", action: "purchase-calculator#update" } %>
+  </div>
+  <div>
+    <%= form.label :sacks, class: "field-label" %>
+    <%= form.number_field :sacks, required: true, min: 1, max: PurchaseWeighing::MAX_SACKS - 1, step: 1, inputmode: "numeric",
+          disabled: !enabled, class: "field-input text-lg",
+          data: { purchase_calculator_target: "weighingSacks", action: "purchase-calculator#update" } %>
+  </div>
+  <button type="button" class="btn btn-sm mb-1" data-action="purchase-calculator#removeWeighing"
+          aria-label="<%= t("trading.purchases.form.remove_weighing") %>"><%= t("trading.purchases.form.remove_weighing") %></button>
+</div>

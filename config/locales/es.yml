@@ -247,6 +247,10 @@ es:
         new_zone: "Nueva zona"
         calculation: "Cálculo"
         cancel: "Cancelar"
+        weighings_help: "Anota cada pesada con su peso y los sacos contados. El peso bruto y los sacos son la suma; la tara es 1 lb por saco contado."
+        add_weighing: "Agregar pesada"
+        remove_weighing: "Quitar pesada"
+        gross_from_weighings: "Suma de las pesadas: se cambia en las pesadas."
       create:
         success: "Compra de %{producer} registrada."
       update:
@@ -756,15 +760,19 @@ es:
               - "Una compra anulada queda registrada, pero no cuenta en listas, totales ni facturación."
           form:
             title: "Registrar o editar una compra"
-            summary: "Registra una pesada. El sistema calcula sacos, tara, peso neto, quintales y total mientras escribes."
+            summary: "Registra una compra, con el peso bruto directo o por pesadas. El sistema calcula sacos, tara, peso neto, quintales y total mientras escribes."
             steps:
               - "Escribe el nombre del productor y elígelo de la lista. Si no existe, toca «¿No está? Registrar productor»."
               - "Revisa la fecha y hora (empieza con la hora actual) y la zona (se cambia a la zona del productor que elijas) y elige el estado del café."
-              - "Escribe el peso bruto y el precio por libra. En pergamino, revisa la humedad y el daño; en uva, el rendimiento."
+              - "Elige la forma de pesar: «Peso bruto directo» o «Por pesadas»."
+              - "Peso bruto directo: escribe el peso bruto. Por pesadas: toca «Agregar pesada» por cada una y escribe su peso y los sacos contados; el peso bruto se llena solo con la suma."
+              - "Escribe el precio por libra. En pergamino, revisa la humedad y el daño; en uva, el rendimiento."
               - "Revisa el cálculo y toca el botón de guardar."
             tips:
               - "Al cambiar el estado del café se ponen sus valores iniciales: humedad 51 % en pergamino húmedo, 12 % en pergamino seco; rendimiento 0.186 en uva. Puedes cambiarlos."
-              - "Tara: 1 libra por cada saco de 165 libras, redondeado hacia arriba."
+              - "Tara con peso bruto directo: 1 libra por cada saco de 165 libras, redondeado hacia arriba."
+              - "Tara por pesadas: 1 libra por cada saco contado. Ejemplo: 3 pesadas de 300 lb con 2 sacos cada una dan 900 lb brutas, 6 sacos y 6 lb de tara."
+              - "Por pesadas, el peso bruto no se escribe: para cambiarlo, cambia o quita una pesada."
               - "Pergamino: peso neto = (peso bruto − tara) menos el porcentaje de humedad, y a eso se le resta el porcentaje de daño. «Restado por daño» muestra cuántas libras quita el daño."
               - "Uva: peso neto = (peso bruto − tara) × rendimiento."
               - "Quintales (QQ) = peso neto ÷ 125. Total = peso neto × precio por libra."
@@ -1000,6 +1008,7 @@ es:
         loan_payment: "el abono"
         supply: "el insumo"
         loan_supply: "el insumo del préstamo"
+        purchase_weighing: "la pesada"
       sentence:
         create: "%{actor} creó %{record} el %{date} a las %{time}."
         update: "%{actor} modificó %{record}: %{fields}, el %{date} a las %{time}."
@@ -1168,6 +1177,9 @@ es:
       loan_supply:
         one: "Insumo del préstamo"
         other: "Insumos del préstamo"
+      purchase_weighing:
+        one: "Pesada"
+        other: "Pesadas"
     attributes:
       user:
         name: "Nombre completo"
@@ -1222,6 +1234,10 @@ es:
         price_per_pound: "Precio por libra (L)"
         sacks: "Sacos"
         tare: "Tara (lb)"
+        weight_mode: "Forma de pesar"
+        weight_mode/single: "Peso bruto directo"
+        weight_mode/weighings: "Por pesadas"
+        weighings: "Pesadas"
         net_weight: "Peso neto (lb)"
         quintals: "Quintales (QQ)"
         total: "Total"
@@ -1298,6 +1314,14 @@ es:
         unit: "Unidad"
         default_price: "Precio predeterminado (L)"
         active: "Activo"
+      purchase/weighings:
+        gross_weight: "Peso de la pesada (lb)"
+        sacks: "Sacos de la pesada"
+      purchase_weighing:
+        purchase: "Compra"
+        purchase_id: "Compra"
+        gross_weight: "Peso (lb)"
+        sacks: "Sacos"
       loan_supply:
         loan: "Préstamo"
         loan_id: "Préstamo"
@@ -1320,6 +1344,8 @@ es:
           attributes:
             invoice:
               other_producer: "pertenece a otro productor"
+            weighings:
+              blank: "faltan: agrega al menos una pesada"
         invoice:
           attributes:
             purchases:

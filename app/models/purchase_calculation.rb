@@ -5,6 +5,9 @@
 #   sacks      = gross / 165                  (a full sack weighs 165 lb)
 #   tare       = ceil(sacks) × 1 lb           (1 lb per sack, rounded up)
 #
+#   Entered by weighings, the sacks are the ones counted on the scale:
+#   tare       = counted sacks × 1 lb
+#
 #   Wet and dry parchment:
 #   net_weight = (gross − tare) × (1 − humidity%) × (1 − damage%)
 #   damage_weight = (gross − tare) × (1 − humidity%) × damage%   (what damage takes off)
@@ -26,12 +29,20 @@ class PurchaseCalculation
     (BigDecimal(net_weight.to_s) / QUINTAL_WEIGHT).round(2)
   end
 
-  def initialize(coffee_state:, gross_weight:, price_per_pound:, humidity_percent: nil, damage_percent: nil, yield_factor: nil)
+  # counted_sacks: the sacks counted in the weighings; without them the sacks
+  # come from the gross weight.
+  def initialize(coffee_state:, gross_weight:, price_per_pound:, humidity_percent: nil, damage_percent: nil, yield_factor: nil,
+                 counted_sacks: nil)
     gross = BigDecimal(gross_weight.to_s)
     price = BigDecimal(price_per_pound.to_s)
 
-    @sacks = (gross / SACK_WEIGHT).round(4)
-    @tare = BigDecimal((gross / SACK_WEIGHT).ceil * TARE_PER_SACK)
+    if counted_sacks
+      @sacks = BigDecimal(counted_sacks.to_s)
+      @tare = @sacks * TARE_PER_SACK
+    else
+      @sacks = (gross / SACK_WEIGHT).round(4)
+      @tare = BigDecimal((gross / SACK_WEIGHT).ceil * TARE_PER_SACK)
+    end
     @net_weight = [ (gross - @tare) * net_factor(coffee_state, humidity_percent, damage_percent, yield_factor), 0 ].max.round(2)
     @damage_weight = coffee_state == "cherry" ? nil : damage_weight_of(gross, humidity_percent, damage_percent)
     @quintals = self.class.quintals(@net_weight)
