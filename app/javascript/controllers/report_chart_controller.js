@@ -9,7 +9,18 @@ import "chart.js"
 // type: bar, stacked, hbar, hstacked (horizontal and stacked), line, combo
 // (bars + lines), pareto (bars + an accumulated % line), doughnut or scatter. format says how values read:
 // money, quintals, pounds, percent, integer or number.
-const PALETTE = ["#6f4128", "#c8873a", "#17774a", "#2f6690", "#8c5e9e", "#d1495b", "#4d908e", "#b08968", "#e9c46a", "#3a5a40", "#9c6644", "#7f8c8d"]
+const PALETTE = ["#6f4128", "#c8873a", "#2f6690", "#4d908e", "#8c5e9e", "#e9c46a", "#b08968", "#3a5a40", "#9c6644", "#7f8c8d"]
+// Colors with a meaning (options.tones: { label: "danger" }): late or
+// pending in red, paid or on time in green.
+const TONES = { danger: "#b42318", success: "#17774a", muted: "#b9aca3" }
+// One color per label on the whole page, so "Pergamino seco" or a farm look
+// the same in every chart.
+const assigned = new Map()
+function colorFor(label, tones = {}) {
+  if (tones[label]) return TONES[tones[label]]
+  if (!assigned.has(label)) assigned.set(label, PALETTE[assigned.size % PALETTE.length])
+  return assigned.get(label)
+}
 
 const number = new Intl.NumberFormat("es-HN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const whole = new Intl.NumberFormat("es-HN", { maximumFractionDigits: 0 })
@@ -23,6 +34,10 @@ function format(value, kind, compact = false) {
     case "integer": return whole.format(value)
     default: return compact ? short.format(value) : number.format(value)
   }
+}
+
+function seriesColor(set, index, tones) {
+  return set.category ? colorFor(set.label, tones) : (tones[set.label] ? TONES[tones[set.label]] : PALETTE[index % PALETTE.length])
 }
 
 export default class extends Controller {
@@ -55,7 +70,8 @@ export default class extends Controller {
   build(config, gridColor) {
     const type = config.type
     const doughnut = type === "doughnut"
-    const datasets = config.datasets.map((set, index) => this.dataset(set, index, type))
+    const tones = config.options?.tones || {}
+    const datasets = config.datasets.map((set, index) => this.dataset(set, index, type, config.labels, tones))
     const formats = Object.fromEntries(datasets.map((set) => [set.yAxisID || "y", set.format]))
     const scales = doughnut ? {} : this.scales(type, config, formats, gridColor)
 
@@ -77,13 +93,15 @@ export default class extends Controller {
     }
   }
 
-  dataset(set, index, type) {
+  dataset(set, index, type, labels, tones) {
     const line = type === "line" || set.kind === "line"
-    const color = PALETTE[index % PALETTE.length]
+    // Series named by a category (states, farms) keep its color; the
+    // measures of a single chart (QQ, total) go by position.
+    const color = seriesColor(set, index, tones)
     const base = { label: set.label, data: set.data, format: set.format, xFormat: set.x_format }
 
     if (type === "doughnut") {
-      return { ...base, backgroundColor: set.data.map((_, i) => PALETTE[i % PALETTE.length]), borderColor: "#fffdfb", borderWidth: 2 }
+      return { ...base, backgroundColor: labels.map((label) => colorFor(label, tones)), borderColor: "#fffdfb", borderWidth: 2 }
     }
     if (type === "scatter") {
       return { ...base, backgroundColor: `${color}99`, borderColor: color, pointRadius: 4, pointHoverRadius: 6 }

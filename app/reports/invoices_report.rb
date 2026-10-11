@@ -99,7 +99,8 @@ class InvoicesReport < Report
     day_labels, days = over_time(relation.where(payment_status: "paid"), { days: "AVG(#{DAYS_TO_PAY})", count: "COUNT(*)" }, gaps: nil)
 
     [
-      chart(:by_status, :stacked, labels:, datasets: by_status.map { |set| set.merge(format: :money) }, wide: true),
+      chart(:by_status, :stacked, labels:, datasets: by_status.map { |set| set.merge(format: :money) }, wide: true,
+                                  tones: { status.call("pending") => "danger", status.call("paid") => "success" }),
       chart(:pending_age, :bar, labels: ages.map(&:first), datasets: [ dataset(:pending, ages.map(&:last), format: :money) ]),
       chart(:debtors, :hbar, labels: debtors.map(&:first), datasets: [ dataset(:pending, debtors.map(&:last), format: :money) ]),
       chart(:methods, :doughnut, labels: methods.map(&:first), datasets: [ dataset(:to_pay, methods.map(&:last), format: :money) ]),

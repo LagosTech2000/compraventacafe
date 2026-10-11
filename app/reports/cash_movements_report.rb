@@ -101,7 +101,8 @@ class CashMovementsReport < Report
     [
       chart(:flow, :combo, labels: dates.map { |date| bucket_label(date, unit) },
                            datasets: [ dataset(:amount_in, ins, format: :money), dataset(:amount_out, outs, format: :money),
-                                       dataset(:balance, balance, format: :money, kind: :line, axis: :y2) ], wide: true),
+                                       dataset(:balance, balance, format: :money, kind: :line, axis: :y2) ], wide: true,
+                           tones: { I18n.t("reports.series.amount_in") => "success", I18n.t("reports.series.amount_out") => "danger" }),
       chart(:out_sources, :doughnut, labels: out_sources.map(&:first), datasets: [ dataset(:amount_out, out_sources.map(&:last), format: :money) ]),
       chart(:in_methods, :doughnut, labels: in_methods.map(&:first), datasets: [ dataset(:amount_in, in_methods.map(&:last), format: :money) ])
     ]

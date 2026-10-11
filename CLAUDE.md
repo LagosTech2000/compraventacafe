@@ -307,6 +307,7 @@ bundle exec rspec spec/policies # solo políticas
 bin/rails db:migrate
 bin/rails db:seed               # requiere ADMIN_NAME, ADMIN_EMAIL y ADMIN_PASSWORD
 bin/rails demo:seed             # datos ficticios para la demo (no en producción)
+bin/rails demo:reports          # un año ficticio de operación (sep 2025 a hoy) para ver los reportes; tarda ~2 min
 bin/rubocop
 bin/brakeman --no-pager
 ```

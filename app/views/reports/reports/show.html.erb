@@ -83,11 +83,11 @@
 <%# Figures of the whole result, against the period before. %>
 <section class="mt-6" aria-labelledby="report-figures">
   <h2 id="report-figures" class="sr-only"><%= t("reports.show.figures") %></h2>
-  <dl class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+  <dl class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
     <% report.kpis.each do |kpi| %>
       <div class="stat">
         <dt><%= t("reports.types.#{report.key}.kpis.#{kpi.key}") %></dt>
-        <dd><%= format_report_value(kpi.value || 0, kpi.type) %></dd>
+        <dd class="truncate text-lg" title="<%= format_report_value(kpi.value || 0, kpi.type) %>"><%= format_report_value(kpi.value || 0, kpi.type) %></dd>
         <% if (change = report_kpi_change(kpi)) %><p class="mt-1"><%= change %></p><% end %>
       </div>
     <% end %>

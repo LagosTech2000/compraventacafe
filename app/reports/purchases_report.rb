@@ -101,13 +101,17 @@ class PurchasesReport < Report
       chart(:producers, :pareto, labels: names, datasets: [ dataset(:quintals, quintals, format: :quintals),
                                                             dataset(:share, shares, format: :percent, kind: :line, axis: :y2) ], wide: true),
       chart(:zones, :hbar, labels: zones.map(&:first), datasets: [ dataset(:quintals, zones.map(&:last), format: :quintals) ]),
-      chart(:invoice_statuses, :doughnut, labels: statuses.map(&:first), datasets: [ dataset(:total, statuses.map(&:last), format: :money) ]),
+      chart(:invoice_statuses, :doughnut, labels: statuses.map(&:first), datasets: [ dataset(:total, statuses.map(&:last), format: :money) ],
+                                          tones: { status_label("uninvoiced") => "muted", status_label("pending") => "danger",
+                                                   status_label("paid") => "success" }),
       chart(:humidity_price, :scatter, labels: [], datasets: humidity_price(relation)),
       chart(:arrivals, :heatmap, labels: [], datasets: [ { data: weekday_hours(relation) } ], wide: true)
     ]
   end
 
   private
+    def status_label(status) = I18n.t("reports.types.purchases.invoice_statuses.#{status}")
+
     def preload(relation) = relation.includes(:zone, :invoice, :created_by, producer: :person)
 
     # Price paid against humidity, one point per parchment purchase (the

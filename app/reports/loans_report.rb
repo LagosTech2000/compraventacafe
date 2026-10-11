@@ -65,7 +65,6 @@ class LoansReport < Report
   group :kind, sql: KIND, translate: ->(kind) { Loan.human_attribute_name("kind/#{kind}") }
   group :due_month, sql: "DATE_TRUNC('month', loans.due_on)::date", translate: ->(date) { I18n.l(date.to_date, format: :month_year) }
 
-  kpi :count, :integer, "COUNT(*)"
   kpi :principal, :money, "SUM(loans.principal)"
   kpi :paid, :money, "COALESCE(SUM(paid.amount), 0)", good: :up
   kpi :interest_paid, :money, "COALESCE(SUM(paid.interest), 0)", good: :up
@@ -99,7 +98,8 @@ class LoansReport < Report
 
     [
       chart(:lent, :stacked, labels:, datasets: by_kind.map { |set| set.merge(format: :money) }, wide: true),
-      chart(:portfolio, :doughnut, labels: statuses.map(&:first), datasets: [ dataset(:owed, statuses.map(&:last), format: :money) ]),
+      chart(:portfolio, :doughnut, labels: statuses.map(&:first), datasets: [ dataset(:owed, statuses.map(&:last), format: :money) ],
+                                   tones: { human(Loan, :status).call("active") => "success", human(Loan, :status).call("overdue") => "danger" }),
       chart(:overdue_age, :bar, labels: ages.map(&:first), datasets: [ dataset(:owed, ages.map(&:last), format: :money) ]),
       chart(:debtors, :hbar, labels: debtors.map(&:first), datasets: [ dataset(:owed, debtors.map(&:last), format: :money) ]),
       chart(:upcoming, :bar, labels: coming.map(&:first), datasets: [ dataset(:owed, coming.map(&:last), format: :money) ])

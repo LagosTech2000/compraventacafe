@@ -366,7 +366,7 @@ class Report
       dates = buckets(unit, rows.map(&:first).uniq)
       datasets = (top + (series.key?(:others) ? [ :others ] : [])).map do |category|
         label = category == :others ? I18n.t("reports.others") : labels[category]
-        { label:, data: dates.map { |date| series[category].key?(date) ? number(series[category][date]) : gaps } }
+        { label:, category: true, data: dates.map { |date| series[category].key?(date) ? number(series[category][date]) : gaps } }
       end
       [ dates.map { |date| bucket_label(date, unit) }, datasets ]
     end
@@ -421,6 +421,8 @@ class Report
       labels.zip(sums.map { |sum| number(sum) })
     end
 
+    # tones: { label => "danger" / "success" / "muted" } for colors with a
+    # meaning (late in red, paid in green).
     def chart(key, type, labels:, datasets:, **options)
       Chart.new(key:, type:, labels:, datasets:, options:)
     end
