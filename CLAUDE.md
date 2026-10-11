@@ -340,14 +340,21 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
   papel; la factura cabe con original y copia en una hoja.
 - `raise_on_missing_translations` está activo en desarrollo y test: una clave
   que falte en `es.yml` rompe la página o el spec.
-- El nombre del negocio se lee con `t("negocio.nombre")`. Un solo lugar.
+- El nombre del negocio, su ubicación y su logo se configuran en
+  Administración → Configuración del sitio (`SiteSetting`, solo
+  administradores) y se leen con `business_name`, `business_location` y
+  `business_logo` (`SiteHelper`). Mientras no se guarde, salen de
+  `es.yml` (`negocio.*`). El logo se guarda en la base (no hay
+  almacenamiento de archivos en el servidor), se sirve en `/site_logo`
+  (público, por el inicio de sesión) y solo acepta PNG, JPG, WebP o GIF
+  de hasta 1 MB, revisados por su contenido; SVG no.
 - Locale `:es` únicamente. Zona horaria `America/Tegucigalpa`.
 
 ## Módulos
 
 | Clave | Estado |
 | --- | --- |
-| `administration` | Usuarios y permisos, y auditoría (solo administradores); personas, clientes y colaboradores (permisos del módulo) |
+| `administration` | Usuarios y permisos, auditoría y configuración del sitio (solo administradores); personas, clientes y colaboradores (permisos del módulo) |
 | `trading` | Demo: zonas, productores (con pestañas y QQ por temporada), compras con cálculo por estado del café y anulación, facturas imprimibles (original y copia) con estado de pago, cierre diario |
 | `farms` | Fincas, planillas por día, por obra y de corte por lata, con roles y salarios, asistencia o latas por día, pagos por período (semanal, quincenal, mensual) con descuento a préstamos, planilla de pago imprimible y gastos por planilla |
 | `loans` | Préstamos en efectivo, insumos o mixtos a cualquier persona con interés simple, catálogo de insumos, abonos (también con café desde una compra o descontados en planilla) con recibo imprimible, estados de cuenta con historial crediticio y score de pago |

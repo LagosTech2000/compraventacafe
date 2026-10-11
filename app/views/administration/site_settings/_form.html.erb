@@ -1,0 +1,56 @@
+<%# Name, location and logo, with a preview of the navigation bar that follows what is typed or picked. %>
+<%= form_with model: setting, url: administration_site_setting_path, method: :patch, multipart: true,
+      class: form_surface_class("max-w-2xl space-y-5"),
+      data: { controller: "form-validation site-preview",
+              site_preview_max_bytes_value: SiteSetting::MAX_LOGO_SIZE,
+              site_preview_too_big_value: t("administration.site_settings.form.too_big", size: number_to_human_size(SiteSetting::MAX_LOGO_SIZE)),
+              site_preview_not_an_image_value: t("administration.site_settings.form.not_an_image") } do |form| %>
+  <%= render "shared/form_errors", record: setting %>
+
+  <div>
+    <%= form.label :business_name, class: "field-label" %>
+    <%= form.text_field :business_name, required: true, maxlength: 80, autofocus: true, class: "field-input",
+          data: { site_preview_target: "name", action: "site-preview#rename",
+                  missing_message: "#{SiteSetting.human_attribute_name(:business_name)} #{t("errors.messages.blank")}" } %>
+    <p class="mt-1 text-xs text-ink-muted"><%= t("administration.site_settings.form.name_help") %></p>
+  </div>
+
+  <div>
+    <%= form.label :location, class: "field-label" %>
+    <%= form.text_field :location, maxlength: 120, class: "field-input", placeholder: t("administration.site_settings.form.location_placeholder") %>
+    <p class="mt-1 text-xs text-ink-muted"><%= t("administration.site_settings.form.location_help") %></p>
+  </div>
+
+  <div>
+    <%= form.label :logo, class: "field-label" %>
+    <%= form.file_field :logo, accept: SiteSetting::LOGO_SIGNATURES.keys.join(","), class: "field-input py-2",
+          data: { site_preview_target: "file", action: "site-preview#pick" } %>
+    <p class="mt-1 text-xs text-ink-muted"><%= t("administration.site_settings.form.logo_help", size: number_to_human_size(SiteSetting::MAX_LOGO_SIZE)) %></p>
+    <% if setting.logo? %>
+      <label class="mt-2 flex items-center gap-2 text-sm">
+        <%= form.check_box :remove_logo, class: "size-4 accent-primary", data: { site_preview_target: "remove", action: "site-preview#toggleRemove" } %>
+        <%= t("administration.site_settings.form.remove_logo", name: setting.logo_filename) %>
+      </label>
+    <% end %>
+  </div>
+
+  <div>
+    <p class="field-label"><%= t("administration.site_settings.form.preview") %></p>
+    <div class="glass flex items-center gap-2.5 px-3 py-2.5">
+      <% if setting.logo? %>
+        <%= image_tag site_logo_path(v: setting.logo_version), alt: "", class: "size-9 shrink-0 rounded-full bg-surface object-contain ring-1 ring-line/60",
+              data: { site_preview_target: "image", saved: site_logo_path(v: setting.logo_version) } %>
+      <% else %>
+        <img alt="" hidden class="size-9 shrink-0 rounded-full bg-surface object-contain ring-1 ring-line/60" data-site-preview-target="image">
+      <% end %>
+      <span class="grid size-9 shrink-0 place-items-center rounded-full bg-primary text-on-primary" style="box-shadow: var(--shadow-primary)"
+            data-site-preview-target="bean" <%= "hidden" if setting.logo? %>><%= icon(:bean, css: "size-5") %></span>
+      <span class="line-clamp-2 max-w-44 text-sm leading-tight font-bold" data-site-preview-target="title"><%= setting.business_name %></span>
+    </div>
+  </div>
+
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit t("administration.site_settings.form.save"), class: "btn btn-primary" %>
+    <%= cancel_button administration_site_setting_path %>
+  </div>
+<% end %>

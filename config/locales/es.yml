@@ -1657,6 +1657,12 @@ es:
             - "No hay registro público: solo un administrador crea usuarios."
             - "Si olvidaste la contraseña, pídele a un administrador que la restablezca."
             - "Después de varios intentos fallidos hay que esperar unos minutos."
+      site_logos:
+        show:
+          title: "Logo del negocio"
+          summary: "La imagen del logo que se configura en Administración → Configuración del sitio."
+          steps:
+            - "Para cambiarlo, un administrador entra a Administración → Configuración del sitio."
       dashboard:
         show:
           title: "Inicio"
@@ -1676,6 +1682,7 @@ es:
               - "Personas: clientes y colaboradores del negocio."
               - "Usuarios: quién entra al sistema y qué puede hacer en cada módulo."
               - "Auditoría: el registro de todo lo que se ha creado, modificado o borrado."
+              - "Configuración del sitio: nombre del negocio, ubicación y logo."
         people:
           index:
             title: "Personas"
@@ -1757,6 +1764,24 @@ es:
             steps:
               - "Revisa la tabla de cambios: cada campo con su valor antes y después."
               - "La referencia de la solicitud es el mismo código que aparece en los mensajes de error."
+        site_settings:
+          show:
+            title: "Configuración del sitio"
+            summary: "El nombre, la ubicación y el logo del negocio, y cómo se ven. Solo para administradores."
+            steps:
+              - "Revisa los datos y la vista previa de la barra y del inicio de sesión."
+              - "Toca «Editar» para cambiarlos."
+          form:
+            title: "Editar la configuración del sitio"
+            summary: "Cambia el nombre del negocio, su ubicación y su logo."
+            steps:
+              - "Escribe el nombre como quieres que se vea en la barra y en los impresos."
+              - "Escribe la ubicación (opcional)."
+              - "Elige el logo: una imagen PNG, JPG, WebP o GIF de hasta 1 MB. La vista previa muestra cómo queda en la barra."
+              - "Toca «Guardar»: se ve en todo el sistema de inmediato."
+            tips:
+              - "Un logo cuadrado se ve mejor: va dentro de un círculo pequeño."
+              - "Para volver al grano de café, marca «Quitar el logo actual»."
       trading:
         home:
           index:
@@ -2222,6 +2247,32 @@ es:
         people_description: "Personas del negocio: clientes y colaboradores."
         users_description: "Crear usuarios, asignar permisos por módulo y restablecer contraseñas."
         audit_description: "Quién creó, modificó o borró qué, y cuándo."
+        site_description: "Nombre del negocio, ubicación y logo que se ven en la barra, el inicio de sesión y los impresos."
+    site_settings:
+      show:
+        title: "Configuración del sitio"
+        help: "Cómo se presenta el negocio: el nombre va en la barra de navegación, la pestaña del navegador, el inicio de sesión y los impresos (facturas, recibos, planillas y cierre diario); la ubicación, en el inicio de sesión y los impresos; el logo, en el botón de inicio de la barra y en el inicio de sesión."
+        edit: "Editar"
+        values: "Datos"
+        no_logo: "Sin logo: se muestra el grano de café."
+        defaults: "Todavía no se ha guardado: estos son los valores iniciales del sistema."
+        preview: "Así se ve"
+        navbar: "Barra de navegación"
+        sign_in: "Inicio de sesión"
+      edit:
+        title: "Editar la configuración del sitio"
+      form:
+        name_help: "Se ve en la barra, la pestaña del navegador, el inicio de sesión y los impresos."
+        location_placeholder: "Por ejemplo: Mata de Plátano, Morocelí"
+        location_help: "Opcional. Va debajo del nombre en el inicio de sesión y en los impresos."
+        logo_help: "PNG, JPG, WebP o GIF de hasta %{size}. Mejor cuadrado: se muestra en un círculo pequeño."
+        remove_logo: "Quitar el logo actual (%{name}) y volver al grano de café"
+        preview: "Vista previa"
+        save: "Guardar"
+        too_big: "El logo pesa más de %{size}: elige una imagen más liviana."
+        not_an_image: "El logo debe ser una imagen PNG, JPG, WebP o GIF."
+      update:
+        success: "Configuración del sitio guardada."
     audit_events:
       system: "Sistema"
       system_actor: "El sistema"
@@ -2253,6 +2304,7 @@ es:
         payroll_payment_line: "la línea de pago de planilla"
         payroll_expense: "el gasto de planilla"
         saved_report: "el filtro guardado"
+        site_setting: "la configuración del sitio"
       sentence:
         create: "%{actor} creó %{record} el %{date} a las %{time}."
         update: "%{actor} modificó %{record}: %{fields}, el %{date} a las %{time}."
@@ -2463,6 +2515,9 @@ es:
       saved_report:
         one: "Filtro guardado"
         other: "Filtros guardados"
+      site_setting:
+        one: "Configuración del sitio"
+        other: "Configuración del sitio"
     attributes:
       user:
         name: "Nombre completo"
@@ -2694,6 +2749,13 @@ es:
         report_key: "Reporte"
         params: "Filtros"
         user_id: "Usuario"
+      site_setting:
+        business_name: "Nombre del negocio"
+        location: "Ubicación"
+        logo: "Logo"
+        logo_filename: "Archivo del logo"
+        logo_content_type: "Tipo de imagen del logo"
+        logo_byte_size: "Tamaño del logo (bytes)"
       purchase/weighings:
         gross_weight: "Peso de la pesada (lb)"
         sacks: "Sacos de la pesada"
@@ -2775,6 +2837,11 @@ es:
           attributes:
             name:
               taken: "ya lo usas en otro filtro guardado"
+        site_setting:
+          attributes:
+            logo:
+              too_big: "pesa más de %{size}: elige una imagen más liviana"
+              not_an_image: "debe ser una imagen PNG, JPG, WebP o GIF"
         purchase:
           voided_invoiced: "Una compra facturada no se puede anular."
           attributes:

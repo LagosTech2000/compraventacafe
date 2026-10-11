@@ -2,10 +2,8 @@
   <nav class="glass mx-auto max-w-6xl px-3 py-2.5 sm:px-4">
     <div class="flex items-center justify-between gap-3">
       <%= link_to root_path, class: "flex min-w-0 items-center gap-2.5 rounded-full pr-2 font-bold text-ink" do %>
-        <span class="grid size-9 shrink-0 place-items-center rounded-full bg-primary text-on-primary" style="box-shadow: var(--shadow-primary)">
-          <%= icon(:bean, css: "size-5") %>
-        </span>
-        <span class="line-clamp-2 max-w-44 text-sm leading-tight"><%= t("negocio.nombre") %></span>
+        <%= business_logo(:nav) %>
+        <span class="line-clamp-2 max-w-44 text-sm leading-tight"><%= business_name %></span>
       <% end %>
 
       <div class="hidden items-center gap-1 lg:flex">

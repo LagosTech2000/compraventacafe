@@ -5,11 +5,14 @@ Rails.application.routes.draw do
   # resources :passwords, param: :token
 
   root "dashboard#show"
+  # The business's logo, public (the sign-in page shows it too).
+  resource :site_logo, only: :show
 
   namespace :administration do
     root "home#index"
     resources :people
     resources :audit_events, only: %i[ index show ]
+    resource :site_setting, only: %i[ show edit update ]
     resources :users, only: %i[ index show new create edit update ] do
       member do
         get :reset_password, action: :edit_password

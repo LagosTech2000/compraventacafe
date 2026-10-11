@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_11_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_11_160000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -385,6 +385,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_150000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_sessions_on_user_id"
+  end
+
+  create_table "site_settings", force: :cascade do |t|
+    t.string "business_name", null: false
+    t.string "location"
+    t.binary "logo_data"
+    t.string "logo_content_type"
+    t.string "logo_filename"
+    t.integer "logo_byte_size"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "supplies", force: :cascade do |t|

@@ -2,11 +2,9 @@
 
 <div class="mx-auto mt-6 max-w-md sm:mt-16">
   <div class="mb-6 flex flex-col items-center text-center">
-    <span class="grid size-14 place-items-center rounded-2xl bg-primary text-on-primary" style="box-shadow: var(--shadow-primary)">
-      <%= icon(:bean, css: "size-8") %>
-    </span>
-    <p class="mt-3 text-lg font-bold text-ink"><%= t("negocio.nombre") %></p>
-    <p class="text-sm text-ink-muted"><%= t("negocio.ubicacion") %></p>
+    <%= business_logo(:sign_in) %>
+    <p class="mt-3 text-lg font-bold text-ink"><%= business_name %></p>
+    <p class="text-sm text-ink-muted"><%= business_location %></p>
   </div>
 
   <div class="clay p-6 ring-1 ring-line/60 sm:p-8">
