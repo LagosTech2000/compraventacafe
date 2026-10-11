@@ -459,6 +459,29 @@ es:
         actions: "Acciones"
         destroy: "Quitar"
         confirm_destroy: "¿Quitar este abono? Solo se puede quitar el último."
+        receipt: "Recibo"
+      show:
+        title: "Recibo de abono %{number}"
+        loan: "Préstamo %{number} · %{person}"
+        print: "Imprimir recibo"
+        original: "ORIGINAL"
+        copy: "COPIA"
+        back: "Volver al préstamo"
+      receipt:
+        title: "Recibo de abono"
+        person: "Recibido de"
+        loan: "Préstamo"
+        amount: "Monto abonado"
+        to_interest: "Aplicado a interés"
+        to_principal: "Aplicado a capital"
+        balance_after: "Saldo después del abono"
+        principal_owed: "Capital pendiente"
+        interest_owed: "Interés pendiente"
+        total_owed: "Total pendiente"
+        settled: "Préstamo saldado"
+        payer_signature: "Firma de quien paga"
+        receiver_signature: "Firma de quien recibe"
+        registered_by: "Registrado por: %{name}"
       new:
         title: "Registrar abono"
         loan: "Préstamo %{number} · %{person}"
@@ -942,6 +965,17 @@ es:
               - "No puede ser mayor que lo que se debe a esa fecha."
               - "No puede llevar una fecha anterior al último abono."
               - "Si el abono cubre todo, el préstamo queda pagado."
+              - "Al registrarlo se abre su recibo, listo para imprimir."
+          show:
+            title: "Recibo de abono"
+            summary: "Comprobante de un abono: cuánto se pagó, a qué se aplicó y cuánto quedó debiendo la persona."
+            steps:
+              - "Revisa los datos del abono y el saldo que quedó después de él."
+              - "Toca «Imprimir recibo»: el original y la copia salen en una sola hoja."
+              - "Corta por la línea, entrega el original a la persona y guarda la copia firmada."
+            tips:
+              - "El saldo es el de la fecha del abono; los abonos posteriores no lo cambian."
+              - "El recibo de cualquier abono, también los pagados con café, se abre con el botón «Recibo» en el detalle del préstamo."
         supplies:
           index:
             title: "Insumos"

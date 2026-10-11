@@ -49,6 +49,19 @@ class LoanPayment < ApplicationRecord
     payment_method == COFFEE
   end
 
+  # Receipt number: the id, with 4 digits like invoices.
+  def display_number
+    format("%04d", id)
+  end
+
+  # What the loan owed right after this payment, on its date (later payments
+  # do not count): the stored splits of this one and the ones before it.
+  def balance_after
+    through = loan.payments.chronological.to_a
+    through = through.first(through.index(self) + 1)
+    LoanBalance.new(loan, as_of: paid_on, payments: through)
+  end
+
   private
     def balance_on_payment_date
       @balance_on_payment_date ||= LoanBalance.new(loan, as_of: paid_on)

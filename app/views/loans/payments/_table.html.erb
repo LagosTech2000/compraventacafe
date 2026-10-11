@@ -8,7 +8,10 @@
             <p class="font-semibold tabular-nums"><%= format_money(payment.amount) %></p>
             <p class="text-xs text-ink-muted"><%= [ l(payment.paid_on), payment_method_label(payment) ].join(" · ") %></p>
           </div>
-          <%= render "loans/payments/destroy_button", payment: payment %>
+          <div class="flex flex-wrap justify-end gap-2">
+            <%= modal_link_to t("loans.payments.table.receipt"), loans_loan_payment_path(payment.loan, payment), class: "btn btn-sm" %>
+            <%= render "loans/payments/destroy_button", payment: payment %>
+          </div>
         </div>
         <p class="mt-2 text-xs text-ink-muted">
           <%= t("loans.payments.table.split", interest: format_money(payment.interest_amount), principal: format_money(payment.principal_amount)) %>
@@ -37,7 +40,12 @@
             <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(payment.amount) %></td>
             <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(payment.interest_amount) %></td>
             <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(payment.principal_amount) %></td>
-            <td class="cell-actions"><%= render "loans/payments/destroy_button", payment: payment %></td>
+            <td class="cell-actions">
+              <div class="flex justify-end gap-2">
+                <%= modal_link_to t("loans.payments.table.receipt"), loans_loan_payment_path(payment.loan, payment), class: "btn btn-sm" %>
+                <%= render "loans/payments/destroy_button", payment: payment %>
+              </div>
+            </td>
           </tr>
         <% end %>
       </tbody>

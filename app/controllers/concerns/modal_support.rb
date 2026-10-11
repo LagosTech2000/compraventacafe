@@ -43,14 +43,15 @@ module ModalSupport
     end
 
     # Saves from a modal close it. A picker receives the new record through a
-    # browser event; any other page refreshes and shows the notice.
-    def close_modal_with(notice:, event: nil, detail: {}, fallback:)
+    # browser event; any other page refreshes and shows the notice (or goes
+    # to `visit`, when given).
+    def close_modal_with(notice:, event: nil, detail: {}, fallback:, visit: nil)
       unless modal_request?
         redirect_to fallback, notice: notice
         return
       end
 
       flash[:notice] = notice unless picker_request?
-      render "shared/modal_result", layout: false, locals: { event:, detail:, refresh: !picker_request? }
+      render "shared/modal_result", layout: false, locals: { event:, detail:, refresh: !picker_request?, visit: }
     end
 end

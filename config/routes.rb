@@ -38,7 +38,7 @@ Rails.application.routes.draw do
   namespace :loans do
     root "home#index"
     resources :loans do
-      resources :payments, only: %i[ new create destroy ]
+      resources :payments, only: %i[ new create show destroy ]
     end
     resources :credit_accounts, only: %i[ index show ]
     resources :supplies, only: %i[ index new create edit update ]

@@ -90,6 +90,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Pago con café (abonar préstamos con una compra) | `PurchaseLoanSettlement`; abono con `payment_method: "coffee"` |
 | Estado de cuenta / historial crediticio | `CreditAccount` |
 | Score de pago | `PayerScore` |
+| Recibo de abono | `loans/payments#show` (`LoanPayment#display_number`) |
 
 ## Modelo de permisos
 
@@ -332,7 +333,7 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 | `administration` | Usuarios y permisos, y auditoría (solo administradores); personas, clientes y colaboradores (permisos del módulo) |
 | `trading` | Demo: zonas, productores (con pestañas y QQ por temporada), compras con cálculo por estado del café y anulación, facturas imprimibles (original y copia) con estado de pago, cierre diario |
 | `farms` | Portada vacía |
-| `loans` | Préstamos en efectivo, insumos o mixtos a cualquier persona con interés simple, catálogo de insumos, abonos (también con café desde una compra), estados de cuenta con historial crediticio y score de pago |
+| `loans` | Préstamos en efectivo, insumos o mixtos a cualquier persona con interés simple, catálogo de insumos, abonos (también con café desde una compra) con recibo imprimible, estados de cuenta con historial crediticio y score de pago |
 | `reports` | Portada vacía |
 
 Cada módulo tiene su namespace de controladores. Implementar una funcionalidad
@@ -449,6 +450,10 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
   - Requiere crear en `loans` y ver en `trading`
     (`PurchaseLoanSettlementPolicy`). Sin permiso de préstamos, la compra no
     muestra deudas.
+
+- **Recibo de abono**: cada abono tiene su recibo imprimible (original y
+  copia en una hoja) con el saldo que quedó a la fecha del abono. Al
+  registrar un abono se abre solo en el modal (`close_modal_with visit:`).
 
 ## Puntos abiertos
 
