@@ -909,7 +909,7 @@ es:
             summary: "Se le puede prestar a cualquier persona: clientes, colaboradores o productores. Se presta efectivo, insumos o los dos."
             steps:
               - "Escribe el nombre de la persona y elígela de la lista. Si no existe, toca «¿No está? Registrar persona»."
-              - "En «Qué se presta», escribe el efectivo (déjalo en 0 si solo son insumos)."
+              - "En «Qué se presta», escribe el efectivo (déjalo vacío si solo son insumos)."
               - "Para prestar insumos, toca «Agregar insumo», elígelo y escribe la cantidad. El precio se pone solo y lo puedes cambiar."
               - "Revisa el resumen: efectivo, insumos y capital del préstamo."
               - "Escribe la tasa de interés mensual, revisa la fecha del préstamo y elige la fecha límite."

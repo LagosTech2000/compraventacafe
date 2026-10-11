@@ -15,6 +15,11 @@ RSpec.describe "Loans with supplies" do
     expect(create(:loan, cash_amount: 500)).to have_attributes(kind: "cash", principal: 500)
   end
 
+  it "takes blank cash as 0 (the form shows 0.00 only as a placeholder)" do
+    loan = create(:loan, cash_amount: "", supply_items_attributes: [ { supply_id: fertilizer.id, quantity: 1, unit_price: 1_250 } ])
+    expect(loan).to have_attributes(cash_amount: 0, principal: 1_250, kind: "supplies")
+  end
+
   it "runs interest on the whole principal, supplies included" do
     loan = create(:loan, cash_amount: 0, monthly_interest_rate: 3, disbursed_on: Date.new(2026, 1, 1), due_on: Date.new(2026, 3, 1),
                          supply_items_attributes: [ { supply_id: fertilizer.id, quantity: 8, unit_price: 1_250 } ])

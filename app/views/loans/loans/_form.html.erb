@@ -31,7 +31,8 @@
 
     <div class="max-w-xs">
       <%= form.label :cash_amount, class: "field-label" %>
-      <%= form.number_field :cash_amount, min: 0, max: Loan::MAX_AMOUNT - 0.01, step: 0.01, inputmode: "decimal",
+      <%# 0 is a placeholder, not a value to erase: blank counts as 0. %>
+      <%= form.number_field :cash_amount, value: (loan.cash_amount if loan.cash_amount.to_d.nonzero?), placeholder: "0.00", min: 0, max: Loan::MAX_AMOUNT - 0.01, step: 0.01, inputmode: "decimal",
             class: "field-input text-lg", autofocus: loan.person.present?,
             data: { loan_composition_target: "cash", action: "loan-composition#update" } %>
     </div>
@@ -85,7 +86,7 @@
   <div class="grid gap-5 sm:grid-cols-3">
     <div>
       <%= form.label :monthly_interest_rate, class: "field-label" %>
-      <%= form.number_field :monthly_interest_rate, required: true, min: 0, max: 99.99, step: 0.01, inputmode: "decimal", class: "field-input text-lg" %>
+      <%= form.number_field :monthly_interest_rate, required: true, placeholder: "0.00", min: 0, max: 99.99, step: 0.01, inputmode: "decimal", class: "field-input text-lg" %>
       <p class="mt-1 text-xs text-ink-muted"><%= t(".rate_help") %></p>
     </div>
     <div>

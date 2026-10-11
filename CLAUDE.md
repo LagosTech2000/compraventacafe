@@ -419,7 +419,8 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
   (`cash_amount`, puede ser 0) y líneas de insumos (`LoanSupply`: cantidad ×
   precio unitario). El precio empieza en el predeterminado, se puede cambiar
   y se guarda en la línea. **Capital = efectivo + valor de los insumos**, y
-  el interés corre sobre todo el capital. El capital no se escribe: lo
+  el interés corre sobre todo el capital. El efectivo vacío cuenta como 0
+  (el formulario muestra `0.00` solo como placeholder). El capital no se escribe: lo
   calcula `Loan` (`loan_composition_controller.js` es solo vista previa).
 - **Pago con café** [Fernando delegó la regla, 2026-10-10; diseño propuesto
   en esta sesión, pendiente de confirmar]: desde el detalle de una compra se
