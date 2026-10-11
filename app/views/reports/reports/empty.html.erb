@@ -1,0 +1,6 @@
+<% content_for :title, AppModule.human_name("reports") %>
+<div class="mb-5 flex items-center gap-3">
+  <span class="grid size-11 place-items-center rounded-2xl bg-primary-soft text-primary"><%= icon(:reports, css: "size-6") %></span>
+  <h1 class="text-2xl font-bold tracking-tight sm:text-3xl"><%= AppModule.human_name("reports") %></h1>
+</div>
+<p class="empty-state"><%= t("reports.empty.none") %></p>

@@ -1,0 +1,2 @@
+<%= filter_text_field form, :q, t("reports.filters.person"), value: filter.q, placeholder: t("reports.filters.person_placeholder") %>
+<%= filter_select form, :supply_id, t("reports.filters.supply"), Supply.order(:name).pluck(:name, :id), selected: filter.supply_id %>

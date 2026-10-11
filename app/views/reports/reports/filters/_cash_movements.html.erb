@@ -1,0 +1,5 @@
+<%= filter_text_field form, :q, t("shared.filters.search"), value: filter.q, placeholder: t("reports.filters.text_placeholder") %>
+<%= filter_select form, :direction, t("reports.filters.direction"),
+      CashMovementsReport::DIRECTIONS.map { |key| [ t("reports.types.cash_movements.directions.#{key}"), key ] }, selected: filter.direction %>
+<%= filter_select form, :source, t("reports.filters.source"),
+      CashMovementsReport::SOURCES.map { |key| [ t("reports.types.cash_movements.sources.#{key}"), key ] }, selected: filter.source %>

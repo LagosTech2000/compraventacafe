@@ -1,0 +1,13 @@
+<%# The next page loads by itself when this comes into view (infinite-scroll);
+    the button does the same by hand. Replaced by each page that loads. %>
+<div id="report-more" class="mt-4 flex justify-center print:hidden">
+  <% if more %>
+    <% next_page = report.filter.page + 1 %>
+    <%= link_to t("reports.show.load_more"), report_path_for(report.class, report.filter.to_params.merge("page" => next_page)),
+          class: "btn", data: { controller: "infinite-scroll", action: "infinite-scroll#load:prevent",
+                                infinite_scroll_url_value: report_path_for(report.class, report.filter.to_params.merge("page" => next_page, "format" => "turbo_stream")),
+                                loading_text: t("reports.show.loading") } %>
+  <% else %>
+    <p class="text-sm text-ink-muted"><%= t("reports.show.end", count: report.total_count) %></p>
+  <% end %>
+</div>

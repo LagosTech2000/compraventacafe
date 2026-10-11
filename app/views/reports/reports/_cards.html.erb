@@ -1,0 +1,19 @@
+<%# The first column names the card; the next ones of priority 1 and 2 go below. %>
+<% title, *rest = columns %>
+<% rest = rest.select { |column| column.priority <= 2 } %>
+<% rows.each do |row| %>
+  <li class="data-card">
+    <div class="flex items-start justify-between gap-3">
+      <p class="min-w-0 font-medium"><%= report_cell(title, row) %></p>
+      <% if report.detail? && (path = report_detail_path(report, row)) %><%= detail_button path %><% end %>
+    </div>
+    <dl class="mt-3 grid grid-cols-2 gap-2 text-sm">
+      <% rest.each do |column| %>
+        <div class="min-w-0">
+          <dt class="text-xs text-ink-muted"><%= report.column_label(column) %></dt>
+          <dd class="<%= "tabular-nums" if ReportsHelper::NUMERIC_TYPES.include?(column.type) %>"><%= report_cell(column, row) %></dd>
+        </div>
+      <% end %>
+    </dl>
+  </li>
+<% end %>

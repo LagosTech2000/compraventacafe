@@ -52,6 +52,7 @@ El doc técnico etiqueta cada afirmación: `[CONFIRMADO]` (decidido por el dueñ
 | Autenticación | Generador nativo de Rails 8. **No Devise.** |
 | Tests | RSpec (`rspec-rails`), `factory_bot_rails`, `pundit-matchers` |
 | Tareas en segundo plano | Ninguna en la fundación. Sin Solid Queue/Cache/Cable. |
+| Gráficos | Chart.js 4.4.7, build UMD oficial en `vendor/javascript/chart.umd.min.js` (importmap, sin Node) |
 | Hosting | Render, plan de pago |
 | Repositorio | `github.com/LagosTech2000/compraventacafe` |
 
@@ -103,6 +104,9 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Pago de planilla / planilla de pago | `PayrollPayment` + `PayrollPaymentLine` (`PayrollPaymentIssuer`) |
 | Descuento de planilla (abono a préstamo) | `LoanPayment` con `payment_method: "payroll"` |
 | Gasto de planilla / categoría de gasto | `PayrollExpense` / `ExpenseCategory` |
+| Reporte / reporte sugerido / filtro guardado ("Mis filtros") | `Report` (`app/reports/`) / `ReportPreset` / `SavedReport` |
+| Período del reporte (hoy, este mes, temporada…) | `ReportPeriod` |
+| Cifras del reporte / agrupar por | `Report.kpi` / `Report.group` |
 
 ## Modelo de permisos
 
@@ -346,7 +350,7 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 | `trading` | Demo: zonas, productores (con pestañas y QQ por temporada), compras con cálculo por estado del café y anulación, facturas imprimibles (original y copia) con estado de pago, cierre diario |
 | `farms` | Fincas, planillas por día, por obra y de corte por lata, con roles y salarios, asistencia o latas por día, pagos por período (semanal, quincenal, mensual) con descuento a préstamos, planilla de pago imprimible y gastos por planilla |
 | `loans` | Préstamos en efectivo, insumos o mixtos a cualquier persona con interés simple, catálogo de insumos, abonos (también con café desde una compra o descontados en planilla) con recibo imprimible, estados de cuenta con historial crediticio y score de pago |
-| `reports` | Portada vacía |
+| `reports` | Una pantalla para todos los reportes del sistema (compras, facturas, productores, préstamos, abonos, insumos, planillas, pagos por empleado, latas, gastos, personas y entradas/salidas de dinero) con filtros, cifras comparadas, gráficos, tabla con carga continua, reportes sugeridos, filtros guardados por usuario y exportación CSV |
 
 Cada módulo tiene su namespace de controladores. Implementar una funcionalidad
 es llenar su carpeta, no crearla.
@@ -520,13 +524,69 @@ Reglas decididas por Fernando el 2026-10-10 [CONFIRMADO]:
   planilla = pagado (bruto) + gastos.
 - El Resumen del módulo muestra los períodos terminados sin pagar.
 
+### Reportería (`reports`)
+
+Pedido por Fernando el 2026-10-11: reportes globales (no de un módulo) con
+gráficos, filtros útiles para el dueño, carga continua, reportes sugeridos y
+filtros guardados por usuario. Los reportes solo **resumen datos que el
+sistema ya guarda**; no agregan reglas de negocio.
+
+- **Una pantalla** (`reports/reports#show`, `/reports/:key`): arriba se elige
+  el reporte, un reporte sugerido o uno de «Mis filtros»; después vienen los
+  filtros, las cifras, los gráficos (plegables, abiertos por defecto) y la
+  tabla.
+- **Un reporte = una clase en `app/reports/`** que hereda de `Report` y
+  declara `filter`, `column`, `measure`, `group`, `kpi` y `detail`, y
+  define `scope`, `apply_filters` y `charts` con los constructores de la
+  base (`over_time`, `over_time_by`, `breakdown`, `pareto`, `age_buckets`,
+  `weekday_hours`). Reporte nuevo = su clase + su lugar en `Report.catalog` +
+  su parcial de filtros (`reports/reports/filters/_<key>`) + sus textos en
+  `reports.types.<key>`.
+- Todo se calcula **en la base de datos sobre todos los registros
+  filtrados**, no sobre las filas cargadas. Las fechas con hora (compras) se
+  agrupan en hora de Tegucigalpa.
+- **Período** (`ReportPeriod`): hoy, ayer, esta semana, semana pasada, este
+  mes, mes pasado, últimos 30 o 90 días, esta temporada, temporada pasada,
+  las últimas 5 temporadas, este año, año pasado, todo o personalizado. Los
+  períodos llegan hasta hoy, y **las cifras se comparan con el mismo tramo
+  del período anterior** (este mes hasta hoy contra el mes pasado hasta el
+  mismo día). Un filtro guardado guarda la clave del período, no las fechas:
+  «Este mes» siempre es el mes en curso.
+- **Agrupar por** (día, semana, mes, productor, zona, estado, finca…)
+  convierte la tabla en sumas por grupo. Los encabezados ordenan.
+- **Tabla con carga continua**: 50 filas por página; la siguiente llega como
+  turbo stream cuando el botón «Cargar más» se acerca a la pantalla
+  (`infinite_scroll_controller.js`). Los gráficos cargan aparte, en su
+  propio frame (`reports/reports#charts`), para que la tabla no los espere.
+- **Gráficos** (`report_chart_controller.js`): barras, apiladas,
+  horizontales, líneas, combinados con segundo eje, Pareto, dona,
+  dispersión y mapa de calor (HTML). Bajo cada uno, «Ver los datos» muestra
+  sus números.
+- **Permisos**: un reporte pide ver Reportería **y** ver el módulo de donde
+  salen sus datos (`ReportPolicy`, `Report.module_keys`). Personas y
+  Entradas y salidas cruzan módulos y piden los tres. Guardar filtros solo
+  pide ver Reportería: son de cada usuario y nadie más los ve.
+- **Reportes sugeridos** (`ReportPreset`): preguntas frecuentes ya filtradas
+  (compras sin facturar, facturas pendientes, préstamos vencidos,
+  productores que dejaron de vender…).
+- **Exportar**: CSV con todas las filas filtradas (hasta 50,000), con BOM
+  para que Excel lea los acentos.
+- **Entradas y salidas de dinero**: salen facturas canceladas (total menos
+  abonos con café), préstamos en efectivo (los insumos no son dinero),
+  planillas (lo entregado) y gastos; entran los abonos en efectivo,
+  transferencia o cheque (con café o por planilla no se mueve dinero). Las
+  ventas de café todavía no existen en el sistema.
+- `config/brakeman.ignore` marca como falsos positivos el SQL de la base de
+  reportes: el orden y las columnas salen de lo que el reporte declara en
+  código, nunca de un parámetro.
+
 ## Puntos abiertos
 
 | Punto | Qué bloquea | Quién decide |
 | --- | --- | --- |
 | Tabla de precios (zona + calidad + bolsa) y categorías de calidad | Precio automático; hoy es manual | Cliente |
 | Retención de fin de temporada | Reporte de retención | Cliente |
-| Reportes por temporada (qué muestran) | Reportería por temporada; la temporada ya se guarda | Cliente |
+| Reportes por temporada (qué muestran) | El reporte de temporada que pida el cliente; los reportes generales ya filtran por temporada | Cliente |
 | Préstamos: recargo por mora | Mora | Cliente |
 | Pago con café: confirmar las reglas propuestas (ver Préstamos) | Ajustes al abono con compra | Fernando / Cliente |
 | Inventario de insumos (existencias, costo de compra) | Control de bodega de insumos | Cliente |

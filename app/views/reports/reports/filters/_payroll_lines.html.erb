@@ -1,0 +1,4 @@
+<%= filter_text_field form, :q, t("reports.filters.person"), value: filter.q, placeholder: t("reports.filters.person_placeholder") %>
+<%= render "reports/reports/filters/farm_fields", form:, filter: %>
+<%= filter_select form, :basis, t("reports.filters.basis"),
+      Payroll::KINDS.map { |key| [ t("reports.types.payroll_lines.bases.#{key}"), key ] }, selected: filter.basis %>

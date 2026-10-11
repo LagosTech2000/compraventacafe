@@ -1,0 +1,120 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "04ee97ae7df8ad632a30c7b52b9286813ba0c9a955e1fd2947d11658c47114e3",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/reports/report.rb",
+      "line": 219,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "Arel.sql(\"#{sort_sql} #{sort_direction.upcase} NULLS LAST, #{scope.klass.quoted_table_name}.id #{sort_direction.upcase}\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Report",
+        "method": "detail_relation"
+      },
+      "user_input": "sort_sql",
+      "confidence": "Medium",
+      "cwe_id": [
+        89
+      ],
+      "note": "The order comes from a column the report declares in code (sort keys outside it are ignored) and a direction that can only be asc or desc (ReportFilter::DIRECTIONS)."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "05cda2df7a3797a8e776ad3a06a6ec54b099149c8cf28ef7c6e922e052aef672",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/reports/report.rb",
+      "line": 270,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "relation.where(\"#{column} >= ?\", (in_period.range.begin.in_time_zone.beginning_of_day or in_period.range.begin))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Report",
+        "method": "within"
+      },
+      "user_input": "column",
+      "confidence": "Weak",
+      "cwe_id": [
+        89
+      ],
+      "note": "The column is a constant of the report (date_column) or one passed by its own code, never a param; the dates are bound values."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "18ecd6d36fdb0cd56c4dbbc5327fffd935116980a4df412f87abb2e6d58521be",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/reports/report.rb",
+      "line": 298,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "Arel.sql(\"MIN(#{local_date_sql})::date\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Report",
+        "method": "data_span_in_days"
+      },
+      "user_input": "local_date_sql",
+      "confidence": "Medium",
+      "cwe_id": [
+        89
+      ],
+      "note": "local_date_sql wraps the report's date_column, a constant of the report class."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "7a02da740fb61200b40d7316aa54c6db8aa7a3e8de2f35a53206137a49e1f24c",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/reports/report.rb",
+      "line": 271,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "relation.where(\"#{column} >= ?\", (in_period.range.begin.in_time_zone.beginning_of_day or in_period.range.begin)).where(\"#{column} <= ?\", (in_period.range.end.in_time_zone.end_of_day or in_period.range.end))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Report",
+        "method": "within"
+      },
+      "user_input": "column",
+      "confidence": "Weak",
+      "cwe_id": [
+        89
+      ],
+      "note": "The column is a constant of the report (date_column) or one passed by its own code, never a param; the dates are bound values."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "84e527469e498f20c3fb908698d7b8efe22ad12124821e5227a5de0ea26c5d90",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/reports/report.rb",
+      "line": 234,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "Arel.sql(\"#{sort_sql} #{sort_direction.upcase} NULLS LAST, group_key ASC\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Report",
+        "method": "grouped_relation"
+      },
+      "user_input": "sort_sql",
+      "confidence": "Medium",
+      "cwe_id": [
+        89
+      ],
+      "note": "The order comes from a column or measure the report declares in code and a direction that can only be asc or desc (ReportFilter::DIRECTIONS)."
+    }
+  ],
+  "brakeman_version": "8.1.0"
+}

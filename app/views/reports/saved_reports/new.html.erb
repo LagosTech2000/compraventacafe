@@ -1,0 +1,21 @@
+<% content_for :title, t(".title") %>
+<h1 class="text-xl font-bold"><%= t(".title") %></h1>
+<p class="mt-1 text-sm text-ink-muted"><%= t(".help", report: @saved_report.report_class&.title) %></p>
+
+<%= form_with model: @saved_report, url: reports_saved_reports_path, class: form_surface_class("mt-4 max-w-xl space-y-5"),
+      data: { controller: "form-validation" } do |form| %>
+  <%= render "shared/form_errors", record: @saved_report %>
+  <%= form.hidden_field :report_key %>
+  <% @saved_report.params.each do |name, value| %>
+    <%= hidden_field_tag "saved_report[params][#{name}]", value, id: nil %>
+  <% end %>
+  <div>
+    <%= form.label :name, class: "field-label" %>
+    <%= form.text_field :name, required: true, maxlength: 60, autofocus: true, class: "field-input", placeholder: t(".name_placeholder"),
+          data: { missing_message: "#{SavedReport.human_attribute_name(:name)} #{t("errors.messages.blank")}" } %>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit t(".save"), class: "btn btn-primary" %>
+    <%= cancel_button reports_report_path(@saved_report.report_key.presence || Report.catalog.first.key, @saved_report.params) %>
+  </div>
+<% end %>

@@ -1,0 +1,28 @@
+<%# Count by weekday (rows, Monday first) × hour (columns): the darker, the busier. %>
+<% hours = values.keys.map(&:last) %>
+<% hours = hours.any? ? (hours.min..hours.max).to_a : [] %>
+<% max = values.values.max || 0 %>
+<div class="overflow-x-auto">
+  <table class="w-full border-separate border-spacing-0.5 text-center text-xs">
+    <thead>
+      <tr>
+        <th></th>
+        <% hours.each do |hour| %><th class="px-1 font-medium text-ink-muted tabular-nums"><%= format("%02d", hour) %></th><% end %>
+      </tr>
+    </thead>
+    <tbody>
+      <% (1..7).each do |weekday| %>
+        <tr>
+          <th scope="row" class="pr-2 text-left font-medium text-ink-muted"><%= t("date.abbr_day_names")[weekday % 7] %></th>
+          <% hours.each do |hour| %>
+            <% value = values[[ weekday, hour ]].to_i %>
+            <td class="h-8 min-w-8 rounded tabular-nums <%= value > max / 2 ? "text-on-primary" : "text-ink-muted" %>" style="<%= heat_style(value, max) %>"
+                title="<%= t("reports.charts.heat_cell", day: t("date.day_names")[weekday % 7], hour: format("%02d:00", hour), count: value) %>">
+              <%= value if value.positive? %>
+            </td>
+          <% end %>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

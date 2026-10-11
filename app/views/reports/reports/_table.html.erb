@@ -1,0 +1,26 @@
+<%# Rows of a report. Narrow: cards with the main columns. Wider: a table
+    whose columns appear by priority as space allows. More rows are
+    appended to #report-rows and #report-cards as the list scrolls. %>
+<% columns = report.table_columns %>
+<div class="@container">
+  <ul id="report-cards" class="space-y-3 @2xl:hidden">
+    <%= render "reports/reports/cards", report:, rows:, columns: %>
+  </ul>
+  <div class="hidden overflow-x-auto panel @2xl:block print:block">
+    <table class="data-table data-table-compact">
+      <thead>
+        <tr>
+          <% columns.each do |column| %>
+            <th class="<%= report_cell_class(column) %>" scope="col" aria-sort="<%= report_sort_aria(report, column) %>">
+              <%= report_sort_link(report, column) %>
+            </th>
+          <% end %>
+          <% if report.detail? %><th class="cell-actions print:hidden"><span class="sr-only"><%= t("reports.show.actions") %></span></th><% end %>
+        </tr>
+      </thead>
+      <tbody id="report-rows">
+        <%= render "reports/reports/rows", report:, rows:, columns: %>
+      </tbody>
+    </table>
+  </div>
+</div>

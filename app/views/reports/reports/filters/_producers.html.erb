@@ -1,0 +1,5 @@
+<%= filter_text_field form, :q, t("reports.filters.producer"), value: filter.q, placeholder: t("reports.filters.person_placeholder") %>
+<%= filter_select form, :zone_id, t("reports.filters.zone"), Zone.ordered.pluck(:name, :id), selected: filter.zone_id, all: t("shared.filters.all_zones") %>
+<%= filter_select form, :kind, t("reports.filters.producer_kind"), enum_options(Producer, :kind, Producer::KINDS), selected: filter.kind %>
+<%= filter_select form, :activity, t("reports.filters.activity"),
+      ProducersReport::ACTIVITIES.map { |key| [ t("reports.filters.activities.#{key}"), key ] }, selected: filter.activity %>

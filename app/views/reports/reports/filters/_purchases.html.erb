@@ -1,0 +1,11 @@
+<%= filter_text_field form, :q, t("reports.filters.producer"), value: filter.q, placeholder: t("reports.filters.person_placeholder") %>
+<%= filter_select form, :zone_id, Purchase.human_attribute_name(:zone), Zone.ordered.pluck(:name, :id), selected: filter.zone_id,
+      all: t("shared.filters.all_zones") %>
+<%= filter_select form, :coffee_state, Purchase.human_attribute_name(:coffee_state),
+      enum_options(Purchase, :coffee_state, Purchase::COFFEE_STATES), selected: filter.coffee_state %>
+<%= filter_select form, :invoice_status, t("reports.filters.invoice_status"),
+      PurchasesReport::INVOICE_STATUSES.map { |status| [ t("reports.types.purchases.invoice_statuses.#{status}"), status ] },
+      selected: filter.invoice_status %>
+<%= filter_select form, :producer_kind, t("reports.filters.producer_kind"), enum_options(Producer, :kind, Producer::KINDS),
+      selected: filter.producer_kind %>
+<%= filter_select form, :created_by_id, t("reports.filters.created_by"), User.order(:name).pluck(:name, :id), selected: filter.created_by_id %>

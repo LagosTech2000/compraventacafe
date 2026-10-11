@@ -54,8 +54,12 @@ Rails.application.routes.draw do
     resources :supplies, only: %i[ index new create edit update ]
   end
 
+  # One screen for every report: /reports/purchases?period=this_month...
   namespace :reports do
-    root "home#index"
+    root "reports#show"
+    resources :saved_reports, only: %i[ index new create destroy ]
+    get ":id/charts", to: "reports#charts", as: :report_charts
+    get ":id", to: "reports#show", as: :report
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

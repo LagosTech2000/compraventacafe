@@ -925,6 +925,663 @@ es:
         success: "Categoría registrada."
       update:
         success: "Categoría actualizada."
+  reports:
+    csv_prefix: "reporte"
+    none: "(Sin dato)"
+    others: "Otros"
+    week_of: "Semana del %{date}"
+    days_range: "%{from} a %{to} días"
+    days_over: "Más de %{days} días"
+    periods:
+      today: "Hoy"
+      yesterday: "Ayer"
+      this_week: "Esta semana"
+      last_week: "Semana pasada"
+      this_month: "Este mes"
+      last_month: "Mes pasado"
+      last_30_days: "Últimos 30 días"
+      last_90_days: "Últimos 90 días"
+      this_season: "Esta temporada"
+      last_season: "Temporada pasada"
+      this_year: "Este año"
+      last_year: "Año pasado"
+      all: "Todo"
+      season: "Temporada %{year}"
+      custom: "Personalizado (fechas)"
+      everything: "Todos los registros"
+      range: "%{from} al %{to}"
+      beginning: "el inicio"
+      today_open: "hoy"
+    filters:
+      period: "Período"
+      group: "Agrupar por"
+      no_group: "Sin agrupar (cada registro)"
+      producer: "Productor"
+      person: "Persona"
+      person_placeholder: "Nombre, DNI o RTN"
+      invoice_status: "Facturación"
+      producer_kind: "Tipo de productor"
+      created_by: "Registró"
+      payment_status: "Estado de pago"
+      payment_method: "Forma de pago"
+      zone: "Zona"
+      activity: "Actividad"
+      activities:
+        with_purchases: "Con compras en el período"
+        without_purchases: "Sin compras en el período"
+        with_activity: "Con algo en el período o deuda"
+      loan_status: "Estado"
+      loan_statuses:
+        unpaid: "Sin pagar (al día y vencidos)"
+        active: "Al día"
+        overdue: "Vencidos"
+        paid_off: "Pagados"
+      loan_kind: "Tipo de préstamo"
+      due: "Vencimiento"
+      dues:
+        overdue: "Ya vencidos"
+        next_7_days: "Vencen en 7 días"
+        next_30_days: "Vencen en 30 días"
+        this_month: "Vencen este mes"
+      supply: "Insumo"
+      farm: "Finca"
+      payroll: "Planilla"
+      payroll_kind: "Tipo de planilla"
+      basis: "Forma de pago"
+      category: "Categoría"
+      description: "Descripción"
+      description_placeholder: "Texto de la descripción"
+      role: "Rol"
+      direction: "Entrada o salida"
+      source: "Origen"
+      text_placeholder: "Persona o descripción"
+    groups:
+      day: "Día"
+      week: "Semana"
+      month: "Mes"
+      season: "Temporada"
+      producer: "Productor"
+      zone: "Zona"
+      coffee_state: "Estado del café"
+      invoice_status: "Facturación"
+      producer_kind: "Tipo de productor"
+      created_by: "Registró"
+      payment_status: "Estado de pago"
+      payment_method: "Forma de pago"
+      person: "Persona"
+      status: "Estado"
+      kind: "Tipo"
+      due_month: "Mes de vencimiento"
+      supply: "Insumo"
+      farm: "Finca"
+      payroll: "Planilla"
+      basis: "Forma de pago"
+      category: "Categoría"
+      source: "Origen"
+      direction: "Entrada o salida"
+    series:
+      count: "Cantidad"
+      quintals: "QQ"
+      total: "Total (L)"
+      share: "% acumulado del total"
+      amount: "Monto (L)"
+      pending: "Pendiente de pago (L)"
+      to_pay: "A pagar (L)"
+      days: "Días promedio"
+      owed: "Capital pendiente (L)"
+      interest: "A interés (L)"
+      principal: "A capital (L)"
+      quantity: "Cantidad"
+      gross_total: "Total de planilla (L)"
+      gross_amount: "Ganado (L)"
+      members: "Empleados pagados"
+      payrolls: "Planillas (L)"
+      expenses: "Gastos (L)"
+      people: "Personas"
+      producers: "Productores"
+      cans: "Latas"
+      pickers: "Cortadores"
+      average: "Latas por cortador al día"
+      sales_total: "Café que nos vendió (L)"
+      earned: "Ganado en planillas (L)"
+      amount_in: "Entradas (L)"
+      amount_out: "Salidas (L)"
+      balance: "Saldo acumulado (L)"
+    show:
+      pickers: "Elegir reporte"
+      report_type: "Reporte"
+      global: "Todo el sistema"
+      presets: "Reportes sugeridos"
+      pick_preset: "Elige una pregunta frecuente…"
+      saved: "Mis filtros"
+      pick_saved: "Elige uno de tus filtros…"
+      no_saved: "Todavía no guardas filtros"
+      manage_saved: "Administrar"
+      manage_saved_title: "Ver y borrar mis filtros guardados"
+      compared_with: "comparado con %{period}"
+      save: "Guardar filtros"
+      export: "Exportar a Excel (CSV)"
+      print: "Imprimir"
+      figures: "Cifras del reporte"
+      previous_value: "Período anterior: %{value}"
+      charts: "Gráficos"
+      show_charts: "Mostrar"
+      hide_charts: "Ocultar"
+      rows: "Registros"
+      grouped_by: "Agrupado por %{group}"
+      count: "Mostrando %{shown} de %{total}"
+      empty: "No hay registros con estos filtros. Prueba con otro período."
+      actions: "Acciones"
+      load_more: "Cargar más"
+      loading: "Cargando…"
+      end:
+        zero: "No hay registros."
+        one: "Es el único registro."
+        other: "Son todos: %{count} registros."
+    empty:
+      none: "No tienes acceso a ningún reporte. Cada reporte necesita además el permiso de ver del módulo de donde salen sus datos; pídeselo a un administrador."
+    charts:
+      empty: "No hay datos para graficar con estos filtros."
+      data: "Ver los datos"
+      heat_cell: "%{day} %{hour}: %{count}"
+    presets:
+      purchases_today: "Compras de hoy"
+      purchases_week_by_day: "Compras de esta semana, día por día"
+      purchases_season_by_month: "Compras de la temporada, mes por mes"
+      purchases_season_by_producer: "Quién nos vendió más esta temporada"
+      purchases_month_by_zone: "Compras del mes por zona"
+      purchases_month_by_state: "Compras del mes por estado del café"
+      purchases_uninvoiced: "Compras sin facturar"
+      invoices_pending: "Facturas pendientes de pago (las más viejas primero)"
+      invoices_paid_month: "Facturas canceladas este mes"
+      producers_season_ranking: "Ranking de productores de la temporada"
+      producers_inactive: "Productores que no venden hace 30 días"
+      loans_overdue: "Préstamos vencidos"
+      loans_due_soon: "Préstamos que vencen en los próximos 30 días"
+      loans_portfolio_by_person: "Cartera por persona (lo que se debe)"
+      loan_payments_month: "Cobros de préstamos de este mes"
+      loan_payments_season_by_method: "Cobros de la temporada por forma de pago"
+      loan_supplies_season: "Insumos prestados en la temporada"
+      payroll_payments_month_by_farm: "Planillas pagadas este mes por finca"
+      payroll_lines_month_by_person: "Lo que ganó cada empleado este mes"
+      harvest_week_by_day: "Latas cortadas esta semana, día por día"
+      harvest_season_by_person: "Mejores cortadores de la temporada"
+      payroll_expenses_month_by_category: "Gastos de fincas del mes por categoría"
+      people_season: "Cada persona con el negocio esta temporada"
+      cash_movements_week: "Entradas y salidas de dinero de esta semana"
+      cash_movements_month_by_source: "Entradas y salidas del mes por origen"
+    saved_reports:
+      index:
+        title: "Mis filtros"
+        help: "Los filtros de reportes que guardaste. Solo tú los ves."
+        open: "Abrir"
+        destroy: "Borrar"
+        confirm_destroy: "¿Borrar el filtro «%{name}»?"
+        empty: "No tienes filtros guardados."
+      new:
+        title: "Guardar filtros"
+        help: "Se guarda el reporte «%{report}» con los filtros que tiene ahora."
+        name_placeholder: "Por ejemplo: Compras de la zona norte"
+        save: "Guardar"
+      create:
+        success: "Filtro «%{name}» guardado. Lo encuentras en «Mis filtros»."
+      destroy:
+        success: "Filtro «%{name}» borrado."
+    types:
+      purchases:
+        title: "Compras"
+        description: "Cada compra de café (sin las anuladas): pesos, quintales, precio, total y facturación."
+        uninvoiced: "Sin facturar"
+        invoice_statuses:
+          uninvoiced: "Sin facturar"
+          pending: "Facturada, pendiente de pago"
+          paid: "Facturada y cancelada"
+        columns:
+          purchased_at: "Fecha y hora"
+          producer: "Productor"
+          zone: "Zona"
+          coffee_state: "Estado"
+          gross_weight: "Bruto (lb)"
+          humidity_percent: "Humedad"
+          quintals: "QQ"
+          price_per_pound: "Precio/lb"
+          total: "Total"
+          invoice: "Factura"
+          created_by: "Registró"
+          count: "Compras"
+          average_price: "Precio prom./lb"
+          net_weight: "Neto (lb)"
+          producers: "Productores"
+        kpis:
+          count: "Compras"
+          quintals: "Quintales (QQ)"
+          total: "Total comprado"
+          average_price: "Precio promedio/lb"
+          producers: "Productores"
+          uninvoiced: "Sin facturar"
+        charts:
+          volume:
+            title: "Quintales y dinero en el tiempo"
+            help: "Barras: QQ comprados. Línea: lempiras pagados."
+          price:
+            title: "Precio promedio por libra"
+            help: "Por estado del café (total ÷ peso neto). Los días sin compras no se dibujan."
+          coffee_states:
+            title: "QQ por estado del café"
+            help: "Cuánto de lo comprado fue uva, pergamino húmedo o seco."
+          producers:
+            title: "Productores que más venden (Pareto)"
+            help: "Los 15 con más QQ. La línea suma su parte del total: muestra cuánto depende el negocio de pocos productores."
+          zones:
+            title: "QQ por zona"
+            help: "De dónde viene el café."
+          invoice_statuses:
+            title: "Dinero por estado de facturación"
+            help: "Lo comprado que falta facturar, lo facturado pendiente de pago y lo ya cancelado."
+          humidity_price:
+            title: "Humedad contra precio"
+            help: "Cada punto es una compra de pergamino (las últimas 400). Sirve para ver si el precio sigue a la humedad."
+          arrivals:
+            title: "Cuándo llega el café"
+            help: "Compras por día de la semana y hora. Lo más oscuro es lo más ocupado."
+      invoices:
+        title: "Facturas"
+        description: "Las facturas entregadas a productores: total, lo abonado a préstamos con café, lo que falta pagarles y cuánto se tardó en cancelarlas."
+        columns:
+          number: "Factura"
+          issued_on: "Fecha"
+          producer: "Productor"
+          purchases_count: "Compras"
+          quintals: "QQ"
+          total: "Total"
+          coffee: "Abonos con café"
+          to_pay: "A pagar"
+          payment_status: "Estado"
+          payment_method: "Forma de pago"
+          paid_on: "Cancelada el"
+          days: "Días"
+          count: "Facturas"
+          pending: "Pendiente"
+          average_days: "Días prom. para pagar"
+        kpis:
+          count: "Facturas"
+          total: "Total facturado"
+          coffee: "Abonado con café"
+          pending: "Pendiente de pago"
+          pending_count: "Facturas pendientes"
+          average_days: "Días prom. para pagar"
+        charts:
+          by_status:
+            title: "Lo facturado en el tiempo"
+            help: "Lo que hay que pagar a los productores (sin los abonos con café), cancelado o pendiente."
+          pending_age:
+            title: "Antigüedad de lo pendiente"
+            help: "Dinero de facturas pendientes según los días desde que se entregaron."
+          debtors:
+            title: "A quién se le debe más"
+            help: "Los 10 productores con más dinero pendiente en facturas."
+          methods:
+            title: "Cómo se pagó"
+            help: "Facturas canceladas por forma de pago."
+          days_to_pay:
+            title: "Rapidez de pago"
+            help: "Barras: facturas canceladas. Línea: días promedio entre la factura y su pago."
+      producers:
+        title: "Productores"
+        description: "Cada productor con lo que vendió en el período, cuándo vendió por última vez y lo que falta pagarle. Sirve para ver quién vende más y quién dejó de vender."
+        never: "Nunca ha vendido"
+        columns:
+          producer: "Productor"
+          kind: "Tipo"
+          zone: "Zona"
+          purchases_count: "Compras"
+          quintals: "QQ"
+          total: "Total"
+          average_price: "Precio prom./lb"
+          last_purchase_on: "Última compra"
+          days_since: "Días sin vender"
+          pending: "Por pagarle"
+          producers: "Productores"
+          selling: "Vendieron"
+        kpis:
+          selling: "Productores que vendieron"
+          quintals: "Quintales (QQ)"
+          average_quintals: "QQ por productor"
+          top_share: "QQ de los 10 mayores"
+          not_selling: "No vendieron"
+          pending: "Por pagarles (hoy)"
+        charts:
+          ranking:
+            title: "Ranking de productores (Pareto)"
+            help: "Los 20 que más vendieron. La línea suma su parte del total."
+          recency:
+            title: "Hace cuánto vendieron"
+            help: "Productores según los días desde su última compra (de todas las fechas)."
+          kinds:
+            title: "QQ por tipo de productor"
+            help: "Productores, carreros y fincas propias."
+          zones:
+            title: "QQ por zona"
+            help: "De dónde viene lo que venden."
+      loans:
+        title: "Préstamos"
+        description: "Los préstamos otorgados en el período: lo prestado, lo abonado, el capital pendiente y lo que se debe hoy con interés, con los vencidos y los que están por vencer."
+        columns:
+          id: "Préstamo"
+          person: "Persona"
+          kind: "Tipo"
+          disbursed_on: "Otorgado"
+          due_on: "Vence"
+          principal: "Capital"
+          monthly_interest_rate: "Tasa mensual"
+          paid: "Abonado"
+          interest_paid: "Interés cobrado"
+          owed: "Capital pendiente"
+          balance: "Debe hoy"
+          status: "Estado"
+          days_late: "Días vencido"
+          count: "Préstamos"
+          overdue: "Vencidos"
+        kpis:
+          count: "Préstamos"
+          principal: "Prestado"
+          paid: "Abonado"
+          interest_paid: "Interés cobrado"
+          owed: "Capital pendiente"
+          balance: "Se debe hoy (con interés)"
+          overdue_owed: "Capital vencido"
+        charts:
+          lent:
+            title: "Lo prestado en el tiempo"
+            help: "Capital prestado por tipo: efectivo, insumos o mixto."
+          portfolio:
+            title: "Cartera: al día y vencida"
+            help: "Capital pendiente de los préstamos sin pagar."
+          overdue_age:
+            title: "Antigüedad de lo vencido"
+            help: "Capital pendiente de los préstamos vencidos, según los días desde que vencieron."
+          debtors:
+            title: "Quién debe más"
+            help: "Las 10 personas con más capital pendiente."
+          upcoming:
+            title: "Vencimientos de las próximas 8 semanas"
+            help: "Capital pendiente que vence cada semana."
+      loan_payments:
+        title: "Abonos a préstamos"
+        description: "Los abonos del período: cuánto entró, cuánto fue a interés y cuánto a capital, y cómo se pagó (efectivo, café, planilla…)."
+        columns:
+          paid_on: "Fecha"
+          receipt: "Recibo"
+          person: "Persona"
+          loan: "Préstamo"
+          payment_method: "Forma de pago"
+          amount: "Monto"
+          interest_amount: "A interés"
+          principal_amount: "A capital"
+          created_by: "Registró"
+          count: "Abonos"
+          people: "Personas"
+        kpis:
+          count: "Abonos"
+          amount: "Cobrado"
+          interest_amount: "A interés"
+          principal_amount: "A capital"
+          coffee: "Pagado con café"
+          payroll: "Descontado en planilla"
+        charts:
+          split:
+            title: "Lo cobrado en el tiempo"
+            help: "Cada barra separa lo que fue a interés y lo que bajó el capital."
+          methods:
+            title: "Cómo pagaron"
+            help: "Abonos por forma de pago."
+          payers:
+            title: "Quién abonó más"
+            help: "Las 10 personas que más abonaron."
+      loan_supplies:
+        title: "Insumos prestados"
+        description: "Los insumos entregados en préstamos del período: cuáles, cuánto, a quién y su valor."
+        columns:
+          disbursed_on: "Fecha"
+          person: "Persona"
+          loan: "Préstamo"
+          supply: "Insumo"
+          quantity: "Cantidad"
+          unit_price: "Precio unitario"
+          total: "Valor"
+          count: "Líneas"
+          loans: "Préstamos"
+          people: "Personas"
+        kpis:
+          total: "Valor prestado"
+          count: "Líneas"
+          supplies: "Insumos distintos"
+          people: "Personas"
+        charts:
+          value_by_supply:
+            title: "Valor por insumo"
+            help: "Cuánto dinero se prestó en cada insumo."
+          quantities:
+            title: "Cantidad por insumo"
+            help: "Unidades entregadas de cada insumo."
+          over_time:
+            title: "Insumos prestados en el tiempo"
+            help: "Valor prestado de los 5 insumos principales; el resto en «Otros»."
+          people:
+            title: "Quién recibió más"
+            help: "Las 10 personas con más valor en insumos."
+      payroll_payments:
+        title: "Pagos de planilla"
+        description: "Los pagos de planilla del período por finca y planilla: lo ganado, lo descontado a préstamos y lo entregado, junto a los gastos de esas planillas."
+        columns:
+          paid_on: "Pagado el"
+          farm: "Finca"
+          payroll: "Planilla"
+          kind: "Tipo"
+          period: "Período"
+          members: "Empleados"
+          gross_total: "Total"
+          loans_total: "A préstamos"
+          net_total: "Entregado"
+          count: "Pagos"
+        kpis:
+          count: "Pagos"
+          gross_total: "Total de planillas"
+          loans_total: "A préstamos"
+          net_total: "Entregado"
+          expenses: "Gastos de planillas"
+          total_cost: "Costo total"
+        charts:
+          by_farm:
+            title: "Planillas pagadas en el tiempo"
+            help: "Total de planilla de cada finca."
+          farm_costs:
+            title: "Costo por finca"
+            help: "Planillas pagadas más gastos de las planillas, en el período."
+          kinds:
+            title: "Por tipo de planilla"
+            help: "Por día, por obra o corte de café."
+          members:
+            title: "Planilla y empleados"
+            help: "Barras: total pagado. Línea: empleados pagados."
+      payroll_lines:
+        title: "Pagos por empleado"
+        description: "Lo que se le pagó a cada empleado en las planillas del período: días, latas o tareas, lo ganado, lo descontado a préstamos y lo entregado."
+        bases:
+          daily: "Por día"
+          harvest: "Por latas"
+          task: "Por tarea"
+        columns:
+          paid_on: "Pagado el"
+          person: "Empleado"
+          farm: "Finca"
+          payroll: "Planilla"
+          basis: "Forma"
+          quantity: "Trabajo"
+          gross_amount: "Ganó"
+          loans_amount: "A préstamos"
+          net_amount: "Recibió"
+          people: "Empleados"
+          days: "Días"
+          cans: "Latas"
+        kpis:
+          people: "Empleados"
+          gross_amount: "Ganado"
+          loans_amount: "A préstamos"
+          net_amount: "Entregado"
+          average: "Promedio por empleado"
+          days: "Días pagados"
+        charts:
+          top:
+            title: "Quién ganó más"
+            help: "Los 15 empleados que más ganaron en el período."
+          bases:
+            title: "Por forma de pago"
+            help: "Lo ganado por día, por latas o por tarea."
+          by_farm:
+            title: "Lo pagado en el tiempo"
+            help: "Lo ganado por los empleados de cada finca."
+      harvest:
+        title: "Latas cortadas"
+        description: "El corte de café día por día: latas de cada cortador, cuántos vinieron y lo que vale al precio de la lata de cada planilla."
+        columns:
+          worked_on: "Día"
+          person: "Cortador"
+          farm: "Finca"
+          payroll: "Planilla"
+          cans: "Latas"
+          can_price: "Precio de la lata"
+          value: "Valor"
+          pickers: "Cortadores"
+          days: "Días"
+          average: "Latas por cortador al día"
+        kpis:
+          cans: "Latas"
+          value: "Valor"
+          pickers: "Cortadores"
+          days: "Días con corte"
+          average: "Latas por cortador al día"
+          best_day: "Mejor día (latas)"
+        charts:
+          cans:
+            title: "Latas en el tiempo"
+            help: "Barras: latas cortadas. Línea: cortadores que vinieron."
+          top:
+            title: "Mejores cortadores"
+            help: "Los 15 con más latas en el período."
+          average:
+            title: "Rendimiento por cortador"
+            help: "Latas promedio de un cortador en un día."
+          farms:
+            title: "Latas por finca"
+            help: "Dónde se cortó."
+      payroll_expenses:
+        title: "Gastos de fincas"
+        description: "Los gastos de las planillas del período por categoría, finca y planilla."
+        columns:
+          spent_on: "Fecha"
+          farm: "Finca"
+          payroll: "Planilla"
+          category: "Categoría"
+          description: "Descripción"
+          amount: "Monto"
+          created_by: "Registró"
+          count: "Gastos"
+          average: "Promedio"
+        kpis:
+          amount: "Gastado"
+          count: "Gastos"
+          average: "Gasto promedio"
+          categories: "Categorías"
+        charts:
+          categories:
+            title: "En qué se gasta"
+            help: "Monto por categoría."
+          over_time:
+            title: "Gastos en el tiempo"
+            help: "Las 5 categorías principales; el resto en «Otros»."
+          farms:
+            title: "Gastos por finca"
+            help: "Monto gastado en cada finca."
+          payrolls:
+            title: "Planillas con más gastos"
+            help: "Las 10 planillas con más gastos."
+      people:
+        title: "Personas (todo el sistema)"
+        description: "Cada persona con todo lo que tiene con el negocio en el período: café que vendió, lo ganado en planillas, lo abonado a préstamos y lo que debe hoy."
+        roles:
+          producer: "Productor"
+          client: "Cliente"
+          collaborator: "Colaborador"
+          borrower: "Con préstamos"
+          employee: "Empleado de planilla"
+        columns:
+          person: "Persona"
+          roles: "Roles"
+          quintals: "QQ vendidos"
+          sales_total: "Café vendido"
+          earned: "Ganado en planillas"
+          repaid: "Abonado a préstamos"
+          owed: "Debe hoy (capital)"
+        kpis:
+          people: "Personas con actividad"
+          sales_total: "Café comprado"
+          earned: "Pagado en planillas"
+          repaid: "Abonado a préstamos"
+          owed: "Capital pendiente (hoy)"
+        charts:
+          paid_to_them:
+            title: "A quién le pagó más el negocio"
+            help: "Los 15 con más dinero entre café que vendieron y lo que ganaron en planillas."
+          debtors:
+            title: "Quién debe más"
+            help: "Capital pendiente de hoy, las 10 personas que más deben."
+          roles:
+            title: "Personas por rol"
+            help: "Una persona puede tener varios roles."
+      cash_movements:
+        title: "Entradas y salidas de dinero"
+        description: "El dinero que salió (facturas pagadas, préstamos en efectivo, planillas y gastos) y el que entró (abonos en efectivo, transferencia o cheque), según lo registrado. Las ventas de café todavía no están en el sistema."
+        sources:
+          invoices: "Factura pagada"
+          loans: "Préstamo en efectivo"
+          loan_payments: "Abono a préstamo"
+          payroll_payments: "Pago de planilla"
+          payroll_expenses: "Gasto de planilla"
+        directions:
+          in: "Entrada"
+          out: "Salida"
+        invoice: "Factura %{number}"
+        loan: "Préstamo %{number}"
+        loan_payment: "Recibo %{number} del préstamo %{loan}"
+        payroll_payment: "%{payroll} · %{farm} (%{period})"
+        expense: "%{category}: %{description} (%{farm})"
+        columns:
+          date: "Fecha"
+          source: "Origen"
+          description: "Detalle"
+          person: "Persona"
+          payment_method: "Forma de pago"
+          amount_in: "Entró"
+          amount_out: "Salió"
+          count: "Movimientos"
+          net: "Neto"
+        kpis:
+          amount_in: "Entró"
+          amount_out: "Salió"
+          net: "Neto"
+          count: "Movimientos"
+        charts:
+          flow:
+            title: "Entradas y salidas en el tiempo"
+            help: "Barras: lo que entró y lo que salió. Línea: el saldo que se va acumulando en el período."
+          out_sources:
+            title: "En qué salió el dinero"
+            help: "Salidas por origen."
+          in_methods:
+            title: "Cómo entró el dinero"
+            help: "Entradas por forma de pago."
+
   module_home:
     empty: "Este módulo todavía no tiene funciones."
 
@@ -1520,12 +2177,43 @@ es:
               - "En «Historial crediticio» está cada préstamo otorgado y cada abono, lo más reciente primero."
               - "Toca «Imprimir» para entregarle una copia, o «Nuevo préstamo» para prestarle otra vez."
       reports:
-        home:
-          index:
-            title: "Reportería"
-            summary: "Este módulo todavía no tiene funciones."
+        reports:
+          show:
+            title: "Reportes"
+            summary: "Todos los reportes del sistema en una pantalla: eliges el reporte, lo filtras y ves sus cifras, gráficos y registros."
             steps:
-              - "Cuando esté listo, aquí van a estar los reportes."
+              - "Arriba elige el reporte, uno de los «Reportes sugeridos» o uno de «Mis filtros»."
+              - "Ajusta los filtros: el período (hoy, este mes, una temporada o fechas a tu gusto) y los propios del reporte. Toca «Aplicar»."
+              - "«Agrupar por» suma los registros por día, mes, productor, zona… en vez de verlos uno por uno."
+              - "Revisa las cifras de arriba: cada una se compara con el período anterior (▲ subió, ▼ bajó)."
+              - "Los gráficos se pueden ocultar tocando «Gráficos». Bajo cada uno, «Ver los datos» muestra sus números."
+              - "La tabla se carga sola a medida que bajas. Toca un encabezado para ordenar por esa columna."
+              - "«Guardar filtros» guarda lo que elegiste con un nombre, para abrirlo después desde «Mis filtros»."
+            tips:
+              - "Un filtro guardado con «Este mes» siempre muestra el mes en curso, no el mes en que lo guardaste."
+              - "«Exportar a Excel (CSV)» baja todos los registros del reporte con estos filtros, no solo los que se ven."
+              - "Cada reporte necesita el permiso de ver de Reportería y el del módulo de donde salen sus datos."
+          charts:
+            title: "Gráficos del reporte"
+            summary: "Los gráficos de los datos filtrados del reporte."
+            steps:
+              - "Pasa el dedo o el cursor sobre un gráfico para ver cada valor."
+              - "Toca «Ver los datos» bajo un gráfico para ver sus números en una tabla."
+        saved_reports:
+          index:
+            title: "Mis filtros"
+            summary: "Los filtros de reportes que guardaste. Solo tú los ves."
+            steps:
+              - "Toca «Abrir» para ver el reporte con esos filtros."
+              - "Toca «Borrar» para quitar uno que ya no usas."
+          form:
+            title: "Guardar filtros"
+            summary: "Guarda el reporte con los filtros que elegiste, para abrirlo después desde «Mis filtros»."
+            steps:
+              - "Escribe un nombre que te diga qué muestra (por ejemplo: «Compras de la zona norte»)."
+              - "Toca «Guardar»."
+            tips:
+              - "Se guarda el período por su nombre: «Este mes» siempre es el mes en curso."
 
   administration:
     home:
@@ -1563,6 +2251,7 @@ es:
         payroll_payment: "el pago de planilla"
         payroll_payment_line: "la línea de pago de planilla"
         payroll_expense: "el gasto de planilla"
+        saved_report: "el filtro guardado"
       sentence:
         create: "%{actor} creó %{record} el %{date} a las %{time}."
         update: "%{actor} modificó %{record}: %{fields}, el %{date} a las %{time}."
@@ -1770,6 +2459,9 @@ es:
       payroll_expense:
         one: "Gasto de planilla"
         other: "Gastos de planilla"
+      saved_report:
+        one: "Filtro guardado"
+        other: "Filtros guardados"
     attributes:
       user:
         name: "Nombre completo"
@@ -1995,6 +2687,11 @@ es:
         description: "Descripción"
         amount: "Monto (L)"
         created_by_id: "Registró"
+      saved_report:
+        name: "Nombre"
+        report_key: "Reporte"
+        params: "Filtros"
+        user_id: "Usuario"
       purchase/weighings:
         gross_weight: "Peso de la pesada (lb)"
         sacks: "Sacos de la pesada"
@@ -2071,6 +2768,11 @@ es:
           attributes:
             category:
               inactive: "está inactiva"
+        saved_report:
+          too_many: "Ya tienes %{count} filtros guardados: borra alguno para guardar otro."
+          attributes:
+            name:
+              taken: "ya lo usas en otro filtro guardado"
         purchase:
           voided_invoiced: "Una compra facturada no se puede anular."
           attributes:
@@ -2211,6 +2913,7 @@ es:
       long: "%-d de %B de %Y"
       short: "%-d de %b"
       short_day: "%a %-d/%m"
+      month_year: "%b %Y"
     order: [day, month, year]
 
   time:

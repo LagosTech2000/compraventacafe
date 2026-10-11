@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_11_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_11_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -83,6 +83,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_140000) do
     t.datetime "updated_at", null: false
     t.index ["payroll_member_id", "worked_on"], name: "index_harvest_entries_on_payroll_member_id_and_worked_on", unique: true
     t.index ["payroll_member_id"], name: "index_harvest_entries_on_payroll_member_id"
+    t.index ["worked_on"], name: "index_harvest_entries_on_worked_on"
   end
 
   create_table "invoices", force: :cascade do |t|
@@ -96,6 +97,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_140000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["created_by_id"], name: "index_invoices_on_created_by_id"
+    t.index ["issued_on"], name: "index_invoices_on_issued_on"
     t.index ["number"], name: "index_invoices_on_number", unique: true
     t.index ["payment_status"], name: "index_invoices_on_payment_status"
     t.index ["producer_id"], name: "index_invoices_on_producer_id"
@@ -116,6 +118,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_140000) do
     t.bigint "payroll_payment_line_id"
     t.index ["created_by_id"], name: "index_loan_payments_on_created_by_id"
     t.index ["loan_id"], name: "index_loan_payments_on_loan_id"
+    t.index ["paid_on"], name: "index_loan_payments_on_paid_on"
     t.index ["payroll_payment_line_id"], name: "index_loan_payments_on_payroll_payment_line_id"
     t.index ["purchase_id"], name: "index_loan_payments_on_purchase_id"
   end
@@ -168,6 +171,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_140000) do
     t.datetime "updated_at", null: false
     t.index ["payroll_member_id", "worked_on"], name: "index_payroll_attendances_on_payroll_member_id_and_worked_on", unique: true
     t.index ["payroll_member_id"], name: "index_payroll_attendances_on_payroll_member_id"
+    t.index ["worked_on"], name: "index_payroll_attendances_on_worked_on"
   end
 
   create_table "payroll_expenses", force: :cascade do |t|
@@ -182,6 +186,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_140000) do
     t.index ["created_by_id"], name: "index_payroll_expenses_on_created_by_id"
     t.index ["expense_category_id"], name: "index_payroll_expenses_on_expense_category_id"
     t.index ["payroll_id"], name: "index_payroll_expenses_on_payroll_id"
+    t.index ["spent_on"], name: "index_payroll_expenses_on_spent_on"
   end
 
   create_table "payroll_members", force: :cascade do |t|
@@ -226,6 +231,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_140000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["created_by_id"], name: "index_payroll_payments_on_created_by_id"
+    t.index ["paid_on"], name: "index_payroll_payments_on_paid_on"
     t.index ["payroll_id", "period_starts_on"], name: "index_payroll_payments_on_payroll_id_and_period_starts_on", unique: true
     t.index ["payroll_id"], name: "index_payroll_payments_on_payroll_id"
   end
@@ -361,6 +367,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_140000) do
     t.index ["zone_id"], name: "index_purchases_on_zone_id"
   end
 
+  create_table "saved_reports", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "report_key", null: false
+    t.string "name", null: false
+    t.jsonb "params", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "user_id, lower((name)::text)", name: "index_saved_reports_on_user_and_lower_name", unique: true
+    t.index ["user_id"], name: "index_saved_reports_on_user_id"
+  end
+
   create_table "sessions", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "ip_address"
@@ -443,5 +460,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_140000) do
   add_foreign_key "purchases", "users", column: "created_by_id"
   add_foreign_key "purchases", "users", column: "voided_by_id"
   add_foreign_key "purchases", "zones"
+  add_foreign_key "saved_reports", "users"
   add_foreign_key "sessions", "users"
 end
