@@ -14,7 +14,7 @@ import { Controller } from "@hotwired/stimulus"
 // figure, the weighings are hidden and disabled (not sent).
 export default class extends Controller {
   static targets = ["coffeeState", "gross", "grossHelp", "humidity", "damage", "yield", "price",
-                    "parchmentField", "cherryField", "sacks", "tare", "damageWeight", "netWeight", "quintals", "total",
+                    "parchmentField", "cherryField", "sacks", "tare", "damageWeight", "damageAmount", "netWeight", "quintals", "total",
                     "weightMode", "weighingsSection", "weighings", "weighingTemplate", "weighing",
                     "weighingDestroy", "weighingGross", "weighingSacks"]
   static values = { sackWeight: Number, tarePerSack: Number, quintalWeight: Number, defaults: Object }
@@ -89,22 +89,25 @@ export default class extends Controller {
     }
 
     const price = parseFloat(this.priceTarget.value)
-    const factor = this.netFactor()
-
-    if (!(gross > 0) || factor === null) return this.show("—", "—", "—", "—", "—", "—")
+    if (!(gross > 0)) return this.show("—", "—", "—", "—", "—", "—", "—")
 
     // Counted sacks (by weighings) or the ones the gross weight holds.
     const tare = sacks === null ? Math.ceil(gross / this.sackWeightValue) * this.tarePerSackValue : sacks * this.tarePerSackValue
     if (sacks === null) sacks = gross / this.sackWeightValue
+
+    // Sacks and tare only need the gross weight: they stay while the rest is incomplete.
+    const factor = this.netFactor()
+    if (factor === null) return this.show(this.pounds.format(sacks), this.pounds.format(tare), "—", "—", "—", "—", "—")
+
     const net = Math.round(Math.max((gross - tare) * factor, 0) * 100) / 100
     const quintals = Math.round((net / this.quintalWeightValue) * 100) / 100
     const damage = this.coffeeStateTarget.value === "cherry" ? 0 :
       Math.round(Math.max((gross - tare) * (1 - parseFloat(this.humidityTarget.value) / 100), 0) *
-                 (parseFloat(this.damageTarget.value) / 100) * 100) / 100
-    const total = price > 0 ? `L ${this.pounds.format(Math.round(net * price * 100) / 100)}` : "—"
+                 (this.damagePercent() / 100) * 100) / 100
+    const money = (value) => price > 0 ? `L ${this.pounds.format(Math.round(value * price * 100) / 100)}` : "—"
 
-    this.show(this.pounds.format(sacks), this.pounds.format(tare), this.pounds.format(damage),
-              this.pounds.format(net), this.pounds.format(quintals), total)
+    this.show(this.pounds.format(sacks), this.pounds.format(tare), this.pounds.format(damage), money(damage),
+              this.pounds.format(net), this.pounds.format(quintals), money(net))
   }
 
   // Share of the weight after tare that counts, or null while incomplete.
@@ -115,9 +118,16 @@ export default class extends Controller {
     }
 
     const humidity = parseFloat(this.humidityTarget.value)
-    const damage = parseFloat(this.damageTarget.value)
-    if (!(humidity >= 0) || !(damage >= 0)) return null
+    const damage = this.damagePercent()
+    if (!(humidity >= 0) || damage === null) return null
     return (1 - humidity / 100) * (1 - damage / 100)
+  }
+
+  // An empty damage field means no damage (0 %), as the server takes it.
+  damagePercent() {
+    if (this.damageTarget.value.trim() === "") return 0
+    const damage = parseFloat(this.damageTarget.value)
+    return damage >= 0 ? damage : null
   }
 
   byWeighings() {
@@ -150,10 +160,11 @@ export default class extends Controller {
     field.querySelectorAll("input").forEach((input) => { input.disabled = !visible })
   }
 
-  show(sacks, tare, damage, net, quintals, total) {
+  show(sacks, tare, damage, damageAmount, net, quintals, total) {
     this.sacksTarget.textContent = sacks
     this.tareTarget.textContent = tare
     this.damageWeightTarget.textContent = damage
+    this.damageAmountTarget.textContent = damageAmount
     this.netWeightTarget.textContent = net
     this.quintalsTarget.textContent = quintals
     this.totalTarget.textContent = total

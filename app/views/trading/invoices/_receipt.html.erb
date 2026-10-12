@@ -28,17 +28,20 @@
   <%# On narrow screens the lines scroll sideways instead of wrapping, so the
       receipt keeps the shape it will have on paper. Printing is unaffected. %>
   <div class="-mx-5 mt-4 overflow-x-auto px-5 print:mx-0 print:mt-2 print:overflow-visible print:px-0">
-  <table class="data-table min-w-[42rem] whitespace-nowrap print:min-w-0 print:whitespace-normal">
+  <table class="data-table min-w-[50rem] whitespace-nowrap print:min-w-0 print:whitespace-normal">
     <thead>
       <%# Repeats on every printed page, so continuation pages say which invoice and copy they are. %>
       <tr class="hidden print:table-row">
-        <th colspan="7" class="text-left font-bold"><%= t("trading.invoices.show.invoice") %> <%= invoice.display_number %> · <%= label %></th>
+        <th colspan="9" class="text-left font-bold"><%= t("trading.invoices.show.invoice") %> <%= invoice.display_number %> · <%= label %></th>
       </tr>
       <tr>
         <th><%= Purchase.human_attribute_name(:purchased_at) %></th>
         <th><%= Purchase.human_attribute_name(:coffee_state) %></th>
         <th class="text-right"><%= Purchase.human_attribute_name(:gross_weight) %></th>
         <th class="text-right"><%= Purchase.human_attribute_name(:humidity_percent) %></th>
+        <%# What damage took off (parchment only): pounds with the % under them, and lempiras. %>
+        <th class="text-right"><%= t("trading.invoices.show.damage_weight") %></th>
+        <th class="text-right"><%= t("trading.invoices.show.damage_amount") %></th>
         <th class="text-right"><%= Purchase.human_attribute_name(:net_weight) %></th>
         <th class="text-right"><%= Purchase.human_attribute_name(:price_per_pound) %></th>
         <th class="text-right"><%= Purchase.human_attribute_name(:total) %></th>
@@ -51,6 +54,15 @@
           <td><%= purchase.human_coffee_state %></td>
           <td class="text-right tabular-nums"><%= format_pounds(purchase.gross_weight) %></td>
           <td class="text-right tabular-nums"><%= format_pounds(purchase.humidity_percent) %></td>
+          <td class="text-right tabular-nums">
+            <% if purchase.damage_weight %>
+              <%= format_pounds(purchase.damage_weight) %>
+              <span class="block whitespace-nowrap text-xs text-ink-muted"><%= format_pounds(purchase.damage_percent) %> %</span>
+            <% else %>
+              —
+            <% end %>
+          </td>
+          <td class="whitespace-nowrap text-right tabular-nums"><%= purchase.damage_amount ? format_money(purchase.damage_amount) : "—" %></td>
           <td class="text-right tabular-nums"><%= format_pounds(purchase.net_weight) %></td>
           <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(purchase.price_per_pound) %></td>
           <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(purchase.total) %></td>
@@ -62,6 +74,8 @@
         <td colspan="2"><%= t("trading.invoices.show.totals") %></td>
         <td class="text-right tabular-nums"><%= format_pounds(invoice.gross_weight) %></td>
         <td></td>
+        <td class="text-right tabular-nums"><%= format_pounds(invoice.damage_weight) %></td>
+        <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(invoice.damage_amount) %></td>
         <td class="text-right tabular-nums"><%= format_pounds(invoice.net_weight) %></td>
         <td></td>
         <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(invoice.total) %></td>

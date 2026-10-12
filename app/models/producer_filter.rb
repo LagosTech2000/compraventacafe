@@ -4,7 +4,7 @@ class ProducerFilter < ListFilter
   field :zone_id, :id
 
   def apply(scope)
-    scope = scope.where(person_id: Person.search(q).select(:id)) if q
+    scope = scope.where(person_id: Person.search(q).select(:id)).or(scope.where("producers.ihcafe_code ILIKE ?", "%#{Producer.sanitize_sql_like(q)}%")) if q
     scope = scope.where(kind:) if kind
     scope = scope.where(zone_id:) if zone_id
     scope.includes(:person, :zone).newest_first

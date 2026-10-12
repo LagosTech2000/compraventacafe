@@ -46,7 +46,7 @@
   <p class="mt-3 text-sm text-ink-muted"><%= t(".frozen_notice") %></p>
 <% end %>
 
-<dl class="mt-6 grid panel sm:grid-cols-3">
+<dl class="mt-6 grid panel sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
   <% {
        t(".principal") => format_money(@loan.principal),
        Loan.human_attribute_name(:cash_amount) => format_money(@loan.cash_amount),

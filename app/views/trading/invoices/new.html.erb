@@ -42,6 +42,8 @@
                 <th class="w-10"></th>
                 <th><%= Purchase.human_attribute_name(:purchased_at) %></th>
                 <th><%= Purchase.human_attribute_name(:coffee_state) %></th>
+                <th class="text-right"><%= t("trading.invoices.show.damage_weight") %></th>
+                <th class="text-right"><%= t("trading.invoices.show.damage_amount") %></th>
                 <th class="text-right"><%= Purchase.human_attribute_name(:net_weight) %></th>
                 <th class="text-right"><%= t("trading.purchases.table.quintals") %></th>
                 <th class="text-right"><%= Purchase.human_attribute_name(:price_per_pound) %></th>
@@ -58,6 +60,8 @@
                   </td>
                   <td class="whitespace-nowrap"><label for="<%= dom_id(purchase, :select) %>"><%= l(purchase.purchased_at) %></label></td>
                   <td><%= purchase.human_coffee_state %></td>
+                  <td class="text-right tabular-nums"><%= purchase.damage_weight ? format_pounds(purchase.damage_weight) : "—" %></td>
+                  <td class="whitespace-nowrap text-right tabular-nums"><%= purchase.damage_amount ? format_money(purchase.damage_amount) : "—" %></td>
                   <td class="text-right tabular-nums"><%= format_pounds(purchase.net_weight) %></td>
                   <td class="text-right tabular-nums"><%= format_pounds(purchase.quintals) %></td>
                   <td class="text-right tabular-nums"><%= format_money(purchase.price_per_pound) %></td>

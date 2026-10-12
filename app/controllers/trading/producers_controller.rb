@@ -6,19 +6,21 @@ module Trading
       authorize Producer
       @filter = ProducerFilter.new(params)
       @producers, @next_page = @filter.results(policy_scope(Producer))
+      @season = Season.current
+      @stats = Purchase.active.in_season(@season).where(producer_id: @producers.map(&:id)).group(:producer_id)
+        .pluck(:producer_id, Arel.sql("SUM(net_weight)")).to_h
+      @last_purchased = Purchase.active.where(producer_id: @producers.map(&:id)).group(:producer_id).maximum(:purchased_at)
     end
 
-    TABS = %w[purchases invoices info].freeze
+    TABS = %w[summary purchases invoices].freeze
 
-    # Pinned figures on top, then one tab at a time: purchases, invoices or
-    # the producer's personal data.
+    # Header with the pinned figures; a side column with the producer's
+    # record, what is pending and their loans; then one tab at a time:
+    # summary (seasons and this season's mix), purchases or invoices.
     def show
       @tab = params[:tab].presence_in(TABS) || TABS.first
-      @season = Season.current
-      @season_summary = PurchaseSummary.new(@producer.purchases.active.in_season(@season))
-      @all_time_summary = PurchaseSummary.new(@producer.purchases.active)
-      @has_uninvoiced = @producer.purchases.uninvoiced.exists?
-      @credit_account = CreditAccount.new(@producer.person)
+      @profile = ProducerProfile.new(@producer)
+      @credit_account = CreditAccount.new(@producer.person) if policy(Loan).index?
 
       case @tab
       when "purchases"
@@ -65,7 +67,7 @@ module Trading
 
       def producer_params
         params.expect(producer: [
-          :kind, :farm_name, :zone_id,
+          :kind, :ihcafe_code, :farm_name, :zone_id,
           person_attributes: [ :id, :first_names, :last_names, :dni, :rtn, :phone, :email,
                                :department_id, :municipality_id, :address_line ]
         ])

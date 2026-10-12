@@ -302,6 +302,12 @@
     background: rgb(29 21 18 / 0.2);
   }
 
+  /* A frame loading a query (a report being filtered or sorted): dimmed
+     where it is, so the user sees it working without the page reloading. */
+  .report-frame[busy] {
+    @apply cursor-progress opacity-60 transition-opacity;
+  }
+
   /* Thin scrollbars for horizontally scrolling tables and bars. */
   .overflow-x-auto {
     scrollbar-width: thin;

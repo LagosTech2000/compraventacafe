@@ -50,7 +50,7 @@ El doc técnico etiqueta cada afirmación: `[CONFIRMADO]` (decidido por el dueñ
 | CSS | Tailwind (`tailwindcss-rails`, binario standalone, sin Node) |
 | Autorización | Pundit |
 | Autenticación | Generador nativo de Rails 8. **No Devise.** |
-| Tests | RSpec (`rspec-rails`), `factory_bot_rails`, `pundit-matchers` |
+| Tests | RSpec (`rspec-rails`), `factory_bot_rails`, `pundit-matchers`; system specs con Capybara + Cuprite (Chrome sin ventana) |
 | Tareas en segundo plano | Ninguna en la fundación. Sin Solid Queue/Cache/Cable. |
 | Gráficos | Chart.js 4.4.7, build UMD oficial en `vendor/javascript/chart.umd.min.js` (importmap, sin Node) |
 | Hosting | Render, plan de pago |
@@ -75,6 +75,8 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Préstamos | `loans` |
 | Reportería | `reports` |
 | Productor / carrero / finca propia | `Producer` (`kind`: `producer` / `intermediary` / `own_farm`) |
+| Clave del IHCAFE (Instituto Hondureño del Café) | `Producer#ihcafe_code` |
+| Ficha / resumen del productor | `ProducerProfile` |
 | Zona | `Zone` |
 | Compra (pesada) | `Purchase` |
 | Uva / pergamino húmedo / pergamino seco | `cherry` / `wet_parchment` / `dry_parchment` |
@@ -151,7 +153,7 @@ cuando su módulo lo pida.
 relación entre ambas.
 
 Campos de `Person` [CONFIRMADO]: `first_names` (Nombres), `last_names`
-(Apellidos), `dni`, `rtn`, `phone`, `email` y dirección (`Addressable`). Solo los nombres y
+(Apellidos), `dni`, `rtn`, `phone`, `email` y dirección (`HasAddress`). Solo los nombres y
 apellidos son obligatorios. El resto se agrega con migraciones cuando cada
 módulo lo pida.
 
@@ -185,6 +187,7 @@ mensaje. Reglas actuales:
 | Nombres / apellidos | Letras, espacios, `'`, `.`, `-` | Sin espacios repetidos |
 | DNI | 13 dígitos | Solo dígitos (se aceptan guiones y espacios) |
 | RTN | 14 dígitos | Solo dígitos |
+| Clave IHCAFE | `XX-XX-XXXXX`, letras o números (9 + 2 guiones) | En mayúsculas y con guiones (se acepta sin guiones o con espacios) |
 | Teléfono | 8 dígitos, `+504` opcional | Solo los 8 dígitos; se muestra `9999-0000` con `format_phone` |
 | Correo | Formato de correo | En minúsculas |
 | Contraseña | Mínimo 8 caracteres (máx. 72) al crearla o cambiarla; el login no la valida | Cifrada |
@@ -193,7 +196,7 @@ Un campo de confirmación usa `confirmation_attributes`: el navegador avisa si
 no coincide antes de enviar.
 
 **2. Toda dirección es departamento + municipio + dirección.** El modelo incluye
-`Addressable` (columnas `department_id`, `municipality_id`, `address_line`) y
+`HasAddress` (columnas `department_id`, `municipality_id`, `address_line`) y
 el formulario renderiza `shared/address_fields`. Sin departamento, la lista de
 municipios queda vacía y deshabilitada; al elegirlo se filtra
 (`address_controller.js`). Se muestra con `format_address`.
@@ -293,6 +296,26 @@ los errores).
   `help_guides.processes` y se ponen con
   `help_guide_button HelpGuide.process(:nombre), label: true`. Las guías solo
   describen lo que el sistema ya hace; nunca reglas de negocio abiertas.
+- **Ancho de página**: el contenido llega a `max-w-[96rem]` para
+  aprovechar monitores anchos; `form_surface_class` limita los formularios
+  a `max-w-5xl` salvo que pidan otro ancho. Los detalles con datos al lado
+  (pesadas, ficha del productor) usan una columna lateral en `xl`/`lg`.
+- **Barra del módulo**: cada módulo tiene su `_nav` (también
+  `administration/_nav`, con lo que el usuario puede ver), que empieza con
+  `shared/module_title` (ícono + nombre). No hay encabezado grande aparte.
+- **Consultas sin recargar la página** (Fernando, 2026-10-12): filtrar,
+  ordenar una columna, agrupar, cambiar de período o de reporte y cargar
+  más **nunca recargan la página**: responden dentro de su Turbo Frame, con
+  `data-turbo-action="advance"` para que la URL (y el botón atrás) sigan la
+  consulta. `shared/filters` recibe `frame:` para apuntar al frame en vez
+  de `_top`. Las respuestas a un frame que no es modal usan el layout
+  `turbo_rails/frame` (`ModalSupport`). `frame_scroll_controller.js`
+  mantiene la posición mientras el frame se reemplaza, y lo que no cambia
+  con la consulta se conserva con `data-turbo-permanent` (los gráficos al
+  ordenar). Cada caso lleva un system spec que comprueba que el `<body>` no
+  se reemplazó. Hoy aplica a Reportería; es la regla para pantallas nuevas.
+- **Filtros**: los campos se acomodan por ancho (`auto-fill`, mínimo
+  12rem) y el botón «Filtrar» va en la misma fila cuando cabe.
 - **Listas desplegables**: nunca con la primera opción en blanco. Campo
   opcional: "Sin … asignado" (`shared.select.*`). Campo obligatorio: "Selecciona
   …". Filtro: "Todos".
@@ -304,6 +327,7 @@ sudo service postgresql start   # si systemd no está activo en WSL
 bin/dev                         # servidor + Tailwind en watch
 bundle exec rspec               # suite completa
 bundle exec rspec spec/policies # solo políticas
+bundle exec rspec spec/system   # pantallas con JavaScript (requiere Google Chrome en WSL)
 bin/rails db:migrate
 bin/rails db:seed               # requiere ADMIN_NAME, ADMIN_EMAIL y ADMIN_PASSWORD
 bin/rails demo:seed             # datos ficticios para la demo (no en producción)
@@ -311,6 +335,14 @@ bin/rails demo:reports          # un año ficticio de operación (sep 2025 a hoy
 bin/rubocop
 bin/brakeman --no-pager
 ```
+
+**Todo cambio lleva specs** (Fernando, 2026-10-12). Lo que pasa en pantalla
+con JavaScript (controladores Stimulus) se prueba con un system spec en
+`spec/system/` (`type: :system`, `sign_in_as(user)`, ver
+`spec/support/system.rb`), incluidos casos como vaciar un campo. Chrome se
+instala una vez en WSL; `BROWSER_PATH` apunta a otro si hace falta. El
+concern de direcciones se llama `HasAddress` porque `Addressable` es una gema
+que trae Capybara.
 
 El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 `ADMIN_EMAIL` y `ADMIN_PASSWORD` del entorno. Nunca se escriben credenciales en el repo.
@@ -376,6 +408,11 @@ textos; la clave y el código siguen siendo `trading`.
     El daño es un porcentaje que se resta al peso neto (suele ser 2–2.5 %).
   - Uva: `(bruto − tara) × rendimiento`. No lleva humedad ni daño.
   - Quintales (QQ) = peso neto ÷ 125. Total = peso neto × precio por libra.
+  - **Restado por daño** (pergamino): `damage_weight` = (bruto − tara) ×
+    (1 − humedad%) × daño%, y `damage_amount` = esas libras × precio por
+    libra. Se guardan en la compra y se muestran en el formulario, el
+    detalle, «Facturar compras» y la factura (con totales) (Fernando,
+    2026-10-12). En uva quedan vacíos.
 - **Forma de pesar** (`Purchase#weight_mode`) [CONFIRMADO, Fernando,
   2026-10-10]: `single` (peso bruto directo; sacos = bruto ÷ 165 y tara como
   arriba) o `weighings` (por pesadas, `PurchaseWeighing`: peso + sacos
@@ -387,7 +424,9 @@ textos; la clave y el código siguen siendo `trading`.
   si la regla cambia. `purchase_calculator_controller.js` lo replica solo
   como vista previa; el servidor manda.
 - Valores iniciales (`PurchaseDefaults`), todos editables: humedad 51 % en
-  pergamino húmedo y 12 % en seco, daño 0 %, rendimiento 0.186 en uva. Al
+  pergamino húmedo y 12 % en seco, daño 0 %, rendimiento 0.186 en uva. El
+  daño vacío cuenta como 0 % (vista previa y servidor). Con datos
+  incompletos la vista previa sigue mostrando sacos y tara. Al
   cambiar el estado en el formulario se ponen los del nuevo estado y se
   ocultan los campos que no aplican. Al cambiar de productor, la zona pasa a
   la del nuevo productor.
@@ -407,9 +446,18 @@ textos; la clave y el código siguen siendo `trading`.
   facturación (`Purchase.active`; `uninvoiced` ya la excluye). Las listas de
   compras la muestran solo con "Mostrar anuladas". No se edita, no se borra y
   no se puede deshacer.
-- La página del productor tiene cifras fijas (QQ, compras y total de la
-  temporada, QQ de todas) y pestañas: compras (por temporada), facturas y
-  datos personales.
+- **Clave IHCAFE** del productor (`ihcafe_code`) [CONFIRMADO, Fernando,
+  2026-10-12]: `XX-XX-XXXXX`, letras o números, **opcional y única**, para
+  todos los tipos de productor. Se busca en la lista de productores.
+- La página del productor (`ProducerProfile`) tiene cifras fijas (QQ,
+  compras, total y precio promedio por libra de la temporada, QQ de todas,
+  deuda en préstamos si se ven préstamos), una columna lateral (ficha con
+  clave y datos de contacto, «Pendiente»: sin facturar y facturas por
+  pagar, y préstamos con su score) y pestañas: resumen (QQ por temporada y
+  por mes, estados del café, últimas compras), compras y facturas. El
+  precio promedio es total ÷ libras netas; no es una regla de negocio.
+- Las tablas de compras y facturas aceptan `show_producer: false` para no
+  repetir el productor en su propia página.
 - En "Facturar compras" se puede anular una compra o registrar una nueva para
   ese productor en un modal; al guardar, la lista se refresca.
 - Una factura agrupa compras sin facturar **del mismo productor**
@@ -566,6 +614,13 @@ sistema ya guarda**; no agregan reglas de negocio.
   «Este mes» siempre es el mes en curso.
 - **Agrupar por** (día, semana, mes, productor, zona, estado, finca…)
   convierte la tabla en sumas por grupo. Los encabezados ordenan.
+- **Todo dentro del frame `report`** (`reports/reports#show`): elegir
+  reporte, sugerido o «Mis filtros» (`navigate_select_controller.js` con
+  `frame`), filtros, orden y agrupar navegan solo ese frame. El título de
+  la pestaña lo pone `document_title_controller.js`. La página lleva
+  `turbo-cache-control: no-cache` para que atrás/adelante pidan la consulta
+  al servidor. Los gráficos van en un contenedor permanente cuyo id depende
+  de los filtros sin el orden: ordenar no los recarga.
 - **Tabla con carga continua**: 50 filas por página; la siguiente llega como
   turbo stream cuando el botón «Cargar más» se acerca a la pantalla
   (`infinite_scroll_controller.js`). Los gráficos cargan aparte, en su

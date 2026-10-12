@@ -1,7 +1,8 @@
 # Convention for every address in the system: department, municipality and a
 # free-text line. The model needs `department_id`, `municipality_id` and
 # `address_line` columns; the form uses the shared/address_fields partial.
-module Addressable
+# Named HasAddress, not Addressable: that is the URI gem (loaded by Capybara).
+module HasAddress
   extend ActiveSupport::Concern
 
   ADDRESS_LINE_MAX = 500

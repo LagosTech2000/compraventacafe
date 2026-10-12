@@ -1,19 +1,23 @@
 <%# Filter bar for a list. Usage:
     render layout: "shared/filters", locals: { filter: @filter, url: some_path } do |form| ... end
-    On narrow screens it folds away (open when a filter is active). %>
+    On narrow screens it folds away (open when a filter is active).
+    frame: the Turbo Frame the results live in, so filtering only reloads
+    that frame (reports); without it the whole page loads. %>
+<% frame = local_assigns.fetch(:frame, "_top") %>
 <details class="group mt-6 panel print:hidden"
          data-controller="collapsible-filters" data-collapsible-filters-active-value="<%= filter.active? %>">
   <summary class="flex cursor-pointer list-none items-center justify-between gap-2 p-4 font-medium sm:hidden">
     <span><%= t("shared.filters.title") %><%= " · #{t("shared.filters.active")}" if filter.active? %></span>
     <span class="text-ink-muted transition group-open:rotate-180" aria-hidden="true">▾</span>
   </summary>
-  <%= form_with url: url, method: :get, data: { turbo_frame: "_top" },
-        class: "grid gap-4 p-4 pt-0 sm:grid-cols-2 sm:pt-4 lg:grid-cols-4" do |form| %>
+  <%= form_with url: url, method: :get, data: { turbo_frame: frame },
+        class: "grid items-end gap-x-4 gap-y-3 p-4 pt-0 sm:grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] sm:pt-4" do |form| %>
     <%= yield form %>
-    <div class="flex flex-wrap items-end gap-3 sm:col-span-2 lg:col-span-4">
+    <%# Same row as the fields when there is room: no line of its own for one button. %>
+    <div class="flex flex-wrap items-end gap-2">
       <%= form.submit t("shared.filters.apply"), name: nil, class: "btn btn-primary" %>
       <% if filter.active? %>
-        <%= link_to t("shared.filters.clear"), url, class: "btn" %>
+        <%= link_to t("shared.filters.clear"), url, class: "btn", data: { turbo_frame: frame } %>
       <% end %>
     </div>
   <% end %>

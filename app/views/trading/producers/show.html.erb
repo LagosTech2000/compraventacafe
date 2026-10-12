@@ -1,99 +1,197 @@
 <% content_for :title, @producer.full_name %>
 <%= render "trading/nav" %>
+<% person = @producer.person %>
+<% season = @profile.season %>
 
+<%# Identity and the next actions. %>
 <div class="flex flex-wrap items-start justify-between gap-4">
-  <div>
-    <h1 class="text-2xl font-bold"><%= @producer.full_name %></h1>
-    <p class="mt-1 text-sm text-ink-muted">
-      <%= [ @producer.human_kind, @producer.zone&.name, @producer.farm_name ].compact_blank.join(" · ") %>
-    </p>
+  <div class="flex min-w-0 items-center gap-4">
+    <span class="grid size-14 shrink-0 place-items-center rounded-2xl bg-primary-soft text-lg font-bold text-primary" aria-hidden="true">
+      <%= initials(person.first_names, person.last_names) %>
+    </span>
+    <div class="min-w-0">
+      <h1 class="text-2xl font-bold"><%= @producer.full_name %></h1>
+      <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
+        <span class="badge badge-neutral"><%= @producer.human_kind %></span>
+        <% if @producer.ihcafe_code %>
+          <span class="badge badge-neutral font-mono" title="<%= Producer.human_attribute_name(:ihcafe_code) %>">
+            <%= t(".ihcafe_badge", code: @producer.ihcafe_code) %>
+          </span>
+        <% end %>
+        <span><%= [ @producer.zone&.name, @producer.farm_name ].compact_blank.join(" · ") %></span>
+      </p>
+    </div>
   </div>
-  <div class="flex flex-wrap gap-3">
+  <div class="flex flex-wrap gap-2">
     <% if policy(Purchase).create? %>
       <%= page_link_to t(".new_purchase"), new_trading_purchase_path(producer_id: @producer.id), class: "btn btn-primary" %>
     <% end %>
-    <% if policy(Invoice).create? && @has_uninvoiced %>
+    <% if policy(Invoice).create? && @profile.uninvoiced.purchases_count.positive? %>
       <%= page_link_to t(".new_invoice"), new_trading_invoice_path(producer_id: @producer.id), class: "btn" %>
     <% end %>
     <% if policy(@producer).update? %>
       <%= link_to t(".edit"), edit_trading_producer_path(@producer), class: "btn" %>
+    <% end %>
+    <%# In the modal: the same page full size, as «Filtrar» already leads there. %>
+    <% if modal_request? %>
+      <%= page_link_to t(".full_page"), trading_producer_path(@producer, tab: @tab), class: "btn" %>
     <% end %>
   </div>
 </div>
 
 <%# Pinned figures: what the producer has sold, whatever the tab. %>
 <section class="mt-6" aria-labelledby="producer-figures">
-  <h2 id="producer-figures" class="mb-3 text-sm font-semibold text-ink-muted"><%= format_season_dates(@season) %></h2>
-  <% figures = {
-       season_quintals: format_pounds(@season_summary.quintals),
-       season_purchases: @season_summary.purchases_count,
-       season_total: format_money(@season_summary.total),
-       all_time_quintals: format_pounds(@all_time_summary.quintals)
-     } %>
-  <% figures[:loans_owed] = format_money(@credit_account.total_owed) if policy(Loan).index? %>
-  <dl class="grid grid-cols-2 gap-3 <%= figures.size > 4 ? "lg:grid-cols-5" : "lg:grid-cols-4" %>">
-    <% figures.each do |key, value| %>
+  <h2 id="producer-figures" class="mb-3 text-sm font-semibold text-ink-muted"><%= format_season_dates(season) %></h2>
+  <% previous = @profile.previous_season_summary %>
+  <% figures = [
+       [ :season_quintals, format_pounds(@profile.season_summary.quintals),
+         (t(".figures.previous_season", value: format_pounds(previous.quintals)) if previous.purchases_count.positive?) ],
+       [ :season_purchases, @profile.season_summary.purchases_count, nil ],
+       [ :season_total, format_money(@profile.season_summary.total), nil ],
+       [ :season_average_price, (@profile.season_average_price ? format_money(@profile.season_average_price) : "—"), t(".figures.average_price_hint") ],
+       [ :all_time_quintals, format_pounds(@profile.all_time_summary.quintals), nil ]
+     ] %>
+  <% figures << [ :loans_owed, format_money(@credit_account.total_owed), nil ] if @credit_account %>
+  <dl class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+    <% figures.each do |key, value, hint| %>
       <div class="stat">
         <dt><%= t(".figures.#{key}") %></dt>
         <dd><%= value %></dd>
+        <% if hint %><p class="mt-1 text-xs text-ink-muted"><%= hint %></p><% end %>
       </div>
     <% end %>
   </dl>
 </section>
 
-<nav class="mt-6 flex flex-wrap gap-1 border-b border-line pb-2 print:hidden" aria-label="<%= t(".tabs.label") %>">
-  <% Trading::ProducersController::TABS.each do |tab| %>
-    <%= link_to t(".tabs.#{tab}"), trading_producer_path(@producer, tab:),
-          class: tab == @tab ? "nav-pill nav-pill-active" : "nav-pill", aria: { current: (tab == @tab ? "page" : nil) } %>
-  <% end %>
-</nav>
+<div class="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_24rem]">
+  <%# Side column: the record, what is pending and the loans. First on phones. %>
+  <aside class="grid gap-4 sm:grid-cols-2 lg:order-last lg:grid-cols-1" aria-label="<%= t(".aside_label") %>">
+    <section class="panel p-4" aria-labelledby="producer-record">
+      <h2 id="producer-record" class="font-semibold"><%= t(".record.title") %></h2>
+      <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+        <% [
+             [ Producer.human_attribute_name(:ihcafe_code), @producer.ihcafe_code, "font-mono" ],
+             [ Person.human_attribute_name(:dni), person.dni, "tabular-nums" ],
+             [ Person.human_attribute_name(:rtn), person.rtn, "tabular-nums" ],
+             [ Person.human_attribute_name(:phone), (link_to(format_phone(person.phone), "tel:#{person.phone}", class: "link") if person.phone), "tabular-nums" ],
+             [ Producer.human_attribute_name(:zone), @producer.zone&.name, nil ],
+             [ Producer.human_attribute_name(:farm_name), @producer.farm_name, nil ],
+             [ t(".record.first_purchase"), (l(@profile.first_purchased_at.to_date) if @profile.first_purchased_at), nil ],
+             [ t(".record.last_purchase"), (l(@profile.last_purchased_at.to_date) if @profile.last_purchased_at), nil ]
+           ].each do |label, value, css| %>
+          <div class="min-w-0">
+            <dt class="text-xs text-ink-muted"><%= label %></dt>
+            <dd class="mt-0.5 truncate <%= css %>"><%= value.presence || "—" %></dd>
+          </div>
+        <% end %>
+        <div class="col-span-2 min-w-0">
+          <dt class="text-xs text-ink-muted"><%= Person.human_attribute_name(:email) %></dt>
+          <dd class="mt-0.5 truncate"><%= person.email ? link_to(person.email, "mailto:#{person.email}", class: "link") : "—" %></dd>
+        </div>
+        <div class="col-span-2">
+          <dt class="text-xs text-ink-muted"><%= Person.human_attribute_name(:address_line) %></dt>
+          <dd class="mt-0.5"><%= format_address(person).presence || "—" %></dd>
+        </div>
+      </dl>
+    </section>
 
-<% case @tab %>
-<% when "purchases" %>
-  <%= render layout: "shared/filters", locals: { filter: @filter, url: trading_producer_path(@producer, tab: "purchases") } do |form| %>
-    <%= hidden_field_tag :tab, "purchases", id: nil %>
-    <%= filter_select form, :season_year, Purchase.human_attribute_name(:season_year), season_options(@producer.purchases),
-          selected: @filter.season_year, all: t("shared.filters.all_seasons") %>
-    <%= filter_select form, :invoiced, t("trading.purchases.index.invoiced"),
-          PurchaseFilter::INVOICED.map { |v| [ t("trading.purchases.index.invoiced_#{v}"), v ] }, selected: @filter.invoiced %>
-    <%= filter_check_box form, :show_voided, t("trading.purchases.index.show_voided"), checked: @filter.show_voided.present? %>
-  <% end %>
-  <div class="mt-6">
-    <% if @purchases.any? %>
-      <%= render "trading/purchases/table", purchases: @purchases %>
-      <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "purchases" } %>
-    <% else %>
-      <p class="empty-state"><%= t(".no_purchases") %></p>
+    <section class="panel p-4" aria-labelledby="producer-pending">
+      <h2 id="producer-pending" class="font-semibold"><%= t(".pending.title") %></h2>
+      <% uninvoiced = @profile.uninvoiced %>
+      <% pending_invoices = @profile.pending_invoices %>
+      <ul class="mt-3 divide-y divide-line text-sm">
+        <li class="flex items-center justify-between gap-3 py-2">
+          <span>
+            <span class="block"><%= t(".pending.uninvoiced", count: uninvoiced.purchases_count) %></span>
+            <span class="block font-semibold tabular-nums"><%= format_money(uninvoiced.total) %></span>
+          </span>
+          <% if uninvoiced.purchases_count.positive? && policy(Invoice).create? %>
+            <%= page_link_to t(".pending.invoice"), new_trading_invoice_path(producer_id: @producer.id), class: "btn btn-sm shrink-0" %>
+          <% end %>
+        </li>
+        <li class="flex items-center justify-between gap-3 py-2">
+          <span>
+            <span class="block"><%= t(".pending.unpaid", count: pending_invoices.count) %></span>
+            <span class="block font-semibold tabular-nums"><%= format_money(@profile.all_time_summary.pending_total) %></span>
+          </span>
+          <% if pending_invoices.any? %>
+            <%= link_to t(".pending.see"), trading_producer_path(@producer, tab: "invoices", payment_status: "pending"), class: "btn btn-sm shrink-0" %>
+          <% end %>
+        </li>
+      </ul>
+    </section>
+
+    <% if @credit_account %>
+      <section class="panel p-4" aria-labelledby="producer-loans">
+        <div class="flex items-center justify-between gap-3">
+          <h2 id="producer-loans" class="font-semibold"><%= t(".loans.title") %></h2>
+          <%= payer_score_badge(@credit_account.score) %>
+        </div>
+        <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <dt class="text-xs text-ink-muted"><%= t(".loans.owed") %></dt>
+            <dd class="font-semibold tabular-nums"><%= format_money(@credit_account.total_owed) %></dd>
+          </div>
+          <div>
+            <dt class="text-xs text-ink-muted"><%= t(".loans.open") %></dt>
+            <dd class="tabular-nums">
+              <%= @credit_account.open_loans.size %>
+              <% if (overdue = @credit_account.overdue_loans.size).positive? %>
+                <span class="badge badge-danger ml-1"><%= t(".loans.overdue", count: overdue) %></span>
+              <% end %>
+            </dd>
+          </div>
+        </dl>
+        <%= link_to t(".loans.account"), loans_credit_account_path(person), class: "btn btn-sm mt-3" %>
+      </section>
     <% end %>
-  </div>
-<% when "invoices" %>
-  <%= render layout: "shared/filters", locals: { filter: @filter, url: trading_producer_path(@producer, tab: "invoices") } do |form| %>
-    <%= hidden_field_tag :tab, "invoices", id: nil %>
-    <%= filter_select form, :payment_status, Invoice.human_attribute_name(:payment_status),
-          enum_options(Invoice, :payment_status, Invoice::PAYMENT_STATUSES), selected: @filter.payment_status %>
-  <% end %>
-  <div class="mt-6">
-    <% if @invoices.any? %>
-      <%= render "trading/invoices/table", invoices: @invoices %>
-      <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "invoices" } %>
-    <% else %>
-      <p class="empty-state"><%= t(".no_invoices") %></p>
-    <% end %>
-  </div>
-<% when "info" %>
-  <dl class="mt-6 grid panel sm:grid-cols-2">
-    <% person = @producer.person %>
-    <% {
-         dni: person.dni, rtn: person.rtn, phone: format_phone(person.phone), email: person.email,
-         address_line: format_address(person)
-       }.each do |attribute, value| %>
-      <div class="border-b border-line px-4 py-3">
-        <dt class="text-xs font-medium text-ink-muted"><%= Person.human_attribute_name(attribute) %></dt>
-        <dd class="mt-1 text-sm"><%= value.presence || "—" %></dd>
+  </aside>
+
+  <div class="min-w-0">
+    <nav class="flex flex-wrap gap-1 border-b border-line pb-2 print:hidden" aria-label="<%= t(".tabs.label") %>">
+      <% Trading::ProducersController::TABS.each do |tab| %>
+        <%= link_to t(".tabs.#{tab}"), trading_producer_path(@producer, tab:),
+              class: tab == @tab ? "nav-pill nav-pill-active" : "nav-pill", aria: { current: (tab == @tab ? "page" : nil) } %>
+      <% end %>
+    </nav>
+
+    <% case @tab %>
+    <% when "summary" %>
+      <%= render "trading/producers/summary", producer: @producer, profile: @profile %>
+    <% when "purchases" %>
+      <%= render layout: "shared/filters", locals: { filter: @filter, url: trading_producer_path(@producer, tab: "purchases") } do |form| %>
+        <%= hidden_field_tag :tab, "purchases", id: nil %>
+        <%= filter_select form, :season_year, Purchase.human_attribute_name(:season_year), season_options(@producer.purchases),
+              selected: @filter.season_year, all: t("shared.filters.all_seasons") %>
+        <%= filter_select form, :invoiced, t("trading.purchases.index.invoiced"),
+              PurchaseFilter::INVOICED.map { |v| [ t("trading.purchases.index.invoiced_#{v}"), v ] }, selected: @filter.invoiced %>
+        <%= filter_check_box form, :show_voided, t("trading.purchases.index.show_voided"), checked: @filter.show_voided.present? %>
+      <% end %>
+      <div class="mt-4">
+        <% if @purchases.any? %>
+          <%= render "trading/purchases/table", purchases: @purchases, show_producer: false %>
+          <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "purchases" } %>
+        <% else %>
+          <p class="empty-state"><%= t(".no_purchases") %></p>
+        <% end %>
+      </div>
+    <% when "invoices" %>
+      <%= render layout: "shared/filters", locals: { filter: @filter, url: trading_producer_path(@producer, tab: "invoices") } do |form| %>
+        <%= hidden_field_tag :tab, "invoices", id: nil %>
+        <%= filter_select form, :payment_status, Invoice.human_attribute_name(:payment_status),
+              enum_options(Invoice, :payment_status, Invoice::PAYMENT_STATUSES), selected: @filter.payment_status %>
+      <% end %>
+      <div class="mt-4">
+        <% if @invoices.any? %>
+          <%= render "trading/invoices/table", invoices: @invoices, show_producer: false %>
+          <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "invoices" } %>
+        <% else %>
+          <p class="empty-state"><%= t(".no_invoices") %></p>
+        <% end %>
       </div>
     <% end %>
-  </dl>
-<% end %>
+  </div>
+</div>
 
 <% unless modal_request? %>
   <p class="mt-6"><%= link_to t(".back"), trading_producers_path, class: "text-sm link" %></p>

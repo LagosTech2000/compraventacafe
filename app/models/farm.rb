@@ -1,7 +1,7 @@
 # A farm of the business. Its payrolls (Payroll) pay the people who work it.
 # A farm with payrolls is deactivated, never deleted.
 class Farm < ApplicationRecord
-  include Addressable
+  include HasAddress
   include Auditable
 
   has_many :payrolls, dependent: :restrict_with_error

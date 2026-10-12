@@ -1,5 +1,5 @@
 <header class="sticky top-0 z-30 px-3 pt-3 sm:px-6 print:hidden">
-  <nav class="glass mx-auto max-w-6xl px-3 py-2.5 sm:px-4">
+  <nav class="glass mx-auto max-w-[94rem] px-3 py-2.5 sm:px-4">
     <div class="flex items-center justify-between gap-3">
       <%= link_to root_path, class: "flex min-w-0 items-center gap-2.5 rounded-full pr-2 font-bold text-ink" do %>
         <%= business_logo(:nav) %>
@@ -18,7 +18,7 @@
         <div class="hidden items-center gap-3 lg:flex">
           <span class="flex items-center gap-2 text-sm text-ink-muted" title="<%= Current.user.email_address %>">
             <span class="grid size-8 place-items-center rounded-full bg-primary-soft text-xs font-bold text-primary" aria-hidden="true">
-              <%= Current.user.name.split.first(2).map { |part| part[0] }.join.upcase %>
+              <%= initials(Current.user.name) %>
             </span>
             <span class="max-w-40 truncate"><%= Current.user.name %></span>
           </span>

@@ -1,16 +1,23 @@
 <%# Purchases list. Adapts to its container (page or modal):
     narrow → cards; medium → key columns; wide → every column. Observations stay in the detail.
-    Each row can be voided from here when allowed. %>
+    Each row can be voided from here when allowed.
+    show_producer: false on a producer's own page, where every row is theirs. %>
+<% show_producer = local_assigns.fetch(:show_producer, true) %>
 <div class="@container">
   <ul class="space-y-3 @3xl:hidden">
     <% purchases.each do |purchase| %>
       <li class="data-card" id="<%= dom_id(purchase, :card) %>">
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0">
-            <p class="font-medium"><%= purchase.producer.full_name %></p>
-            <p class="text-xs text-ink-muted">
-              <%= [ l(purchase.purchased_at), purchase.zone&.name, purchase.human_coffee_state ].compact.join(" · ") %>
-            </p>
+            <% if show_producer %>
+              <p class="font-medium"><%= purchase.producer.full_name %></p>
+              <p class="text-xs text-ink-muted">
+                <%= [ l(purchase.purchased_at), purchase.zone&.name, purchase.human_coffee_state ].compact.join(" · ") %>
+              </p>
+            <% else %>
+              <p class="font-medium"><%= l(purchase.purchased_at) %></p>
+              <p class="text-xs text-ink-muted"><%= [ purchase.zone&.name, purchase.human_coffee_state ].compact.join(" · ") %></p>
+            <% end %>
           </div>
           <div class="flex shrink-0 flex-wrap justify-end gap-2">
             <%= detail_button trading_purchase_path(purchase) %>
@@ -34,7 +41,7 @@
         <tr>
           <th class="hidden @5xl:table-cell"><%= t("trading.purchases.table.number") %></th>
           <th><%= Purchase.human_attribute_name(:purchased_at) %></th>
-          <th><%= t("trading.purchases.table.producer") %></th>
+          <th><%= show_producer ? t("trading.purchases.table.producer") : Purchase.human_attribute_name(:coffee_state) %></th>
           <th class="hidden text-right @5xl:table-cell"><%= t("trading.purchases.table.gross") %></th>
           <th class="hidden text-right @5xl:table-cell"><%= t("trading.purchases.table.humidity") %></th>
           <th class="text-right"><%= t("trading.purchases.table.net") %></th>
@@ -51,8 +58,13 @@
             <td class="hidden tabular-nums text-ink-muted @5xl:table-cell"><%= purchase.id %></td>
             <td class="whitespace-nowrap"><%= l(purchase.purchased_at) %></td>
             <td>
-              <span class="font-medium"><%= purchase.producer.full_name %></span>
-              <span class="block text-xs text-ink-muted"><%= [ purchase.zone&.name, purchase.human_coffee_state ].compact.join(" · ") %></span>
+              <% if show_producer %>
+                <span class="font-medium"><%= purchase.producer.full_name %></span>
+                <span class="block text-xs text-ink-muted"><%= [ purchase.zone&.name, purchase.human_coffee_state ].compact.join(" · ") %></span>
+              <% else %>
+                <span class="whitespace-nowrap"><%= purchase.human_coffee_state %></span>
+                <span class="block text-xs text-ink-muted"><%= purchase.zone&.name %></span>
+              <% end %>
             </td>
             <td class="hidden whitespace-nowrap text-right tabular-nums @5xl:table-cell"><%= format_pounds(purchase.gross_weight) %></td>
             <td class="hidden whitespace-nowrap text-right tabular-nums @5xl:table-cell"><%= purchase.cherry? ? "—" : format_pounds(purchase.humidity_percent) %></td>

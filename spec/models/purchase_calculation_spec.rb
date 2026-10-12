@@ -44,6 +44,8 @@ RSpec.describe PurchaseCalculation do
     result = calculate(146, 51, 58, damage: 2.5)
     expect(result.net_weight).to eq(BigDecimal("69.27"))
     expect(result.damage_weight).to eq(BigDecimal("1.78"))
+    expect(result.damage_amount).to eq(BigDecimal("103.24")) # 1.78 lb × L 58
+    expect(cherry(146, 0.186, 58).damage_amount).to be_nil
     expect(calculate(146, 51, 58).damage_weight).to eq(0)
     expect(cherry(146, 0.186, 58).damage_weight).to be_nil
     expect(result.total).to eq(BigDecimal("4017.66"))

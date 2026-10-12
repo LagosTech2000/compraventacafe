@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_11_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_12_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -321,6 +321,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_160000) do
     t.string "farm_name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "ihcafe_code"
+    t.index ["ihcafe_code"], name: "index_producers_on_ihcafe_code", unique: true, where: "(ihcafe_code IS NOT NULL)"
     t.index ["person_id"], name: "index_producers_on_person_id", unique: true
     t.index ["zone_id"], name: "index_producers_on_zone_id"
   end
@@ -357,6 +359,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_160000) do
     t.bigint "voided_by_id"
     t.datetime "purchased_at", null: false
     t.string "weight_mode", default: "single", null: false
+    t.decimal "damage_weight", precision: 12, scale: 2
+    t.decimal "damage_amount", precision: 14, scale: 2
     t.index ["created_by_id"], name: "index_purchases_on_created_by_id"
     t.index ["invoice_id"], name: "index_purchases_on_invoice_id"
     t.index ["producer_id"], name: "index_purchases_on_producer_id"

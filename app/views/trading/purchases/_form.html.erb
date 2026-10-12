@@ -106,7 +106,8 @@
     </div>
     <div data-purchase-calculator-target="parchmentField" <%= "hidden" if purchase.cherry? %>>
       <%= form.label :damage_percent, class: "field-label" %>
-      <%= form.number_field :damage_percent, required: true, min: 0, max: 99.99, step: 0.01, inputmode: "decimal",
+      <%# Optional: left empty it counts as 0 % (Purchase#clear_unused_inputs). %>
+      <%= form.number_field :damage_percent, min: 0, max: 99.99, step: 0.01, inputmode: "decimal",
             disabled: purchase.cherry?, class: "field-input text-lg",
             data: { purchase_calculator_target: "damage", action: "purchase-calculator#update" } %>
     </div>
@@ -124,10 +125,10 @@
 
     <div class="clay p-4 sm:col-span-2 lg:col-span-4">
       <p class="text-sm font-semibold"><%= t(".calculation") %></p>
-      <dl class="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <% %i[sacks tare damage_weight net_weight quintals total].each do |attribute| %>
+      <dl class="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
+        <% %i[sacks tare damage_weight damage_amount net_weight quintals total].each do |attribute| %>
           <%# Damage only applies to parchment: hidden with its inputs for cherry. %>
-          <% parchment_only = attribute == :damage_weight %>
+          <% parchment_only = attribute.in?(%i[damage_weight damage_amount]) %>
           <div <%= tag.attributes(hidden: parchment_only && purchase.cherry?, data: { purchase_calculator_target: ("parchmentField" if parchment_only) }) %>>
             <dt class="text-xs text-ink-muted"><%= Purchase.human_attribute_name(attribute) %></dt>
             <dd class="text-xl font-bold tabular-nums" data-purchase-calculator-target="<%= attribute.to_s.camelize(:lower) %>">—</dd>

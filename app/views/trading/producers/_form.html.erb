@@ -4,7 +4,7 @@
 
   <section>
     <h2 class="mb-3 text-lg font-semibold"><%= t(".producer_data") %></h2>
-    <div class="grid gap-5 sm:grid-cols-3">
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
       <div>
         <%= form.label :kind, class: "field-label" %>
         <%= form.select :kind, enum_options(Producer, :kind, Producer::KINDS), {}, required: true, class: "field-input" %>
@@ -17,6 +17,11 @@
         <% if policy(Zone).create? %>
           <%= modal_link_to t(".new_zone"), new_trading_zone_path(picker: 1), class: "btn btn-sm mt-2" %>
         <% end %>
+      </div>
+      <div>
+        <%= form.label :ihcafe_code, class: "field-label" %>
+        <%= form.text_field :ihcafe_code, placeholder: t(".ihcafe_code_placeholder"), autocomplete: "off", class: "field-input uppercase",
+              **field_format_attributes(Producer, :ihcafe_code, :ihcafe_code) %>
       </div>
       <div>
         <%= form.label :farm_name, class: "field-label" %>

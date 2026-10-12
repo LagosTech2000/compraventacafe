@@ -153,12 +153,14 @@ class Purchase < ApplicationRecord
       errors.add(:weighings, :blank) if kept_weighings.empty?
     end
 
-    # Cherry has no humidity nor damage; parchment has no yield.
+    # Cherry has no humidity nor damage; parchment has no yield. Parchment
+    # with the damage left empty has no damage (0 %, its default).
     def clear_unused_inputs
       if cherry?
         self.humidity_percent = nil
         self.damage_percent = nil
       else
+        self.damage_percent ||= 0
         self.yield_factor = nil
       end
     end
@@ -173,6 +175,8 @@ class Purchase < ApplicationRecord
       self.sacks = calculation.sacks
       self.tare = calculation.tare
       self.net_weight = calculation.net_weight
+      self.damage_weight = calculation.damage_weight
+      self.damage_amount = calculation.damage_amount
       self.total = calculation.total
     end
 

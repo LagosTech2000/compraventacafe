@@ -15,31 +15,58 @@
 <% end %>
 
 <% if @producers.any? %>
-  <div class="mt-6 overflow-x-auto panel">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th><%= t(".name") %></th>
-          <th><%= Producer.human_attribute_name(:kind) %></th>
-          <th><%= Producer.human_attribute_name(:zone) %></th>
-          <th><%= Producer.human_attribute_name(:farm_name) %></th>
-          <th><%= Person.human_attribute_name(:phone) %></th>
-          <th class="cell-actions"></th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @producers.each do |producer| %>
-          <tr id="<%= dom_id(producer) %>">
-            <td class="font-medium"><%= producer.full_name %></td>
-            <td><%= producer.human_kind %></td>
-            <td><%= producer.zone&.name %></td>
-            <td><%= producer.farm_name %></td>
-            <td class="whitespace-nowrap"><%= format_phone(producer.person.phone) %></td>
-            <td class="cell-actions"><%= detail_button trading_producer_path(producer) %></td>
+  <%# Narrow → cards; medium → key columns; wide → every column. %>
+  <div class="mt-6 @container">
+    <ul class="space-y-3 @3xl:hidden">
+      <% @producers.each do |producer| %>
+        <li class="data-card" id="<%= dom_id(producer, :card) %>">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="font-medium"><%= producer.full_name %></p>
+              <p class="text-xs text-ink-muted"><%= [ producer.human_kind, producer.zone&.name, producer.ihcafe_code ].compact.join(" · ") %></p>
+            </div>
+            <%= detail_button trading_producer_path(producer) %>
+          </div>
+          <dl class="mt-3 grid grid-cols-2 gap-2 text-sm">
+            <div><dt class="text-xs text-ink-muted"><%= t(".season_quintals") %></dt><dd class="tabular-nums"><%= format_pounds(PurchaseCalculation.quintals(@stats.fetch(producer.id, 0))) %></dd></div>
+            <div><dt class="text-xs text-ink-muted"><%= t(".last_purchase") %></dt><dd><%= @last_purchased[producer.id] ? l(@last_purchased[producer.id].to_date) : "—" %></dd></div>
+          </dl>
+        </li>
+      <% end %>
+    </ul>
+
+    <div class="hidden overflow-x-auto panel @3xl:block">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th><%= t(".name") %></th>
+            <th><%= Producer.human_attribute_name(:kind) %></th>
+            <th><%= Producer.human_attribute_name(:zone) %></th>
+            <th class="hidden @5xl:table-cell"><%= Producer.human_attribute_name(:ihcafe_code) %></th>
+            <th class="hidden @6xl:table-cell"><%= Producer.human_attribute_name(:farm_name) %></th>
+            <th class="hidden @5xl:table-cell"><%= Person.human_attribute_name(:phone) %></th>
+            <th class="text-right"><%= t(".season_quintals") %></th>
+            <th><%= t(".last_purchase") %></th>
+            <th class="cell-actions"><span class="sr-only"><%= t("trading.purchases.table.actions") %></span></th>
           </tr>
-        <% end %>
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          <% @producers.each do |producer| %>
+            <tr id="<%= dom_id(producer) %>">
+              <td class="font-medium"><%= producer.full_name %></td>
+              <td><%= producer.human_kind %></td>
+              <td><%= producer.zone&.name %></td>
+              <td class="hidden whitespace-nowrap font-mono text-sm @5xl:table-cell"><%= producer.ihcafe_code %></td>
+              <td class="hidden @6xl:table-cell"><%= producer.farm_name %></td>
+              <td class="hidden whitespace-nowrap @5xl:table-cell"><%= format_phone(producer.person.phone) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(PurchaseCalculation.quintals(@stats.fetch(producer.id, 0))) %></td>
+              <td class="whitespace-nowrap"><%= @last_purchased[producer.id] ? l(@last_purchased[producer.id].to_date) : "—" %></td>
+              <td class="cell-actions"><%= detail_button trading_producer_path(producer) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
   </div>
   <%= render "shared/pagination", filter: @filter, next_page: @next_page %>
 <% else %>

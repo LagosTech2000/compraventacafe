@@ -1,0 +1,9 @@
+<%# The module's name at the start of its bar, so every page of the module
+    says where it is without a header of its own; each page keeps its h1. %>
+<span class="flex shrink-0 items-center gap-2 pr-2 pl-1.5 font-bold tracking-tight">
+  <span class="grid size-8 place-items-center rounded-xl bg-primary-soft text-primary"><%= icon(module_key, css: "size-5") %></span>
+  <span class="hidden sm:inline"><%= AppModule.human_name(module_key) %></span>
+</span>
+<% if local_assigns.fetch(:divider, true) %>
+  <span class="mx-1 h-6 w-px shrink-0 bg-line" aria-hidden="true"></span>
+<% end %>

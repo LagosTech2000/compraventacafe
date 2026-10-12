@@ -11,6 +11,7 @@
 #   Wet and dry parchment:
 #   net_weight = (gross − tare) × (1 − humidity%) × (1 − damage%)
 #   damage_weight = (gross − tare) × (1 − humidity%) × damage%   (what damage takes off)
+#   damage_amount = damage_weight × price_per_pound               (the same, in lempiras)
 #   Cherry:
 #   net_weight = (gross − tare) × yield       (0.186 by default)
 #
@@ -23,7 +24,7 @@ class PurchaseCalculation
   TARE_PER_SACK = 1
   QUINTAL_WEIGHT = 125
 
-  attr_reader :sacks, :tare, :net_weight, :damage_weight, :quintals, :total
+  attr_reader :sacks, :tare, :net_weight, :damage_weight, :damage_amount, :quintals, :total
 
   def self.quintals(net_weight)
     (BigDecimal(net_weight.to_s) / QUINTAL_WEIGHT).round(2)
@@ -45,6 +46,7 @@ class PurchaseCalculation
     end
     @net_weight = [ (gross - @tare) * net_factor(coffee_state, humidity_percent, damage_percent, yield_factor), 0 ].max.round(2)
     @damage_weight = coffee_state == "cherry" ? nil : damage_weight_of(gross, humidity_percent, damage_percent)
+    @damage_amount = (@damage_weight * price).round(2) if @damage_weight
     @quintals = self.class.quintals(@net_weight)
     @total = (@net_weight * price).round(2)
   end

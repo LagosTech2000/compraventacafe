@@ -138,6 +138,20 @@ RSpec.describe "Trading purchase flow" do
     expect(invoice.reload).to be_paid
   end
 
+  it "shows on the invoice what damage took off, in pounds and lempiras" do
+    producer = create(:producer, zone:)
+    purchase = create(:purchase, producer:, gross_weight: 146, humidity_percent: 51, damage_percent: 2.5, price_per_pound: 58)
+    get new_trading_invoice_path(producer_id: producer.id)
+    expect(response.body).to include("Daño (lb)", "1.78", "L 103.24")
+
+    post trading_invoices_path, params: { producer_id: producer.id, invoice: { purchase_ids: [ purchase.id ], payment_status: "pending" } }
+    get trading_invoice_path(Invoice.last)
+    receipt = Nokogiri::HTML(response.body).at_css("article")
+    expect(receipt.at_css("thead").text).to include("Daño (lb)", "Daño (L)")
+    expect(receipt.at_css("tbody tr").text.squish).to include("1.78 2.50 % L 103.24")
+    expect(receipt.at_css("tfoot").text.squish).to include("1.78 L 103.24")
+  end
+
   it "does not print the notice of the invoice just created" do
     producer = create(:producer)
     purchase = create(:purchase, producer:)
@@ -337,8 +351,8 @@ RSpec.describe "Trading purchase flow" do
   end
 
   describe "producer page" do
-    it "pins the quintals and splits purchases, invoices and personal data into tabs" do
-      producer = create(:producer)
+    it "pins the quintals and splits summary, purchases and invoices into tabs" do
+      producer = create(:producer, ihcafe_code: "08-04-01234")
       create(:purchase, producer:, net_weight: 0, gross_weight: 1000, humidity_percent: 51) # 486.57 lb net
       create(:purchase, producer:, purchased_at: Season.current.starts_on - 1)
       create(:purchase, producer:).void!(user)
@@ -348,16 +362,51 @@ RSpec.describe "Trading purchase flow" do
       stats = page.css("dl .stat").to_h { |stat| [ stat.at_css("dt").text, stat.at_css("dd").text ] }
       expect(stats).to include("QQ de la temporada" => "3.89", "Compras de la temporada" => "1")
       expect(stats["QQ de todas las temporadas"]).to eq("4.46")
-      expect(page.css("nav a[aria-current=page]").map(&:text)).to include("Compras")
-      expect(page.css("[id^=purchase_]").size).to eq(1)
+      expect(page.css("nav a[aria-current=page]").map(&:text)).to include("Resumen")
+      expect(page.at_css("aside").text).to include("Clave IHCAFE", "08-04-01234", "DNI", "2 compras sin facturar")
+      expect(page.css("#producer-seasons ~ table tbody tr").size).to eq(2)
+      expect(page.css("tr[id^=purchase_]").size).to eq(2) # latest purchases, without the voided one
 
       get trading_producer_path(producer, season_year: "", tab: "purchases")
       expect(Nokogiri::HTML(response.body).css("tr[id^=purchase_]").size).to eq(2)
 
-      get trading_producer_path(producer, tab: "info")
-      expect(response.body).to include("DNI")
       get trading_producer_path(producer, tab: "invoices")
       expect(response.body).to include("No hay facturas que coincidan con los filtros.")
+    end
+
+    it "offers the full page only inside the modal" do
+      producer = create(:producer)
+      get trading_producer_path(producer), headers: { "Turbo-Frame" => "modal" }
+      link = Nokogiri::HTML(response.body).css("a").find { |a| a.text == "Ver detalle completo" }
+      expect(link["href"]).to eq(trading_producer_path(producer, tab: "summary"))
+      expect(link["data-turbo-frame"]).to eq("_top")
+
+      get trading_producer_path(producer)
+      expect(Nokogiri::HTML(response.body).css("a").map(&:text)).not_to include("Ver detalle completo")
+    end
+
+    it "shows what the producer owes in loans only to who can see loans" do
+      producer = create(:producer)
+      create(:loan, person: producer.person, cash_amount: 500, monthly_interest_rate: 0)
+
+      get trading_producer_path(producer)
+      expect(response.body).not_to include("Estado de cuenta")
+
+      create(:permission, user:, module_key: "loans", can_read: true)
+      get trading_producer_path(producer)
+      expect(Nokogiri::HTML(response.body).at_css("section[aria-labelledby=producer-loans]").text.squish).to include("Debe hoy L 500.00")
+    end
+  end
+
+  describe "IHCAFE code" do
+    it "is saved from the form in XX-XX-XXXXX and finds the producer" do
+      post trading_producers_path, params: { producer: { kind: "producer", ihcafe_code: "08 04 a1234",
+                                                         person_attributes: { first_names: "Ana", last_names: "Paz" } } }
+      producer = Producer.last
+      expect(producer.ihcafe_code).to eq("08-04-A1234")
+
+      get trading_producers_path(q: "a1234")
+      expect(Nokogiri::HTML(response.body).css("tbody tr").map { |row| row["id"] }).to eq([ "producer_#{producer.id}" ])
     end
   end
 

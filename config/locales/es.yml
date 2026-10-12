@@ -167,27 +167,81 @@ es:
         title: "Productores"
         new: "Nuevo productor"
         search: "Buscar"
-        search_placeholder: "Nombre, apellido, DNI o RTN"
+        search_placeholder: "Nombre, DNI, RTN o clave IHCAFE"
         name: "Nombre"
+        season_quintals: "QQ temporada"
+        last_purchase: "Última compra"
         empty: "No hay productores que coincidan con los filtros."
       show:
         edit: "Editar"
         new_purchase: "Nueva compra"
         new_invoice: "Facturar compras"
+        full_page: "Ver detalle completo"
+        ihcafe_badge: "IHCAFE %{code}"
+        aside_label: "Ficha del productor"
         figures:
           season_quintals: "QQ de la temporada"
+          previous_season: "Temporada pasada: %{value} QQ"
           season_purchases: "Compras de la temporada"
           season_total: "Comprado en la temporada"
+          season_average_price: "Precio promedio por libra"
+          average_price_hint: "Total comprado ÷ libras netas"
           all_time_quintals: "QQ de todas las temporadas"
           loans_owed: "Debe en préstamos hoy"
+        record:
+          title: "Ficha"
+          first_purchase: "Primera compra"
+          last_purchase: "Última compra"
+        pending:
+          title: "Pendiente"
+          uninvoiced:
+            one: "1 compra sin facturar"
+            other: "%{count} compras sin facturar"
+          unpaid:
+            one: "1 factura pendiente de pago"
+            other: "%{count} facturas pendientes de pago"
+          invoice: "Facturar"
+          see: "Ver"
+        loans:
+          title: "Préstamos"
+          owed: "Debe hoy"
+          open: "Préstamos abiertos"
+          overdue:
+            one: "1 vencido"
+            other: "%{count} vencidos"
+          account: "Estado de cuenta"
         tabs:
           label: "Secciones del productor"
+          summary: "Resumen"
           purchases: "Compras"
           invoices: "Facturas"
-          info: "Datos personales"
         no_purchases: "No hay compras que coincidan con los filtros."
         no_invoices: "No hay facturas que coincidan con los filtros."
         back: "Volver a productores"
+      summary:
+        empty: "Este productor todavía no tiene compras."
+        charts:
+          quintals: "QQ"
+          empty: "Sin compras en este período."
+          seasons:
+            title: "QQ por temporada"
+            help: "Las últimas temporadas con compras, sin las anuladas."
+          months:
+            title: "QQ por mes · %{season}"
+            help: "Lo comprado cada mes de la temporada actual."
+        seasons:
+          title: "Por temporada"
+          purchases: "Compras"
+          average_price: "Precio promedio / lb"
+        states:
+          title: "Estado del café · %{season}"
+          empty: "Sin compras esta temporada."
+          amount:
+            one: "%{quintals} QQ · 1 compra"
+            other: "%{quintals} QQ · %{count} compras"
+        latest:
+          title: "Últimas compras"
+          all: "Ver todas las compras"
       new:
         title: "Nuevo productor"
       edit:
@@ -195,6 +249,7 @@ es:
       form:
         producer_data: "Datos de compra"
         new_zone: "Nueva zona"
+        ihcafe_code_placeholder: "XX-XX-XXXXX"
         cancel: "Cancelar"
       create:
         success: "Productor creado."
@@ -340,6 +395,8 @@ es:
         issued_by: "Facturado por: %{name}"
         totals: "Totales"
         purchases_total: "Total de compras"
+        damage_weight: "Daño (lb)"
+        damage_amount: "Daño (L)"
         loan_payment: "Abono a préstamo N.º %{number}"
         amount_to_pay: "Total a pagar"
       create:
@@ -1835,7 +1892,7 @@ es:
               - "Tara con peso bruto directo: 1 libra por cada saco de 165 libras, redondeado hacia arriba."
               - "Tara por pesadas: 1 libra por cada saco contado. Ejemplo: 3 pesadas de 300 lb con 2 sacos cada una dan 900 lb brutas, 6 sacos y 6 lb de tara."
               - "Por pesadas, el peso bruto no se escribe: para cambiarlo, cambia o quita una pesada."
-              - "Pergamino: peso neto = (peso bruto − tara) menos el porcentaje de humedad, y a eso se le resta el porcentaje de daño. «Restado por daño» muestra cuántas libras quita el daño."
+              - "Pergamino: peso neto = (peso bruto − tara) menos el porcentaje de humedad, y a eso se le resta el porcentaje de daño. «Restado por daño» muestra cuántas libras quita el daño y cuánto es en lempiras (libras × precio por libra)."
               - "Uva: peso neto = (peso bruto − tara) × rendimiento."
               - "Quintales (QQ) = peso neto ÷ 125. Total = peso neto × precio por libra."
               - "Cada compra queda en la temporada de su fecha: la temporada empieza el 1 de septiembre."
@@ -1876,6 +1933,7 @@ es:
               - "Si falta una compra, toca «Nueva compra para este productor»: se registra en una ventana y aparece en la lista."
               - "Si una compra no va, toca «Anular» en su fila: sale de la lista y de los totales."
               - "Las compras facturadas ya no se pueden editar, anular ni borrar."
+              - "La lista muestra cuánto restó el daño de cada compra, en libras y en lempiras."
           show:
             title: "Factura"
             summary: "El recibo para el productor, con original y copia."
@@ -1885,31 +1943,38 @@ es:
               - "Cuando se le pague al productor, elige la forma de pago y la fecha, y toca «Marcar como cancelada»."
             tips:
               - "Desde la ventana de detalle, «Imprimir» abre la factura en página completa."
+              - "En pergamino, «Daño (lb)» y «Daño (L)» muestran lo que el daño restó de cada compra, con su porcentaje; en uva no aplica."
               - "Una factura no se borra; una vez cancelada, ya no cambia."
         producers:
           index:
             title: "Productores"
             summary: "Productores, carreros (intermediarios) y fincas propias a quienes se les compra café."
             steps:
-              - "Busca por nombre, apellido, DNI o RTN; también puedes filtrar por tipo y zona."
-              - "Toca «Detalle» para ver sus compras sin facturar y sus últimas facturas."
+              - "Busca por nombre, apellido, DNI, RTN o clave IHCAFE; también puedes filtrar por tipo y zona."
+              - "La lista muestra los QQ de la temporada y la última compra de cada uno."
+              - "Toca «Detalle» para ver su ficha, lo que tiene pendiente, sus compras y sus facturas."
               - "Toca «Nuevo productor» para registrar uno."
           show:
             title: "Detalle del productor"
-            summary: "Los quintales que ha vendido y, en pestañas, sus compras, sus facturas y sus datos personales."
+            summary: "Todo lo del productor en una pantalla: lo que ha vendido, su ficha, lo pendiente, sus préstamos, sus compras y sus facturas."
             steps:
-              - "Arriba están fijos los quintales (QQ), las compras y el total de la temporada actual, y los QQ de todas las temporadas."
-              - "En «Compras» ves sus compras de la temporada actual; en «Filtros» puedes elegir otra temporada o todas."
-              - "En «Facturas» ves sus facturas y en «Datos personales», su DNI, teléfono y dirección."
-              - "Toca «Nueva compra» para registrarle una compra o «Facturar compras» para facturar lo pendiente."
+              - "Arriba están fijos los QQ, las compras, el total y el precio promedio por libra de la temporada actual, los QQ de todas las temporadas y, si ves préstamos, lo que debe hoy."
+              - "La ficha tiene su clave IHCAFE, DNI, RTN, teléfono, correo, dirección y las fechas de su primera y última compra."
+              - "«Pendiente» muestra las compras sin facturar y las facturas pendientes de pago, con un botón para atenderlas."
+              - "«Resumen» compara sus temporadas, muestra lo comprado cada mes y qué estados del café vende."
+              - "En «Compras» y «Facturas» están las listas completas, con filtros."
             tips:
               - "Los QQ y totales no cuentan las compras anuladas."
+              - "El precio promedio por libra es el total comprado entre las libras netas: mezcla todos los estados del café."
+              - "Toca el teléfono o el correo para llamar o escribir desde el celular."
+              - "Si lo abriste desde la lista, toca «Ver detalle completo» para verlo en página completa."
           form:
             title: "Registrar o editar un productor"
             summary: "Datos de compra del productor y sus datos personales."
             steps:
               - "Elige el tipo: productor, carrero (intermediario) o finca propia."
               - "Elige su zona y, si aplica, el nombre de la finca. Si la zona no existe, toca «Nueva zona»: se abre encima y al guardarla queda elegida."
+              - "Si tiene clave del IHCAFE, escríbela con el formato XX-XX-XXXXX (letras o números). Puedes escribirla sin guiones o en minúsculas: se guarda en mayúsculas y con guiones. No se puede repetir entre productores."
               - "Escribe nombres y apellidos; el resto de datos es opcional."
               - "Toca el botón de guardar."
             tips:
@@ -2242,6 +2307,12 @@ es:
               - "Se guarda el período por su nombre: «Este mes» siempre es el mes en curso."
 
   administration:
+    nav:
+      home: "Resumen"
+      people: "Personas"
+      users: "Usuarios"
+      audit_events: "Auditoría"
+      site_setting: "Configuración del sitio"
     home:
       index:
         people_description: "Personas del negocio: clientes y colaboradores."
@@ -2547,6 +2618,7 @@ es:
         kind/intermediary: "Carrero (intermediario)"
         kind/own_farm: "Finca propia"
         farm_name: "Finca"
+        ihcafe_code: "Clave IHCAFE"
         zone: "Zona"
         zone_id: "Zona"
         person: "Persona"
@@ -2568,6 +2640,7 @@ es:
         humidity_percent: "Humedad (%)"
         damage_percent: "Daño (%)"
         damage_weight: "Restado por daño (lb)"
+        damage_amount: "Restado por daño (L)"
         yield_factor: "Rendimiento"
         price_per_pound: "Precio por libra (L)"
         sacks: "Sacos"
@@ -2945,6 +3018,7 @@ es:
       person_name_format: "solo puede tener letras, espacios, apóstrofos, puntos y guiones"
       dni_format: "debe tener 13 dígitos numéricos, sin letras"
       rtn_format: "debe tener 14 dígitos numéricos, sin letras"
+      ihcafe_code_format: "debe tener el formato XX-XX-XXXXX (letras o números)"
       phone_format: "debe tener 8 dígitos (puede empezar con +504)"
       email_format: "no es un correo válido"
       password_format: "debe tener al menos 8 caracteres"

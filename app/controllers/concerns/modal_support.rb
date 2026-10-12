@@ -15,7 +15,9 @@ module ModalSupport
   MODAL_FRAME = MODAL_FRAMES.first
 
   included do
-    layout -> { modal_request? ? "modal" : "application" }
+    # A request for another Turbo Frame (a report's results) only needs the
+    # frame: no navigation or dialogs around it.
+    layout -> { modal_request? ? "modal" : (turbo_frame_request? ? "turbo_rails/frame" : "application") }
     helper_method :modal_request?, :picker_request?, :modal_frame_id, :next_modal_frame
   end
 
