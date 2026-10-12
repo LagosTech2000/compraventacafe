@@ -38,6 +38,12 @@ module FieldFormats
       html_pattern: "(?:\\+?504)?[\\s\\-]*(?:[0-9][\\s\\-]*){8}",
       maxlength: 16, inputmode: "tel", message: :phone_format
     ),
+    # IHCAFE producer code: three blocks of letters or digits, XX-XX-XXXXX.
+    ihcafe_code: Format.new(
+      pattern: /\A[A-Z0-9]{2}-[A-Z0-9]{2}-[A-Z0-9]{5}\z/,
+      html_pattern: "\\s*[A-Za-z0-9]{2}[\\s\\-]?[A-Za-z0-9]{2}[\\s\\-]?[A-Za-z0-9]{5}\\s*",
+      maxlength: 15, message: :ihcafe_code_format
+    ),
     email: Format.new(
       pattern: URI::MailTo::EMAIL_REGEXP,
       maxlength: 254, message: :email_format
@@ -57,5 +63,10 @@ module FieldFormats
   STRIP = ->(value) { value.strip.presence }
   DIGITS = ->(value) { value.gsub(/[\s\-]/, "").presence }
   PHONE = ->(value) { value.gsub(/[\s\-]/, "").delete_prefix("+").sub(/\A504(?=\d{8}\z)/, "").presence }
+  # Typed with or without dashes, in any case: stored as XX-XX-XXXXX.
+  IHCAFE_CODE = lambda do |value|
+    code = value.gsub(/[\s\-]/, "").upcase
+    code.match?(/\A[A-Z0-9]{9}\z/) ? "#{code[0, 2]}-#{code[2, 2]}-#{code[4, 5]}" : code.presence
+  end
   EMAIL = ->(value) { value.strip.downcase.presence }
 end

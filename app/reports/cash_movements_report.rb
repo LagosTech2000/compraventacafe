@@ -1,8 +1,8 @@
 # Money that came in and went out in the period, as the system records it,
 # across modules:
 #
-#   out  invoices paid to producers (what was handed: total less what they
-#        paid to their loans with coffee), cash lent (supplies are not
+#   out  payments to producers on their invoices (each on its date; an
+#        invoice paid in parts goes out part by part), cash lent (supplies are not
 #        money), payroll payments (what was handed to the members) and
 #        payroll expenses
 #   in   loan payments in cash, transfer or check (paid with coffee or
@@ -162,13 +162,15 @@ class CashMovementsReport < Report
       Movement.new(id:, date:, source:, description:, person:, payment_method:, amount_in: amount_in.to_d, amount_out: amount_out.to_d, route:)
     end
 
+    # Each payment to a producer on its date: an invoice paid in parts goes out part by part.
     def invoices(in_period)
-      within(Invoice.where(payment_status: "paid").joins(producer: :person).joins(InvoicesReport::TOTALS), in_period, column: "invoices.paid_on")
-        .pluck(:id, :paid_on, :number, :payment_method, Arel.sql(NAME), Arel.sql(InvoicesReport::TO_PAY))
-        .map do |id, date, number, method, name, amount|
+      within(InvoicePayment.joins(invoice: { producer: :person }), in_period, column: "invoice_payments.paid_on")
+        .pluck("invoice_payments.id", "invoice_payments.paid_on", "invoices.number", "invoice_payments.payment_method",
+               Arel.sql(NAME), "invoice_payments.amount", "invoices.id")
+        .map do |id, date, number, method, name, amount, invoice_id|
           movement(id, date, "invoices", I18n.t("reports.types.cash_movements.invoice", number: format("%04d", number)),
                    amount_out: amount, person: name, payment_method: Invoice.human_attribute_name("payment_method/#{method}"),
-                   route: [ :trading_invoice_path, id ])
+                   route: [ :trading_invoice_path, invoice_id ])
         end
     end
 

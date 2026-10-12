@@ -34,6 +34,29 @@ RSpec.describe "Field format convention" do
     end
   end
 
+  describe "IHCAFE code" do
+    def producer(code) = build(:producer, ihcafe_code: code).tap(&:valid?)
+
+    it "stores XX-XX-XXXXX in capitals, typed with or without dashes" do
+      [ "08-04-01234", "0804 01234", "080401234", "ab-cd-1e2f3" ].each do |typed|
+        expect(producer(typed).errors[:ihcafe_code]).to be_empty, typed
+      end
+      expect(producer("ab cd 1e2f3").ihcafe_code).to eq("AB-CD-1E2F3")
+    end
+
+    it "rejects other lengths and symbols, in Spanish" do
+      [ "08-04-1234", "08-04-012345", "08-04-0123$" ].each do |typed|
+        expect(producer(typed).errors[:ihcafe_code]).to eq([ "debe tener el formato XX-XX-XXXXX (letras o números)" ]), typed
+      end
+    end
+
+    it "is optional and unique" do
+      expect(producer("").errors[:ihcafe_code]).to be_empty
+      create(:producer, ihcafe_code: "08-04-01234")
+      expect(producer("0804-01234").errors[:ihcafe_code]).to eq([ "ya está en uso" ])
+    end
+  end
+
   describe "email" do
     it "rejects malformed addresses" do
       expect(person(email: "juan@").errors[:email]).to eq([ "no es un correo válido" ])

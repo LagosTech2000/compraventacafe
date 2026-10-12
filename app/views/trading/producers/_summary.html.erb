@@ -1,0 +1,92 @@
+<%# Summary tab of the producer page (ProducerProfile): quintals per season
+    and per month of this season, this season's mix of coffee states, the
+    last seasons side by side and the latest purchases. %>
+<% seasons = profile.seasons %>
+<% if seasons.empty? %>
+  <p class="empty-state mt-4"><%= t(".empty") %></p>
+<% else %>
+  <div class="mt-4 @container">
+    <div class="grid gap-4 @3xl:grid-cols-2">
+      <% charts = {
+           seasons: { labels: seasons.reverse.map { |row| format_season(row.season) },
+                      data: seasons.reverse.map { |row| row.quintals.to_f } },
+           months: { labels: profile.season_months.keys.map { |month| l(month, format: "%b %Y") },
+                     data: profile.season_months.values.map(&:to_f) }
+         } %>
+      <% charts.each do |key, chart| %>
+        <figure class="min-w-0 panel p-4">
+          <figcaption class="mb-3">
+            <span class="block font-semibold"><%= t(".charts.#{key}.title", season: format_season(profile.season)) %></span>
+            <span class="block text-xs text-ink-muted"><%= t(".charts.#{key}.help") %></span>
+          </figcaption>
+          <% config = { type: "bar", labels: chart[:labels],
+                        datasets: [ { label: t(".charts.quintals"), data: chart[:data], format: "quintals" } ],
+                        options: {}, empty: t(".charts.empty") } %>
+          <div class="relative h-56" data-controller="report-chart" data-report-chart-config-value="<%= config.to_json %>">
+            <canvas role="img" aria-label="<%= t(".charts.#{key}.title", season: format_season(profile.season)) %>"></canvas>
+          </div>
+        </figure>
+      <% end %>
+    </div>
+
+    <div class="mt-4 grid gap-4 @3xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <section class="min-w-0 overflow-x-auto panel" aria-labelledby="producer-seasons">
+        <h3 id="producer-seasons" class="px-4 pt-4 font-semibold"><%= t(".seasons.title") %></h3>
+        <table class="data-table data-table-compact mt-2">
+          <thead>
+            <tr>
+              <th><%= Purchase.human_attribute_name(:season_year) %></th>
+              <th class="text-right"><%= t(".seasons.purchases") %></th>
+              <th class="text-right"><%= t("trading.purchases.table.quintals") %></th>
+              <th class="text-right"><%= Purchase.human_attribute_name(:total) %></th>
+              <th class="text-right"><%= t(".seasons.average_price") %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% seasons.each do |row| %>
+              <tr>
+                <td class="whitespace-nowrap <%= "font-semibold" if row.season == profile.season %>"><%= format_season(row.season) %></td>
+                <td class="text-right tabular-nums"><%= row.purchases_count %></td>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(row.quintals) %></td>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(row.total) %></td>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= row.average_price ? format_money(row.average_price) : "—" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="min-w-0 panel p-4" aria-labelledby="producer-states">
+        <h3 id="producer-states" class="font-semibold"><%= t(".states.title", season: format_season(profile.season)) %></h3>
+        <% states = profile.states %>
+        <% if states.empty? %>
+          <p class="mt-3 text-sm text-ink-muted"><%= t(".states.empty") %></p>
+        <% else %>
+          <% most = states.map(&:net_weight).max %>
+          <ul class="mt-3 space-y-3 text-sm">
+            <% states.each do |row| %>
+              <li>
+                <div class="flex items-baseline justify-between gap-3">
+                  <span><%= Purchase.human_attribute_name("coffee_state/#{row.coffee_state}") %></span>
+                  <span class="tabular-nums"><%= t(".states.amount", quintals: format_pounds(row.quintals), count: row.purchases_count) %></span>
+                </div>
+                <div class="mt-1 h-2 rounded-full bg-surface-2" aria-hidden="true">
+                  <div class="h-2 rounded-full bg-primary" style="width: <%= (row.net_weight / most * 100).round(1) %>%"></div>
+                </div>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
+      </section>
+    </div>
+
+    <section class="mt-4" aria-labelledby="producer-latest">
+      <div class="mb-2 flex items-center justify-between gap-3">
+        <h3 id="producer-latest" class="font-semibold"><%= t(".latest.title") %></h3>
+        <%= link_to t(".latest.all"), trading_producer_path(producer, tab: "purchases"), class: "text-sm link" %>
+      </div>
+      <%= render "trading/purchases/table", show_producer: false,
+            purchases: producer.purchases.active.includes(:invoice, :zone, producer: :person).newest_first.limit(5) %>
+    </section>
+  </div>
+<% end %>

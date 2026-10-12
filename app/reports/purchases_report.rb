@@ -1,6 +1,6 @@
 # Coffee bought: every purchase not voided, by date and time of purchase.
 class PurchasesReport < Report
-  INVOICE_STATUSES = %w[uninvoiced pending paid].freeze
+  INVOICE_STATUSES = %w[uninvoiced pending partial paid].freeze
   QUINTALS = "SUM(purchases.net_weight) / #{PurchaseCalculation::QUINTAL_WEIGHT}".freeze
   AVERAGE_PRICE = "SUM(purchases.total) / NULLIF(SUM(purchases.net_weight), 0)".freeze
   INVOICE_STATUS = <<~SQL.squish.freeze
@@ -33,7 +33,7 @@ class PurchasesReport < Report
   column(:invoice, :badge, sort: "invoices.number", priority: 2) do |purchase|
     invoice = purchase.invoice
     if invoice
-      [ "#{invoice.display_number} · #{invoice.human_payment_status}", invoice.paid? ? "success" : "danger" ]
+      [ "#{invoice.display_number} · #{invoice.human_payment_status}", InvoicesReport::STATUS_TONES.fetch(invoice.payment_status) ]
     else
       [ I18n.t("reports.types.purchases.uninvoiced"), "neutral" ]
     end
@@ -103,7 +103,7 @@ class PurchasesReport < Report
       chart(:zones, :hbar, labels: zones.map(&:first), datasets: [ dataset(:quintals, zones.map(&:last), format: :quintals) ]),
       chart(:invoice_statuses, :doughnut, labels: statuses.map(&:first), datasets: [ dataset(:total, statuses.map(&:last), format: :money) ],
                                           tones: { status_label("uninvoiced") => "muted", status_label("pending") => "danger",
-                                                   status_label("paid") => "success" }),
+                                                   status_label("partial") => "warning", status_label("paid") => "success" }),
       chart(:humidity_price, :scatter, labels: [], datasets: humidity_price(relation)),
       chart(:arrivals, :heatmap, labels: [], datasets: [ { data: weekday_hours(relation) } ], wide: true)
     ]

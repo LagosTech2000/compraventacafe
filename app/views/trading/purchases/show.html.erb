@@ -34,7 +34,7 @@
           <%= page_link_to t("trading.purchases.show.invoice_now"), new_trading_invoice_path(producer_id: @purchase.producer_id),
                 class: "btn btn-primary", autofocus: params[:created].present? %>
         <% end %>
-      <% elsif !@purchase.invoice.paid? && policy(@purchase.invoice).update? %>
+      <% elsif policy(InvoicePayment.new(invoice: @purchase.invoice)).create? %>
         <%= link_to t("trading.purchases.show.register_payment", number: @purchase.invoice.display_number), trading_invoice_path(@purchase.invoice), class: "btn btn-primary" %>
       <% elsif policy(@purchase.invoice).show? %>
         <%= link_to t("trading.purchases.show.view_invoice", number: @purchase.invoice.display_number), trading_invoice_path(@purchase.invoice), class: "btn" %>
@@ -52,11 +52,14 @@
 
 <%= render "trading/purchases/loans", purchase: @purchase, settlement: @settlement, loan_payments: @loan_payments %>
 
-<dl class="mt-6 grid panel sm:grid-cols-3">
+<%# On wide screens the weighings sit beside the data instead of under it. %>
+<div class="mt-6 grid items-start gap-6 <%= "xl:grid-cols-[minmax(0,1fr)_22rem]" if @purchase.by_weighings? %>">
+<dl class="grid panel sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
   <% inputs = if @purchase.cherry?
                 { yield_factor: @purchase.yield_factor && number_with_precision(@purchase.yield_factor, precision: 4, strip_insignificant_zeros: true) }
               else
-                { humidity_percent: format_pounds(@purchase.humidity_percent), damage_percent: format_pounds(@purchase.damage_percent) }
+                { humidity_percent: format_pounds(@purchase.humidity_percent), damage_percent: format_pounds(@purchase.damage_percent),
+                  damage_weight: format_pounds(@purchase.damage_weight), damage_amount: (format_money(@purchase.damage_amount) if @purchase.damage_amount) }
               end %>
   <% {
        purchased_at: l(@purchase.purchased_at, format: :long), season_year: format_season(@purchase.season),
@@ -74,7 +77,7 @@
 </dl>
 
 <% if @purchase.by_weighings? %>
-  <section class="mt-6" aria-labelledby="purchase-weighings">
+  <section aria-labelledby="purchase-weighings">
     <h2 id="purchase-weighings" class="mb-3 text-lg font-semibold"><%= Purchase.human_attribute_name(:weighings) %></h2>
     <div class="panel overflow-x-auto">
       <table class="data-table">
@@ -98,6 +101,7 @@
     </div>
   </section>
 <% end %>
+</div>
 
 <% unless modal_request? %>
   <p class="mt-6"><%= link_to t(".back"), trading_purchases_path, class: "text-sm link" %></p>

@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe Addressable do
+RSpec.describe HasAddress do
   let(:cortes) { Department.find_by!(code: "05") }
   let(:san_pedro_sula) { Municipality.find_by!(code: "0501") }
   let(:distrito_central) { Municipality.find_by!(code: "0801") }

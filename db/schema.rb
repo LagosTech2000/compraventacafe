@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_11_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_12_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -84,6 +84,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_160000) do
     t.index ["payroll_member_id", "worked_on"], name: "index_harvest_entries_on_payroll_member_id_and_worked_on", unique: true
     t.index ["payroll_member_id"], name: "index_harvest_entries_on_payroll_member_id"
     t.index ["worked_on"], name: "index_harvest_entries_on_worked_on"
+  end
+
+  create_table "invoice_payments", force: :cascade do |t|
+    t.bigint "invoice_id", null: false
+    t.bigint "created_by_id", null: false
+    t.decimal "amount", precision: 14, scale: 2, null: false
+    t.date "paid_on", null: false
+    t.string "payment_method", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_invoice_payments_on_created_by_id"
+    t.index ["invoice_id", "paid_on"], name: "index_invoice_payments_on_invoice_id_and_paid_on"
+    t.index ["invoice_id"], name: "index_invoice_payments_on_invoice_id"
   end
 
   create_table "invoices", force: :cascade do |t|
@@ -321,6 +334,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_160000) do
     t.string "farm_name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "ihcafe_code"
+    t.index ["ihcafe_code"], name: "index_producers_on_ihcafe_code", unique: true, where: "(ihcafe_code IS NOT NULL)"
     t.index ["person_id"], name: "index_producers_on_person_id", unique: true
     t.index ["zone_id"], name: "index_producers_on_zone_id"
   end
@@ -357,6 +372,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_160000) do
     t.bigint "voided_by_id"
     t.datetime "purchased_at", null: false
     t.string "weight_mode", default: "single", null: false
+    t.decimal "damage_weight", precision: 12, scale: 2
+    t.decimal "damage_amount", precision: 14, scale: 2
     t.index ["created_by_id"], name: "index_purchases_on_created_by_id"
     t.index ["invoice_id"], name: "index_purchases_on_invoice_id"
     t.index ["producer_id"], name: "index_purchases_on_producer_id"
@@ -432,6 +449,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_160000) do
   add_foreign_key "farms", "departments"
   add_foreign_key "farms", "municipalities"
   add_foreign_key "harvest_entries", "payroll_members"
+  add_foreign_key "invoice_payments", "invoices"
+  add_foreign_key "invoice_payments", "users", column: "created_by_id"
   add_foreign_key "invoices", "producers"
   add_foreign_key "invoices", "users", column: "created_by_id"
   add_foreign_key "loan_payments", "loans"

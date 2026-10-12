@@ -1,3 +1,4 @@
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
 <% content_for :title, @farm.name %>
 <%= render "farms/nav" %>
 
@@ -33,19 +34,8 @@
 <% end %>
 
 <h2 class="mt-8 text-lg font-semibold"><%= t(".payrolls") %></h2>
-<%= render layout: "shared/filters", locals: { filter: @filter, url: farms_farm_path(@farm) } do |form| %>
-  <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: Payroll.human_attribute_name(:name) %>
-  <%= filter_select form, :kind, Payroll.human_attribute_name(:kind), enum_options(Payroll, :kind, Payroll::KINDS), selected: @filter.kind %>
-  <%= filter_select form, :status, Payroll.human_attribute_name(:status), payroll_status_options, selected: @filter.status %>
-<% end %>
-<div class="mt-6">
-  <% if @payrolls.any? %>
-    <%= render "farms/payrolls/table", payrolls: @payrolls %>
-    <%= render "shared/pagination", filter: @filter, next_page: @next_page %>
-  <% else %>
-    <p class="empty-state"><%= t(".no_payrolls") %></p>
-  <% end %>
-</div>
+<%= render "farms/payrolls/live_list", filter: @filter, url: farms_farm_path(@farm), farm: @farm, payrolls: @payrolls,
+      next_page: @next_page, count: @count, empty: t(".no_payrolls") %>
 
 <% unless modal_request? %>
   <p class="mt-6"><%= link_to t(".back"), farms_farms_path, class: "text-sm link" %></p>

@@ -1,13 +1,145 @@
 <% content_for :title, t(".title") %>
+<% dashboard = @dashboard %>
+<% trading = dashboard.can?("trading") %>
+<% loans = dashboard.can?("loans") %>
+<% farms = dashboard.can?("farms") %>
 
+<%# Greeting, what the platform is for and today's date. %>
 <h1 class="text-2xl font-bold sm:text-3xl"><%= t(".welcome", name: Current.user.name) %></h1>
+<p class="mt-1 text-sm text-ink-muted">
+  <%= t(".purpose", business: business_name) %> · <span class="first-letter:uppercase"><%= l(dashboard.today, format: :weekday_long) %></span>
+  <% if trading %> · <%= format_season(dashboard.season) %><% end %>
+</p>
 
+<%# The usual work, one tap away; only what the user may do, in modules they can see. %>
+<% actions = [
+     ([ t(".actions.new_purchase"), new_trading_purchase_path, true ] if trading && policy(Purchase).create?),
+     ([ t(".actions.invoice"), new_trading_invoice_path, false ] if trading && policy(Invoice).create?),
+     ([ t(".actions.producers"), trading_producers_path, false ] if policy(Producer).index?),
+     ([ t(".actions.farms"), farms_root_path, false ] if farms),
+     ([ t(".actions.new_loan"), new_loans_loan_path, false ] if loans && policy(Loan).create?),
+     ([ t(".actions.loans"), loans_loans_path, false ] if loans),
+     ([ t(".actions.reports"), reports_root_path, false ] if dashboard.can?("reports"))
+   ].compact %>
+<% if actions.any? %>
+  <nav class="mt-6 flex flex-wrap gap-2" aria-label="<%= t(".actions.label") %>">
+    <% actions.each do |label, path, main| %>
+      <%= link_to label, path, class: "btn #{"btn-primary" if main}" %>
+    <% end %>
+  </nav>
+<% end %>
+
+<%# The business at a glance. %>
+<% figures = [] %>
+<% if trading %>
+  <% today_close = dashboard.today_summary %>
+  <% season = dashboard.season_summary %>
+  <% figures << [ :purchases_today, today_close.purchases_count,
+                  t(".hints.purchases_today", quintals: format_pounds(today_close.quintals), total: format_money(today_close.total)),
+                  trading_purchases_path ] %>
+  <% figures << [ :season_quintals, format_pounds(season.quintals),
+                  t(".hints.season_quintals", count: season.purchases_count, total: format_money(season.total)),
+                  trading_purchases_path(season_year: dashboard.season.year, from: "", to: "") ] %>
+<% end %>
+<% if loans %>
+  <% overdue = dashboard.overdue_loans.size %>
+  <% figures << [ :open_loans, dashboard.open_loans.size,
+                  [ t(".hints.loans_owed", amount: format_money(dashboard.loans_owed)), (t(".hints.overdue", count: overdue) if overdue.positive?) ].compact.join(" · "),
+                  loans_root_path ] %>
+<% end %>
+<% if farms %>
+  <% figures << [ :active_farms, dashboard.active_farms_count, t(".hints.running_payrolls", count: dashboard.running_payrolls.size), farms_farms_path ] %>
+<% end %>
+
+<%# What needs the user's attention, only what exists. %>
+<% pending = [] %>
+<% if trading %>
+  <% uninvoiced = dashboard.uninvoiced %>
+  <% pending << [ :uninvoiced, uninvoiced.purchases_count, uninvoiced.total, (policy(Invoice).create? ? new_trading_invoice_path : trading_purchases_path(invoiced: "no", from: "", to: "")) ] if uninvoiced.purchases_count.positive? %>
+  <% unpaid = dashboard.unpaid_invoices %>
+  <% pending << [ :unpaid_invoices, unpaid.size, unpaid.sum(&:balance_due), trading_invoices_path(payment_status: "unpaid") ] if unpaid.any? %>
+<% end %>
+<% if loans && (overdue_loans = dashboard.overdue_loans).any? %>
+  <% pending << [ :overdue_loans, overdue_loans.size, overdue_loans.sum { |loan| loan.balance(as_of: dashboard.today).total_owed }, loans_loans_path(status: "overdue") ] %>
+<% end %>
+<% if farms %>
+  <% periods = dashboard.periods_to_pay %>
+  <% pending << [ :periods_to_pay, periods.size, periods.sum { |payroll, period| payroll.calculation(period).gross_total }, farms_root_path ] if periods.any? %>
+  <% without_wage = dashboard.members_without_wage %>
+  <% if without_wage.any? %>
+    <% payroll = without_wage.group_by(&:payroll).max_by { |_, members| members.size }.first %>
+    <% pending << [ :members_without_wage, without_wage.size, nil, farms_payroll_path(payroll, tab: "members") ] %>
+  <% end %>
+<% end %>
+<% if figures.any? %>
+  <section class="mt-8" aria-labelledby="dashboard-figures">
+    <h2 id="dashboard-figures" class="mb-3 text-lg font-semibold"><%= t(".figures.title") %></h2>
+    <% columns = { 1 => "", 2 => "lg:grid-cols-2", 3 => "lg:grid-cols-3", 4 => "lg:grid-cols-4" }.fetch(figures.size + (pending.any? ? 1 : 0), "lg:grid-cols-5") %>
+    <dl class="grid grid-cols-2 gap-3 <%= columns %>">
+      <% figures.each do |key, value, hint, path| %>
+        <%= link_to path, class: "stat block transition hover:ring-primary/40" do %>
+          <dt><%= t(".figures.#{key}") %></dt>
+          <dd><%= value %></dd>
+          <p class="mt-1 text-xs text-ink-muted"><%= hint %></p>
+        <% end %>
+      <% end %>
+      <% if pending.any? %>
+        <a href="#dashboard-pending" class="stat block transition hover:ring-primary/40">
+          <dt><%= t(".figures.pending") %></dt>
+          <dd class="text-danger"><%= pending.sum { |_, count, _, _| count } %></dd>
+          <p class="mt-1 text-xs text-ink-muted"><%= t(".hints.pending", count: pending.size) %></p>
+        </a>
+      <% end %>
+    </dl>
+  </section>
+<% end %>
+
+<% if pending.any? || dashboard.activity.any? %>
+  <div class="mt-8 grid items-start gap-6 <%= "lg:grid-cols-2" if pending.any? && dashboard.activity.any? %>">
+    <% if pending.any? %>
+      <section class="panel p-4" id="dashboard-pending" aria-labelledby="dashboard-pending-title">
+        <h2 id="dashboard-pending-title" class="font-semibold"><%= t(".pending.title") %></h2>
+        <ul class="mt-3 divide-y divide-line text-sm">
+          <% pending.each do |key, count, amount, path| %>
+            <li class="flex items-center justify-between gap-3 py-2.5">
+              <span class="min-w-0">
+                <span class="block"><%= t(".pending.#{key}", count:) %></span>
+                <% if amount %><span class="block font-semibold tabular-nums"><%= format_money(amount) %></span><% end %>
+              </span>
+              <%= link_to t(".pending.go.#{key}"), path, class: "btn btn-sm shrink-0" %>
+            </li>
+          <% end %>
+        </ul>
+      </section>
+    <% end %>
+
+    <% if dashboard.activity.any? %>
+      <section class="panel p-4" aria-labelledby="dashboard-activity">
+        <h2 id="dashboard-activity" class="font-semibold"><%= t(".activity.title") %></h2>
+        <ul class="mt-3 divide-y divide-line text-sm">
+          <% dashboard.activity.each do |item| %>
+            <li class="flex items-center justify-between gap-3 py-2.5">
+              <span class="min-w-0">
+                <span class="block truncate"><span class="badge badge-neutral mr-1"><%= t(".activity.kinds.#{item.kind}") %></span> <%= item.title %></span>
+                <span class="mt-0.5 block text-xs text-ink-muted"><%= activity_detail(item) %> · <%= l(item.at) %></span>
+              </span>
+              <%= link_to t(".activity.open"), public_send(item.path.first, *item.path.drop(1)), class: "btn btn-sm shrink-0" %>
+            </li>
+          <% end %>
+        </ul>
+      </section>
+    <% end %>
+  </div>
+<% end %>
+
+<%# Every module the user can open. %>
+<h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".modules") %></h2>
 <% if @module_keys.any? %>
-  <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
     <% @module_keys.each do |key| %>
       <%= render "shared/tile", path: module_root_path(key), icon_name: key, title: AppModule.human_name(key) %>
     <% end %>
   </div>
 <% else %>
-  <p class="empty-state mt-6"><%= t(".no_modules") %></p>
+  <p class="empty-state"><%= t(".no_modules") %></p>
 <% end %>

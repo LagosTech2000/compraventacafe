@@ -29,6 +29,6 @@
 
   <div class="sm:col-span-2">
     <%= form.label :address_line, record.class.human_attribute_name(:address_line), class: "field-label" %>
-    <%= form.text_area :address_line, rows: 2, maxlength: Addressable::ADDRESS_LINE_MAX, class: "field-input" %>
+    <%= form.text_area :address_line, rows: 2, maxlength: HasAddress::ADDRESS_LINE_MAX, class: "field-input" %>
   </div>
 </fieldset>

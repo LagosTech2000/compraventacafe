@@ -1,15 +1,18 @@
-<%# Previous / next links that keep the list's filters (and extra_params, e.g. a tab). %>
+<%# Previous / next links that keep the list's filters (and extra_params, e.g. a tab).
+    frame: the list's Turbo Frame, when its links go to the whole page
+    (target="_top") but its pages must stay in it. %>
 <% query = filter.to_params.merge(local_assigns.fetch(:extra_params, {})) %>
+<% frame_data = local_assigns[:frame] ? { turbo_frame: local_assigns[:frame] } : {} %>
 <% if filter.page > 1 || next_page %>
   <nav class="mt-4 flex items-center justify-between gap-3 print:hidden" aria-label="<%= t("shared.pagination.label") %>">
     <% if filter.page > 1 %>
-      <%= link_to t("shared.pagination.previous"), url_for(query.merge(page: filter.page - 1)), class: "btn" %>
+      <%= link_to t("shared.pagination.previous"), url_for(query.merge(page: filter.page - 1)), class: "btn", data: frame_data %>
     <% else %>
       <span></span>
     <% end %>
     <span class="text-sm text-ink-muted"><%= t("shared.pagination.page", page: filter.page) %></span>
     <% if next_page %>
-      <%= link_to t("shared.pagination.next"), url_for(query.merge(page: filter.page + 1)), class: "btn" %>
+      <%= link_to t("shared.pagination.next"), url_for(query.merge(page: filter.page + 1)), class: "btn", data: frame_data %>
     <% else %>
       <span></span>
     <% end %>

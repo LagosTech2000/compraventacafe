@@ -1,20 +1,48 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Timesheet grid (members × days): "Todos" fills a day with a full day for
-// everyone, and the totals of each member (days or cans, and pay) and of
-// each day follow what is typed. Only a preview: the server saves and
-// recalculates.
+// Timesheet grid (members × days). Attendance is a button per day that
+// cycles — → 1 (full day) → ½ → —, with a hidden field holding what is
+// sent; "Todos" fills a day for everyone and "Toda la semana" a member's
+// whole period. Cans are typed. The totals of each member (days or cans,
+// and pay) and of each day follow, and every change is announced
+// ("timesheet:changed") for the save bar. Only a preview: the server saves
+// and recalculates.
+const NEXT = { "": "1", 1: "0.5", 0.5: "" }
+
 export default class extends Controller {
-  static targets = ["row", "rowTotal", "rowAmount", "dateTotal", "grandTotal"]
+  static targets = ["row", "rowTotal", "rowAmount", "dateTotal", "grandTotal", "dayValue"]
+  static values = { labels: Object }
 
   connect() {
     this.money = new Intl.NumberFormat("es-HN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     this.number = new Intl.NumberFormat("es-HN", { maximumFractionDigits: 2 })
   }
 
-  fillColumn(event) {
-    this.cells(event.currentTarget.dataset.date).forEach((cell) => { if (!cell.disabled) cell.value = "1" })
+  cycle(event) {
+    const input = event.currentTarget.previousElementSibling
+    this.set(input, NEXT[input.value] ?? "")
     this.update()
+  }
+
+  fillColumn(event) {
+    this.cells(event.currentTarget.dataset.date).forEach((cell) => this.set(cell, "1"))
+    this.update()
+  }
+
+  fillRow(event) {
+    event.currentTarget.closest("tr").querySelectorAll("[data-date]").forEach((cell) => this.set(cell, "1"))
+    this.update()
+  }
+
+  // A day's value and the look of its button.
+  set(input, value) {
+    if (input.disabled) return
+    input.value = value
+    const button = input.nextElementSibling
+    if (button?.classList.contains("day-toggle")) {
+      button.dataset.state = value
+      button.textContent = this.labelsValue[value] ?? value
+    }
   }
 
   update() {
@@ -31,6 +59,7 @@ export default class extends Controller {
       cell.textContent = this.number.format(this.cells(cell.dataset.date).reduce((sum, input) => sum + this.value(input), 0))
     })
     this.grandTotalTarget.textContent = `L ${this.money.format(grand)}`
+    this.dispatch("changed")
   }
 
   cells(date) {

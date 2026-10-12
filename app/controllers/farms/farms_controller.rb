@@ -12,6 +12,7 @@ module Farms
     def show
       @filter = PayrollFilter.new(params)
       @payrolls, @next_page = @filter.results(policy_scope(Payroll).where(farm: @farm))
+      @count = @filter.apply(policy_scope(Payroll).where(farm: @farm)).unscope(:order, :includes).count
       @all_payrolls = @farm.payrolls
     end
 

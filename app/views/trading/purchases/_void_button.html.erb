@@ -1,5 +1,6 @@
-<%# "Anular" for a purchase that can still be voided; nothing otherwise. %>
+<%# "Anular" for a purchase that can still be voided; nothing otherwise. On a
+    page it reloads the whole page (a list frame would lose the notice). %>
 <% if policy(purchase).void? %>
   <%= button_to t("trading.purchases.table.void"), void_trading_purchase_path(purchase), method: :patch, class: "btn btn-sm",
-        form: { data: { turbo_confirm: t("trading.purchases.show.confirm_void") } } %>
+        form: { data: { turbo_confirm: t("trading.purchases.show.confirm_void"), turbo_frame: ("_top" unless modal_request?) }.compact } %>
 <% end %>

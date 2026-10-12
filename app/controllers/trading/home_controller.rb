@@ -4,8 +4,9 @@ module Trading
       authorize [ :trading, :home ]
       @daily_close = DailyClose.new(Time.zone.today)
       @uninvoiced = PurchaseSummary.new(policy_scope(Purchase).uninvoiced)
-      @pending_invoices = policy_scope(Invoice).pending
-      @pending_total = PurchaseSummary.new(Purchase.where(invoice_id: @pending_invoices.select(:id))).total
+      @pending_invoices = policy_scope(Invoice).unpaid.includes(:payments, purchases: :loan_payments)
+      # What is left to pay the producers on them.
+      @pending_total = @pending_invoices.sum(&:balance_due)
       @season = Season.current
       @season_summary = PurchaseSummary.new(policy_scope(Purchase).active.in_season(@season))
     end

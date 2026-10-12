@@ -101,7 +101,7 @@ RSpec.describe "Farms flow" do
     get farms_payroll_timesheet_path(harvest)
     page = Nokogiri::HTML(response.body)
     expect(page.css("main h2").map(&:text)).to eq([ "Cortadores (por latas)", "Caporales (salario por día)" ])
-    expect(page.at_css("select[name='work[#{foreman.id}][#{today.iso8601}]']")).to be_present
+    expect(page.at_css("input[type=hidden][name='work[#{foreman.id}][#{today.iso8601}]'] + button.day-toggle")).to be_present
     expect(page.at_css("input[name='work[#{picker.id}][#{today.iso8601}]']")).to be_present
 
     patch farms_payroll_timesheet_path(harvest, period: today.iso8601),

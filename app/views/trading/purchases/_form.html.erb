@@ -1,13 +1,17 @@
 <% producers = Producer.includes(:person).alphabetical %>
 <% can_create_producer = policy(Producer).create? %>
 <% can_create_zone = policy(Zone).create? %>
-<%= form_with model: [ :trading, purchase ], class: form_surface_class("space-y-6"),
+<%# Wide (page or modal): the calculation and the buttons stay in a column on
+    the right while typing; narrow: they follow the fields. %>
+<%= form_with model: [ :trading, purchase ], class: form_surface_class("@container max-w-none"),
       data: { controller: "form-validation purchase-calculator",
               purchase_calculator_sack_weight_value: PurchaseCalculation::SACK_WEIGHT,
               purchase_calculator_tare_per_sack_value: PurchaseCalculation::TARE_PER_SACK,
               purchase_calculator_quintal_weight_value: PurchaseCalculation::QUINTAL_WEIGHT,
               purchase_calculator_defaults_value: PurchaseDefaults.by_coffee_state.to_json } do |form| %>
   <%= render "shared/form_errors", record: purchase %>
+  <div class="grid items-start gap-6 @5xl:grid-cols-[minmax(0,1fr)_20rem]">
+  <div class="min-w-0 space-y-6">
 
   <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
        data-controller="record-picker"
@@ -106,7 +110,8 @@
     </div>
     <div data-purchase-calculator-target="parchmentField" <%= "hidden" if purchase.cherry? %>>
       <%= form.label :damage_percent, class: "field-label" %>
-      <%= form.number_field :damage_percent, required: true, min: 0, max: 99.99, step: 0.01, inputmode: "decimal",
+      <%# Optional: left empty it counts as 0 % (Purchase#clear_unused_inputs). %>
+      <%= form.number_field :damage_percent, min: 0, max: 99.99, step: 0.01, inputmode: "decimal",
             disabled: purchase.cherry?, class: "field-input text-lg",
             data: { purchase_calculator_target: "damage", action: "purchase-calculator#update" } %>
     </div>
@@ -122,19 +127,6 @@
             class: "field-input text-lg", data: { purchase_calculator_target: "price", action: "purchase-calculator#update" } %>
     </div>
 
-    <div class="clay p-4 sm:col-span-2 lg:col-span-4">
-      <p class="text-sm font-semibold"><%= t(".calculation") %></p>
-      <dl class="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <% %i[sacks tare damage_weight net_weight quintals total].each do |attribute| %>
-          <%# Damage only applies to parchment: hidden with its inputs for cherry. %>
-          <% parchment_only = attribute == :damage_weight %>
-          <div <%= tag.attributes(hidden: parchment_only && purchase.cherry?, data: { purchase_calculator_target: ("parchmentField" if parchment_only) }) %>>
-            <dt class="text-xs text-ink-muted"><%= Purchase.human_attribute_name(attribute) %></dt>
-            <dd class="text-xl font-bold tabular-nums" data-purchase-calculator-target="<%= attribute.to_s.camelize(:lower) %>">—</dd>
-          </div>
-        <% end %>
-      </dl>
-    </div>
   </section>
 
   <div>
@@ -142,8 +134,29 @@
     <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
   </div>
 
-  <div class="flex flex-wrap gap-3">
-    <%= form.submit class: "btn btn-primary" %>
-    <%= cancel_button trading_purchases_path %>
+  </div>
+
+  <aside class="space-y-4 @5xl:sticky @5xl:top-24">
+    <div class="clay p-4">
+      <p class="text-sm font-semibold"><%= t(".calculation") %></p>
+      <dl class="mt-2 grid grid-cols-2 gap-3 @xl:grid-cols-4 @5xl:grid-cols-2">
+        <% %i[sacks tare damage_weight damage_amount net_weight quintals total].each do |attribute| %>
+          <%# Damage only applies to parchment: hidden with its inputs for cherry. %>
+          <% parchment_only = attribute.in?(%i[damage_weight damage_amount]) %>
+          <%# The total, what the producer is paid, stands out on a line of its own. %>
+          <% total = attribute == :total %>
+          <div <%= tag.attributes(hidden: parchment_only && purchase.cherry?, data: { purchase_calculator_target: ("parchmentField" if parchment_only) },
+                                  class: ("col-span-2 border-t border-line pt-3 @xl:col-span-4 @5xl:col-span-2" if total)) %>>
+            <dt class="text-xs text-ink-muted"><%= Purchase.human_attribute_name(attribute) %></dt>
+            <dd class="<%= total ? "text-3xl" : "text-xl" %> font-bold tabular-nums" data-purchase-calculator-target="<%= attribute.to_s.camelize(:lower) %>">—</dd>
+          </div>
+        <% end %>
+      </dl>
+    </div>
+    <div class="flex flex-wrap gap-3">
+      <%= form.submit class: "btn btn-primary" %>
+      <%= cancel_button trading_purchases_path %>
+    </div>
+  </aside>
   </div>
 <% end %>

@@ -1,12 +1,19 @@
-<%# Invoices list. Narrow container → cards; otherwise a table. %>
+<%# Invoices list. Narrow container → cards; otherwise a table.
+    show_producer: false on a producer's own page. %>
+<% show_producer = local_assigns.fetch(:show_producer, true) %>
 <div class="@container">
   <ul class="space-y-3 @2xl:hidden">
     <% invoices.each do |invoice| %>
       <li class="data-card" id="<%= dom_id(invoice, :card) %>">
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0">
-            <p class="font-medium"><%= invoice.producer.full_name %></p>
-            <p class="text-xs text-ink-muted"><%= t("trading.invoices.show.invoice") %> <%= invoice.display_number %> · <%= l(invoice.issued_on) %></p>
+            <% if show_producer %>
+              <p class="font-medium"><%= invoice.producer.full_name %></p>
+              <p class="text-xs text-ink-muted"><%= t("trading.invoices.show.invoice") %> <%= invoice.display_number %> · <%= l(invoice.issued_on) %></p>
+            <% else %>
+              <p class="font-medium"><%= t("trading.invoices.show.invoice") %> <%= invoice.display_number %></p>
+              <p class="text-xs text-ink-muted"><%= l(invoice.issued_on) %></p>
+            <% end %>
           </div>
           <%= detail_button trading_invoice_path(invoice) %>
         </div>
@@ -25,7 +32,7 @@
         <tr>
           <th><%= t("trading.invoices.index.number") %></th>
           <th><%= t("trading.invoices.index.date") %></th>
-          <th><%= t("trading.invoices.index.producer") %></th>
+          <% if show_producer %><th><%= t("trading.invoices.index.producer") %></th><% end %>
           <th class="text-right"><%= t("trading.purchases.table.net") %></th>
           <th class="text-right"><%= Invoice.human_attribute_name(:total) %></th>
           <th><%= t("trading.invoices.index.status") %></th>
@@ -37,7 +44,7 @@
           <tr id="<%= dom_id(invoice) %>">
             <td class="font-medium tabular-nums"><%= invoice.display_number %></td>
             <td class="whitespace-nowrap"><%= l(invoice.issued_on) %></td>
-            <td><%= invoice.producer.full_name %></td>
+            <% if show_producer %><td><%= invoice.producer.full_name %></td><% end %>
             <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(invoice.net_weight) %></td>
             <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(invoice.total) %></td>
             <td><%= payment_status_badge(invoice) %></td>

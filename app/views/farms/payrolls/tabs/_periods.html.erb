@@ -1,12 +1,36 @@
 <%# Pay periods, newest first: what each amounts to and whether it was paid. %>
 <p class="mt-4 text-sm text-ink-muted"><%= t("farms.payrolls.periods.help_#{payroll.kind}") %></p>
-<%= render layout: "shared/filters", locals: { filter: @filter, url: farms_payroll_path(payroll, tab: "periods") } do |form| %>
-  <%= hidden_field_tag :tab, "periods", id: nil %>
-  <%= filter_select form, :status, t("farms.payrolls.periods.status"),
-        PayrollPeriodFilter::STATUSES.map { |status| [ t("farms.payrolls.periods.statuses.#{status}"), status ] }, selected: @filter.status %>
-<% end %>
 <% can_pay = policy(PayrollPayment.new(payroll:)).create? %>
-<div class="mt-6">
+
+<%# Today's period on top: where it stands and its next step. %>
+<% if (row = @current_row) %>
+  <section class="mt-4 panel flex flex-wrap items-center justify-between gap-4 p-4 ring-1 ring-primary/20" aria-labelledby="current-period">
+    <div>
+      <p id="current-period" class="text-xs font-semibold tracking-wide text-ink-muted uppercase"><%= t("farms.payrolls.periods.current") %></p>
+      <p class="mt-1 flex flex-wrap items-center gap-2 text-lg font-semibold">
+        <%= format_period(row.period) %> <%= period_status_badge(row) %>
+      </p>
+      <p class="mt-1 text-sm text-ink-muted">
+        <%= t("farms.payrolls.periods.pay_day", date: l(row.period.ends_on, format: :long)) %>
+        <% unless row.status == "upcoming" %> · <%= t("farms.payrolls.periods.so_far") %> <strong class="text-ink tabular-nums"><%= format_money(row.gross_total) %></strong><% end %>
+      </p>
+    </div>
+    <div class="flex flex-wrap gap-2"><%= render "farms/payrolls/period_actions", payroll:, row:, can_pay: %></div>
+  </section>
+<% end %>
+
+<%# Status as chips: one tap, only the list (this frame) reloads. %>
+<%= turbo_frame_tag "periods-list", class: "query-frame block", target: "_top", data: { turbo_action: "advance" } do %>
+<nav class="mt-4 flex flex-wrap gap-1.5" aria-label="<%= t("farms.payrolls.periods.status") %>">
+  <% [ [ nil, @status_counts.values.sum ], *@status_counts ].each do |status, count| %>
+    <%= link_to farms_payroll_path(payroll, tab: "periods", status:), class: "chip #{"chip-active" if @filter.status == status}",
+          aria: { current: (@filter.status == status ? "true" : nil) }, data: { turbo_frame: "periods-list" } do %>
+      <%= status ? t("farms.payrolls.periods.statuses.#{status}") : t("shared.filters.all") %>
+      <span class="tabular-nums opacity-70"><%= count %></span>
+    <% end %>
+  <% end %>
+</nav>
+<div class="mt-4">
   <% if @rows.any? %>
     <div class="@container">
       <ul class="space-y-3 @2xl:hidden">
@@ -48,8 +72,9 @@
         </table>
       </div>
     </div>
-    <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "periods" } %>
+    <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "periods" }, frame: "periods-list" %>
   <% else %>
     <p class="empty-state"><%= t("farms.payrolls.periods.empty") %></p>
   <% end %>
 </div>
+<% end %>

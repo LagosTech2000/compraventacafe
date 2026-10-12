@@ -15,6 +15,10 @@
 
 <div class="mt-6"><%= render "trading/summary", daily_close: @daily_close %></div>
 
+<% if @daily_close.purchases.any? %>
+  <%= render "trading/daily_closes/by_producer", daily_close: @daily_close %>
+<% end %>
+
 <h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".purchases") %></h2>
 <% if @daily_close.purchases.any? %>
   <%= render "trading/purchases/table", purchases: @daily_close.purchases %>

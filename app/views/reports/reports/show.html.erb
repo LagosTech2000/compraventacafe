@@ -1,17 +1,26 @@
 <% report = @report %>
 <% content_for :title, "#{report.title} · #{AppModule.human_name("reports")}" %>
+<%# Live figures: back and forward ask the server again instead of showing a
+    cached copy, which could already hold the newer query. %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
 <% saved_reports = policy_scope(SavedReport).ordered.to_a %>
 <% period = report.period %>
 <% previous = period.previous %>
 
-<div class="mb-5 flex items-center gap-3 print:hidden">
-  <span class="grid size-11 place-items-center rounded-2xl bg-primary-soft text-primary"><%= icon(:reports, css: "size-6") %></span>
-  <p class="text-2xl font-bold tracking-tight sm:text-3xl"><%= AppModule.human_name("reports") %></p>
+<div class="mb-4 flex items-center print:hidden"><%= render "shared/module_title", module_key: "reports", divider: false %></div>
+<%# Printed: the letterhead with the report and its period. %>
+<div class="mb-4 hidden print:block">
+  <%= render "shared/print_letterhead", title: report.title, subtitle: format_report_period(period) %>
 </div>
+
+<%# Every query (report, filters, sort, grouping) reloads only this frame,
+    never the page; "advance" keeps the URL and the back button in step. %>
+<%= turbo_frame_tag "report", class: "report-frame block", data: { turbo_action: "advance", controller: "frame-scroll" } do %>
+<%= tag.div hidden: true, data: { controller: "document-title", document_title_title_value: [ content_for(:title), business_name ].join(" · ") } %>
 
 <%# What to see: a report, a suggested one or one of my saved filters. %>
 <section class="clay grid gap-4 p-4 ring-1 ring-line/60 sm:grid-cols-3 print:hidden" aria-label="<%= t("reports.show.pickers") %>"
-         data-controller="navigate-select">
+         data-controller="navigate-select" data-navigate-select-frame-value="report">
   <div>
     <label for="report_type" class="field-label"><%= t("reports.show.report_type") %></label>
     <select id="report_type" class="field-input" data-action="navigate-select#go"><%= report_type_options(report) %></select>
@@ -59,7 +68,7 @@
   </div>
 </div>
 
-<%= render layout: "shared/filters", locals: { filter: report.filter, url: report_path_for(report.class) } do |form| %>
+<%= render layout: "shared/filters", locals: { filter: report.filter, url: report_path_for(report.class), frame: "report" } do |form| %>
   <div data-controller="report-period" class="contents">
     <div>
       <%= form.label :period, t("reports.filters.period"), class: "field-label" %>
@@ -95,7 +104,11 @@
 </section>
 
 <%# Charts: open by default, they can be folded away. They load on their own
-    so the table does not wait for them. %>
+    so the table does not wait for them. Permanent while only the order
+    changes (the id leaves sort out): sorting keeps them as they are, folded
+    or not, instead of reloading them and pushing the table off screen. %>
+<% charts_params = report.filter.to_params.except("page", "sort", "dir") %>
+<div id="report-charts-<%= Digest::SHA256.hexdigest([ report.key, charts_params.to_query ].join("?")).first(16) %>" data-turbo-permanent>
 <details open class="group mt-6 panel print:border-0">
   <summary class="flex cursor-pointer list-none items-center justify-between gap-2 p-4 font-semibold print:hidden">
     <span><%= t("reports.show.charts") %></span>
@@ -105,13 +118,14 @@
       <span class="transition group-open:rotate-180" aria-hidden="true">▾</span>
     </span>
   </summary>
-  <%= turbo_frame_tag "report-charts", src: reports_report_charts_path(report.key, report.filter.to_params.except("page")),
+  <%= turbo_frame_tag "report-charts", src: reports_report_charts_path(report.key, charts_params),
         class: "block px-4 pb-4" do %>
     <div class="grid gap-4 lg:grid-cols-2" aria-busy="true">
       <% 2.times do %><div class="h-72 animate-pulse rounded-xl bg-surface-2"></div><% end %>
     </div>
   <% end %>
 </details>
+</div>
 
 <%# The rows: page by page as the list scrolls. %>
 <section class="mt-6" aria-labelledby="report-rows-title">
@@ -128,3 +142,4 @@
     <p class="empty-state"><%= t("reports.show.empty") %></p>
   <% end %>
 </section>
+<% end %>

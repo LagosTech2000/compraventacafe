@@ -4,17 +4,27 @@
 class ProducersReport < Report
   ACTIVITIES = %w[with_purchases without_purchases].freeze
   QUINTAL = PurchaseCalculation::QUINTAL_WEIGHT
-  # Owed to the producer: purchases not invoiced or with the invoice pending,
-  # less what they paid with coffee to their loans.
+  # Owed to the producer: purchases not invoiced or with the invoice not
+  # fully paid (pending or partial), less what they paid with coffee to their
+  # loans and what was already paid on those invoices.
   PENDING = <<~SQL.squish.freeze
     LEFT JOIN (
-      SELECT purchases.producer_id, SUM(purchases.total) - COALESCE(SUM(coffee.amount), 0) AS amount
-      FROM purchases
-      LEFT JOIN invoices ON invoices.id = purchases.invoice_id
-      LEFT JOIN (SELECT purchase_id, SUM(amount) AS amount FROM loan_payments GROUP BY purchase_id) coffee
-        ON coffee.purchase_id = purchases.id
-      WHERE purchases.voided_at IS NULL AND (purchases.invoice_id IS NULL OR invoices.payment_status = 'pending')
-      GROUP BY purchases.producer_id
+      SELECT owed.producer_id, owed.amount - COALESCE(paid.amount, 0) AS amount
+      FROM (
+        SELECT purchases.producer_id, SUM(purchases.total) - COALESCE(SUM(coffee.amount), 0) AS amount
+        FROM purchases
+        LEFT JOIN invoices ON invoices.id = purchases.invoice_id
+        LEFT JOIN (SELECT purchase_id, SUM(amount) AS amount FROM loan_payments GROUP BY purchase_id) coffee
+          ON coffee.purchase_id = purchases.id
+        WHERE purchases.voided_at IS NULL AND (purchases.invoice_id IS NULL OR invoices.payment_status IN ('pending', 'partial'))
+        GROUP BY purchases.producer_id
+      ) owed
+      LEFT JOIN (
+        SELECT invoices.producer_id, SUM(invoice_payments.amount) AS amount
+        FROM invoice_payments JOIN invoices ON invoices.id = invoice_payments.invoice_id
+        WHERE invoices.payment_status = 'partial'
+        GROUP BY invoices.producer_id
+      ) paid ON paid.producer_id = owed.producer_id
     ) pending ON pending.producer_id = producers.id
     LEFT JOIN (
       SELECT producer_id, MAX(purchased_at) AS purchased_at FROM purchases WHERE voided_at IS NULL GROUP BY producer_id

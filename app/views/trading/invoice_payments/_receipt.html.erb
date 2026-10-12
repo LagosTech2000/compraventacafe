@@ -1,0 +1,47 @@
+<%# One printed copy of the receipt of an invoice payment: what the producer
+    received and what the invoice still owes after it. `label` is ORIGINAL or COPIA. %>
+<% invoice = payment.invoice %>
+<% person = invoice.producer.person %>
+<% balance_after = payment.balance_after %>
+<article class="rounded-2xl border border-line bg-white p-5 shadow-[0_1px_2px_rgb(29_21_18/0.04)] break-inside-avoid print:p-3 print:shadow-none print:rounded-none print:border-ink">
+  <%= render "shared/print_letterhead", title: t("trading.invoice_payments.receipt.title"), number: payment.display_number, label: %>
+
+  <dl class="mt-4 grid grid-cols-1 gap-x-6 gap-y-1 text-sm min-[30rem]:grid-cols-2 print:mt-2 print:grid-cols-2">
+    <div><dt class="inline font-semibold"><%= t("trading.invoice_payments.receipt.producer") %>:</dt> <dd class="inline"><%= person.full_name %></dd></div>
+    <% if person.dni.present? %>
+      <div><dt class="inline font-semibold"><%= Person.human_attribute_name(:dni) %>:</dt> <dd class="inline"><%= person.dni %></dd></div>
+    <% end %>
+    <div><dt class="inline font-semibold"><%= t("trading.invoices.show.invoice") %>:</dt> <dd class="inline"><%= invoice.display_number %></dd></div>
+    <div><dt class="inline font-semibold"><%= InvoicePayment.human_attribute_name(:paid_on) %>:</dt> <dd class="inline"><%= l(payment.paid_on, format: :long) %></dd></div>
+    <div><dt class="inline font-semibold"><%= InvoicePayment.human_attribute_name(:payment_method) %>:</dt> <dd class="inline"><%= payment.human_payment_method %></dd></div>
+  </dl>
+
+  <div class="mt-4 grid gap-4 sm:grid-cols-2 print:mt-2 print:grid-cols-2">
+    <dl class="text-sm">
+      <div class="flex justify-between gap-4 border-b border-ink py-1 text-base font-bold">
+        <dt><%= t("trading.invoice_payments.receipt.amount") %></dt>
+        <dd class="tabular-nums"><%= format_money(payment.amount) %></dd>
+      </div>
+    </dl>
+    <dl class="text-sm">
+      <div class="flex justify-between gap-4 py-0.5">
+        <dt><%= t("trading.invoices.show.amount_to_pay") %></dt>
+        <dd class="tabular-nums"><%= format_money(invoice.amount_to_pay) %></dd>
+      </div>
+      <div class="flex justify-between gap-4 py-0.5">
+        <dt><%= t("trading.invoice_payments.receipt.paid_until") %></dt>
+        <dd class="tabular-nums"><%= format_money(invoice.amount_to_pay - balance_after) %></dd>
+      </div>
+      <div class="flex justify-between gap-4 border-t border-ink py-1 font-bold">
+        <dt><%= t("trading.invoice_payments.receipt.balance_after") %></dt>
+        <dd class="tabular-nums"><%= balance_after.positive? ? format_money(balance_after) : t("trading.invoice_payments.receipt.settled") %></dd>
+      </div>
+    </dl>
+  </div>
+
+  <footer class="mt-10 flex flex-wrap items-end justify-between gap-6 text-sm print:mt-8">
+    <div class="w-56 border-t border-ink pt-1 text-center"><%= t("trading.invoice_payments.receipt.receiver_signature") %></div>
+    <div class="w-56 border-t border-ink pt-1 text-center"><%= t("trading.invoice_payments.receipt.payer_signature") %></div>
+    <p class="w-full text-xs text-ink-muted"><%= t("trading.invoice_payments.receipt.registered_by", name: payment.created_by.name) %></p>
+  </footer>
+</article>

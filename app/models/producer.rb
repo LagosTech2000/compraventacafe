@@ -11,9 +11,12 @@ class Producer < ApplicationRecord
   has_many :invoices, dependent: :restrict_with_error
 
   normalizes :farm_name, with: FieldFormats::STRIP
+  normalizes :ihcafe_code, with: FieldFormats::IHCAFE_CODE
 
   validates :kind, inclusion: { in: KINDS }
   validates :farm_name, length: { maximum: 100 }
+  # Optional (intermediaries may not have one), unique when given.
+  validates :ihcafe_code, field_format: :ihcafe_code, uniqueness: true, allow_nil: true
 
   delegate :full_name, to: :person
 

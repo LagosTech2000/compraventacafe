@@ -1,4 +1,8 @@
 <% content_for :title, t(".title", number: @invoice.display_number) %>
+<%# Right after a payment: its receipt opens in the modal, ready to print. %>
+<% if params[:receipt].to_s.match?(/\A\d+\z/) %>
+  <% content_for :modal_src, trading_invoice_payment_path(@invoice, params[:receipt]) %>
+<% end %>
 <%= render "trading/nav" %>
 
 <div class="mb-6 flex flex-wrap items-start justify-between gap-4 print:hidden">
@@ -15,20 +19,8 @@
 
 <div class="mb-6 print:hidden">
   <%= render layout: "trading/lifecycle", locals: { lifecycle: TradingLifecycle.for_invoice(@invoice) } do %>
-    <% if policy(@invoice).update? %>
-      <%= form_with model: @invoice, url: trading_invoice_path(@invoice), method: :patch,
-            class: "flex flex-wrap items-end gap-3", data: { controller: "form-validation" } do |form| %>
-        <div>
-          <%= form.label :payment_method, class: "field-label" %>
-          <%= form.select :payment_method, enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS), { include_blank: t("shared.select.pick_payment_method") }, required: true, class: "field-input",
-                data: { missing_message: "#{Invoice.human_attribute_name(:payment_method)} #{t("errors.messages.blank")}" } %>
-        </div>
-        <div>
-          <%= form.label :paid_on, t("trading.invoices.show.paid_on_label"), class: "field-label" %>
-          <%= form.date_field :paid_on, value: @invoice.paid_on || Time.zone.today, required: true, class: "field-input" %>
-        </div>
-        <%= form.submit t("trading.invoices.show.mark_paid"), class: "btn btn-primary" %>
-      <% end %>
+    <% if policy(InvoicePayment.new(invoice: @invoice)).create? %>
+      <%= modal_link_to t("trading.invoices.show.new_payment"), new_trading_invoice_payment_path(@invoice), class: "btn btn-primary" %>
     <% elsif @invoice.paid? %>
       <% if modal_request? %>
         <%= page_link_to t("trading.invoices.show.print"), trading_invoice_path(@invoice), class: "btn btn-primary" %>
@@ -37,7 +29,7 @@
       <% end %>
     <% end %>
   <% end %>
-  <%= render "shared/form_errors", record: @invoice %>
+  <%= render "trading/invoices/payments", invoice: @invoice %>
 </div>
 
 <div class="space-y-6 print:space-y-4">

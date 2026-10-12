@@ -20,13 +20,15 @@ class ReportPreset
 
   DEFINITIONS = {
     purchases_today: [ "purchases", { period: "today" } ],
+    purchases_today_by_producer: [ "purchases", { period: "today", group: "producer" } ],
     purchases_week_by_day: [ "purchases", { period: "this_week", group: "day" } ],
     purchases_season_by_month: [ "purchases", { period: "this_season", group: "month" } ],
     purchases_season_by_producer: [ "purchases", { period: "this_season", group: "producer" } ],
     purchases_month_by_zone: [ "purchases", { period: "this_month", group: "zone" } ],
     purchases_month_by_state: [ "purchases", { period: "this_month", group: "coffee_state" } ],
     purchases_uninvoiced: [ "purchases", { period: "all", invoice_status: "uninvoiced", sort: "purchased_at", dir: "asc" } ],
-    invoices_pending: [ "invoices", { period: "all", payment_status: "pending", sort: "issued_on", dir: "asc" } ],
+    invoices_pending: [ "invoices", { period: "all", payment_status: "unpaid", sort: "issued_on", dir: "asc" } ],
+    invoices_partial: [ "invoices", { period: "all", payment_status: "partial", sort: "balance", dir: "desc" } ],
     invoices_paid_month: [ "invoices", { period: "this_month", payment_status: "paid" } ],
     producers_season_ranking: [ "producers", { period: "this_season", activity: "with_purchases", sort: "quintals" } ],
     producers_inactive: [ "producers", { period: "last_30_days", activity: "without_purchases", sort: "last_purchase_on" } ],

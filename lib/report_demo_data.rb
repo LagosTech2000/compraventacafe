@@ -257,7 +257,13 @@ class ReportDemoData
         waited = (date - invoice.issued_on).to_i
         next false if @random.rand > (waited.zero? ? 0.2 : waited <= 5 ? 0.15 : 0.06)
 
-        invoice.mark_paid(method: weighted("cash" => 6, "transfer" => 3, "check" => 1), on: date)
+        method = weighted("cash" => 6, "transfer" => 3, "check" => 1)
+        # Some are paid in two parts: half now, the rest another day.
+        if invoice.payments.empty? && invoice.balance_due > 1 && @random.rand < 0.25
+          invoice.payments.create!(amount: (invoice.balance_due / 2).round(2), paid_on: date, payment_method: method, created_by: invoice.created_by)
+          next false
+        end
+        invoice.mark_paid(method:, on: date)
       end
     end
 

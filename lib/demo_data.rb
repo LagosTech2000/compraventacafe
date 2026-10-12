@@ -141,12 +141,14 @@ class DemoData
       loan.payments.create!(paid_on:, amount:, payment_method: "cash", created_by: @user)
     end
 
-    # Leaves today's purchases uninvoiced; older ones get invoices, some paid.
+    # Leaves today's purchases uninvoiced; older ones get invoices: some
+    # paid, some paid in part (half, in cash) and some pending.
     def invoice_older_purchases(purchases)
       purchases.reject { |p| p.purchased_at.to_date == Time.zone.today }.group_by(&:producer).each_with_index do |(producer, list), i|
-        paid = i.even?
-        InvoiceIssuer.new(producer:, user: @user, purchase_ids: list.map(&:id),
-                          payment_status: paid ? "paid" : "pending", payment_method: ("cash" if paid)).call
+        status = %w[paid partial pending][i % 3]
+        amount = (list.sum(&:amount_to_pay) / 2).round(2) if status == "partial"
+        InvoiceIssuer.new(producer:, user: @user, purchase_ids: list.map(&:id), payment_status: status,
+                          payment_method: ("cash" unless status == "pending"), amount:).call
       end
     end
 end

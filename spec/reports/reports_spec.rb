@@ -77,6 +77,44 @@ RSpec.describe "Reports (data)" do
     expect(InvoicesReport.columns.find { |column| column.key == :to_pay }.value.call(invoice)).to eq(BigDecimal("3620.9"))
   end
 
+  describe "invoices paid in parts" do
+    let(:producer) { create(:producer) }
+    let(:invoice) { create(:invoice, producer:, purchases: [ create(:purchase, producer:) ]) }
+
+    before do
+      invoice.payments.create!(amount: 1_000, paid_on: today, payment_method: "cash", created_by: user)
+      create(:invoice, producer:, purchases: [ create(:purchase, producer:) ]).mark_paid(method: "transfer", on: today)
+    end
+
+    it "shows what was paid and the balance, and filters by partial or unpaid" do
+      report = run(InvoicesReport, period: "this_month")
+      expect(kpi(report, :paid).value).to eq(BigDecimal("1000") + BigDecimal("4120.9"))
+      expect(kpi(report, :pending).value).to eq(BigDecimal("3120.9"))
+      expect(kpi(report, :pending_count).value).to eq(1)
+
+      partial = run(InvoicesReport, period: "this_month", payment_status: "partial").page.first.sole
+      expect(InvoicesReport.columns.find { |column| column.key == :balance }.value.call(partial)).to eq(BigDecimal("3120.9"))
+      expect(run(InvoicesReport, period: "this_month", payment_status: "unpaid").total_count).to eq(1)
+      expect(run(InvoicesReport, period: "this_month", payment_method: "cash").total_count).to eq(1)
+    end
+
+    it "takes out each payment on its own day in the money in and out" do
+      by_source = run(CashMovementsReport, period: "today", group: "source").page.first.to_h { |row| [ row.key, row["amount_out"] ] }
+      expect(by_source["invoices"]).to eq(BigDecimal("1000") + BigDecimal("4120.9"))
+    end
+
+    it "counts what is still owed to the producer, less what was paid" do
+      create(:purchase, producer:) # not invoiced yet
+      row = run(ProducersReport, period: "this_season").page.first.sole
+      expect(ProducersReport.columns.find { |column| column.key == :pending }.value.call(row)).to eq(BigDecimal("3120.9") + BigDecimal("4120.9"))
+    end
+
+    it "shows the partial status of a purchase's invoice" do
+      report = run(PurchasesReport, period: "this_month", invoice_status: "partial")
+      expect(report.total_count).to eq(1)
+    end
+  end
+
   it "finds the producers who stopped selling" do
     selling = create(:producer)
     stopped = create(:producer)

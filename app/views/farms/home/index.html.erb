@@ -76,7 +76,12 @@
 
 <h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".active_payrolls") %></h2>
 <% if @active_payrolls.any? %>
-  <%= render "farms/payrolls/table", payrolls: @active_payrolls %>
+  <%# One card per payroll: today's period, its pay day and the work of today in one tap. %>
+  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <% @active_payrolls.each do |payroll, period, calculation| %>
+      <%= render "farms/home/payroll_card", payroll:, period:, calculation: %>
+    <% end %>
+  </div>
 <% else %>
   <p class="empty-state"><%= t(".no_active_payrolls") %></p>
 <% end %>

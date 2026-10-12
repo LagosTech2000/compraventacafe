@@ -18,7 +18,12 @@
     <% end %>
   </div>
 </div>
-<p class="hidden text-lg font-bold print:block"><%= t(".title", name: person.full_name) %> · <%= l(Time.zone.today, format: :long) %></p>
+<%# Printed: the letterhead, whose account and as of when. %>
+<div class="hidden print:block">
+  <%= render "shared/print_letterhead", title: t(".print_title"), subtitle: l(Time.zone.today, format: :long) %>
+  <p class="mt-3 text-base"><span class="font-semibold"><%= person.full_name %></span>
+    <%= [ person.dni, format_phone(person.phone) ].compact_blank.join(" · ").presence&.then { |data| "· #{data}" } %></p>
+</div>
 
 <section class="panel mt-6 flex flex-wrap items-center justify-between gap-4 p-4">
   <div>
@@ -35,7 +40,7 @@
   <%= help_guide_button HelpGuide.process(:payer_score), label: true %>
 </section>
 
-<dl class="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-3">
+<dl class="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-3 print:mt-3 print:grid-cols-3 print:gap-2">
   <% {
        lent: @account.lent, principal_paid: @account.principal_paid, interest_paid: @account.interest_paid,
        principal_owed: @account.principal_owed, interest_owed: @account.interest_owed, total_owed: @account.total_owed

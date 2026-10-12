@@ -36,7 +36,6 @@ es:
       no_department: "Sin departamento asignado"
       no_municipality: "Sin municipio asignado"
       pick_department_first: "Primero selecciona un departamento"
-      payment_method_later: "Por definir"
       pick_supply: "Selecciona un insumo"
       pick_farm: "Selecciona una finca"
       pick_category: "Selecciona una categoría"
@@ -53,6 +52,22 @@ es:
       search: "Buscar"
       from: "Desde"
       to: "Hasta"
+      periods: "Períodos rápidos"
+      active_label: "Filtros activos"
+      remove: "Quitar el filtro %{filter}"
+      clear_all: "Limpiar todo"
+      on_day: "El %{date}"
+      between: "Del %{from} al %{to}"
+      since: "Desde el %{date}"
+      until: "Hasta el %{date}"
+      any_date: "Todas las fechas"
+      quick:
+        today: "Hoy"
+        yesterday: "Ayer"
+        this_week: "Esta semana"
+        this_month: "Este mes"
+        this_season: "Esta temporada"
+        all: "Todo"
     pagination:
       label: "Páginas"
       previous: "Anterior"
@@ -74,7 +89,80 @@ es:
     show:
       title: "Inicio"
       welcome: "Hola, %{name}"
+      purpose: "Compra de café, facturación, préstamos y planillas de %{business}"
       no_modules: "Todavía no tienes acceso a ningún módulo. Pídele a un administrador que te asigne permisos."
+      modules: "Tus módulos"
+      actions:
+        label: "Acciones frecuentes"
+        new_purchase: "Registrar compra"
+        invoice: "Facturar compras"
+        producers: "Productores"
+        farms: "Fincas y planillas"
+        new_loan: "Nuevo préstamo"
+        loans: "Préstamos"
+        reports: "Reportes"
+      figures:
+        title: "Resumen de operaciones"
+        purchases_today: "Compras de hoy"
+        season_quintals: "QQ de la temporada"
+        open_loans: "Préstamos por cobrar"
+        active_farms: "Fincas activas"
+        pending: "Pendientes"
+      hints:
+        purchases_today: "%{quintals} QQ · %{total}"
+        season_quintals:
+          one: "1 compra · %{total}"
+          other: "%{count} compras · %{total}"
+        loans_owed: "Deben %{amount} hoy"
+        overdue:
+          one: "1 vencido"
+          other: "%{count} vencidos"
+        running_payrolls:
+          zero: "Ninguna planilla en curso"
+          one: "1 planilla en curso"
+          other: "%{count} planillas en curso"
+        pending:
+          one: "1 tipo de tarea por atender"
+          other: "%{count} tipos de tarea por atender"
+      pending:
+        title: "Tareas pendientes"
+        uninvoiced:
+          one: "1 compra sin facturar"
+          other: "%{count} compras sin facturar"
+        unpaid_invoices:
+          one: "1 factura sin cancelar: falta pagar"
+          other: "%{count} facturas sin cancelar: falta pagar"
+        overdue_loans:
+          one: "1 préstamo vencido, deben"
+          other: "%{count} préstamos vencidos, deben"
+        periods_to_pay:
+          one: "1 período de planilla por pagar"
+          other: "%{count} períodos de planilla por pagar"
+        members_without_wage:
+          one: "1 empleado de una planilla por día sin salario: sus días no se pueden pagar"
+          other: "%{count} empleados de planillas por día sin salario: sus días no se pueden pagar"
+        go:
+          uninvoiced: "Facturar"
+          unpaid_invoices: "Ver facturas"
+          overdue_loans: "Ver préstamos"
+          periods_to_pay: "Pagar"
+          members_without_wage: "Asignar salario"
+      activity:
+        title: "Actividad reciente"
+        open: "Abrir"
+        kinds:
+          purchase: "Compra"
+          producer: "Productor nuevo"
+          invoice: "Factura"
+          loan: "Préstamo"
+          loan_payment: "Abono"
+          payroll_payment: "Pago de planilla"
+        details:
+          purchase: "Compra %{number} · %{quintals} QQ · %{total}"
+          invoice: "Factura %{number} · %{status} · %{total}"
+          loan: "Préstamo %{number} · %{amount}"
+          loan_payment: "Préstamo %{number} · %{amount}"
+          payroll_payment: "%{farm} · %{amount}"
 
   addresses:
     title: "Dirección"
@@ -89,7 +177,7 @@ es:
         paid: "Cancelada (pagada)"
       hint:
         registered: "Siguiente paso: facturar para entregarle el recibo al productor."
-        invoiced: "Siguiente paso: registrar el pago cuando se le pague al productor."
+        invoiced: "Siguiente paso: registrar el pago al productor, completo o por abonos."
         paid: "Ciclo completo: la compra está facturada y pagada."
     season:
       name: "Temporada %{year}"
@@ -128,8 +216,8 @@ es:
             action: "Ver pendientes"
             status_html:
               zero: "No hay facturas pendientes de pago."
-              one: "1 factura pendiente de pago (%{amount})."
-              other: "%{count} facturas pendientes de pago (%{amount})."
+              one: "1 factura sin cancelar: falta pagar %{amount}."
+              other: "%{count} facturas sin cancelar: falta pagar %{amount}."
           close:
             title: "Cerrar el día"
             action: "Ver cierre diario"
@@ -142,8 +230,8 @@ es:
       net_weight: "Libras netas"
       quintals: "Quintales (QQ)"
       total: "Total comprado"
-      paid_total: "Pagado"
-      pending_total: "Pendiente de pago"
+      paid_total: "En facturas canceladas"
+      pending_total: "En facturas sin cancelar"
       uninvoiced_total: "Sin facturar"
     zones:
       index:
@@ -167,27 +255,81 @@ es:
         title: "Productores"
         new: "Nuevo productor"
         search: "Buscar"
-        search_placeholder: "Nombre, apellido, DNI o RTN"
+        search_placeholder: "Nombre, DNI, RTN o clave IHCAFE"
         name: "Nombre"
+        season_quintals: "QQ temporada"
+        last_purchase: "Última compra"
         empty: "No hay productores que coincidan con los filtros."
       show:
         edit: "Editar"
         new_purchase: "Nueva compra"
         new_invoice: "Facturar compras"
+        full_page: "Ver detalle completo"
+        ihcafe_badge: "IHCAFE %{code}"
+        aside_label: "Ficha del productor"
         figures:
           season_quintals: "QQ de la temporada"
+          previous_season: "Temporada pasada: %{value} QQ"
           season_purchases: "Compras de la temporada"
           season_total: "Comprado en la temporada"
+          season_average_price: "Precio promedio por libra"
+          average_price_hint: "Total comprado ÷ libras netas"
           all_time_quintals: "QQ de todas las temporadas"
           loans_owed: "Debe en préstamos hoy"
+        record:
+          title: "Ficha"
+          first_purchase: "Primera compra"
+          last_purchase: "Última compra"
+        pending:
+          title: "Pendiente"
+          uninvoiced:
+            one: "1 compra sin facturar"
+            other: "%{count} compras sin facturar"
+          unpaid:
+            one: "1 factura sin cancelar (saldo)"
+            other: "%{count} facturas sin cancelar (saldo)"
+          invoice: "Facturar"
+          see: "Ver"
+        loans:
+          title: "Préstamos"
+          owed: "Debe hoy"
+          open: "Préstamos abiertos"
+          overdue:
+            one: "1 vencido"
+            other: "%{count} vencidos"
+          account: "Estado de cuenta"
         tabs:
           label: "Secciones del productor"
+          summary: "Resumen"
           purchases: "Compras"
           invoices: "Facturas"
-          info: "Datos personales"
         no_purchases: "No hay compras que coincidan con los filtros."
         no_invoices: "No hay facturas que coincidan con los filtros."
         back: "Volver a productores"
+      summary:
+        empty: "Este productor todavía no tiene compras."
+        charts:
+          quintals: "QQ"
+          empty: "Sin compras en este período."
+          seasons:
+            title: "QQ por temporada"
+            help: "Las últimas temporadas con compras, sin las anuladas."
+          months:
+            title: "QQ por mes · %{season}"
+            help: "Lo comprado cada mes de la temporada actual."
+        seasons:
+          title: "Por temporada"
+          purchases: "Compras"
+          average_price: "Precio promedio / lb"
+        states:
+          title: "Estado del café · %{season}"
+          empty: "Sin compras esta temporada."
+          amount:
+            one: "%{quintals} QQ · 1 compra"
+            other: "%{quintals} QQ · %{count} compras"
+        latest:
+          title: "Últimas compras"
+          all: "Ver todas las compras"
       new:
         title: "Nuevo productor"
       edit:
@@ -195,6 +337,7 @@ es:
       form:
         producer_data: "Datos de compra"
         new_zone: "Nueva zona"
+        ihcafe_code_placeholder: "XX-XX-XXXXX"
         cancel: "Cancelar"
       create:
         success: "Productor creado."
@@ -211,6 +354,14 @@ es:
         show_voided: "Mostrar anuladas"
         new: "Nueva compra"
         empty: "No hay compras que coincidan con los filtros."
+        count:
+          zero: "Ninguna compra"
+          one: "1 compra"
+          other: "%{count} compras"
+        chips:
+          q: "Productor: %{text}"
+          zone: "Zona: %{name}"
+          voided: "Con anuladas"
       table:
         number: "N.º"
         producer: "Productor"
@@ -236,7 +387,7 @@ es:
         invoiced_notice: "Esta compra ya está en la factura %{number} y no se puede modificar."
         view_invoice: "Ver factura %{number}"
         invoice_now: "Facturar ahora"
-        register_payment: "Registrar pago de la factura %{number}"
+        register_payment: "Registrar abono a la factura %{number}"
         another_purchase: "Registrar otra compra"
         back: "Volver a compras"
       new:
@@ -303,11 +454,30 @@ es:
           one: "Abono de %{amount} registrado con la compra."
           other: "%{count} abonos por %{amount} registrados con la compra."
     invoices:
+      mixed_payment_methods: "Varias formas"
+      payments:
+        title: "Pagos al productor"
+        amount_to_pay: "A pagar"
+        paid_total: "Abonado"
+        balance_due: "Saldo"
+        number: "N.º"
+        receipt: "Recibo"
+        destroy: "Quitar"
+        confirm_destroy: "¿Quitar este abono? Su monto vuelve al saldo de la factura."
+        none: "Todavía no se le ha pagado nada de esta factura."
       index:
         title: "Facturas"
         new: "Facturar compras"
         search_placeholder: "Productor o número de factura"
         empty: "No hay facturas que coincidan con los filtros."
+        count:
+          zero: "Ninguna factura"
+          one: "1 factura"
+          other: "%{count} facturas"
+        chips:
+          q: "Buscar: %{text}"
+          zone: "Zona: %{name}"
+          method: "Pagada con: %{method}"
         number: "N.º"
         date: "Fecha"
         producer: "Productor"
@@ -322,13 +492,14 @@ es:
         new_purchase: "Nueva compra para este productor"
         no_purchases: "Este productor no tiene compras sin facturar."
         payment: "Pago"
+        amount: "Monto pagado ahora"
+        amount_help: "Menos que el total a pagar: el resto queda pendiente."
         submit: "Crear factura"
         cancel: "Cancelar"
       show:
         title: "Factura %{number}"
         print: "Imprimir"
-        mark_paid: "Marcar como cancelada"
-        paid_on_label: "Fecha de pago"
+        new_payment: "Registrar abono"
         back: "Volver a facturas"
         original: "ORIGINAL"
         copy: "COPIA"
@@ -340,12 +511,45 @@ es:
         issued_by: "Facturado por: %{name}"
         totals: "Totales"
         purchases_total: "Total de compras"
+        damage_weight: "Daño (lb)"
+        damage_amount: "Daño (L)"
         loan_payment: "Abono a préstamo N.º %{number}"
         amount_to_pay: "Total a pagar"
+        payment: "Abono %{number} · %{date} · %{method}"
+        balance_due: "Saldo pendiente"
+        settled: "Cancelada"
       create:
         success: "Factura creada."
-      update:
-        success: "Factura marcada como cancelada."
+    invoice_payments:
+      new:
+        title: "Registrar abono"
+        invoice: "Factura %{number} · %{producer}"
+        amount_to_pay: "A pagar"
+        paid_total: "Abonado"
+        balance_due: "Saldo"
+        amount_help: "El saldo completo o una parte: lo que falte queda pendiente."
+        submit: "Registrar abono"
+      show:
+        title: "Recibo de pago %{number}"
+        invoice: "Factura %{number} · %{producer}"
+        print: "Imprimir"
+        original: "ORIGINAL"
+        copy: "COPIA"
+        back: "Volver a la factura"
+      receipt:
+        title: "Recibo de pago"
+        producer: "Productor"
+        amount: "Monto pagado"
+        paid_until: "Abonado a la fecha"
+        balance_after: "Saldo pendiente"
+        settled: "Cancelada"
+        receiver_signature: "Recibí conforme (productor)"
+        payer_signature: "Entregó"
+        registered_by: "Registrado por: %{name}"
+      create:
+        success: "Abono registrado."
+      destroy:
+        success: "Abono quitado."
     daily_closes:
       report:
         title: "Cierre diario"
@@ -355,7 +559,7 @@ es:
         generated: "Generado por %{name} el %{time}"
         groups:
           paid: "Canceladas"
-          pending: "Pendientes de pago"
+          pending: "Pendientes o con pago parcial"
           uninvoiced: "Sin facturar"
         units: "Pesos en libras; precios y montos en Lempiras."
         columns:
@@ -371,6 +575,13 @@ es:
         print: "Imprimir"
         purchases: "Compras del día"
         empty: "No hay compras registradas en esta fecha."
+      by_producer:
+        title: "Por productor"
+        purchases:
+          one: "1 compra"
+          other: "%{count} compras"
+        see_producer: "Ver el productor"
+        producer: "Productor"
 
   loans:
     nav:
@@ -545,6 +756,7 @@ es:
         empty: "No hay personas que coincidan con los filtros."
       show:
         title: "Estado de cuenta de %{name}"
+        print_title: "Estado de cuenta"
         new_loan: "Nuevo préstamo"
         print: "Imprimir"
         score_basis:
@@ -589,6 +801,15 @@ es:
     statuses:
       active: "Activos"
       inactive: "Inactivos"
+    status_badges:
+      member:
+        active: "Activo"
+        inactive: "Inactivo"
+      farm:
+        active: "Activa"
+        inactive: "Inactiva"
+      category:
+        inactive: "Inactiva"
     units:
       daily:
         one: "día"
@@ -652,6 +873,21 @@ es:
         nothing_to_pay: "Todo al día: no hay períodos terminados sin pagar."
         active_payrolls: "Planillas activas o por iniciar"
         no_active_payrolls: "No hay planillas activas ni por iniciar. Toca «Nueva planilla» para crear una."
+      payroll_card:
+        current_period: "Período actual"
+        pay_day: "Día de pago"
+        days_left:
+          zero: "Hoy se paga"
+          one: "Mañana"
+          other: "En %{count} días"
+        so_far: "Lleva"
+        people: "Empleados"
+        starts: "Empieza el"
+        today:
+          daily: "Asistencia de hoy"
+          harvest: "Latas de hoy"
+        new_task: "Nueva tarea"
+        open: "Abrir"
     farms:
       index:
         title: "Fincas"
@@ -687,6 +923,13 @@ es:
         title: "Planillas"
         new: "Nueva planilla"
         all_farms: "Todas las fincas"
+        count:
+          zero: "Ninguna planilla"
+          one: "1 planilla"
+          other: "%{count} planillas"
+        chips:
+          q: "Nombre: %{text}"
+          any_status: "Todos los estados"
         unfinished: "Activas y por iniciar"
         empty: "No hay planillas con esos filtros."
       show:
@@ -716,6 +959,9 @@ es:
           paid: "Pagados"
           upcoming: "Próximos"
         period: "Período"
+        current: "Período actual"
+        pay_day: "Se paga el %{date}"
+        so_far: "Lleva"
         amount: "Monto"
         timesheet_daily: "Asistencia"
         timesheet_harvest: "Latas"
@@ -723,6 +969,13 @@ es:
         pay_sheet: "Planilla de pago"
         empty: "No hay períodos con esos filtros. El primero empieza en la fecha de inicio de la planilla."
       members:
+        count:
+          zero: "Ningún empleado"
+          one: "1 empleado"
+          other: "%{count} empleados"
+        chips:
+          q: "Buscar: %{text}"
+          any_status: "Activos e inactivos"
         roles: "Roles"
         roles_help:
           daily: "Cada rol tiene su salario por día. Un empleado puede tener además un salario propio que manda sobre el del rol."
@@ -812,8 +1065,8 @@ es:
         whole_period: "Todo el período"
         closed: "Este período ya se pagó: lo registrado ya no se cambia."
         help:
-          daily: "Marca cada día: 1 (día completo), ½ (medio día) o — (no vino). «Todos» marca el día completo para todos."
-          harvest: "Escribe las latas que cortó cada persona cada día. Deja vacío si no cortó. A los caporales márcales 1, ½ o — como asistencia."
+          daily: "Toca cada casilla para cambiarla: — (no vino) → 1 (día completo) → ½ (medio día). «Todos» marca el día completo para todos y «Todo el período» todos los días de una persona."
+          harvest: "Escribe las latas que cortó cada persona cada día; deja vacío si no cortó. A los caporales toca su casilla para marcar — (no vino), 1 o ½."
         fill_day: "Todos"
         fill_day_label: "Día completo para todos el %{date}"
         cell_label: "%{person}, %{date}"
@@ -831,6 +1084,13 @@ es:
         amount: "A pagar"
         totals: "Totales"
         save: "Guardar"
+        saved: "Sin cambios por guardar."
+        unsaved: "Tienes cambios sin guardar."
+        leave_unsaved: "Tienes cambios sin guardar en esta planilla. ¿Salir sin guardar?"
+        today: "Hoy"
+        fill_row: "Todo el período"
+        fill_row_label: "Día completo todos los días para %{person}"
+        cycle_hint: "Toca para cambiar: — (no vino), 1 (día completo), ½ (medio día)"
         no_members: "Esta planilla no tiene empleados activos."
         add_members: "Agregar empleado"
       update:
@@ -844,6 +1104,11 @@ es:
         name_placeholder: "Por ejemplo: Chapia del lote 2"
         share: "Le toca a cada uno:"
         no_members: "La planilla no tiene empleados activos. Agrégalos primero."
+        all: "Todos"
+        none: "Ninguno"
+        chosen:
+          one: "1 persona"
+          other: "%{count} personas"
         completed_help: "Déjala vacía mientras la tarea no esté terminada. Se paga en el período de esta fecha."
       create:
         success: "Tarea registrada."
@@ -1028,6 +1293,7 @@ es:
       amount: "Monto (L)"
       pending: "Pendiente de pago (L)"
       to_pay: "A pagar (L)"
+      paid: "Pagado (L)"
       days: "Días promedio"
       owed: "Capital pendiente (L)"
       interest: "A interés (L)"
@@ -1087,13 +1353,15 @@ es:
       heat_cell: "%{day} %{hour}: %{count}"
     presets:
       purchases_today: "Compras de hoy"
+      purchases_today_by_producer: "Compras de hoy por productor"
       purchases_week_by_day: "Compras de esta semana, día por día"
       purchases_season_by_month: "Compras de la temporada, mes por mes"
       purchases_season_by_producer: "Quién nos vendió más esta temporada"
       purchases_month_by_zone: "Compras del mes por zona"
       purchases_month_by_state: "Compras del mes por estado del café"
       purchases_uninvoiced: "Compras sin facturar"
-      invoices_pending: "Facturas pendientes de pago (las más viejas primero)"
+      invoices_pending: "Facturas sin cancelar (las más viejas primero)"
+      invoices_partial: "Facturas con pago parcial (mayor saldo primero)"
       invoices_paid_month: "Facturas canceladas este mes"
       producers_season_ranking: "Ranking de productores de la temporada"
       producers_inactive: "Productores que no venden hace 30 días"
@@ -1136,6 +1404,7 @@ es:
         invoice_statuses:
           uninvoiced: "Sin facturar"
           pending: "Facturada, pendiente de pago"
+          partial: "Facturada, con pago parcial"
           paid: "Facturada y cancelada"
         columns:
           purchased_at: "Fecha y hora"
@@ -1178,7 +1447,7 @@ es:
             help: "De dónde viene el café."
           invoice_statuses:
             title: "Dinero por estado de facturación"
-            help: "Lo comprado que falta facturar, lo facturado pendiente de pago y lo ya cancelado."
+            help: "Lo comprado que falta facturar, lo facturado pendiente de pago o con pago parcial, y lo ya cancelado."
           humidity_price:
             title: "Humedad contra precio"
             help: "Cada punto es una compra de pergamino (las últimas 400). Sirve para ver si el precio sigue a la humedad."
@@ -1187,7 +1456,8 @@ es:
             help: "Compras por día de la semana y hora. Lo más oscuro es lo más ocupado."
       invoices:
         title: "Facturas"
-        description: "Las facturas entregadas a productores: total, lo abonado a préstamos con café, lo que falta pagarles y cuánto se tardó en cancelarlas."
+        description: "Las facturas entregadas a productores: total, lo abonado a préstamos con café, lo que se les ha pagado, el saldo y cuánto se tardó en cancelarlas."
+        no_single_method: "Sin pagar o varias formas"
         columns:
           number: "Factura"
           issued_on: "Fecha"
@@ -1197,6 +1467,8 @@ es:
           total: "Total"
           coffee: "Abonos con café"
           to_pay: "A pagar"
+          paid: "Abonado"
+          balance: "Saldo"
           payment_status: "Estado"
           payment_method: "Forma de pago"
           paid_on: "Cancelada el"
@@ -1208,22 +1480,23 @@ es:
           count: "Facturas"
           total: "Total facturado"
           coffee: "Abonado con café"
-          pending: "Pendiente de pago"
-          pending_count: "Facturas pendientes"
+          paid: "Pagado a productores"
+          pending: "Saldo por pagar"
+          pending_count: "Facturas sin cancelar"
           average_days: "Días prom. para pagar"
         charts:
           by_status:
             title: "Lo facturado en el tiempo"
-            help: "Lo que hay que pagar a los productores (sin los abonos con café), cancelado o pendiente."
+            help: "Lo que hay que pagar a los productores (sin los abonos con café), por estado: cancelada, pago parcial o pendiente."
           pending_age:
             title: "Antigüedad de lo pendiente"
-            help: "Dinero de facturas pendientes según los días desde que se entregaron."
+            help: "Saldo de las facturas sin cancelar según los días desde que se entregaron."
           debtors:
             title: "A quién se le debe más"
-            help: "Los 10 productores con más dinero pendiente en facturas."
+            help: "Los 10 productores con más saldo en facturas sin cancelar."
           methods:
             title: "Cómo se pagó"
-            help: "Facturas canceladas por forma de pago."
+            help: "Lo pagado a los productores en estas facturas, por forma de pago de cada abono."
           days_to_pay:
             title: "Rapidez de pago"
             help: "Barras: facturas canceladas. Línea: días promedio entre la factura y su pago."
@@ -1542,9 +1815,9 @@ es:
             help: "Una persona puede tener varios roles."
       cash_movements:
         title: "Entradas y salidas de dinero"
-        description: "El dinero que salió (facturas pagadas, préstamos en efectivo, planillas y gastos) y el que entró (abonos en efectivo, transferencia o cheque), según lo registrado. Las ventas de café todavía no están en el sistema."
+        description: "El dinero que salió (pagos de facturas, préstamos en efectivo, planillas y gastos) y el que entró (abonos en efectivo, transferencia o cheque), según lo registrado. Las ventas de café todavía no están en el sistema."
         sources:
-          invoices: "Factura pagada"
+          invoices: "Pago de factura"
           loans: "Préstamo en efectivo"
           loan_payments: "Abono a préstamo"
           payroll_payments: "Pago de planilla"
@@ -1616,11 +1889,11 @@ es:
         steps:
           - "Compra registrada: se pesa el café y se registra la compra (Nueva compra). El sistema calcula sacos, tara, peso neto y total."
           - "Facturada: se agrupan en una factura las compras sin facturar de un mismo productor (Facturar compras) y se le entrega el recibo."
-          - "Cancelada (pagada): cuando se le paga al productor, se abre la factura y se marca como cancelada con la forma y la fecha de pago."
+          - "Cancelada (pagada): se le paga al productor con uno o más abonos desde la factura (Registrar abono). Mientras falte saldo, la factura está en «Pago parcial»; al cubrir el total pasa a cancelada."
         tips:
           - "Una compra facturada ya no se puede editar ni borrar."
-          - "Una factura no se borra: solo pasa de pendiente de pago a cancelada."
-          - "La factura también se puede crear ya cancelada, si el pago se hace en el momento."
+          - "Una factura no se borra: pasa de pendiente a pago parcial y a cancelada con sus abonos. Solo se puede quitar el último abono."
+          - "La factura también se puede crear ya cancelada o con un pago parcial, si se paga en el momento."
       loan_interest:
         title: "Cómo se calcula el interés"
         summary: "Interés simple, con la tasa mensual de cada préstamo, sobre lo que todavía se debe."
@@ -1666,10 +1939,13 @@ es:
       dashboard:
         show:
           title: "Inicio"
-          summary: "Muestra los módulos a los que tienes acceso."
+          summary: "El centro de operaciones: cómo va el negocio, lo que necesita atención, lo último que pasó y las acciones de todos los días. Solo ves lo de los módulos a los que tienes acceso."
           steps:
-            - "Toca la tarjeta de un módulo para entrar."
-            - "Para volver aquí, toca el logo de arriba a la izquierda."
+            - "Usa las acciones frecuentes (Registrar compra, Facturar compras, Productores, Préstamos…) para ir directo a lo que necesitas."
+            - "«Resumen de operaciones» muestra las compras de hoy, los QQ de la temporada, los préstamos por cobrar y las fincas activas. Toca una cifra para ver su detalle."
+            - "«Tareas pendientes» aparece solo cuando hay algo por atender: compras sin facturar, facturas sin cancelar, préstamos vencidos, períodos de planilla por pagar o empleados sin salario. Cada una tiene su botón."
+            - "«Actividad reciente» lista las últimas compras, facturas, productores, préstamos, abonos y pagos de planilla, con su fecha; toca «Abrir» para verlos."
+            - "Abajo están tus módulos. Para volver aquí, toca el logo de arriba a la izquierda."
             - "Para salir, usa «Cerrar sesión» (en el celular, dentro de «Menú»)."
           tips:
             - "Si no ves ningún módulo, pídele a un administrador que te asigne permisos."
@@ -1800,7 +2076,9 @@ es:
             title: "Compras"
             summary: "Lista de compras. Al entrar muestra solo las de hoy."
             steps:
-              - "Cambia las fechas en «Filtros» para ver otros días; también puedes filtrar por temporada, productor, zona, estado del café y facturación."
+              - "Los filtros se aplican solos al cambiarlos, sin botón: escribe el productor, elige fechas, temporada, zona, estado del café o facturación, y la lista se actualiza sin recargar la página."
+              - "Toca un período rápido (Hoy, Ayer, Esta semana, Este mes, Esta temporada o Todo) para cambiar las fechas de un toque."
+              - "Los filtros activos salen como etiquetas sobre la lista: toca su × para quitar uno, o «Limpiar todo»."
               - "Toca «Detalle» para ver el cálculo de una compra."
               - "Toca «Anular» para sacar una compra que todavía no está facturada de las listas y los totales."
               - "Toca «Nueva compra» para registrar una sin salir de la lista."
@@ -1835,11 +2113,31 @@ es:
               - "Tara con peso bruto directo: 1 libra por cada saco de 165 libras, redondeado hacia arriba."
               - "Tara por pesadas: 1 libra por cada saco contado. Ejemplo: 3 pesadas de 300 lb con 2 sacos cada una dan 900 lb brutas, 6 sacos y 6 lb de tara."
               - "Por pesadas, el peso bruto no se escribe: para cambiarlo, cambia o quita una pesada."
-              - "Pergamino: peso neto = (peso bruto − tara) menos el porcentaje de humedad, y a eso se le resta el porcentaje de daño. «Restado por daño» muestra cuántas libras quita el daño."
+              - "Pergamino: peso neto = (peso bruto − tara) menos el porcentaje de humedad, y a eso se le resta el porcentaje de daño. «Restado por daño» muestra cuántas libras quita el daño y cuánto es en lempiras (libras × precio por libra)."
               - "Uva: peso neto = (peso bruto − tara) × rendimiento."
               - "Quintales (QQ) = peso neto ÷ 125. Total = peso neto × precio por libra."
               - "Cada compra queda en la temporada de su fecha: la temporada empieza el 1 de septiembre."
               - "El cálculo que se guarda es el del sistema; el de la pantalla es una vista previa."
+        invoice_payments:
+          form:
+            title: "Registrar abono a una factura"
+            summary: "Un pago al productor por su factura: el saldo completo o una parte."
+            steps:
+              - "Revisa lo que hay que pagar, lo ya abonado y el saldo."
+              - "Escribe el monto: empieza con el saldo completo y puedes bajarlo."
+              - "Elige la forma de pago y la fecha, y toca «Registrar abono»."
+            tips:
+              - "Al registrar el abono se abre su recibo para imprimirlo."
+              - "Si el abono no cubre el saldo, la factura queda en «Pago parcial»; cuando lo cubre, pasa a «Cancelada»."
+              - "Un abono no puede pasar del saldo ni ser de una fecha anterior a la factura o al último abono."
+          show:
+            title: "Recibo de pago"
+            summary: "El comprobante de un abono a la factura, con original y copia en una hoja."
+            steps:
+              - "Toca «Imprimir»: el original y la copia salen en la misma hoja."
+              - "El productor firma «Recibí conforme» y quien paga firma «Entregó»."
+            tips:
+              - "El recibo muestra lo que se pagó, lo abonado hasta ese día y el saldo que quedó."
         loan_settlements:
           form:
             title: "Abonar préstamos con una compra"
@@ -1860,7 +2158,8 @@ es:
             title: "Facturas"
             summary: "Lista de facturas, las más recientes primero."
             steps:
-              - "Filtra por fechas, temporada (la de sus compras), productor o número, zona, estado de pago y forma de pago."
+              - "Los filtros se aplican solos al cambiarlos: busca por productor o número, o elige estado de pago, fechas, temporada (la de sus compras), zona o forma de pago. La lista se actualiza sin recargar la página."
+              - "Usa los períodos rápidos (Hoy, Ayer, Esta semana…) y quita un filtro activo con la × de su etiqueta, o todos con «Limpiar todo»."
               - "Toca «Detalle» para ver una factura, imprimirla o registrar su pago."
               - "Toca «Facturar compras» para crear una factura nueva."
           form:
@@ -1869,47 +2168,56 @@ es:
             steps:
               - "Elige el productor de la lista de productores con compras sin facturar."
               - "Deja marcadas las compras que van en la factura."
-              - "En «Pago», elige si queda pendiente de pago o ya cancelada."
-              - "Si ya está cancelada, elige la forma y la fecha de pago."
+              - "En «Pago», elige si queda pendiente, si se paga completa (cancelada) o si se paga una parte (pago parcial)."
+              - "Si se paga algo, elige la forma y la fecha de pago; en pago parcial escribe el monto pagado ahora."
               - "Toca «Crear factura»."
             tips:
               - "Si falta una compra, toca «Nueva compra para este productor»: se registra en una ventana y aparece en la lista."
               - "Si una compra no va, toca «Anular» en su fila: sale de la lista y de los totales."
               - "Las compras facturadas ya no se pueden editar, anular ni borrar."
+              - "La lista muestra cuánto restó el daño de cada compra, en libras y en lempiras."
           show:
             title: "Factura"
             summary: "El recibo para el productor, con original y copia."
             steps:
               - "Toca «Imprimir»: el original y la copia salen en hojas separadas."
               - "Si se abonaron préstamos con sus compras, la factura los resta y muestra el total a pagar."
-              - "Cuando se le pague al productor, elige la forma de pago y la fecha, y toca «Marcar como cancelada»."
+              - "Cuando se le pague al productor, toca «Registrar abono»: puede ser el saldo completo o una parte."
+              - "En «Pagos al productor» ves cada abono con su recibo, lo abonado y el saldo. Con abonos que no cubren todo, la factura queda en «Pago parcial»; al cubrir el total pasa a «Cancelada»."
             tips:
               - "Desde la ventana de detalle, «Imprimir» abre la factura en página completa."
+              - "En pergamino, «Daño (lb)» y «Daño (L)» muestran lo que el daño restó de cada compra, con su porcentaje; en uva no aplica."
               - "Una factura no se borra; una vez cancelada, ya no cambia."
         producers:
           index:
             title: "Productores"
             summary: "Productores, carreros (intermediarios) y fincas propias a quienes se les compra café."
             steps:
-              - "Busca por nombre, apellido, DNI o RTN; también puedes filtrar por tipo y zona."
-              - "Toca «Detalle» para ver sus compras sin facturar y sus últimas facturas."
+              - "Busca por nombre, apellido, DNI, RTN o clave IHCAFE; también puedes filtrar por tipo y zona."
+              - "La lista muestra los QQ de la temporada y la última compra de cada uno."
+              - "Toca «Detalle» para ver su ficha, lo que tiene pendiente, sus compras y sus facturas."
               - "Toca «Nuevo productor» para registrar uno."
           show:
             title: "Detalle del productor"
-            summary: "Los quintales que ha vendido y, en pestañas, sus compras, sus facturas y sus datos personales."
+            summary: "Todo lo del productor en una pantalla: lo que ha vendido, su ficha, lo pendiente, sus préstamos, sus compras y sus facturas."
             steps:
-              - "Arriba están fijos los quintales (QQ), las compras y el total de la temporada actual, y los QQ de todas las temporadas."
-              - "En «Compras» ves sus compras de la temporada actual; en «Filtros» puedes elegir otra temporada o todas."
-              - "En «Facturas» ves sus facturas y en «Datos personales», su DNI, teléfono y dirección."
-              - "Toca «Nueva compra» para registrarle una compra o «Facturar compras» para facturar lo pendiente."
+              - "Arriba están fijos los QQ, las compras, el total y el precio promedio por libra de la temporada actual, los QQ de todas las temporadas y, si ves préstamos, lo que debe hoy."
+              - "La ficha tiene su clave IHCAFE, DNI, RTN, teléfono, correo, dirección y las fechas de su primera y última compra."
+              - "«Pendiente» muestra las compras sin facturar y las facturas pendientes de pago, con un botón para atenderlas."
+              - "«Resumen» compara sus temporadas, muestra lo comprado cada mes y qué estados del café vende."
+              - "En «Compras» y «Facturas» están las listas completas, con filtros."
             tips:
               - "Los QQ y totales no cuentan las compras anuladas."
+              - "El precio promedio por libra es el total comprado entre las libras netas: mezcla todos los estados del café."
+              - "Toca el teléfono o el correo para llamar o escribir desde el celular."
+              - "Si lo abriste desde la lista, toca «Ver detalle completo» para verlo en página completa."
           form:
             title: "Registrar o editar un productor"
             summary: "Datos de compra del productor y sus datos personales."
             steps:
               - "Elige el tipo: productor, carrero (intermediario) o finca propia."
               - "Elige su zona y, si aplica, el nombre de la finca. Si la zona no existe, toca «Nueva zona»: se abre encima y al guardarla queda elegida."
+              - "Si tiene clave del IHCAFE, escríbela con el formato XX-XX-XXXXX (letras o números). Puedes escribirla sin guiones o en minúsculas: se guarda en mayúsculas y con guiones. No se puede repetir entre productores."
               - "Escribe nombres y apellidos; el resto de datos es opcional."
               - "Toca el botón de guardar."
             tips:
@@ -1936,18 +2244,22 @@ es:
             summary: "Resumen y detalle de las compras de un día."
             steps:
               - "Elige la fecha: el cierre se actualiza solo."
-              - "Revisa los totales: comprado, pagado, pendiente de pago y sin facturar."
+              - "Revisa los totales: comprado, en facturas canceladas, en facturas sin cancelar y sin facturar."
+              - "En «Por productor» ves lo que vendió cada productor ese día; toca su nombre para ver sus compras."
               - "Toca «Imprimir» para sacar el reporte."
             tips:
-              - "El reporte agrupa las compras en canceladas, pendientes de pago y sin facturar."
+              - "El reporte impreso agrupa las compras en canceladas, pendientes o con pago parcial, y sin facturar, y trae la tabla por productor."
+              - "El productor que más vendió en el día sale primero."
       farms:
         home:
           index:
             title: "Resumen de fincas"
-            summary: "Lo que hay que pagar y las planillas activas."
+            summary: "Lo que hay que pagar y, en tarjetas, cada planilla activa con su período de hoy."
             steps:
               - "Revisa «Por pagar»: períodos que terminan hoy o antes y no se han pagado, con su monto."
               - "Toca «Pagar» para pagar un período, o «Abrir planilla» para revisarla antes."
+              - "Cada tarjeta muestra el período actual, su día de pago (y cuántos días faltan), lo que lleva y los empleados. La que se paga primero sale primero."
+              - "Toca «Asistencia de hoy» o «Latas de hoy» para registrar el trabajo del día en un toque; en una planilla por obra, «Nueva tarea»."
               - "Toca «Nueva planilla» para crear una."
             tips:
               - "Semanal se paga cada sábado; quincenal, el 15 y el último día del mes; mensual, el último día del mes."
@@ -1966,7 +2278,7 @@ es:
             summary: "La finca, lo que han costado sus planillas y la lista de sus planillas."
             steps:
               - "Revisa las cifras: pagado en planillas, gastos y costo total de la finca."
-              - "Filtra sus planillas por tipo o estado y ábrelas desde la lista."
+              - "Filtra sus planillas por nombre, tipo o estado: se aplican solas y la lista se actualiza sin recargar. Quita un filtro con la × de su etiqueta."
               - "Toca «Nueva planilla» para crear una en esta finca."
           form:
             title: "Registrar o editar una finca"
@@ -1980,7 +2292,7 @@ es:
             title: "Planillas"
             summary: "Todas las planillas. Al entrar muestra las activas y las que todavía no empiezan («Por iniciar»)."
             steps:
-              - "Filtra por nombre, finca, tipo o estado en «Filtros»."
+              - "Filtra por nombre, finca, tipo o estado: se aplican solos al cambiarlos y la lista se actualiza sin recargar. Quita un filtro con la × de su etiqueta o todos con «Limpiar todo»."
               - "Toca «Abrir» para ver la planilla: períodos de pago, empleados, tareas y gastos."
               - "Toca «Nueva planilla» para crear una."
           show:
@@ -1990,7 +2302,8 @@ es:
               - "Arriba están las cuentas: pagado, lo que fue a préstamos, gastos, costo total y lo que falta por pagar."
               - "En «Empleados» crea los roles con su salario por día y agrega a los colaboradores que trabajan."
               - "Registra el trabajo: «Asistencia» (por día), «Latas» (corte de café) o «Nueva tarea» (por obra)."
-              - "En «Períodos de pago» toca «Pagar» cuando termine un período."
+              - "En «Períodos de pago», el período de hoy sale arriba con lo que lleva, su día de pago y sus botones. Toca «Pagar» cuando termine."
+              - "Toca un estado (Sin pagar, Pagados, Próximos) para ver solo esos períodos; cada uno dice cuántos tiene."
               - "Registra los gastos con «Registrar gasto»."
             tips:
               - "Un período pagado queda cerrado: su asistencia, latas o tareas ya no se cambian."
@@ -2037,9 +2350,9 @@ es:
             title: "Asistencia o latas"
             summary: "Lo que trabajó cada empleado cada día del período: días (planillas por día) o latas (corte de café). En corte, los caporales van aparte con su asistencia."
             steps:
-              - "Elige el período con «Anterior», «Siguiente» o la lista."
-              - "Por día: marca 1, ½ o —. «Todos» marca el día completo para todos. En corte: escribe las latas."
-              - "Toca «Guardar». Los totales de cada persona y de cada día se ven mientras escribes."
+              - "Elige el período con «Anterior», «Siguiente», la lista o «Hoy»; o un solo día (más cómodo en el celular)."
+              - "Por día: toca cada casilla para pasar de — (no vino) a 1 (día completo) y a ½. «Todos» llena un día para todos y «Todo el período» todos los días de una persona. En corte: escribe las latas."
+              - "Toca «Guardar» en la barra de abajo, que siempre está a la vista. Te avisa si tienes cambios sin guardar, y si sales sin guardar te pregunta antes."
             tips:
               - "En el celular, elige un día arriba para ver solo esa columna."
               - "Un período pagado ya no se puede cambiar."
@@ -2242,6 +2555,12 @@ es:
               - "Se guarda el período por su nombre: «Este mes» siempre es el mes en curso."
 
   administration:
+    nav:
+      home: "Resumen"
+      people: "Personas"
+      users: "Usuarios"
+      audit_events: "Auditoría"
+      site_setting: "Configuración del sitio"
     home:
       index:
         people_description: "Personas del negocio: clientes y colaboradores."
@@ -2431,6 +2750,9 @@ es:
 
   activerecord:
     models:
+      invoice_payment:
+        one: "Abono a factura"
+        other: "Abonos a facturas"
       user:
         one: "Usuario"
         other: "Usuarios"
@@ -2547,6 +2869,7 @@ es:
         kind/intermediary: "Carrero (intermediario)"
         kind/own_farm: "Finca propia"
         farm_name: "Finca"
+        ihcafe_code: "Clave IHCAFE"
         zone: "Zona"
         zone_id: "Zona"
         person: "Persona"
@@ -2568,6 +2891,7 @@ es:
         humidity_percent: "Humedad (%)"
         damage_percent: "Daño (%)"
         damage_weight: "Restado por daño (lb)"
+        damage_amount: "Restado por daño (L)"
         yield_factor: "Rendimiento"
         price_per_pound: "Precio por libra (L)"
         sacks: "Sacos"
@@ -2593,13 +2917,22 @@ es:
         purchases: "Compras"
         payment_status: "Estado de pago"
         payment_status/pending: "Pendiente de pago"
+        payment_status/partial: "Pago parcial"
         payment_status/paid: "Cancelada"
+        payment_status/unpaid: "Sin cancelar (pendiente o parcial)"
         payment_method: "Forma de pago"
         payment_method/cash: "Efectivo"
         payment_method/transfer: "Transferencia"
         payment_method/check: "Cheque"
         paid_on: "Fecha de pago"
         total: "Total"
+      invoice_payment:
+        invoice: "Factura"
+        invoice_id: "Factura"
+        created_by_id: "Registró"
+        amount: "Monto"
+        paid_on: "Fecha del abono"
+        payment_method: "Forma de pago"
       audit_event:
         action/create: "Creó"
         action/update: "Modificó"
@@ -2781,6 +3114,13 @@ es:
         can_destroy: "Borrar"
     errors:
       models:
+        invoice_payment:
+          attributes:
+            amount:
+              over_balance: "es mayor que el saldo de la factura (%{balance})"
+            paid_on:
+              before_invoice: "no puede ser antes de la fecha de la factura"
+              before_last_payment: "no puede ser antes del último abono"
         payroll:
           attributes:
             ends_on:
@@ -2850,6 +3190,7 @@ es:
             weighings:
               blank: "faltan: agrega al menos una pesada"
         invoice:
+          partial_not_less: "Un pago parcial debe ser menor que el total a pagar. Si se paga todo, elige «Cancelada»."
           attributes:
             purchases:
               other_producer: "deben ser todas del mismo productor"
@@ -2945,6 +3286,7 @@ es:
       person_name_format: "solo puede tener letras, espacios, apóstrofos, puntos y guiones"
       dni_format: "debe tener 13 dígitos numéricos, sin letras"
       rtn_format: "debe tener 14 dígitos numéricos, sin letras"
+      ihcafe_code_format: "debe tener el formato XX-XX-XXXXX (letras o números)"
       phone_format: "debe tener 8 dígitos (puede empezar con +504)"
       email_format: "no es un correo válido"
       password_format: "debe tener al menos 8 caracteres"
@@ -2980,6 +3322,7 @@ es:
     formats:
       default: "%d/%m/%Y"
       long: "%-d de %B de %Y"
+      weekday_long: "%A %-d de %B de %Y"
       short: "%-d de %b"
       short_day: "%a %-d/%m"
       month_year: "%b %Y"

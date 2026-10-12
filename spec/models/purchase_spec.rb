@@ -6,6 +6,18 @@ RSpec.describe Purchase do
     expect(purchase.reload).to have_attributes(sacks: BigDecimal("0.8848"), tare: 1, net_weight: BigDecimal("71.05"), total: BigDecimal("4120.90"))
   end
 
+  it "stores what damage takes off, in pounds and lempiras, only in parchment" do
+    purchase = create(:purchase, gross_weight: 146, humidity_percent: 51, damage_percent: 2.5, price_per_pound: 58)
+    expect(purchase.reload).to have_attributes(damage_weight: BigDecimal("1.78"), damage_amount: BigDecimal("103.24"))
+    purchase.update!(coffee_state: "cherry", yield_factor: 0.186)
+    expect(purchase.reload).to have_attributes(damage_weight: nil, damage_amount: nil)
+  end
+
+  it "takes an empty damage as 0 % in parchment" do
+    purchase = create(:purchase, gross_weight: 146, humidity_percent: 51, damage_percent: nil, price_per_pound: 58)
+    expect(purchase.reload).to have_attributes(damage_percent: 0, damage_weight: 0, net_weight: BigDecimal("71.05"))
+  end
+
   describe "by weighings" do
     def weighings(*pairs) = pairs.map { |gross, sacks| { gross_weight: gross, sacks: } }
 
@@ -74,7 +86,8 @@ RSpec.describe Purchase do
 
   it "requires the inputs of its coffee state, in Spanish" do
     expect(build(:purchase, coffee_state: "cherry", yield_factor: nil).tap(&:valid?).errors.full_messages).to include("Rendimiento no es un número")
-    expect(build(:purchase, damage_percent: nil).tap(&:valid?).errors.full_messages).to include("Daño (%) no es un número")
+    expect(build(:purchase, humidity_percent: nil).tap(&:valid?).errors.full_messages).to include("Humedad (%) no es un número")
+    expect(build(:purchase, damage_percent: -1).tap(&:valid?).errors.full_messages).to include("Daño (%) debe ser mayor o igual que 0")
     expect(build(:purchase, coffee_state: "cherry", yield_factor: 1.5)).not_to be_valid
   end
 

@@ -31,7 +31,9 @@ module TradingHelper
     values.map { |value| [ model_class.human_attribute_name("#{attribute}/#{value}"), value ] }
   end
 
+  PAYMENT_STATUS_BADGES = { "paid" => "badge-success", "partial" => "badge-warning", "pending" => "badge-danger" }.freeze
+
   def payment_status_badge(invoice)
-    tag.span(invoice.human_payment_status, class: "badge #{invoice.paid? ? "badge-success" : "badge-danger"}")
+    tag.span(invoice.human_payment_status, class: "badge #{PAYMENT_STATUS_BADGES.fetch(invoice.payment_status)}")
   end
 end

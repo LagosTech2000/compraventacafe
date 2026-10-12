@@ -80,10 +80,12 @@ RSpec.describe "Error handling" do
     ActionController::Base.allow_forgery_protection = false
   end
 
-  it "lets the user dismiss alerts" do
+  it "shows alerts as toasts the user closes, which do not go away by themselves" do
     get administration_person_path(id: 0)
     follow_redirect!
-    expect(response.body).to include('data-action="dismissible#dismiss"')
+    toast = Nokogiri::HTML(response.body).at_css(".toast-region .toast-alert[role=alert]")
+    expect(toast["data-toast-timeout-value"]).to eq("0")
+    expect(toast.at_css("button[data-action='toast#dismiss']")).to be_present
   end
 end
 

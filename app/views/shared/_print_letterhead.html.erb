@@ -1,0 +1,22 @@
+<%# The same letterhead on every printed document: the business (logo,
+    name, location) on the left; what the document is on the right.
+      title:    "Factura", "Recibo de pago"…
+      number:   its number, when it has one
+      label:    ORIGINAL / COPIA
+      subtitle: one more line (the payroll and farm, a date…)
+      badge:    a status shown under it (payment status…) %>
+<header class="flex items-start justify-between gap-4 border-b-2 border-ink pb-3">
+  <div class="flex min-w-0 items-center gap-3">
+    <%= business_logo(:print) %>
+    <div class="min-w-0">
+      <p class="text-lg leading-tight font-bold"><%= business_name %></p>
+      <% if business_location.present? %><p class="text-xs text-ink-muted"><%= business_location %></p><% end %>
+    </div>
+  </div>
+  <div class="shrink-0 text-right">
+    <% if local_assigns[:label] %><p class="text-[0.65rem] font-bold tracking-[0.2em]"><%= label %></p><% end %>
+    <p class="text-lg leading-tight font-bold"><%= title %><% if local_assigns[:number] %> <span class="tabular-nums"><%= number %></span><% end %></p>
+    <% if local_assigns[:subtitle] %><p class="text-sm"><%= subtitle %></p><% end %>
+    <% if local_assigns[:badge] %><p class="mt-1 text-sm"><%= badge %></p><% end %>
+  </div>
+</header>

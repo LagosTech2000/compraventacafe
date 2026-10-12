@@ -50,7 +50,7 @@ El doc técnico etiqueta cada afirmación: `[CONFIRMADO]` (decidido por el dueñ
 | CSS | Tailwind (`tailwindcss-rails`, binario standalone, sin Node) |
 | Autorización | Pundit |
 | Autenticación | Generador nativo de Rails 8. **No Devise.** |
-| Tests | RSpec (`rspec-rails`), `factory_bot_rails`, `pundit-matchers` |
+| Tests | RSpec (`rspec-rails`), `factory_bot_rails`, `pundit-matchers`; system specs con Capybara + Cuprite (Chrome sin ventana) |
 | Tareas en segundo plano | Ninguna en la fundación. Sin Solid Queue/Cache/Cable. |
 | Gráficos | Chart.js 4.4.7, build UMD oficial en `vendor/javascript/chart.umd.min.js` (importmap, sin Node) |
 | Hosting | Render, plan de pago |
@@ -75,6 +75,8 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Préstamos | `loans` |
 | Reportería | `reports` |
 | Productor / carrero / finca propia | `Producer` (`kind`: `producer` / `intermediary` / `own_farm`) |
+| Clave del IHCAFE (Instituto Hondureño del Café) | `Producer#ihcafe_code` |
+| Ficha / resumen del productor | `ProducerProfile` |
 | Zona | `Zone` |
 | Compra (pesada) | `Purchase` |
 | Uva / pergamino húmedo / pergamino seco | `cherry` / `wet_parchment` / `dry_parchment` |
@@ -83,7 +85,8 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Temporada | `Season` (`season_year` en la compra) |
 | Compra anulada | `voided` (`voided_at`, `voided_by`) |
 | Factura (recibo al productor) | `Invoice` |
-| Cancelada / pendiente de pago (PXP) | `paid` / `pending` |
+| Cancelada / pago parcial / pendiente de pago (PXP) | `paid` / `partial` / `pending` (`Invoice::PAYMENT_STATUSES`; filtro `unpaid` = pendiente o parcial) |
+| Abono a factura (pago al productor) / recibo de pago | `InvoicePayment` / `trading/invoice_payments#show` |
 | Cierre diario | `DailyClose` |
 | Préstamo / abono | `Loan` / `LoanPayment` |
 | Insumo / insumo del préstamo | `Supply` / `LoanSupply` |
@@ -151,7 +154,7 @@ cuando su módulo lo pida.
 relación entre ambas.
 
 Campos de `Person` [CONFIRMADO]: `first_names` (Nombres), `last_names`
-(Apellidos), `dni`, `rtn`, `phone`, `email` y dirección (`Addressable`). Solo los nombres y
+(Apellidos), `dni`, `rtn`, `phone`, `email` y dirección (`HasAddress`). Solo los nombres y
 apellidos son obligatorios. El resto se agrega con migraciones cuando cada
 módulo lo pida.
 
@@ -185,6 +188,7 @@ mensaje. Reglas actuales:
 | Nombres / apellidos | Letras, espacios, `'`, `.`, `-` | Sin espacios repetidos |
 | DNI | 13 dígitos | Solo dígitos (se aceptan guiones y espacios) |
 | RTN | 14 dígitos | Solo dígitos |
+| Clave IHCAFE | `XX-XX-XXXXX`, letras o números (9 + 2 guiones) | En mayúsculas y con guiones (se acepta sin guiones o con espacios) |
 | Teléfono | 8 dígitos, `+504` opcional | Solo los 8 dígitos; se muestra `9999-0000` con `format_phone` |
 | Correo | Formato de correo | En minúsculas |
 | Contraseña | Mínimo 8 caracteres (máx. 72) al crearla o cambiarla; el login no la valida | Cifrada |
@@ -193,7 +197,7 @@ Un campo de confirmación usa `confirmation_attributes`: el navegador avisa si
 no coincide antes de enviar.
 
 **2. Toda dirección es departamento + municipio + dirección.** El modelo incluye
-`Addressable` (columnas `department_id`, `municipality_id`, `address_line`) y
+`HasAddress` (columnas `department_id`, `municipality_id`, `address_line`) y
 el formulario renderiza `shared/address_fields`. Sin departamento, la lista de
 municipios queda vacía y deshabilitada; al elegirlo se filtra
 (`address_controller.js`). Se muestra con `format_address`.
@@ -208,7 +212,16 @@ a "el español solo vive en `es.yml`".
 
 **3. El usuario nunca ve una pantalla de error del servidor.** `ErrorHandling`
 (incluido en `ApplicationController`) convierte cada error en una alerta en
-español (`shared/_flash`, con `role="alert"` y botón para cerrarla):
+español (`shared/_flash`, con `role="alert"` y botón para cerrarla).
+Avisos y alertas salen como **toasts** abajo a la derecha, encima de la
+página (`toast_controller.js`, Fernando, 2026-10-12): entran deslizándose,
+se cierran con la ×, y un aviso se va solo a los 7 segundos (con barra de
+tiempo; se pausa con el puntero o el foco encima). Una alerta de error se
+queda hasta cerrarla, para no perder su código de referencia. Los toasts
+están **siempre encima de modales y de la guía de ayuda**, y se pueden usar
+ahí: son un popover (capa superior del navegador) que vive dentro del
+diálogo abierto de más arriba (`toast_region_controller.js`), porque un
+modal vuelve inerte lo que queda fuera de él.
 
 | Error | Qué ve el usuario |
 | --- | --- |
@@ -293,6 +306,46 @@ los errores).
   `help_guides.processes` y se ponen con
   `help_guide_button HelpGuide.process(:nombre), label: true`. Las guías solo
   describen lo que el sistema ya hace; nunca reglas de negocio abiertas.
+- **Ancho de página**: el contenido llega a `max-w-[96rem]` para
+  aprovechar monitores anchos; `form_surface_class` limita los formularios
+  cortos a `max-w-5xl` salvo que pidan otro ancho. Los formularios de
+  trabajo diario (nueva compra, facturar compras) usan todo el ancho con
+  una columna lateral fija a la derecha (`@container` + `@5xl:`), que deja
+  a la vista el cálculo o el pago y el botón de guardar. Los detalles con
+  datos al lado (pesadas, ficha del productor) usan una columna lateral en
+  `xl`/`lg`.
+- **Barra del módulo**: cada módulo tiene su `_nav` (también
+  `administration/_nav`, con lo que el usuario puede ver), que empieza con
+  `shared/module_title` (ícono + nombre). No hay encabezado grande aparte.
+- **Consultas sin recargar la página** (Fernando, 2026-10-12): filtrar,
+  ordenar una columna, agrupar, cambiar de período o de reporte y cargar
+  más **nunca recargan la página**: responden dentro de su Turbo Frame, con
+  `data-turbo-action="advance"` para que la URL (y el botón atrás) sigan la
+  consulta. `shared/filters` recibe `frame:` para apuntar al frame en vez
+  de `_top`. Las respuestas a un frame que no es modal usan el layout
+  `turbo_rails/frame` (`ModalSupport`). `frame_scroll_controller.js`
+  mantiene la posición mientras el frame se reemplaza, y lo que no cambia
+  con la consulta se conserva con `data-turbo-permanent` (los gráficos al
+  ordenar). Cada caso lleva un system spec que comprueba que el `<body>` no
+  se reemplazó. Aplica a Reportería y a las listas de Compras y Facturas;
+  es la regla para pantallas nuevas.
+- **Listas con filtros en vivo** (Compras y Facturas, Fernando, 2026-10-12):
+  `shared/filters` con `live: true` y `frame:`, dentro de un elemento con
+  `live_filter_controller.js`. Sin botón «Filtrar»: listas, fechas y
+  casillas aplican al cambiar; la búsqueda, 350 ms después de dejar de
+  escribir. El formulario queda **fuera** del frame de resultados (no se
+  pierde el foco ni lo que se escribe); dentro van `shared/filter_status`
+  (cantidad, períodos rápidos `quick_periods` y etiquetas `filter_chips`
+  con su × y «Limpiar todo»), el resumen y la tabla. Períodos y × cambian
+  campos del formulario y lo envían: el formulario es la única verdad.
+  `ListFilter#to_params` conserva un campo vaciado a propósito ("") para
+  que la página siguiente no vuelva a su valor por defecto.
+  El frame de resultados lleva **`target: "_top"`**: sus enlaces (abrir,
+  asistencia, pagar) van a la página completa, y solo la paginación
+  (`shared/pagination` con `frame:`) y las etiquetas apuntan al frame con
+  `data-turbo-frame`. Sin eso, un enlace a otra página da «Content missing».
+- **Filtros**: los campos se acomodan por ancho (`auto-fill`, mínimo
+  12rem) y el botón «Filtrar» va en la misma fila cuando cabe.
 - **Listas desplegables**: nunca con la primera opción en blanco. Campo
   opcional: "Sin … asignado" (`shared.select.*`). Campo obligatorio: "Selecciona
   …". Filtro: "Todos".
@@ -304,6 +357,7 @@ sudo service postgresql start   # si systemd no está activo en WSL
 bin/dev                         # servidor + Tailwind en watch
 bundle exec rspec               # suite completa
 bundle exec rspec spec/policies # solo políticas
+bundle exec rspec spec/system   # pantallas con JavaScript (requiere Google Chrome en WSL)
 bin/rails db:migrate
 bin/rails db:seed               # requiere ADMIN_NAME, ADMIN_EMAIL y ADMIN_PASSWORD
 bin/rails demo:seed             # datos ficticios para la demo (no en producción)
@@ -311,6 +365,14 @@ bin/rails demo:reports          # un año ficticio de operación (sep 2025 a hoy
 bin/rubocop
 bin/brakeman --no-pager
 ```
+
+**Todo cambio lleva specs** (Fernando, 2026-10-12). Lo que pasa en pantalla
+con JavaScript (controladores Stimulus) se prueba con un system spec en
+`spec/system/` (`type: :system`, `sign_in_as(user)`, ver
+`spec/support/system.rb`), incluidos casos como vaciar un campo. Chrome se
+instala una vez en WSL; `BROWSER_PATH` apunta a otro si hace falta. El
+concern de direcciones se llama `HasAddress` porque `Addressable` es una gema
+que trae Capybara.
 
 El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 `ADMIN_EMAIL` y `ADMIN_PASSWORD` del entorno. Nunca se escriben credenciales en el repo.
@@ -333,11 +395,23 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
   tablas, detalles y filtros); `data-table`, `data-card`, `cell-actions`;
   `field-label`, `field-input`; `badge` + `badge-success` / `badge-danger` /
   `badge-neutral`; `empty-state`; `link`; `flash-notice` / `flash-alert`;
-  `modal`. Los formularios de página completa usan `form_surface_class`.
+  `modal`; `toast` (avisos flotantes, en `shared/_flash`). Los mensajes
+  dentro de la página (errores del formulario, avisos de contexto) siguen
+  con `flash-notice` / `flash-alert`. Los formularios de página completa
+  usan `form_surface_class`.
 - Íconos: `icon(:nombre)` (`IconsHelper`), decorativos y ocultos a lectores
   de pantalla; el texto al lado lleva el significado.
 - Impresión: `print:` oculta lo interactivo y las tablas se compactan en
-  papel; la factura cabe con original y copia en una hoja.
+  papel; la factura cabe con original y copia en una hoja. **Todo impreso
+  empieza con `shared/_print_letterhead`** (logo, nombre y ubicación del
+  negocio; a la derecha qué documento es, número, ORIGINAL/COPIA y estado):
+  facturas, recibos de pago y de abono, planilla de pago, cierre diario,
+  estado de cuenta y reportes. Reglas globales en `@media print`
+  (`application.css`): nunca se imprimen botones, ayuda, etiquetas, toasts
+  ni la barra de guardar; tarjetas y paneles planos con línea fina; las
+  insignias llevan borde (se leen aunque el navegador no imprima fondos);
+  `print-exact` conserva los colores del logo. Un spec revisa el
+  encabezado en cada impreso (`spec/requests/printables_spec.rb`).
 - `raise_on_missing_translations` está activo en desarrollo y test: una clave
   que falte en `es.yml` rompe la página o el spec.
 - El nombre del negocio, su ubicación y su logo se configuran en
@@ -360,6 +434,16 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 | `loans` | Préstamos en efectivo, insumos o mixtos a cualquier persona con interés simple, catálogo de insumos, abonos (también con café desde una compra o descontados en planilla) con recibo imprimible, estados de cuenta con historial crediticio y score de pago |
 | `reports` | Una pantalla para todos los reportes del sistema (compras, facturas, productores, préstamos, abonos, insumos, planillas, pagos por empleado, latas, gastos, personas y entradas/salidas de dinero) con filtros, cifras comparadas, gráficos, tabla con carga continua, reportes sugeridos, filtros guardados por usuario y exportación CSV |
 
+**Inicio** (`Dashboard`, `dashboard/show`): centro de operaciones con
+saludo, propósito, fecha y temporada; acciones frecuentes (solo las que el
+usuario puede hacer en módulos que puede ver); resumen de operaciones
+(compras de hoy, QQ de la temporada, préstamos por cobrar, fincas activas y
+pendientes); tareas pendientes, solo si existen (compras sin facturar,
+facturas sin cancelar, préstamos vencidos, períodos por pagar, empleados
+de planillas por día sin salario); actividad reciente de los módulos que
+ve, con enlace; y sus módulos. Todo sale de los datos y scopes existentes;
+nada se estima ni se inventa.
+
 Cada módulo tiene su namespace de controladores. Implementar una funcionalidad
 es llenar su carpeta, no crearla.
 
@@ -376,6 +460,11 @@ textos; la clave y el código siguen siendo `trading`.
     El daño es un porcentaje que se resta al peso neto (suele ser 2–2.5 %).
   - Uva: `(bruto − tara) × rendimiento`. No lleva humedad ni daño.
   - Quintales (QQ) = peso neto ÷ 125. Total = peso neto × precio por libra.
+  - **Restado por daño** (pergamino): `damage_weight` = (bruto − tara) ×
+    (1 − humedad%) × daño%, y `damage_amount` = esas libras × precio por
+    libra. Se guardan en la compra y se muestran en el formulario, el
+    detalle, «Facturar compras» y la factura (con totales) (Fernando,
+    2026-10-12). En uva quedan vacíos.
 - **Forma de pesar** (`Purchase#weight_mode`) [CONFIRMADO, Fernando,
   2026-10-10]: `single` (peso bruto directo; sacos = bruto ÷ 165 y tara como
   arriba) o `weighings` (por pesadas, `PurchaseWeighing`: peso + sacos
@@ -387,7 +476,9 @@ textos; la clave y el código siguen siendo `trading`.
   si la regla cambia. `purchase_calculator_controller.js` lo replica solo
   como vista previa; el servidor manda.
 - Valores iniciales (`PurchaseDefaults`), todos editables: humedad 51 % en
-  pergamino húmedo y 12 % en seco, daño 0 %, rendimiento 0.186 en uva. Al
+  pergamino húmedo y 12 % en seco, daño 0 %, rendimiento 0.186 en uva. El
+  daño vacío cuenta como 0 % (vista previa y servidor). Con datos
+  incompletos la vista previa sigue mostrando sacos y tara. Al
   cambiar el estado en el formulario se ponen los del nuevo estado y se
   ocultan los campos que no aplican. Al cambiar de productor, la zona pasa a
   la del nuevo productor.
@@ -407,16 +498,48 @@ textos; la clave y el código siguen siendo `trading`.
   facturación (`Purchase.active`; `uninvoiced` ya la excluye). Las listas de
   compras la muestran solo con "Mostrar anuladas". No se edita, no se borra y
   no se puede deshacer.
-- La página del productor tiene cifras fijas (QQ, compras y total de la
-  temporada, QQ de todas) y pestañas: compras (por temporada), facturas y
-  datos personales.
+- **Clave IHCAFE** del productor (`ihcafe_code`) [CONFIRMADO, Fernando,
+  2026-10-12]: `XX-XX-XXXXX`, letras o números, **opcional y única**, para
+  todos los tipos de productor. Se busca en la lista de productores.
+- La página del productor (`ProducerProfile`) tiene cifras fijas (QQ,
+  compras, total y precio promedio por libra de la temporada, QQ de todas,
+  deuda en préstamos si se ven préstamos), una columna lateral (ficha con
+  clave y datos de contacto, «Pendiente»: sin facturar y facturas por
+  pagar, y préstamos con su score) y pestañas: resumen (QQ por temporada y
+  por mes, estados del café, últimas compras), compras y facturas. El
+  precio promedio es total ÷ libras netas; no es una regla de negocio.
+- Las tablas de compras y facturas aceptan `show_producer: false` para no
+  repetir el productor en su propia página.
 - En "Facturar compras" se puede anular una compra o registrar una nueva para
   ese productor en un modal; al guardar, la lista se refresca.
 - Una factura agrupa compras sin facturar **del mismo productor**
   (`InvoiceIssuer`, con bloqueo de filas). Número correlativo con bloqueo
   consultivo (`Invoice::NUMBERING_LOCK_KEY`), mostrado con 4 dígitos.
 - Una compra facturada **no se edita ni se borra** (`PurchasePolicy`). Una
-  factura no se borra; solo pasa de pendiente a cancelada.
+  factura no se borra ni se edita.
+- **Pago de facturas por abonos** [CONFIRMADO, Fernando, 2026-10-12, por
+  observación del cliente: «parte en efectivo y otra pendiente de pago»]:
+  una factura se paga con uno o más abonos (`InvoicePayment`: monto, fecha,
+  forma de pago, quién registró), cada uno con su recibo imprimible
+  (original y copia). Sin abonos está **pendiente**, con abonos que no
+  cubren el total a pagar está en **pago parcial** y al cubrirlo pasa a
+  **cancelada** (`Invoice#refresh_payment_status!`, que también guarda la
+  fecha de pago y la forma: vacía si se usaron varias, «Varias formas»).
+  Al facturar se elige pendiente, cancelada o pago parcial con el monto
+  pagado (`InvoiceIssuer`, todo o nada). Registrar un abono pide editar en
+  `trading`; quitarlo, borrar (`InvoicePaymentPolicy`). Las facturas
+  canceladas de antes se migraron a un abono por su total. Decisiones de
+  implementación, **pendientes de confirmar**: un abono no pasa del saldo
+  ni va antes de la fecha de la factura o del último abono; solo se quita el
+  último; el pago con café de una compra facturada solo toma lo que la
+  factura todavía debe (`Purchase#available_for_loans`).
+- **Cierre diario por productor** [CONFIRMADO, Fernando, 2026-10-12, por
+  observación del cliente: «detallar a diario la compra de café de cada
+  productor»]: el cierre diario tiene la sección «Por productor»
+  (`DailyClose#by_producer`): lo que vendió cada uno ese día, el que más
+  vendió primero, con su dinero en facturas canceladas, sin cancelar y sin
+  facturar, desplegable con sus compras; también en el impreso. En
+  Reportería, el sugerido «Compras de hoy por productor».
 - **Ciclo de vida guiado** (`TradingLifecycle`): compra registrada →
   facturada → cancelada (pagada), como el flujo que describe el cliente. El
   parcial `trading/_lifecycle` muestra los pasos y el botón del siguiente paso
@@ -534,7 +657,22 @@ Reglas decididas por Fernando el 2026-10-10 [CONFIRMADO]:
 - **Gastos** por planilla con fecha, categoría (catálogo `ExpenseCategory`,
   se desactiva, no se borra), descripción y monto. Costo total de la
   planilla = pagado (bruto) + gastos.
-- El Resumen del módulo muestra los períodos terminados sin pagar.
+- El Resumen del módulo muestra los períodos terminados sin pagar y una
+  tarjeta por planilla activa o por iniciar (período de hoy, día de pago,
+  lo que lleva, empleados y «Asistencia/Latas de hoy»), la que se paga
+  primero arriba.
+- **Asistencia en pantalla** (Fernando pidió Fincas más moderna e
+  intuitiva, 2026-10-12): cada día es un botón que se toca para pasar de —
+  a 1 y a ½ (`day-toggle`, `timesheet_controller.js`; el campo oculto es lo
+  que se envía). «Todos» llena un día y «Todo el período» a una persona.
+  Se guarda con una barra fija abajo que avisa los cambios sin guardar y
+  pregunta antes de salir (`unsaved_changes_controller.js`). El detalle de
+  la planilla muestra arriba el período de hoy y filtra los períodos con
+  etiquetas de estado (frame `periods-list`); las listas de planillas usan
+  filtros en vivo (`farms/payrolls/_live_list`), igual que la pestaña
+  Empleados. «Pagar período» deja fecha, totales y botón en una columna
+  fija a la derecha. Las tareas eligen a sus participantes con tarjetas
+  marcables, «Todos / Ninguno» y cuántas personas van.
 
 ### Reportería (`reports`)
 
@@ -566,6 +704,13 @@ sistema ya guarda**; no agregan reglas de negocio.
   «Este mes» siempre es el mes en curso.
 - **Agrupar por** (día, semana, mes, productor, zona, estado, finca…)
   convierte la tabla en sumas por grupo. Los encabezados ordenan.
+- **Todo dentro del frame `report`** (`reports/reports#show`): elegir
+  reporte, sugerido o «Mis filtros» (`navigate_select_controller.js` con
+  `frame`), filtros, orden y agrupar navegan solo ese frame. El título de
+  la pestaña lo pone `document_title_controller.js`. La página lleva
+  `turbo-cache-control: no-cache` para que atrás/adelante pidan la consulta
+  al servidor. Los gráficos van en un contenedor permanente cuyo id depende
+  de los filtros sin el orden: ordenar no los recarga.
 - **Tabla con carga continua**: 50 filas por página; la siguiente llega como
   turbo stream cuando el botón «Cargar más» se acerca a la pantalla
   (`infinite_scroll_controller.js`). Los gráficos cargan aparte, en su
@@ -583,8 +728,8 @@ sistema ya guarda**; no agregan reglas de negocio.
   productores que dejaron de vender…).
 - **Exportar**: CSV con todas las filas filtradas (hasta 50,000), con BOM
   para que Excel lea los acentos.
-- **Entradas y salidas de dinero**: salen facturas canceladas (total menos
-  abonos con café), préstamos en efectivo (los insumos no son dinero),
+- **Entradas y salidas de dinero**: salen los abonos a facturas (cada uno
+  en su fecha), préstamos en efectivo (los insumos no son dinero),
   planillas (lo entregado) y gastos; entran los abonos en efectivo,
   transferencia o cheque (con café o por planilla no se mueve dinero). Las
   ventas de café todavía no existen en el sistema.
@@ -601,6 +746,7 @@ sistema ya guarda**; no agregan reglas de negocio.
 | Reportes por temporada (qué muestran) | El reporte de temporada que pida el cliente; los reportes generales ya filtran por temporada | Cliente |
 | Préstamos: recargo por mora | Mora | Cliente |
 | Pago con café: confirmar las reglas propuestas (ver Préstamos) | Ajustes al abono con compra | Fernando / Cliente |
+| Abonos a factura: confirmar orden por fecha, quitar solo el último y tope del pago con café (ver Compra de café) | Ajustes a los abonos | Fernando / Cliente |
 | Inventario de insumos (existencias, costo de compra) | Control de bodega de insumos | Cliente |
 | Planillas: séptimo día, décimo, IHSS u otras deducciones o bonos | Cálculo legal de planillas | Cliente |
 | Si la factura siempre agrupa hasta 4 compras | Hoy no hay límite | Cliente |

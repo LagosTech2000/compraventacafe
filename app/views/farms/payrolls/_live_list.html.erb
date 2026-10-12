@@ -1,0 +1,32 @@
+<%# Payrolls with live filters (the payrolls page and a farm's page): they
+    apply as they change and only the results reload. farm: on a farm's page,
+    so the farm is not a filter there. %>
+<% farm = local_assigns[:farm] %>
+<div data-controller="live-filter">
+  <%= render layout: "shared/filters", locals: { filter:, url:, frame: "payrolls-list", live: true } do |form| %>
+    <%= filter_text_field form, :q, t("shared.filters.search"), value: filter.q, placeholder: Payroll.human_attribute_name(:name) %>
+    <% unless farm %>
+      <%= filter_select form, :farm_id, Payroll.human_attribute_name(:farm), Farm.ordered.pluck(:name, :id), selected: filter.farm_id,
+            all: t("farms.payrolls.index.all_farms") %>
+    <% end %>
+    <%= filter_select form, :kind, Payroll.human_attribute_name(:kind), enum_options(Payroll, :kind, Payroll::KINDS), selected: filter.kind %>
+    <%= filter_select form, :status, Payroll.human_attribute_name(:status), payroll_status_options, selected: filter.status %>
+  <% end %>
+
+  <%= turbo_frame_tag "payrolls-list", class: "query-frame block", target: "_top", data: { turbo_action: "advance", controller: "frame-scroll" } do %>
+    <%= render "shared/filter_status", filter:, count: t("farms.payrolls.index.count", count:),
+          chips: filter_chips(filter,
+                              q: ->(text) { t("farms.payrolls.index.chips.q", text:) },
+                              farm_id: ->(id) { Farm.find_by(id:)&.name },
+                              kind: ->(kind) { Payroll.human_attribute_name("kind/#{kind}") },
+                              status: ->(status) { status ? payroll_status_options.to_h.invert[status] : t("farms.payrolls.index.chips.any_status") }) %>
+    <div class="mt-4">
+      <% if payrolls.any? %>
+        <%= render "farms/payrolls/table", payrolls: %>
+        <%= render "shared/pagination", filter:, next_page:, frame: "payrolls-list" %>
+      <% else %>
+        <p class="empty-state"><%= empty %></p>
+      <% end %>
+    </div>
+  <% end %>
+</div>
