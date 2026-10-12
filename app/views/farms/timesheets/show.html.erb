@@ -22,18 +22,21 @@
   <% end %>
 </div>
 
-<%# Period: previous / next, or any of them from the list. %>
-<div class="panel mt-6 flex flex-wrap items-end gap-3 p-4">
+<%# Period: previous / next, any of them from the list, or back to today's. %>
+<% today_period = @payroll.period_containing(today) %>
+<div class="panel mt-6 flex flex-wrap items-center gap-2 p-3">
   <% if index && index.positive? %>
     <%= link_to t(".previous"), farms_payroll_timesheet_path(@payroll, period: periods[index - 1].to_param), class: "btn btn-sm" %>
   <% end %>
-  <%= form_with url: farms_payroll_timesheet_path(@payroll), method: :get, data: { controller: "auto-submit", turbo_frame: "_top" } do |form| %>
-    <%= form.label :period, t(".period"), class: "field-label" %>
+  <%= form_with url: farms_payroll_timesheet_path(@payroll), method: :get, class: "min-w-0", data: { controller: "auto-submit", turbo_frame: "_top" } do |form| %>
     <%= form.select :period, options_for_select(periods.reverse.map { |p| [ format_period(p), p.to_param ] }, period.to_param), {},
-          class: "field-input", data: { action: "auto-submit#submit" } %>
+          aria: { label: t(".period") }, class: "field-input font-semibold", data: { action: "auto-submit#submit" } %>
   <% end %>
   <% if index && index < periods.size - 1 %>
     <%= link_to t(".next"), farms_payroll_timesheet_path(@payroll, period: periods[index + 1].to_param), class: "btn btn-sm" %>
+  <% end %>
+  <% if today_period && (today_period != period || day != today) %>
+    <%= link_to t(".today"), farms_payroll_timesheet_path(@payroll, period: today_period.to_param, day: today.iso8601), class: "btn btn-sm" %>
   <% end %>
   <span class="ml-auto"><%= period_status_badge(Payroll::PeriodRow.new(period, timesheet.payment, 0)) %></span>
 </div>
@@ -58,14 +61,20 @@
 <%= render "shared/form_errors", record: timesheet %>
 
 <% if timesheet.members.any? %>
+  <%# Saved with the bar at the bottom, always in reach while scrolling the
+      grid; it tells when there are changes not saved (unsaved_changes_controller.js). %>
   <%= form_with url: farms_payroll_timesheet_path(@payroll, period: period.to_param, day: day&.iso8601), method: :patch,
-        class: "mt-4", data: { controller: "form-validation" } do |form| %>
+        class: "mt-4", data: { controller: "form-validation unsaved-changes",
+                               action: "input->unsaved-changes#changed timesheet:changed->unsaved-changes#changed submit->unsaved-changes#saving",
+                               unsaved_changes_message_value: t(".leave_unsaved"),
+                               unsaved_changes_dirty_text_value: t(".unsaved") } do |form| %>
     <% timesheet.groups.each do |basis, members| %>
       <%= render "farms/timesheets/grid", timesheet:, basis:, members:, dates:, editable:, today:,
             heading: (t(".groups.#{basis}") if harvest) %>
     <% end %>
     <% if editable %>
-      <div class="mt-4 flex flex-wrap gap-3">
+      <div class="save-bar">
+        <p class="text-sm" data-unsaved-changes-target="status" aria-live="polite"><%= t(".saved") %></p>
         <%= form.submit t(".save"), class: "btn btn-primary" %>
       </div>
     <% end %>

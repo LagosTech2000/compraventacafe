@@ -56,4 +56,18 @@ RSpec.describe "Purchase form preview", type: :system do
     expect(page).to have_field("purchase_damage_percent", with: "0")
     expect(page).to have_css("[data-purchase-calculator-target='netWeight']", text: "486.57")
   end
+
+  it "keeps the calculation and the buttons on the right on wide screens, and below on phones" do
+    box = ->(selector) { page.evaluate_script("(() => { const r = document.querySelector(#{selector.to_json}).getBoundingClientRect(); return [r.left, r.top] })()") }
+
+    calculation_left, = box.call("aside")
+    gross_left, = box.call("#purchase_gross_weight")
+    expect(calculation_left).to be > gross_left + 400
+
+    page.driver.resize(390, 900)
+    expect(page).to have_css("aside")
+    _, calculation_top = box.call("aside")
+    _, observations_top = box.call("#purchase_observations")
+    expect(calculation_top).to be > observations_top
+  end
 end

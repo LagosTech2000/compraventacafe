@@ -1,4 +1,5 @@
 <% content_for :title, t(".title") %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
 <%= render "farms/nav" %>
 
 <div class="flex flex-wrap items-center justify-between gap-4">
@@ -8,19 +9,5 @@
   <% end %>
 </div>
 
-<%= render layout: "shared/filters", locals: { filter: @filter, url: farms_payrolls_path } do |form| %>
-  <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: Payroll.human_attribute_name(:name) %>
-  <%= filter_select form, :farm_id, Payroll.human_attribute_name(:farm), Farm.ordered.pluck(:name, :id), selected: @filter.farm_id,
-        all: t("farms.payrolls.index.all_farms") %>
-  <%= filter_select form, :kind, Payroll.human_attribute_name(:kind), enum_options(Payroll, :kind, Payroll::KINDS), selected: @filter.kind %>
-  <%= filter_select form, :status, Payroll.human_attribute_name(:status), payroll_status_options, selected: @filter.status %>
-<% end %>
-
-<div class="mt-6">
-  <% if @payrolls.any? %>
-    <%= render "table", payrolls: @payrolls %>
-    <%= render "shared/pagination", filter: @filter, next_page: @next_page %>
-  <% else %>
-    <p class="empty-state"><%= t(".empty") %></p>
-  <% end %>
-</div>
+<%= render "farms/payrolls/live_list", filter: @filter, url: farms_payrolls_path, payrolls: @payrolls, next_page: @next_page,
+      count: @count, empty: t(".empty") %>

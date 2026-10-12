@@ -1,9 +1,9 @@
 class InvoicePolicy < ApplicationPolicy
   self.module_key = "trading"
 
-  # Marking as paid is the only change an invoice accepts.
+  # An invoice is never edited: it is paid with payments (InvoicePaymentPolicy).
   def update?
-    super && !(record.is_a?(Invoice) && record.paid?)
+    false
   end
 
   def destroy?

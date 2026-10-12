@@ -1,0 +1,32 @@
+<%# The day by producer: what each one sold, with its money by payment
+    state; open a producer to see its purchases. The one who sold the most first. %>
+<section class="mt-8" aria-labelledby="daily-close-producers">
+  <h2 id="daily-close-producers" class="mb-3 text-lg font-semibold"><%= t("trading.daily_closes.by_producer.title") %></h2>
+  <div class="space-y-2">
+    <% daily_close.by_producer.each do |day| %>
+      <details class="group panel" id="<%= dom_id(day.producer, :daily_close) %>">
+        <summary class="flex cursor-pointer list-none flex-wrap items-center justify-between gap-x-6 gap-y-2 p-4">
+          <span class="flex min-w-0 items-center gap-2">
+            <span class="text-ink-muted transition group-open:rotate-90" aria-hidden="true">▸</span>
+            <span class="font-semibold"><%= day.producer.full_name %></span>
+            <span class="text-xs text-ink-muted"><%= t("trading.daily_closes.by_producer.purchases", count: day.purchases_count) %></span>
+          </span>
+          <dl class="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+            <div><dt class="text-xs text-ink-muted"><%= t("trading.summary.quintals") %></dt><dd class="font-semibold tabular-nums"><%= format_pounds(day.quintals) %></dd></div>
+            <div><dt class="text-xs text-ink-muted"><%= t("trading.summary.net_weight") %></dt><dd class="tabular-nums"><%= format_pounds(day.net_weight) %></dd></div>
+            <div><dt class="text-xs text-ink-muted"><%= t("trading.summary.total") %></dt><dd class="font-semibold tabular-nums"><%= format_money(day.total) %></dd></div>
+            <% %w[paid pending uninvoiced].each do |state| %>
+              <% amount = day.total_in(state, daily_close) %>
+              <% next if amount.zero? %>
+              <div><dt class="text-xs text-ink-muted"><%= t("trading.daily_closes.report.groups.#{state}") %></dt><dd class="tabular-nums"><%= format_money(amount) %></dd></div>
+            <% end %>
+          </dl>
+        </summary>
+        <div class="border-t border-line p-4">
+          <%= render "trading/purchases/table", purchases: day.purchases, show_producer: false %>
+          <p class="mt-3"><%= link_to t("trading.daily_closes.by_producer.see_producer"), trading_producer_path(day.producer), class: "text-sm link" %></p>
+        </div>
+      </details>
+    <% end %>
+  </div>
+</section>

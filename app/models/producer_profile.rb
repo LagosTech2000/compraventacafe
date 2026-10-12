@@ -52,7 +52,9 @@ class ProducerProfile
   def last_purchased_at = dates.last
 
   def uninvoiced = @uninvoiced ||= PurchaseSummary.new(producer.purchases.uninvoiced)
-  def pending_invoices = producer.invoices.pending
+  def unpaid_invoices = @unpaid_invoices ||= producer.invoices.unpaid.includes(:payments, purchases: :loan_payments).to_a
+  # What is left to pay on them: what they have to pay less what was paid.
+  def unpaid_balance = unpaid_invoices.sum(&:balance_due)
 
   private
     def dates

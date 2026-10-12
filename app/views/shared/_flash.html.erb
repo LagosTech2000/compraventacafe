@@ -1,16 +1,24 @@
-<%# Notices and alerts. Alerts use role="alert" so screen readers announce them.
-    They never print: they are about the screen, not the document. %>
+<%# Notices and alerts as toasts, bottom right, over the page instead of
+    pushing it down (toast_controller.js). A notice goes away by itself after
+    7 seconds (paused while the pointer or focus is on it); an alert (an
+    error, maybe with its reference code) stays until it is closed. Alerts
+    use role="alert" so screen readers announce them. They never print. The
+    region is a popover so it shows above modals (toast_region_controller.js). %>
 <% messages = { notice: notice, alert: alert }.compact_blank %>
 <% if messages.any? %>
-  <div class="mb-6 space-y-2 print:hidden">
+  <div class="toast-region print:hidden" aria-live="polite" popover="manual" data-controller="toast-region">
     <% messages.each do |kind, message| %>
-      <div id="<%= kind %>" data-controller="dismissible"
-           class="<%= kind == :alert ? "flash-alert" : "flash-notice" %> flex items-start gap-3"
-           role="<%= kind == :alert ? "alert" : "status" %>">
-        <%= icon(kind == :alert ? :alert : :check, css: "mt-0.5 size-5 shrink-0") %>
-        <p class="flex-1"><%= message %></p>
-        <button type="button" data-action="dismissible#dismiss" class="-my-1 -mr-1 shrink-0 cursor-pointer rounded-full px-2 py-1 text-lg leading-none opacity-60 transition hover:bg-black/5 hover:opacity-100"
+      <% alert = kind == :alert %>
+      <div id="<%= kind %>" class="toast <%= alert ? "toast-alert" : "toast-notice" %>" role="<%= alert ? "alert" : "status" %>"
+           data-controller="toast" data-toast-timeout-value="<%= alert ? 0 : 7000 %>"
+           data-action="mouseenter->toast#pause mouseleave->toast#resume focusin->toast#pause focusout->toast#resume">
+        <span class="toast-icon"><%= icon(alert ? :alert : :check, css: "size-5") %></span>
+        <p class="min-w-0 flex-1 pt-0.5 text-sm font-medium text-ink"><%= message %></p>
+        <button type="button" data-action="toast#dismiss" class="-mt-1 -mr-1 shrink-0 cursor-pointer rounded-full px-2 py-1 text-lg leading-none text-ink-muted transition hover:bg-black/5 hover:text-ink"
                 aria-label="<%= t("shared.flash.dismiss") %>">&times;</button>
+        <% unless alert %>
+          <span class="toast-progress" data-toast-target="progress" aria-hidden="true"></span>
+        <% end %>
       </div>
     <% end %>
   </div>

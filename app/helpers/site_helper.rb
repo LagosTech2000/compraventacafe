@@ -12,7 +12,8 @@ module SiteHelper
   # business name always goes next to it.
   LOGO_STYLES = {
     nav: [ "size-9 rounded-full", "size-5" ],
-    sign_in: [ "size-14 rounded-2xl", "size-8" ]
+    sign_in: [ "size-14 rounded-2xl", "size-8" ],
+    print: [ "size-12 rounded-xl print-exact", "size-7" ]
   }.freeze
 
   def business_logo(style = :nav)

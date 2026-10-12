@@ -21,7 +21,7 @@
       <li class="data-card flex items-center justify-between gap-3" id="<%= dom_id(category) %>">
         <div>
           <p class="font-medium"><%= category.name %></p>
-          <% unless category.active? %><span class="badge badge-neutral"><%= t("farms.statuses.inactive") %></span><% end %>
+          <% unless category.active? %><span class="badge badge-neutral"><%= t("farms.status_badges.category.inactive") %></span><% end %>
         </div>
         <% if policy(category).update? %>
           <%= modal_link_to t(".edit"), edit_farms_expense_category_path(category), class: "btn btn-sm" %>

@@ -4,16 +4,7 @@
 <%# Same widths in every group so the columns line up across the page. %>
 <% widths = %w[5% 6% 18% 11% 15% 8% 6% 8% 7% 11% 5%] %>
 <section class="hidden text-[9pt] leading-snug text-black print:block">
-  <header class="flex items-start justify-between border-b-2 border-black pb-2">
-    <div>
-      <p class="text-[13pt] font-bold"><%= business_name %></p>
-      <p><%= business_location %></p>
-    </div>
-    <div class="text-right">
-      <p class="text-[13pt] font-bold"><%= t(".title") %></p>
-      <p class="font-semibold"><%= l(daily_close.date, format: :long) %></p>
-    </div>
-  </header>
+  <%= render "shared/print_letterhead", title: t(".title"), subtitle: l(daily_close.date, format: :long) %>
 
   <table class="mt-3 w-full border-collapse">
     <tbody>
@@ -94,6 +85,39 @@
           <td></td>
         </tr>
       </tfoot>
+    </table>
+  <% end %>
+
+  <%# The day by producer, the one who sold the most first. %>
+  <% if daily_close.purchases.any? %>
+    <table class="mt-4 w-full border-collapse text-[8.5pt] break-inside-avoid">
+      <caption class="mb-1 text-left text-[10pt] font-bold"><%= t("trading.daily_closes.by_producer.title") %></caption>
+      <thead>
+        <tr class="border-y border-black text-left whitespace-nowrap">
+          <th class="py-1 pr-1"><%= t("trading.daily_closes.by_producer.producer") %></th>
+          <th class="py-1 pl-1 text-right"><%= t("trading.summary.purchases") %></th>
+          <th class="py-1 pl-1 text-right"><%= t(".columns.net_weight") %></th>
+          <th class="py-1 pl-1 text-right"><%= t("trading.summary.quintals") %></th>
+          <th class="py-1 pl-1 text-right"><%= t(".columns.total") %></th>
+          <% %w[paid pending uninvoiced].each do |state| %>
+            <th class="py-1 pl-1 text-right"><%= t(".groups.#{state}") %></th>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody>
+        <% daily_close.by_producer.each do |day| %>
+          <tr class="border-b border-gray-300 break-inside-avoid">
+            <td class="py-0.5 pr-1"><%= day.producer.full_name %></td>
+            <td class="py-0.5 pl-1 text-right tabular-nums"><%= day.purchases_count %></td>
+            <td class="whitespace-nowrap py-0.5 pl-1 text-right tabular-nums"><%= format_pounds(day.net_weight) %></td>
+            <td class="whitespace-nowrap py-0.5 pl-1 text-right tabular-nums"><%= format_pounds(day.quintals) %></td>
+            <td class="whitespace-nowrap py-0.5 pl-1 text-right tabular-nums"><%= format_money(day.total) %></td>
+            <% %w[paid pending uninvoiced].each do |state| %>
+              <td class="whitespace-nowrap py-0.5 pl-1 text-right tabular-nums"><%= format_money(day.total_in(state, daily_close)) %></td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
     </table>
   <% end %>
 

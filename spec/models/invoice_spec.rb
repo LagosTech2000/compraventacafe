@@ -50,8 +50,8 @@ RSpec.describe Invoice do
 
   it "can be marked as paid later" do
     invoice = issue([ create(:purchase, producer:) ]).invoice
-    expect(invoice.mark_paid(method: "transfer", on: Date.new(2026, 9, 27))).to be(true)
-    expect(invoice.reload).to have_attributes(payment_status: "paid", payment_method: "transfer", paid_on: Date.new(2026, 9, 27))
+    expect(invoice.mark_paid(method: "transfer", on: Time.zone.today)).to be(true)
+    expect(invoice.reload).to have_attributes(payment_status: "paid", payment_method: "transfer", paid_on: Time.zone.today)
   end
 
   it "only accepts the known payment methods" do

@@ -18,11 +18,13 @@
     <p class="empty-state"><%= t(".nothing_to_invoice") %></p>
   <% end %>
 <% else %>
-  <%= form_with model: @invoice, url: trading_invoices_path, class: form_surface_class("space-y-6"), data: { controller: "form-validation" } do |form| %>
+  <%# Wide: the payment and the button stay in a column on the right of the purchases. %>
+  <%= form_with model: @invoice, url: trading_invoices_path, class: form_surface_class("@container max-w-none"), data: { controller: "form-validation" } do |form| %>
     <%= hidden_field_tag :producer_id, @producer.id %>
     <%= render "shared/form_errors", record: @invoice %>
 
-    <section>
+    <div class="grid items-start gap-6 @5xl:grid-cols-[minmax(0,1fr)_20rem]">
+    <section class="min-w-0">
       <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
         <h2 class="text-lg font-semibold"><%= t(".pick_purchases", producer: @producer.full_name) %></h2>
         <% if policy(Purchase).create? %>
@@ -92,25 +94,39 @@
       <% end %>
     </section>
 
-    <fieldset class="grid gap-5 sm:grid-cols-3">
+    <%# Paid on the spot in full, in part (with the amount) or later. The
+        fields that do not apply hide (invoice_payment_choice_controller.js). %>
+    <aside class="space-y-5 @5xl:sticky @5xl:top-24">
+    <fieldset class="grid gap-5 @xl:grid-cols-2 @5xl:grid-cols-1" data-controller="invoice-payment-choice">
       <legend class="mb-3 text-lg font-semibold"><%= t(".payment") %></legend>
       <div>
         <%= form.label :payment_status, class: "field-label" %>
-        <%= form.select :payment_status, enum_options(Invoice, :payment_status, Invoice::PAYMENT_STATUSES), {}, required: true, class: "field-input" %>
+        <%= form.select :payment_status, enum_options(Invoice, :payment_status, InvoiceIssuer::PAYMENT_CHOICES), {}, required: true, class: "field-input",
+              data: { invoice_payment_choice_target: "status", action: "invoice-payment-choice#update" } %>
       </div>
-      <div>
+      <div data-invoice-payment-choice-target="partialField">
+        <%= label_tag "invoice_amount", t(".amount"), class: "field-label" %>
+        <%= number_field_tag "invoice[amount]", params.dig(:invoice, :amount), id: "invoice_amount", min: 0.01, step: 0.01, inputmode: "decimal",
+              class: "field-input", data: { missing_message: "#{t(".amount")} #{t("errors.messages.blank")}" } %>
+        <p class="mt-1 text-xs text-ink-muted"><%= t(".amount_help") %></p>
+      </div>
+      <div data-invoice-payment-choice-target="paidField">
         <%= form.label :payment_method, class: "field-label" %>
-        <%= form.select :payment_method, enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS), { include_blank: t("shared.select.payment_method_later") }, class: "field-input" %>
+        <%= form.select :payment_method, enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS),
+              { include_blank: t("shared.select.pick_payment_method") }, class: "field-input",
+              data: { missing_message: "#{Invoice.human_attribute_name(:payment_method)} #{t("errors.messages.blank")}" } %>
       </div>
-      <div>
+      <div data-invoice-payment-choice-target="paidField">
         <%= form.label :paid_on, class: "field-label" %>
-        <%= form.date_field :paid_on, class: "field-input" %>
+        <%= form.date_field :paid_on, value: params.dig(:invoice, :paid_on) || Time.zone.today, class: "field-input" %>
       </div>
     </fieldset>
 
     <div class="flex flex-wrap gap-3">
       <%= form.submit t(".submit"), class: "btn btn-primary" %>
       <%= cancel_button new_trading_invoice_path %>
+    </div>
+    </aside>
     </div>
   <% end %>
 

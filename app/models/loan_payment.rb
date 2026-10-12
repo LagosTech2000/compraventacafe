@@ -36,6 +36,9 @@ class LoanPayment < ApplicationRecord
   before_validation :split, on: :create
   after_create :settle_loan
   after_destroy :reopen_loan
+  # Paid with coffee: what the purchase's invoice has to pay changed.
+  after_create :refresh_invoice, if: :purchase_id
+  after_destroy :refresh_invoice, if: :purchase_id
 
   scope :chronological, -> { order(:paid_on, :id) }
   scope :newest_first, -> { order(paid_on: :desc, id: :desc) }
@@ -132,5 +135,9 @@ class LoanPayment < ApplicationRecord
 
     def reopen_loan
       loan.update!(paid_off_on: nil) if loan.paid_off?
+    end
+
+    def refresh_invoice
+      Purchase.find_by(id: purchase_id)&.invoice&.refresh_payment_status!
     end
 end

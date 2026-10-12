@@ -11,8 +11,8 @@ import "chart.js"
 // money, quintals, pounds, percent, integer or number.
 const PALETTE = ["#6f4128", "#c8873a", "#2f6690", "#4d908e", "#8c5e9e", "#e9c46a", "#b08968", "#3a5a40", "#9c6644", "#7f8c8d"]
 // Colors with a meaning (options.tones: { label: "danger" }): late or
-// pending in red, paid or on time in green.
-const TONES = { danger: "#b42318", success: "#17774a", muted: "#b9aca3" }
+// pending in red, partly paid in amber, paid or on time in green.
+const TONES = { danger: "#b42318", warning: "#c8873a", success: "#17774a", muted: "#b9aca3" }
 // One color per label on the whole page, so "Pergamino seco" or a farm look
 // the same in every chart.
 const assigned = new Map()

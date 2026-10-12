@@ -1,0 +1,43 @@
+<% content_for :title, t(".title") %>
+<%= render "trading/nav" %>
+
+<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+<p class="mt-1 text-sm text-ink-muted"><%= t(".invoice", number: @invoice.display_number, producer: @invoice.producer.full_name) %></p>
+
+<dl class="mt-4 grid grid-cols-3 gap-3">
+  <% { amount_to_pay: @invoice.amount_to_pay, paid_total: @invoice.paid_total, balance_due: @invoice.balance_due }.each do |key, value| %>
+    <div class="stat">
+      <dt><%= t(".#{key}") %></dt>
+      <dd><%= format_money(value) %></dd>
+    </div>
+  <% end %>
+</dl>
+
+<%= form_with model: @payment, url: trading_invoice_payments_path(@invoice), class: form_surface_class("mt-6 space-y-6"),
+      data: { controller: "form-validation" } do |form| %>
+  <%= render "shared/form_errors", record: @payment %>
+
+  <div class="grid gap-5 sm:grid-cols-3">
+    <div>
+      <%= form.label :amount, class: "field-label" %>
+      <%= form.number_field :amount, required: true, min: 0.01, max: @invoice.balance_due, step: 0.01, inputmode: "decimal",
+            autofocus: true, class: "field-input text-lg" %>
+      <p class="mt-1 text-xs text-ink-muted"><%= t(".amount_help") %></p>
+    </div>
+    <div>
+      <%= form.label :payment_method, class: "field-label" %>
+      <%= form.select :payment_method, enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS),
+            { include_blank: t("shared.select.pick_payment_method") }, required: true, class: "field-input",
+            data: { missing_message: "#{InvoicePayment.human_attribute_name(:payment_method)} #{t("errors.messages.blank")}" } %>
+    </div>
+    <div>
+      <%= form.label :paid_on, class: "field-label" %>
+      <%= form.date_field :paid_on, required: true, min: @invoice.issued_on, class: "field-input" %>
+    </div>
+  </div>
+
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit t(".submit"), class: "btn btn-primary" %>
+    <%= cancel_button trading_invoice_path(@invoice) %>
+  </div>
+<% end %>

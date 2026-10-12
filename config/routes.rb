@@ -28,7 +28,10 @@ Rails.application.routes.draw do
       # Pay the producer's loans with this purchase ("pago con café").
       resource :loan_settlement, only: %i[ new create ]
     end
-    resources :invoices, only: %i[ index show new create update ]
+    resources :invoices, only: %i[ index show new create ] do
+      # Payments to the producer ("abonos"), each with its receipt.
+      resources :payments, only: %i[ new create show destroy ], controller: "invoice_payments"
+    end
     resources :producers, except: :destroy
     resources :zones, only: %i[ index new create edit update ]
     resource :daily_close, only: :show

@@ -1,0 +1,33 @@
+<%# Above a live list's results (inside its Turbo Frame, so it follows the
+    query): how many there are, quick periods and the active filters, each
+    with its × and "Limpiar todo". Buttons set fields of the filter form and
+    send it (live_filter_controller.js).
+      count:   the results' count text
+      periods: [[label, { field => value }, active?], ...]
+      chips:   [[label, [fields it resets]], ...] %>
+<% periods = local_assigns.fetch(:periods, []) %>
+<% chips = local_assigns.fetch(:chips, []) %>
+<div class="mt-4 flex flex-wrap items-center justify-between gap-3 print:hidden">
+  <% if periods.any? %>
+    <div class="flex flex-wrap gap-1.5" role="group" aria-label="<%= t("shared.filters.periods") %>">
+      <% periods.each do |label, values, active| %>
+        <button type="button" class="chip <%= "chip-active" if active %>" aria-pressed="<%= active %>"
+                data-action="live-filter#apply" data-live-filter-values-param="<%= values.to_json %>"><%= label %></button>
+      <% end %>
+    </div>
+  <% end %>
+  <p class="text-sm text-ink-muted" aria-live="polite"><%= count %></p>
+</div>
+<% if chips.any? %>
+  <div class="mt-3 flex flex-wrap items-center gap-2 print:hidden" aria-label="<%= t("shared.filters.active_label") %>">
+    <% chips.each do |label, fields| %>
+      <span class="chip chip-filter">
+        <%= label %>
+        <button type="button" class="chip-remove" aria-label="<%= t("shared.filters.remove", filter: label) %>"
+                data-action="live-filter#apply" data-live-filter-values-param="<%= filter.default_values(*fields).to_json %>">&times;</button>
+      </span>
+    <% end %>
+    <button type="button" class="text-sm link" data-action="live-filter#apply"
+            data-live-filter-values-param="<%= filter.default_values.to_json %>"><%= t("shared.filters.clear_all") %></button>
+  </div>
+<% end %>

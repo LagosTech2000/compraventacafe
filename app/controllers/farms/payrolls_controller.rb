@@ -6,6 +6,7 @@ module Farms
       authorize Payroll
       @filter = PayrollFilter.new(params)
       @payrolls, @next_page = @filter.results(policy_scope(Payroll))
+      @count = @filter.apply(policy_scope(Payroll)).unscope(:order, :includes).count
     end
 
     TABS = %w[periods members tasks expenses].freeze
@@ -19,10 +20,15 @@ module Farms
       case @tab
       when "periods"
         @filter = PayrollPeriodFilter.new(params)
-        @rows, @next_page = @filter.results(@payroll.period_rows)
+        all_rows = @payroll.period_rows
+        @rows, @next_page = @filter.results(all_rows)
+        # Today's period stands out on top; each status shows how many it has.
+        @current_row = all_rows.find { |row| row.period.include?(Time.zone.today) }
+        @status_counts = PayrollPeriodFilter::STATUSES.index_with { |status| PayrollPeriodFilter.new(status:).apply(all_rows).size }
       when "members"
         @filter = PayrollMemberFilter.new(params)
         @members, @next_page = @filter.results(@payroll.members)
+        @members_count = @filter.apply(@payroll.members).size
       when "tasks"
         @filter = PayrollTaskFilter.new(params)
         @tasks, @next_page = @filter.results(@payroll.tasks)

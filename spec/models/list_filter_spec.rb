@@ -79,4 +79,22 @@ RSpec.describe ListFilter do
     create(:zone, name: "Buenas Noches")
     expect(ZoneFilter.new(params(q: "noches")).apply(Zone.all).map(&:name)).to eq([ "Buenas Noches" ])
   end
+
+  describe "for links and the active filters" do
+    def purchases(**params) = PurchaseFilter.new(ActionController::Parameters.new(params))
+
+    it "keeps a field cleared on purpose, so the next page does not go back to its default" do
+      cleared = purchases(from: "", to: "", zone_id: "")
+      expect(cleared.to_params).to eq("from" => "", "to" => "")
+      expect(purchases(**cleared.to_params.symbolize_keys)).to have_attributes(from: nil, to: nil)
+      expect(purchases.to_params).to eq("from" => Time.zone.today.iso8601, "to" => Time.zone.today.iso8601)
+    end
+
+    it "lists what changed from the defaults and puts fields back to them" do
+      filter = purchases(zone_id: "3", invoiced: "no", from: "")
+      expect(filter.active_fields).to eq(%i[from zone_id invoiced])
+      expect(filter.params_without(:zone_id)).not_to include("zone_id")
+      expect(filter.default_values(:from, :zone_id)).to eq("from" => Time.zone.today.iso8601, "zone_id" => "")
+    end
+  end
 end

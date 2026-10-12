@@ -35,15 +35,34 @@ RSpec.describe "Trading policies" do
   end
 
   describe InvoicePolicy do
-    it "allows marking a pending invoice as paid, not a paid one" do
-      invoice = create(:invoice)
-      expect(described_class.new(full, invoice)).to permit_action(:update)
-      invoice.mark_paid(method: "cash", on: Time.zone.today)
-      expect(described_class.new(full, invoice)).to forbid_action(:update)
+    it "never edits invoices: they are paid with payments" do
+      expect(described_class.new(full, create(:invoice))).to forbid_action(:update)
     end
 
     it "never deletes invoices" do
       expect(described_class.new(create(:user, :admin), create(:invoice))).to forbid_action(:destroy)
+    end
+  end
+
+  describe InvoicePaymentPolicy do
+    let(:invoice) { create(:invoice) }
+
+    def payment(amount) = invoice.payments.create!(amount:, paid_on: Time.zone.today, payment_method: "cash", created_by: full)
+
+    it "pays an invoice with editing in trading, until it is paid" do
+      expect(described_class.new(full, InvoicePayment.new(invoice:))).to permit_action(:create)
+      expect(described_class.new(trader(can_read: true, can_create: true), InvoicePayment.new(invoice:))).to forbid_action(:create)
+      invoice.mark_paid(method: "cash", on: Time.zone.today)
+      expect(described_class.new(full, InvoicePayment.new(invoice: invoice.reload))).to forbid_action(:create)
+    end
+
+    it "removes only the latest payment, with deleting in trading, and never edits one" do
+      first = payment(100)
+      last = payment(50)
+      expect(described_class.new(full, first)).to forbid_action(:destroy)
+      expect(described_class.new(full, last)).to permit_action(:destroy)
+      expect(described_class.new(trader(can_read: true, can_update: true), last)).to forbid_action(:destroy)
+      expect(described_class.new(full, last)).to forbid_action(:update)
     end
   end
 

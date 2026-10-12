@@ -13,8 +13,8 @@
          path: new_trading_purchase_path, allowed: policy(Purchase).create?, pending: false },
        { key: "invoice", count: @uninvoiced.purchases_count, amount: @uninvoiced.total,
          path: new_trading_invoice_path, allowed: policy(Invoice).create?, pending: @uninvoiced.purchases_count.positive? },
-       { key: "pay", count: @pending_invoices.count, amount: @pending_total,
-         path: trading_invoices_path(payment_status: "pending"), allowed: policy(Invoice).index?, pending: @pending_invoices.exists? },
+       { key: "pay", count: @pending_invoices.size, amount: @pending_total,
+         path: trading_invoices_path(payment_status: "unpaid"), allowed: policy(Invoice).index?, pending: @pending_invoices.any? },
        { key: "close", count: nil, amount: @daily_close.total,
          path: trading_daily_close_path, allowed: policy([ :trading, :daily_close ]).show?, pending: false }
      ].each_with_index do |step, index| %>

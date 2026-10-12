@@ -49,11 +49,36 @@ class ListFilter
 
   # True when the user changed something from the defaults.
   def active?
-    @values.any? { |name, value| value != @defaults[name] }
+    active_fields.any?
   end
 
+  # The fields the user changed from their defaults, in declaration order.
+  def active_fields
+    @values.keys.reject { |name| @values[name] == @defaults[name] }
+  end
+
+  # The query string. A field cleared on purpose (its default is not blank,
+  # like the purchases' dates that start on today) is kept as "", so links
+  # (next page, sorting) do not bring the default back.
   def to_params
-    @values.compact_blank.to_h { |name, value| [ name.to_s, value.to_s ] }
+    @values.filter_map do |name, value|
+      if value.present? then [ name.to_s, value.to_s ]
+      elsif @defaults[name].present? then [ name.to_s, "" ]
+      end
+    end.to_h
+  end
+
+  # The query string with these fields back to their defaults (an active
+  # filter's ×).
+  def params_without(*names)
+    to_params.except(*names.map(&:to_s))
+  end
+
+  # Each field's default as the form shows it ("" for none), to put a field
+  # back (live_filter_controller.js).
+  def default_values(*names)
+    names = fields.keys if names.empty?
+    names.to_h { |name| [ name.to_s, @defaults[name].to_s ] }
   end
 
   private

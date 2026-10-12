@@ -14,7 +14,8 @@ class PurchaseSummary
   def total = total_of(:total)
 
   def paid_total = total_of(:total, @purchases.joins(:invoice).where(invoices: { payment_status: "paid" }))
-  def pending_total = total_of(:total, @purchases.joins(:invoice).where(invoices: { payment_status: "pending" }))
+  # Invoiced but not fully paid yet (pending or partial).
+  def pending_total = total_of(:total, @purchases.joins(:invoice).where(invoices: { payment_status: Invoice::UNPAID_STATUSES }))
   def uninvoiced_total = total_of(:total, @purchases.uninvoiced)
 
   private

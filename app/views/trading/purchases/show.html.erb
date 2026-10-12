@@ -34,7 +34,7 @@
           <%= page_link_to t("trading.purchases.show.invoice_now"), new_trading_invoice_path(producer_id: @purchase.producer_id),
                 class: "btn btn-primary", autofocus: params[:created].present? %>
         <% end %>
-      <% elsif !@purchase.invoice.paid? && policy(@purchase.invoice).update? %>
+      <% elsif policy(InvoicePayment.new(invoice: @purchase.invoice)).create? %>
         <%= link_to t("trading.purchases.show.register_payment", number: @purchase.invoice.display_number), trading_invoice_path(@purchase.invoice), class: "btn btn-primary" %>
       <% elsif policy(@purchase.invoice).show? %>
         <%= link_to t("trading.purchases.show.view_invoice", number: @purchase.invoice.display_number), trading_invoice_path(@purchase.invoice), class: "btn" %>

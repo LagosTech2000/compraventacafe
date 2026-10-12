@@ -42,13 +42,19 @@
       <%= modal_link_to t("farms.payrolls.members.new_member"), new_farms_payroll_member_path(payroll), class: "btn btn-sm btn-primary" %>
     <% end %>
   </div>
-  <%= render layout: "shared/filters", locals: { filter: @filter, url: farms_payroll_path(payroll, tab: "members") } do |form| %>
+  <%# Filters apply as they change; only the list reloads (live_filter_controller.js). %>
+  <div data-controller="live-filter">
+  <%= render layout: "shared/filters", locals: { filter: @filter, url: farms_payroll_path(payroll, tab: "members"), frame: "members-list", live: true } do |form| %>
     <%= hidden_field_tag :tab, "members", id: nil %>
     <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("farms.payrolls.members.search_placeholder") %>
     <%= filter_select form, :status, t("farms.payrolls.members.status"),
           PayrollMemberFilter::STATUSES.map { |status| [ t("farms.statuses.#{status}"), status ] }, selected: @filter.status %>
   <% end %>
-  <div class="mt-6">
+  <%= turbo_frame_tag "members-list", class: "query-frame block", target: "_top", data: { turbo_action: "advance" } do %>
+  <%= render "shared/filter_status", filter: @filter, count: t("farms.payrolls.members.count", count: @members_count),
+        chips: filter_chips(@filter, q: ->(text) { t("farms.payrolls.members.chips.q", text:) },
+                                     status: ->(status) { status ? t("farms.statuses.#{status}") : t("farms.payrolls.members.chips.any_status") }) %>
+  <div class="mt-4">
     <% if @members.any? %>
       <div class="@container">
         <ul class="space-y-3 @2xl:hidden">
@@ -61,7 +67,7 @@
                 </div>
                 <%= render "farms/payrolls/member_actions", payroll:, member: %>
               </div>
-              <% unless member.active? %><p class="mt-2"><span class="badge badge-neutral"><%= t("farms.statuses.inactive") %></span></p><% end %>
+              <% unless member.active? %><p class="mt-2"><span class="badge badge-neutral"><%= t("farms.status_badges.member.inactive") %></span></p><% end %>
             </li>
           <% end %>
         </ul>
@@ -89,7 +95,7 @@
                       <% if member.own_wage? %><span class="badge badge-neutral ml-1"><%= t("farms.members.own_wage") %></span><% end %>
                     </td>
                   <% end %>
-                  <td><span class="badge <%= member.active? ? "badge-success" : "badge-neutral" %>"><%= t("farms.statuses.#{member.active? ? "active" : "inactive"}") %></span></td>
+                  <td><span class="badge <%= member.active? ? "badge-success" : "badge-neutral" %>"><%= t("farms.status_badges.member.#{member.active? ? "active" : "inactive"}") %></span></td>
                   <td class="cell-actions"><%= render "farms/payrolls/member_actions", payroll:, member: %></td>
                 </tr>
               <% end %>
@@ -97,9 +103,11 @@
           </table>
         </div>
       </div>
-      <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "members" } %>
+      <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "members" }, frame: "members-list" %>
     <% else %>
       <p class="empty-state"><%= t("farms.payrolls.members.empty") %></p>
     <% end %>
+  </div>
+  <% end %>
   </div>
 </section>

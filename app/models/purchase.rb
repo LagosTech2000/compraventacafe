@@ -112,8 +112,14 @@ class Purchase < ApplicationRecord
   end
 
   # Counted in the database, so payments saved a moment ago are included.
+  # Once its invoice has payments, the loans can only take what the invoice
+  # still owes: what was already paid out cannot go to a loan.
   def available_for_loans
-    total - loan_payments.sum(:amount)
+    left = total - loan_payments.sum(:amount)
+    return left unless invoice
+
+    paid = invoice.payments.sum(:amount)
+    [ left, invoice.amount_to_pay - paid ].min
   end
 
   # Its money can still go to a loan: not voided, not yet paid out, and

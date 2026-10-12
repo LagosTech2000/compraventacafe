@@ -26,7 +26,7 @@
             </div>
             <%= detail_button farms_farm_path(farm) %>
           </div>
-          <% unless farm.active? %><p class="mt-2"><span class="badge badge-neutral"><%= t("farms.statuses.inactive") %></span></p><% end %>
+          <% unless farm.active? %><p class="mt-2"><span class="badge badge-neutral"><%= t("farms.status_badges.farm.inactive") %></span></p><% end %>
         </li>
       <% end %>
     </ul>
@@ -45,7 +45,7 @@
             <tr id="<%= dom_id(farm) %>">
               <td class="font-medium"><%= farm.name %></td>
               <td><%= format_address(farm).presence || "—" %></td>
-              <td><span class="badge <%= farm.active? ? "badge-success" : "badge-neutral" %>"><%= t("farms.statuses.#{farm.active? ? "active" : "inactive"}") %></span></td>
+              <td><span class="badge <%= farm.active? ? "badge-success" : "badge-neutral" %>"><%= t("farms.status_badges.farm.#{farm.active? ? "active" : "inactive"}") %></span></td>
               <td class="cell-actions">
                 <div class="flex justify-end gap-2">
                   <%= detail_button farms_farm_path(farm) %>

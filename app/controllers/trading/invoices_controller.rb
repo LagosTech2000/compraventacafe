@@ -1,11 +1,12 @@
 module Trading
   class InvoicesController < ApplicationController
-    before_action :set_invoice, only: %i[ show update ]
+    before_action :set_invoice, only: :show
 
     def index
       authorize Invoice
       @filter = InvoiceFilter.new(params)
       @invoices, @next_page = @filter.results(policy_scope(Invoice))
+      @count = @filter.apply(policy_scope(Invoice)).unscope(:order, :includes).count
     end
 
     def show
@@ -42,30 +43,18 @@ module Trading
       end
     end
 
-    def update
-      if @invoice.mark_paid(**payment_params)
-        close_modal_with notice: t(".success"), fallback: trading_invoice_path(@invoice)
-      else
-        render :show, status: :unprocessable_content
-      end
-    end
-
     private
       def set_invoice
-        @invoice = authorize Invoice.includes(:created_by, purchases: [ :zone, :loan_payments ], producer: [ :person, :zone ]).find(params[:id])
+        @invoice = authorize Invoice.includes(:created_by, payments: :created_by, purchases: [ :zone, :loan_payments ],
+                                            producer: [ :person, :zone ]).find(params[:id])
       end
 
       def issue_params
-        permitted = params.expect(invoice: [ :payment_status, :payment_method, :paid_on, purchase_ids: [] ])
+        permitted = params.expect(invoice: [ :payment_status, :payment_method, :paid_on, :amount, purchase_ids: [] ])
         {
           purchase_ids: permitted[:purchase_ids], payment_status: permitted[:payment_status],
-          payment_method: permitted[:payment_method], paid_on: permitted[:paid_on]
+          payment_method: permitted[:payment_method], paid_on: permitted[:paid_on], amount: permitted[:amount]
         }
-      end
-
-      def payment_params
-        permitted = params.expect(invoice: [ :payment_method, :paid_on ])
-        { method: permitted[:payment_method], on: permitted[:paid_on].presence || Time.zone.today }
       end
   end
 end
