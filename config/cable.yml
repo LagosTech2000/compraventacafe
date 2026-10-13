@@ -5,5 +5,7 @@ test:
   adapter: test
 
 production:
-  # No broadcasting in the foundation, so no Redis or Solid Cable.
+  # Live updates (LiveUpdates) only say "refresh" to the pages of this one
+  # process: in-process is enough with one instance and one Puma process.
+  # More instances or workers need Solid Cable or Redis.
   adapter: async

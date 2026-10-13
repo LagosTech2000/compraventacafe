@@ -3,6 +3,8 @@
 <% trading = dashboard.can?("trading") %>
 <% loans = dashboard.can?("loans") %>
 <% farms = dashboard.can?("farms") %>
+<%# Its figures, pending work and activity update while open (LiveUpdates). %>
+<%= live_updates_from(*[ (:trading if trading), (:loans if loans) ].compact) if trading || loans %>
 
 <%# Greeting, what the platform is for and today's date. %>
 <h1 class="text-2xl font-bold sm:text-3xl"><%= t(".welcome", name: Current.user.name) %></h1>

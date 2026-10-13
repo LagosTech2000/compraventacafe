@@ -1,4 +1,6 @@
 <% content_for :title, t(".title") %>
+<%# Updates itself while open when the data changes (LiveUpdates). %>
+<%= live_updates_from :trading %>
 <%# Live list: back and forward ask the server again (the frame changed the page). %>
 <% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
 <%= render "trading/nav" %>

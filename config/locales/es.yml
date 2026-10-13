@@ -23,6 +23,9 @@ es:
       users: "Usuarios"
       sign_out: "Cerrar sesión"
 
+  live_updates:
+    "on": "En vivo"
+    "off": "Conectando…"
   shared:
     flash:
       dismiss: "Cerrar mensaje"
@@ -1908,6 +1911,7 @@ es:
       tips:
         - "Si no ves un módulo o un botón, pídele a un administrador que te dé el permiso."
         - "Si aparece un error con un código de referencia, pásale ese código a un administrador."
+        - "El Inicio y las pantallas de Compra de café y Préstamos se actualizan solas cuando otra persona registra algo: lo nuevo aparece con un brillo y las cifras que cambian dan un pulso. Abajo a la izquierda dice «En vivo». Si tienes una ventana abierta, se actualiza al cerrarla."
     processes:
       purchase_lifecycle:
         title: "Etapas de una compra"

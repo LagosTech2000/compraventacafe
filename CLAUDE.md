@@ -51,7 +51,7 @@ El doc técnico etiqueta cada afirmación: `[CONFIRMADO]` (decidido por el dueñ
 | Autorización | Pundit |
 | Autenticación | Generador nativo de Rails 8. **No Devise.** |
 | Tests | RSpec (`rspec-rails`), `factory_bot_rails`, `pundit-matchers`; system specs con Capybara + Cuprite (Chrome sin ventana) |
-| Tareas en segundo plano | Ninguna en la fundación. Sin Solid Queue/Cache/Cable. |
+| Tareas en segundo plano | Sin Solid Queue/Cache/Cable. Las actualizaciones en vivo usan Action Cable con el adaptador `async` (en el mismo proceso: una instancia, un proceso de Puma) |
 | Gráficos | Chart.js 4.4.7, build UMD oficial en `vendor/javascript/chart.umd.min.js` (importmap, sin Node) |
 | Hosting | Render, plan de pago |
 | Repositorio | `github.com/LagosTech2000/compraventacafe` |
@@ -523,6 +523,37 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 - **CI** (`.github/workflows/ci.yml`): Brakeman, bundler-audit, importmap
   audit, Rubocop y RSpec (con PostgreSQL 18 y Chrome) en cada push a
   `main`/`staging` y en cada PR; Dependabot semanal.
+
+## Actualizaciones en vivo (Fernando, 2026-10-12)
+
+- Las páginas de Inicio, Compra de café (Resumen, Compras, detalle de
+  compra, Facturas, detalle de factura, Cierre diario, Productores y su
+  detalle) y Préstamos (Resumen, Préstamos, detalle, Estados de cuenta) se
+  **actualizan solas** cuando otra persona cambia los datos. Fincas y
+  Reportería no, por ahora.
+- Cómo: el modelo incluye `LiveUpdates` y declara `live_updates :trading`
+  (o `:loans`); tras cada commit avisa «refresh» a ese canal
+  (`broadcast_refresh_later_to`, agrupa ráfagas). La página se suscribe con
+  `live_updates_from :trading` (`LiveUpdatesHelper`) y Turbo 8 vuelve a
+  pedirla y aplica solo lo que cambió (morph, conserva el scroll). Por el
+  canal no viaja ningún dato: cada usuario recibe la página con sus
+  permisos. Quien hizo el cambio no se recarga dos veces (request id).
+- Avisan: `Purchase`, `Invoice`, `InvoicePayment`, `Producer` a `trading`;
+  `Loan` a `loans`; `LoanPayment` a los dos (pago con café). Página nueva
+  en vivo = `live_updates_from`; modelo nuevo = `include LiveUpdates`.
+- `live_refresh_controller.js` (en el `<body>`): con una ventana abierta
+  (modal, guía) la actualización espera a que se cierre; conserva los
+  toasts y los `<details>` abiertos, y los atributos que un elemento marca
+  con `data-live-keep` (el morph devuelve todo a como lo manda el
+  servidor: lo que el JavaScript cambia a mano, como el `hidden` del botón
+  «Filtrar» de los filtros en vivo, se marca así); las filas nuevas (`tr`/`li`/`.data-card`
+  con id) entran con brillo y las cifras (`.stat dd`, `[data-live-value]`)
+  que cambian dan un pulso. «En vivo» abajo a la izquierda mientras la
+  conexión está abierta.
+- Action Cable autentica con la cookie de sesión y rechaza usuarios
+  inactivos (`ApplicationCable::Connection`). Adaptador `async`: con más
+  de una instancia o más workers de Puma habría que pasar a Solid Cable o
+  Redis. En test los specs de pantalla corren los jobs en línea.
 
 **Respaldo de datos** (`DataBackup`, Administración → Respaldo, solo
 administradores, Fernando 2026-10-12): descarga un `.zip` con una carpeta

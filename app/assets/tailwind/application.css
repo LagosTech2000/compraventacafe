@@ -466,6 +466,91 @@
   }
 }
 
+/* Live pages (live_refresh_controller.js): a row that arrives glows in
+   from the left and fades to normal; a figure that changed pulses once in
+   the primary color. "En vivo" sits at the bottom left while connected. */
+@keyframes live-row-in {
+  0% { opacity: 0; transform: translateY(-6px); background-color: var(--color-success-soft); box-shadow: inset 4px 0 0 var(--color-success); }
+  18% { opacity: 1; transform: none; background-color: var(--color-success-soft); box-shadow: inset 4px 0 0 var(--color-success); }
+  100% { background-color: transparent; box-shadow: inset 0 0 0 transparent; }
+}
+
+@keyframes live-cell-in {
+  0%, 18% { background-color: var(--color-success-soft); }
+  100% { background-color: var(--color-surface); }
+}
+
+@keyframes live-value {
+  0% { color: inherit; transform: scale(1); }
+  25% { color: var(--color-primary); transform: scale(1.08); text-shadow: 0 0 18px rgb(200 135 58 / 0.55); }
+  100% { color: inherit; transform: scale(1); }
+}
+
+@keyframes live-dot {
+  0% { box-shadow: 0 0 0 0 rgb(23 119 74 / 0.55); }
+  70%, 100% { box-shadow: 0 0 0 7px rgb(23 119 74 / 0); }
+}
+
+.live-new {
+  animation: live-row-in 2.6s ease-out;
+}
+
+/* Table cells carry their own background: they glow too. */
+tr.live-new > td {
+  animation: live-cell-in 2.6s ease-out;
+}
+
+.live-changed {
+  display: inline-block;
+  transform-origin: left center;
+  animation: live-value 1.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.live-indicator {
+  position: fixed;
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 20;
+}
+
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 9999px;
+  background: var(--color-surface);
+  padding: 0.3rem 0.75rem 0.3rem 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+  box-shadow: var(--shadow-clay-sm);
+}
+
+.live-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: var(--color-line);
+}
+
+.live-on {
+  display: none;
+}
+
+.live-indicator:has(turbo-cable-stream-source[connected]) .live-dot {
+  background: var(--color-success);
+  animation: live-dot 1.8s ease-out infinite;
+}
+
+.live-indicator:has(turbo-cable-stream-source[connected]) .live-on {
+  display: inline;
+  color: var(--color-success);
+}
+
+.live-indicator:has(turbo-cable-stream-source[connected]) .live-off {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

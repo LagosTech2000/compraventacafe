@@ -12,6 +12,9 @@
 # the payroll payment, not one by one.
 class LoanPayment < ApplicationRecord
   include Auditable
+  include LiveUpdates
+  # Paid with coffee, it also changes the purchase and its invoice.
+  live_updates :loans, :trading
 
   # Methods chosen by hand; "coffee" only comes from a purchase and
   # "payroll" from a payroll payment.
