@@ -1,6 +1,8 @@
 # Role of a Person: someone the business buys coffee from.
 class Producer < ApplicationRecord
   include Auditable
+  include LiveUpdates
+  live_updates :trading
 
   KINDS = %w[producer intermediary own_farm].freeze
 

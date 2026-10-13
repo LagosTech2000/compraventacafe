@@ -1,4 +1,6 @@
 <% content_for :title, AppModule.human_name("trading") %>
+<%# Updates itself while open when the data changes (LiveUpdates). %>
+<%= live_updates_from :trading %>
 
 <%= render "trading/nav" %>
 <h1 class="sr-only"><%= t("trading.nav.home") %></h1>
@@ -24,7 +26,7 @@
         <%= t(".step", number: index + 1) %>
       </p>
       <p class="mt-1 font-semibold"><%= t(".steps.#{step[:key]}.title") %></p>
-      <p class="mt-1 flex-1 text-sm text-ink-muted">
+      <p class="mt-1 flex-1 text-sm text-ink-muted" data-live-value="step-<%= step[:key] %>">
         <%= t(".steps.#{step[:key]}.status_html", count: step[:count],
               amount: step[:amount] && tag.span(format_money(step[:amount]), class: "whitespace-nowrap")) %>
       </p>

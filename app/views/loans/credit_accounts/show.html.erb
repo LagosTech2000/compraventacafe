@@ -1,5 +1,7 @@
 <% person = @account.person %>
 <% content_for :title, t(".title", name: person.full_name) %>
+<%# Updates itself while open when the data changes (LiveUpdates). %>
+<%= live_updates_from :loans %>
 <%= render "loans/nav" %>
 
 <div class="flex flex-wrap items-start justify-between gap-4 print:hidden">

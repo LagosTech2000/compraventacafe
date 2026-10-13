@@ -1,4 +1,6 @@
 <% content_for :title, t(".title") %>
+<%# Updates itself while open when the data changes (LiveUpdates). %>
+<%= live_updates_from :trading %>
 <%= render "trading/nav" %>
 
 <div class="flex flex-wrap items-start justify-between gap-4">

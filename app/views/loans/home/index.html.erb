@@ -1,4 +1,6 @@
 <% content_for :title, AppModule.human_name("loans") %>
+<%# Updates itself while open when the data changes (LiveUpdates). %>
+<%= live_updates_from :loans %>
 <%= render "loans/nav" %>
 <h1 class="sr-only"><%= t("loans.nav.home") %></h1>
 

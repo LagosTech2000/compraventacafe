@@ -1,4 +1,6 @@
 <% content_for :title, t(".title", number: @invoice.display_number) %>
+<%# Updates itself while open when the data changes (LiveUpdates). %>
+<%= live_updates_from :trading %>
 <%# Right after a payment: its receipt opens in the modal, ready to print. %>
 <% if params[:receipt].to_s.match?(/\A\d+\z/) %>
   <% content_for :modal_src, trading_invoice_payment_path(@invoice, params[:receipt]) %>

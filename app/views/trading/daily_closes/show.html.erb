@@ -1,4 +1,6 @@
 <% content_for :title, t(".title", date: l(@daily_close.date)) %>
+<%# Updates itself while open when the data changes (LiveUpdates). %>
+<%= live_updates_from :trading %>
 <%= render "trading/nav" %>
 
 <div class="print:hidden">

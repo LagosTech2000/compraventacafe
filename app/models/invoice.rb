@@ -5,6 +5,8 @@
 # the invoice from its payments (#refresh_payment_status!).
 class Invoice < ApplicationRecord
   include Auditable
+  include LiveUpdates
+  live_updates :trading
 
   PAYMENT_STATUSES = %w[pending partial paid].freeze
   UNPAID_STATUSES = %w[pending partial].freeze

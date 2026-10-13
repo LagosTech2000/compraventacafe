@@ -1,4 +1,6 @@
 <% content_for :title, t(".title") %>
+<%# Updates itself while open when the data changes (LiveUpdates). %>
+<%= live_updates_from :loans %>
 <%= render "loans/nav" %>
 
 <h1 class="text-2xl font-bold"><%= t(".title") %></h1>

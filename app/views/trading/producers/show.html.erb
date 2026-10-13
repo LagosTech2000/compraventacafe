@@ -1,4 +1,6 @@
 <% content_for :title, @producer.full_name %>
+<%# Updates itself while open when the data changes (LiveUpdates). %>
+<%= live_updates_from :trading %>
 <%= render "trading/nav" %>
 <% person = @producer.person %>
 <% season = @profile.season %>

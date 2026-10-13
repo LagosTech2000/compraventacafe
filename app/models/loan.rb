@@ -6,6 +6,8 @@
 # cash plus the value of its supply lines, and interest runs on all of it.
 class Loan < ApplicationRecord
   include Auditable
+  include LiveUpdates
+  live_updates :loans
 
   STATUSES = %w[active overdue paid_off].freeze
   KINDS = %w[cash supplies mixed].freeze
