@@ -62,6 +62,25 @@ RSpec.describe "Administration::People" do
       expect(person).to be_collaborator
     end
 
+    it "creates a producer of the kind picked, with create in Compra de café" do
+      user = user_with(can_read: true, can_create: true)
+      create(:permission, user:, module_key: "trading", can_read: true, can_create: true)
+      sign_in user
+      get new_administration_person_path
+      expect(Nokogiri::HTML(response.body).at_css("input[type=checkbox][name='person[producer_role]']")["disabled"]).to be_nil
+
+      post administration_people_path, params: { person: { first_names: "Rosa", last_names: "Díaz", client_role: "0",
+                                                           collaborator_role: "0", producer_role: "1", producer_kind: "own_farm" } }
+      expect(Person.last.producer).to have_attributes(kind: "own_farm")
+    end
+
+    it "refuses a producer role without create in Compra de café" do
+      expect {
+        post administration_people_path, params: { person: { first_names: "Rosa", last_names: "Díaz", producer_role: "1" } }
+      }.not_to change(Producer, :count)
+      expect(flash[:alert]).to eq("No tienes permiso para hacer eso.")
+    end
+
     it "rejects a duplicate DNI with a Spanish message" do
       create(:person, dni: "0704200000968")
       expect { post administration_people_path, params: valid_params }.not_to change(Person, :count)
@@ -111,11 +130,42 @@ RSpec.describe "Administration::People" do
 
     it "updates fields and removes a role" do
       person = create(:person, :client)
-      patch administration_person_path(person), params: { person: { phone: "3333-4444", client_role: "0", collaborator_role: "0" } }
+      patch administration_person_path(person), params: { person: { phone: "3333-4444", client_role: "0", collaborator_role: "1" } }
       expect(response).to redirect_to(administration_person_path(person))
       person.reload
       expect(person.phone).to eq("33334444")
       expect(person).not_to be_client
+      expect(person).to be_collaborator
+    end
+
+    it "requires at least one role" do
+      person = create(:person, :client)
+      patch administration_person_path(person), params: { person: { client_role: "0", collaborator_role: "0" } }
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("Marca al menos un rol: cliente, colaborador o productor.")
+      expect(person.reload).to be_client
+    end
+
+    it "saves the zone the person is from" do
+      person = create(:person, :client)
+      zone = create(:zone, name: "El Rosario")
+      get edit_administration_person_path(person)
+      expect(response.body).to include("Zona", "El Rosario")
+      patch administration_person_path(person), params: { person: { zone_id: zone.id, client_role: "1" } }
+      expect(person.reload.zone).to eq(zone)
+      get administration_person_path(person)
+      expect(response.body).to include("El Rosario")
+    end
+
+    it "needs to create in Compra de café to add or remove the producer role" do
+      person = create(:person, :client)
+      get edit_administration_person_path(person)
+      page = Nokogiri::HTML(response.body)
+      expect(page.at_css("input[type=checkbox][name='person[producer_role]']")["disabled"]).to eq("disabled")
+      expect(response.body).to include("requiere permiso para crear en Compra de café")
+
+      patch administration_person_path(person), params: { person: { client_role: "1", producer_role: "1" } }
+      expect(person.reload).not_to be_producer
     end
 
     it "cannot delete" do

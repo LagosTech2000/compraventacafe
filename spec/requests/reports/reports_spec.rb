@@ -8,6 +8,7 @@ RSpec.describe "Reports" do
   it "renders every report, detailed and grouped every way, with its charts, next page and CSV" do
     DemoData.new(admin).load
     Report.catalog.each do |report|
+      Rails.cache.clear # the CSV and charts limits are per minute; this walks every report at once
       get reports_report_path(report.key, period: "all")
       expect(response).to have_http_status(:ok), "#{report.key}: #{response.status}"
 

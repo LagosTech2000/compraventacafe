@@ -1,18 +1,18 @@
 <% unless modal_request? %>
 <nav class="mb-5 print:hidden" aria-label="<%= AppModule.human_name("loans") %>">
-  <div class="subnav clay flex items-center gap-1 overflow-x-auto p-1.5 ring-1 ring-line/60" data-controller="scroll-to-current">
+  <div class="subnav" data-controller="scroll-to-current">
     <%= render "shared/module_title", module_key: "loans" %>
     <%= link_to t("loans.nav.home"), loans_root_path, class: nav_link_class(loans_root_path, exact: true),
           aria: { current: (current_page?(loans_root_path) ? "page" : nil) } %>
-    <% if policy(Loan).create? %>
-      <%= link_to t("loans.nav.new_loan"), new_loans_loan_path, class: "btn btn-primary h-9 shrink-0" %>
-    <% end %>
     <% { loans: loans_loans_path, credit_accounts: loans_credit_accounts_path }.each do |key, path| %>
       <%= link_to t("loans.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>
     <% end %>
-    <span class="mx-1 h-6 w-px shrink-0 bg-line" aria-hidden="true"></span>
+    <span class="mx-1 h-6 w-px shrink-0 self-center bg-primary/20" aria-hidden="true"></span>
     <%= link_to t("loans.nav.supplies"), loans_supplies_path, class: nav_link_class(loans_supplies_path),
           aria: { current: (current_page?(loans_supplies_path) ? "page" : nil) } %>
+    <% if policy(Loan).create? %>
+      <span class="subnav-action"><%= link_to t("loans.nav.new_loan"), new_loans_loan_path, class: "btn btn-primary btn-sm" %></span>
+    <% end %>
   </div>
 </nav>
 <% end %>

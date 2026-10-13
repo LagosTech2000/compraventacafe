@@ -50,6 +50,11 @@ class Loan < ApplicationRecord
     "#{self.class.model_name.human} #{id} · #{person.full_name}"
   end
 
+  # Days from the loan's date to its due date.
+  def term_days
+    (due_on - disbursed_on).to_i if due_on && disbursed_on
+  end
+
   def paid_off?
     paid_off_on.present?
   end

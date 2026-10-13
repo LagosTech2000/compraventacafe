@@ -1,0 +1,4 @@
+<%# An alert in place of a frame's content (a limit reached while loading it). %>
+<%= turbo_frame_tag frame do %>
+  <p class="flash-alert" role="alert"><%= message %></p>
+<% end %>

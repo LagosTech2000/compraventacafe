@@ -7,7 +7,7 @@
 <% period = report.period %>
 <% previous = period.previous %>
 
-<div class="mb-4 flex items-center print:hidden"><%= render "shared/module_title", module_key: "reports", divider: false %></div>
+<div class="subnav mb-4 h-12 print:hidden"><%= render "shared/module_title", module_key: "reports", divider: false %></div>
 <%# Printed: the letterhead with the report and its period. %>
 <div class="mb-4 hidden print:block">
   <%= render "shared/print_letterhead", title: report.title, subtitle: format_report_period(period) %>

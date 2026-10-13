@@ -25,9 +25,8 @@ class DemoData
 
   private
     def producer(first, last, zone, index)
-      person = Person.find_or_create_by!(first_names: first, last_names: last)
+      person = Person.find_or_create_by!(first_names: first, last_names: last) { |new_person| new_person.zone = zone }
       Producer.find_or_create_by!(person:) do |producer|
-        producer.zone = zone
         producer.kind = index % 5 == 0 ? "intermediary" : "producer"
       end
     end

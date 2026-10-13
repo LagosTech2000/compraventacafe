@@ -1,4 +1,5 @@
-<%# Identity, contact and address of a Person. `form` builds a Person. %>
+<%# Identity, contact, zone and address of a Person. `form` builds a Person.
+    A zone created here (in a modal on top) is added and selected. %>
 <% person = form.object %>
 <div>
   <%= form.label :first_names, class: "field-label" %>
@@ -26,6 +27,15 @@
 <div>
   <%= form.label :email, class: "field-label" %>
   <%= form.email_field :email, class: "field-input", **field_format_attributes(Person, :email, :email) %>
+</div>
+
+<div data-controller="option-picker" data-action="zone:created@window->option-picker#add">
+  <%= form.label :zone_id, class: "field-label" %>
+  <%= form.collection_select :zone_id, Zone.ordered, :id, :name, { include_blank: t("shared.select.no_zone") },
+        class: "field-input", data: { option_picker_target: "select" } %>
+  <% if policy(Zone).create? %>
+    <%= modal_link_to t("shared.person_fields.new_zone"), new_trading_zone_path(picker: 1), class: "btn btn-sm mt-2" %>
+  <% end %>
 </div>
 
 <%= render "shared/address_fields", form: form %>

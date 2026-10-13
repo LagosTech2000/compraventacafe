@@ -114,6 +114,29 @@
         89
       ],
       "note": "The order comes from a column or measure the report declares in code and a direction that can only be asc or desc (ReportFilter::DIRECTIONS)."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "363f0d35e069084c3db8ed2afe315841694e2655da488641420a8161d9339c37",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/services/data_backup.rb",
+      "line": 102,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "ActiveRecord::Base.connection.select_rows(\"SELECT #{(ActiveRecord::Base.connection.columns(table).map(&:name) - SECRET_COLUMNS).map do\n ActiveRecord::Base.connection.quote_column_name(column)\n end.join(\", \")} FROM #{ActiveRecord::Base.connection.quote_table_name(table)}#{(\" ORDER BY id\" or \"\")}\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "DataBackup",
+        "method": "csv_for"
+      },
+      "user_input": "(ActiveRecord::Base.connection.columns(table).map(&:name) - SECRET_COLUMNS).map do\n ActiveRecord::Base.connection.quote_column_name(column)\n end.join(\", \")",
+      "confidence": "Medium",
+      "cwe_id": [
+        89
+      ],
+      "note": "Table and column names come from the database schema (connection.tables / columns), never from a request, and are quoted with quote_table_name / quote_column_name."
     }
   ],
   "brakeman_version": "8.1.0"

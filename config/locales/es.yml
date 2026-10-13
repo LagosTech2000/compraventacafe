@@ -31,8 +31,16 @@ es:
       close: "Cerrar"
     detail: "Detalle"
     cancel: "Cancelar"
+    person_fields:
+      new_zone: "Nueva zona"
+    person_roles:
+      legend: "Roles"
+      help: "Marca al menos uno."
+      required: "Marca al menos un rol: cliente, colaborador o productor."
+      producer_needs_permission: "Agregar o quitar el rol de productor requiere permiso para crear en Compra de café."
     select:
       no_zone: "Sin zona asignada"
+      no_farm: "Sin finca asignada"
       no_department: "Sin departamento asignado"
       no_municipality: "Sin municipio asignado"
       pick_department_first: "Primero selecciona un departamento"
@@ -336,7 +344,9 @@ es:
         title: "Editar productor"
       form:
         producer_data: "Datos de compra"
-        new_zone: "Nueva zona"
+        add_farm: "+ Agregar otra finca"
+        farm_placeholder: "Nombre de la finca"
+        farms_help: "Escribe el nombre de cada finca del productor. Si ya tiene una con ese nombre (aunque esté escrita distinto) se usa esa; si no, se crea."
         ihcafe_code_placeholder: "XX-XX-XXXXX"
         cancel: "Cancelar"
       create:
@@ -398,7 +408,11 @@ es:
         producer_placeholder: "Escribe para buscar un productor"
         producer_missing: "Selecciona un productor de la lista"
         new_producer: "¿No está? Registrar productor"
+        producer_gaps: "A este productor le faltan datos por ingresar: %{fields}."
+        complete_producer: "Completar datos"
         new_zone: "Nueva zona"
+        new_farm: "Nueva finca"
+        farm_pick_producer: "Elige primero el productor: aquí salen sus fincas."
         calculation: "Cálculo"
         cancel: "Cancelar"
         weighings_help: "Anota cada pesada con su peso y los sacos contados. El peso bruto y los sacos son la suma; la tara es 1 lb por saco contado."
@@ -633,6 +647,10 @@ es:
         supplies: "Insumos prestados"
         supplies_amount: "Valor de los insumos"
         rate: "Tasa de interés mensual"
+        term: "Plazo"
+        term_days:
+          one: "%{count} día"
+          other: "%{count} días"
         principal_owed: "Capital pendiente"
         interest_owed: "Interés acumulado a hoy"
         principal_paid: "Capital pagado"
@@ -649,6 +667,8 @@ es:
         person_missing: "Selecciona una persona de la lista"
         new_person: "¿No está? Registrar persona"
         rate_help: "Porcentaje por mes. El interés corre por día (mes de 30 días) sobre el capital pendiente."
+        term_days: "Plazo (días)"
+        term_days_help: "Escribe los días y se llena la fecha límite, o elige la fecha y aquí salen los días."
         what_is_lent: "Qué se presta"
         what_is_lent_help: "Efectivo, insumos o los dos. El capital del préstamo es la suma, y el interés corre sobre todo el capital."
         supplies: "Insumos"
@@ -908,6 +928,11 @@ es:
       edit:
         title: "Editar finca"
       form:
+        business: "Del negocio"
+        producer_placeholder: "Escribe para buscar un productor"
+        producer_missing: "Selecciona un productor de la lista o deja el campo vacío"
+        producer_help: "Déjalo vacío si es una finca del negocio."
+        owner_locked: "Ya tiene compras o planillas: su dueño ya no cambia."
         active_help: "Una finca inactiva no aparece al crear planillas; sus planillas se conservan."
       create:
         success: "Finca registrada."
@@ -1091,6 +1116,7 @@ es:
         fill_row: "Todo el período"
         fill_row_label: "Día completo todos los días para %{person}"
         cycle_hint: "Toca para cambiar: — (no vino), 1 (día completo), ½ (medio día)"
+        cans_hint: "Latas de cuarto en cuarto: 0.25, 0.50, 0.75, 1.00, 1.25…"
         no_members: "Esta planilla no tiene empleados activos."
         add_members: "Agregar empleado"
       update:
@@ -1876,7 +1902,7 @@ es:
       summary: "El sistema está dividido en módulos. Solo ves los módulos y botones para los que tienes permiso."
       steps:
         - "Entra a un módulo desde el Inicio o desde el menú de arriba (en el celular, el botón «Menú»)."
-        - "En las listas, usa «Filtros» para buscar y «Detalle» para abrir un registro en una ventana."
+        - "En las listas, usa «Filtros» para buscar y toca cualquier parte de una fila (o su botón «Detalle» o «Abrir») para abrir el registro."
         - "Los botones «Nuevo…» y «Editar» abren un formulario; al guardar, la lista se actualiza sola."
         - "Toca el botón «?» en cualquier pantalla para ver cómo se usa."
       tips:
@@ -1950,6 +1976,17 @@ es:
           tips:
             - "Si no ves ningún módulo, pídele a un administrador que te asigne permisos."
       administration:
+        backups:
+          show:
+            title: "Respaldo de datos"
+            summary: "Descarga una copia de todos los datos para guardarla fuera del servidor. Solo administradores."
+            steps:
+              - "Revisa «En este servidor»: dice si el respaldo podrá incluir la base de datos completa (base.dump)."
+              - "Toca «Descargar respaldo»: baja un .zip con una carpeta que trae base.dump, una carpeta csv/ con una tabla por archivo y LEEME.txt."
+              - "Guarda el .zip en un lugar seguro, fuera del servidor (una memoria, la nube del negocio)."
+            tips:
+              - "Los CSV se abren en Excel y no llevan contraseñas cifradas. base.dump sí trae todo: sirve para restaurar el sistema con pg_restore (los pasos vienen en LEEME.txt)."
+              - "Cada descarga queda en la auditoría como «Descargó respaldo»."
         home:
           index:
             title: "Administración"
@@ -1969,7 +2006,7 @@ es:
               - "Toca «Nueva persona» para registrar a alguien."
           show:
             title: "Detalle de la persona"
-            summary: "Datos de identidad, contacto, dirección y roles de la persona."
+            summary: "Datos de identidad, contacto, zona, dirección y roles de la persona."
             steps:
               - "Toca «Editar» para cambiar sus datos o sus roles."
               - "Toca «Borrar» para eliminarla; el sistema pide confirmación."
@@ -1981,13 +2018,16 @@ es:
             steps:
               - "Escribe nombres y apellidos."
               - "Si los tienes, agrega DNI, RTN, teléfono y correo."
+              - "Elige la zona de donde es. Si no existe, toca «Nueva zona»: se abre encima y al guardarla queda elegida."
               - "Para la dirección, elige primero el departamento; después se habilita el municipio."
-              - "Marca los roles: cliente, colaborador o ambos."
+              - "Marca sus roles: cliente, colaborador, productor o varios. Hay que marcar al menos uno. Al marcar «Productor» elige su tipo."
               - "Toca el botón de guardar."
             tips:
               - "DNI: 13 dígitos. RTN: 14 dígitos. Se pueden escribir con guiones o espacios."
               - "El DNI y el RTN no se pueden repetir entre personas."
               - "Teléfono: 8 dígitos, con o sin +504."
+              - "Agregar o quitar el rol de productor requiere permiso para crear en Compra de café. Su clave IHCAFE y sus fincas se escriben en el formulario del productor."
+              - "No se puede quitar el rol de productor a quien ya tiene compras, facturas o fincas."
         users:
           index:
             title: "Usuarios"
@@ -2028,9 +2068,9 @@ es:
         audit_events:
           index:
             title: "Auditoría"
-            summary: "Registro de todo lo que se crea, modifica o borra, y de cada inicio y cierre de sesión. No se puede modificar ni borrar."
+            summary: "Registro de todo lo que se crea, modifica o borra, de cada inicio y cierre de sesión, de cada respaldo descargado y de cada error que le salió a un usuario. No se puede modificar ni borrar."
             steps:
-              - "Usa «Filtros» para buscar por fechas, usuario, acción, entidad o texto."
+              - "Usa «Filtros» para buscar por fechas, usuario, acción, entidad o texto. Elige la acción «Error» para ver solo los errores."
               - "Toca «Detalle» para ver qué campos cambiaron, con su valor antes y después."
             tips:
               - "Las contraseñas nunca se muestran: aparecen como «(oculto)»."
@@ -2040,6 +2080,7 @@ es:
             steps:
               - "Revisa la tabla de cambios: cada campo con su valor antes y después."
               - "La referencia de la solicitud es el mismo código que aparece en los mensajes de error."
+              - "En un error, «Detalle del error» dice la ruta, la pantalla, el código (404 no encontrado, 403 sin permiso, 500 error inesperado…), el mensaje, los datos enviados (sin contraseñas), el navegador y, en errores del servidor, dónde falló en el código."
         site_settings:
           show:
             title: "Configuración del sitio"
@@ -2103,7 +2144,9 @@ es:
             summary: "Registra una compra, con el peso bruto directo o por pesadas. El sistema calcula sacos, tara, peso neto, quintales y total mientras escribes."
             steps:
               - "Escribe el nombre del productor y elígelo de la lista. Si no existe, toca «¿No está? Registrar productor»."
+              - "Si al productor le faltan datos (DNI, RTN, teléfono, correo, zona, dirección o clave IHCAFE), aparece un aviso con cuáles. Toca «Completar datos» para llenarlos en una ventana sin perder la compra."
               - "Revisa la fecha y hora (empieza con la hora actual) y la zona (se cambia a la zona del productor que elijas) y elige el estado del café."
+              - "Si quieres, elige la finca: la lista muestra solo las fincas del productor elegido y cambia al cambiar de productor. Si no está, toca «Nueva finca»."
               - "Elige la forma de pesar: «Peso bruto directo» o «Por pesadas»."
               - "Peso bruto directo: escribe el peso bruto. Por pesadas: toca «Agregar pesada» por cada una y escribe su peso y los sacos contados; el peso bruto se llena solo con la suma."
               - "Escribe el precio por libra. En pergamino, revisa la humedad y el daño; en uva, el rendimiento."
@@ -2216,9 +2259,11 @@ es:
             summary: "Datos de compra del productor y sus datos personales."
             steps:
               - "Elige el tipo: productor, carrero (intermediario) o finca propia."
-              - "Elige su zona y, si aplica, el nombre de la finca. Si la zona no existe, toca «Nueva zona»: se abre encima y al guardarla queda elegida."
+              - "En «Fincas» escribe las fincas del productor; toca «+ Agregar otra finca» para escribir más. Si ya tiene una con ese nombre (aunque esté escrita con otras mayúsculas) se usa esa; si no, se crea. Al editar, sus fincas salen arriba."
               - "Si tiene clave del IHCAFE, escríbela con el formato XX-XX-XXXXX (letras o números). Puedes escribirla sin guiones o en minúsculas: se guarda en mayúsculas y con guiones. No se puede repetir entre productores."
               - "Escribe nombres y apellidos; el resto de datos es opcional."
+              - "Elige su zona. Si la zona no existe, toca «Nueva zona»: se abre encima y al guardarla queda elegida."
+              - "En «Roles», «Productor» ya va marcado; marca también «Cliente» o «Colaborador» si lo es."
               - "Toca el botón de guardar."
             tips:
               - "Si lo registras desde una compra, al guardar queda elegido en esa compra sin perder lo que ya escribiste."
@@ -2282,9 +2327,10 @@ es:
               - "Toca «Nueva planilla» para crear una en esta finca."
           form:
             title: "Registrar o editar una finca"
-            summary: "Nombre y ubicación de la finca."
+            summary: "Nombre, dueño y ubicación de la finca."
             steps:
               - "Escribe el nombre."
+              - "Si es la finca de un productor, búscalo en «Productor»; déjalo vacío si es una finca del negocio. El dueño ya no cambia cuando la finca tiene compras o planillas."
               - "Elige departamento y municipio y escribe la dirección."
               - "Toca el botón de guardar."
         payrolls:
@@ -2351,7 +2397,7 @@ es:
             summary: "Lo que trabajó cada empleado cada día del período: días (planillas por día) o latas (corte de café). En corte, los caporales van aparte con su asistencia."
             steps:
               - "Elige el período con «Anterior», «Siguiente», la lista o «Hoy»; o un solo día (más cómodo en el celular)."
-              - "Por día: toca cada casilla para pasar de — (no vino) a 1 (día completo) y a ½. «Todos» llena un día para todos y «Todo el período» todos los días de una persona. En corte: escribe las latas."
+              - "Por día: toca cada casilla para pasar de — (no vino) a 1 (día completo) y a ½. «Todos» llena un día para todos y «Todo el período» todos los días de una persona. En corte: escribe las latas, de cuarto en cuarto (0.25, 0.50, 0.75, 1, 1.25…)."
               - "Toca «Guardar» en la barra de abajo, que siempre está a la vista. Te avisa si tienes cambios sin guardar, y si sales sin guardar te pregunta antes."
             tips:
               - "En el celular, elige un día arriba para ver solo esa columna."
@@ -2456,6 +2502,7 @@ es:
               - "Para quitar una línea de insumo, toca «Quitar»."
               - "La tasa se define en cada préstamo; puede ser 0 si no cobra interés."
               - "La fecha límite cuenta para el score de pago de la persona."
+              - "«Plazo (días)»: escribe los días y la fecha límite se llena sola; si eliges la fecha límite, salen los días. Al cambiar la fecha del préstamo, la fecha límite se mueve con el mismo plazo."
         payments:
           form:
             title: "Registrar un abono"
@@ -2561,9 +2608,53 @@ es:
       users: "Usuarios"
       audit_events: "Auditoría"
       site_setting: "Configuración del sitio"
+      backup: "Respaldo"
+    backups:
+      show:
+        title: "Respaldo de datos"
+        help: "Descarga una copia de todos los datos del sistema para guardarla fuera del servidor. Cada descarga queda en la auditoría."
+        download: "Descargar respaldo"
+        contents:
+          title: "Qué trae"
+          dump: "la base de datos completa, para restaurarla con pg_restore."
+          csv:
+            one: "1 tabla en CSV, que se abre en Excel."
+            other: "%{count} tablas en CSV, una por archivo, que se abren en Excel."
+          readme: "qué contiene y cómo restaurarlo."
+          secrets: "Llega como un archivo .zip con una carpeta adentro. Los CSV no llevan contraseñas cifradas ni sesiones; el .dump sí trae todo, porque sirve para restaurar el sistema: guárdalo en un lugar seguro."
+        server:
+          title: "En este servidor"
+          database: "Base de datos"
+          pg_dump: "pg_dump"
+          missing: "No está instalado"
+          ok: "El respaldo incluirá base.dump"
+          old: "pg_dump %{pg_dump} es más viejo que la base de datos (PostgreSQL %{server}): el respaldo traerá solo los CSV."
+          none: "Este servidor no tiene pg_dump: el respaldo traerá solo los CSV."
+      readme:
+        dump_included: "base.dump: la base de datos completa (formato personalizado de pg_dump)."
+        no_pg_dump: "base.dump no viene: el servidor no tiene pg_dump."
+        old_pg_dump: "base.dump no viene: pg_dump %{pg_dump} es más viejo que la base de datos (PostgreSQL %{server})."
+        dump_failed: "base.dump no viene: pg_dump falló (%{error})."
+        body: |
+          Respaldo de datos de %{business}
+          Generado el %{at}
+
+          Contenido
+          - %{dump}
+          - csv/: %{tables} tablas, una por archivo, con los nombres de columna de la base de datos.
+            Se abren en Excel. No llevan contraseñas cifradas ni sesiones de inicio.
+          - LEEME.txt: este archivo.
+
+          Restaurar la base de datos (base.dump)
+            createdb nombre_de_la_base
+            pg_restore --no-owner --no-acl --dbname=nombre_de_la_base base.dump
+          pg_restore debe ser de la misma versión de PostgreSQL o más nueva.
+
+          Guarde este respaldo en un lugar seguro: base.dump contiene todos los datos del sistema.
     home:
       index:
         people_description: "Personas del negocio: clientes y colaboradores."
+        backup_description: "Descarga una copia de todos los datos (base de datos y CSV)."
         users_description: "Crear usuarios, asignar permisos por módulo y restablecer contraseñas."
         audit_description: "Quién creó, modificó o borró qué, y cuándo."
         site_description: "Nombre del negocio, ubicación y logo que se ven en la barra, el inicio de sesión y los impresos."
@@ -2595,6 +2686,28 @@ es:
     audit_events:
       system: "Sistema"
       system_actor: "El sistema"
+      visitor: "Un visitante sin sesión"
+      details:
+        status: "Código"
+        method: "Método"
+        path: "Ruta"
+        controller: "Pantalla (controlador#acción)"
+        error: "Error"
+        message: "Mensaje"
+        reference: "Código de referencia (el que vio el usuario)"
+        params: "Datos enviados (sin contraseñas)"
+        referer: "Venía de"
+        user_agent: "Navegador"
+        turbo_frame: "Parte de la página"
+        backtrace: "Dónde falló (código)"
+        rule: "Límite superado"
+      rules:
+        requests_per_ip: "Demasiadas solicitudes desde la misma IP"
+        scanner_ban: "IP bloqueada por buscar direcciones de ataque (/wp-admin, .env, .php…)"
+        sign_in: "Demasiados intentos de inicio de sesión"
+        backup: "Demasiadas descargas del respaldo"
+        report_csv: "Demasiadas exportaciones CSV"
+        report_charts: "Demasiadas cargas de gráficos"
       entities:
         user: "el usuario"
         permission: "el permiso"
@@ -2605,6 +2718,7 @@ es:
         zone: "la zona"
         purchase: "la compra"
         invoice: "la factura"
+        invoice_payment: "el abono a factura"
         loan: "el préstamo"
         loan_payment: "el abono"
         supply: "el insumo"
@@ -2631,6 +2745,9 @@ es:
         sign_in: "%{actor} inició sesión el %{date} a las %{time}."
         sign_out: "%{actor} cerró sesión el %{date} a las %{time}."
         sign_in_failed: "Intento fallido de iniciar sesión con «%{record}» el %{date} a las %{time}."
+        backup: "%{actor} descargó el respaldo %{record} el %{date} a las %{time}."
+        error: "%{actor} recibió un error %{record} el %{date} a las %{time}."
+        rate_limited: "%{actor} superó un límite de solicitudes (%{record}) el %{date} a las %{time}."
       filtered: "(oculto)"
       "true": "Sí"
       "false": "No"
@@ -2666,6 +2783,8 @@ es:
         ip_address: "Dirección IP"
         request_id: "Referencia de la solicitud"
         changes: "Cambios"
+        error_details: "Detalle del error"
+        limit_details: "Detalle del límite"
         field: "Campo"
         before: "Antes"
         after: "Después"
@@ -2861,6 +2980,14 @@ es:
         municipality: "Municipio"
         municipality_id: "Municipio"
         address_line: "Dirección"
+        zone: "Zona"
+        zone_id: "Zona"
+        client_role: "Cliente"
+        collaborator_role: "Colaborador"
+        producer_role: "Productor"
+        producer_kind: "Tipo de productor"
+        producer.kind: "Tipo de productor"
+        producer.ihcafe_code: "Clave IHCAFE"
       zone:
         name: "Nombre"
       producer:
@@ -2868,7 +2995,9 @@ es:
         kind/producer: "Productor"
         kind/intermediary: "Carrero (intermediario)"
         kind/own_farm: "Finca propia"
-        farm_name: "Finca"
+        farms: "Fincas"
+        new_farm_name: "Finca"
+        new_farm_names: "Fincas"
         ihcafe_code: "Clave IHCAFE"
         zone: "Zona"
         zone_id: "Zona"
@@ -2878,6 +3007,8 @@ es:
         purchased_at: "Fecha y hora"
         producer: "Productor"
         producer_id: "Productor"
+        farm: "Finca"
+        farm_id: "Finca"
         zone: "Zona"
         zone_id: "Zona"
         invoice: "Factura"
@@ -2940,6 +3071,9 @@ es:
         action/sign_in: "Inició sesión"
         action/sign_out: "Cerró sesión"
         action/sign_in_failed: "Intento de sesión fallido"
+        action/backup: "Descargó respaldo"
+        action/error: "Error"
+        action/rate_limited: "Límite de solicitudes"
       client:
         person_id: "Persona"
       collaborator:
@@ -2988,6 +3122,8 @@ es:
         active: "Activo"
       farm:
         name: "Nombre"
+        producer: "Productor"
+        producer_id: "Productor"
         department: "Departamento"
         department_id: "Departamento"
         municipality: "Municipio"
@@ -3114,6 +3250,13 @@ es:
         can_destroy: "Borrar"
     errors:
       models:
+        person:
+          role_required: "Marca al menos un rol: cliente, colaborador o productor."
+          producer_in_use: "No se puede quitar el rol de productor: ya tiene compras, facturas o fincas."
+        farm:
+          attributes:
+            producer:
+              locked: "no se puede cambiar: la finca ya tiene compras o planillas"
         invoice_payment:
           attributes:
             amount:
@@ -3150,6 +3293,8 @@ es:
         harvest_entry:
           paid_by_day: "Este empleado gana por día: no se le anotan latas."
           attributes:
+            cans:
+              quarters: "van de cuarto en cuarto de lata (0.25, 0.50, 0.75, 1.00, 1.25…)"
             worked_on:
               outside_payroll: "está fuera de las fechas de la planilla"
               period_paid: "es de un período ya pagado"
@@ -3187,6 +3332,8 @@ es:
           attributes:
             invoice:
               other_producer: "pertenece a otro productor"
+            farm:
+              other_producer: "no es una finca de este productor"
             weighings:
               blank: "faltan: agrega al menos una pesada"
         invoice:
@@ -3255,8 +3402,11 @@ es:
     handled:
       forbidden: "No tienes permiso para hacer eso."
       not_found: "El registro que buscas no existe o fue borrado."
+      page_not_found: "La página que buscas no existe. Revisa la dirección o usa el menú."
       bad_request: "La solicitud llegó incompleta. Vuelve a intentarlo."
       expired_form: "El formulario expiró. Recarga la página e inténtalo de nuevo."
+      stale_record: "Alguien más guardó cambios en este registro mientras lo editabas. No se guardó nada: recarga la página y vuelve a intentarlo."
+      rate_limited: "Hiciste esto demasiadas veces en poco tiempo. Espera unos minutos y vuelve a intentarlo."
       unexpected: "Ocurrió un error inesperado. Vuelve a intentarlo; si continúa, avisa a un administrador con el código %{reference}."
     format: "%{attribute} %{message}"
     messages:

@@ -7,6 +7,10 @@ module Reports
   # the charts load in their own frame so the table shows first.
   class ReportsController < ApplicationController
     before_action :set_report
+    # The CSV reads every filtered row (up to 50,000); the charts run several
+    # grouped queries each time the filters change.
+    rate_limit_per_user name: "report_csv", to: 10, within: 1.minute, only: :show, if: -> { request.format.csv? }
+    rate_limit_per_user name: "report_charts", to: 60, within: 1.minute, only: :charts
 
     def show
       if @report.nil?

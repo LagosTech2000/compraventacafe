@@ -12,11 +12,11 @@
             <% if show_producer %>
               <p class="font-medium"><%= purchase.producer.full_name %></p>
               <p class="text-xs text-ink-muted">
-                <%= [ l(purchase.purchased_at), purchase.zone&.name, purchase.human_coffee_state ].compact.join(" · ") %>
+                <%= [ l(purchase.purchased_at), purchase.zone&.name, purchase.farm&.name, purchase.human_coffee_state ].compact.join(" · ") %>
               </p>
             <% else %>
               <p class="font-medium"><%= l(purchase.purchased_at) %></p>
-              <p class="text-xs text-ink-muted"><%= [ purchase.zone&.name, purchase.human_coffee_state ].compact.join(" · ") %></p>
+              <p class="text-xs text-ink-muted"><%= [ purchase.zone&.name, purchase.farm&.name, purchase.human_coffee_state ].compact.join(" · ") %></p>
             <% end %>
           </div>
           <div class="flex shrink-0 flex-wrap justify-end gap-2">
@@ -60,10 +60,10 @@
             <td>
               <% if show_producer %>
                 <span class="font-medium"><%= purchase.producer.full_name %></span>
-                <span class="block text-xs text-ink-muted"><%= [ purchase.zone&.name, purchase.human_coffee_state ].compact.join(" · ") %></span>
+                <span class="block text-xs text-ink-muted"><%= [ purchase.zone&.name, purchase.farm&.name, purchase.human_coffee_state ].compact.join(" · ") %></span>
               <% else %>
                 <span class="whitespace-nowrap"><%= purchase.human_coffee_state %></span>
-                <span class="block text-xs text-ink-muted"><%= purchase.zone&.name %></span>
+                <span class="block text-xs text-ink-muted"><%= [ purchase.zone&.name, purchase.farm&.name ].compact.join(" · ") %></span>
               <% end %>
             </td>
             <td class="hidden whitespace-nowrap text-right tabular-nums @5xl:table-cell"><%= format_pounds(purchase.gross_weight) %></td>

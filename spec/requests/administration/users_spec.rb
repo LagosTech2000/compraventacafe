@@ -127,9 +127,9 @@ RSpec.describe "Administration::Users" do
       expect(response).to have_http_status(:unprocessable_content)
     end
 
-    it "has no way to delete users" do
-      expect { Rails.application.routes.recognize_path(administration_user_path(admin), method: :delete) }
-        .to raise_error(ActionController::RoutingError)
+    it "has no way to delete users: the address only reaches «page not found»" do
+      expect(Rails.application.routes.recognize_path(administration_user_path(admin), method: :delete))
+        .to include(controller: "errors", action: "not_found")
     end
   end
 end

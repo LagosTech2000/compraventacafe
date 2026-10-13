@@ -38,6 +38,23 @@ RSpec.describe "Farms screens", type: :system do
     expect(bruno.attendances.sum(:day_fraction)).to eq(bruno_days)
   end
 
+  it "takes cans by quarters, and says so in Spanish before sending" do
+    harvest = create(:payroll, name: "Corte", kind: "harvest", can_price: 40, starts_on: today)
+    picker = create(:payroll_member, payroll: harvest, person: create(:person, :collaborator, first_names: "Carla", last_names: "Mejía"))
+    visit farms_payroll_timesheet_path(harvest)
+
+    cell = find("input[name='work[#{picker.id}][#{today.iso8601}]']")
+    cell.fill_in(with: "2.3")
+    within(".save-bar") { click_button "Guardar" }
+    expect(cell.evaluate_script("this.validationMessage")).to eq("Latas de cuarto en cuarto: 0.25, 0.50, 0.75, 1.00, 1.25…")
+    expect(picker.harvest_entries).to be_empty
+
+    cell.fill_in(with: "2.75")
+    within(".save-bar") { click_button "Guardar" }
+    expect(page).to have_text("Guardado.")
+    expect(picker.harvest_entries.sole.cans).to eq(2.75)
+  end
+
   it "asks before leaving with changes not saved" do
     visit farms_payroll_timesheet_path(payroll, period: payroll.period_containing(today).to_param)
     first("button.day-toggle").click
@@ -127,5 +144,25 @@ RSpec.describe "Farms screens", type: :system do
     left = ->(selector) { page.evaluate_script("document.querySelector(#{selector.to_json}).getBoundingClientRect().left") }
     expect(left.call("aside")).to be > left.call("#pay-lines") + 400
     expect(page).to have_css("aside [type=submit][value='Registrar pago']")
+  end
+
+  it "creates a farm for a producer from the farms module, and a producer with several farms" do
+    producer = create(:producer, person: create(:person, first_names: "Ana", last_names: "Zelaya"))
+    visit new_farms_farm_path
+    fill_in "farm_name", with: "El Mirador"
+    fill_in "farm_producer_search", with: producer.picker_label
+    within("main form") { find("[type=submit]").click }
+    expect(page).to have_text("Finca registrada.")
+    expect(producer.farms.pluck(:name)).to eq([ "El Mirador" ])
+
+    visit new_trading_producer_path
+    fill_in "producer_person_attributes_first_names", with: "Bruno"
+    fill_in "producer_person_attributes_last_names", with: "Aguilar"
+    all("input[name='producer[new_farm_names][]']").last.fill_in(with: "Las Brisas")
+    click_button "+ Agregar otra finca"
+    all("input[name='producer[new_farm_names][]']").last.fill_in(with: "Santa Rosa")
+    within("main form") { find("[type=submit]").click }
+    expect(page).to have_text("Productor creado.")
+    expect(Producer.last.farm_names).to eq("Las Brisas, Santa Rosa")
   end
 end

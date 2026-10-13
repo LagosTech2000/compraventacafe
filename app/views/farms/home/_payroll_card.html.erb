@@ -1,7 +1,7 @@
 <%# A running (or about to start) payroll on the module home: today's period,
     when it is paid, what it amounts to so far, and today's work in one tap. %>
 <% today = Time.zone.today %>
-<article class="flex min-w-0 flex-col panel p-4" id="<%= dom_id(payroll, :card) %>">
+<article class="flex min-w-0 flex-col panel p-4" id="<%= dom_id(payroll, :card) %>" data-row-link-scope>
   <div class="flex flex-wrap-reverse items-start justify-between gap-x-3 gap-y-2">
     <div class="min-w-0">
       <h3 class="truncate font-semibold"><%= link_to payroll.name, farms_payroll_path(payroll), class: "hover:text-primary" %></h3>
@@ -49,6 +49,6 @@
     <% elsif payroll.task? && policy(PayrollTask.new(payroll:)).create? %>
       <%= modal_link_to t(".new_task"), new_farms_payroll_task_path(payroll), class: "btn btn-sm btn-primary" %>
     <% end %>
-    <%= link_to t(".open"), farms_payroll_path(payroll), class: "btn btn-sm" %>
+    <%= link_to t(".open"), farms_payroll_path(payroll), class: "btn btn-sm", data: { row_link: true } %>
   </div>
 </article>

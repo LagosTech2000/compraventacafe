@@ -126,11 +126,31 @@
     box-shadow: var(--shadow-primary);
   }
 
-  /* Inside a section's sub-menu the current page is marked softly, so it
-     never competes with the primary action button next to it. */
+  /* A module's own menu (its _nav) is a second tier, unlike the floating
+     pills of the main menu: a flat band with the module's name and tabs
+     underlined, the current one in bold with a thick line; the module's
+     main action sits apart at the end. */
+  .subnav {
+    @apply flex items-stretch gap-1 overflow-x-auto rounded-t-2xl bg-primary-soft pr-2;
+    box-shadow: inset 0 -1px 0 var(--color-line);
+  }
+
+  .subnav .nav-pill {
+    @apply h-12 shrink-0 rounded-none border-y-2 border-transparent px-3 text-ink-muted hover:border-b-primary/30 hover:bg-transparent hover:text-ink;
+  }
+
   .subnav .nav-pill-active {
-    @apply bg-primary-soft text-primary hover:bg-primary-soft hover:text-primary;
-    box-shadow: inset 0 0 0 1px rgb(111 65 40 / 0.15);
+    @apply border-b-primary bg-transparent font-semibold text-primary hover:border-b-primary hover:bg-transparent hover:text-primary;
+    box-shadow: none;
+  }
+
+  /* The module's name stays in view while the tabs scroll (phones). */
+  .subnav-title {
+    @apply sticky left-0 z-10 bg-primary-soft pl-2;
+  }
+
+  .subnav-action {
+    @apply ml-auto flex shrink-0 items-center pl-3;
   }
 
   /* Translucent sticky header. */
@@ -225,6 +245,15 @@
   /* Action column ("Detalle", "Editar") stays visible when a table scrolls. */
   .data-table .cell-actions {
     @apply sticky right-0 text-right whitespace-nowrap shadow-[-10px_0_10px_-10px_rgb(29_21_18/0.18)];
+  }
+
+  /* A row or card that opens with a click anywhere on it (row_link_controller.js). */
+  :is(tr, .data-card, li, [data-row-link-scope]):has([data-row-link]) {
+    @apply cursor-pointer;
+  }
+
+  .data-card:has([data-row-link]):hover {
+    @apply border-primary/30 bg-surface-2/60;
   }
 
   /* Card shown instead of a table row when the container is narrow. */

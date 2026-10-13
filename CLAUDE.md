@@ -95,7 +95,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Estado de cuenta / historial crediticio | `CreditAccount` |
 | Score de pago | `PayerScore` |
 | Recibo de abono | `loans/payments#show` (`LoanPayment#display_number`) |
-| Finca | `Farm` |
+| Finca (del negocio o de un productor) | `Farm` (`producer_id` vacío = del negocio) |
 | Planilla (por día / por obra o tarea / corte por lata) | `Payroll` (`kind`: `daily` / `task` / `harvest`) |
 | Rol de planilla / salario por día / salario propio | `PayrollRole` / `daily_wage` / `PayrollMember#daily_wage_override` |
 | Empleado de planilla | `PayrollMember` (una `Person` con rol `Collaborator`) |
@@ -110,6 +110,9 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Reporte / reporte sugerido / filtro guardado ("Mis filtros") | `Report` (`app/reports/`) / `ReportPreset` / `SavedReport` |
 | Período del reporte (hoy, este mes, temporada…) | `ReportPeriod` |
 | Cifras del reporte / agrupar por | `Report.kpi` / `Report.group` |
+| Plazo del préstamo (días) | `Loan#term_days` (no se guarda: sale de las fechas) |
+| Datos que le faltan al productor | `Producer#missing_fields` |
+| Límite de solicitudes (auditoría) | acción `rate_limited` (`RateLimitAudit`) |
 
 ## Modelo de permisos
 
@@ -154,9 +157,28 @@ cuando su módulo lo pida.
 relación entre ambas.
 
 Campos de `Person` [CONFIRMADO]: `first_names` (Nombres), `last_names`
-(Apellidos), `dni`, `rtn`, `phone`, `email` y dirección (`HasAddress`). Solo los nombres y
-apellidos son obligatorios. El resto se agrega con migraciones cuando cada
-módulo lo pida.
+(Apellidos), `dni`, `rtn`, `phone`, `email`, `zone` (Zona) y dirección
+(`HasAddress`). Solo los nombres y apellidos son obligatorios. El resto se
+agrega con migraciones cuando cada módulo lo pida.
+
+**Zona de la persona** (Fernando, 2026-10-12: «que aparezca la zona de
+donde es siempre, en todos los formularios»): vive en `people.zone_id`,
+opcional, y sale en `shared/_person_fields` (todo formulario de persona,
+con «Nueva zona»). La zona del productor **es la de su persona**
+(`Producer has_one :zone, through: :person`; la migración
+`MoveZoneToPeople` la pasó de `producers`). La compra sigue guardando su
+propia zona.
+
+**Roles en el formulario** (Fernando, 2026-10-12): todo formulario de
+persona lleva una casilla por rol, Cliente, Colaborador y **Productor**
+(`shared/_person_roles`), y **hay que marcar al menos uno**
+(`Person#role_chosen`, solo cuando el formulario manda los roles; el
+navegador avisa antes con `person_roles_controller.js`). Las casillas son
+atributos de `Person` (`client_role=`, `collaborator_role=`,
+`producer_role=` y `producer_kind` para un productor nuevo). Agregar o
+quitar el rol de productor pide crear en `trading`; no se quita a quien
+tiene compras, facturas o fincas. En el formulario del productor la casilla
+«Productor» va marcada y fija.
 
 **`dni` tiene 13 dígitos y `rtn` 14, solo números** [CONFIRMADO], y cada uno es **único por
 persona** (validación + índice único parcial). Se aceptan con guiones o
@@ -240,6 +262,28 @@ modal vuelve inerte lo que queda fuera de él.
   de `public/` (400, 404, 406, 422, 500).
 - No agregues `rescue` en controladores para mostrar errores: agrega el caso
   en `ErrorHandling`.
+- **Todo error queda en la auditoría** (`ErrorAudit`, acción `error`,
+  Fernando 2026-10-12): usuario, ruta completa, método, pantalla
+  (controlador#acción), código (400/403/404/422/500), error, mensaje, código
+  de referencia, datos enviados (filtrados), de dónde venía, navegador y, en
+  5xx, las líneas del código donde falló, en `audit_events.details`. Los de
+  usuarios con sesión se guardan todos; de visitantes sin sesión solo los
+  5xx (los bots que prueban direcciones no llenan la auditoría). Auditar
+  nunca rompe la respuesta. Lo que no llega a un controlador (dirección
+  inexistente, fallo en un middleware) pasa por `config.exceptions_app`,
+  que lo audita y sirve la página estática en español de `public/`.
+- **Dirección que no existe**: la ruta comodín al final de `routes.rb`
+  (`ErrorsController#not_found`, que no tapa `/rails/...` ni las rutas que
+  agregan las gemas después) la convierte en aviso en español «La página
+  que buscas no existe», de vuelta al inicio y auditada, en todos los
+  ambientes (también en desarrollo, en vez de la página de error de Rails).
+- **Con la sesión iniciada**, la página de inicio de sesión lleva al inicio
+  (`SessionsController#redirect_signed_in`). En los specs, `sign_in` cierra
+  la sesión abierta antes de entrar con otro usuario.
+- Un **502/503 de Render** (la app no respondió: despliegue, caída, memoria)
+  lo sirve el proxy de Render: la app no puede cambiar esa página ni
+  auditarla, porque la petición nunca le llega. Se reduce configurando el
+  Health Check Path `/up` en Render.
 
 **4. Todo cambio de datos queda auditado.** Un modelo nuevo con datos del
 negocio incluye `Auditable` y se agrega a `AuditEvent::AUDITED_TYPES` (un spec
@@ -273,7 +317,11 @@ los errores).
   (`producer:created`, `zone:created`) y el campo agrega y selecciona la nueva
   opción, sin perder lo ya escrito en el formulario.
 - En listas, el detalle se abre con el botón **"Detalle"** en el modal; nunca
-  con el id o el nombre subrayado. Los botones "Cancelar" usan `cancel_button`
+  con el id o el nombre subrayado. **Un clic en cualquier parte de la fila**
+  (o de su tarjeta) hace lo mismo que su botón (Fernando, 2026-10-12):
+  `row_link_controller.js` en el `<body>` busca en la fila el enlace con
+  `data-row-link` (`detail_button` ya lo trae; un «Abrir» lo agrega a
+  mano) y deja en paz los controles propios de la fila. El botón se queda. Los botones "Cancelar" usan `cancel_button`
   (cierra el modal si está dentro de uno).
 - **Toda lista tiene filtros y paginación**: una subclase de `ListFilter`
   (`field :q, :text`, `:date`, `:id`, `:choice`) + `render layout:
@@ -317,6 +365,12 @@ los errores).
 - **Barra del módulo**: cada módulo tiene su `_nav` (también
   `administration/_nav`, con lo que el usuario puede ver), que empieza con
   `shared/module_title` (ícono + nombre). No hay encabezado grande aparte.
+  Se distingue del menú principal (Fernando, 2026-10-12): el principal son
+  píldoras en una barra flotante; la del módulo (`.subnav`) es una banda
+  plana con **pestañas subrayadas** (la actual en negrita con línea
+  gruesa), el nombre del módulo fijo a la izquierda al desplazar en el
+  celular (`.subnav-title`) y su acción principal aparte al final
+  (`.subnav-action`).
 - **Consultas sin recargar la página** (Fernando, 2026-10-12): filtrar,
   ordenar una columna, agrupar, cambiar de período o de reporte y cargar
   más **nunca recargan la página**: responden dentro de su Turbo Frame, con
@@ -428,13 +482,60 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 
 | Clave | Estado |
 | --- | --- |
-| `administration` | Usuarios y permisos, auditoría y configuración del sitio (solo administradores); personas, clientes y colaboradores (permisos del módulo) |
+| `administration` | Usuarios y permisos, auditoría, configuración del sitio y respaldo de datos (solo administradores); personas, clientes y colaboradores (permisos del módulo) |
 | `trading` | Demo: zonas, productores (con pestañas y QQ por temporada), compras con cálculo por estado del café y anulación, facturas imprimibles (original y copia) con estado de pago, cierre diario |
 | `farms` | Fincas, planillas por día, por obra y de corte por lata, con roles y salarios, asistencia o latas por día, pagos por período (semanal, quincenal, mensual) con descuento a préstamos, planilla de pago imprimible y gastos por planilla |
 | `loans` | Préstamos en efectivo, insumos o mixtos a cualquier persona con interés simple, catálogo de insumos, abonos (también con café desde una compra o descontados en planilla) con recibo imprimible, estados de cuenta con historial crediticio y score de pago |
 | `reports` | Una pantalla para todos los reportes del sistema (compras, facturas, productores, préstamos, abonos, insumos, planillas, pagos por empleado, latas, gastos, personas y entradas/salidas de dinero) con filtros, cifras comparadas, gráficos, tabla con carga continua, reportes sugeridos, filtros guardados por usuario y exportación CSV |
 
-**Inicio** (`Dashboard`, `dashboard/show`): centro de operaciones con
+## Seguridad y carga (Fernando, 2026-10-12)
+
+- **Límite por IP delante de la app** (`rack-attack`,
+  `config/initializers/rack_attack.rb`): 900 solicitudes por 5 minutos por
+  IP (alto: la oficina sale por una sola IP de Starlink; no cuentan assets,
+  logo ni `/up`), y una IP que pide direcciones de ataque (`/wp-admin`,
+  `.env`, `.php`…) 3 veces en 10 minutos queda bloqueada 1 hora. Responde
+  429 con `public/429.html` en español. En los tests está apagado;
+  `with_rack_attack` lo enciende (`spec/support/rate_limits.rb`).
+- **Límite por usuario en pantallas caras**
+  (`ApplicationController.rate_limit_per_user`): respaldo 3 por hora, CSV
+  de reportes 10 por minuto, gráficos 60 por minuto. Pasado el límite,
+  alerta en español (`ErrorHandling#handle_rate_limited`; en un frame, la
+  alerta va dentro del frame). El inicio de sesión sigue con 10 intentos
+  por 3 minutos por IP.
+- Cada límite superado queda en la auditoría **una vez por IP, regla y
+  período** (acción `rate_limited`, `RateLimitAudit`), no por solicitud.
+- **Caché**: `:memory_store` acotado en producción y en test (lo usan los
+  contadores de `rate_limit`; nada más se cachea). Los specs lo limpian
+  antes de cada ejemplo.
+- **Tiempo máximo por consulta** en producción: `statement_timeout` 15 s
+  (`DB_STATEMENT_TIMEOUT` lo cambia; `bin/render-build.sh` lo pone en 0
+  para migraciones y cargas).
+- **Bloqueo optimista** (`lock_version`) en compras, facturas, préstamos y
+  planillas. Los formularios de compra, préstamo y planilla mandan
+  `lock_version`; si alguien guardó antes, no se guarda nada y sale «Alguien
+  más guardó cambios…» (`ActiveRecord::StaleObjectError` en
+  `ErrorHandling`, auditado como error 409). `lock_version` no entra en los
+  cambios auditados.
+- **CI** (`.github/workflows/ci.yml`): Brakeman, bundler-audit, importmap
+  audit, Rubocop y RSpec (con PostgreSQL 18 y Chrome) en cada push a
+  `main`/`staging` y en cada PR; Dependabot semanal.
+
+**Respaldo de datos** (`DataBackup`, Administración → Respaldo, solo
+administradores, Fernando 2026-10-12): descarga un `.zip` con una carpeta
+`respaldo-AAAA-MM-DD-HHMM/` que trae `base.dump` (pg_dump formato custom,
+sin datos de `sessions`), `csv/` con una tabla por archivo (BOM para Excel,
+sin `password_digest` ni sesiones) y `LEEME.txt` con cómo restaurar. Si el
+servidor no tiene `pg_dump` o es más viejo que la base (PostgreSQL 18), el
+respaldo trae solo los CSV y lo explica; la pantalla muestra ambas
+versiones antes de descargar. **Verificar en Render** (`pg_dump --version`
+en el shell del servicio). Cada descarga se audita (`backup`).
+
+**Inicio** (`Dashboard`, `dashboard/show`), **sin huecos** (Fernando,
+2026-10-12): cifras y módulos llenan cada fila (`flex-wrap` con
+`flex-1`), y en pantallas anchas «Actividad reciente» va a la derecha con
+la misma altura que la columna izquierda (pendientes + módulos) y se
+desplaza por dentro (`contain: size`). Es un centro de operaciones con
 saludo, propósito, fecha y temporada; acciones frecuentes (solo las que el
 usuario puede hacer en módulos que puede ver); resumen de operaciones
 (compras de hoy, QQ de la temporada, préstamos por cobrar, fincas activas y
@@ -512,6 +613,22 @@ textos; la clave y el código siguen siendo `trading`.
   repetir el productor en su propia página.
 - En "Facturar compras" se puede anular una compra o registrar una nueva para
   ese productor en un modal; al guardar, la lista se refresca.
+- **Fincas de productores** [CONFIRMADO, Fernando, 2026-10-12]: van en la
+  misma tabla `Farm` que las fincas del negocio, con `producer_id`. Cada
+  productor tiene las suyas: un nombre se busca **solo entre las fincas de
+  ese productor**, sin importar mayúsculas ni espacios; si existe se usa,
+  si no se crea (`Farm.for_producer`; en el formulario del productor se
+  escriben varias, `Producer#new_farm_names`). En el formulario de la finca
+  se elige su productor con el buscador (vacío = del negocio); el dueño
+  queda fijo cuando la finca tiene compras o planillas
+  (`Farm#owner_locked?`). Nombres únicos entre las del negocio y, aparte, entre las de
+  cada productor (dos productores pueden tener «Finca El Paraíso»). La
+  compra puede llevar una finca de su productor (**opcional**,
+  `Purchase#farm`), elegida en un desplegable que solo muestra las fincas
+  del productor elegido (`producer_farms_controller.js`). El texto viejo
+  `producers.farm_name` se convirtió en fincas y se asignó a sus compras
+  (`ProducerFarmBackfill`, migración `AssignFarmsToProducers`). En el
+  módulo Fincas aparecen con su dueño («Finca X · Ana Zelaya»).
 - Una factura agrupa compras sin facturar **del mismo productor**
   (`InvoiceIssuer`, con bloqueo de filas). Número correlativo con bloqueo
   consultivo (`Invoice::NUMBERING_LOCK_KEY`), mostrado con 4 dígitos.
@@ -546,6 +663,13 @@ textos; la clave y el código siguen siendo `trading`.
   en el detalle de compra, el de factura y al facturar. El Resumen del módulo
   tiene el panel "Qué sigue" con el trabajo pendiente de cada paso. La
   retención de fin de temporada no es un paso todavía (punto abierto).
+- **Datos que le faltan al productor** (Fernando, 2026-10-12): en «Nueva
+  compra», al elegir productor sale un aviso con lo que tiene vacío (DNI,
+  RTN, teléfono, correo, zona, dirección, clave IHCAFE:
+  `Producer#missing_fields`) y «Completar datos», que abre su formulario
+  en un modal sin perder la compra (`producer:updated` actualiza el aviso,
+  el nombre y la zona; `producer_gaps_controller.js`). Solo avisa: ninguno
+  es obligatorio.
 - `bin/rails demo:seed` carga datos **ficticios** (nunca datos reales del
   Excel del cliente).
 
@@ -602,6 +726,12 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
     (`PurchaseLoanSettlementPolicy`). Sin permiso de préstamos, la compra no
     muestra deudas.
 
+- **Plazo en días** (Fernando, 2026-10-12): el formulario tiene «Plazo
+  (días)» entre la fecha del préstamo y la fecha límite. Escribir los días
+  llena la fecha límite y elegir la fecha muestra los días
+  (`loan_term_controller.js`); se guardan solo las fechas y el detalle
+  muestra el plazo (`Loan#term_days`).
+
 - **Recibo de abono**: cada abono tiene su recibo imprimible (original y
   copia en una hoja) con el saldo que quedó a la fecha del abono. Al
   registrar un abono se abre solo en el modal (`close_modal_with visit:`).
@@ -622,7 +752,8 @@ Reglas decididas por Fernando el 2026-10-10 [CONFIRMADO]:
     un día o unas horas: planilla con la misma fecha de inicio y fin. Los centavos que sobran van uno a uno a los primeros
     por apellido (decisión de implementación).
   - **Corte de café** (`harvest`): latas por empleado por día × precio de la
-    lata de la planilla. Los **caporales** no cortan: tienen salario fijo
+    lata de la planilla. Las latas van **de cuarto en cuarto** (0.25, 0.50,
+    0.75, 1.00, 1.25…; `HarvestEntry::CAN_STEP`, Fernando, 2026-10-12). Los **caporales** no cortan: tienen salario fijo
     por día (Fernando, 2026-10-10). En corte, quien tiene rol o salario
     propio gana por día con asistencia (`PayrollMember#paid_by_day?`), y
     los cortadores van sin rol y ganan por latas. La asistencia se marca
@@ -753,6 +884,7 @@ sistema ya guarda**; no agregan reglas de negocio.
 | 160 lb/saco en salidas vs. 165 en compras | Salidas de camión | Cliente |
 | Contratos: moneda, cobro, anticipos del exportador | Ventas / contratos | Cliente |
 | Reporte exacto que piden el contador y el SAR | Reportería | Cliente |
+| `pg_dump` en Render (versión ≥ 18) | Que el respaldo incluya `base.dump` en producción | Fernando + Render |
 | Numeración inicial de facturas (el Excel va por ~2,800) | Hoy empieza en 0001 | Cliente |
 | Logo y colores (dijeron que tienen) | Pulido visual | Cliente |
 | Servicio de correo | Recuperación de contraseña por correo | Fernando |

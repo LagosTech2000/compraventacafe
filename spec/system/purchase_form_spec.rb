@@ -70,4 +70,69 @@ RSpec.describe "Purchase form preview", type: :system do
     _, observations_top = box.call("#purchase_observations")
     expect(calculation_top).to be > observations_top
   end
+
+  it "lists only the farms of the producer picked, and follows a change of producer" do
+    ana = create(:producer, person: create(:person, first_names: "Ana", last_names: "Zelaya"))
+    bruno = create(:producer, person: create(:person, first_names: "Bruno", last_names: "Aguilar"))
+    ana.farms.create!(name: "El Mirador")
+    ana.farms.create!(name: "Santa Rosa")
+    bruno.farms.create!(name: "Las Brisas")
+    create(:farm, name: "Finca del negocio")
+    visit new_trading_purchase_path
+    farm_options = -> { all("#purchase_farm_id option").map(&:text) }
+
+    expect(farm_options.call).to eq([ "Sin finca asignada" ])
+    expect(page).to have_text("Elige primero el productor")
+
+    fill_in "producer_search", with: ana.picker_label
+    expect(page).to have_select("purchase_farm_id", options: [ "Sin finca asignada", "El Mirador", "Santa Rosa" ])
+    select "Santa Rosa", from: "purchase_farm_id"
+
+    fill_in "producer_search", with: bruno.picker_label
+    expect(page).to have_select("purchase_farm_id", options: [ "Sin finca asignada", "Las Brisas" ], selected: "Sin finca asignada")
+    expect(page).to have_link("Nueva finca", href: /producer_id=#{bruno.id}/)
+  end
+
+  it "offers the farms of a producer registered from the purchase form" do
+    visit new_trading_purchase_path
+    click_link "¿No está? Registrar productor"
+    within("dialog[open]") do
+      fill_in "producer_person_attributes_first_names", with: "Carla"
+      fill_in "producer_person_attributes_last_names", with: "Mejía"
+      first("input[name='producer[new_farm_names][]']").fill_in(with: "El Cerro")
+      find("[type=submit]").click
+    end
+    expect(page).to have_field("producer_search", with: /Carla Mejía/)
+    expect(page).to have_select("purchase_farm_id", options: [ "Sin finca asignada", "El Cerro" ])
+  end
+
+  it "says which details the producer picked is missing, and updates once they are completed in the modal" do
+    zone = create(:zone, name: "El Rosario")
+    complete = create(:producer, ihcafe_code: "AB-12-34567",
+                                 person: create(:person, first_names: "Ana", last_names: "Zelaya", dni: "0801199912345", rtn: "08011999123456",
+                                                         phone: "99990000", email: "ana@example.com", zone:, address_line: "Aldea",
+                                                         department: Department.first, municipality: Department.first.municipalities.first))
+    partial = create(:producer, person: create(:person, first_names: "Bruno", last_names: "Aguilar", phone: "99990000"))
+    visit new_trading_purchase_path
+
+    fill_in "producer_search", with: complete.picker_label
+    expect(page).to have_no_css("[data-producer-gaps-target='notice']", visible: true)
+
+    fill_in "producer_search", with: partial.picker_label
+    expect(page).to have_css("[role=status]",
+                             text: "A este productor le faltan datos por ingresar: DNI, RTN, Correo electrónico, Zona, Dirección, Clave IHCAFE.")
+    fill_in "purchase_gross_weight", with: "330"
+
+    within("[data-producer-gaps-target='notice']") { click_link "Completar datos" }
+    within("dialog[open]") do
+      fill_in "producer_ihcafe_code", with: "CD-34-56789"
+      select "El Rosario", from: "producer_person_attributes_zone_id"
+      find("[type=submit]").click
+    end
+    expect(page).to have_no_css("dialog[open]")
+    expect(page).to have_css("[role=status]", text: "le faltan datos por ingresar: DNI, RTN, Correo electrónico, Dirección.")
+    expect(page).to have_field("purchase_gross_weight", with: "330")
+    expect(page).to have_select("purchase_zone_id", selected: "El Rosario")
+    expect(partial.reload.ihcafe_code).to eq("CD-34-56789")
+  end
 end

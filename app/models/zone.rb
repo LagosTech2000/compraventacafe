@@ -1,9 +1,10 @@
-# Locality a producer comes from. Price depends on it (with quality and the
+# Locality a person (a producer, mostly) comes from. Price depends on it (with quality and the
 # market); the price table itself is still unknown.
 class Zone < ApplicationRecord
   include Auditable
 
-  has_many :producers, dependent: :restrict_with_error
+  has_many :people, dependent: :restrict_with_error
+  has_many :producers, through: :people
   has_many :purchases, dependent: :restrict_with_error
 
   normalizes :name, with: ->(value) { value.squish.presence }

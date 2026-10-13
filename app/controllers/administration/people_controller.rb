@@ -19,7 +19,7 @@ module Administration
 
     def create
       @person = authorize Person.new(person_params)
-      @person.assign_roles(**role_params)
+      authorize_producer_role
 
       if @person.save
         close_modal_with notice: t(".success"), fallback: administration_person_path(@person),
@@ -34,7 +34,7 @@ module Administration
 
     def update
       @person.assign_attributes(person_params)
-      @person.assign_roles(**role_params)
+      authorize_producer_role
 
       if @person.save
         close_modal_with notice: t(".success"), fallback: administration_person_path(@person)
@@ -57,12 +57,15 @@ module Administration
       end
 
       def person_params
-        params.expect(person: [ :first_names, :last_names, :dni, :rtn, :phone, :email, :department_id, :municipality_id, :address_line ])
+        params.expect(person: [ :first_names, :last_names, :dni, :rtn, :phone, :email, :zone_id, :department_id, :municipality_id,
+                                :address_line, :client_role, :collaborator_role, :producer_role, :producer_kind ])
       end
 
-      def role_params
-        roles = params.fetch(:person, {})
-        { client: roles[:client_role], collaborator: roles[:collaborator_role] }
+      # A producer is a Compra de café record: adding or removing the role
+      # takes creating producers there.
+      def authorize_producer_role
+        producer = @person.producer
+        authorize Producer, :create? if producer&.new_record? || producer&.marked_for_destruction?
       end
   end
 end

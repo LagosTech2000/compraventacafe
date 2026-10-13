@@ -4,30 +4,40 @@
 
   <section>
     <h2 class="mb-3 text-lg font-semibold"><%= t(".producer_data") %></h2>
-    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="grid gap-5 sm:grid-cols-2">
       <div>
         <%= form.label :kind, class: "field-label" %>
         <%= form.select :kind, enum_options(Producer, :kind, Producer::KINDS), {}, required: true, class: "field-input" %>
-      </div>
-      <%# A zone created here (in a modal on top) is added and selected. %>
-      <div data-controller="option-picker" data-action="zone:created@window->option-picker#add">
-        <%= form.label :zone_id, class: "field-label" %>
-        <%= form.collection_select :zone_id, Zone.ordered, :id, :name, { include_blank: t("shared.select.no_zone") },
-              class: "field-input", data: { option_picker_target: "select" } %>
-        <% if policy(Zone).create? %>
-          <%= modal_link_to t(".new_zone"), new_trading_zone_path(picker: 1), class: "btn btn-sm mt-2" %>
-        <% end %>
       </div>
       <div>
         <%= form.label :ihcafe_code, class: "field-label" %>
         <%= form.text_field :ihcafe_code, placeholder: t(".ihcafe_code_placeholder"), autocomplete: "off", class: "field-input uppercase",
               **field_format_attributes(Producer, :ihcafe_code, :ihcafe_code) %>
       </div>
-      <div>
-        <%= form.label :farm_name, class: "field-label" %>
-        <%= form.text_field :farm_name, maxlength: 100, class: "field-input" %>
-      </div>
     </div>
+  </section>
+
+  <%# Its farms: the ones it has, and as many more as written (each assigned
+      if it has it in any case, created otherwise: Producer#new_farm_names). %>
+  <section data-controller="repeat-field">
+    <h2 class="mb-1 text-lg font-semibold"><%= Producer.human_attribute_name(:farms) %></h2>
+    <p class="mb-3 text-sm text-ink-muted"><%= t(".farms_help") %></p>
+    <% if producer.farms.any? %>
+      <p class="mb-3 flex flex-wrap gap-1.5">
+        <% producer.farms.each do |farm| %><span class="badge badge-neutral"><%= farm.name %></span><% end %>
+      </p>
+    <% end %>
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-repeat-field-target="list">
+      <% (Array(producer.new_farm_names).compact_blank.presence || [ "" ]).each do |name| %>
+        <%= text_field_tag "producer[new_farm_names][]", name, id: nil, maxlength: 100, class: "field-input",
+              placeholder: t(".farm_placeholder"), aria: { label: t(".farm_placeholder") } %>
+      <% end %>
+    </div>
+    <template data-repeat-field-target="template">
+      <%= text_field_tag "producer[new_farm_names][]", "", id: nil, maxlength: 100, class: "field-input",
+            placeholder: t(".farm_placeholder"), aria: { label: t(".farm_placeholder") } %>
+    </template>
+    <button type="button" class="btn btn-sm mt-3" data-action="repeat-field#add"><%= t(".add_farm") %></button>
   </section>
 
   <section>
@@ -36,6 +46,7 @@
       <div class="grid gap-5 sm:grid-cols-2">
         <%= render "shared/person_fields", form: person_form, autofocus: false %>
       </div>
+      <div class="mt-5"><%= render "shared/person_roles", form: person_form, producer_form: true %></div>
     <% end %>
   </section>
 

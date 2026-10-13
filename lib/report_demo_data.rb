@@ -84,8 +84,8 @@ class ReportDemoData
       @farms = farms
     end
 
-    def person
-      Person.create!(first_names: pick(FIRST_NAMES), last_names: "#{pick(SURNAMES)} #{pick(SURNAMES)}")
+    def person(zone: nil)
+      Person.create!(first_names: pick(FIRST_NAMES), last_names: "#{pick(SURNAMES)} #{pick(SURNAMES)}", zone:)
     end
 
     # 70 producers. A few big ones carry much of the coffee (their weight);
@@ -93,8 +93,8 @@ class ReportDemoData
     def producers
       (1..70).map do |rank|
         kind = rank <= 6 ? "intermediary" : (rank % 23).zero? ? "own_farm" : "producer"
-        producer = Producer.create!(person: person, kind:, zone: pick(@zones),
-                                    farm_name: ("Finca #{pick(%w[El Mirador La Esperanza Santa Rosa El Paraíso Las Brisas])}" if @random.rand < 0.4))
+        producer = Producer.create!(person: person(zone: pick(@zones)), kind:,
+                                    new_farm_name: ("Finca #{pick(%w[El Mirador La Esperanza Santa Rosa El Paraíso Las Brisas])}" if @random.rand < 0.4))
         from = rank > 62 ? Date.new(2026, 9, 1) + @random.rand(30) : @from
         stops = Date.new(2026, 1, 10) + @random.rand(80) if rank.between?(30, 37)
         ProducerPlan.new(producer:, weight: 1.0 / (rank**0.55), from:, until: stops)
@@ -209,7 +209,7 @@ class ReportDemoData
       else
         { weight_mode: "single", gross_weight: size }
       end
-      Purchase.create!(producer:, zone: producer.zone, purchased_at: moment(date), created_by: pick(@clerks), coffee_state: state,
+      Purchase.create!(producer:, zone: producer.zone, farm: producer.farms.first, purchased_at: moment(date), created_by: pick(@clerks), coffee_state: state,
                        price_per_pound: price(state, date), **inputs, **weight)
     end
 
@@ -320,7 +320,7 @@ class ReportDemoData
         next if @random.rand > 0.82
 
         skill = 0.55 + (member.id % 9) * 0.11
-        cans = [ (good_day * skill * (0.7 + @random.rand * 0.6)).round(1), 1 ].max
+        cans = [ (good_day * skill * (0.7 + @random.rand * 0.6) * 4).round / 4.0, 1 ].max
         HarvestEntry.create!(member:, worked_on: date, cans:)
         @counts[:harvest_entries] += 1
       end

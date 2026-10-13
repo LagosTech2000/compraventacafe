@@ -63,7 +63,7 @@
               end %>
   <% {
        purchased_at: l(@purchase.purchased_at, format: :long), season_year: format_season(@purchase.season),
-       zone: @purchase.zone&.name, coffee_state: @purchase.human_coffee_state,
+       zone: @purchase.zone&.name, farm: @purchase.farm&.name, coffee_state: @purchase.human_coffee_state,
        weight_mode: Purchase.human_attribute_name("weight_mode/#{@purchase.weight_mode}"),
        gross_weight: format_pounds(@purchase.gross_weight), sacks: format_pounds(@purchase.sacks), tare: format_pounds(@purchase.tare),
        **inputs, net_weight: format_pounds(@purchase.net_weight), quintals: format_pounds(@purchase.quintals),

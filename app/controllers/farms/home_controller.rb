@@ -14,7 +14,7 @@ module Farms
       end.sort_by { |payroll, period, _| [ period ? 0 : 1, period&.ends_on || payroll.starts_on, payroll.name ] }
       @to_pay = payrolls.flat_map { |payroll| payroll.periods_to_pay.map { |period| [ payroll, period, payroll.calculation(period) ] } }
                         .sort_by { |_, period, _| period.ends_on }
-      @farms_count = policy_scope(Farm).active.count
+      @farms_count = policy_scope(Farm).of_business.active.count
     end
   end
 end

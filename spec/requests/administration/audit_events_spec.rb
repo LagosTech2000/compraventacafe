@@ -75,6 +75,7 @@ RSpec.describe "Administration::AuditEvents" do
       purchase.update!(price_per_pound: 60)
       purchase.destroy!
       allow(Current).to receive(:user).and_call_original
+      delete session_path # signed in, the sign-in page would send home
       post session_path, params: { email_address: "nadie@example.com", password: "x" }
       sign_in admin
 

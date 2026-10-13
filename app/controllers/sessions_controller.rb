@@ -1,7 +1,12 @@
 class SessionsController < ApplicationController
   allow_unauthenticated_access only: %i[ new create ]
+  # Signed in already: the sign-in page has nothing to offer, go home.
+  before_action :redirect_signed_in, only: %i[ new create ]
   skip_after_action :verify_authorized
-  rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to new_session_path, alert: t("sessions.rate_limited") }
+  rate_limit to: 10, within: 3.minutes, only: :create, with: -> {
+    RateLimitAudit.record(request, rule: "sign_in", period: 3.minutes)
+    redirect_to new_session_path, alert: t("sessions.rate_limited")
+  }
 
   def new
   end
@@ -24,4 +29,9 @@ class SessionsController < ApplicationController
     terminate_session
     redirect_to new_session_path, status: :see_other
   end
+
+  private
+    def redirect_signed_in
+      redirect_to root_path if authenticated?
+    end
 end

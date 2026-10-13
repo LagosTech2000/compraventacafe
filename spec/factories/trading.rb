@@ -6,6 +6,10 @@ FactoryBot.define do
   factory :producer do
     person
     kind { "producer" }
+
+    # The zone is the person's: create(:producer, zone:) puts it there.
+    transient { zone { nil } }
+    after(:build) { |producer, context| producer.person.zone = context.zone if context.zone }
   end
 
   factory :purchase do

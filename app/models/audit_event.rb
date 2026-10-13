@@ -1,7 +1,7 @@
 # Who did what to which record, and when. Written by Auditable and by the
 # session controller; never updated or deleted by the application.
 class AuditEvent < ApplicationRecord
-  ACTIONS = %w[create update destroy sign_in sign_out sign_in_failed].freeze
+  ACTIONS = %w[create update destroy sign_in sign_out sign_in_failed backup error rate_limited].freeze
   # Keep in sync with the models that include Auditable (a spec checks it).
   AUDITED_TYPES = %w[User Permission Person Client Collaborator Producer Zone Purchase Invoice InvoicePayment Loan LoanPayment Supply LoanSupply PurchaseWeighing Farm ExpenseCategory Payroll PayrollRole PayrollMember PayrollAttendance HarvestEntry PayrollTask PayrollTaskParticipant PayrollPayment PayrollPaymentLine PayrollExpense SavedReport SiteSetting].freeze
   FILTERED = "[FILTERED]".freeze
@@ -11,12 +11,14 @@ class AuditEvent < ApplicationRecord
 
   validates :action, inclusion: { in: ACTIONS }
 
-  def self.record!(action:, auditable: nil, label: nil, changeset: {}, user: Current.user, ip_address: Current.ip_address)
+  # details: what else there is to know (an error's route, status, message…).
+  def self.record!(action:, auditable: nil, label: nil, changeset: {}, details: {}, user: Current.user,
+                   ip_address: Current.ip_address, request_id: Current.request_id)
     create!(
       action:, auditable_type: auditable&.class&.name, auditable_id: auditable&.id,
       auditable_label: (label || auditable&.audit_label).to_s.truncate(255),
-      changeset:, user:, user_email: user&.email_address,
-      ip_address:, request_id: Current.request_id
+      changeset:, details:, user:, user_email: user&.email_address,
+      ip_address:, request_id:
     )
   end
 

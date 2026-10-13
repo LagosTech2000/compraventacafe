@@ -19,7 +19,7 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="min-h-screen font-sans text-ink print:min-h-0">
+  <body class="min-h-screen font-sans text-ink print:min-h-0" data-controller="row-link">
     <% if authenticated? %>
       <%= render "layouts/navigation" %>
     <% end %>

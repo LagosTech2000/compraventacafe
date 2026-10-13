@@ -15,6 +15,13 @@ class ApplicationController < ActionController::Base
   # Every action must ask its policy. Forgetting to authorize fails on purpose.
   after_action :verify_authorized
 
+  # A screen that is expensive to serve (backup, CSV, charts): at most `to`
+  # requests per user within `within`. Past it, the user gets an alert and
+  # the first hit goes to the audit log (ErrorHandling#handle_rate_limited).
+  def self.rate_limit_per_user(name:, to:, within:, **options)
+    rate_limit to:, within:, name:, by: -> { Current.user.id }, with: -> { handle_rate_limited(name, within) }, **options
+  end
+
   private
     def pundit_user
       Current.user

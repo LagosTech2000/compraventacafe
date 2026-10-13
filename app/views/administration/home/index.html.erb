@@ -16,6 +16,10 @@
     <%= render "shared/tile", path: administration_site_setting_path, icon_name: :settings,
           title: t("administration.site_settings.show.title"), description: t(".site_description") %>
   <% end %>
+  <% if policy(:backup).show? %>
+    <%= render "shared/tile", path: administration_backup_path, icon_name: :history,
+          title: t("administration.backups.show.title"), description: t(".backup_description") %>
+  <% end %>
   <% if policy(User).index? %>
     <%= render "shared/tile", path: administration_users_path, icon_name: :shield,
           title: t("administration.users.index.title"), description: t(".users_description") %>

@@ -1,0 +1,37 @@
+<% content_for :title, t(".title") %>
+<%= render "administration/nav" %>
+<% tools = @tools %>
+
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <%# A file download: a plain form post, not a Turbo visit. %>
+  <%= button_to t(".download"), administration_backup_path, class: "btn btn-primary", form: { data: { turbo: false } } %>
+</div>
+
+<div class="mt-6 grid items-start gap-4 lg:grid-cols-2">
+  <section class="panel p-4" aria-labelledby="backup-contents">
+    <h2 id="backup-contents" class="font-semibold"><%= t(".contents.title") %></h2>
+    <ul class="mt-3 space-y-2 text-sm">
+      <li><span class="font-mono">base.dump</span> — <%= t(".contents.dump") %></li>
+      <li><span class="font-mono">csv/</span> — <%= t(".contents.csv", count: @tables.size) %></li>
+      <li><span class="font-mono">LEEME.txt</span> — <%= t(".contents.readme") %></li>
+    </ul>
+    <p class="mt-3 text-xs text-ink-muted"><%= t(".contents.secrets") %></p>
+  </section>
+
+  <section class="panel p-4" aria-labelledby="backup-server">
+    <h2 id="backup-server" class="font-semibold"><%= t(".server.title") %></h2>
+    <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
+      <div><dt class="text-xs text-ink-muted"><%= t(".server.database") %></dt><dd>PostgreSQL <%= tools.server_version %></dd></div>
+      <div><dt class="text-xs text-ink-muted"><%= t(".server.pg_dump") %></dt><dd><%= tools.pg_dump_version || t(".server.missing") %></dd></div>
+    </dl>
+    <% if tools.dump_possible? %>
+      <p class="mt-3 text-sm"><span class="badge badge-success"><%= t(".server.ok") %></span></p>
+    <% else %>
+      <p class="mt-3 flash-alert" role="status"><%= tools.pg_dump_found? ? t(".server.old", pg_dump: tools.pg_dump_version, server: tools.server_version) : t(".server.none") %></p>
+    <% end %>
+  </section>
+</div>

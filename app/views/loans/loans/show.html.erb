@@ -54,6 +54,7 @@
        t(".rate") => format_rate(@loan.monthly_interest_rate),
        Loan.human_attribute_name(:disbursed_on) => l(@loan.disbursed_on, format: :long),
        Loan.human_attribute_name(:due_on) => l(@loan.due_on, format: :long),
+       t(".term") => t(".term_days", count: @loan.term_days),
        t(".principal_owed") => format_money(@balance.principal_owed),
        t(".interest_owed") => format_money(@balance.interest_owed),
        t(".principal_paid") => format_money(@balance.principal_paid),

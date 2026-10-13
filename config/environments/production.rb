@@ -46,8 +46,10 @@ Rails.application.configure do
   # Don't log any deprecations.
   config.active_support.report_deprecations = false
 
-  # Replace the default in-process memory cache store with a durable alternative.
-  # config.cache_store = :mem_cache_store
+  # In-process memory, bounded. It only holds the request counters of the
+  # rate limits (rate_limit in the controllers); there is one instance and
+  # nothing else is cached. Without this Rails falls back to files in tmp/.
+  config.cache_store = :memory_store, { size: 64 * 1024 * 1024 }
 
   # Replace the default in-process and non-durable queuing backend for Active Job.
   # config.active_job.queue_adapter = :resque

@@ -4,6 +4,9 @@
 set -o errexit
 
 bundle install
+# Migrations and data loads may take longer than a request: no query limit
+# here (config/database.yml).
+export DB_STATEMENT_TIMEOUT=0
 bin/rails assets:precompile
 bin/rails assets:clean
 bin/rails db:migrate

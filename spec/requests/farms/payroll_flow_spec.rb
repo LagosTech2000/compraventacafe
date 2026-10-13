@@ -110,6 +110,15 @@ RSpec.describe "Farms flow" do
     expect(foreman.attendances.sole.day_fraction).to eq(1)
     expect(harvest.calculation(harvest.period_containing(today)).gross_total).to eq(700)
 
+    get farms_payroll_timesheet_path(harvest)
+    expect(Nokogiri::HTML(response.body).at_css("input[name='work[#{picker.id}][#{today.iso8601}]']")["step"]).to eq("0.25")
+    patch farms_payroll_timesheet_path(harvest, period: today.iso8601), params: { work: { picker.id.to_s => { today.iso8601 => "10.75" } } }
+    expect(picker.harvest_entries.sole.cans).to eq(10.75)
+    patch farms_payroll_timesheet_path(harvest, period: today.iso8601), params: { work: { picker.id.to_s => { today.iso8601 => "10.6" } } }
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("van de cuarto en cuarto de lata")
+    expect(picker.harvest_entries.sole.cans).to eq(10.75)
+
     by_task = create(:payroll, kind: "task", starts_on: today)
     workers = create_list(:payroll_member, 2, payroll: by_task)
     post farms_payroll_tasks_path(by_task), params: { payroll_task: { name: "Chapia", amount: "900", completed_on: today, member_ids: workers.map(&:id) } }

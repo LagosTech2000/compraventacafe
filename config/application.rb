@@ -41,6 +41,14 @@ module Compraventacafe
     # Off by default so development shows the full trace; on in production.
     config.x.friendly_errors = false
 
+    # Errors that never reach a controller's ErrorHandling (an unknown
+    # address, a failure in a middleware) are audited (ErrorAudit) and then
+    # answered with the same Spanish static pages of public/.
+    config.exceptions_app = lambda do |env|
+      ErrorAudit.from_env(env)
+      ActionDispatch::PublicExceptions.new(Rails.public_path).call(env)
+    end
+
     config.time_zone = "America/Tegucigalpa"
     config.i18n.available_locales = [ :es ]
     config.i18n.default_locale = :es

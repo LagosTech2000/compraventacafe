@@ -43,7 +43,8 @@ module Trading
       if @producer.save
         close_modal_with notice: t(".success"), fallback: trading_producer_path(@producer),
                          event: "producer:created",
-                         detail: { id: @producer.id, label: @producer.picker_label, zone_id: @producer.zone_id }
+                         detail: { id: @producer.id, label: @producer.picker_label, zone_id: @producer.zone_id,
+                                   farms: @producer.farms.map { |farm| [ farm.id, farm.name ] }, missing: @producer.missing_fields }
       else
         render :new, status: :unprocessable_content
       end
@@ -53,8 +54,13 @@ module Trading
     end
 
     def update
+      # From the purchase form (picker=1) the form stays: it learns the
+      # producer's new name, zone and empty details.
       if @producer.update(producer_params)
-        close_modal_with notice: t(".success"), fallback: trading_producer_path(@producer)
+        close_modal_with notice: t(".success"), fallback: trading_producer_path(@producer),
+                         event: "producer:updated",
+                         detail: { id: @producer.id, label: @producer.picker_label, zone_id: @producer.zone_id,
+                                   missing: @producer.missing_fields }
       else
         render :edit, status: :unprocessable_content
       end
@@ -67,9 +73,9 @@ module Trading
 
       def producer_params
         params.expect(producer: [
-          :kind, :ihcafe_code, :farm_name, :zone_id,
-          person_attributes: [ :id, :first_names, :last_names, :dni, :rtn, :phone, :email,
-                               :department_id, :municipality_id, :address_line ]
+          :kind, :ihcafe_code, :new_farm_name, new_farm_names: [],
+          person_attributes: [ :id, :first_names, :last_names, :dni, :rtn, :phone, :email, :zone_id,
+                               :department_id, :municipality_id, :address_line, :client_role, :collaborator_role ]
         ])
       end
   end

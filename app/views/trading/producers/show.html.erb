@@ -18,7 +18,7 @@
             <%= t(".ihcafe_badge", code: @producer.ihcafe_code) %>
           </span>
         <% end %>
-        <span><%= [ @producer.zone&.name, @producer.farm_name ].compact_blank.join(" · ") %></span>
+        <span><%= [ @producer.zone&.name, @producer.farm_names ].compact_blank.join(" · ") %></span>
       </p>
     </div>
   </div>
@@ -75,7 +75,7 @@
              [ Person.human_attribute_name(:rtn), person.rtn, "tabular-nums" ],
              [ Person.human_attribute_name(:phone), (link_to(format_phone(person.phone), "tel:#{person.phone}", class: "link") if person.phone), "tabular-nums" ],
              [ Producer.human_attribute_name(:zone), @producer.zone&.name, nil ],
-             [ Producer.human_attribute_name(:farm_name), @producer.farm_name, nil ],
+             [ Producer.human_attribute_name(:farms), @producer.farm_names, nil ],
              [ t(".record.first_purchase"), (l(@profile.first_purchased_at.to_date) if @profile.first_purchased_at), nil ],
              [ t(".record.last_purchase"), (l(@profile.last_purchased_at.to_date) if @profile.last_purchased_at), nil ]
            ].each do |label, value, css| %>
