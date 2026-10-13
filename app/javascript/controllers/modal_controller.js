@@ -22,8 +22,15 @@ export default class extends Controller {
     this.frameTarget.innerHTML = ""
   }
 
+  // Only a click that both starts and ends on the backdrop closes it:
+  // selecting text in a field and letting go outside keeps the form.
+  pressStart(event) {
+    this.pressedOnBackdrop = event.target === this.element
+  }
+
   closeOnBackdrop(event) {
-    if (event.target === this.element) this.close()
+    if (event.target === this.element && this.pressedOnBackdrop) this.close()
+    this.pressedOnBackdrop = false
   }
 
   // The response had no modal frame (e.g. the session expired and the server

@@ -311,6 +311,9 @@ los errores).
   Los modales se apilan: un `modal_link_to` dentro de un modal abre el
   siguiente (`modal_2`, `modal_3`, `ModalSupport::MODAL_FRAMES`) encima, sin
   perder el de abajo (p. ej. "Nueva zona" desde "Nuevo productor").
+  Un modal (y la guía de ayuda) se cierra al tocar el fondo **solo si el
+  clic empieza y termina en el fondo**: seleccionar texto en un campo y
+  soltar afuera no lo cierra ni pierde lo escrito (Fernando, 2026-10-12).
 - Al guardar desde el modal, el controlador llama `close_modal_with`: cierra el
   modal y refresca la página de atrás con el aviso. Si el modal se abrió desde
   un campo (`picker=1`), en vez de refrescar emite un evento de ventana
