@@ -92,6 +92,16 @@ jobs:
         with:
           bundler-cache: true
 
+      # The data backup (DataBackup) needs a pg_dump as new as the server:
+      # the runner ships PostgreSQL 16's client, the database is 18.
+      - name: Install the PostgreSQL 18 client
+        run: |
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y --no-install-recommends postgresql-client-18
+          # pg_wrapper would still pick 16: put 18's tools first.
+          echo "/usr/lib/postgresql/18/bin" >> "$GITHUB_PATH"
+          /usr/lib/postgresql/18/bin/pg_dump --version
+
       - name: Build Tailwind
         run: bin/rails tailwindcss:build
 

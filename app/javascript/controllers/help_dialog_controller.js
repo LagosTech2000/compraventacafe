@@ -7,8 +7,15 @@ export default class extends Controller {
     this.element.close()
   }
 
+  // Only a click that both starts and ends on the backdrop closes it
+  // (selecting text and letting go outside does not).
+  pressStart(event) {
+    this.pressedOnBackdrop = event.target === this.element
+  }
+
   closeOnBackdrop(event) {
-    if (event.target === this.element) this.close()
+    if (event.target === this.element && this.pressedOnBackdrop) this.close()
+    this.pressedOnBackdrop = false
   }
 
   // Turbo keeps a snapshot of the page for the back button: never an open guide.
