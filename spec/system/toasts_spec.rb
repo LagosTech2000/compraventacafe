@@ -16,8 +16,9 @@ RSpec.describe "Toasts", type: :system do
   it "shows a notice at the bottom right, over the page, and closes it" do
     create_zone("Zona Norte")
 
-    toast = find(".toast-region .toast", text: "Zona creada.")
-    expect(page).to have_css(".toast.toast-shown")
+    toast = find(".toast-region .toast.toast-shown", text: "Zona creada.")
+    sleep 0.6 # done sliding in
+    toast.hover # its time stops: a slow run does not lose it before the ×
     region = page.evaluate_script("(() => { const s = getComputedStyle(document.querySelector('.toast-region')); return [s.position, s.right, s.bottom] })()")
     expect(region).to eq([ "fixed", "16px", "16px" ])
     expect(page).to have_css("main h1") # the page starts right away, not under the notice

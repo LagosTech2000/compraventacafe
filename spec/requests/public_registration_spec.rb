@@ -23,9 +23,9 @@ RSpec.describe "No public registration" do
     # Not routed at all: the expected outcome.
   end
 
-  it "does not route common sign-up paths" do
+  it "does not route common sign-up paths: they only reach «page not found»" do
     %w[/users/new /users/sign_up /registrations/new /signup /registro].each do |path|
-      expect { Rails.application.routes.recognize_path(path) }.to raise_error(ActionController::RoutingError), path
+      expect(Rails.application.routes.recognize_path(path)).to include(controller: "errors", action: "not_found"), path
     end
   end
 end

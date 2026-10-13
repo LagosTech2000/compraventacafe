@@ -8,7 +8,7 @@
             <p class="font-medium"><%= payroll.name %></p>
             <p class="text-xs text-ink-muted"><%= payroll.farm.name %> · <%= payroll.human_pay_frequency %></p>
           </div>
-          <%= link_to t("farms.payrolls.table.open"), farms_payroll_path(payroll), class: "btn btn-sm" %>
+          <%= link_to t("farms.payrolls.table.open"), farms_payroll_path(payroll), class: "btn btn-sm", data: { row_link: true } %>
         </div>
         <p class="mt-2 flex flex-wrap gap-1"><%= payroll_kind_badge(payroll) %> <%= payroll_status_badge(payroll) %></p>
       </li>
@@ -38,7 +38,7 @@
               <%= l(payroll.starts_on) %> – <%= payroll.ends_on ? l(payroll.ends_on) : t("farms.payrolls.table.no_end") %>
             </td>
             <td><%= payroll_status_badge(payroll) %></td>
-            <td class="cell-actions"><%= link_to t("farms.payrolls.table.open"), farms_payroll_path(payroll), class: "btn btn-sm" %></td>
+            <td class="cell-actions"><%= link_to t("farms.payrolls.table.open"), farms_payroll_path(payroll), class: "btn btn-sm", data: { row_link: true } %></td>
           </tr>
         <% end %>
       </tbody>

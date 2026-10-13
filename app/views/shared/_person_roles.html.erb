@@ -1,0 +1,37 @@
+<%# The roles of a Person, one checkbox each; at least one is required
+    (Person#role_chosen; person_roles_controller.js warns before sending).
+    A new producer also picks its kind. Adding or removing the producer role
+    takes creating producers in Compra de café. In the producer's own form
+    (producer_form: true) that role is fixed. `form` builds a Person. %>
+<% person = form.object %>
+<% producer_form = local_assigns.fetch(:producer_form, false) %>
+<% can_manage_producer = !producer_form && policy(Producer).create? %>
+<% scope = "shared.person_roles" %>
+<fieldset data-controller="person-roles" data-person-roles-required-message-value="<%= t("#{scope}.required") %>"
+          data-action="change->person-roles#update">
+  <legend class="field-label"><%= t("#{scope}.legend") %></legend>
+  <p class="text-xs text-ink-muted"><%= t("#{scope}.help") %></p>
+  <div class="mt-2 flex flex-wrap gap-x-6 gap-y-3">
+    <% %i[client collaborator].each do |role| %>
+      <label class="flex items-center gap-2 text-sm">
+        <%= form.check_box :"#{role}_role", { checked: person.role?(role), class: "size-4 accent-primary",
+                                              data: { person_roles_target: "checkbox" } } %>
+        <%= role.to_s.classify.constantize.model_name.human %>
+      </label>
+    <% end %>
+    <label class="flex items-center gap-2 text-sm <%= "text-ink-muted" if producer_form || !can_manage_producer %>">
+      <%= form.check_box :producer_role, { checked: producer_form || person.role?(:producer), disabled: producer_form || !can_manage_producer,
+                                           class: "size-4 accent-primary", data: { person_roles_target: "checkbox producer" } } %>
+      <%= Producer.model_name.human %>
+    </label>
+  </div>
+  <% if !producer_form && can_manage_producer && (person.producer.nil? || person.producer.new_record?) %>
+    <div class="mt-3 max-w-xs" data-person-roles-target="kind" <%= "hidden" unless person.role?(:producer) %>>
+      <%= form.label :producer_kind, class: "field-label" %>
+      <%= form.select :producer_kind, enum_options(Producer, :kind, Producer::KINDS), {}, class: "field-input" %>
+    </div>
+  <% end %>
+  <% if !producer_form && !can_manage_producer %>
+    <p class="mt-2 text-xs text-ink-muted"><%= t("#{scope}.producer_needs_permission") %></p>
+  <% end %>
+</fieldset>

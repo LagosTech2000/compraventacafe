@@ -14,6 +14,8 @@ class Purchase < ApplicationRecord
 
   belongs_to :producer
   belongs_to :zone, optional: true
+  # Optional: one of its producer's farms.
+  belongs_to :farm, optional: true
   belongs_to :invoice, optional: true
   belongs_to :created_by, class_name: "User"
   belongs_to :voided_by, class_name: "User", optional: true
@@ -39,6 +41,7 @@ class Purchase < ApplicationRecord
   end
   validates :observations, length: { maximum: 500 }
   validate :invoice_belongs_to_same_producer
+  validate :farm_belongs_to_producer
   validate :voided_not_invoiced
 
   # First: by weighings, the gross weight and sacks come from them.
@@ -188,6 +191,10 @@ class Purchase < ApplicationRecord
 
     def assign_season
       self.season_year = Season.for(purchased_at.to_date).year if purchased_at
+    end
+
+    def farm_belongs_to_producer
+      errors.add(:farm, :other_producer) if farm && farm.producer_id != producer_id
     end
 
     def invoice_belongs_to_same_producer

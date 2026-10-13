@@ -88,9 +88,11 @@ RSpec.describe "Live list filters", type: :system do
     visit trading_purchases_path
     click_button "Todo"
     expect(page).to have_text("54 compras")
+    expect(page).to have_current_path(/from=&/) # the query is in the history: the visit is done
     mark_page
-
-    within("#purchases-list") { click_link "Siguiente" }
+    # Clicked on the link itself: a click by screen position can land where the
+    # link was while the list keeps its scroll after the previous query.
+    find("#purchases-list a", text: "Siguiente").execute_script("this.click()")
     expect(page).to have_text("Página 2")
     expect(page).to have_css(".chip-filter", text: "Todas las fechas")
     expect(rows.size).to eq(4)

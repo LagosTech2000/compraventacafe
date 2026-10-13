@@ -24,19 +24,52 @@ RSpec.describe "Trading purchase flow" do
     expect(response).to have_http_status(:unprocessable_content)
   end
 
+  it "saves a purchase with a farm of its producer and shows it, and refuses another producer's" do
+    producer = create(:producer)
+    farm = producer.farms.create!(name: "El Mirador")
+    other = create(:producer).farms.create!(name: "Las Brisas")
+    attributes = { producer_id: producer.id, purchased_at: Time.current, coffee_state: "wet_parchment", weight_mode: "single",
+                   gross_weight: "146", humidity_percent: "51", damage_percent: "0", price_per_pound: "58" }
+
+    post trading_purchases_path, params: { purchase: attributes.merge(farm_id: farm.id) }
+    purchase = Purchase.last
+    expect(purchase.farm).to eq(farm)
+    get trading_purchase_path(purchase)
+    expect(response.body).to include("El Mirador")
+
+    post trading_purchases_path, params: { purchase: attributes.merge(farm_id: other.id) }
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("no es una finca de este productor")
+  end
+
+  it "creates a producer's farm from the purchase form, set to that producer" do
+    producer = create(:producer)
+    create(:permission, user:, module_key: "farms", can_read: true, can_create: true)
+    get new_farms_farm_path(picker: 1, producer_id: producer.id), headers: { "Turbo-Frame" => "modal" }
+    expect(response.body).to include(producer.full_name)
+
+    post farms_farms_path, headers: { "Turbo-Frame" => "modal" }, params: { picker: "1", farm: { name: "El Cerro", producer_id: producer.id } }
+    expect(producer.farms.pluck(:name)).to eq([ "El Cerro" ])
+    detail = Nokogiri::HTML(response.body).at_css("[data-controller='modal-result']")["data-modal-result-detail-value"]
+    expect(JSON.parse(detail)).to include("name" => "El Cerro", "producer_id" => producer.id)
+  end
+
   it "registers a producer from the purchase form's modal and hands it to the picker" do
     post trading_producers_path, headers: { "Turbo-Frame" => "modal" }, params: {
       picker: "1",
-      producer: { kind: "intermediary", zone_id: zone.id, farm_name: "El Cerro",
-                  person_attributes: { first_names: "Pedro", last_names: "Martínez", phone: "9999-0000" } }
+      producer: { kind: "intermediary", new_farm_name: "El Cerro",
+                  person_attributes: { first_names: "Pedro", last_names: "Martínez", phone: "9999-0000", zone_id: zone.id,
+                                       client_role: "0", collaborator_role: "1" } }
     }
     producer = Producer.last
-    expect(producer).to have_attributes(kind: "intermediary", farm_name: "El Cerro", zone: zone)
-    expect(producer.person.phone).to eq("99990000")
+    expect(producer).to have_attributes(kind: "intermediary", farm_names: "El Cerro", zone: zone)
+    expect(producer.person).to have_attributes(phone: "99990000", collaborator?: true, client?: false)
 
     result = Nokogiri::HTML(response.body).at_css("turbo-frame#modal [data-controller='modal-result']")
     expect(result["data-modal-result-event-value"]).to eq("producer:created")
-    expect(JSON.parse(result["data-modal-result-detail-value"])).to eq("id" => producer.id, "label" => "Pedro Martínez", "zone_id" => zone.id)
+    expect(JSON.parse(result["data-modal-result-detail-value"])).to eq("id" => producer.id, "label" => "Pedro Martínez", "zone_id" => zone.id,
+                                                                       "farms" => [ [ producer.farms.sole.id, "El Cerro" ] ],
+                                                                       "missing" => [ "DNI", "RTN", "Correo electrónico", "Dirección", "Clave IHCAFE" ])
     expect(result["data-modal-result-refresh-value"]).to eq("false")
     expect(flash[:notice]).to be_nil
   end

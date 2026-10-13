@@ -20,6 +20,19 @@
   <% end %>
 </dl>
 
+<%# An error a user ran into: where, what and how (ErrorAudit). %>
+<% if @event.details.any? %>
+  <h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(@event.action == "rate_limited" ? ".limit_details" : ".error_details") %></h2>
+  <dl class="grid panel">
+    <% audit_error_details(@event).each do |label, value| %>
+      <div class="grid gap-1 border-b border-line px-4 py-3 sm:grid-cols-[12rem_minmax(0,1fr)]">
+        <dt class="text-xs font-medium text-ink-muted"><%= label %></dt>
+        <dd class="text-sm break-all <%= "font-mono text-xs whitespace-pre-wrap" if value.to_s.include?("\n") || value.to_s.start_with?("{") %>"><%= value %></dd>
+      </div>
+    <% end %>
+  </dl>
+<% end %>
+
 <% if @event.changeset.any? %>
   <h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".changes") %></h2>
   <div class="overflow-x-auto panel">

@@ -67,15 +67,50 @@ RSpec.describe Person do
     expect { Client.create!(person: person) }.to raise_error(ActiveRecord::RecordNotUnique)
   end
 
-  describe "#assign_roles" do
+  describe "roles from the form" do
     it "adds and removes roles" do
       person = create(:person, :client).reload
-      person.assign_roles(client: "0", collaborator: "1")
+      person.assign_attributes(client_role: "0", collaborator_role: "1", producer_role: "0")
       person.save!
       person.reload
       expect(person).not_to be_client
       expect(person).to be_collaborator
     end
+
+    it "requires at least one role when the form sends them, not in code" do
+      person = create(:person, :client).reload
+      person.assign_attributes(client_role: "0", collaborator_role: "0", producer_role: "0")
+      expect(person).not_to be_valid
+      expect(person.errors[:base]).to eq([ "Marca al menos un rol: cliente, colaborador o productor." ])
+      expect(person.reload).to be_client
+
+      expect(build(:person)).to be_valid
+    end
+
+    it "adds a producer of the kind picked, and removes one without purchases" do
+      person = Person.create!(first_names: "Ana", last_names: "Zelaya", producer_role: "1", producer_kind: "intermediary")
+      expect(person.reload.producer).to have_attributes(kind: "intermediary")
+
+      person.update!(client_role: "1", producer_role: "0")
+      expect(person.reload).to have_attributes(client?: true, producer?: false)
+    end
+
+    it "keeps the producer role of a producer with purchases" do
+      producer = create(:purchase).producer
+      person = producer.person.reload
+      person.assign_attributes(client_role: "1", producer_role: "0")
+      expect(person).not_to be_valid
+      expect(person.errors[:base]).to eq([ "No se puede quitar el rol de productor: ya tiene compras, facturas o fincas." ])
+      expect(producer.reload).to be_persisted
+    end
+  end
+
+  it "has an optional zone, which is its producer's" do
+    zone = create(:zone)
+    person = create(:person, zone:)
+    producer = create(:producer, person:)
+    expect([ producer.zone, producer.zone_id ]).to eq([ zone, zone.id ])
+    expect(build(:person, zone: nil)).to be_valid
   end
 
   describe ".search" do

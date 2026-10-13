@@ -23,7 +23,8 @@ export default class extends Controller {
 
     let message = ""
     if (validity.valueMissing) message = dataset.missingMessage
-    else if (validity.patternMismatch || validity.typeMismatch || validity.tooShort || validity.tooLong) message = dataset.invalidMessage
+    else if (validity.patternMismatch || validity.typeMismatch || validity.tooShort || validity.tooLong ||
+             validity.stepMismatch || validity.rangeOverflow || validity.rangeUnderflow) message = dataset.invalidMessage
 
     if (message) field.setCustomValidity(message)
   }

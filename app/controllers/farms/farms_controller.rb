@@ -17,7 +17,8 @@ module Farms
     end
 
     def new
-      @farm = authorize Farm.new
+      # From a purchase: a farm of that producer.
+      @farm = authorize Farm.new(producer: Producer.find_by(id: params[:producer_id]))
     end
 
     def create
@@ -25,7 +26,7 @@ module Farms
 
       if @farm.save
         close_modal_with notice: t(".success"), fallback: farms_farm_path(@farm),
-                         event: "farm:created", detail: { id: @farm.id, name: @farm.name }
+                         event: "farm:created", detail: { id: @farm.id, name: @farm.name, producer_id: @farm.producer_id }
       else
         render :new, status: :unprocessable_content
       end
@@ -48,7 +49,8 @@ module Farms
       end
 
       def farm_params
-        params.expect(farm: [ :name, :department_id, :municipality_id, :address_line, :observations, :active ])
+        # Its producer can change while no purchase or payroll names the farm (Farm#owner_locked?).
+        params.expect(farm: [ :name, :producer_id, :department_id, :municipality_id, :address_line, :observations, :active ])
       end
   end
 end

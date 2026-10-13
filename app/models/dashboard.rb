@@ -7,7 +7,8 @@ class Dashboard
   Pending = Data.define(:key, :count, :amount, :path)
   Activity = Data.define(:at, :kind, :title, :detail, :path)
 
-  ACTIVITY_SIZE = 8
+  # It scrolls inside its panel: more than fit is fine.
+  ACTIVITY_SIZE = 15
 
   attr_reader :user, :today
 
@@ -33,7 +34,7 @@ class Dashboard
   def loans_owed = @loans_owed ||= open_loans.sum { |loan| loan.balance(as_of: today).total_owed }
   def overdue_loans = @overdue_loans ||= open_loans.select { |loan| loan.overdue?(today) }
 
-  def active_farms_count = Farm.active.count
+  def active_farms_count = Farm.of_business.active.count
   def running_payrolls = @running_payrolls ||= Payroll.active(today).includes(:payments).to_a
 
   # --- Pending work --------------------------------------------------------------

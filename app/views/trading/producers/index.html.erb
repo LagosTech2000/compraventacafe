@@ -43,7 +43,7 @@
             <th><%= Producer.human_attribute_name(:kind) %></th>
             <th><%= Producer.human_attribute_name(:zone) %></th>
             <th class="hidden @5xl:table-cell"><%= Producer.human_attribute_name(:ihcafe_code) %></th>
-            <th class="hidden @6xl:table-cell"><%= Producer.human_attribute_name(:farm_name) %></th>
+            <th class="hidden @6xl:table-cell"><%= Producer.human_attribute_name(:farms) %></th>
             <th class="hidden @5xl:table-cell"><%= Person.human_attribute_name(:phone) %></th>
             <th class="text-right"><%= t(".season_quintals") %></th>
             <th><%= t(".last_purchase") %></th>
@@ -57,7 +57,7 @@
               <td><%= producer.human_kind %></td>
               <td><%= producer.zone&.name %></td>
               <td class="hidden whitespace-nowrap font-mono text-sm @5xl:table-cell"><%= producer.ihcafe_code %></td>
-              <td class="hidden @6xl:table-cell"><%= producer.farm_name %></td>
+              <td class="hidden @6xl:table-cell"><%= producer.farm_names %></td>
               <td class="hidden whitespace-nowrap @5xl:table-cell"><%= format_phone(producer.person.phone) %></td>
               <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(PurchaseCalculation.quintals(@stats.fetch(producer.id, 0))) %></td>
               <td class="whitespace-nowrap"><%= @last_purchased[producer.id] ? l(@last_purchased[producer.id].to_date) : "—" %></td>

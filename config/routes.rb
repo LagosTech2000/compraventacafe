@@ -13,6 +13,8 @@ Rails.application.routes.draw do
     resources :people
     resources :audit_events, only: %i[ index show ]
     resource :site_setting, only: %i[ show edit update ]
+    # The data backup: a .zip with the database dump and a CSV per table.
+    resource :backup, only: %i[ show create ]
     resources :users, only: %i[ index show new create edit update ] do
       member do
         get :reset_password, action: :edit_password
@@ -71,4 +73,11 @@ Rails.application.routes.draw do
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
+
+  # Any other address: a Spanish "page not found" (audited), in every
+  # environment, instead of Rails' routing error. Last of ours; Rails' own
+  # paths (/rails/...) and the routes engines add after these (turbo-rails'
+  # /*_historical_location) are left alone.
+  match "*path", to: "errors#not_found", via: :all, format: false,
+                 constraints: ->(request) { !request.path.start_with?("/rails/") && !request.path.end_with?("_historical_location") }
 end

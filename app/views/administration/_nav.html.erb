@@ -1,14 +1,15 @@
 <% unless modal_request? %>
 <%# Same bar as the other modules: each screen shows only if the user may see it. %>
 <nav class="mb-5 print:hidden" aria-label="<%= AppModule.human_name("administration") %>">
-  <div class="subnav clay flex items-center gap-1 overflow-x-auto p-1.5 ring-1 ring-line/60" data-controller="scroll-to-current">
+  <div class="subnav" data-controller="scroll-to-current">
     <%= render "shared/module_title", module_key: "administration" %>
     <%= link_to t("administration.nav.home"), administration_root_path, class: nav_link_class(administration_root_path, exact: true),
           aria: { current: (current_page?(administration_root_path) ? "page" : nil) } %>
     <% { people: [ administration_people_path, policy(Person).index? ],
          users: [ administration_users_path, policy(User).index? ],
          audit_events: [ administration_audit_events_path, policy(AuditEvent).index? ],
-         site_setting: [ administration_site_setting_path, policy(SiteSetting).show? ] }.each do |key, (path, allowed)| %>
+         site_setting: [ administration_site_setting_path, policy(SiteSetting).show? ],
+         backup: [ administration_backup_path, policy(:backup).show? ] }.each do |key, (path, allowed)| %>
       <% next unless allowed %>
       <%= link_to t("administration.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>
     <% end %>

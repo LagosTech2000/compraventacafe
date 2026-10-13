@@ -49,7 +49,7 @@ module Loans
       end
 
       def loan_params
-        params.expect(loan: [ :person_id, :cash_amount, :monthly_interest_rate, :disbursed_on, :due_on, :observations,
+        params.expect(loan: [ :person_id, :cash_amount, :monthly_interest_rate, :disbursed_on, :due_on, :observations, :lock_version,
                               supply_items_attributes: [ [ :id, :supply_id, :quantity, :unit_price, :_destroy ] ] ])
       end
   end

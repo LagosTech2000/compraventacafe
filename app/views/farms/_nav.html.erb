@@ -1,18 +1,18 @@
 <% unless modal_request? %>
 <nav class="mb-5 print:hidden" aria-label="<%= AppModule.human_name("farms") %>">
-  <div class="subnav clay flex items-center gap-1 overflow-x-auto p-1.5 ring-1 ring-line/60" data-controller="scroll-to-current">
+  <div class="subnav" data-controller="scroll-to-current">
     <%= render "shared/module_title", module_key: "farms" %>
     <%= link_to t("farms.nav.home"), farms_root_path, class: nav_link_class(farms_root_path, exact: true),
           aria: { current: (current_page?(farms_root_path) ? "page" : nil) } %>
-    <% if policy(Payroll).create? %>
-      <%= modal_link_to t("farms.nav.new_payroll"), new_farms_payroll_path, class: "btn btn-primary h-9 shrink-0" %>
-    <% end %>
     <% { payrolls: farms_payrolls_path, farms: farms_farms_path }.each do |key, path| %>
       <%= link_to t("farms.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>
     <% end %>
-    <span class="mx-1 h-6 w-px shrink-0 bg-line" aria-hidden="true"></span>
+    <span class="mx-1 h-6 w-px shrink-0 self-center bg-primary/20" aria-hidden="true"></span>
     <%= link_to t("farms.nav.expense_categories"), farms_expense_categories_path, class: nav_link_class(farms_expense_categories_path),
           aria: { current: (current_page?(farms_expense_categories_path) ? "page" : nil) } %>
+    <% if policy(Payroll).create? %>
+      <span class="subnav-action"><%= modal_link_to t("farms.nav.new_payroll"), new_farms_payroll_path, class: "btn btn-primary btn-sm" %></span>
+    <% end %>
   </div>
 </nav>
 <% end %>

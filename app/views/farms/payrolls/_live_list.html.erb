@@ -6,7 +6,7 @@
   <%= render layout: "shared/filters", locals: { filter:, url:, frame: "payrolls-list", live: true } do |form| %>
     <%= filter_text_field form, :q, t("shared.filters.search"), value: filter.q, placeholder: Payroll.human_attribute_name(:name) %>
     <% unless farm %>
-      <%= filter_select form, :farm_id, Payroll.human_attribute_name(:farm), Farm.ordered.pluck(:name, :id), selected: filter.farm_id,
+      <%= filter_select form, :farm_id, Payroll.human_attribute_name(:farm), Farm.includes(producer: :person).ordered.map { |farm| [ farm.display_name, farm.id ] }, selected: filter.farm_id,
             all: t("farms.payrolls.index.all_farms") %>
     <% end %>
     <%= filter_select form, :kind, Payroll.human_attribute_name(:kind), enum_options(Payroll, :kind, Payroll::KINDS), selected: filter.kind %>

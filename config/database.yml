@@ -63,3 +63,8 @@ test:
 production:
   <<: *default
   url: <%= ENV["DATABASE_URL"] %>
+  # A query that runs longer is cancelled (the user gets the error alert),
+  # so one slow report cannot hold the app's few connections. Builds and
+  # one-off tasks that need longer set DB_STATEMENT_TIMEOUT=0 (no limit).
+  variables:
+    statement_timeout: <%= ENV.fetch("DB_STATEMENT_TIMEOUT", "15s") %>

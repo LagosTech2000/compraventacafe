@@ -2,12 +2,15 @@
 <%= form_with model: [ :farms, payroll ], class: form_surface_class("max-w-3xl space-y-6"),
       data: { controller: "form-validation payroll-form" } do |form| %>
   <%= render "shared/form_errors", record: payroll %>
+  <%# Optimistic locking: saving over someone else's newer change fails. %>
+  <%= form.hidden_field :lock_version if payroll.persisted? %>
 
   <div class="grid gap-5 sm:grid-cols-2">
     <div data-controller="option-picker" data-action="farm:created@window->option-picker#add">
       <%= form.label :farm_id, class: "field-label" %>
-      <% farms = Farm.active.ordered.to_a | [ payroll.farm ].compact %>
-      <%= form.collection_select :farm_id, farms, :id, :name, { prompt: t("shared.select.pick_farm") }, required: true, class: "field-input",
+      <%# A producer's farm says whose it is (Farm#display_name). %>
+      <% farms = Farm.active.includes(producer: :person).ordered.to_a | [ payroll.farm ].compact %>
+      <%= form.collection_select :farm_id, farms, :id, :display_name, { prompt: t("shared.select.pick_farm") }, required: true, class: "field-input",
             autofocus: payroll.farm.nil?, data: { option_picker_target: "select",
                                                   missing_message: "#{Payroll.human_attribute_name(:farm)} #{t("errors.messages.blank")}" } %>
       <% if policy(Farm).create? %>

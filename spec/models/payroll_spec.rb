@@ -146,6 +146,16 @@ RSpec.describe "Farm payrolls" do
     expect(build(:payroll, kind: "harvest", can_price: nil)).not_to be_valid
   end
 
+  it "takes cans by quarters only" do
+    member = create(:payroll_member, payroll: create(:payroll, kind: "harvest", can_price: 25, starts_on: Date.new(2026, 9, 1)))
+    %w[0.25 0.5 0.75 1 1.25 12.75].each do |cans|
+      expect(HarvestEntry.new(member:, worked_on: Date.new(2026, 9, 1), cans:)).to be_valid, cans
+    end
+    entry = HarvestEntry.new(member:, worked_on: Date.new(2026, 9, 1), cans: "1.3")
+    expect(entry).not_to be_valid
+    expect(entry.errors[:cans]).to eq([ "van de cuarto en cuarto de lata (0.25, 0.50, 0.75, 1.00, 1.25…)" ])
+  end
+
   it "pays the foremen of a harvest payroll by day (their role's wage) and the pickers by cans" do
     payroll = create(:payroll, kind: "harvest", can_price: 25, starts_on: Date.new(2026, 9, 1))
     foreman = create(:payroll_member, payroll:, role: create(:payroll_role, payroll:, name: "Caporal", daily_wage: 400))

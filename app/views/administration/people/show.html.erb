@@ -21,7 +21,7 @@
 <dl class="mt-6 grid panel sm:grid-cols-2">
   <% {
        first_names: @person.first_names, last_names: @person.last_names, dni: @person.dni, rtn: @person.rtn,
-       phone: format_phone(@person.phone), email: @person.email, address_line: format_address(@person)
+       phone: format_phone(@person.phone), email: @person.email, zone: @person.zone&.name, address_line: format_address(@person)
      }.each do |attribute, value| %>
     <div class="border-b border-line px-4 py-3 <%= "sm:col-span-2" if attribute == :address_line %>">
       <dt class="text-xs font-medium text-ink-muted"><%= Person.human_attribute_name(attribute) %></dt>

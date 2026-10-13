@@ -7,6 +7,6 @@ class FarmFilter < ListFilter
   def apply(scope)
     scope = scope.where("name ILIKE ?", like(q)) if q
     scope = scope.where(active: status == "active") if status
-    scope.includes(:department, :municipality).newest_first
+    scope.includes(:department, :municipality, producer: :person).newest_first
   end
 end

@@ -1,5 +1,7 @@
 module AuditHelper
   def audit_actor(event)
+    return event.user&.name || event.user_email || t("administration.audit_events.visitor") if event.action.in?(%w[error rate_limited])
+
     event.user&.name || event.user_email || t("administration.audit_events.system_actor")
   end
 
@@ -49,7 +51,18 @@ module AuditHelper
   end
 
   def audit_action_badge(event)
-    variant = { "create" => "badge-success", "destroy" => "badge-danger", "sign_in_failed" => "badge-danger" }
+    variant = { "create" => "badge-success", "destroy" => "badge-danger", "sign_in_failed" => "badge-danger", "error" => "badge-danger", "rate_limited" => "badge-danger" }
     tag.span(event.human_action, class: "badge #{variant.fetch(event.action, "badge-neutral")}")
+  end
+
+  # An error's details (ErrorAudit), in a fixed order with Spanish names.
+  ERROR_DETAILS = %w[rule status method path controller error message reference params referer user_agent turbo_frame backtrace].freeze
+
+  def audit_error_details(event)
+    ERROR_DETAILS.filter_map do |key|
+      value = event.details[key]
+      value = t("administration.audit_events.rules.#{value}", default: value) if key == "rule"
+      [ t("administration.audit_events.details.#{key}"), value ] if value.present?
+    end
   end
 end

@@ -69,7 +69,7 @@ class ProducersReport < Report
   measure :total, :money, "COALESCE(SUM(stats.total), 0)"
   measure :pending, :money, "COALESCE(SUM(pending.amount), 0)"
 
-  group :zone, sql: "producers.zone_id", label_sql: "MIN(zones.name)"
+  group :zone, sql: "people.zone_id", label_sql: "MIN(zones.name)"
   group :producer_kind, sql: "producers.kind", translate: ->(kind) { Producer.human_attribute_name("kind/#{kind}") }
 
   kpi :selling, :integer, "COUNT(*) FILTER (WHERE stats.purchases_count > 0)", good: :up
@@ -87,13 +87,13 @@ class ProducersReport < Report
     stats = within(Purchase.active, in_period).group(:producer_id)
                                               .select(:producer_id, "COUNT(*) AS purchases_count",
                                                       "SUM(purchases.net_weight) AS net_weight", "SUM(purchases.total) AS total")
-    apply_filters(Producer.joins(:person).left_joins(:zone).joins(PENDING)
+    apply_filters(Producer.joins(:person).joins("LEFT JOIN zones ON zones.id = people.zone_id").joins(PENDING)
                           .joins("LEFT JOIN (#{stats.to_sql}) stats ON stats.producer_id = producers.id"))
   end
 
   def apply_filters(relation)
     relation = relation.where(person_id: people_matching(filter.q)) if filter.q
-    relation = relation.where(zone_id: filter.zone_id) if filter.zone_id
+    relation = relation.where(people: { zone_id: filter.zone_id }) if filter.zone_id
     relation = relation.where(kind: filter.kind) if filter.kind
     relation = relation.where("stats.purchases_count > 0") if filter.activity == "with_purchases"
     relation = relation.where("stats.purchases_count IS NULL") if filter.activity == "without_purchases"
@@ -105,7 +105,7 @@ class ProducersReport < Report
     top = breakdown(relation, "producers.id", "SUM(stats.net_weight) / #{QUINTAL}", label_sql: "MIN(#{NAME})", limit: 20, others: false)
     names, quintals, shares = pareto(top, plain(relation).pick(Arel.sql("SUM(stats.net_weight) / #{QUINTAL}")))
     kinds = breakdown(relation, "producers.kind", "SUM(stats.net_weight) / #{QUINTAL}", translate: human(Producer, :kind))
-    zones = breakdown(relation, "producers.zone_id", "SUM(stats.net_weight) / #{QUINTAL}", label_sql: "MIN(zones.name)")
+    zones = breakdown(relation, "people.zone_id", "SUM(stats.net_weight) / #{QUINTAL}", label_sql: "MIN(zones.name)")
     recency = plain(records).group(Arel.sql(LAST_DATE)).pluck(Arel.sql(LAST_DATE), Arel.sql("COUNT(*)"))
     never = recency.sum { |date, count| date ? 0 : count }
     ages = age_buckets(recency.select(&:first).map { |date, count| [ (today - date).to_i, count ] }, [ 0, 8, 31, 91 ])

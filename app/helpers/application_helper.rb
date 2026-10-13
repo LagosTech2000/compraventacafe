@@ -10,8 +10,9 @@ module ApplicationHelper
   end
 
   # "Detalle" button that opens the record in the app-wide modal.
+  # Also opened by a click anywhere on its row (row_link_controller.js).
   def detail_button(path)
-    modal_link_to t("shared.detail"), path, class: "btn btn-sm"
+    modal_link_to t("shared.detail"), path, class: "btn btn-sm", data: { row_link: true }
   end
 
   # Link that opens its page in the modal (forms, details). Inside a modal it

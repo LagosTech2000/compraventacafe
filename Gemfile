@@ -31,6 +31,9 @@ gem "tzinfo-data", platforms: %i[ windows jruby ]
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
 
+# Writes the data backup (.zip with the database dump and a CSV per table).
+gem "rubyzip", "~> 3.0", require: "zip"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
@@ -62,3 +65,6 @@ end
 
 # Report exports (no longer a default gem since Ruby 3.4).
 gem "csv", "~> 3.3"
+
+# Throttles requests per IP and bans address scanners (config/initializers/rack_attack.rb).
+gem "rack-attack", "~> 6.8"

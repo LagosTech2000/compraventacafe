@@ -15,7 +15,7 @@
           <% if report && policy(report).show? %>
             <%# Opens in the report frame of the page below and closes this modal. %>
             <%= link_to t(".open"), reports_report_path(report.key, saved.params), class: "btn btn-sm",
-                  data: { turbo_frame: "report", action: "modal#close" } %>
+                  data: { turbo_frame: "report", action: "modal#close", row_link: true } %>
           <% end %>
           <%= button_to t(".destroy"), reports_saved_report_path(saved), method: :delete, class: "btn btn-sm",
                 form: { data: { turbo_confirm: t(".confirm_destroy", name: saved.name) } } %>

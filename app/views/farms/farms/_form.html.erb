@@ -1,6 +1,26 @@
 <%= form_with model: [ :farms, farm ], class: form_surface_class("max-w-2xl space-y-5"), data: { controller: "form-validation" } do |form| %>
   <%= hidden_field_tag :picker, "1" if picker_request? %>
   <%= render "shared/form_errors", record: farm %>
+  <%# Whose farm it is: a producer (searched by name) or, left empty, the
+      business. Locked once a purchase or a payroll names the farm. %>
+  <% if farm.owner_locked? %>
+    <p class="text-sm"><span class="text-ink-muted"><%= Farm.human_attribute_name(:producer) %>:</span>
+      <strong><%= farm.producer&.full_name || t("farms.farms.form.business") %></strong></p>
+    <p class="-mt-3 text-xs text-ink-muted"><%= t("farms.farms.form.owner_locked") %></p>
+  <% else %>
+    <% producers = Producer.includes(:person).alphabetical %>
+    <div data-controller="record-picker"
+         data-record-picker-records-value="<%= producers.to_h { |producer| [ producer.id, { label: producer.picker_label } ] }.to_json %>"
+         data-record-picker-missing-message-value="<%= t("farms.farms.form.producer_missing") %>">
+      <%= form.label :producer_id, for: "farm_producer_search", class: "field-label" %>
+      <input type="text" id="farm_producer_search" list="farm_producer_options" autocomplete="off" class="field-input"
+             placeholder="<%= t("farms.farms.form.producer_placeholder") %>" value="<%= farm.producer&.picker_label %>"
+             data-record-picker-target="search" data-action="record-picker#pick">
+      <datalist id="farm_producer_options" data-record-picker-target="options"></datalist>
+      <%= form.hidden_field :producer_id, data: { record_picker_target: "id" } %>
+      <p class="mt-1 text-xs text-ink-muted"><%= t("farms.farms.form.producer_help") %></p>
+    </div>
+  <% end %>
   <div>
     <%= form.label :name, class: "field-label" %>
     <%= form.text_field :name, autofocus: true, required: true, maxlength: 100, class: "field-input",

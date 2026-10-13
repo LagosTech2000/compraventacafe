@@ -21,7 +21,7 @@
         <li class="data-card" id="<%= dom_id(farm, :card) %>">
           <div class="flex items-start justify-between gap-3">
             <div class="min-w-0">
-              <p class="font-medium"><%= farm.name %></p>
+              <p class="font-medium"><%= farm.display_name %></p>
               <p class="text-xs text-ink-muted"><%= format_address(farm).presence || "—" %></p>
             </div>
             <%= detail_button farms_farm_path(farm) %>
@@ -43,7 +43,7 @@
         <tbody>
           <% @farms.each do |farm| %>
             <tr id="<%= dom_id(farm) %>">
-              <td class="font-medium"><%= farm.name %></td>
+              <td class="font-medium"><%= farm.display_name %></td>
               <td><%= format_address(farm).presence || "—" %></td>
               <td><span class="badge <%= farm.active? ? "badge-success" : "badge-neutral" %>"><%= t("farms.status_badges.farm.#{farm.active? ? "active" : "inactive"}") %></span></td>
               <td class="cell-actions">
