@@ -4,6 +4,10 @@ require "capybara/cuprite"
 # (Stimulus controllers) is tested as the user sees it. Chrome must be
 # installed: locally `google-chrome` in WSL, in CI the one GitHub Actions
 # ships. BROWSER_PATH points to another Chrome when needed.
+# Ferrum waits this long for Chrome to start (its default, 10 s, is too
+# short for a cold start on the CI runner).
+ENV["FERRUM_PROCESS_TIMEOUT"] ||= "30"
+
 Capybara.register_driver(:cuprite) do |app|
   Capybara::Cuprite::Driver.new(app, window_size: [ 1440, 1000 ], headless: true, process_timeout: 20,
                                      browser_options: { "no-sandbox" => nil })

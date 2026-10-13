@@ -98,7 +98,9 @@ jobs:
         run: |
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
           sudo apt-get install -y --no-install-recommends postgresql-client-18
-          pg_dump --version
+          # pg_wrapper would still pick 16: put 18's tools first.
+          echo "/usr/lib/postgresql/18/bin" >> "$GITHUB_PATH"
+          /usr/lib/postgresql/18/bin/pg_dump --version
 
       - name: Build Tailwind
         run: bin/rails tailwindcss:build
