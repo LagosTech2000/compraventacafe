@@ -4,6 +4,10 @@
 # only, by name without regard to case or extra spaces ("finca x" is
 # "Finca X"): it is used if it exists, created otherwise. Safe to run again.
 #
+# Writes with plain inserts and updates (no callbacks, validations or audit
+# events): it runs inside a migration, and the models of today may expect
+# columns that later migrations add (AuditEvent#details broke the deploy).
+#
 #   ProducerFarmBackfill.new.call                 # reads producers.farm_name
 #   ProducerFarmBackfill.new([[producer_id, "Finca X"], ...]).call
 class ProducerFarmBackfill
@@ -19,13 +23,13 @@ class ProducerFarmBackfill
       name = text.to_s.squish
       next if name.empty?
 
-      farm = Farm.where(producer_id:).find_by("LOWER(name) = ?", name.downcase)
-      unless farm
-        farm = Farm.create!(name:, producer_id:)
+      farm_id = Farm.where(producer_id:).where("LOWER(name) = ?", name.downcase).pick(:id)
+      unless farm_id
+        farm_id = Farm.insert({ name:, producer_id: }, returning: :id).rows.first.first
         created += 1
       end
       producers += 1
-      purchases += Purchase.where(producer_id:, farm_id: nil).update_all(farm_id: farm.id)
+      purchases += Purchase.where(producer_id:, farm_id: nil).update_all(farm_id:)
     end
     Result.new(farms_created: created, producers:, purchases:)
   end
