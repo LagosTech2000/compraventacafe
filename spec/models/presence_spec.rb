@@ -40,8 +40,45 @@ RSpec.describe Presence do
     described_class.leave(ana)
 
     expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to)
-      .with(:presence, target: "active-users", partial: "dashboard/active_users", locals: { users: [ ana ] }).once
+      .with(:presence, target: "active-users", partial: "dashboard/active_users", locals: { users: [ ana ], recent: [] }).once
     expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to)
-      .with(:presence, target: "active-users", partial: "dashboard/active_users", locals: { users: [] }).once
+      .with(:presence, target: "active-users", partial: "dashboard/active_users", locals: { users: [], recent: [] }).once
+  end
+
+  describe "recent activity" do
+    def session_for(user, seen:) = user.sessions.create!(last_seen_at: seen)
+
+    it "lists who is not connected but did something in the last hour, latest first, with the time" do
+      session_for(ana, seen: 50.minutes.ago)
+      session_for(beto, seen: 70.minutes.ago)
+      session_for(beto, seen: 5.minutes.ago) # another device: the latest counts
+      carla = create(:user, name: "Carla Ríos")
+      session_for(carla, seen: 61.minutes.ago)
+
+      recent = described_class.recent_users.to_a
+      expect(recent).to eq([ beto, ana ])
+      expect(recent.first.last_seen_at).to be_within(1.second).of(5.minutes.ago)
+    end
+
+    it "leaves out who is connected now, the hidden user, inactive users and signed-out sessions" do
+      dora = create(:user, name: "Dora Paz")
+      eva = create(:user, name: "Eva Cruz")
+      [ ana, beto, dora, eva ].each { session_for(it, seen: 1.minute.ago) }
+      described_class.join(ana)
+      stub_const("Presence::HIDDEN_USER_IDS", [ beto.id ])
+      dora.update!(active: false)
+      eva.sessions.destroy_all
+
+      expect(described_class.recent_users).to be_empty
+    end
+
+    it "moves a user to recent when their last tab closes" do
+      session_for(ana, seen: 1.minute.ago)
+      described_class.join(ana)
+      expect(described_class.panel_locals).to eq(users: [ ana ], recent: [])
+
+      described_class.leave(ana)
+      expect(described_class.panel_locals).to eq(users: [], recent: [ ana ])
+    end
   end
 end

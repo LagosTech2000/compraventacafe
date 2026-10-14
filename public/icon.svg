@@ -1,3 +1,8 @@
-<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="256" cy="256" r="256" fill="red"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- A coffee bean on the app's brown (--color-primary), cream like --color-primary-soft. Provisional until the client's logo. -->
+  <rect width="512" height="512" rx="112" fill="#6f4128"/>
+  <g transform="translate(256 256) rotate(35)">
+    <ellipse rx="128" ry="182" fill="#f5e9df"/>
+    <path d="M0 -158 C -62 -70 62 70 0 158" fill="none" stroke="#6f4128" stroke-width="30" stroke-linecap="round"/>
+  </g>
 </svg>

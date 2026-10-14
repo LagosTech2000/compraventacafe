@@ -18,7 +18,7 @@
   </div>
   <div class="shrink-0 pt-1">
     <%= turbo_stream_from Presence::STREAM %>
-    <%= render "dashboard/active_users", users: Presence.visible_users.to_a %>
+    <%= render "dashboard/active_users", **Presence.panel_locals %>
   </div>
 </div>
 

@@ -13,9 +13,10 @@
     <%# Signed-in pages keep the user online (presence.js, Presence). %>
     <% if authenticated? %><meta name="presence" content="on"><% end %>
 
-    <link rel="icon" href="/icon.png" type="image/png">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
+    <%# ?v= busts the year-long cache of public/: bump it when the icon changes. %>
+    <link rel="icon" href="/icon.png?v=2" type="image/png">
+    <link rel="icon" href="/icon.svg?v=2" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
 
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>

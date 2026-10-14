@@ -310,6 +310,9 @@ los errores).
   `SessionsController`.
 - La pantalla (Administración → Auditoría) es solo para administradores y
   filtra por fechas, usuario, acción, entidad y texto, en páginas de 50.
+  Los bots bloqueados por buscar direcciones de ataque (`scanner_ban`) se
+  siguen auditando, pero no salen salvo con «Mostrar bloqueos de bots»
+  (`AuditEventFilter#show_bot_blocks`, Fernando 2026-10-14).
 
 **5. Listas, detalles y ventanas.**
 
@@ -490,6 +493,15 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
   Es el único lugar a editar cuando se defina la paleta real; la actual es
   provisional. Tipografía: Inter, alojada en la app (`app/assets/fonts`), sin
   servicios externos.
+- **Ícono del navegador** (provisional, un grano de café en el café de la
+  paleta; Fernando 2026-10-14): `public/icon.svg` es el original y de él
+  salen `icon.png` (512), `favicon.ico` (16/32/48) y
+  `apple-touch-icon.png` / `apple-touch-icon-precomposed.png` (180, sin
+  esquinas transparentes: iOS las redondea). Los navegadores piden estos
+  nombres aunque la página no los enlace; si faltan, cada visita deja un
+  404 en la auditoría (`spec/requests/icons_spec.rb`). Cuando llegue el
+  logo del cliente, se reemplazan los cinco y se sube el `?v=` de sus
+  enlaces en el layout (`public/` va con caché de un año).
 - **Componentes de estilo** (úsalos en vez de repetir clases): `btn`,
   `btn-primary`, `btn-sm` (píldoras clay); `nav-pill` / `nav-pill-active`
   (vía `nav_link_class`; dentro de `.subnav` el activo va en tono suave);
@@ -610,8 +622,15 @@ tras salir). Un usuario está conectado mientras tenga alguna pestaña abierta.
 En el Inicio van en la fila del saludo, al otro extremo: círculos
 pequeños con las iniciales y un punto verde, el nombre en un tooltip al
 pasar el puntero o con el foco (`.online-avatar`); más de
-`Presence::AVATARS` se juntan en «+N». Al entrar o salir alguien se
-reemplazan por el stream de Turbo `presence` (solo nombres). **El usuario con
+`Presence::AVATARS` se juntan en «+N». Al lado, con un **anillo gris** en
+vez del punto verde, quienes no están conectados pero tuvieron actividad en
+la última hora (`Presence::RECENT_WINDOW`, Fernando 2026-10-14: un celular
+bloqueado o una pestaña dormida cortan la conexión, pero la sesión sigue en
+uso). La actividad es de la sesión (`Session#last_seen_at`, `seen!`): cada
+solicitud la mueve, como mucho una vez por minuto, y cerrar la pestaña
+también. Quien cierra sesión sale, porque su sesión se borra. El tooltip
+dice «En línea» o «Última actividad: 09:42». Al entrar o salir alguien se
+reemplazan por el stream de Turbo `presence` (solo nombres y horas). **El usuario con
 id 1 nunca sale como conectado** (`Presence::HIDDEN_USER_IDS`), pero ve a los
 demás. Vive en la memoria del proceso, como el adaptador `async`.
 

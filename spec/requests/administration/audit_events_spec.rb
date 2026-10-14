@@ -103,6 +103,20 @@ RSpec.describe "Administration::AuditEvents" do
       expect(helper_sentence(AuditEvent.find_by!(auditable: zone))).to start_with("El sistema creó la zona ##{zone.id} (Las Labranzas)")
     end
 
+    it "hides blocked bots unless asked, but keeps other rate limits" do
+      bot = AuditEvent.record!(action: "rate_limited", label: "scanner_ban GET /api/.env", user: nil, details: { "rule" => "scanner_ban" })
+      flood = AuditEvent.record!(action: "rate_limited", label: "requests_per_ip GET /", user: nil, details: { "rule" => "requests_per_ip" })
+
+      get administration_audit_events_path(event_action: "rate_limited")
+      ids = Nokogiri::HTML(response.body).css("tbody tr").map { it["id"] }
+      expect(ids).to eq([ "audit_event_#{flood.id}" ])
+      expect(response.body).to include("Mostrar bloqueos de bots")
+
+      get administration_audit_events_path(event_action: "rate_limited", show_bot_blocks: "1")
+      ids = Nokogiri::HTML(response.body).css("tbody tr").map { it["id"] }
+      expect(ids).to contain_exactly("audit_event_#{bot.id}", "audit_event_#{flood.id}")
+    end
+
     it "ignores garbage in the filters" do
       get administration_audit_events_path(from: "ayer", event_action: "drop table", auditable_type: "Kernel", page: "-3")
       expect(response).to have_http_status(:ok)

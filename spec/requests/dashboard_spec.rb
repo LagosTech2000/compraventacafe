@@ -75,4 +75,45 @@ RSpec.describe "Home page" do
     expect(page.at_css("[aria-labelledby=dashboard-activity]")).to be_nil
     expect(response.body).to include("Todavía no tienes acceso a ningún módulo")
   end
+
+  describe "who is online and recently active (Presence)" do
+    include ActiveSupport::Testing::TimeHelpers
+
+    let(:viewer) { create(:user, name: "Vera Luna") }
+
+    it "keeps the session's last activity, at most once a minute" do
+      sign_in viewer
+      session = viewer.sessions.sole
+      expect(session.last_seen_at).to be_within(5.seconds).of(Time.current)
+
+      travel 30.seconds do
+        expect { get root_path }.not_to(change { session.reload.last_seen_at })
+      end
+      travel 2.minutes do
+        get root_path
+        expect(session.reload.last_seen_at).to be_within(5.seconds).of(Time.current)
+      end
+    end
+
+    it "shows the recently active with a grey ring and their last activity on hover" do
+      ana = create(:user, name: "Ana Zelaya")
+      seen = Time.zone.parse("2026-10-14 09:42")
+      ana.sessions.create!(last_seen_at: seen)
+      Presence.join(viewer)
+      travel_to(seen + 10.minutes) do
+        sign_in viewer
+        get root_path
+      end
+
+      online = page.at_css("#active-users li#online_user_#{viewer.id}")
+      expect(online.at_css(".online-dot:not(.online-dot-recent)")).to be_present
+      expect(online.at_css(".online-tooltip").text.squish).to eq("Vera Luna En línea")
+
+      recent = page.at_css("#active-users li#recent_user_#{ana.id}")
+      expect(recent.at_css(".online-dot.online-dot-recent")).to be_present
+      expect(recent.at_css(".online-tooltip").text.squish).to eq("Ana Zelaya Última actividad: 09:42")
+      expect(recent["aria-describedby"]).to eq("recent_user_#{ana.id}_status")
+      expect(page.at_css("#active-users")["aria-label"]).to eq("1 usuario conectado, 1 con actividad en la última hora")
+    end
+  end
 end

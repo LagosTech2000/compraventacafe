@@ -228,6 +228,11 @@ es:
         zero: "Nadie más está conectado"
         one: "1 usuario conectado"
         other: "%{count} usuarios conectados"
+      recent_label:
+        one: "1 con actividad en la última hora"
+        other: "%{count} con actividad en la última hora"
+      online: "En línea"
+      last_seen: "Última actividad: %{time}"
     show:
       title: "Inicio"
       coffee_market_loading: "Cargando el precio del café en la bolsa…"
@@ -2219,7 +2224,7 @@ es:
             - "Toca la cifra «Pendientes» (o «Ver el detalle») para ver cada tarea pendiente con su botón para resolverla."
             - "«Tareas pendientes» aparece solo cuando hay algo por atender: compras sin facturar, facturas sin cancelar, préstamos vencidos, períodos de planilla por pagar o empleados sin salario. Cada una tiene su botón."
             - "«Café en la bolsa» muestra el precio del café arábica en la bolsa de Nueva York, cuánto cambió en la última sesión y su línea del último mes."
-            - "Arriba a la derecha, los círculos son los usuarios conectados ahora; pasa el puntero encima para ver el nombre. Se actualiza solo cuando alguien entra o sale."
+            - "Arriba a la derecha, los círculos son los usuarios: con punto verde, los conectados ahora; con un anillo gris, los que usaron el sistema en la última hora pero ya no tienen la página abierta (celular bloqueado, pestaña cerrada). Pasa el puntero encima para ver el nombre y la hora de su última actividad. Quien cierra sesión sale de la lista."
             - "«Actividad reciente» lista las últimas compras, facturas, productores, préstamos, abonos y pagos de planilla, con su fecha; toca «Abrir» para verlos."
             - "Abajo están tus módulos. Para volver aquí, toca el logo de arriba a la izquierda."
             - "Para salir, usa «Cerrar sesión» (en el celular, dentro de «Menú»)."
@@ -2327,6 +2332,7 @@ es:
               - "Toca «Detalle» para ver qué campos cambiaron, con su valor antes y después."
             tips:
               - "Las contraseñas nunca se muestran: aparecen como «(oculto)»."
+              - "Los bots de internet que buscan direcciones de ataque (/wp-admin, .env…) quedan bloqueados y registrados, pero no salen en la lista: marca «Mostrar bloqueos de bots» para verlos."
           show:
             title: "Detalle de la acción"
             summary: "Quién hizo el cambio, cuándo, desde qué dirección IP y qué campos cambiaron."
@@ -3028,6 +3034,7 @@ es:
         search_placeholder: "Registro o correo"
         all_actions: "Todas"
         all_entities: "Todas"
+        show_bot_blocks: "Mostrar bloqueos de bots"
         when: "Fecha y hora"
         record: "Registro"
         record_id: "ID del registro"

@@ -26,7 +26,7 @@ class Rack::Attack
   SCANNER_HITS = 3
   SCANNER_WINDOW = 10.minutes
   SCANNER_BAN = 1.hour
-  UNCOUNTED_PATHS = %r{\A/(assets/|up\z|site_logo|icon\.|favicon\.|robots\.txt\z)}
+  UNCOUNTED_PATHS = %r{\A/(assets/|up\z|site_logo|icon\.|favicon\.|apple-touch-icon|robots\.txt\z)}
   SCANNER_PATHS = %r{
     \.(php\d?|aspx?|jsp|cgi|env|git|svn|sql|bak|old|swp|ini|yml)(/|\?|\z) |
     /(wp-|wordpress|phpmyadmin|pma|cgi-bin|xmlrpc|vendor/phpunit|\.git|\.env|\.aws|\.ssh|actuator|boaform|HNAP1)
