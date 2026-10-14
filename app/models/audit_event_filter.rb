@@ -7,6 +7,10 @@ class AuditEventFilter < ListFilter
   field :auditable_id, :id
   field :q, :text
 
+  sorts when: "audit_events.created_at",
+        description: text("audit_events.user_email", "audit_events.auditable_label"),
+        action: "audit_events.action"
+
   def apply(scope)
     scope = scope.where(created_at: from.in_time_zone.beginning_of_day..) if from
     scope = scope.where(created_at: ..to.in_time_zone.end_of_day) if to

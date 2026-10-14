@@ -1,6 +1,7 @@
 <%# Identity, contact, zone and address of a Person. `form` builds a Person.
     A zone created here (in a modal on top) is added and selected. %>
 <% person = form.object %>
+<%= render "shared/photo_field", form: form %>
 <div>
   <%= form.label :first_names, class: "field-label" %>
   <%= form.text_field :first_names, autofocus: local_assigns.fetch(:autofocus, true), class: "field-input",

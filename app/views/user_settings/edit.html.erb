@@ -1,0 +1,82 @@
+<% content_for :title, t(".title") %>
+<h1 class="mb-1 text-xl font-bold"><%= t(".title") %></h1>
+<p class="mb-5 text-sm text-ink-muted"><%= t(".summary", name: @user.name) %></p>
+
+<%# Everything about the user (Fernando, 2026-10-13): their data, how the
+    system looks for them and their password, in one form; their
+    fingerprints below it, which save on their own. %>
+<%= form_with model: @user, url: user_setting_path, method: :patch, class: form_surface_class("max-w-3xl space-y-8"),
+      data: { controller: "form-validation" } do |form| %>
+  <%= render "shared/form_errors", record: @user %>
+
+  <section class="space-y-5" aria-labelledby="settings-account">
+    <h2 id="settings-account" class="text-lg font-semibold"><%= t(".account") %></h2>
+    <div class="grid gap-5 sm:grid-cols-2">
+      <%= render "shared/photo_field", form: form %>
+      <div>
+        <%= form.label :name, class: "field-label" %>
+        <%= form.text_field :name, autocomplete: "name", class: "field-input",
+              **field_format_attributes(User, :name, :person_name, required: true) %>
+      </div>
+      <div>
+        <%= form.label :email_address, class: "field-label" %>
+        <%= form.email_field :email_address, autocomplete: "username", class: "field-input",
+              **field_format_attributes(User, :email_address, :email, required: true) %>
+        <p class="mt-1 text-xs text-ink-muted"><%= t(".email_hint") %></p>
+      </div>
+    </div>
+  </section>
+
+  <%# Each choice carries a small sketch of how the screen looks with it. %>
+  <section class="space-y-5" aria-labelledby="settings-display">
+    <h2 id="settings-display" class="text-lg font-semibold"><%= t(".display") %></h2>
+    <% [ [ :window_style, User::WINDOW_STYLES ], [ :nav_position, User::NAV_POSITIONS ] ].each do |attribute, options| %>
+      <fieldset>
+        <legend class="field-label"><%= User.human_attribute_name(attribute) %></legend>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <% options.each do |option| %>
+            <label class="data-card flex cursor-pointer gap-3 has-[:checked]:ring-2 has-[:checked]:ring-primary">
+              <%= form.radio_button attribute, option, class: "mt-1 size-4 shrink-0 accent-primary" %>
+              <span class="min-w-0 flex-1">
+                <span class="block font-medium"><%= User.human_attribute_name("#{attribute}/#{option}") %></span>
+                <span class="block text-xs text-ink-muted"><%= t(".hints.#{attribute}.#{option}") %></span>
+                <span class="settings-sketch settings-sketch-<%= option %>" aria-hidden="true"><span></span></span>
+              </span>
+            </label>
+          <% end %>
+        </div>
+      </fieldset>
+    <% end %>
+  </section>
+
+  <section class="space-y-5" aria-labelledby="settings-password">
+    <div>
+      <h2 id="settings-password" class="text-lg font-semibold"><%= t(".password") %></h2>
+      <p class="text-sm text-ink-muted"><%= t(".password_hint") %></p>
+    </div>
+    <div class="grid gap-5 sm:grid-cols-3">
+      <div>
+        <%= label_tag "user_current_password", User.human_attribute_name(:current_password), class: "field-label" %>
+        <%= password_field_tag "user[current_password]", nil, id: "user_current_password", autocomplete: "current-password", maxlength: 72, class: "field-input" %>
+      </div>
+      <div>
+        <%= form.label :password, t(".new_password"), class: "field-label" %>
+        <%= form.password_field :password, autocomplete: "new-password", class: "field-input",
+              **field_format_attributes(User, :password, :password) %>
+      </div>
+      <div>
+        <%= form.label :password_confirmation, class: "field-label" %>
+        <%# Only when a new password is written (not required otherwise). %>
+        <%= form.password_field :password_confirmation, autocomplete: "new-password", class: "field-input",
+              **confirmation_attributes(User, :password_confirmation, form.field_id(:password)).merge(required: nil) %>
+      </div>
+    </div>
+  </section>
+
+  <div class="flex flex-wrap gap-2">
+    <%= form.submit t(".save"), class: "btn btn-primary" %>
+    <%= cancel_button root_path %>
+  </div>
+<% end %>
+
+<%= render "user_settings/passkeys", user: @user %>

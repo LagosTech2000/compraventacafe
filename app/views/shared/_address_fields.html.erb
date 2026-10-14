@@ -31,4 +31,31 @@
     <%= form.label :address_line, record.class.human_attribute_name(:address_line), class: "field-label" %>
     <%= form.text_area :address_line, rows: 2, maxlength: HasAddress::ADDRESS_LINE_MAX, class: "field-input" %>
   </div>
+
+  <%# Where it is, on the map (optional): a tap puts the pin. %>
+  <% if record.respond_to?(:latitude) %>
+    <div class="space-y-3 sm:col-span-2" <%= tag.attributes(data: location_map_data) %>>
+      <div>
+        <p class="field-label"><%= t("addresses.map.title") %></p>
+        <p class="text-xs text-ink-muted"><%= t("addresses.map.help") %></p>
+      </div>
+      <div class="h-64 overflow-hidden rounded-xl ring-1 ring-line sm:h-80" data-location-map-target="map"
+           role="application" aria-label="<%= t("addresses.map.label") %>"></div>
+      <div class="flex flex-wrap items-end gap-3">
+        <div class="min-w-0 flex-1 basis-36">
+          <%= form.label :latitude, class: "field-label" %>
+          <%= form.number_field :latitude, step: "any", min: -90, max: 90, inputmode: "decimal", class: "field-input",
+                data: { location_map_target: "latitude", action: "input->location-map#typed" } %>
+        </div>
+        <div class="min-w-0 flex-1 basis-36">
+          <%= form.label :longitude, class: "field-label" %>
+          <%= form.number_field :longitude, step: "any", min: -180, max: 180, inputmode: "decimal", class: "field-input",
+                data: { location_map_target: "longitude", action: "input->location-map#typed" } %>
+        </div>
+        <button type="button" class="btn btn-sm gap-1.5" data-action="location-map#locate"><%= icon(:map_pin, css: "size-4") %> <%= t("addresses.map.locate") %></button>
+        <button type="button" class="btn btn-sm" data-action="location-map#clear" data-location-map-target="clear" hidden><%= t("addresses.map.clear") %></button>
+      </div>
+      <p class="text-sm text-danger" role="status" data-location-map-target="status" hidden></p>
+    </div>
+  <% end %>
 </fieldset>

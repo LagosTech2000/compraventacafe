@@ -1,4 +1,8 @@
-<%# Payrolls with their farm, kind, pay frequency and dates. %>
+<%# Payrolls with their farm, kind, pay frequency and dates.
+    sorting: the list's filter and frame when the server sorts it (TableSortHelper).
+    show_farm: false on a farm's own page, where every row is that farm's. %>
+<% sorting = local_assigns[:sorting] %>
+<% show_farm = local_assigns.fetch(:show_farm, true) %>
 <div class="@container">
   <ul class="space-y-3 @2xl:hidden">
     <% payrolls.each do |payroll| %>
@@ -6,7 +10,7 @@
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0">
             <p class="font-medium"><%= payroll.name %></p>
-            <p class="text-xs text-ink-muted"><%= payroll.farm.name %> · <%= payroll.human_pay_frequency %></p>
+            <p class="text-xs text-ink-muted"><%= [ (payroll.farm.name if show_farm), payroll.human_pay_frequency ].compact.join(" · ") %></p>
           </div>
           <%= link_to t("farms.payrolls.table.open"), farms_payroll_path(payroll), class: "btn btn-sm", data: { row_link: true } %>
         </div>
@@ -15,15 +19,15 @@
     <% end %>
   </ul>
   <div class="hidden overflow-x-auto panel @2xl:block">
-    <table class="data-table">
+    <table class="data-table" <%= tag.attributes(data: table_sort_data(sorting)) %>>
       <thead>
         <tr>
-          <th><%= Payroll.human_attribute_name(:name) %></th>
-          <th><%= Payroll.human_attribute_name(:farm) %></th>
-          <th><%= Payroll.human_attribute_name(:kind) %></th>
-          <th class="hidden @4xl:table-cell"><%= Payroll.human_attribute_name(:pay_frequency) %></th>
-          <th class="hidden @4xl:table-cell"><%= t("farms.payrolls.table.dates") %></th>
-          <th><%= Payroll.human_attribute_name(:status) %></th>
+          <%= sort_th Payroll.human_attribute_name(:name), :name, sorting %>
+          <% if show_farm %><%= sort_th Payroll.human_attribute_name(:farm), :farm, sorting %><% end %>
+          <%= sort_th Payroll.human_attribute_name(:kind), :kind, sorting %>
+          <%= sort_th Payroll.human_attribute_name(:pay_frequency), :pay_frequency, sorting, class: "hidden @4xl:table-cell" %>
+          <%= sort_th t("farms.payrolls.table.dates"), :dates, sorting, class: "hidden @4xl:table-cell" %>
+          <%= sort_th Payroll.human_attribute_name(:status), :status, sorting %>
           <th class="cell-actions"><span class="sr-only"><%= t("farms.payrolls.table.actions") %></span></th>
         </tr>
       </thead>
@@ -31,7 +35,7 @@
         <% payrolls.each do |payroll| %>
           <tr id="<%= dom_id(payroll) %>">
             <td class="font-medium"><%= payroll.name %></td>
-            <td><%= payroll.farm.name %></td>
+            <% if show_farm %><td><%= payroll.farm.name %></td><% end %>
             <td><%= payroll_kind_badge(payroll) %></td>
             <td class="hidden @4xl:table-cell"><%= payroll.human_pay_frequency %></td>
             <td class="hidden whitespace-nowrap @4xl:table-cell">

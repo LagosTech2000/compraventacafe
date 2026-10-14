@@ -1,8 +1,11 @@
 <%# Purchases list. Adapts to its container (page or modal):
     narrow → cards; medium → key columns; wide → every column. Observations stay in the detail.
     Each row can be voided from here when allowed.
-    show_producer: false on a producer's own page, where every row is theirs. %>
+    show_producer: false on a producer's own page, where every row is theirs.
+    sorting: the list's filter and frame when the server sorts it (TableSortHelper);
+    without it, the browser sorts the rows on screen. %>
 <% show_producer = local_assigns.fetch(:show_producer, true) %>
+<% sorting = local_assigns[:sorting] %>
 <div class="@container">
   <ul class="space-y-3 @3xl:hidden">
     <% purchases.each do |purchase| %>
@@ -36,19 +39,19 @@
   </ul>
 
   <div class="hidden overflow-x-auto panel @3xl:block">
-    <table class="data-table data-table-compact">
+    <table class="data-table data-table-compact" <%= tag.attributes(data: table_sort_data(sorting)) %>>
       <thead>
         <tr>
-          <th class="hidden @5xl:table-cell"><%= t("trading.purchases.table.number") %></th>
-          <th><%= Purchase.human_attribute_name(:purchased_at) %></th>
-          <th><%= show_producer ? t("trading.purchases.table.producer") : Purchase.human_attribute_name(:coffee_state) %></th>
-          <th class="hidden text-right @5xl:table-cell"><%= t("trading.purchases.table.gross") %></th>
-          <th class="hidden text-right @5xl:table-cell"><%= t("trading.purchases.table.humidity") %></th>
-          <th class="text-right"><%= t("trading.purchases.table.net") %></th>
-          <th class="text-right"><%= t("trading.purchases.table.quintals") %></th>
-          <th class="hidden text-right @5xl:table-cell"><%= t("trading.purchases.table.price") %></th>
-          <th class="text-right"><%= Purchase.human_attribute_name(:total) %></th>
-          <th><%= t("trading.purchases.table.invoice") %></th>
+          <%= sort_th t("trading.purchases.table.number"), :number, sorting, class: "hidden @5xl:table-cell" %>
+          <%= sort_th Purchase.human_attribute_name(:purchased_at), :purchased_at, sorting %>
+          <%= show_producer ? sort_th(t("trading.purchases.table.producer"), :producer, sorting) : sort_th(Purchase.human_attribute_name(:coffee_state), :coffee_state, sorting) %>
+          <%= sort_th t("trading.purchases.table.gross"), :gross, sorting, class: "hidden text-right @5xl:table-cell" %>
+          <%= sort_th t("trading.purchases.table.humidity"), :humidity, sorting, class: "hidden text-right @5xl:table-cell" %>
+          <%= sort_th t("trading.purchases.table.net"), :net, sorting, class: "text-right" %>
+          <%= sort_th t("trading.purchases.table.quintals"), :quintals, sorting, class: "text-right" %>
+          <%= sort_th t("trading.purchases.table.price"), :price, sorting, class: "hidden text-right @5xl:table-cell" %>
+          <%= sort_th Purchase.human_attribute_name(:total), :total, sorting, class: "text-right" %>
+          <%= sort_th t("trading.purchases.table.invoice"), :invoice, sorting %>
           <th class="cell-actions"><span class="sr-only"><%= t("trading.purchases.table.actions") %></span></th>
         </tr>
       </thead>

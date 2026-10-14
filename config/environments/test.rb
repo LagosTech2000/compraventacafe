@@ -24,6 +24,9 @@ Rails.application.configure do
   # cleared before each example (spec/support/rate_limits.rb).
   config.cache_store = :memory_store
 
+  # The map draws without tiles: specs never reach the internet.
+  config.x.map_tiles_url = nil
+
   # Render exception templates for rescuable exceptions and raise for other exceptions.
   config.action_dispatch.show_exceptions = :rescuable
 

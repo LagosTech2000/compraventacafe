@@ -50,7 +50,8 @@ module Farms
 
       def farm_params
         # Its producer can change while no purchase or payroll names the farm (Farm#owner_locked?).
-        params.expect(farm: [ :name, :producer_id, :department_id, :municipality_id, :address_line, :observations, :active ])
+        params.expect(farm: [ :name, :producer_id, :department_id, :municipality_id, :address_line, :latitude, :longitude,
+                               :observations, :active ])
       end
   end
 end

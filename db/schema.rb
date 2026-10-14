@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_13_014137) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_13_130200) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -72,6 +72,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_014137) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "producer_id"
+    t.decimal "latitude", precision: 9, scale: 6
+    t.decimal "longitude", precision: 9, scale: 6
     t.index "lower((name)::text)", name: "index_farms_on_lower_name", unique: true, where: "(producer_id IS NULL)"
     t.index "producer_id, lower((name)::text)", name: "index_farms_on_producer_and_lower_name", unique: true, where: "(producer_id IS NOT NULL)"
     t.index ["department_id"], name: "index_farms_on_department_id"
@@ -316,6 +318,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_014137) do
     t.bigint "department_id"
     t.bigint "municipality_id"
     t.bigint "zone_id"
+    t.decimal "latitude", precision: 9, scale: 6
+    t.decimal "longitude", precision: 9, scale: 6
     t.index ["department_id"], name: "index_people_on_department_id"
     t.index ["dni"], name: "index_people_on_dni", unique: true, where: "(dni IS NOT NULL)"
     t.index ["last_names", "first_names"], name: "index_people_on_last_names_and_first_names"
@@ -344,6 +348,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_014137) do
     t.string "ihcafe_code"
     t.index ["ihcafe_code"], name: "index_producers_on_ihcafe_code", unique: true, where: "(ihcafe_code IS NOT NULL)"
     t.index ["person_id"], name: "index_producers_on_person_id", unique: true
+  end
+
+  create_table "profile_photos", force: :cascade do |t|
+    t.string "owner_type", null: false
+    t.bigint "owner_id", null: false
+    t.binary "data", null: false
+    t.string "content_type", null: false
+    t.integer "byte_size", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["owner_type", "owner_id"], name: "index_profile_photos_on_owner", unique: true
   end
 
   create_table "purchase_weighings", force: :cascade do |t|
@@ -442,7 +457,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_014137) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "name", null: false
+    t.string "window_style", default: "modal", null: false
+    t.string "nav_position", default: "top", null: false
+    t.string "webauthn_id"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
+    t.index ["webauthn_id"], name: "index_users_on_webauthn_id", unique: true
+  end
+
+  create_table "webauthn_credentials", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "external_id", null: false
+    t.text "public_key", null: false
+    t.bigint "sign_count", default: 0, null: false
+    t.string "nickname", null: false
+    t.datetime "last_used_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["external_id"], name: "index_webauthn_credentials_on_external_id", unique: true
+    t.index ["user_id"], name: "index_webauthn_credentials_on_user_id"
   end
 
   create_table "zones", force: :cascade do |t|
@@ -503,4 +535,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_014137) do
   add_foreign_key "purchases", "zones"
   add_foreign_key "saved_reports", "users"
   add_foreign_key "sessions", "users"
+  add_foreign_key "webauthn_credentials", "users"
 end

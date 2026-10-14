@@ -1,0 +1,46 @@
+<%# The main navigation on the left (the user's setting, User#side_nav?),
+    from lg; smaller screens keep the top bar with its menu. It collapses to
+    its icons (sidebar_controller.js, remembered in a cookie): an icon grows
+    on hover or focus and shows its name in a tooltip beside it, without
+    widening the bar. %>
+<aside class="sidebar fixed inset-y-0 left-0 z-30 hidden p-3 lg:block print:hidden" data-controller="sidebar"
+       data-sidebar-cookie-value="<%= SidebarState::COOKIE %>"
+       data-sidebar-collapse-label-value="<%= t("layouts.sidebar.collapse") %>"
+       data-sidebar-expand-label-value="<%= t("layouts.sidebar.expand") %>">
+  <nav class="sidebar-panel glass flex h-full flex-col gap-4 p-3" aria-label="<%= t("layouts.navigation.label") %>">
+    <div class="sidebar-head flex items-center gap-2">
+      <%= link_to root_path, class: "sidebar-brand", aria: { label: business_name } do %>
+        <%= business_logo(:nav) %>
+        <span class="sidebar-brand-name"><%= business_name %></span>
+      <% end %>
+      <% label = t("layouts.sidebar.#{sidebar_collapsed? ? "expand" : "collapse"}") %>
+      <button type="button" class="sidebar-toggle" data-action="sidebar#toggle" data-sidebar-target="toggle"
+              aria-expanded="<%= !sidebar_collapsed? %>" aria-label="<%= label %>" title="<%= label %>">
+        <%= icon(:sidebar, css: "size-5") %>
+      </button>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <% [ [ t("layouts.navigation.home"), root_path, :home, true ],
+           *readable_module_keys.map { |key| [ AppModule.human_name(key), module_root_path(key), key, false ] } ].each do |name, path, icon_name, exact| %>
+        <% active = nav_link_class(path, exact:).include?("active") %>
+        <%= link_to path, class: "sidebar-link #{"sidebar-link-active" if active}", aria: { current: ("page" if active) } do %>
+          <%= icon(icon_name, css: "sidebar-icon") %>
+          <span class="sidebar-label"><%= name %></span>
+        <% end %>
+      <% end %>
+    </div>
+
+    <div class="mt-auto flex flex-col gap-1 border-t border-line pt-3">
+      <%= modal_link_to edit_user_setting_path, class: "sidebar-link" do %>
+        <span class="sidebar-icon grid shrink-0 place-items-center rounded-full bg-primary-soft text-[0.6rem] font-bold text-primary" aria-hidden="true"><%= initials(Current.user.name) %></span>
+        <span class="sidebar-label"><%= Current.user.name %> <span class="sr-only">· <%= t("layouts.navigation.settings") %></span></span>
+      <% end %>
+      <div class="sidebar-help"><%= help_guide_button %></div>
+      <%= button_to session_path, method: :delete, class: "sidebar-link w-full", form: { class: "contents" } do %>
+        <%= icon(:sign_out, css: "sidebar-icon") %>
+        <span class="sidebar-label"><%= t("layouts.navigation.sign_out") %></span>
+      <% end %>
+    </div>
+  </nav>
+</aside>

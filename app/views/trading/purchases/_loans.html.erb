@@ -26,7 +26,7 @@
 
     <% if loan_payments.any? %>
       <div class="mt-4 overflow-x-auto">
-        <table class="data-table data-table-compact">
+        <table class="data-table data-table-compact" data-controller="table-sort">
           <thead>
             <tr>
               <th><%= LoanPayment.human_attribute_name(:loan) %></th>

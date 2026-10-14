@@ -41,6 +41,11 @@ module Compraventacafe
     # Off by default so development shows the full trace; on in production.
     config.x.friendly_errors = false
 
+    # Map tiles for the location of people and farms (OpenStreetMap: free, no
+    # key; its usage policy asks for the attribution the map shows). Specs
+    # set it to nil: they never reach the internet.
+    config.x.map_tiles_url = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+
     # Errors that never reach a controller's ErrorHandling (an unknown
     # address, a failure in a middleware) are audited (ErrorAudit) and then
     # answered with the same Spanish static pages of public/.

@@ -1,11 +1,16 @@
 <% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
 <% content_for :title, @farm.name %>
 <%= render "farms/nav" %>
+<%= render "shared/breadcrumbs", crumbs: [ [ t("farms.nav.farms"), farms_farms_path ], [ @farm.name ] ] %>
 
 <div class="flex flex-wrap items-start justify-between gap-4">
   <div>
-    <h1 class="text-2xl font-bold"><%= @farm.name %></h1>
-    <p class="mt-1 text-sm text-ink-muted"><%= format_address(@farm).presence || "—" %></p>
+    <h1 class="flex flex-wrap items-center gap-2 text-2xl font-bold">
+      <%= @farm.name %>
+      <% unless @farm.active? %><span class="badge badge-neutral"><%= t("farms.status_badges.farm.inactive") %></span><% end %>
+    </h1>
+    <% about = [ (t(".owner", name: @farm.producer.full_name) if @farm.producer), format_address(@farm).presence ].compact %>
+    <% if about.any? %><p class="mt-1 text-sm text-ink-muted"><%= about.join(" · ") %></p><% end %>
   </div>
   <div class="flex flex-wrap gap-3">
     <% if policy(Payroll).create? && @farm.active? %>
@@ -18,11 +23,12 @@
 </div>
 
 <%# The farm's accounts: all its payrolls, whatever the filter. %>
-<dl class="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+<%# The figures fill each row, without gaps. %>
+<dl class="mt-6 flex flex-wrap gap-3">
   <% gross = @all_payrolls.sum(&:gross_paid) %>
   <% expenses = @all_payrolls.sum(&:expenses_total) %>
   <% { payrolls: @all_payrolls.size, gross_paid: format_money(gross), expenses: format_money(expenses), total_cost: format_money(gross + expenses) }.each do |key, value| %>
-    <div class="stat">
+    <div class="stat min-w-0 flex-1 basis-40">
       <dt><%= t("farms.accounts.#{key}") %></dt>
       <dd><%= value %></dd>
     </div>
@@ -32,11 +38,10 @@
 <% if @farm.observations.present? %>
   <p class="mt-4 text-sm"><span class="font-semibold"><%= Farm.human_attribute_name(:observations) %>:</span> <%= @farm.observations %></p>
 <% end %>
+<% if @farm.located? %>
+  <div class="mt-4 panel max-w-xl p-4"><%= render "shared/location", record: @farm %></div>
+<% end %>
 
 <h2 class="mt-8 text-lg font-semibold"><%= t(".payrolls") %></h2>
 <%= render "farms/payrolls/live_list", filter: @filter, url: farms_farm_path(@farm), farm: @farm, payrolls: @payrolls,
       next_page: @next_page, count: @count, empty: t(".no_payrolls") %>
-
-<% unless modal_request? %>
-  <p class="mt-6"><%= link_to t(".back"), farms_farms_path, class: "text-sm link" %></p>
-<% end %>

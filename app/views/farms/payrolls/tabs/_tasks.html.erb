@@ -6,6 +6,8 @@
   <%= filter_select form, :status, t("farms.payrolls.tasks.status"),
         PayrollTaskFilter::STATUSES.map { |status| [ t("farms.payrolls.tasks.statuses.#{status}"), status ] }, selected: @filter.status %>
 <% end %>
+<%= list_frame "tasks-list" do %>
+<% sorting = { filter: @filter, frame: "tasks-list", extra_params: { tab: "tasks" } } %>
 <div class="mt-6">
   <% if @tasks.any? %>
     <div class="@container">
@@ -28,11 +30,11 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th><%= PayrollTask.human_attribute_name(:name) %></th>
-              <th><%= PayrollTask.human_attribute_name(:completed_on) %></th>
-              <th class="text-right"><%= PayrollTask.human_attribute_name(:amount) %></th>
-              <th><%= PayrollTask.human_attribute_name(:members) %></th>
-              <th class="text-right"><%= t("farms.payrolls.tasks.share") %></th>
+              <%= sort_th PayrollTask.human_attribute_name(:name), :name, sorting %>
+              <%= sort_th PayrollTask.human_attribute_name(:completed_on), :completed_on, sorting %>
+              <%= sort_th PayrollTask.human_attribute_name(:amount), :amount, sorting, class: "text-right" %>
+              <%= sort_th PayrollTask.human_attribute_name(:members), :members, sorting %>
+              <%= sort_th t("farms.payrolls.tasks.share"), :share, sorting, class: "text-right" %>
               <th class="cell-actions"><span class="sr-only"><%= t("farms.payrolls.table.actions") %></span></th>
             </tr>
           </thead>
@@ -59,8 +61,9 @@
         </table>
       </div>
     </div>
-    <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "tasks" } %>
+    <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "tasks" }, frame: "tasks-list" %>
   <% else %>
     <p class="empty-state"><%= t("farms.payrolls.tasks.empty") %></p>
   <% end %>
 </div>
+<% end %>

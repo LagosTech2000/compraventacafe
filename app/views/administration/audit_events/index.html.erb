@@ -16,14 +16,16 @@
   <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("administration.audit_events.index.search_placeholder") %>
 <% end %>
 
+<%= list_frame "audit-events-list" do %>
+<% sorting = { filter: @filter, frame: "audit-events-list" } %>
 <% if @events.any? %>
   <div class="mt-6 overflow-x-auto panel">
     <table class="data-table">
       <thead>
         <tr>
-          <th><%= t("administration.audit_events.index.when") %></th>
-          <th><%= t("administration.audit_events.index.description") %></th>
-          <th><%= t("administration.audit_events.index.action") %></th>
+          <%= sort_th t("administration.audit_events.index.when"), :when, sorting %>
+          <%= sort_th t("administration.audit_events.index.description"), :description, sorting %>
+          <%= sort_th t("administration.audit_events.index.action"), :action, sorting %>
           <th class="cell-actions"></th>
         </tr>
       </thead>
@@ -39,7 +41,8 @@
       </tbody>
     </table>
   </div>
-  <%= render "shared/pagination", filter: @filter, next_page: @next_page %>
+  <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "audit-events-list" %>
 <% else %>
   <p class="empty-state mt-6"><%= t(".empty") %></p>
+<% end %>
 <% end %>

@@ -1,0 +1,23 @@
+<%# Where this page sits and the way back (Fernando, 2026-10-13: there was no
+    way back in places). crumbs: [[label, path], ..., [label]]; the last is
+    this page. On a phone only "← parent" shows. Not in a modal (its own
+    "Atrás" goes back) nor on paper. %>
+<% unless modal_request? %>
+  <% *parents, current = crumbs %>
+  <nav class="breadcrumbs mb-3 print:hidden" aria-label="<%= t("shared.breadcrumbs.label") %>">
+    <% if (parent = parents.last) %>
+      <%= link_to parent.last, class: "breadcrumb-back sm:hidden" do %>
+        <%= icon(:arrow_left, css: "size-4") %> <span class="truncate"><%= parent.first %></span>
+      <% end %>
+    <% end %>
+    <ol class="hidden min-w-0 flex-wrap items-center gap-1 sm:flex">
+      <% parents.each do |label, path| %>
+        <li class="flex min-w-0 items-center gap-1">
+          <%= link_to label, path, class: "breadcrumb-link" %>
+          <span class="text-ink-muted/60" aria-hidden="true">›</span>
+        </li>
+      <% end %>
+      <li class="min-w-0 truncate font-medium text-ink" aria-current="page"><%= current.first %></li>
+    </ol>
+  </nav>
+<% end %>

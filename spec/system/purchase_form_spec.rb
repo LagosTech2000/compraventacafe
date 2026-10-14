@@ -99,7 +99,9 @@ RSpec.describe "Purchase form preview", type: :system do
     within("dialog[open]") do
       fill_in "producer_person_attributes_first_names", with: "Carla"
       fill_in "producer_person_attributes_last_names", with: "Mejía"
-      first("input[name='producer[new_farm_names][]']").fill_in(with: "El Cerro")
+      click_button "Agregar finca"
+      fill_in "farm_adder_name", with: "El Cerro"
+      click_button "Agregar"
       find("[type=submit]").click
     end
     expect(page).to have_field("producer_search", with: /Carla Mejía/)

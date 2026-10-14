@@ -30,6 +30,49 @@ RSpec.describe ListFilter do
     expect(next_page).to be(false)
   end
 
+  describe "sorting (every column of a list)" do
+    it "sorts the whole list by a column, both ways, and keeps it in the links" do
+      %w[Bravo alfa Charlie].each { create(:zone, name: it) }
+      filter = ZoneFilter.new(params(sort: "name", dir: "desc"))
+      expect(filter.results(Zone.all).first.map(&:name)).to eq(%w[Charlie Bravo alfa])
+      expect(filter.to_params).to eq("sort" => "name", "dir" => "desc")
+      expect(filter).not_to be_active # a sort is not a filter
+
+      records, next_page = ZoneFilter.new(params(sort: "name", page: "2")).results(Zone.all, per_page: 2)
+      expect(records.map(&:name)).to eq(%w[Charlie])
+      expect(next_page).to be(false)
+    end
+
+    it "ignores a column it does not know, and a wrong direction" do
+      expect(ZoneFilter.new(params(sort: "drop table", dir: "up")).sort).to be_nil
+      expect(ZoneFilter.new(params(sort: "name", dir: "sideways")).dir).to eq("asc")
+    end
+
+    it "sorts by a column of another table, empty values last" do
+      with_zone = create(:producer, person: create(:person, zone: create(:zone, name: "Zacapa")))
+      other = create(:producer, person: create(:person, zone: create(:zone, name: "Azul")))
+      without = create(:producer)
+
+      %w[asc desc].each do |dir|
+        records, = ProducerFilter.new(params(sort: "zone", dir:)).results(Producer.all)
+        expected = dir == "asc" ? [ other, with_zone ] : [ with_zone, other ]
+        expect(records).to eq(expected + [ without ])
+      end
+    end
+
+    it "sorts computed values in Ruby, without minding accents" do
+      today = Time.zone.today
+      small = create(:loan, cash_amount: 100, monthly_interest_rate: 0, person: create(:person, first_names: "Álvaro"))
+      big = create(:loan, cash_amount: 900, monthly_interest_rate: 0, person: create(:person, first_names: "Beto"))
+      paid = create(:loan, cash_amount: 500, monthly_interest_rate: 0, disbursed_on: today - 10, due_on: today + 10)
+      paid.update_columns(paid_off_on: today)
+
+      expect(LoanFilter.new(params(sort: "owed", dir: "desc")).results(Loan.where(id: [ small, big ])).first).to eq([ big, small ])
+      expect(LoanFilter.new(params(sort: "person")).results(Loan.where(id: [ small, big ])).first).to eq([ small, big ])
+      expect(LoanFilter.new(params(sort: "status", dir: "desc")).results(Loan.all).first.first).to eq(paid)
+    end
+  end
+
   describe PurchaseFilter do
     it "shows today by default, and everything once the dates are cleared" do
       create(:purchase, purchased_at: Time.zone.today - 3)

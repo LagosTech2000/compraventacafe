@@ -89,7 +89,7 @@ RSpec.describe "Audited errors" do
   end
 
   it "names backups and invoice payments in the audit screen" do
-    admin = create(:user, :admin)
+    admin = make_data_exporter(create(:user, :admin))
     sign_in admin
     post administration_backup_path
     invoice = create(:invoice)

@@ -82,20 +82,22 @@ RSpec.describe "Live list filters", type: :system do
     expect(page_reloaded?).to be(false)
   end
 
-  it "pages through the purchases inside the list, keeping the filters" do
+  it "loads the next purchases while scrolling, keeping the filters" do
     producer = create(:producer)
     51.times { |minute| create(:purchase, producer:, purchased_at: 2.days.ago.change(hour: 7) + minute.minutes) }
     visit trading_purchases_path
     click_button "Todo"
     expect(page).to have_text("54 compras")
     expect(page).to have_current_path(/from=&/) # the query is in the history: the visit is done
+    expect(rows.size).to eq(50)
     mark_page
-    # Clicked on the link itself: a click by screen position can land where the
-    # link was while the list keeps its scroll after the previous query.
-    find("#purchases-list a", text: "Siguiente").execute_script("this.click()")
-    expect(page).to have_text("Página 2")
+
+    page.execute_script("document.querySelector('#purchases-list [data-controller=infinite-list]').scrollIntoView()")
+    expect(page).to have_css("#purchases-list tr[id^=purchase_]", count: 54)
+    expect(page).to have_css("#purchases-list li.data-card", count: 54, visible: :all)
+    expect(page).to have_no_button("Cargar más")
+    expect(page).to have_no_link("Siguiente")
     expect(page).to have_css(".chip-filter", text: "Todas las fechas")
-    expect(rows.size).to eq(4)
     expect(page_reloaded?).to be(false)
   end
 end

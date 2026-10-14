@@ -16,6 +16,8 @@
   <%= filter_select form, :zone_id, Producer.human_attribute_name(:zone), Zone.ordered.pluck(:name, :id), selected: @filter.zone_id, all: t("shared.filters.all_zones") %>
 <% end %>
 
+<%= list_frame "producers-list" do %>
+<% sorting = { filter: @filter, frame: "producers-list" } %>
 <% if @producers.any? %>
   <%# Narrow → cards; medium → key columns; wide → every column. %>
   <div class="mt-6 @container">
@@ -41,14 +43,14 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th><%= t(".name") %></th>
-            <th><%= Producer.human_attribute_name(:kind) %></th>
-            <th><%= Producer.human_attribute_name(:zone) %></th>
-            <th class="hidden @5xl:table-cell"><%= Producer.human_attribute_name(:ihcafe_code) %></th>
-            <th class="hidden @6xl:table-cell"><%= Producer.human_attribute_name(:farms) %></th>
-            <th class="hidden @5xl:table-cell"><%= Person.human_attribute_name(:phone) %></th>
-            <th class="text-right"><%= t(".season_quintals") %></th>
-            <th><%= t(".last_purchase") %></th>
+            <%= sort_th t(".name"), :name, sorting %>
+            <%= sort_th Producer.human_attribute_name(:kind), :kind, sorting %>
+            <%= sort_th Producer.human_attribute_name(:zone), :zone, sorting %>
+            <%= sort_th Producer.human_attribute_name(:ihcafe_code), :ihcafe_code, sorting, class: "hidden @5xl:table-cell" %>
+            <%= sort_th Producer.human_attribute_name(:farms), :farms, sorting, class: "hidden @6xl:table-cell" %>
+            <%= sort_th Person.human_attribute_name(:phone), :phone, sorting, class: "hidden @5xl:table-cell" %>
+            <%= sort_th t(".season_quintals"), :season_quintals, sorting, class: "text-right" %>
+            <%= sort_th t(".last_purchase"), :last_purchase, sorting %>
             <th class="cell-actions"><span class="sr-only"><%= t("trading.purchases.table.actions") %></span></th>
           </tr>
         </thead>
@@ -70,7 +72,8 @@
       </table>
     </div>
   </div>
-  <%= render "shared/pagination", filter: @filter, next_page: @next_page %>
+  <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "producers-list" %>
 <% else %>
   <p class="empty-state mt-6"><%= t(".empty") %></p>
+<% end %>
 <% end %>

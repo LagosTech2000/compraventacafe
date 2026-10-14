@@ -140,7 +140,7 @@ RSpec.describe "Trading purchase flow" do
     expect(response.body).to include(dom_id_for(old))
     expect(response.body).not_to include(dom_id_for(current))
     options = Nokogiri::HTML(response.body).css("select#season_year option").map(&:text)
-    expect(options).to eq([ "Todas las temporadas", "Temporada 2026", "Temporada 2025" ])
+    expect(options).to eq([ "Todas las temporadas", "Temporada 2026-2027", "Temporada 2025-2026" ])
 
     get trading_invoices_path(season_year: 2026)
     expect(response.body).not_to include(trading_invoice_path(old_invoice))
@@ -279,6 +279,25 @@ RSpec.describe "Trading purchase flow" do
     expect(receipt.at_css("thead").text).to include("Daño (lb)", "Daño (L)")
     expect(receipt.at_css("tbody tr").text.squish).to include("1.78 2.50 % L 103.24")
     expect(receipt.at_css("tfoot").text.squish).to include("1.78 L 103.24")
+  end
+
+  it "shows the QQ of each purchase and of the whole invoice, also in the list" do
+    producer = create(:producer, zone:)
+    purchases = [ create(:purchase, producer:, gross_weight: 1000), create(:purchase, producer:, gross_weight: 500) ]
+    post trading_invoices_path, params: { producer_id: producer.id, invoice: { purchase_ids: purchases.map(&:id), payment_status: "pending" } }
+    invoice = Invoice.last
+    expect(invoice.quintals).to eq((invoice.net_weight / 125).round(2))
+
+    get trading_invoice_path(invoice)
+    receipt = Nokogiri::HTML(response.body).at_css("article")
+    expect(receipt.at_css("thead").text).to include("QQ")
+    rows = receipt.css("tbody tr").map { it.text.squish }
+    purchases.each { |purchase| expect(rows).to include(a_string_including(format("%.2f", purchase.quintals))) }
+    expect(receipt.at_css("tfoot").text.squish).to include(format("%.2f", invoice.quintals))
+
+    get trading_invoices_path(from: "", to: "")
+    row = Nokogiri::HTML(response.body).at_css("tr##{ActionView::RecordIdentifier.dom_id(invoice)}")
+    expect(row.text.squish).to include(format("%.2f", invoice.quintals))
   end
 
   it "does not print the notice of the invoice just created" do

@@ -35,6 +35,9 @@ RSpec.describe "Loans flow" do
     get loans_loan_payment_path(loan, first)
     page = Nokogiri::HTML(response.body)
     expect(page.css("article").size).to eq(2) # original and copy
+    copy = page.at_css("div.print\\:break-before-page article") # each on its own page
+    expect(copy.text).to include("COPIA")
+    expect(response.body).not_to include("border-dashed")
     expect(page.text).to include("ORIGINAL", "COPIA", "Recibo de abono #{first.display_number}", person.full_name,
                                  "L 300.00", "L 700.00") # what was owed right after it, not today
 

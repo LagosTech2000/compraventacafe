@@ -1,0 +1,29 @@
+<%# A profile photo (HasPhoto) in a person's or a user's form: the current
+    one (or the initials), choose another, or remove it. The browser shrinks
+    it before sending (photo_input_controller.js). `form` builds the record. %>
+<% record = form.object %>
+<div class="flex flex-wrap items-center gap-4 sm:col-span-2" data-controller="photo-input">
+  <span class="relative inline-flex size-20 shrink-0 overflow-hidden rounded-full bg-primary-soft ring-1 ring-line">
+    <img src="<%= record.photo_info ? profile_photo_path(record.photo_info, v: record.photo_info.version) : "" %>" alt=""
+         class="size-full object-cover" data-photo-input-target="preview" <%= "hidden" unless record.photo_info %>>
+    <span class="m-auto text-xl font-semibold text-primary" data-photo-input-target="initials" <%= "hidden" if record.photo_info %>>
+      <%= initials_for(record) %>
+    </span>
+  </span>
+  <div class="min-w-0 space-y-2">
+    <p class="field-label"><%= record.class.human_attribute_name(:photo_upload) %></p>
+    <%# The browser's own picker speaks its language: a button in Spanish
+        opens it (the label), the input stays for screen readers only. %>
+    <%= form.file_field :photo_upload, accept: "image/jpeg,image/png,image/webp", class: "peer sr-only",
+          data: { photo_input_target: "input", action: "photo-input#change" } %>
+    <%= form.label :photo_upload, t(record.photo_info ? "shared.photo_field.change" : "shared.photo_field.choose"),
+          class: "btn btn-sm cursor-pointer peer-focus-visible:ring-2 peer-focus-visible:ring-primary" %>
+    <p class="text-xs text-ink-muted"><%= t("shared.photo_field.hint") %></p>
+    <% if record.photo_info %>
+      <label class="flex items-center gap-2 text-sm">
+        <%= form.check_box :remove_photo, class: "size-4 accent-primary", data: { photo_input_target: "remove" } %>
+        <%= t("shared.photo_field.remove") %>
+      </label>
+    <% end %>
+  </div>
+</div>

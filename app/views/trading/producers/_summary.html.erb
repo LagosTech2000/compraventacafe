@@ -32,7 +32,7 @@
     <div class="mt-4 grid gap-4 @3xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
       <section class="min-w-0 overflow-x-auto panel" aria-labelledby="producer-seasons">
         <h3 id="producer-seasons" class="px-4 pt-4 font-semibold"><%= t(".seasons.title") %></h3>
-        <table class="data-table data-table-compact mt-2">
+        <table class="data-table data-table-compact mt-2" data-controller="table-sort">
           <thead>
             <tr>
               <th><%= Purchase.human_attribute_name(:season_year) %></th>

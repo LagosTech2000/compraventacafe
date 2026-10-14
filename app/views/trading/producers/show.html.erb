@@ -8,9 +8,7 @@
 <%# Identity and the next actions. %>
 <div class="flex flex-wrap items-start justify-between gap-4">
   <div class="flex min-w-0 items-center gap-4">
-    <span class="grid size-14 shrink-0 place-items-center rounded-2xl bg-primary-soft text-lg font-bold text-primary" aria-hidden="true">
-      <%= initials(person.first_names, person.last_names) %>
-    </span>
+    <%= avatar(person, css: "size-16 text-lg") %>
     <div class="min-w-0">
       <h1 class="text-2xl font-bold"><%= @producer.full_name %></h1>
       <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
@@ -95,6 +93,7 @@
           <dd class="mt-0.5"><%= format_address(person).presence || "—" %></dd>
         </div>
       </dl>
+      <div class="mt-3"><%= render "shared/location", record: person %></div>
     </section>
 
     <section class="panel p-4" aria-labelledby="producer-pending">
@@ -169,28 +168,34 @@
               PurchaseFilter::INVOICED.map { |v| [ t("trading.purchases.index.invoiced_#{v}"), v ] }, selected: @filter.invoiced %>
         <%= filter_check_box form, :show_voided, t("trading.purchases.index.show_voided"), checked: @filter.show_voided.present? %>
       <% end %>
+      <%= list_frame "producer-purchases-list" do %>
       <div class="mt-4">
         <% if @purchases.any? %>
-          <%= render "trading/purchases/table", purchases: @purchases, show_producer: false %>
-          <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "purchases" } %>
+          <%= render "trading/purchases/table", purchases: @purchases, show_producer: false,
+                sorting: { filter: @filter, frame: "producer-purchases-list", extra_params: { tab: "purchases" } } %>
+          <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "purchases" }, frame: "producer-purchases-list" %>
         <% else %>
           <p class="empty-state"><%= t(".no_purchases") %></p>
         <% end %>
       </div>
+      <% end %>
     <% when "invoices" %>
       <%= render layout: "shared/filters", locals: { filter: @filter, url: trading_producer_path(@producer, tab: "invoices") } do |form| %>
         <%= hidden_field_tag :tab, "invoices", id: nil %>
         <%= filter_select form, :payment_status, Invoice.human_attribute_name(:payment_status),
               enum_options(Invoice, :payment_status, Invoice::FILTER_STATUSES), selected: @filter.payment_status %>
       <% end %>
+      <%= list_frame "producer-invoices-list" do %>
       <div class="mt-4">
         <% if @invoices.any? %>
-          <%= render "trading/invoices/table", invoices: @invoices, show_producer: false %>
-          <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "invoices" } %>
+          <%= render "trading/invoices/table", invoices: @invoices, show_producer: false,
+                sorting: { filter: @filter, frame: "producer-invoices-list", extra_params: { tab: "invoices" } } %>
+          <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "invoices" }, frame: "producer-invoices-list" %>
         <% else %>
           <p class="empty-state"><%= t(".no_invoices") %></p>
         <% end %>
       </div>
+      <% end %>
     <% end %>
   </div>
 </div>

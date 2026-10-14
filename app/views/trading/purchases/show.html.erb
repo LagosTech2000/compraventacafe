@@ -82,7 +82,7 @@
   <section aria-labelledby="purchase-weighings">
     <h2 id="purchase-weighings" class="mb-3 text-lg font-semibold"><%= Purchase.human_attribute_name(:weighings) %></h2>
     <div class="panel overflow-x-auto">
-      <table class="data-table">
+      <table class="data-table" data-controller="table-sort">
         <thead>
           <tr>
             <th scope="col">#</th>

@@ -1,0 +1,156 @@
+<% content_for :title, t(".title") %>
+<% dashboard = @dashboard %>
+<% today = dashboard.today %>
+<%# Each kind of pending work the Inicio counts, with its records and the
+    button that solves each one; only what exists, only what the user reads. %>
+<% groups = [] %>
+<% if dashboard.can?("trading") %>
+  <% groups << :uninvoiced if dashboard.uninvoiced_by_producer.any? %>
+  <% groups << :unpaid_invoices if dashboard.unpaid_invoices.any? %>
+<% end %>
+<% groups << :overdue_loans if dashboard.can?("loans") && dashboard.overdue_loans.any? %>
+<% if dashboard.can?("farms") %>
+  <% groups << :periods_to_pay if dashboard.periods_to_pay.any? %>
+  <% groups << :members_without_wage if dashboard.members_without_wage.any? %>
+<% end %>
+
+<h1 class="text-xl font-bold"><%= t(".title") %></h1>
+<p class="mt-1 text-sm text-ink-muted"><%= t(".summary") %></p>
+
+<% if groups.empty? %>
+  <p class="empty-state mt-5"><%= t(".empty") %></p>
+<% end %>
+
+<%# One tab per kind of work (Fernando, 2026-10-13): they change in place,
+    without leaving the window (tabs_controller.js). %>
+<div data-controller="tabs">
+<% if groups.any? %>
+  <nav class="subnav mt-4 rounded-2xl" role="tablist" aria-label="<%= t(".kinds") %>">
+    <% groups.each_with_index do |key, index| %>
+      <button type="button" role="tab" id="pending-tab-<%= key %>" aria-controls="pending-<%= key %>"
+              aria-selected="<%= index.zero? %>" tabindex="<%= index.zero? ? 0 : -1 %>"
+              class="nav-pill <%= "nav-pill-active" if index.zero? %>"
+              data-tabs-target="tab" data-action="tabs#select keydown->tabs#key">
+        <%= t(".groups.#{key}.title") %>
+        <span class="badge badge-neutral ml-1"><%= pending_work_count(dashboard, key) %></span>
+      </button>
+    <% end %>
+  </nav>
+<% end %>
+<div class="mt-4">
+  <% if groups.include?(:uninvoiced) %>
+    <section id="pending-uninvoiced" role="tabpanel" aria-labelledby="pending-tab-uninvoiced" data-tabs-target="panel" <%= "hidden" unless groups.first == :uninvoiced %>>
+      <p class="text-xs text-ink-muted"><%= t(".groups.uninvoiced.help") %></p>
+      <ul class="mt-2 divide-y divide-line">
+        <% dashboard.uninvoiced_by_producer.each do |group| %>
+          <li class="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm" id="<%= dom_id(group.producer, :pending) %>">
+            <span class="min-w-0">
+              <span class="block font-medium"><%= group.producer.full_name %></span>
+              <span class="block text-xs text-ink-muted">
+                <%= t(".groups.uninvoiced.detail", count: group.purchases_count, since: l(group.since.to_date, format: :short)) %>
+              </span>
+            </span>
+            <span class="flex items-center gap-3">
+              <span class="font-semibold tabular-nums"><%= format_money(group.total) %></span>
+              <% if policy(Invoice).create? %>
+                <%= page_link_to t(".groups.uninvoiced.action"), new_trading_invoice_path(producer_id: group.producer.id), class: "btn btn-sm btn-primary" %>
+              <% end %>
+            </span>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
+  <% if groups.include?(:unpaid_invoices) %>
+    <section id="pending-unpaid_invoices" role="tabpanel" aria-labelledby="pending-tab-unpaid_invoices" data-tabs-target="panel" <%= "hidden" unless groups.first == :unpaid_invoices %>>
+      <p class="text-xs text-ink-muted"><%= t(".groups.unpaid_invoices.help") %></p>
+      <ul class="mt-2 divide-y divide-line">
+        <% dashboard.unpaid_invoices.sort_by(&:issued_on).each do |invoice| %>
+          <li class="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm" id="<%= dom_id(invoice, :pending) %>">
+            <span class="min-w-0">
+              <span class="block font-medium"><%= t(".groups.unpaid_invoices.name", number: invoice.display_number, producer: invoice.producer.full_name) %></span>
+              <span class="block text-xs text-ink-muted">
+                <%= invoice.human_payment_status %> · <%= t(".groups.unpaid_invoices.days", count: (today - invoice.issued_on).to_i) %>
+              </span>
+            </span>
+            <span class="flex items-center gap-2">
+              <span class="font-semibold tabular-nums"><%= format_money(invoice.balance_due) %></span>
+              <%= modal_link_to t("shared.detail"), trading_invoice_path(invoice), class: "btn btn-sm" %>
+              <% if policy(InvoicePayment.new(invoice:)).create? %>
+                <%= modal_link_to t(".groups.unpaid_invoices.action"), new_trading_invoice_payment_path(invoice), class: "btn btn-sm btn-primary" %>
+              <% end %>
+            </span>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
+  <% if groups.include?(:overdue_loans) %>
+    <section id="pending-overdue_loans" role="tabpanel" aria-labelledby="pending-tab-overdue_loans" data-tabs-target="panel" <%= "hidden" unless groups.first == :overdue_loans %>>
+      <p class="text-xs text-ink-muted"><%= t(".groups.overdue_loans.help") %></p>
+      <ul class="mt-2 divide-y divide-line">
+        <% dashboard.overdue_loans.sort_by(&:due_on).each do |loan| %>
+          <li class="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm" id="<%= dom_id(loan, :pending) %>">
+            <span class="min-w-0">
+              <span class="block font-medium"><%= t(".groups.overdue_loans.name", number: loan.id, person: loan.person.full_name) %></span>
+              <span class="block text-xs text-ink-muted">
+                <%= t(".groups.overdue_loans.late", date: l(loan.due_on, format: :short), count: (today - loan.due_on).to_i) %>
+              </span>
+            </span>
+            <span class="flex items-center gap-2">
+              <span class="font-semibold tabular-nums"><%= format_money(loan.balance(as_of: today).total_owed) %></span>
+              <%= modal_link_to t("shared.detail"), loans_loan_path(loan), class: "btn btn-sm" %>
+              <% if policy(LoanPayment.new(loan:)).create? %>
+                <%= modal_link_to t(".groups.overdue_loans.action"), new_loans_loan_payment_path(loan), class: "btn btn-sm btn-primary" %>
+              <% end %>
+            </span>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
+  <% if groups.include?(:periods_to_pay) %>
+    <section id="pending-periods_to_pay" role="tabpanel" aria-labelledby="pending-tab-periods_to_pay" data-tabs-target="panel" <%= "hidden" unless groups.first == :periods_to_pay %>>
+      <p class="text-xs text-ink-muted"><%= t(".groups.periods_to_pay.help") %></p>
+      <ul class="mt-2 divide-y divide-line">
+        <% dashboard.periods_to_pay.sort_by { |_, period| period.ends_on }.each do |payroll, period| %>
+          <li class="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm" id="<%= dom_id(payroll, "pending_#{period.to_param}") %>">
+            <span class="min-w-0">
+              <span class="block font-medium"><%= payroll.name %></span>
+              <span class="block text-xs text-ink-muted"><%= payroll.farm.name %> · <%= format_period(period) %></span>
+            </span>
+            <span class="flex items-center gap-2">
+              <span class="font-semibold tabular-nums"><%= format_money(payroll.calculation(period).gross_total) %></span>
+              <% if policy(PayrollPayment.new(payroll:)).create? %>
+                <%= page_link_to t(".groups.periods_to_pay.action"), new_farms_payroll_payment_path(payroll, period: period.to_param), class: "btn btn-sm btn-primary" %>
+              <% end %>
+            </span>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
+  <% if groups.include?(:members_without_wage) %>
+    <section id="pending-members_without_wage" role="tabpanel" aria-labelledby="pending-tab-members_without_wage" data-tabs-target="panel" <%= "hidden" unless groups.first == :members_without_wage %>>
+      <p class="text-xs text-ink-muted"><%= t(".groups.members_without_wage.help") %></p>
+      <ul class="mt-2 divide-y divide-line">
+        <% dashboard.members_without_wage.sort_by { |member| [ member.payroll.name, member.person.full_name ] }.each do |member| %>
+          <li class="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm" id="<%= dom_id(member, :pending) %>">
+            <span class="min-w-0">
+              <span class="block font-medium"><%= member.person.full_name %></span>
+              <span class="block text-xs text-ink-muted"><%= member.payroll.name %></span>
+            </span>
+            <% if policy(member).update? %>
+              <%= modal_link_to t(".groups.members_without_wage.action"), edit_farms_payroll_member_path(member.payroll, member), class: "btn btn-sm btn-primary" %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+</div>
+</div>

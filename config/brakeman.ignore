@@ -137,6 +137,29 @@
         89
       ],
       "note": "Table and column names come from the database schema (connection.tables / columns), never from a request, and are quoted with quote_table_name / quote_column_name."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "07d0677a670ced17b7cfb20cf57fc73eaef2ffbbcd8a2d649f38719b950c09c9",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/list_filter.rb",
+      "line": 137,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "Arel.sql((Array((spec[:sql].respond_to?(:call) ? (spec[:sql].call) : (spec[:sql]))).map(&:to_s).map do\n \"#{column} #{dir.upcase} NULLS LAST\"\n end << \"#{scope.left_joins(spec[:joins]).quoted_table_name}.id #{dir.upcase}\").join(\", \"))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "ListFilter",
+        "method": "sorted_in_sql"
+      },
+      "user_input": "dir.upcase",
+      "confidence": "Medium",
+      "cwe_id": [
+        89
+      ],
+      "note": "The order comes from a column the list's filter declares in code (ListFilter.sorts; sort keys outside it are ignored) and a direction that can only be asc or desc (ListFilter::DIRECTIONS)."
     }
   ],
   "brakeman_version": "8.1.0"

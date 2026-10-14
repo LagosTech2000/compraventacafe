@@ -18,7 +18,7 @@ module ModalSupport
     # A request for another Turbo Frame (a report's results) only needs the
     # frame: no navigation or dialogs around it.
     layout -> { modal_request? ? "modal" : (turbo_frame_request? ? "turbo_rails/frame" : "application") }
-    helper_method :modal_request?, :picker_request?, :modal_frame_id, :next_modal_frame
+    helper_method :modal_request?, :picker_request?, :modal_frame_id, :next_modal_frame, :modal_frame_for
   end
 
   private
@@ -37,6 +37,18 @@ module ModalSupport
       return MODAL_FRAME unless modal_request?
 
       MODAL_FRAMES[MODAL_FRAMES.index(modal_frame_id) + 1] || MODAL_FRAMES.last
+    end
+
+    # Where a modal link to `path` opens. In a drawer (the user's setting) a
+    # page navigates inside the drawer it is in, with its history; a picker
+    # (?picker=1) still opens on top, so the form below keeps what is typed.
+    def modal_frame_for(path)
+      return next_modal_frame unless modal_request? && Current.user&.drawer?
+
+      picker = Rack::Utils.parse_query(URI.parse(path.to_s).query.to_s)["picker"] == "1"
+      picker ? next_modal_frame : modal_frame_id
+    rescue URI::InvalidURIError
+      next_modal_frame
     end
 
     # The modal was opened from a form field to create an option for it.

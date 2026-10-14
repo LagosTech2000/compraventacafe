@@ -2,11 +2,18 @@
 <%= render "farms/nav" %>
 <% issuer = @issuer %>
 <% period = issuer.period %>
+<%= render "shared/breadcrumbs", crumbs: payroll_crumbs(@payroll, [ t(".title") ]) %>
 
-<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
-<p class="mt-1 text-sm text-ink-muted">
-  <%= link_to @payroll.name, farms_payroll_path(@payroll), class: "link" %> · <%= @payroll.farm.name %> · <%= format_period(period) %>
-</p>
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= @payroll.name %> · <%= @payroll.farm.name %> · <%= format_period(period) %></p>
+  </div>
+  <% unless @payroll.task? %>
+    <%# To check or fix the days before paying. %>
+    <%= link_to t(".check_#{@payroll.kind}"), farms_payroll_timesheet_path(@payroll, period: period.to_param), class: "btn" %>
+  <% end %>
+</div>
 <% unless period.due? %>
   <p class="mt-4 flash-alert" role="status"><%= t(".not_ended", date: l(period.ends_on, format: :long)) %></p>
 <% end %>
@@ -98,7 +105,7 @@
 
       <div class="flex flex-wrap gap-3">
         <%= form.submit t(".submit"), class: "btn btn-primary", data: { turbo_confirm: t(".confirm") } %>
-        <%= cancel_button farms_payroll_path(@payroll) %>
+        <%= cancel_button farms_payroll_path(@payroll, tab: "periods") %>
       </div>
     </aside>
     </div>

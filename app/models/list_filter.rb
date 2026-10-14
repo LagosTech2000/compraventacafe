@@ -8,11 +8,45 @@
 #   end
 #
 #   records, next_page = ZoneFilter.new(params).results(Zone.all)
+#
+# Every column of a list sorts (Fernando, 2026-10-13): a subclass declares
+# how with `sorts`, and ?sort=key&dir=asc|desc orders the whole filtered
+# list (every page), not just the rows on screen. Without a sort the list
+# keeps its own order (newest first).
+#
+#   sorts name: text("zones.name"),                                    # text, in Spanish order
+#         zone: { sql: text("zones.name"), joins: { person: :zone } },  # SQL that needs a join
+#         total: "purchases.total",                                     # any SQL
+#         owed: { ruby: ->(loan) { loan.balance.total_owed } }          # computed: sorted in Ruby
+#
+# SQL can be a list (several columns) or a lambda that returns it. Text
+# columns go through `text`: Spanish order without minding case or accents
+# ("Álvaro" before "Beto"). A Ruby sort loads every filtered record: for
+# computed values of lists that stay small. Empty values go last either way.
 class ListFilter
   PER_PAGE = 50
   TYPES = %i[text date id choice].freeze
+  DIRECTIONS = %w[asc desc].freeze
 
   class_attribute :fields, instance_writer: false, default: {}
+  class_attribute :sortings, instance_writer: false, default: {}
+
+  # Spanish order where PostgreSQL has ICU (es-x-icu); else, case only.
+  TextColumn = Data.define(:sql) do
+    def to_s = ListFilter.spanish_collation? ? %(#{sql} COLLATE "es-x-icu") : "LOWER(#{sql})"
+  end
+
+  def self.text(*columns) = columns.map { TextColumn.new(it) }
+
+  def self.spanish_collation?
+    return @spanish_collation if defined?(@spanish_collation)
+
+    @spanish_collation = ActiveRecord::Base.connection.select_value("SELECT 1 FROM pg_collation WHERE collname = 'es-x-icu'").present?
+  end
+
+  def self.sorts(**specs)
+    self.sortings = sortings.merge(specs.transform_keys(&:to_s).transform_values { |spec| spec.is_a?(Hash) ? spec : { sql: spec } })
+  end
 
   # type: :text, :date, :id, or :choice (with `in:`); `default:` applies when
   # the param is absent (not when it is blank: the user cleared it).
@@ -23,7 +57,7 @@ class ListFilter
     define_method(name) { @values[name] }
   end
 
-  attr_reader :page
+  attr_reader :page, :sort, :dir
 
   def initialize(params)
     @defaults = fields.to_h { |name, spec| [ name, parse(default_for(spec), spec) ] }
@@ -31,7 +65,11 @@ class ListFilter
       [ name, params.key?(name) ? parse(params[name], spec) : @defaults[name] ]
     end
     @page = [ params[:page].to_i, 1 ].max
+    @sort = params[:sort].to_s.presence_in(sortings.keys)
+    @dir = @sort && (params[:dir].to_s.presence_in(DIRECTIONS) || "asc")
   end
+
+  def sortable?(key) = sortings.key?(key.to_s)
 
   # Subclasses narrow the scope with the parsed values.
   def apply(scope)
@@ -41,7 +79,7 @@ class ListFilter
   # [records of this page, whether there is a next page]. The scope can be
   # a relation or an array (lists computed in Ruby, like pay periods).
   def results(scope, per_page: PER_PAGE)
-    filtered = apply(scope)
+    filtered = sorted(apply(scope))
     skip = (page - 1) * per_page
     records = filtered.is_a?(Array) ? filtered.drop(skip).first(per_page + 1) : filtered.offset(skip).limit(per_page + 1).to_a
     [ records.first(per_page), records.size > per_page ]
@@ -65,8 +103,11 @@ class ListFilter
       if value.present? then [ name.to_s, value.to_s ]
       elsif @defaults[name].present? then [ name.to_s, "" ]
       end
-    end.to_h
+    end.to_h.merge(sort_params)
   end
+
+  # The query string's sort, when there is one.
+  def sort_params = sort ? { "sort" => sort, "dir" => dir } : {}
 
   # The query string with these fields back to their defaults (an active
   # filter's ×).
@@ -82,6 +123,37 @@ class ListFilter
   end
 
   private
+    def sorted(scope)
+      spec = sort && sortings[sort]
+      return scope unless spec
+
+      spec[:ruby] || scope.is_a?(Array) ? sorted_in_ruby(scope.to_a, spec.fetch(:ruby)) : sorted_in_sql(scope, spec)
+    end
+
+    def sorted_in_sql(scope, spec)
+      scope = scope.left_joins(spec[:joins]) if spec[:joins]
+      columns = Array(spec[:sql].respond_to?(:call) ? spec[:sql].call : spec[:sql]).map(&:to_s)
+      order = columns.map { |column| "#{column} #{dir.upcase} NULLS LAST" } << "#{scope.quoted_table_name}.id #{dir.upcase}"
+      scope.reorder(Arel.sql(order.join(", ")))
+    end
+
+    # Stable: equal values keep the list's own order. Text sorts without
+    # minding case or accents ("Álvarez" next to "Alvarez").
+    def sorted_in_ruby(records, value)
+      keyed = records.each_with_index.map { |record, index| [ sort_value(value.call(record)), index, record ] }
+      present, missing = keyed.partition { |key, _, _| !key.nil? }
+      present.sort! { |a, b| ((dir == "desc" ? b[0] <=> a[0] : a[0] <=> b[0]) || 0).nonzero? || a[1] <=> b[1] }
+      (present + missing).map(&:last)
+    end
+
+    def sort_value(value)
+      case value
+      when String then value.blank? ? nil : I18n.transliterate(value).downcase
+      when Array then value.map { |part| sort_value(part) || "" }
+      else value
+      end
+    end
+
     def default_for(spec)
       spec[:default].respond_to?(:call) ? spec[:default].call : spec[:default]
     end

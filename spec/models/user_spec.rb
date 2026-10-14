@@ -86,4 +86,17 @@ RSpec.describe User do
       expect(admin.update(email_address: "nuevo@example.com")).to be(true)
     end
   end
+
+  describe "who downloads the data backup" do
+    it "is only the active user with id 1" do
+      expect(User::DATA_EXPORTER_ID).to eq(1)
+
+      user = create(:user, :admin)
+      expect(user).not_to be_data_exporter
+      stub_const("User::DATA_EXPORTER_ID", user.id)
+      expect(user).to be_data_exporter
+      user.update_columns(active: false)
+      expect(user).not_to be_data_exporter
+    end
+  end
 end

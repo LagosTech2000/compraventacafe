@@ -13,12 +13,14 @@
   <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: Zone.human_attribute_name(:name) %>
 <% end %>
 
+<%= list_frame "zones-list" do %>
+<% sorting = { filter: @filter, frame: "zones-list" } %>
 <% if @zones.any? %>
   <div class="mt-6 overflow-x-auto panel">
     <table class="data-table">
       <thead>
         <tr>
-          <th><%= Zone.human_attribute_name(:name) %></th>
+          <%= sort_th Zone.human_attribute_name(:name), :name, sorting %>
           <th class="cell-actions"></th>
         </tr>
       </thead>
@@ -36,7 +38,8 @@
       </tbody>
     </table>
   </div>
-  <%= render "shared/pagination", filter: @filter, next_page: @next_page %>
+  <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "zones-list" %>
 <% else %>
   <p class="empty-state mt-6"><%= t(".empty") %></p>
+<% end %>
 <% end %>

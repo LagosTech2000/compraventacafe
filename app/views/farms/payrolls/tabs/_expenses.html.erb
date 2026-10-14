@@ -6,6 +6,8 @@
   <%= filter_select form, :expense_category_id, PayrollExpense.human_attribute_name(:category),
         ExpenseCategory.ordered.pluck(:name, :id), selected: @filter.expense_category_id, all: t("farms.payrolls.expenses.all_categories") %>
 <% end %>
+<%= list_frame "expenses-list" do %>
+<% sorting = { filter: @filter, frame: "expenses-list", extra_params: { tab: "expenses" } } %>
 <div class="mt-6">
   <p class="mb-3 text-sm"><%= t("farms.payrolls.expenses.filtered_total_html", amount: tag.strong(format_money(@filtered_total), class: "tabular-nums")) %></p>
   <% if @expenses.any? %>
@@ -28,10 +30,10 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th><%= PayrollExpense.human_attribute_name(:spent_on) %></th>
-              <th><%= PayrollExpense.human_attribute_name(:category) %></th>
-              <th><%= PayrollExpense.human_attribute_name(:description) %></th>
-              <th class="text-right"><%= PayrollExpense.human_attribute_name(:amount) %></th>
+              <%= sort_th PayrollExpense.human_attribute_name(:spent_on), :spent_on, sorting %>
+              <%= sort_th PayrollExpense.human_attribute_name(:category), :category, sorting %>
+              <%= sort_th PayrollExpense.human_attribute_name(:description), :description, sorting %>
+              <%= sort_th PayrollExpense.human_attribute_name(:amount), :amount, sorting, class: "text-right" %>
               <th class="cell-actions"><span class="sr-only"><%= t("farms.payrolls.table.actions") %></span></th>
             </tr>
           </thead>
@@ -49,8 +51,9 @@
         </table>
       </div>
     </div>
-    <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "expenses" } %>
+    <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "expenses" }, frame: "expenses-list" %>
   <% else %>
     <p class="empty-state"><%= t("farms.payrolls.expenses.empty") %></p>
   <% end %>
 </div>
+<% end %>

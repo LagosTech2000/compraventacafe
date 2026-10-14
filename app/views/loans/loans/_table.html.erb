@@ -1,5 +1,7 @@
 <%# Loans list. `balances` maps each loan to its LoanBalance for today.
-    Narrow → cards; medium → key columns; wide → every column. %>
+    Narrow → cards; medium → key columns; wide → every column.
+    sorting: the list's filter and frame when the server sorts it (TableSortHelper). %>
+<% sorting = local_assigns[:sorting] %>
 <div class="@container">
   <ul class="space-y-3 @3xl:hidden">
     <% loans.each do |loan| %>
@@ -22,18 +24,18 @@
   </ul>
 
   <div class="hidden overflow-x-auto panel @3xl:block">
-    <table class="data-table data-table-compact">
+    <table class="data-table data-table-compact" <%= tag.attributes(data: table_sort_data(sorting)) %>>
       <thead>
         <tr>
-          <th class="hidden @5xl:table-cell"><%= t("loans.loans.table.number") %></th>
-          <th><%= Loan.human_attribute_name(:person) %></th>
-          <th><%= Loan.human_attribute_name(:disbursed_on) %></th>
-          <th><%= Loan.human_attribute_name(:due_on) %></th>
-          <th class="hidden text-right @5xl:table-cell"><%= t("loans.loans.table.rate") %></th>
-          <th class="hidden @5xl:table-cell"><%= Loan.human_attribute_name(:kind) %></th>
-          <th class="hidden text-right @5xl:table-cell"><%= Loan.human_attribute_name(:principal) %></th>
-          <th class="text-right"><%= t("loans.loans.table.owed") %></th>
-          <th><%= Loan.human_attribute_name(:status) %></th>
+          <%= sort_th t("loans.loans.table.number"), :number, sorting, class: "hidden @5xl:table-cell" %>
+          <%= sort_th Loan.human_attribute_name(:person), :person, sorting %>
+          <%= sort_th Loan.human_attribute_name(:disbursed_on), :disbursed_on, sorting %>
+          <%= sort_th Loan.human_attribute_name(:due_on), :due_on, sorting %>
+          <%= sort_th t("loans.loans.table.rate"), :rate, sorting, class: "hidden text-right @5xl:table-cell" %>
+          <%= sort_th Loan.human_attribute_name(:kind), :kind, sorting, class: "hidden @5xl:table-cell" %>
+          <%= sort_th Loan.human_attribute_name(:principal), :principal, sorting, class: "hidden text-right @5xl:table-cell" %>
+          <%= sort_th t("loans.loans.table.owed"), :owed, sorting, class: "text-right" %>
+          <%= sort_th Loan.human_attribute_name(:status), :status, sorting %>
           <th class="cell-actions"><span class="sr-only"><%= t("loans.loans.table.actions") %></span></th>
         </tr>
       </thead>

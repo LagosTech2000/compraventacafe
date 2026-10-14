@@ -1,0 +1,13 @@
+<%# Where a person or a farm is (HasAddress#located?): a small map with the
+    pin and the way there in Google Maps. Nothing when it has no point. %>
+<% if record.located? %>
+  <div class="space-y-2" <%= tag.attributes(data: location_map_data(readonly: true, point: [ record.latitude.to_f, record.longitude.to_f ])) %>>
+    <div class="h-48 overflow-hidden rounded-xl ring-1 ring-line print:hidden" data-location-map-target="map"
+         role="img" aria-label="<%= t("addresses.map.label") %>"></div>
+    <p class="flex flex-wrap items-center justify-between gap-2 text-xs text-ink-muted">
+      <span class="tabular-nums"><%= record.latitude %>, <%= record.longitude %></span>
+      <%= link_to t("addresses.map.directions"), "https://www.google.com/maps/search/?api=1&query=#{record.latitude},#{record.longitude}",
+            class: "link print:hidden", target: "_blank", rel: "noopener" %>
+    </p>
+  </div>
+<% end %>

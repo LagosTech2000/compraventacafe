@@ -40,11 +40,22 @@ class Dashboard
   # --- Pending work --------------------------------------------------------------
 
   def uninvoiced = @uninvoiced ||= PurchaseSummary.new(Purchase.uninvoiced)
-  def unpaid_invoices = @unpaid_invoices ||= Invoice.unpaid.includes(:payments, purchases: :loan_payments).to_a
+  # Purchases waiting for an invoice, per producer (an invoice groups one
+  # producer's purchases): the one waiting longest first.
+  UninvoicedGroup = Data.define(:producer, :purchases_count, :total, :since)
+
+  def uninvoiced_by_producer
+    @uninvoiced_by_producer ||= Purchase.uninvoiced.includes(producer: :person).group_by(&:producer).map do |producer, purchases|
+      UninvoicedGroup.new(producer:, purchases_count: purchases.size, total: purchases.sum(&:total),
+                          since: purchases.map(&:purchased_at).min)
+    end.sort_by(&:since)
+  end
+
+  def unpaid_invoices = @unpaid_invoices ||= Invoice.unpaid.includes(:payments, producer: :person, purchases: :loan_payments).to_a
 
   # Pay periods whose day has come and are not paid, with something to pay.
   def periods_to_pay
-    @periods_to_pay ||= Payroll.unfinished(today).includes(:payments).flat_map do |payroll|
+    @periods_to_pay ||= Payroll.unfinished(today).includes(:payments, :farm).flat_map do |payroll|
       payroll.periods_to_pay(today).map { |period| [ payroll, period ] }
     end
   end
@@ -54,7 +65,7 @@ class Dashboard
   def members_without_wage
     @members_without_wage ||= PayrollMember.active.where(payroll_role_id: nil, daily_wage_override: nil)
                                            .joins(:payroll).merge(Payroll.unfinished(today)).where(payrolls: { kind: "daily" })
-                                           .includes(:payroll).to_a
+                                           .includes(:person, :payroll).to_a
   end
 
   # --- Recent activity -----------------------------------------------------------

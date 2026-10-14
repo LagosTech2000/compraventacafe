@@ -58,7 +58,7 @@ RSpec.describe "Rate limits" do
   end
 
   describe "per user on expensive screens" do
-    before { sign_in admin }
+    before { sign_in make_data_exporter(admin) }
 
     it "allows three backups an hour" do
       allow_any_instance_of(DataBackup).to receive(:write) do

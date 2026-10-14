@@ -21,7 +21,7 @@
   <p class="text-sm text-ink-muted"><%= t(".admin_has_all") %></p>
 <% else %>
   <div class="overflow-x-auto panel">
-    <table class="data-table">
+    <table class="data-table" data-controller="table-sort">
       <thead>
         <tr>
           <th><%= t("administration.users.form.module") %></th>

@@ -113,7 +113,8 @@ RSpec.describe "Administration::AuditEvents" do
       create_list(:zone, AuditEventFilter::PER_PAGE + 1)
       allow(Current).to receive(:user).and_call_original
       get administration_audit_events_path(auditable_type: "Zone")
-      expect(response.body).to include("Siguiente")
+      more = Nokogiri::HTML(response.body).at_css("[data-controller=infinite-list]")
+      expect(more["data-infinite-list-url-value"]).to include("auditable_type=Zone", "page=2")
       get administration_audit_events_path(auditable_type: "Zone", page: 2)
       expect(Nokogiri::HTML(response.body).css("tbody tr").size).to eq(1)
     end
