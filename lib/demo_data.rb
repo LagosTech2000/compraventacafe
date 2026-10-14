@@ -5,6 +5,8 @@ class DemoData
   FIRST_NAMES = %w[Ana Carlos Rosa Luis Marta José Elena Mario Julia Pedro Sofía Tomás Lucía Andrés Carmen].freeze
   LAST_NAMES = [ "Demo Uno", "Demo Dos", "Demo Tres", "Demo Cuatro", "Demo Cinco" ].freeze
   # Farm workers (collaborators), apart from the producers.
+  # Fictitious points around Morocelí (El Paraíso), for the maps.
+  AREA = { latitude: 14.0..14.25, longitude: -87.0..-86.7 }.freeze
   WORKERS = [ %w[Ramón Demo\ Seis], %w[Teresa Demo\ Siete], %w[Hugo Demo\ Ocho], %w[Irma Demo\ Nueve], %w[Félix Demo\ Diez] ].freeze
 
   def initialize(user)
@@ -25,10 +27,18 @@ class DemoData
 
   private
     def producer(first, last, zone, index)
-      person = Person.find_or_create_by!(first_names: first, last_names: last) { |new_person| new_person.zone = zone }
+      person = Person.find_or_create_by!(first_names: first, last_names: last) do |new_person|
+        new_person.zone = zone
+        # Every fourth one without a point: the maps say how many are missing.
+        new_person.assign_attributes(point) unless index % 4 == 3
+      end
       Producer.find_or_create_by!(person:) do |producer|
         producer.kind = index % 5 == 0 ? "intermediary" : "producer"
       end
+    end
+
+    def point
+      { latitude: @random.rand(AREA[:latitude]).round(6), longitude: @random.rand(AREA[:longitude]).round(6) }
     end
 
     # A working hour of that day, never later than now.
@@ -92,8 +102,8 @@ class DemoData
       people = WORKERS.map do |first_names, last_names|
         Person.find_or_create_by!(first_names:, last_names:).tap { |person| person.collaborator || person.create_collaborator! }
       end
-      el_roble = Farm.find_or_create_by!(name: "Finca El Roble (demo)")
-      la_cumbre = Farm.find_or_create_by!(name: "Finca La Cumbre (demo)")
+      el_roble = Farm.find_or_create_by!(name: "Finca El Roble (demo)") { |farm| farm.assign_attributes(point) }
+      la_cumbre = Farm.find_or_create_by!(name: "Finca La Cumbre (demo)") { |farm| farm.assign_attributes(point) }
 
       daily = Payroll.create!(farm: el_roble, name: "Limpia de lotes", kind: "daily", pay_frequency: "weekly", starts_on: start, created_by: @user)
       worker = daily.roles.create!(name: "Jornalero", daily_wage: 300)

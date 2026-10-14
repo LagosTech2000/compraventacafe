@@ -7,6 +7,17 @@ class PurchasesReport < Report
     CASE WHEN purchases.invoice_id IS NULL THEN 'uninvoiced' ELSE invoices.payment_status END
   SQL
 
+  # Where the coffee comes from (map): the purchase's farm when it has a
+  # point on the map, otherwise the producer's.
+  FARM_LOCATED = "(farms.latitude IS NOT NULL AND farms.longitude IS NOT NULL)".freeze
+  PRODUCER_NAME = "people.first_names || ' ' || people.last_names".freeze
+  ORIGIN = {
+    id: "CASE WHEN #{FARM_LOCATED} THEN 'farm-' || farms.id ELSE 'person-' || people.id END",
+    label: "CASE WHEN #{FARM_LOCATED} THEN farms.name || ' · ' || #{PRODUCER_NAME} ELSE #{PRODUCER_NAME} END",
+    latitude: "CASE WHEN #{FARM_LOCATED} THEN farms.latitude ELSE people.latitude END",
+    longitude: "CASE WHEN #{FARM_LOCATED} THEN farms.longitude ELSE people.longitude END"
+  }.freeze
+
   self.module_key = "trading"
   self.date_column = "purchases.purchased_at"
   self.date_type = :datetime
@@ -105,7 +116,9 @@ class PurchasesReport < Report
                                           tones: { status_label("uninvoiced") => "muted", status_label("pending") => "danger",
                                                    status_label("partial") => "warning", status_label("paid") => "success" }),
       chart(:humidity_price, :scatter, labels: [], datasets: humidity_price(relation)),
-      chart(:arrivals, :heatmap, labels: [], datasets: [ { data: weekday_hours(relation) } ], wide: true)
+      chart(:arrivals, :heatmap, labels: [], datasets: [ { data: weekday_hours(relation) } ], wide: true),
+      locations(:map, relation.left_joins(:farm), place: ORIGIN, measure: :quintals, sql: QUINTALS, format: :quintals,
+                                                  link: :trading_producer_path, link_sql: "producers.id")
     ]
   end
 

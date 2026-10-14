@@ -116,7 +116,9 @@ class ProducersReport < Report
                                                           dataset(:share, shares, format: :percent, kind: :line, axis: :y2) ], wide: true),
       chart(:recency, :bar, labels: ages.map(&:first), datasets: [ dataset(:producers, ages.map(&:last), format: :integer) ]),
       chart(:kinds, :doughnut, labels: kinds.map(&:first), datasets: [ dataset(:quintals, kinds.map(&:last), format: :quintals) ]),
-      chart(:zones, :hbar, labels: zones.map(&:first), datasets: [ dataset(:quintals, zones.map(&:last), format: :quintals) ])
+      chart(:zones, :hbar, labels: zones.map(&:first), datasets: [ dataset(:quintals, zones.map(&:last), format: :quintals) ]),
+      locations(:map, records, place: :person, measure: :quintals, sql: "COALESCE(SUM(stats.net_weight), 0) / #{QUINTAL}", format: :quintals,
+                               link: :trading_producer_path, link_sql: "producers.id")
     ]
   end
 

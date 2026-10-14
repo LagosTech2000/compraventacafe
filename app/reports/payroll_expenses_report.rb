@@ -60,7 +60,9 @@ class PayrollExpensesReport < Report
       chart(:categories, :doughnut, labels: categories.map(&:first), datasets: [ dataset(:amount, categories.map(&:last), format: :money) ]),
       chart(:over_time, :stacked, labels:, datasets: by_category.map { |set| set.merge(format: :money) }),
       chart(:farms, :hbar, labels: farms.map(&:first), datasets: [ dataset(:amount, farms.map(&:last), format: :money) ]),
-      chart(:payrolls, :hbar, labels: payrolls.map(&:first), datasets: [ dataset(:amount, payrolls.map(&:last), format: :money) ])
+      chart(:payrolls, :hbar, labels: payrolls.map(&:first), datasets: [ dataset(:amount, payrolls.map(&:last), format: :money) ]),
+      locations(:map, relation, place: :farm, measure: :amount, sql: "SUM(payroll_expenses.amount)", format: :money,
+                                link: :farms_farm_path, link_sql: "farms.id")
     ]
   end
 

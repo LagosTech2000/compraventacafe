@@ -102,7 +102,9 @@ class LoansReport < Report
                                    tones: { human(Loan, :status).call("active") => "success", human(Loan, :status).call("overdue") => "danger" }),
       chart(:overdue_age, :bar, labels: ages.map(&:first), datasets: [ dataset(:owed, ages.map(&:last), format: :money) ]),
       chart(:debtors, :hbar, labels: debtors.map(&:first), datasets: [ dataset(:owed, debtors.map(&:last), format: :money) ]),
-      chart(:upcoming, :bar, labels: coming.map(&:first), datasets: [ dataset(:owed, coming.map(&:last), format: :money) ])
+      chart(:upcoming, :bar, labels: coming.map(&:first), datasets: [ dataset(:owed, coming.map(&:last), format: :money) ]),
+      locations(:map, relation, place: :person, measure: :lent, sql: "SUM(loans.principal)", format: :money,
+                                link: :loans_credit_account_path, link_sql: "people.id")
     ]
   end
 

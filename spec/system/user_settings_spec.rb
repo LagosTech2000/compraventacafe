@@ -30,6 +30,25 @@ RSpec.describe "User settings", type: :system do
     expect(user.reload).to have_attributes(window_style: "drawer", nav_position: "left")
   end
 
+  it "sizes the drawer to its page, up to 90% of the width" do
+    user.update!(window_style: "drawer")
+    sign_in_as(user)
+    drawer_width = -> { page.evaluate_script("document.querySelector('dialog.drawer[open]').getBoundingClientRect().width") }
+    window_width = page.evaluate_script("window.innerWidth")
+
+    visit trading_zones_path
+    click_link "Nueva zona"
+    wait_for_drawer
+    expect(page).to have_field("zone_name")
+    expect(drawer_width.call).to be < window_width * 0.6 # a short form, not a mostly empty panel
+    expect(drawer_width.call).to be >= 34 * 16 - 1
+
+    open_invoice # a page with tables takes the whole 90%
+    wait_for_drawer
+    expect(page).to have_css("dialog.drawer[open] table")
+    expect(drawer_width.call).to be_within(2).of(window_width * 0.9)
+  end
+
   it "navigates inside the drawer and goes back" do
     user.update!(window_style: "drawer")
     sign_in_as(user)

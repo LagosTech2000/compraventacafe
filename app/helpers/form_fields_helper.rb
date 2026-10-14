@@ -67,6 +67,11 @@ module FormFieldsHelper
     { controller: "location-map", location_map_tiles_value: Rails.configuration.x.map_tiles_url.to_s,
       location_map_attribution_value: t("addresses.map.attribution_html"), location_map_center_value: HONDURAS_CENTER.to_json,
       location_map_readonly_value: readonly, location_map_point_value: point&.to_json,
-      location_map_locate_failed_value: t("addresses.map.locate_failed") }.compact
+      location_map_locate_failed_value: t("addresses.map.locate_failed"), location_map_labels_value: map_labels.to_json }.compact
+  end
+
+  # Leaflet's own control names, in Spanish.
+  def map_labels
+    { zoom_in: t("addresses.map.zoom_in"), zoom_out: t("addresses.map.zoom_out"), close: t("addresses.map.close") }
   end
 end
