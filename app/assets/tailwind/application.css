@@ -606,6 +606,11 @@
     @apply absolute -right-px -bottom-px size-2 rounded-full bg-success ring-2 ring-surface;
   }
 
+  /* Not connected, active in the last hour (Presence::RECENT_WINDOW). */
+  .online-dot-recent {
+    @apply border-2 border-ink-muted bg-surface;
+  }
+
   .online-tooltip {
     @apply pointer-events-none invisible absolute top-full right-0 z-20 mt-2 w-max max-w-56 rounded-lg bg-ink px-2.5 py-1.5 text-xs font-medium text-surface opacity-0 shadow-lg transition;
   }

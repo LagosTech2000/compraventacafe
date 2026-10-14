@@ -622,8 +622,15 @@ tras salir). Un usuario está conectado mientras tenga alguna pestaña abierta.
 En el Inicio van en la fila del saludo, al otro extremo: círculos
 pequeños con las iniciales y un punto verde, el nombre en un tooltip al
 pasar el puntero o con el foco (`.online-avatar`); más de
-`Presence::AVATARS` se juntan en «+N». Al entrar o salir alguien se
-reemplazan por el stream de Turbo `presence` (solo nombres). **El usuario con
+`Presence::AVATARS` se juntan en «+N». Al lado, con un **anillo gris** en
+vez del punto verde, quienes no están conectados pero tuvieron actividad en
+la última hora (`Presence::RECENT_WINDOW`, Fernando 2026-10-14: un celular
+bloqueado o una pestaña dormida cortan la conexión, pero la sesión sigue en
+uso). La actividad es de la sesión (`Session#last_seen_at`, `seen!`): cada
+solicitud la mueve, como mucho una vez por minuto, y cerrar la pestaña
+también. Quien cierra sesión sale, porque su sesión se borra. El tooltip
+dice «En línea» o «Última actividad: 09:42». Al entrar o salir alguien se
+reemplazan por el stream de Turbo `presence` (solo nombres y horas). **El usuario con
 id 1 nunca sale como conectado** (`Presence::HIDDEN_USER_IDS`), pero ve a los
 demás. Vive en la memoria del proceso, como el adaptador `async`.
 

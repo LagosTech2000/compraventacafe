@@ -26,10 +26,11 @@ module Authentication
     end
 
     # An inactive user cannot continue a session that was already open.
+    # Each request counts as activity (Presence's recent activity).
     def find_session_by_cookie
       return unless cookies.signed[:session_id]
 
-      Session.joins(:user).merge(User.active).find_by(id: cookies.signed[:session_id])
+      Session.joins(:user).merge(User.active).find_by(id: cookies.signed[:session_id])&.tap(&:seen!)
     end
 
     def request_authentication
@@ -42,7 +43,7 @@ module Authentication
     end
 
     def start_new_session_for(user)
-      user.sessions.create!(user_agent: request.user_agent, ip_address: request.remote_ip).tap do |session|
+      user.sessions.create!(user_agent: request.user_agent, ip_address: request.remote_ip, last_seen_at: Time.current).tap do |session|
         Current.session = session
         cookies.signed.permanent[:session_id] = { value: session.id, httponly: true, same_site: :lax }
       end
