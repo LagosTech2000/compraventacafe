@@ -1,4 +1,9 @@
+# Bots blocked for probing attack addresses (rack-attack's scanner_ban) are
+# noise for the owner: hidden unless "show_bot_blocks" is checked
+# (Fernando, 2026-10-14). They are still audited.
 class AuditEventFilter < ListFilter
+  BOT_BLOCK_RULE = "scanner_ban"
+
   field :from, :date
   field :to, :date
   field :user_id, :id
@@ -6,12 +11,14 @@ class AuditEventFilter < ListFilter
   field :auditable_type, :choice, in: AuditEvent::AUDITED_TYPES
   field :auditable_id, :id
   field :q, :text
+  field :show_bot_blocks, :choice, in: %w[1]
 
   sorts when: "audit_events.created_at",
         description: text("audit_events.user_email", "audit_events.auditable_label"),
         action: "audit_events.action"
 
   def apply(scope)
+    scope = scope.where.not("audit_events.action = 'rate_limited' AND COALESCE(audit_events.details->>'rule', '') = ?", BOT_BLOCK_RULE) unless show_bot_blocks
     scope = scope.where(created_at: from.in_time_zone.beginning_of_day..) if from
     scope = scope.where(created_at: ..to.in_time_zone.end_of_day) if to
     scope = scope.where(user_id:) if user_id

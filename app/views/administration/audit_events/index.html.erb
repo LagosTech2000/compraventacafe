@@ -14,6 +14,7 @@
         AuditEvent::AUDITED_TYPES.map { |type| [ type.constantize.model_name.human(count: 2), type ] }.sort, selected: @filter.auditable_type, all: t("administration.audit_events.index.all_entities") %>
   <%= filter_text_field form, :auditable_id, t("administration.audit_events.index.record_id"), value: @filter.auditable_id %>
   <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("administration.audit_events.index.search_placeholder") %>
+  <%= filter_check_box form, :show_bot_blocks, t("administration.audit_events.index.show_bot_blocks"), checked: @filter.show_bot_blocks.present? %>
 <% end %>
 
 <%= list_frame "audit-events-list" do %>
