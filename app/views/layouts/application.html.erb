@@ -10,6 +10,8 @@
     <%= csp_meta_tag %>
 
     <%= yield :head %>
+    <%# Signed-in pages keep the user online (presence.js, Presence). %>
+    <% if authenticated? %><meta name="presence" content="on"><% end %>
 
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
@@ -19,11 +21,17 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="min-h-screen font-sans text-ink print:min-h-0" data-controller="row-link live-refresh">
+  <% side_nav = authenticated? && Current.user.side_nav? %>
+  <body class="min-h-screen font-sans text-ink print:min-h-0 <%= "sidebar-collapsed" if side_nav && sidebar_collapsed? %>" data-controller="row-link live-refresh">
+    <%# Each user's display settings (UserSettingsController): navigation at
+        the top or on the left, pages over the page in a modal or a drawer. %>
+    <% drawer = authenticated? && Current.user.drawer? %>
     <% if authenticated? %>
-      <%= render "layouts/navigation" %>
+      <%= render "layouts/sidebar" if side_nav %>
+      <%= render "layouts/navigation", side_nav: %>
     <% end %>
 
+    <div class="<%= "sidebar-offset" if side_nav %> print:p-0">
     <main class="mx-auto w-full max-w-[96rem] px-4 py-5 sm:px-6 lg:px-8 lg:py-6 print:max-w-none print:p-0">
       <% unless authenticated? %>
         <%# Signed-in pages have the "?" in the navigation. %>
@@ -33,13 +41,14 @@
 
       <%= yield %>
     </main>
+    </div>
 
     <%# Reusable modals: links with data-turbo-frame="modal" open here (ModalSupport).
         The later ones stack on top, for links opened from inside a modal. %>
     <% ModalSupport::MODAL_FRAMES.each_with_index do |frame_id, index| %>
       <dialog data-controller="modal" aria-label="<%= t("shared.modal.label") %>"
               data-action="turbo:frame-load->modal#open turbo:frame-missing->modal#fallback close->modal#reset pointerdown->modal#pressStart click->modal#closeOnBackdrop"
-              class="modal print:hidden">
+              class="<%= drawer ? "modal drawer" : "modal" %> print:hidden">
         <%# Padding lives on the frame so only clicks on the backdrop hit the dialog itself. %>
         <%= tag.turbo_frame id: frame_id, src: (content_for(:modal_src).presence if index.zero?), class: "block p-5 sm:p-8", data: { modal_target: "frame" } %>
       </dialog>

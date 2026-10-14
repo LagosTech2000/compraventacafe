@@ -113,6 +113,12 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Plazo del préstamo (días) | `Loan#term_days` (no se guarda: sale de las fechas) |
 | Datos que le faltan al productor | `Producer#missing_fields` |
 | Límite de solicitudes (auditoría) | acción `rate_limited` (`RateLimitAudit`) |
+| Mi configuración (datos, foto, contraseña, ventana o panel lateral, menú arriba o a la izquierda, huellas) | `UserSettingsController`; `User#window_style` (`modal` / `drawer`), `User#nav_position` (`top` / `left`) |
+| Usuarios conectados | `Presence` + `PresenceChannel` |
+| Café en la bolsa | `CoffeeMarket` (`coffee_markets#show`) |
+| Foto de perfil (persona o usuario) | `ProfilePhoto` (`HasPhoto`) |
+| Ubicación en el mapa | `latitude` / `longitude` (`HasAddress#located?`) |
+| Huella digital (passkey) / entrar con huella | `WebauthnCredential` / `PasskeySessionsController` |
 
 ## Modelo de permisos
 
@@ -120,7 +126,9 @@ No hay roles fijos: cada usuario recibe, **por módulo**, permisos separados de
 ver, crear, editar y borrar.
 
 - `AppModule::KEYS` y `AppModule::ACTIONS` son la lista canónica de módulos y
-  acciones. Agregar un módulo = una clave ahí + una entrada en `es.yml` + su
+  acciones. Su orden es el de todos los menús, las tarjetas del Inicio y
+  las pantallas de permisos: **Administración va al final** (Fernando,
+  2026-10-13). Agregar un módulo = una clave ahí + una entrada en `es.yml` + su
   namespace de controladores. Nada más.
 - `Permission` es una fila por `(user, module_key)` con cuatro banderas
   booleanas. Índice único en `[user_id, module_key]`.
@@ -157,8 +165,9 @@ cuando su módulo lo pida.
 relación entre ambas.
 
 Campos de `Person` [CONFIRMADO]: `first_names` (Nombres), `last_names`
-(Apellidos), `dni`, `rtn`, `phone`, `email`, `zone` (Zona) y dirección
-(`HasAddress`). Solo los nombres y apellidos son obligatorios. El resto se
+(Apellidos), `dni`, `rtn`, `phone`, `email`, `zone` (Zona), dirección
+(`HasAddress`, con ubicación opcional en el mapa) y foto de perfil
+opcional (`HasPhoto`, 2026-10-13). Solo los nombres y apellidos son obligatorios. El resto se
 agrega con migraciones cuando cada módulo lo pida.
 
 **Zona de la persona** (Fernando, 2026-10-12: «que aparezca la zona de
@@ -331,6 +340,42 @@ los errores).
   "shared/filters"` con `filter_text_field` / `filter_date_field` /
   `filter_select` + `shared/pagination`. Los valores inválidos se ignoran.
   Dentro del bloque de filtros usa claves de traducción completas, no `t(".x")`.
+- **Toda columna se ordena** (Fernando, 2026-10-13), salvo la de acciones.
+  - **Listas por páginas** (las de `ListFilter`): ordena el servidor, sobre
+    **toda** la lista filtrada. El filtro declara cada columna con `sorts`
+    (SQL; `text(...)` para texto en orden español sin mayúsculas ni
+    acentos, con ICU `es-x-icu` si la base lo tiene; `joins:` si hace
+    falta; `ruby:` para valores calculados como el saldo de un préstamo,
+    que carga todos los registros filtrados). Los encabezados usan
+    `sort_th(label, :key, sorting)` (`TableSortHelper`): suben, bajan y
+    vuelven al orden propio de la lista. `?sort=&dir=` viaja en
+    `to_params` (página siguiente, etiquetas) y en campos ocultos con
+    `form=` que dejan el orden al cambiar un filtro. Responden dentro del
+    frame de la lista (`list_frame`, o el frame que ya tenía), sin
+    recargar; en un modal no cambian la URL. Ordenar no es un filtro: no
+    sale en las etiquetas. Lista nueva = su `sorts` + `sort_th`; un spec
+    (`spec/requests/list_sorting_spec.rb`) recorre cada lista, cada
+    columna y ambas direcciones.
+  - **Tablas que muestran todas sus filas** (detalles, recibos de planilla,
+    datos de un gráfico): ordena el navegador (`data-controller=
+    "table-sort"`, `table_sort_controller.js`). Lee fechas `dd/mm/aaaa`,
+    números y dinero; `data-sort-value` en la celda manda sobre el texto;
+    `data-sort="false"` en el `th` lo deja fijo (la firma). Una tabla
+    compartida (compras, facturas, préstamos, planillas) ordena en el
+    servidor si recibe `sorting:` y en el navegador si no
+    (`table_sort_data`).
+  - Sin orden: formularios (permisos, asistencia), impresos (factura,
+    cierre diario) y el mapa de calor de Reportería, que ya ordena a su
+    manera.
+- **Scroll infinito, nunca «Anterior / Siguiente»** (Fernando,
+  2026-10-13): `shared/pagination` deja al final de la lista un ancla
+  (`data-infinite-list-anchor`) con «Cargar más», que pide la página
+  siguiente al acercarse a la pantalla (`infinite_list_controller.js`).
+  Pide la misma URL con `page=N+1` (con `frame:`, solo ese frame) y agrega
+  sus filas: el n-ésimo `tbody` o lista de `.data-card` antes del ancla,
+  dentro de su padre, recibe las filas del n-ésimo de la página nueva. Una
+  fila con un id que ya está en la página no se repite. Sin endpoint
+  propio: la página normal sirve. Reportería sigue con su turbo stream.
 - **Tablas que se ven completas**: se adaptan al ancho de su contenedor (sirve
   igual en página y en modal) con consultas de contenedor de Tailwind
   (`@container`, `@3xl:`…): en angosto, tarjetas (`.data-card`); en medio, las
@@ -399,7 +444,8 @@ los errores).
   que la página siguiente no vuelva a su valor por defecto.
   El frame de resultados lleva **`target: "_top"`**: sus enlaces (abrir,
   asistencia, pagar) van a la página completa, y solo la paginación
-  (`shared/pagination` con `frame:`) y las etiquetas apuntan al frame con
+  (`shared/pagination` con `frame:`, que pide solo el frame) y las
+  etiquetas apuntan al frame con
   `data-turbo-frame`. Sin eso, un enlace a otra página da «Content missing».
 - **Filtros**: los campos se acomodan por ancho (`auto-fill`, mínimo
   12rem) y el botón «Filtrar» va en la misma fila cuando cabe.
@@ -485,7 +531,7 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 
 | Clave | Estado |
 | --- | --- |
-| `administration` | Usuarios y permisos, auditoría, configuración del sitio y respaldo de datos (solo administradores); personas, clientes y colaboradores (permisos del módulo) |
+| `administration` | Usuarios y permisos, auditoría y configuración del sitio (solo administradores); respaldo de datos (solo el usuario con id 1); personas, clientes y colaboradores (permisos del módulo) |
 | `trading` | Demo: zonas, productores (con pestañas y QQ por temporada), compras con cálculo por estado del café y anulación, facturas imprimibles (original y copia) con estado de pago, cierre diario |
 | `farms` | Fincas, planillas por día, por obra y de corte por lata, con roles y salarios, asistencia o latas por día, pagos por período (semanal, quincenal, mensual) con descuento a préstamos, planilla de pago imprimible y gastos por planilla |
 | `loans` | Préstamos en efectivo, insumos o mixtos a cualquier persona con interés simple, catálogo de insumos, abonos (también con café desde una compra o descontados en planilla) con recibo imprimible, estados de cuenta con historial crediticio y score de pago |
@@ -509,7 +555,8 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 - Cada límite superado queda en la auditoría **una vez por IP, regla y
   período** (acción `rate_limited`, `RateLimitAudit`), no por solicitud.
 - **Caché**: `:memory_store` acotado en producción y en test (lo usan los
-  contadores de `rate_limit`; nada más se cachea). Los specs lo limpian
+  contadores de `rate_limit` y la cotización de `CoffeeMarket`; nada más
+  se cachea). Los specs lo limpian
   antes de cada ejemplo.
 - **Tiempo máximo por consulta** en producción: `statement_timeout` 15 s
   (`DB_STATEMENT_TIMEOUT` lo cambia; `bin/render-build.sh` lo pone en 0
@@ -555,8 +602,100 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
   de una instancia o más workers de Puma habría que pasar a Solid Cable o
   Redis. En test los specs de pantalla corren los jobs en línea.
 
-**Respaldo de datos** (`DataBackup`, Administración → Respaldo, solo
-administradores, Fernando 2026-10-12): descarga un `.zip` con una carpeta
+**Usuarios conectados** (`Presence`, Fernando, 2026-10-13): toda página con
+sesión mantiene **una** suscripción a `PresenceChannel` (`presence.js`,
+importado una vez en `application.js`; sobrevive a las visitas de Turbo y se
+suelta en una página sin `<meta name="presence">`, como el inicio de sesión
+tras salir). Un usuario está conectado mientras tenga alguna pestaña abierta.
+En el Inicio van en la fila del saludo, al otro extremo: círculos
+pequeños con las iniciales y un punto verde, el nombre en un tooltip al
+pasar el puntero o con el foco (`.online-avatar`); más de
+`Presence::AVATARS` se juntan en «+N». Al entrar o salir alguien se
+reemplazan por el stream de Turbo `presence` (solo nombres). **El usuario con
+id 1 nunca sale como conectado** (`Presence::HIDDEN_USER_IDS`), pero ve a los
+demás. Vive en la memoria del proceso, como el adaptador `async`.
+
+**Café en la bolsa** (`CoffeeMarket`, Fernando, 2026-10-13): tarjeta del
+Inicio, a todo el ancho (precio, línea y rangos en una fila; apilados en
+angosto), con el arábica «C» de ICE Nueva York (`KC=F`, centavos de dólar por
+libra): precio, cambio contra la sesión anterior, línea del último mes,
+rangos del día y de 52 semanas. Sale del endpoint público de gráficos de
+Yahoo Finanzas (gratis, sin clave, **no es una API oficial**: puede cambiar
+o fallar). Se pide aparte en un frame perezoso (`coffee_markets#show`), se
+guarda 15 min en la caché (un fallo, 2 min) y si no responde dice «no
+disponible». Es solo referencia: no toca el precio de las compras. En los
+specs nunca sale a internet (`spec/support/outside_services.rb`).
+
+**Mi configuración** (Fernando, 2026-10-13): el nombre del usuario en la
+navegación abre su configuración en el modal (`UserSettingsController`,
+`UserSettingPolicy`: cada quien la suya). Es un formulario completo: **sus
+datos** (foto, nombre y correo), la pantalla (abajo) y **su contraseña**;
+cambiar el correo o la contraseña pide la contraseña actual
+(`password_challenge` de `has_secure_password`). Nunca cambia permisos,
+`admin` ni `active`. Debajo, aparte del formulario, sus **huellas**
+(ver «Huella digital»). Las opciones de pantalla:
+- **Páginas que se abren encima** (`window_style`): `modal` (ventana al
+  centro) o `drawer` (panel que entra desde la derecha y cubre el 90 % del
+  ancho; `.modal.drawer`). En el drawer, un `modal_link_to` navega **dentro
+  del mismo panel** (`ModalSupport#modal_frame_for`), salvo un `?picker=1`,
+  que se apila encima para no perder el formulario de abajo.
+- **Menú principal** (`nav_position`): `top` o `left` (`layouts/_sidebar`,
+  desde `lg`; en el celular sigue arriba). El de la izquierda **se esconde
+  a solo íconos** con su botón (`sidebar_controller.js`): al pasar el
+  puntero o con el foco, el ícono crece y su nombre sale en un tooltip al
+  lado, **sin ensanchar la barra**. Se recuerda en la cookie
+  `sidebar_collapsed` (`SidebarState`), no en el usuario: la página llega
+  del servidor ya plegada y plegar no escribe nada ni se audita.
+- **«Atrás»** (`modal_controller.js`, en el layout `modal`): cada ventana
+  recuerda las páginas que mostró (solo las pedidas con GET); «Atrás» vuelve
+  a la anterior, o, si no hay, cierra la ventana de arriba y deja la de
+  abajo. Guardar un formulario sigue cerrando la ventana y refrescando la
+  página.
+
+**Huella digital** (passkeys, WebAuthn, gema `webauthn`; Fernando,
+2026-10-13): **una forma más de entrar, la contraseña sigue sirviendo**.
+Cada usuario registra la huella (o el desbloqueo) de cada dispositivo en Mi
+configuración (`WebauthnCredentialsController`, `WebauthnCredential`: solo
+la llave pública, con nombre del dispositivo y último uso); en el inicio de
+sesión, «Entrar con huella» deja que el dispositivo elija la llave (sin
+escribir el correo: credenciales descubribles con verificación del usuario)
+y entra (`PasskeySessionsController`, mismo límite de intentos que el
+login, auditado como `sign_in` con `method: passkey`; un usuario inactivo
+no entra). `passkey_controller.js` hace las dos ceremonias. La parte
+confiable (`Passkeys.relying_party`) es el host de la petición: una huella
+solo sirve en el dominio donde se registró (en Render, el de producción) y
+WebAuthn exige HTTPS o `localhost`. En los specs: `WebAuthn::FakeClient`
+en los de petición y el autenticador virtual de Chrome en el de pantalla
+(visitando `localhost`, no una IP).
+
+**Fotos de perfil** (`ProfilePhoto`, `HasPhoto`, Fernando 2026-10-13):
+personas (y por ellas productores, clientes, colaboradores) y usuarios.
+Se guardan en la base, en su propia tabla (no hay almacenamiento de
+archivos en el servidor), solo JPG, PNG o WebP revisados por su contenido,
+de hasta 1 MB: el navegador achica la foto a 512 px antes de enviarla
+(`photo_input_controller.js`, `shared/_photo_field`, con botón en
+español). Se sirven en `/profile_photos/:id?v=` a usuarios con sesión.
+`avatar(record)` muestra la foto o las iniciales; para listas,
+`includes(:photo_info)`, que no carga los bytes. La foto se audita sin sus
+bytes.
+
+**Ubicación en el mapa** (Fernando, 2026-10-13, con OpenStreetMap: gratis
+y sin clave): personas y fincas tienen `latitude` y `longitude`
+opcionales (`HasAddress`: las dos o ninguna, dentro del globo). El mapa
+está en `shared/_address_fields` (`location_map_controller.js`, Leaflet
+1.9.4 vendorizado en `vendor/javascript/leaflet.js` y su CSS en
+`app/assets/stylesheets/leaflet.css`): tocar el mapa pone el pin
+(arrastrable), «Usar mi ubicación» usa la del dispositivo y las
+coordenadas se pueden escribir o pegar de Google Maps. Los detalles de
+productor, persona y finca muestran el mapa con «Abrir en Google Maps»
+(`shared/_location`). Las teselas salen de `config.x.map_tiles_url`
+(en test, ninguna: los specs no salen a internet).
+
+**Respaldo de datos** (`DataBackup`, Administración → Respaldo, Fernando
+2026-10-12; **solo el usuario con id 1**, y mientras sea administrador:
+`User::DATA_EXPORTER_ID`, `User#data_exporter?`, Fernando 2026-10-13; a
+los demás no les aparece. El CSV de cada reporte sigue para quien ve el
+reporte): descarga un `.zip` con una carpeta
 `respaldo-AAAA-MM-DD-HHMM/` que trae `base.dump` (pg_dump formato custom,
 sin datos de `sessions`), `csv/` con una tabla por archivo (BOM para Excel,
 sin `password_digest` ni sesiones) y `LEEME.txt` con cómo restaurar. Si el
@@ -576,7 +715,14 @@ usuario puede hacer en módulos que puede ver); resumen de operaciones
 pendientes); tareas pendientes, solo si existen (compras sin facturar,
 facturas sin cancelar, préstamos vencidos, períodos por pagar, empleados
 de planillas por día sin salario); actividad reciente de los módulos que
-ve, con enlace; y sus módulos. Todo sale de los datos y scopes existentes;
+ve, con enlace; café en la bolsa y usuarios conectados; y sus módulos. La cifra
+«Pendientes» (y «Ver el detalle» del panel) abre en el modal **Tareas
+pendientes** (`PendingWorkController`): **una pestaña por tipo** con
+cuántos hay (`tabs_controller.js`, cambian ahí mismo, también con las
+flechas; nunca enlaces `#ancla`, que dentro de un frame cargaban el
+Inicio), cada una con sus registros, lo más viejo primero, y el botón que lo resuelve (Facturar por productor,
+Registrar abono, Pagar el período, Asignar salario), solo si el usuario
+puede hacerlo. Los formularios se abren encima; «Atrás» vuelve a la lista. Todo sale de los datos y scopes existentes;
 nada se estima ni se inventa.
 
 Cada módulo tiene su namespace de controladores. Implementar una funcionalidad
@@ -620,6 +766,10 @@ textos; la clave y el código siguen siendo `trading`.
 - **Temporada** (`Season`) [CONFIRMADO]: empieza cada 1 de septiembre y
   lleva el año en que empieza (la 2026 va del 2026-09-01 al 2027-08-31).
   Cada compra guarda su `season_year`, calculado de la fecha de compra.
+  **En pantalla, impresos y reportes se llama con sus dos años**:
+  «Temporada 2026-2027» (`Season#label`, Fernando, 2026-10-13); el número
+  guardado y los parámetros (`season_year=2026`) siguen siendo el año en
+  que empieza.
   Compras y facturas se filtran por temporada (solo las que tienen compras;
   una factura cae en la temporada de sus compras). Elegir una temporada
   borra las fechas del filtro (`season_filter_controller.js`).
@@ -656,13 +806,19 @@ textos; la clave y el código siguen siendo `trading`.
   se elige su productor con el buscador (vacío = del negocio); el dueño
   queda fijo cuando la finca tiene compras o planillas
   (`Farm#owner_locked?`). Nombres únicos entre las del negocio y, aparte, entre las de
-  cada productor (dos productores pueden tener «Finca El Paraíso»). La
+  cada productor (dos productores pueden tener «Finca El Paraíso»). En el formulario del
+  productor, sus fincas van en un desplegable con «Agregar finca», que pide
+  el nombre en una ventanita y la agrega como «(nueva)» hasta guardar
+  (`farm_adder_controller.js`, Fernando 2026-10-13). La
   compra puede llevar una finca de su productor (**opcional**,
   `Purchase#farm`), elegida en un desplegable que solo muestra las fincas
   del productor elegido (`producer_farms_controller.js`). El texto viejo
   `producers.farm_name` se convirtió en fincas y se asignó a sus compras
   (`ProducerFarmBackfill`, migración `AssignFarmsToProducers`). En el
   módulo Fincas aparecen con su dueño («Finca X · Ana Zelaya»).
+- La factura muestra los **QQ** de cada compra y del total
+  (`Invoice#quintals` = neto ÷ 125), también en su lista (Fernando,
+  2026-10-13).
 - Una factura agrupa compras sin facturar **del mismo productor**
   (`InvoiceIssuer`, con bloqueo de filas). Número correlativo con bloqueo
   consultivo (`Invoice::NUMBERING_LOCK_KEY`), mostrado con 4 dígitos.
@@ -767,7 +923,7 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
   muestra el plazo (`Loan#term_days`).
 
 - **Recibo de abono**: cada abono tiene su recibo imprimible (original y
-  copia en una hoja) con el saldo que quedó a la fecha del abono. Al
+  copia, **cada uno en su hoja**, Fernando 2026-10-13) con el saldo que quedó a la fecha del abono. Al
   registrar un abono se abre solo en el modal (`close_modal_with visit:`).
 
 ### Fincas (`farms`) — fase 1
@@ -826,6 +982,22 @@ Reglas decididas por Fernando el 2026-10-10 [CONFIRMADO]:
   tarjeta por planilla activa o por iniciar (período de hoy, día de pago,
   lo que lleva, empleados y «Asistencia/Latas de hoy»), la que se paga
   primero arriba.
+- **Navegación del módulo** (Fernando, 2026-10-13: «hay muchas
+  redirecciones y en varias partes no hay manera de regresar»): la finca es
+  una **página** (centro de sus planillas), no un modal; se abre con
+  «Abrir» o tocando su fila, y su lista de planillas no repite la columna
+  «Finca» (`show_farm: false`). Finca, planilla, asistencia/latas, «Pagar
+  período» y planilla de pago llevan arriba la ruta **Fincas › finca ›
+  planilla › pantalla** (`shared/_breadcrumbs`, `FarmsBreadcrumbsHelper`;
+  en el celular, solo «← padre»): una planilla siempre muestra su finca,
+  venga de donde venga. Las pestañas de la planilla cambian dentro del
+  frame `payroll-tab` sin recargar (la URL sigue). La acción principal de
+  la planilla es «Asistencia/Latas de hoy»; en la asistencia, «Pagar este
+  período» se resalta al llegar su día de pago y «Ver la planilla»
+  regresa; «Pagar período» tiene «Revisar asistencia/latas» y su
+  «Cancelar» vuelve a los períodos; la planilla de pago tiene «Volver a
+  la planilla». Las cifras de finca y planilla llenan cada fila (sin
+  huecos). `shared/_breadcrumbs` sirve para cualquier pantalla con padres.
 - **Asistencia en pantalla** (Fernando pidió Fincas más moderna e
   intuitiva, 2026-10-12): cada día es un botón que se toca para pasar de —
   a 1 y a ½ (`day-toggle`, `timesheet_controller.js`; el campo oculto es lo

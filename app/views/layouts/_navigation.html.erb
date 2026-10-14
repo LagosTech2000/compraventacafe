@@ -1,4 +1,7 @@
-<header class="sticky top-0 z-30 px-3 pt-3 sm:px-6 print:hidden">
+<%# The main navigation at the top. With the navigation on the left (the
+    user's setting), it only shows on small screens; layouts/_sidebar
+    takes over from lg. %>
+<header class="sticky top-0 z-30 px-3 pt-3 sm:px-6 print:hidden <%= "lg:hidden" if local_assigns[:side_nav] %>">
   <nav class="glass mx-auto max-w-[94rem] px-3 py-2.5 sm:px-4">
     <div class="flex items-center justify-between gap-3">
       <%= link_to root_path, class: "flex min-w-0 items-center gap-2.5 rounded-full pr-2 font-bold text-ink" do %>
@@ -16,12 +19,7 @@
         <%= help_guide_button %>
 
         <div class="hidden items-center gap-3 lg:flex">
-          <span class="flex items-center gap-2 text-sm text-ink-muted" title="<%= Current.user.email_address %>">
-            <span class="grid size-8 place-items-center rounded-full bg-primary-soft text-xs font-bold text-primary" aria-hidden="true">
-              <%= initials(Current.user.name) %>
-            </span>
-            <span class="max-w-40 truncate"><%= Current.user.name %></span>
-          </span>
+          <%= render "layouts/user_button" %>
           <%= button_to t(".sign_out"), session_path, method: :delete, class: "btn btn-sm" %>
         </div>
 
@@ -34,6 +32,7 @@
             <% end %>
             <div class="mt-2 border-t border-line pt-3">
               <p class="mb-2 truncate px-3.5 text-xs text-ink-muted"><%= Current.user.name %></p>
+              <%= modal_link_to t(".settings"), edit_user_setting_path, class: "nav-pill mb-2 w-full" %>
               <%= button_to t(".sign_out"), session_path, method: :delete, class: "btn w-full" %>
             </div>
           </div>

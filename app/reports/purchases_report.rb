@@ -53,7 +53,7 @@ class PurchasesReport < Report
   group :day, unit: "day"
   group :week, unit: "week"
   group :month, unit: "month"
-  group :season, sql: "purchases.season_year", translate: ->(year) { I18n.t("trading.season.name", year:) }
+  group :season, sql: "purchases.season_year", translate: ->(year) { I18n.t("trading.season.name", season: Season.new(year).label) }
   group :producer, sql: "purchases.producer_id", label_sql: "MIN(people.first_names || ' ' || people.last_names)"
   group :zone, sql: "purchases.zone_id", label_sql: "MIN(zones.name)"
   group :coffee_state, sql: "purchases.coffee_state", translate: ->(state) { Purchase.human_attribute_name("coffee_state/#{state}") }

@@ -4,6 +4,10 @@ class FarmFilter < ListFilter
   field :q, :text
   field :status, :choice, in: STATUSES, default: "active"
 
+  sorts name: text("farms.name"),
+        location: { sql: text("departments.name", "municipalities.name", "farms.address_line"), joins: %i[department municipality] },
+        status: "NOT farms.active"
+
   def apply(scope)
     scope = scope.where("name ILIKE ?", like(q)) if q
     scope = scope.where(active: status == "active") if status

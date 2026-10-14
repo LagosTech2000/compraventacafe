@@ -14,15 +14,17 @@
         %w[active inactive].map { |s| [ t("administration.user_status.#{s}"), s ] }, selected: @filter.status %>
 <% end %>
 
+<%= list_frame "users-list" do %>
+<% sorting = { filter: @filter, frame: "users-list" } %>
 <% if @users.any? %>
   <div class="mt-6 overflow-x-auto panel">
     <table class="data-table">
       <thead>
         <tr>
-          <th><%= User.human_attribute_name(:name) %></th>
-          <th><%= User.human_attribute_name(:email_address) %></th>
-          <th><%= t(".role") %></th>
-          <th><%= t(".status") %></th>
+          <%= sort_th User.human_attribute_name(:name), :name, sorting %>
+          <%= sort_th User.human_attribute_name(:email_address), :email_address, sorting %>
+          <%= sort_th t(".role"), :role, sorting %>
+          <%= sort_th t(".status"), :status, sorting %>
           <th class="cell-actions"><%= t(".actions") %></th>
         </tr>
       </thead>
@@ -43,7 +45,8 @@
       </tbody>
     </table>
   </div>
-  <%= render "shared/pagination", filter: @filter, next_page: @next_page %>
+  <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "users-list" %>
 <% else %>
   <p class="empty-state mt-6"><%= t(".empty") %></p>
+<% end %>
 <% end %>

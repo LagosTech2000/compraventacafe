@@ -1,0 +1,70 @@
+<% content_for :title, t(".title") %>
+<%# The coffee exchange (CoffeeMarket), loaded apart into the home page. It
+    takes the whole row: price, the month's line and the ranges side by side
+    when there is room (@container), stacked when narrow. %>
+<%= turbo_frame_tag "coffee-market" do %>
+  <section class="@container panel p-4" aria-labelledby="coffee-market-title">
+    <% if @quotes.any? %>
+      <% @quotes.each do |quote| %>
+        <% change = quote.change %>
+        <% tone = change.nil? || change.zero? ? "text-ink-muted" : (change.positive? ? "text-success" : "text-danger") %>
+        <div class="grid items-center gap-4 @3xl:grid-cols-[auto_minmax(0,1fr)_auto]" data-coffee-quote="<%= quote.key %>">
+          <div class="min-w-0">
+            <h2 id="coffee-market-title" class="flex items-center gap-2 font-semibold">
+              <span class="text-primary"><%= icon(:bean) %></span> <%= t(".title") %>
+            </h2>
+            <p class="text-xs text-ink-muted"><%= t(".contracts.#{quote.key}") %> · <%= quote.exchange %></p>
+            <p class="mt-1 flex flex-wrap items-baseline gap-x-2">
+              <span class="text-2xl font-bold tabular-nums" data-live-value><%= number_with_precision(quote.price, precision: 2, delimiter: ",") %></span>
+              <span class="text-xs text-ink-muted"><%= t(".units.#{quote.currency == "USX" ? "cents" : "dollars"}") %></span>
+              <% if change %>
+                <span class="text-sm font-semibold tabular-nums <%= tone %>">
+                  <%= change.positive? ? "▲" : (change.negative? ? "▼" : "•") %>
+                  <%= number_with_precision(change.abs, precision: 2) %> (<%= number_to_percentage(quote.change_percent.abs, precision: 2) %>)
+                </span>
+              <% end %>
+            </p>
+            <p class="text-xs text-ink-muted"><%= t(".per_pound", amount: number_to_currency(quote.dollars_per_pound, unit: "US$ ", precision: 4)) %></p>
+          </div>
+
+          <% if quote.history.size > 1 %>
+            <div class="min-w-0">
+              <div class="<%= tone == "text-danger" ? "text-danger" : "text-primary" %>"><%= sparkline(quote.history.map(&:last), css: "h-14 w-full") %></div>
+              <p class="flex justify-between text-xs text-ink-muted">
+                <span><%= l(quote.history.first.first, format: :short) %></span>
+                <span><%= l(quote.history.last.first, format: :short) %></span>
+              </p>
+            </div>
+          <% end %>
+
+          <div class="min-w-0 text-xs">
+            <dl class="grid grid-cols-[auto_auto] gap-x-4 gap-y-0.5">
+              <% if quote.day_low && quote.day_high %>
+                <dt class="text-ink-muted"><%= t(".day_range") %></dt>
+                <dd class="text-right tabular-nums"><%= number_with_precision(quote.day_low, precision: 2) %> – <%= number_with_precision(quote.day_high, precision: 2) %></dd>
+              <% end %>
+              <% if quote.year_low && quote.year_high %>
+                <dt class="text-ink-muted"><%= t(".year_range") %></dt>
+                <dd class="text-right tabular-nums"><%= number_with_precision(quote.year_low, precision: 2) %> – <%= number_with_precision(quote.year_high, precision: 2) %></dd>
+              <% end %>
+              <% if quote.contract %>
+                <dt class="text-ink-muted"><%= t(".contract") %></dt>
+                <dd class="text-right"><%= quote.contract %></dd>
+              <% end %>
+            </dl>
+            <p class="mt-2 text-ink-muted">
+              <%= t(".as_of", time: quote.at ? l(quote.at, format: :short) : "—") %> ·
+              <%= link_to t(".source"), quote.source_url, class: "link", target: "_blank", rel: "noopener" %>
+            </p>
+          </div>
+        </div>
+      <% end %>
+      <p class="mt-2 text-xs text-ink-muted"><%= t(".disclaimer") %></p>
+    <% else %>
+      <h2 id="coffee-market-title" class="flex items-center gap-2 font-semibold">
+        <span class="text-primary"><%= icon(:bean) %></span> <%= t(".title") %>
+      </h2>
+      <p class="mt-1 text-sm text-ink-muted"><%= t(".unavailable") %></p>
+    <% end %>
+  </section>
+<% end %>

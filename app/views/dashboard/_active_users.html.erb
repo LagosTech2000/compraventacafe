@@ -1,0 +1,30 @@
+<%# Who is online right now (Presence): small avatars, the name
+    in a tooltip on hover or focus. Replaced by the "presence" stream when
+    someone comes or goes, the same for everyone who sees it. %>
+<% shown = users.first(Presence::AVATARS) %>
+<% rest = users.drop(Presence::AVATARS) %>
+<div id="<%= Presence::TARGET %>" class="flex items-center gap-2" role="group"
+     aria-label="<%= t("dashboard.active_users.label", count: users.size) %>">
+  <% if users.any? %>
+    <span class="hidden text-xs text-ink-muted sm:inline"><%= t("dashboard.active_users.title") %></span>
+    <ul class="flex gap-1" role="list">
+      <% shown.each do |user| %>
+        <li id="<%= dom_id(user, :online) %>" class="online-avatar" tabindex="0" aria-label="<%= user.name %>">
+          <% if (photo = user.photo_info) %>
+            <%= image_tag profile_photo_path(photo, v: photo.version), alt: "", class: "size-full rounded-full object-cover" %>
+          <% else %>
+            <span aria-hidden="true"><%= initials(user.name) %></span>
+          <% end %>
+          <span class="online-dot" aria-hidden="true"></span>
+          <span class="online-tooltip" role="tooltip"><%= user.name %></span>
+        </li>
+      <% end %>
+      <% if rest.any? %>
+        <li class="online-avatar online-avatar-more" tabindex="0" aria-label="<%= rest.map(&:name).to_sentence %>">
+          <span aria-hidden="true">+<%= rest.size %></span>
+          <span class="online-tooltip" role="tooltip"><%= rest.map(&:name).to_sentence %></span>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</div>

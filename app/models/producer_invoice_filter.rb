@@ -2,6 +2,8 @@
 class ProducerInvoiceFilter < ListFilter
   field :payment_status, :choice, in: Invoice::FILTER_STATUSES
 
+  sorts(**InvoiceFilter::SORTS)
+
   def apply(scope)
     scope = scope.with_payment_status(payment_status) if payment_status
     scope.includes(:purchases, :payments, producer: :person).newest_first

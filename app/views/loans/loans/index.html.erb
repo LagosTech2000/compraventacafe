@@ -13,11 +13,13 @@
   <%= filter_select form, :kind, Loan.human_attribute_name(:kind), enum_options(Loan, :kind, Loan::KINDS), selected: @filter.kind %>
 <% end %>
 
+<%= list_frame "loans-list" do %>
 <div class="mt-6">
   <% if @loans.any? %>
-    <%= render "table", loans: @loans, balances: @loans.to_h { |loan| [ loan, loan.balance ] } %>
-    <%= render "shared/pagination", filter: @filter, next_page: @next_page %>
+    <%= render "table", loans: @loans, balances: @loans.to_h { |loan| [ loan, loan.balance ] }, sorting: { filter: @filter, frame: "loans-list" } %>
+    <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "loans-list" %>
   <% else %>
     <p class="empty-state"><%= t(".empty") %></p>
   <% end %>
 </div>
+<% end %>

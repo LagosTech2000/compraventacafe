@@ -1,8 +1,11 @@
 class User < ApplicationRecord
+  include HasPhoto
   include Auditable
 
   has_secure_password
   has_many :sessions, dependent: :destroy
+  # Passkeys of their devices, to sign in with a fingerprint (one more way in).
+  has_many :webauthn_credentials, dependent: :destroy
   has_many :permissions, dependent: :destroy
   has_many :saved_reports, dependent: :destroy
 
@@ -15,6 +18,15 @@ class User < ApplicationRecord
   validates :email_address, presence: true, uniqueness: true, field_format: :email, length: { maximum: 254 }
   validates :password, field_format: :password, allow_nil: true
   validate :keeps_an_active_admin, on: :update
+
+  # Display settings each user picks for themselves (UserSettingsController):
+  # pages opened over the current one show in a centered modal or in a drawer
+  # from the right, and the main navigation goes at the top or on the left.
+  WINDOW_STYLES = %w[modal drawer].freeze
+  NAV_POSITIONS = %w[top left].freeze
+
+  validates :window_style, inclusion: { in: WINDOW_STYLES }
+  validates :nav_position, inclusion: { in: NAV_POSITIONS }
 
   scope :active, -> { where(active: true) }
   scope :active_admins, -> { active.where(admin: true) }
@@ -32,6 +44,16 @@ class User < ApplicationRecord
 
     permission_for(module_key)&.allows?(action) || false
   end
+
+  # Only the user with this id downloads the data backup (the database dump
+  # and every table in CSV, Administración → Respaldo) (Fernando, 2026-10-13).
+  # Nobody else sees it. The reports' CSV stays with whoever sees the report.
+  DATA_EXPORTER_ID = 1
+
+  def data_exporter? = active? && id == DATA_EXPORTER_ID
+
+  def drawer? = window_style == "drawer"
+  def side_nav? = nav_position == "left"
 
   def audit_label
     "#{name} (#{email_address})"

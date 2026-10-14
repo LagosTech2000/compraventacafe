@@ -16,9 +16,12 @@ module ApplicationHelper
   end
 
   # Link that opens its page in the modal (forms, details). Inside a modal it
-  # opens a second one on top.
-  def modal_link_to(label, path, **options)
-    link_to label, path, options.merge(data: { **options.fetch(:data, {}), turbo_frame: next_modal_frame })
+  # opens a second one on top; inside a drawer it navigates the drawer itself
+  # (its "Atrás" goes back), except a picker, which stacks to keep the form
+  # below it. Takes a block for the link's content, like link_to.
+  def modal_link_to(*args, **options, &block)
+    path = block ? args.first : args.second
+    link_to(*args, **options.merge(data: { **options.fetch(:data, {}), turbo_frame: modal_frame_for(path) }), &block)
   end
 
   # Link that leaves the modal and loads a full page.
@@ -48,6 +51,24 @@ module ApplicationHelper
     words = last_names ? [ name.split.first, last_names.split.first ] : name.split.first(2)
     words.compact.map { |word| word[0] }.join.upcase
   end
+
+  # The initials of a person (first name + last name) or a user.
+  def initials_for(record)
+    record.is_a?(Person) ? initials(record.first_names.to_s, record.last_names.to_s.presence) : initials(record.name.to_s)
+  end
+
+  # A round profile photo (HasPhoto), or the initials when there is none.
+  # Decorative: the name beside it carries the meaning.
+  def avatar(record, css: "size-8 text-xs")
+    if (photo = record.photo_info)
+      image_tag profile_photo_path(photo, v: photo.version), alt: "", class: "#{css} shrink-0 rounded-full object-cover", loading: "lazy"
+    else
+      tag.span initials_for(record), class: "#{css} grid shrink-0 place-items-center rounded-full bg-primary-soft font-bold text-primary", aria: { hidden: true }
+    end
+  end
+
+  # The left navigation is collapsed to its icons (SidebarState).
+  def sidebar_collapsed? = SidebarState.collapsed?(cookies)
 
   def nav_link_class(path, exact: false)
     active = current_page?(path) || (!exact && request.path.start_with?("#{path}/"))

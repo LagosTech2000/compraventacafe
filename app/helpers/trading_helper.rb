@@ -7,12 +7,12 @@ module TradingHelper
     number_to_currency(value)
   end
 
-  # "Temporada 2026"
+  # "Temporada 2026-2027"
   def format_season(season)
-    t("trading.season.name", year: season.year) if season
+    t("trading.season.name", season: season.label) if season
   end
 
-  # "Temporada 2026: 1 de septiembre de 2026 al 31 de agosto de 2027"
+  # "Temporada 2026-2027: 1 de septiembre de 2026 al 31 de agosto de 2027"
   def format_season_dates(season)
     t("trading.season.dates", name: format_season(season),
                               from: l(season.starts_on, format: :long), to: l(season.ends_on, format: :long))

@@ -14,7 +14,9 @@
     <span><%= t("shared.filters.title") %><%= " · #{t("shared.filters.active")}" if filter.active? %></span>
     <span class="text-ink-muted transition group-open:rotate-180" aria-hidden="true">▾</span>
   </summary>
-  <%= form_with url: url, method: :get,
+  <%# Its id lets the list's sort (in shared/_pagination, inside the list's
+      frame) go with the form when it is sent. %>
+  <%= form_with url: url, method: :get, id: list_form_id(filter),
         data: { turbo_frame: frame, live_filter_target: ("form" if live),
                 action: ("change->live-filter#change input->live-filter#type" if live) }.compact,
         class: "grid items-end gap-x-4 gap-y-3 p-4 pt-0 sm:grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] sm:pt-4" do |form| %>

@@ -1,11 +1,14 @@
 <% content_for :title, @payroll.name %>
 <%= render "farms/nav" %>
+<%# Always its farm above it, wherever it was opened from. %>
+<%= render "shared/breadcrumbs", crumbs: farm_crumbs(@payroll.farm, [ @payroll.name ]) %>
+<% today = Time.zone.today %>
+<% today_period = (@payroll.period_containing(today) unless @payroll.task?) %>
 
 <div class="flex flex-wrap items-start justify-between gap-4">
   <div>
     <h1 class="text-2xl font-bold"><%= @payroll.name %></h1>
     <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
-      <%= link_to @payroll.farm.name, farms_farm_path(@payroll.farm), class: "link" %> ·
       <%= @payroll.human_pay_frequency %> ·
       <%= l(@payroll.starts_on) %> – <%= @payroll.ends_on ? l(@payroll.ends_on) : t("farms.payrolls.table.no_end") %>
       <%= payroll_kind_badge(@payroll) %> <%= payroll_status_badge(@payroll) %>
@@ -19,6 +22,10 @@
       <% if policy(PayrollTask.new(payroll: @payroll)).create? %>
         <%= modal_link_to t(".new_task"), new_farms_payroll_task_path(@payroll), class: "btn btn-primary" %>
       <% end %>
+    <% elsif today_period %>
+      <%# The usual job: today's attendance or cans, right away. %>
+      <%= link_to t(".today.#{@payroll.kind}"), farms_payroll_timesheet_path(@payroll, period: today_period.to_param, day: today.iso8601),
+            class: "btn btn-primary" %>
     <% else %>
       <%= link_to t(".timesheet.#{@payroll.kind}"), farms_payroll_timesheet_path(@payroll), class: "btn btn-primary" %>
     <% end %>
@@ -39,7 +46,8 @@
 <section class="mt-6" aria-labelledby="payroll-accounts">
   <h2 id="payroll-accounts" class="sr-only"><%= t(".accounts") %></h2>
   <% to_pay = @payroll.periods_to_pay %>
-  <dl class="grid grid-cols-2 gap-3 lg:grid-cols-5">
+  <%# The figures fill each row, without gaps. %>
+  <dl class="flex flex-wrap gap-3">
     <% {
          gross_paid: format_money(@payroll.gross_paid),
          loans_paid: format_money(@payroll.loans_paid),
@@ -47,7 +55,7 @@
          total_cost: format_money(@payroll.total_cost),
          to_pay: format_money(to_pay.sum { |period| @payroll.calculation(period).gross_total })
        }.each do |key, value| %>
-      <div class="stat">
+      <div class="stat min-w-0 flex-1 basis-40">
         <dt><%= t("farms.accounts.#{key}") %></dt>
         <dd><%= value %></dd>
       </div>
@@ -59,20 +67,21 @@
   <p class="mt-4 text-sm"><span class="font-semibold"><%= Payroll.human_attribute_name(:observations) %>:</span> <%= @payroll.observations %></p>
 <% end %>
 
-<nav class="mt-6 flex flex-wrap gap-1 border-b border-line pb-2 print:hidden" aria-label="<%= t(".tabs.label") %>">
-  <% @tabs.each do |tab| %>
-    <%= link_to t(".tabs.#{tab}"), farms_payroll_path(@payroll, tab:),
-          class: tab == @tab ? "nav-pill nav-pill-active" : "nav-pill", aria: { current: (tab == @tab ? "page" : nil) } %>
-  <% end %>
-</nav>
+<%# The tabs change only this frame: no page reload, the address and the
+    back button follow (its other links go to their page). %>
+<%= turbo_frame_tag "payroll-tab", class: "block", target: "_top" do %>
+  <nav class="mt-6 flex flex-wrap gap-1 border-b border-line pb-2 print:hidden" aria-label="<%= t(".tabs.label") %>">
+    <% @tabs.each do |tab| %>
+      <%= link_to t(".tabs.#{tab}"), farms_payroll_path(@payroll, tab:),
+            class: tab == @tab ? "nav-pill nav-pill-active" : "nav-pill", aria: { current: (tab == @tab ? "page" : nil) },
+            data: { turbo_frame: "payroll-tab", turbo_action: "advance" } %>
+    <% end %>
+  </nav>
 
 <% case @tab %>
 <% when "periods" %><%= render "farms/payrolls/tabs/periods", payroll: @payroll %>
 <% when "members" %><%= render "farms/payrolls/tabs/members", payroll: @payroll %>
 <% when "tasks" %><%= render "farms/payrolls/tabs/tasks", payroll: @payroll %>
 <% when "expenses" %><%= render "farms/payrolls/tabs/expenses", payroll: @payroll %>
-<% end %>
-
-<% unless modal_request? %>
-  <p class="mt-6"><%= link_to t(".back"), farms_payrolls_path, class: "text-sm link" %></p>
+  <% end %>
 <% end %>

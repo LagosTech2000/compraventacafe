@@ -9,17 +9,22 @@
 <% harvest = timesheet.harvest? %>
 <% editable = !timesheet.closed? && policy(@payroll).record_work? %>
 <% today = Time.zone.today %>
+<%= render "shared/breadcrumbs", crumbs: payroll_crumbs(@payroll, [ t(".title.#{@payroll.kind}") ]) %>
 
 <div class="flex flex-wrap items-start justify-between gap-4">
   <div>
     <h1 class="text-2xl font-bold"><%= t(".title.#{@payroll.kind}") %></h1>
-    <p class="mt-1 text-sm text-ink-muted"><%= link_to @payroll.name, farms_payroll_path(@payroll), class: "link" %> · <%= @payroll.farm.name %></p>
+    <p class="mt-1 text-sm text-ink-muted"><%= @payroll.name %> · <%= @payroll.farm.name %></p>
   </div>
-  <% if timesheet.payment %>
-    <%= link_to t(".pay_sheet"), farms_payroll_payment_path(@payroll, timesheet.payment), class: "btn" %>
-  <% elsif policy(PayrollPayment.new(payroll: @payroll)).create? %>
-    <%= link_to t(".pay"), new_farms_payroll_payment_path(@payroll, period: period.to_param), class: "btn" %>
-  <% end %>
+  <div class="flex flex-wrap gap-2">
+    <% if timesheet.payment %>
+      <%= link_to t(".pay_sheet"), farms_payroll_payment_path(@payroll, timesheet.payment), class: "btn" %>
+    <% elsif policy(PayrollPayment.new(payroll: @payroll)).create? %>
+      <%# Once its pay day came, paying is the next step. %>
+      <%= link_to t(".pay"), new_farms_payroll_payment_path(@payroll, period: period.to_param), class: "btn #{"btn-primary" if period.due?(today)}" %>
+    <% end %>
+    <%= link_to t(".to_payroll"), farms_payroll_path(@payroll), class: "btn" %>
+  </div>
 </div>
 
 <%# Period: previous / next, any of them from the list, or back to today's. %>

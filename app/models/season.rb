@@ -1,6 +1,7 @@
 # Coffee season: it starts every September 1 and runs to August 31 of the
-# next year. It is named after the year it starts in: season 2026 runs from
-# 2026-09-01 to 2027-08-31.
+# next year. It is kept as the year it starts in (season_year 2026 runs from
+# 2026-09-01 to 2027-08-31) and shown with both years, "2026-2027"
+# (Fernando, 2026-10-13).
 class Season
   include Comparable
 
@@ -19,6 +20,9 @@ class Season
   def initialize(year)
     @year = Integer(year)
   end
+
+  # "2026-2027": how a season is named on screen, in prints and in reports.
+  def label = "#{year}-#{year + 1}"
 
   def starts_on = Date.new(year, START_MONTH, 1)
   def ends_on = Date.new(year + 1, START_MONTH, 1) - 1

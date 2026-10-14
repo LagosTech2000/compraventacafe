@@ -1,0 +1,46 @@
+<%# The user's fingerprints (passkeys, WebauthnCredential): register this
+    device or remove one. They save on their own, apart from the form. %>
+<% credentials = user.webauthn_credentials.ordered %>
+<section class="<%= form_surface_class("mt-6 max-w-3xl space-y-4") %>" aria-labelledby="settings-passkeys"
+         data-controller="passkey"
+         data-passkey-options-url-value="<%= options_webauthn_credentials_path %>"
+         data-passkey-url-value="<%= webauthn_credentials_path %>"
+         data-passkey-unsupported-value="<%= t("user_settings.passkeys.unsupported") %>"
+         data-passkey-failed-value="<%= t("user_settings.passkeys.failed") %>">
+  <div>
+    <h2 id="settings-passkeys" class="text-lg font-semibold"><%= t("user_settings.passkeys.title") %></h2>
+    <p class="text-sm text-ink-muted"><%= t("user_settings.passkeys.summary") %></p>
+  </div>
+
+  <% if credentials.any? %>
+    <ul class="divide-y divide-line rounded-xl ring-1 ring-line">
+      <% credentials.each do |credential| %>
+        <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm" id="<%= dom_id(credential) %>">
+          <span class="min-w-0">
+            <span class="flex items-center gap-2 font-medium"><%= icon(:fingerprint) %> <%= credential.nickname %></span>
+            <span class="block text-xs text-ink-muted">
+              <%= t("user_settings.passkeys.added", date: l(credential.created_at.to_date)) %>
+              · <%= credential.last_used_at ? t("user_settings.passkeys.last_used", time: l(credential.last_used_at)) : t("user_settings.passkeys.never_used") %>
+            </span>
+          </span>
+          <%= button_to t("user_settings.passkeys.remove"), webauthn_credential_path(credential), method: :delete, class: "btn btn-sm",
+                form: { data: { turbo_confirm: t("user_settings.passkeys.confirm_remove", nickname: credential.nickname) } } %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="empty-state"><%= t("user_settings.passkeys.none") %></p>
+  <% end %>
+
+  <div class="flex flex-wrap items-end gap-3" data-passkey-target="form">
+    <div class="min-w-0 flex-1 basis-56">
+      <label for="passkey_nickname" class="field-label"><%= t("user_settings.passkeys.nickname") %></label>
+      <input type="text" id="passkey_nickname" maxlength="60" autocomplete="off" class="field-input"
+             placeholder="<%= t("user_settings.passkeys.nickname_placeholder") %>" data-passkey-target="nickname">
+    </div>
+    <button type="button" class="btn btn-primary" data-passkey-target="button" data-action="passkey#register">
+      <%= icon(:fingerprint) %> <%= t("user_settings.passkeys.register") %>
+    </button>
+  </div>
+  <p class="flash-alert" role="alert" data-passkey-target="error" hidden></p>
+</section>

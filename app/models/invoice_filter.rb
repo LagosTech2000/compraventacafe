@@ -7,6 +7,18 @@ class InvoiceFilter < ListFilter
   field :payment_status, :choice, in: Invoice::FILTER_STATUSES
   field :payment_method, :choice, in: Invoice::PAYMENT_METHODS
 
+  # Every column of the invoices table (also on a producer's page).
+  SORTS = {
+    number: "invoices.number", date: "invoices.issued_on",
+    producer: { sql: text("people.first_names", "people.last_names"), joins: { producer: :person } },
+    net: "(SELECT SUM(purchases.net_weight) FROM purchases WHERE purchases.invoice_id = invoices.id)",
+    # QQ = net ÷ 125: the same order as the net weight.
+    quintals: "(SELECT SUM(purchases.net_weight) FROM purchases WHERE purchases.invoice_id = invoices.id)",
+    total: "(SELECT SUM(purchases.total) FROM purchases WHERE purchases.invoice_id = invoices.id)",
+    status: "invoices.payment_status"
+  }.freeze
+  sorts(**SORTS)
+
   def apply(scope)
     scope = scope.where(issued_on: from..) if from
     scope = scope.where(issued_on: ..to) if to

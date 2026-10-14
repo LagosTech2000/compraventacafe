@@ -17,27 +17,54 @@
     </div>
   </section>
 
-  <%# Its farms: the ones it has, and as many more as written (each assigned
-      if it has it in any case, created otherwise: Producer#new_farm_names). %>
-  <section data-controller="repeat-field">
+  <%# Its farms (Fernando, 2026-10-13): a dropdown with the ones it has and
+      «Agregar finca», which adds a name (farm_adder_controller.js). New ones
+      are created when the producer is saved, or reused if it has them
+      written differently (Producer#new_farm_names). %>
+  <% new_names = Array(producer.new_farm_names).compact_blank.uniq %>
+  <section data-controller="farm-adder"
+           data-farm-adder-new-label-value="<%= t(".farm_new") %>"
+           data-farm-adder-blank-message-value="<%= t(".farm_name") %> <%= t("errors.messages.blank") %>">
     <h2 class="mb-1 text-lg font-semibold"><%= Producer.human_attribute_name(:farms) %></h2>
     <p class="mb-3 text-sm text-ink-muted"><%= t(".farms_help") %></p>
-    <% if producer.farms.any? %>
-      <p class="mb-3 flex flex-wrap gap-1.5">
-        <% producer.farms.each do |farm| %><span class="badge badge-neutral"><%= farm.name %></span><% end %>
-      </p>
-    <% end %>
-    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-repeat-field-target="list">
-      <% (Array(producer.new_farm_names).compact_blank.presence || [ "" ]).each do |name| %>
-        <%= text_field_tag "producer[new_farm_names][]", name, id: nil, maxlength: 100, class: "field-input",
-              placeholder: t(".farm_placeholder"), aria: { label: t(".farm_placeholder") } %>
-      <% end %>
+    <div class="flex flex-wrap items-end gap-3">
+      <div class="min-w-0 flex-1 basis-60">
+        <label for="producer_farms_list" class="field-label"><%= t(".farms_list") %></label>
+        <select id="producer_farms_list" class="field-input" data-farm-adder-target="select" data-action="farm-adder#toggleRemove">
+          <% producer.farms.each do |farm| %>
+            <option value="<%= farm.id %>" data-name="<%= farm.name %>"><%= farm.name %></option>
+          <% end %>
+          <% new_names.each do |name| %>
+            <option value="new:<%= name %>" data-name="<%= name %>" data-new="true"><%= name %> <%= t(".farm_new") %></option>
+          <% end %>
+          <% if producer.farms.empty? && new_names.empty? %>
+            <option value="" data-farm-adder-target="empty"><%= t(".no_farms") %></option>
+          <% end %>
+        </select>
+      </div>
+      <button type="button" class="btn" data-action="farm-adder#open"><%= t(".add_farm") %></button>
+      <button type="button" class="btn" data-farm-adder-target="remove" data-action="farm-adder#remove" hidden><%= t(".remove_farm") %></button>
     </div>
-    <template data-repeat-field-target="template">
-      <%= text_field_tag "producer[new_farm_names][]", "", id: nil, maxlength: 100, class: "field-input",
-            placeholder: t(".farm_placeholder"), aria: { label: t(".farm_placeholder") } %>
-    </template>
-    <button type="button" class="btn btn-sm mt-3" data-action="repeat-field#add"><%= t(".add_farm") %></button>
+    <div data-farm-adder-target="inputs">
+      <% new_names.each do |name| %><%= hidden_field_tag "producer[new_farm_names][]", name, id: nil %><% end %>
+    </div>
+
+    <%# Its own small window: the name is not a field of the form until added. %>
+    <dialog class="modal max-w-sm" aria-labelledby="farm-adder-title" data-farm-adder-target="dialog">
+      <div class="space-y-4 p-5">
+        <h3 id="farm-adder-title" class="text-lg font-semibold"><%= t(".add_farm_title") %></h3>
+        <div>
+          <label for="farm_adder_name" class="field-label"><%= t(".farm_name") %></label>
+          <input type="text" id="farm_adder_name" maxlength="100" autocomplete="off" class="field-input"
+                 placeholder="<%= t(".farm_placeholder") %>" data-farm-adder-target="name" data-action="keydown->farm-adder#key">
+          <p class="mt-1 text-sm text-danger" role="alert" data-farm-adder-target="error" hidden></p>
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <button type="button" class="btn btn-primary" data-action="farm-adder#add"><%= t(".add_farm_confirm") %></button>
+          <button type="button" class="btn" data-action="farm-adder#close"><%= t(".cancel") %></button>
+        </div>
+      </div>
+    </dialog>
   </section>
 
   <section>

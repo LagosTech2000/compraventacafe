@@ -1,8 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "Data backup" do
-  it "lets an admin download it, and audits each download" do
-    admin = create(:user, :admin)
+  it "lets the user who exports the data download it, and audits each download" do
+    admin = make_data_exporter(create(:user, :admin))
     sign_in admin
 
     get administration_backup_path
@@ -15,8 +15,19 @@ RSpec.describe "Data backup" do
     expect(event).to have_attributes(user: admin, auditable_label: a_string_starting_with("respaldo-"))
   end
 
+  it "is not there for any other admin" do
+    sign_in create(:user, :admin)
+
+    get administration_root_path
+    expect(response.body).not_to include(administration_backup_path)
+    get administration_backup_path
+    expect(response).to redirect_to(root_path)
+    post administration_backup_path
+    expect(AuditEvent.where(action: "backup")).to be_empty
+  end
+
   it "is for admins only" do
-    user = create(:user)
+    user = make_data_exporter(create(:user))
     create(:permission, user:, module_key: "administration", can_read: true, can_create: true, can_update: true, can_destroy: true)
     sign_in user
 

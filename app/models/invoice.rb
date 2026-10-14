@@ -58,6 +58,8 @@ class Invoice < ApplicationRecord
 
   def gross_weight = purchases.sum(&:gross_weight)
   def net_weight = purchases.sum(&:net_weight)
+  # QQ of the whole invoice: its net weight in quintals of 125 lb.
+  def quintals = PurchaseCalculation.quintals(net_weight)
   # What damage took off the parchment purchases (cherry has none).
   def damage_weight = purchases.sum { |purchase| purchase.damage_weight || 0 }
   def damage_amount = purchases.sum { |purchase| purchase.damage_amount || 0 }

@@ -22,7 +22,7 @@
     <thead>
       <%# Repeats on every printed page, so continuation pages say which invoice and copy they are. %>
       <tr class="hidden print:table-row">
-        <th colspan="9" class="text-left font-bold"><%= t("trading.invoices.show.invoice") %> <%= invoice.display_number %> · <%= label %></th>
+        <th colspan="10" class="text-left font-bold"><%= t("trading.invoices.show.invoice") %> <%= invoice.display_number %> · <%= label %></th>
       </tr>
       <tr>
         <th><%= Purchase.human_attribute_name(:purchased_at) %></th>
@@ -33,6 +33,7 @@
         <th class="text-right"><%= t("trading.invoices.show.damage_weight") %></th>
         <th class="text-right"><%= t("trading.invoices.show.damage_amount") %></th>
         <th class="text-right"><%= Purchase.human_attribute_name(:net_weight) %></th>
+        <th class="text-right"><%= t("trading.purchases.table.quintals") %></th>
         <th class="text-right"><%= Purchase.human_attribute_name(:price_per_pound) %></th>
         <th class="text-right"><%= Purchase.human_attribute_name(:total) %></th>
       </tr>
@@ -54,6 +55,7 @@
           </td>
           <td class="whitespace-nowrap text-right tabular-nums"><%= purchase.damage_amount ? format_money(purchase.damage_amount) : "—" %></td>
           <td class="text-right tabular-nums"><%= format_pounds(purchase.net_weight) %></td>
+          <td class="text-right tabular-nums"><%= format_pounds(purchase.quintals) %></td>
           <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(purchase.price_per_pound) %></td>
           <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(purchase.total) %></td>
         </tr>
@@ -67,6 +69,7 @@
         <td class="text-right tabular-nums"><%= format_pounds(invoice.damage_weight) %></td>
         <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(invoice.damage_amount) %></td>
         <td class="text-right tabular-nums"><%= format_pounds(invoice.net_weight) %></td>
+        <td class="text-right tabular-nums"><%= format_pounds(invoice.quintals) %></td>
         <td></td>
         <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(invoice.total) %></td>
       </tr>

@@ -6,12 +6,21 @@
 <%# Its figures, pending work and activity update while open (LiveUpdates). %>
 <%= live_updates_from(*[ (:trading if trading), (:loans if loans) ].compact) if trading || loans %>
 
-<%# Greeting, what the platform is for and today's date. %>
-<h1 class="text-2xl font-bold sm:text-3xl"><%= t(".welcome", name: Current.user.name) %></h1>
-<p class="mt-1 text-sm text-ink-muted">
-  <%= t(".purpose", business: business_name) %> · <span class="first-letter:uppercase"><%= l(dashboard.today, format: :weekday_long) %></span>
-  <% if trading %> · <%= format_season(dashboard.season) %><% end %>
-</p>
+<%# Greeting, what the platform is for and today's date; at the other end
+    of the row, who is online now (small avatars, the name on hover). %>
+<div class="flex items-start justify-between gap-4">
+  <div class="min-w-0">
+    <h1 class="text-2xl font-bold sm:text-3xl"><%= t(".welcome", name: Current.user.name) %></h1>
+    <p class="mt-1 text-sm text-ink-muted">
+      <%= t(".purpose", business: business_name) %> · <span class="first-letter:uppercase"><%= l(dashboard.today, format: :weekday_long) %></span>
+      <% if trading %> · <%= format_season(dashboard.season) %><% end %>
+    </p>
+  </div>
+  <div class="shrink-0 pt-1">
+    <%= turbo_stream_from Presence::STREAM %>
+    <%= render "dashboard/active_users", users: Presence.visible_users.to_a %>
+  </div>
+</div>
 
 <%# The usual work, one tap away; only what the user may do, in modules they can see. %>
 <% actions = [
@@ -88,14 +97,21 @@
         <% end %>
       <% end %>
       <% if pending.any? %>
-        <a href="#dashboard-pending" class="stat block min-w-0 flex-1 basis-40 transition hover:ring-primary/40">
+        <%# The pending work in detail, with the way to solve each (PendingWorkController). %>
+        <%= modal_link_to pending_work_path, class: "stat block min-w-0 flex-1 basis-40 transition hover:ring-primary/40" do %>
           <dt><%= t(".figures.pending") %></dt>
           <dd class="text-danger"><%= pending.sum { |_, count, _, _| count } %></dd>
           <p class="mt-1 text-xs text-ink-muted"><%= t(".hints.pending", count: pending.size) %></p>
-        </a>
+        <% end %>
       <% end %>
     </dl>
   </section>
+<% end %>
+
+<%# The coffee exchange, the whole width (loaded apart: the page never waits
+    for the outside service; permanent, so live refreshes keep it). %>
+<%= turbo_frame_tag "coffee-market", src: coffee_market_path, loading: :lazy, class: "mt-6 block", data: { turbo_permanent: true } do %>
+  <div class="panel p-4 text-sm text-ink-muted" role="status"><%= t(".coffee_market_loading") %></div>
 <% end %>
 
 <% activity = dashboard.activity %>
@@ -103,7 +119,10 @@
   <div class="min-w-0 space-y-6">
     <% if pending.any? %>
       <section class="panel p-4" id="dashboard-pending" aria-labelledby="dashboard-pending-title">
-        <h2 id="dashboard-pending-title" class="font-semibold"><%= t(".pending.title") %></h2>
+        <div class="flex items-center justify-between gap-3">
+          <h2 id="dashboard-pending-title" class="font-semibold"><%= t(".pending.title") %></h2>
+          <%= modal_link_to t(".pending.detail"), pending_work_path, class: "btn btn-sm" %>
+        </div>
         <ul class="mt-3 grid gap-x-6 sm:grid-cols-2">
           <% pending.each do |key, count, amount, path| %>
             <li class="flex items-center justify-between gap-3 border-t border-line py-2.5 text-sm">

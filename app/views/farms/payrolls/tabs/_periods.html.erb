@@ -21,9 +21,10 @@
 
 <%# Status as chips: one tap, only the list (this frame) reloads. %>
 <%= turbo_frame_tag "periods-list", class: "query-frame block", target: "_top", data: { turbo_action: "advance" } do %>
+<% sorting = { filter: @filter, frame: "periods-list", extra_params: { tab: "periods" } } %>
 <nav class="mt-4 flex flex-wrap gap-1.5" aria-label="<%= t("farms.payrolls.periods.status") %>">
   <% [ [ nil, @status_counts.values.sum ], *@status_counts ].each do |status, count| %>
-    <%= link_to farms_payroll_path(payroll, tab: "periods", status:), class: "chip #{"chip-active" if @filter.status == status}",
+    <%= link_to farms_payroll_path(payroll, tab: "periods", status:, **@filter.sort_params.symbolize_keys), class: "chip #{"chip-active" if @filter.status == status}",
           aria: { current: (@filter.status == status ? "true" : nil) }, data: { turbo_frame: "periods-list" } do %>
       <%= status ? t("farms.payrolls.periods.statuses.#{status}") : t("shared.filters.all") %>
       <span class="tabular-nums opacity-70"><%= count %></span>
@@ -51,9 +52,9 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th><%= t("farms.payrolls.periods.period") %></th>
-              <th><%= t("farms.payrolls.periods.status") %></th>
-              <th class="text-right"><%= t("farms.payrolls.periods.amount") %></th>
+              <%= sort_th t("farms.payrolls.periods.period"), :period, sorting %>
+              <%= sort_th t("farms.payrolls.periods.status"), :status, sorting %>
+              <%= sort_th t("farms.payrolls.periods.amount"), :amount, sorting, class: "text-right" %>
               <th class="cell-actions"><span class="sr-only"><%= t("farms.payrolls.table.actions") %></span></th>
             </tr>
           </thead>

@@ -16,7 +16,7 @@
 
   <% if payments.any? %>
     <div class="mt-3 overflow-x-auto">
-      <table class="data-table data-table-compact">
+      <table class="data-table data-table-compact" data-controller="table-sort">
         <thead>
           <tr>
             <th><%= t("trading.invoices.payments.number") %></th>

@@ -15,6 +15,8 @@
         SupplyFilter::STATUSES.map { |status| [ t("loans.supplies.index.statuses.#{status}"), status ] }, selected: @filter.status %>
 <% end %>
 
+<%= list_frame "supplies-list" do %>
+<% sorting = { filter: @filter, frame: "supplies-list" } %>
 <% if @supplies.any? %>
   <div class="@container mt-6">
     <ul class="space-y-3 @2xl:hidden">
@@ -38,10 +40,10 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th><%= Supply.human_attribute_name(:name) %></th>
-            <th><%= Supply.human_attribute_name(:unit) %></th>
-            <th class="text-right"><%= Supply.human_attribute_name(:default_price) %></th>
-            <th><%= t(".status") %></th>
+            <%= sort_th Supply.human_attribute_name(:name), :name, sorting %>
+            <%= sort_th Supply.human_attribute_name(:unit), :unit, sorting %>
+            <%= sort_th Supply.human_attribute_name(:default_price), :default_price, sorting, class: "text-right" %>
+            <%= sort_th t(".status"), :status, sorting %>
             <th class="cell-actions"><span class="sr-only"><%= t(".actions") %></span></th>
           </tr>
         </thead>
@@ -67,7 +69,8 @@
       </table>
     </div>
   </div>
-  <%= render "shared/pagination", filter: @filter, next_page: @next_page %>
+  <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "supplies-list" %>
 <% else %>
   <p class="empty-state mt-6"><%= t(".empty") %></p>
+<% end %>
 <% end %>

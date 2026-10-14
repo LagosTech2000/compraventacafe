@@ -424,6 +424,190 @@
     backdrop-filter: blur(4px);
   }
 
+  /* The modal as a drawer (the user's setting, User#drawer?): it slides in
+     from the right and covers 90% of the width, leaving the page in sight
+     on the left. Pages navigate inside it ("Atrás" goes back). */
+  .modal.drawer {
+    @apply fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-dvh w-[90vw] max-w-none rounded-none rounded-l-[var(--radius-clay)];
+    transform: translateX(100%);
+    opacity: 1;
+    transition: transform 0.25s ease, overlay 0.25s allow-discrete, display 0.25s allow-discrete;
+  }
+
+  .modal.drawer[open] {
+    transform: none;
+  }
+
+  @starting-style {
+    .modal.drawer[open] {
+      transform: translateX(100%);
+    }
+  }
+
+  /* The left navigation (layouts/_sidebar). Collapsed (body.sidebar-collapsed)
+     it keeps only its icons: an icon grows on hover or focus and its name
+     shows in a tooltip beside it, over the page, without widening the bar. */
+  .sidebar {
+    @apply w-64 transition-[width] duration-200;
+  }
+
+  .sidebar-offset {
+    @apply transition-[padding] duration-200 lg:pl-64;
+  }
+
+  .sidebar-panel {
+    @apply overflow-y-auto;
+  }
+
+  .sidebar-brand {
+    @apply flex min-w-0 flex-1 items-center gap-2.5 rounded-full pr-2 font-bold text-ink;
+  }
+
+  .sidebar-brand-name {
+    @apply line-clamp-2 text-sm leading-tight;
+  }
+
+  .sidebar-toggle {
+    @apply grid size-9 shrink-0 cursor-pointer place-items-center rounded-full text-ink-muted transition hover:bg-primary-soft hover:text-ink;
+  }
+
+  .sidebar-link {
+    @apply relative flex h-10 cursor-pointer items-center gap-3 rounded-full px-3 text-sm font-medium whitespace-nowrap text-ink/80 transition hover:bg-primary-soft hover:text-ink;
+  }
+
+  .sidebar-link-active {
+    @apply bg-primary text-on-primary hover:bg-primary hover:text-on-primary;
+    box-shadow: var(--shadow-primary);
+  }
+
+  .sidebar-icon {
+    @apply size-5 shrink-0 transition-[scale] duration-150;
+  }
+
+  .sidebar-help {
+    @apply px-1;
+  }
+
+  body.sidebar-collapsed .sidebar {
+    @apply w-[4.75rem];
+  }
+
+  body.sidebar-collapsed .sidebar-offset {
+    @apply lg:pl-[4.75rem];
+  }
+
+  /* Tooltips go beyond the bar: nothing may clip them. */
+  body.sidebar-collapsed .sidebar-panel {
+    @apply items-center overflow-visible px-1.5;
+  }
+
+  body.sidebar-collapsed .sidebar-brand-name {
+    @apply hidden;
+  }
+
+  body.sidebar-collapsed .sidebar-head {
+    @apply flex-col;
+  }
+
+  body.sidebar-collapsed .sidebar-brand {
+    @apply flex-none pr-0;
+  }
+
+  body.sidebar-collapsed .sidebar-toggle svg {
+    @apply rotate-180;
+  }
+
+  body.sidebar-collapsed .sidebar-link {
+    @apply size-10 justify-center px-0;
+  }
+
+  body.sidebar-collapsed .sidebar-link:hover .sidebar-icon,
+  body.sidebar-collapsed .sidebar-link:focus-visible .sidebar-icon {
+    @apply scale-125;
+  }
+
+  body.sidebar-collapsed .sidebar-label {
+    @apply pointer-events-none invisible absolute top-1/2 left-full z-40 ml-3 w-max max-w-56 -translate-y-1/2 rounded-lg bg-ink px-2.5 py-1.5 text-xs font-medium text-surface opacity-0 shadow-lg transition;
+  }
+
+  body.sidebar-collapsed .sidebar-link:hover .sidebar-label,
+  body.sidebar-collapsed .sidebar-link:focus-visible .sidebar-label {
+    @apply visible opacity-100;
+  }
+
+  /* Where a page sits (shared/_breadcrumbs): links back up, this page last. */
+  .breadcrumbs {
+    @apply text-sm text-ink-muted;
+  }
+
+  .breadcrumb-link {
+    @apply truncate rounded px-1 underline-offset-2 transition hover:bg-primary-soft hover:text-ink hover:underline;
+  }
+
+  .breadcrumb-back {
+    @apply inline-flex max-w-full items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 font-medium text-ink ring-1 ring-line/80;
+  }
+
+  /* Sortable table headers (TableSortHelper, table_sort_controller.js):
+     the label and an arrow; the column sorted by stands out. */
+  .sort-link {
+    @apply -mx-1 inline-flex cursor-pointer items-center gap-1 rounded px-1 font-semibold whitespace-nowrap uppercase transition hover:bg-primary-soft hover:text-ink;
+  }
+
+  .sort-link-active {
+    @apply text-primary;
+  }
+
+  .sort-arrow {
+    @apply text-[0.6rem] opacity-40;
+  }
+
+  .sort-link-active .sort-arrow {
+    @apply opacity-100;
+  }
+
+  @media print {
+    .sort-arrow { display: none; }
+  }
+
+  /* Who is online (dashboard/_active_users): small avatars
+     with a green dot; the name shows in a tooltip on hover or focus. */
+  .online-avatar {
+    @apply relative grid size-7 cursor-default place-items-center rounded-full bg-primary-soft text-[0.6rem] font-bold text-primary ring-2 ring-surface outline-none transition hover:z-10 hover:-translate-y-0.5 focus-visible:z-10 focus-visible:ring-primary;
+  }
+
+  .online-avatar-more {
+    @apply bg-surface-2 text-ink-muted;
+  }
+
+  .online-dot {
+    @apply absolute -right-px -bottom-px size-2 rounded-full bg-success ring-2 ring-surface;
+  }
+
+  .online-tooltip {
+    @apply pointer-events-none invisible absolute top-full right-0 z-20 mt-2 w-max max-w-56 rounded-lg bg-ink px-2.5 py-1.5 text-xs font-medium text-surface opacity-0 shadow-lg transition;
+  }
+
+  .online-avatar:hover .online-tooltip,
+  .online-avatar:focus-visible .online-tooltip {
+    @apply visible opacity-100;
+  }
+
+  /* Small sketches of the screen in the user's settings: a page (frame),
+     what opens over it (the inner box) or where the navigation goes. */
+  .settings-sketch {
+    @apply relative mt-3 block h-16 overflow-hidden rounded-lg bg-surface-2 ring-1 ring-line;
+  }
+
+  .settings-sketch > span {
+    @apply absolute rounded bg-primary/70;
+  }
+
+  .settings-sketch-modal > span { inset: 22% 28%; }
+  .settings-sketch-drawer > span { inset: 0 0 0 10%; border-radius: 0.25rem 0 0 0.25rem; }
+  .settings-sketch-top > span { inset: 8% 8% auto 8%; height: 18%; }
+  .settings-sketch-left > span { inset: 8% auto 8% 4%; width: 18%; }
+
   /* Round "?" button that opens a help guide (HelpGuidesHelper). */
   .help-button {
     @apply grid size-10 shrink-0 cursor-pointer place-items-center rounded-full bg-surface text-primary ring-1 ring-line/80 transition duration-150 hover:-translate-y-px hover:bg-primary-soft active:translate-y-0;
@@ -537,6 +721,12 @@ tr.live-new > td {
   display: none;
 }
 
+/* Beside the left navigation, not under it. */
+@media (width >= 64rem) {
+  body:has(.sidebar) .live-indicator { left: 17rem; }
+  body.sidebar-collapsed:has(.sidebar) .live-indicator { left: 5.75rem; }
+}
+
 .live-indicator:has(turbo-cable-stream-source[connected]) .live-dot {
   background: var(--color-success);
   animation: live-dot 1.8s ease-out infinite;
@@ -646,4 +836,28 @@ tr.live-new > td {
   tfoot {
     display: table-row-group;
   }
+}
+
+/* The pin of a location map (location_map_controller.js): a drop in the
+   primary color, its tip on the point. */
+.map-pin {
+  background: none;
+  border: 0;
+}
+
+.map-pin span {
+  display: block;
+  width: 28px;
+  height: 28px;
+  border-radius: 50% 50% 50% 0;
+  background: var(--color-primary);
+  border: 3px solid var(--color-surface);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.35);
+  transform: rotate(-45deg);
+}
+
+/* Leaflet's layers sit under the app's modals, toasts and sticky bars. */
+.leaflet-container {
+  z-index: 0;
+  font: inherit;
 }

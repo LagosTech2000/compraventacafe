@@ -16,16 +16,18 @@
         Department.ordered.pluck(:name, :id), selected: @filter.department_id %>
 <% end %>
 
+<%= list_frame "people-list" do %>
+<% sorting = { filter: @filter, frame: "people-list" } %>
 <% if @people.any? %>
   <div class="mt-6 overflow-x-auto panel">
     <table class="data-table">
       <thead>
         <tr>
-          <th><%= t(".name") %></th>
-          <th><%= Person.human_attribute_name(:dni) %></th>
-          <th><%= Person.human_attribute_name(:rtn) %></th>
-          <th><%= Person.human_attribute_name(:phone) %></th>
-          <th><%= t(".roles") %></th>
+          <%= sort_th t(".name"), :name, sorting %>
+          <%= sort_th Person.human_attribute_name(:dni), :dni, sorting %>
+          <%= sort_th Person.human_attribute_name(:rtn), :rtn, sorting %>
+          <%= sort_th Person.human_attribute_name(:phone), :phone, sorting %>
+          <%= sort_th t(".roles"), :roles, sorting %>
           <th class="cell-actions"></th>
         </tr>
       </thead>
@@ -43,7 +45,8 @@
       </tbody>
     </table>
   </div>
-  <%= render "shared/pagination", filter: @filter, next_page: @next_page %>
+  <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "people-list" %>
 <% else %>
   <p class="empty-state mt-6"><%= t(".empty") %></p>
+<% end %>
 <% end %>

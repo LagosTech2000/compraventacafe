@@ -51,6 +51,7 @@
           PayrollMemberFilter::STATUSES.map { |status| [ t("farms.statuses.#{status}"), status ] }, selected: @filter.status %>
   <% end %>
   <%= turbo_frame_tag "members-list", class: "query-frame block", target: "_top", data: { turbo_action: "advance" } do %>
+  <% sorting = { filter: @filter, frame: "members-list", extra_params: { tab: "members" } } %>
   <%= render "shared/filter_status", filter: @filter, count: t("farms.payrolls.members.count", count: @members_count),
         chips: filter_chips(@filter, q: ->(text) { t("farms.payrolls.members.chips.q", text:) },
                                      status: ->(status) { status ? t("farms.statuses.#{status}") : t("farms.payrolls.members.chips.any_status") }) %>
@@ -75,12 +76,12 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th><%= PayrollMember.human_attribute_name(:person) %></th>
+                <%= sort_th PayrollMember.human_attribute_name(:person), :person, sorting %>
                 <% unless payroll.task? %>
-                  <th><%= PayrollMember.human_attribute_name(:role) %></th>
-                  <th class="text-right"><%= t("farms.payrolls.members.daily_wage") %></th>
+                  <%= sort_th PayrollMember.human_attribute_name(:role), :role, sorting %>
+                  <%= sort_th t("farms.payrolls.members.daily_wage"), :daily_wage, sorting, class: "text-right" %>
                 <% end %>
-                <th><%= t("farms.payrolls.members.status") %></th>
+                <%= sort_th t("farms.payrolls.members.status"), :status, sorting %>
                 <th class="cell-actions"><span class="sr-only"><%= t("farms.payrolls.table.actions") %></span></th>
               </tr>
             </thead>

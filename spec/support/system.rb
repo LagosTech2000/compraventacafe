@@ -32,6 +32,15 @@ module SystemHelpers
     find("[type=submit]").click
     expect(page).to have_no_current_path(new_session_path)
   end
+
+  # The drawer slides in: click once it is in place (clicks go by position).
+  def wait_for_drawer
+    drawer = find("dialog.drawer[open]")
+    Timeout.timeout(Capybara.default_max_wait_time) do
+      sleep 0.05 until page.evaluate_script("getComputedStyle(document.querySelector('dialog.drawer[open]')).transform") == "none"
+    end
+    drawer
+  end
 end
 
 RSpec.configure { |config| config.include SystemHelpers, type: :system }

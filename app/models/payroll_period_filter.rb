@@ -5,6 +5,12 @@ class PayrollPeriodFilter < ListFilter
 
   field :status, :choice, in: STATUSES
 
+  # The periods are computed (Payroll::PeriodRow), not records: sorted in Ruby.
+  STATUS_ORDER = %w[to_pay in_progress upcoming paid].freeze
+  sorts period: { ruby: ->(row) { row.period.starts_on } },
+        status: { ruby: ->(row) { STATUS_ORDER.index(row.status) } },
+        amount: { ruby: ->(row) { row.gross_total unless row.status == "upcoming" } }
+
   # rows: [Payroll::PeriodRow, ...]
   def apply(rows)
     return rows unless status

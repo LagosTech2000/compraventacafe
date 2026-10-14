@@ -12,6 +12,8 @@
         CreditAccountFilter::STANDINGS.map { |value| [ t("loans.credit_accounts.index.standings.#{value}"), value ] }, selected: @filter.standing %>
 <% end %>
 
+<%= list_frame "credit-accounts-list" do %>
+<% sorting = { filter: @filter, frame: "credit-accounts-list" } %>
 <div class="mt-6">
   <% if @accounts.any? %>
     <div class="@container">
@@ -37,11 +39,11 @@
         <table class="data-table data-table-compact">
           <thead>
             <tr>
-              <th><%= t("loans.credit_accounts.index.person") %></th>
-              <th class="text-right"><%= t("loans.credit_accounts.index.open_loans") %></th>
-              <th class="text-right"><%= t("loans.credit_accounts.index.overdue_loans") %></th>
-              <th class="text-right"><%= t("loans.credit_accounts.index.total_owed") %></th>
-              <th><%= t("loans.score.label") %></th>
+              <%= sort_th t("loans.credit_accounts.index.person"), :person, sorting %>
+              <%= sort_th t("loans.credit_accounts.index.open_loans"), :open_loans, sorting, class: "text-right" %>
+              <%= sort_th t("loans.credit_accounts.index.overdue_loans"), :overdue_loans, sorting, class: "text-right" %>
+              <%= sort_th t("loans.credit_accounts.index.total_owed"), :total_owed, sorting, class: "text-right" %>
+              <%= sort_th t("loans.score.label"), :score, sorting %>
               <th class="cell-actions"><span class="sr-only"><%= t("loans.credit_accounts.index.actions") %></span></th>
             </tr>
           </thead>
@@ -60,8 +62,9 @@
         </table>
       </div>
     </div>
-    <%= render "shared/pagination", filter: @filter, next_page: @next_page %>
+    <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "credit-accounts-list" %>
   <% else %>
     <p class="empty-state"><%= t(".empty") %></p>
   <% end %>
 </div>
+<% end %>

@@ -110,6 +110,39 @@ RSpec.describe "Farms screens", type: :system do
     expect(page).to have_css("h1", text: "Limpia")
   end
 
+  it "goes farm → payroll → attendance and back up by the route, the tabs without reloading" do
+    farm = payroll.farm
+    visit farms_farms_path
+    find("#farms-list tr", text: farm.name).click # the whole row opens the farm, as a page
+    expect(page).to have_css("h1", text: farm.name)
+    expect(page).to have_css("nav[aria-label='Dónde estás']", text: "Fincas")
+    expect(page).to have_no_css("dialog[open]")
+    expect(page).to have_no_css("#payrolls-list th", text: "FINCA") # every payroll here is this farm's
+
+    within("#payrolls-list") { click_link "Abrir" }
+    expect(page).to have_css("h1", text: "Limpia")
+    within("nav[aria-label='Dónde estás']") { expect(page).to have_link(farm.name) }
+    mark_page
+    click_link "Empleados"
+    expect(page).to have_css("#payroll-members")
+    expect(page).to have_current_path(/tab=members/)
+    expect(page_reloaded?).to be(false)
+    click_link "Gastos"
+    expect(page).to have_current_path(/tab=expenses/)
+    expect(page_reloaded?).to be(false)
+
+    click_link "Asistencia de hoy"
+    expect(page).to have_css("h1", text: "Asistencia")
+    expect(page).to have_css("nav[aria-label='Dónde estás'] [aria-current=page]", text: "Asistencia")
+    click_link "Ver la planilla"
+    expect(page).to have_css("h1", text: "Limpia")
+
+    within("nav[aria-label='Dónde estás']") { click_link farm.name }
+    expect(page).to have_css("h1", text: farm.name)
+    within("nav[aria-label='Dónde estás']") { click_link "Fincas" }
+    expect(page).to have_css("h1", text: "Fincas")
+  end
+
   it "picks the task's people at once and shows how many and each one's part" do
     task_payroll = create(:payroll, kind: "task", starts_on: today - 10)
     3.times { create(:payroll_member, payroll: task_payroll) }
@@ -158,11 +191,42 @@ RSpec.describe "Farms screens", type: :system do
     visit new_trading_producer_path
     fill_in "producer_person_attributes_first_names", with: "Bruno"
     fill_in "producer_person_attributes_last_names", with: "Aguilar"
-    all("input[name='producer[new_farm_names][]']").last.fill_in(with: "Las Brisas")
-    click_button "+ Agregar otra finca"
-    all("input[name='producer[new_farm_names][]']").last.fill_in(with: "Santa Rosa")
+    # A dropdown with its farms and «Agregar finca» (Fernando, 2026-10-13).
+    expect(page).to have_select("Fincas del productor", options: [ "Sin fincas todavía" ])
+    add_farm = lambda do |name|
+      click_button "Agregar finca"
+      within("dialog[open]") do
+        fill_in "Nombre de la finca", with: name
+        click_button "Agregar"
+      end
+      expect(page).to have_no_css("dialog[open]")
+    end
+    click_button "Agregar finca"
+    within("dialog[open]") { click_button "Agregar" } # a name is needed
+    expect(page).to have_css("dialog[open] [role=alert]", text: "Nombre de la finca no puede estar en blanco")
+    within("dialog[open]") { click_button "Cancelar" }
+    add_farm.call("Las Brisas")
+    add_farm.call("Santa Rosa")
+    add_farm.call("El Error")
+    add_farm.call(" las  brisas ") # already in the list: chosen, not repeated
+    expect(page).to have_select("Fincas del productor", options: [ "Las Brisas (nueva)", "Santa Rosa (nueva)", "El Error (nueva)" ],
+                                                        selected: "Las Brisas (nueva)")
+    select "El Error (nueva)", from: "Fincas del productor"
+    click_button "Quitar esta"
+    expect(page).to have_select("Fincas del productor", options: [ "Las Brisas (nueva)", "Santa Rosa (nueva)" ])
+
+    # Enter in the window adds; it never sends the producer's form.
+    click_button "Agregar finca"
+    within("dialog[open]") { find_field("Nombre de la finca").send_keys("La Cumbre", :enter) }
+    expect(page).to have_select("Fincas del productor", with_options: [ "La Cumbre (nueva)" ])
+    expect(page).to have_current_path(new_trading_producer_path)
+
     within("main form") { find("[type=submit]").click }
     expect(page).to have_text("Productor creado.")
-    expect(Producer.last.farm_names).to eq("Las Brisas, Santa Rosa")
+    expect(Producer.last.farm_names).to eq("La Cumbre, Las Brisas, Santa Rosa")
+
+    visit edit_trading_producer_path(Producer.last)
+    expect(page).to have_select("Fincas del productor", options: [ "La Cumbre", "Las Brisas", "Santa Rosa" ])
+    expect(page).to have_button("Quitar esta", visible: :hidden) # saved farms are not taken out here
   end
 end

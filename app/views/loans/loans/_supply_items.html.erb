@@ -1,6 +1,6 @@
 <%# Supplies lent in a loan, with the price each was lent at. %>
 <div class="overflow-x-auto panel">
-  <table class="data-table data-table-compact">
+  <table class="data-table data-table-compact" data-controller="table-sort">
     <thead>
       <tr>
         <th><%= LoanSupply.human_attribute_name(:supply) %></th>

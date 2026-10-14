@@ -36,7 +36,7 @@ RSpec.describe Auditable do
   it "never stores passwords" do
     user = create(:user)
     user.update!(password: "otra-clave-larga")
-    changes = AuditEvent.where(auditable: user).flat_map { |event| event.changeset.to_a }
+    changes = AuditEvent.where(auditable: user).order(:id).flat_map { |event| event.changeset.to_a } # the update is the last
     expect(changes.to_h["password_digest"]).to eq([ AuditEvent::FILTERED, AuditEvent::FILTERED ])
     expect(AuditEvent.pluck(:changeset).to_s).not_to include("$2a$")
   end

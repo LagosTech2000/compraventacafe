@@ -22,7 +22,7 @@
                               status: ->(status) { status ? payroll_status_options.to_h.invert[status] : t("farms.payrolls.index.chips.any_status") }) %>
     <div class="mt-4">
       <% if payrolls.any? %>
-        <%= render "farms/payrolls/table", payrolls: %>
+        <%= render "farms/payrolls/table", payrolls:, sorting: { filter:, frame: "payrolls-list" }, show_farm: farm.nil? %>
         <%= render "shared/pagination", filter:, next_page:, frame: "payrolls-list" %>
       <% else %>
         <p class="empty-state"><%= empty %></p>

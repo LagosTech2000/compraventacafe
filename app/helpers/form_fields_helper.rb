@@ -58,4 +58,15 @@ module FormFieldsHelper
   def format_address(record)
     record.address_parts.join(", ")
   end
+
+  # The data of a location map (location_map_controller.js): the tiles, their
+  # attribution, and Honduras in view while there is no pin.
+  HONDURAS_CENTER = [ 14.8, -86.8 ].freeze
+
+  def location_map_data(readonly: false, point: nil)
+    { controller: "location-map", location_map_tiles_value: Rails.configuration.x.map_tiles_url.to_s,
+      location_map_attribution_value: t("addresses.map.attribution_html"), location_map_center_value: HONDURAS_CENTER.to_json,
+      location_map_readonly_value: readonly, location_map_point_value: point&.to_json,
+      location_map_locate_failed_value: t("addresses.map.locate_failed") }.compact
+  end
 end

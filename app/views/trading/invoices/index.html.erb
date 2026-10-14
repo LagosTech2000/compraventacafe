@@ -40,7 +40,7 @@
 
     <div class="mt-4">
       <% if @invoices.any? %>
-        <%= render "table", invoices: @invoices %>
+        <%= render "table", invoices: @invoices, sorting: { filter: @filter, frame: "invoices-list" } %>
         <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "invoices-list" %>
       <% else %>
         <p class="empty-state"><%= t(".empty") %></p>

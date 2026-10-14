@@ -39,7 +39,7 @@ module ReportsHelper
     keys = ReportPeriod::KEYS - %w[custom]
     seasons = (0..4).map { |back| Season.current.year - back }
     options = keys.map { |key| [ t("reports.periods.#{key}"), key ] } +
-              seasons.map { |year| [ t("reports.periods.season", year:), "season_#{year}" ] } +
+              seasons.map { |year| [ t("reports.periods.season", season: Season.new(year).label), "season_#{year}" ] } +
               [ [ t("reports.periods.custom"), "custom" ] ]
     options_for_select(options, selected)
   end

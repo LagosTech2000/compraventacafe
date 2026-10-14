@@ -38,7 +38,7 @@
       <% end %>
       <% if @purchases.any? %>
         <div class="overflow-x-auto panel">
-          <table class="data-table">
+          <table class="data-table" data-controller="table-sort">
             <thead>
               <tr>
                 <th class="w-10"></th>

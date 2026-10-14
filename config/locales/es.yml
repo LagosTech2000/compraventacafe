@@ -22,16 +22,28 @@ es:
       home: "Inicio"
       users: "Usuarios"
       sign_out: "Cerrar sesión"
+      label: "Navegación principal"
+      settings: "Mi configuración"
+      settings_for: "Mi configuración (%{email})"
+    sidebar:
+      collapse: "Esconder el menú (solo íconos)"
+      expand: "Mostrar el menú completo"
 
   live_updates:
     "on": "En vivo"
     "off": "Conectando…"
   shared:
+    photo_field:
+      choose: "Elegir foto"
+      change: "Cambiar foto"
+      hint: "JPG, PNG o WebP. Se achica sola antes de guardarse."
+      remove: "Quitar la foto"
     flash:
       dismiss: "Cerrar mensaje"
     modal:
       label: "Ventana"
       close: "Cerrar"
+      back: "Atrás"
     detail: "Detalle"
     cancel: "Cancelar"
     person_fields:
@@ -79,11 +91,15 @@ es:
         this_month: "Este mes"
         this_season: "Esta temporada"
         all: "Todo"
+    breadcrumbs:
+      label: "Dónde estás"
+    sort:
+      asc: "Ordenar por %{column}, de menor a mayor"
+      desc: "Ordenar por %{column}, de mayor a menor"
+      clear: "Quitar el orden por %{column}"
     pagination:
-      label: "Páginas"
-      previous: "Anterior"
-      next: "Siguiente"
-      page: "Página %{page}"
+      load_more: "Cargar más"
+      loading: "Cargando…"
 
 
   sessions:
@@ -93,12 +109,128 @@ es:
       password: "Contraseña"
       submit: "Entrar"
       forgot_password: "¿Olvidaste tu contraseña? Pídele a un administrador que la restablezca."
+      or: "o"
+      passkey: "Entrar con huella"
+      passkey_failed: "No se pudo entrar con la huella. Intenta de nuevo o entra con tu contraseña."
     invalid: "Correo o contraseña incorrectos."
     rate_limited: "Demasiados intentos. Espera unos minutos y vuelve a intentarlo."
 
+  passkey_sessions:
+    create:
+      audit_label: "Huella digital"
+      failed: "No se pudo entrar con la huella. Intenta de nuevo o entra con tu contraseña."
+
+  webauthn_credentials:
+    audit_label: "Huella «%{nickname}» de %{user}"
+    create:
+      default_nickname: "Mi dispositivo"
+      success: "Huella registrada. Ya puedes entrar con ella."
+      failed: "No se pudo registrar la huella. Intenta de nuevo."
+    destroy:
+      success: "Huella quitada. Ese dispositivo ya no entra con huella."
+
+  profile_photos:
+    audit_label: "Foto de perfil de %{owner}"
+
+  user_settings:
+    edit:
+      title: "Mi configuración"
+      summary: "Tus datos, cómo se ve el sistema para ti y cómo entras, %{name}. Lo de la pantalla solo cambia la tuya."
+      save: "Guardar configuración"
+      account: "Mis datos"
+      email_hint: "Con este correo inicias sesión."
+      display: "Pantalla"
+      password: "Contraseña"
+      password_hint: "Para cambiarla, o para cambiar tu correo, escribe tu contraseña actual. Déjala en blanco si no la cambias."
+      new_password: "Contraseña nueva"
+      hints:
+        window_style:
+          modal: "Detalles y formularios se abren en una ventana al centro. Si abres otra encima, «Atrás» la cierra y vuelves a la de abajo."
+          drawer: "Se abren en un panel que entra desde la derecha y cubre casi toda la pantalla. Lo que abras dentro se muestra en el mismo panel, y «Atrás» vuelve a la pantalla anterior."
+        nav_position:
+          top: "Los módulos en una barra arriba de la página."
+          left: "Los módulos en una columna fija a la izquierda (en el celular sigue arriba, en «Menú»)."
+    update:
+      success: "Tu configuración quedó guardada."
+    passkeys:
+      title: "Huella digital"
+      summary: "Registra la huella (o el desbloqueo) de este dispositivo para entrar sin escribir la contraseña. La contraseña sigue sirviendo."
+      none: "Todavía no registras ninguna huella."
+      added: "Registrada el %{date}"
+      last_used: "último uso: %{time}"
+      never_used: "sin usar todavía"
+      remove: "Quitar"
+      confirm_remove: "¿Quitar la huella «%{nickname}»? Ese dispositivo ya no podrá entrar con huella."
+      nickname: "Nombre del dispositivo"
+      nickname_placeholder: "Ej.: Celular de la oficina"
+      register: "Registrar huella de este dispositivo"
+      unsupported: "Este navegador no permite entrar con huella. Prueba en un celular o una computadora con lector de huella o Windows Hello."
+      failed: "No se pudo registrar la huella. Intenta de nuevo."
+  pending_work:
+    show:
+      title: "Tareas pendientes"
+      summary: "Todo lo que espera por alguien, con el botón para resolverlo. Lo más viejo va primero."
+      kinds: "Tipos de tarea"
+      empty: "No hay nada pendiente. ¡Todo al día!"
+      groups:
+        uninvoiced:
+          title: "Compras sin facturar"
+          help: "Por productor: una factura agrupa las compras de un mismo productor."
+          detail:
+            one: "1 compra · desde el %{since}"
+            other: "%{count} compras · desde el %{since}"
+          action: "Facturar"
+        unpaid_invoices:
+          title: "Facturas sin cancelar"
+          help: "Lo que falta pagarle al productor en cada factura."
+          name: "Factura %{number} · %{producer}"
+          days:
+            zero: "emitida hoy"
+            one: "emitida hace 1 día"
+            other: "emitida hace %{count} días"
+          action: "Registrar abono"
+        overdue_loans:
+          title: "Préstamos vencidos"
+          help: "Lo que deben hoy, con el interés a la fecha."
+          name: "Préstamo %{number} · %{person}"
+          late:
+            one: "Venció el %{date} · 1 día de atraso"
+            other: "Venció el %{date} · %{count} días de atraso"
+          action: "Registrar abono"
+        periods_to_pay:
+          title: "Períodos de planilla por pagar"
+          help: "Períodos que ya llegaron a su día de pago y no se han pagado."
+          action: "Pagar"
+        members_without_wage:
+          title: "Empleados sin salario"
+          help: "En planillas por día: sin rol ni salario propio, sus días no se pueden pagar."
+          action: "Asignar salario"
+  coffee_markets:
+    show:
+      title: "Café en la bolsa"
+      contracts:
+        arabica: "Café arábica «C» (futuros)"
+      units:
+        cents: "centavos de dólar por libra"
+        dollars: "dólares por libra"
+      per_pound: "%{amount} por libra"
+      day_range: "Rango del día"
+      year_range: "Rango de 52 semanas"
+      contract: "Contrato"
+      as_of: "Precio de %{time}"
+      source: "Fuente: Yahoo Finanzas"
+      disclaimer: "Precio de referencia de la bolsa de Nueva York, con retraso de unos minutos. No es el precio que paga el negocio."
+      unavailable: "El precio de la bolsa no está disponible en este momento. Intenta más tarde."
   dashboard:
+    active_users:
+      title: "Conectados"
+      label:
+        zero: "Nadie más está conectado"
+        one: "1 usuario conectado"
+        other: "%{count} usuarios conectados"
     show:
       title: "Inicio"
+      coffee_market_loading: "Cargando el precio del café en la bolsa…"
       welcome: "Hola, %{name}"
       purpose: "Compra de café, facturación, préstamos y planillas de %{business}"
       no_modules: "Todavía no tienes acceso a ningún módulo. Pídele a un administrador que te asigne permisos."
@@ -137,6 +269,7 @@ es:
           other: "%{count} tipos de tarea por atender"
       pending:
         title: "Tareas pendientes"
+        detail: "Ver el detalle"
         uninvoiced:
           one: "1 compra sin facturar"
           other: "%{count} compras sin facturar"
@@ -177,6 +310,15 @@ es:
 
   addresses:
     title: "Dirección"
+    map:
+      title: "Ubicación en el mapa"
+      help: "Opcional. Toca el mapa para poner el pin (se puede arrastrar), usa tu ubicación, o escribe o pega las coordenadas (por ejemplo, de Google Maps)."
+      label: "Mapa de la ubicación"
+      locate: "Usar mi ubicación"
+      locate_failed: "No se pudo saber dónde estás. Revisa que el navegador tenga permiso de ubicación, o toca el mapa."
+      clear: "Quitar del mapa"
+      directions: "Abrir en Google Maps"
+      attribution_html: "© <a href=\"https://www.openstreetmap.org/copyright\">colaboradores de OpenStreetMap</a>"
 
   trading:
     lifecycle:
@@ -191,7 +333,7 @@ es:
         invoiced: "Siguiente paso: registrar el pago al productor, completo o por abonos."
         paid: "Ciclo completo: la compra está facturada y pagada."
     season:
-      name: "Temporada %{year}"
+      name: "Temporada %{season}"
       dates: "%{name}: del %{from} al %{to}"
     nav:
       home: "Resumen"
@@ -347,9 +489,16 @@ es:
         title: "Editar productor"
       form:
         producer_data: "Datos de compra"
-        add_farm: "+ Agregar otra finca"
-        farm_placeholder: "Nombre de la finca"
-        farms_help: "Escribe el nombre de cada finca del productor. Si ya tiene una con ese nombre (aunque esté escrita distinto) se usa esa; si no, se crea."
+        add_farm: "Agregar finca"
+        add_farm_title: "Agregar finca"
+        add_farm_confirm: "Agregar"
+        remove_farm: "Quitar esta"
+        farm_name: "Nombre de la finca"
+        farm_new: "(nueva)"
+        farm_placeholder: "Ej.: Finca El Paraíso"
+        farms_list: "Fincas del productor"
+        no_farms: "Sin fincas todavía"
+        farms_help: "Agrega cada finca del productor; las nuevas se guardan con el productor. Si ya tiene una con ese nombre (aunque esté escrita distinto), se usa esa."
         ihcafe_code_placeholder: "XX-XX-XXXXX"
         cancel: "Cancelar"
       create:
@@ -472,6 +621,8 @@ es:
           other: "%{count} abonos por %{amount} registrados con la compra."
     invoices:
       mixed_payment_methods: "Varias formas"
+      table:
+        quintals_short: "%{quintals} QQ"
       payments:
         title: "Pagos al productor"
         amount_to_pay: "A pagar"
@@ -919,13 +1070,14 @@ es:
         location: "Ubicación"
         actions: "Acciones"
         edit: "Editar"
+        open: "Abrir"
         empty: "No hay fincas con esos filtros."
       show:
         new_payroll: "Nueva planilla"
         edit: "Editar"
+        owner: "De %{name}"
         payrolls: "Planillas de la finca"
         no_payrolls: "Esta finca no tiene planillas con esos filtros."
-        back: "Volver a fincas"
       new:
         title: "Nueva finca"
       edit:
@@ -965,6 +1117,9 @@ es:
         timesheet:
           daily: "Asistencia"
           harvest: "Latas"
+        today:
+          daily: "Asistencia de hoy"
+          harvest: "Latas de hoy"
         new_expense: "Registrar gasto"
         edit: "Editar"
         destroy: "Borrar"
@@ -976,7 +1131,6 @@ es:
           members: "Empleados"
           tasks: "Tareas"
           expenses: "Gastos"
-        back: "Volver a planillas"
       periods:
         help_daily: "Cada período se paga con los días de asistencia × el salario por día de cada empleado."
         help_harvest: "Cada período se paga con las latas cortadas × el precio de la lata; los caporales, con sus días × su salario por día."
@@ -1086,6 +1240,7 @@ es:
           harvest: "Latas cortadas"
         pay: "Pagar este período"
         pay_sheet: "Planilla de pago"
+        to_payroll: "Ver la planilla"
         previous: "← Anterior"
         next: "Siguiente →"
         period: "Período"
@@ -1149,6 +1304,8 @@ es:
       loan_observation: "Descontado en planilla %{payroll}"
       new:
         title: "Pagar período"
+        check_daily: "Revisar asistencia"
+        check_harvest: "Revisar latas"
         not_ended: "Este período todavía no termina (termina el %{date}). Al pagarlo, lo registrado en él ya no se podrá cambiar."
         nothing_to_pay: "No hay nada que pagar en este período: no se registró trabajo."
         paid_on: "Fecha de pago"
@@ -1173,6 +1330,7 @@ es:
         success: "Pago registrado. Total a entregar: %{amount}."
       show:
         title: "Planilla de pago · %{payroll}"
+        crumb: "Planilla de pago %{period}"
         back_to_payroll: "Volver a la planilla"
         print: "Imprimir"
         destroy: "Quitar pago"
@@ -1241,7 +1399,7 @@ es:
       this_year: "Este año"
       last_year: "Año pasado"
       all: "Todo"
-      season: "Temporada %{year}"
+      season: "Temporada %{season}"
       custom: "Personalizado (fechas)"
       everything: "Todos los registros"
       range: "%{from} al %{to}"
@@ -1951,21 +2109,68 @@ es:
       sessions:
         form:
           title: "Iniciar sesión"
-          summary: "Entra con el correo y la contraseña que te dio un administrador."
+          summary: "Entra con el correo y la contraseña que te dio un administrador, o con tu huella."
           steps:
             - "Escribe tu correo electrónico."
             - "Escribe tu contraseña."
             - "Toca «Entrar»."
+            - "O toca «Entrar con huella» y pon tu dedo (o desbloquea el dispositivo): no hace falta escribir nada."
           tips:
+            - "La huella se registra en Mi configuración (tu nombre, arriba), en cada dispositivo donde la quieras usar."
             - "No hay registro público: solo un administrador crea usuarios."
             - "Si olvidaste la contraseña, pídele a un administrador que la restablezca."
             - "Después de varios intentos fallidos hay que esperar unos minutos."
+      profile_photos:
+        show:
+          title: "Foto de perfil"
+          summary: "La foto de una persona o de un usuario, tal como se guardó."
+          steps:
+            - "Se cambia en el formulario de la persona, del productor o en Mi configuración."
       site_logos:
         show:
           title: "Logo del negocio"
           summary: "La imagen del logo que se configura en Administración → Configuración del sitio."
           steps:
             - "Para cambiarlo, un administrador entra a Administración → Configuración del sitio."
+      user_settings:
+        form:
+          title: "Mi configuración"
+          summary: "Tus datos, cómo se ve el sistema para ti, tu contraseña y tu huella. Lo de la pantalla solo cambia la tuya."
+          steps:
+            - "«Mis datos»: tu foto, tu nombre y tu correo (con el correo inicias sesión)."
+            - "«Páginas que se abren encima»: en una ventana al centro, o en un panel que entra desde la derecha. En el panel, lo que abras dentro se muestra en el mismo panel; «Atrás» vuelve a la pantalla anterior. En ventanas, «Atrás» cierra la de arriba."
+            - "«Menú principal»: arriba o en una columna a la izquierda (en el celular siempre arriba)."
+            - "«Contraseña»: para cambiarla escribe la actual y dos veces la nueva. Déjala en blanco si no la cambias."
+            - "Toca «Guardar configuración»."
+            - "«Huella digital»: ponle un nombre al dispositivo y toca «Registrar huella de este dispositivo»; el dispositivo te pide el dedo (o su desbloqueo). Desde ahí puedes entrar con «Entrar con huella»."
+          tips:
+            - "Cambiar el correo también pide tu contraseña actual."
+            - "La huella es una forma más de entrar: la contraseña sigue sirviendo. Registra cada celular o computadora donde la quieras usar."
+            - "Si pierdes un dispositivo, toca «Quitar» en su huella."
+      pending_work:
+        show:
+          title: "Tareas pendientes"
+          summary: "El detalle de lo pendiente que cuenta el Inicio, con el botón para resolver cada cosa."
+          steps:
+            - "Cada tipo de tarea tiene su pestaña, con cuántas hay; tócala para ver su lista. También se cambia con las flechas del teclado."
+            - "Compras sin facturar: van por productor; «Facturar» abre la facturación de ese productor."
+            - "Facturas sin cancelar y préstamos vencidos: «Registrar abono» abre el abono encima; «Detalle» muestra el registro."
+            - "Períodos de planilla: «Pagar» abre el pago del período."
+            - "Empleados sin salario: «Asignar salario» abre el empleado para darle un rol o un salario propio."
+          tips:
+            - "Al guardar un abono o un salario, la ventana se cierra y el Inicio se actualiza. Vuelve a tocar «Pendientes» para seguir."
+            - "Solo ves lo de los módulos a los que tienes acceso, y los botones de lo que puedes hacer."
+      coffee_markets:
+        show:
+          title: "Café en la bolsa"
+          summary: "El precio del café arábica en la bolsa de Nueva York (contrato «C» de ICE), en centavos de dólar por libra."
+          steps:
+            - "La cifra grande es el último precio; al lado, cuánto subió o bajó desde el cierre de la sesión anterior."
+            - "La línea muestra el precio de cierre de cada día del último mes."
+            - "Toca «Fuente» para ver la cotización completa."
+          tips:
+            - "Es una referencia del mercado, con unos minutos de retraso. No cambia el precio de las compras, que se escribe en cada una."
+            - "Si dice que no está disponible, el servicio de la bolsa no respondió; vuelve a intentar más tarde."
       dashboard:
         show:
           title: "Inicio"
@@ -1973,17 +2178,21 @@ es:
           steps:
             - "Usa las acciones frecuentes (Registrar compra, Facturar compras, Productores, Préstamos…) para ir directo a lo que necesitas."
             - "«Resumen de operaciones» muestra las compras de hoy, los QQ de la temporada, los préstamos por cobrar y las fincas activas. Toca una cifra para ver su detalle."
+            - "Toca la cifra «Pendientes» (o «Ver el detalle») para ver cada tarea pendiente con su botón para resolverla."
             - "«Tareas pendientes» aparece solo cuando hay algo por atender: compras sin facturar, facturas sin cancelar, préstamos vencidos, períodos de planilla por pagar o empleados sin salario. Cada una tiene su botón."
+            - "«Café en la bolsa» muestra el precio del café arábica en la bolsa de Nueva York, cuánto cambió en la última sesión y su línea del último mes."
+            - "Arriba a la derecha, los círculos son los usuarios conectados ahora; pasa el puntero encima para ver el nombre. Se actualiza solo cuando alguien entra o sale."
             - "«Actividad reciente» lista las últimas compras, facturas, productores, préstamos, abonos y pagos de planilla, con su fecha; toca «Abrir» para verlos."
             - "Abajo están tus módulos. Para volver aquí, toca el logo de arriba a la izquierda."
             - "Para salir, usa «Cerrar sesión» (en el celular, dentro de «Menú»)."
+            - "Toca tu nombre para abrir «Mi configuración»: ventanas o panel lateral, y el menú arriba o a la izquierda."
           tips:
             - "Si no ves ningún módulo, pídele a un administrador que te asigne permisos."
       administration:
         backups:
           show:
             title: "Respaldo de datos"
-            summary: "Descarga una copia de todos los datos para guardarla fuera del servidor. Solo administradores."
+            summary: "Descarga una copia de todos los datos para guardarla fuera del servidor. Solo la ve el usuario a cargo de exportar los datos."
             steps:
               - "Revisa «En este servidor»: dice si el respaldo podrá incluir la base de datos completa (base.dump)."
               - "Toca «Descargar respaldo»: baja un .zip con una carpeta que trae base.dump, una carpeta csv/ con una tabla por archivo y LEEME.txt."
@@ -2010,7 +2219,7 @@ es:
               - "Toca «Nueva persona» para registrar a alguien."
           show:
             title: "Detalle de la persona"
-            summary: "Datos de identidad, contacto, zona, dirección y roles de la persona."
+            summary: "Foto, datos de identidad, contacto, zona, dirección, ubicación en el mapa y roles de la persona."
             steps:
               - "Toca «Editar» para cambiar sus datos o sus roles."
               - "Toca «Borrar» para eliminarla; el sistema pide confirmación."
@@ -2020,10 +2229,12 @@ es:
             title: "Registrar o editar una persona"
             summary: "Solo los nombres y los apellidos son obligatorios."
             steps:
+              - "Si quieres, toca «Foto de perfil» y elige una foto (en el celular puedes tomarla). Se achica sola antes de guardarse."
               - "Escribe nombres y apellidos."
               - "Si los tienes, agrega DNI, RTN, teléfono y correo."
               - "Elige la zona de donde es. Si no existe, toca «Nueva zona»: se abre encima y al guardarla queda elegida."
               - "Para la dirección, elige primero el departamento; después se habilita el municipio."
+              - "En «Ubicación en el mapa», toca el mapa donde está para poner el pin (se puede arrastrar), toca «Usar mi ubicación» si estás ahí, o pega las coordenadas de Google Maps en latitud y longitud. Es opcional."
               - "Marca sus roles: cliente, colaborador, productor o varios. Hay que marcar al menos uno. Al marcar «Productor» elige su tipo."
               - "Toca el botón de guardar."
             tips:
@@ -2263,10 +2474,12 @@ es:
             summary: "Datos de compra del productor y sus datos personales."
             steps:
               - "Elige el tipo: productor, carrero (intermediario) o finca propia."
-              - "En «Fincas» escribe las fincas del productor; toca «+ Agregar otra finca» para escribir más. Si ya tiene una con ese nombre (aunque esté escrita con otras mayúsculas) se usa esa; si no, se crea. Al editar, sus fincas salen arriba."
+              - "En «Fincas», la lista muestra las fincas del productor. Toca «Agregar finca», escribe el nombre y toca «Agregar»: sale en la lista como «(nueva)» y se crea al guardar el productor. «Quitar esta» saca una nueva antes de guardar. Si ya tiene una con ese nombre (aunque esté escrita con otras mayúsculas), se usa esa."
               - "Si tiene clave del IHCAFE, escríbela con el formato XX-XX-XXXXX (letras o números). Puedes escribirla sin guiones o en minúsculas: se guarda en mayúsculas y con guiones. No se puede repetir entre productores."
               - "Escribe nombres y apellidos; el resto de datos es opcional."
+              - "Si quieres, toca «Foto de perfil» y elige una foto (en el celular puedes tomarla). Se achica sola antes de guardarse."
               - "Elige su zona. Si la zona no existe, toca «Nueva zona»: se abre encima y al guardarla queda elegida."
+              - "En «Ubicación en el mapa», toca el mapa donde está para poner el pin (se puede arrastrar), toca «Usar mi ubicación» si estás ahí, o pega las coordenadas de Google Maps en latitud y longitud. Es opcional."
               - "En «Roles», «Productor» ya va marcado; marca también «Cliente» o «Colaborador» si lo es."
               - "Toca el botón de guardar."
             tips:
@@ -2318,7 +2531,7 @@ es:
             summary: "Las fincas del negocio. Cada una tiene sus planillas."
             steps:
               - "Busca por nombre o filtra por activas e inactivas en «Filtros»."
-              - "Toca «Detalle» para ver la finca, sus planillas y lo que han costado."
+              - "Toca «Abrir» (o cualquier parte de la fila) para ir a la finca: sus planillas y lo que han costado."
               - "Toca «Nueva finca» para registrar una."
             tips:
               - "Una finca no se borra: se desactiva y deja de aparecer al crear planillas."
@@ -2328,7 +2541,9 @@ es:
             steps:
               - "Revisa las cifras: pagado en planillas, gastos y costo total de la finca."
               - "Filtra sus planillas por nombre, tipo o estado: se aplican solas y la lista se actualiza sin recargar. Quita un filtro con la × de su etiqueta."
-              - "Toca «Nueva planilla» para crear una en esta finca."
+              - "Toca «Nueva planilla» para crear una en esta finca, o «Abrir» en una planilla para entrar a ella."
+            tips:
+              - "Arriba, «Fincas ›» te regresa a la lista de fincas."
           form:
             title: "Registrar o editar una finca"
             summary: "Nombre, dueño y ubicación de la finca."
@@ -2336,6 +2551,7 @@ es:
               - "Escribe el nombre."
               - "Si es la finca de un productor, búscalo en «Productor»; déjalo vacío si es una finca del negocio. El dueño ya no cambia cuando la finca tiene compras o planillas."
               - "Elige departamento y municipio y escribe la dirección."
+              - "En «Ubicación en el mapa», toca el mapa donde está para poner el pin (se puede arrastrar), toca «Usar mi ubicación» si estás ahí, o pega las coordenadas de Google Maps en latitud y longitud. Es opcional."
               - "Toca el botón de guardar."
         payrolls:
           index:
@@ -2354,6 +2570,7 @@ es:
               - "Registra el trabajo: «Asistencia» (por día), «Latas» (corte de café) o «Nueva tarea» (por obra)."
               - "En «Períodos de pago», el período de hoy sale arriba con lo que lleva, su día de pago y sus botones. Toca «Pagar» cuando termine."
               - "Toca un estado (Sin pagar, Pagados, Próximos) para ver solo esos períodos; cada uno dice cuántos tiene."
+              - "Arriba, la ruta (Fincas › la finca › la planilla) te lleva a la finca o a la lista de fincas. Las pestañas cambian sin recargar la página."
               - "Registra los gastos con «Registrar gasto»."
             tips:
               - "Un período pagado queda cerrado: su asistencia, latas o tareas ya no se cambian."
@@ -2403,6 +2620,7 @@ es:
               - "Elige el período con «Anterior», «Siguiente», la lista o «Hoy»; o un solo día (más cómodo en el celular)."
               - "Por día: toca cada casilla para pasar de — (no vino) a 1 (día completo) y a ½. «Todos» llena un día para todos y «Todo el período» todos los días de una persona. En corte: escribe las latas, de cuarto en cuarto (0.25, 0.50, 0.75, 1, 1.25…)."
               - "Toca «Guardar» en la barra de abajo, que siempre está a la vista. Te avisa si tienes cambios sin guardar, y si sales sin guardar te pregunta antes."
+              - "Cuando el período llegue a su día de pago, «Pagar este período» se resalta. «Ver la planilla» (o la ruta de arriba) te regresa a la planilla."
             tips:
               - "En el celular, elige un día arriba para ver solo esa columna."
               - "Un período pagado ya no se puede cambiar."
@@ -2438,6 +2656,7 @@ es:
             summary: "Lo que se pagó en un período, con una línea por empleado para su firma."
             steps:
               - "Toca «Imprimir» y que cada empleado firme al recibir."
+              - "«Volver a la planilla» (o la ruta de arriba) te regresa a sus períodos."
             tips:
               - "Solo se puede quitar el pago del último período; también se quitan sus abonos a préstamos."
         expenses:
@@ -2526,8 +2745,8 @@ es:
             summary: "Comprobante de un abono: cuánto se pagó, a qué se aplicó y cuánto quedó debiendo la persona."
             steps:
               - "Revisa los datos del abono y el saldo que quedó después de él."
-              - "Toca «Imprimir recibo»: el original y la copia salen en una sola hoja."
-              - "Corta por la línea, entrega el original a la persona y guarda la copia firmada."
+              - "Toca «Imprimir recibo»: el original y la copia salen cada uno en su hoja."
+              - "Entrega el original a la persona y guarda la copia firmada."
             tips:
               - "El saldo es el de la fecha del abono; los abonos posteriores no lo cambian."
               - "El recibo de cualquier abono, también los pagados con café, se abre con el botón «Recibo» en el detalle del préstamo."
@@ -2873,6 +3092,12 @@ es:
 
   activerecord:
     models:
+      profile_photo:
+        one: "Foto de perfil"
+        other: "Fotos de perfil"
+      webauthn_credential:
+        one: "Huella digital"
+        other: "Huellas digitales"
       invoice_payment:
         one: "Abono a factura"
         other: "Abonos a facturas"
@@ -2972,6 +3197,15 @@ es:
         admin: "Administrador"
         active: "Activo"
         password_digest: "Contraseña"
+        window_style: "Páginas que se abren encima"
+        window_style/modal: "En una ventana (modal)"
+        window_style/drawer: "En un panel lateral (drawer)"
+        nav_position: "Menú principal"
+        nav_position/top: "Arriba"
+        nav_position/left: "A la izquierda"
+        photo_upload: "Foto de perfil"
+        current_password: "Contraseña actual"
+        password_challenge: "Contraseña actual"
       person:
         first_names: "Nombres"
         last_names: "Apellidos"
@@ -2992,6 +3226,9 @@ es:
         producer_kind: "Tipo de productor"
         producer.kind: "Tipo de productor"
         producer.ihcafe_code: "Clave IHCAFE"
+        photo_upload: "Foto de perfil"
+        latitude: "Latitud"
+        longitude: "Longitud"
       zone:
         name: "Nombre"
       producer:
@@ -3135,6 +3372,8 @@ es:
         address_line: "Dirección"
         observations: "Observaciones"
         active: "Activa"
+        latitude: "Latitud"
+        longitude: "Longitud"
       expense_category:
         name: "Nombre"
         active: "Activa"
@@ -3366,6 +3605,9 @@ es:
               closed: "ya no se puede usar: está anulada, ya se le pagó al productor o no le queda dinero"
         user:
           last_active_admin: "No se puede desactivar ni quitar el rol de administrador al último administrador activo."
+          attributes:
+            password_challenge:
+              invalid: "no es la que tienes ahora"
       messages:
         record_invalid: "La validación falló: %{errors}"
         restrict_dependent_destroy:
@@ -3400,6 +3642,10 @@ es:
           loan_error: "Préstamo %{loan}: %{detail}"
 
   errors:
+    attributes:
+      photo_upload:
+        too_big: "pesa más de %{size}: elige una imagen más liviana"
+        not_an_image: "debe ser una imagen JPG, PNG o WebP"
     show:
       title: "No se pudo mostrar esta página"
       home: "Volver al inicio"

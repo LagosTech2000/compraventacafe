@@ -25,6 +25,9 @@ gem "bcrypt", "~> 3.1.7"
 # Authorization policies [https://github.com/varvet/pundit]
 gem "pundit", "~> 2.5"
 
+# Sign in with a fingerprint or the device's lock (passkeys, WebAuthn).
+gem "webauthn", "~> 3.4"
+
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 

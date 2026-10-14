@@ -8,6 +8,7 @@
 # form sent them, not to people created in code.
 class Person < ApplicationRecord
   include HasAddress
+  include HasPhoto
   include Auditable
 
   ROLES = %i[client collaborator producer].freeze

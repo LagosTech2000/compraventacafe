@@ -44,7 +44,7 @@
 
     <div class="mt-6">
       <% if @purchases.any? %>
-        <%= render "table", purchases: @purchases %>
+        <%= render "table", purchases: @purchases, sorting: { filter: @filter, frame: "purchases-list" } %>
         <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "purchases-list" %>
       <% else %>
         <p class="empty-state"><%= t(".empty") %></p>

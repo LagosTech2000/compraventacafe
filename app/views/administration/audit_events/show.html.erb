@@ -36,7 +36,7 @@
 <% if @event.changeset.any? %>
   <h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".changes") %></h2>
   <div class="overflow-x-auto panel">
-    <table class="data-table">
+    <table class="data-table" data-controller="table-sort">
       <thead>
         <tr>
           <th><%= t(".field") %></th>

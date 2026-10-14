@@ -1,5 +1,9 @@
 Rails.application.routes.draw do
   resource :session, only: %i[ new create destroy ]
+  # Signing in with a fingerprint (passkeys, WebAuthn): one more way in.
+  resource :passkey_session, only: :create do
+    post :options
+  end
   # Password recovery by email is disconnected until there is an email
   # service. Admins reset passwords from the panel instead.
   # resources :passwords, param: :token
@@ -7,6 +11,17 @@ Rails.application.routes.draw do
   root "dashboard#show"
   # The business's logo, public (the sign-in page shows it too).
   resource :site_logo, only: :show
+  # Profile photos of people and users, for signed-in users.
+  resources :profile_photos, only: :show
+  # The signed-in user's own display settings (modal or drawer, navigation).
+  resource :user_setting, only: %i[ edit update ]
+  resources :webauthn_credentials, only: %i[ create destroy ] do
+    post :options, on: :collection
+  end
+  # Coffee futures on the exchange, for the home page card.
+  resource :coffee_market, only: :show
+  # The home page's pending work in detail, with the way to solve each.
+  resource :pending_work, only: :show, controller: "pending_work"
 
   namespace :administration do
     root "home#index"
