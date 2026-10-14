@@ -1,0 +1,23 @@
+<%# A map chart (Report#locations): a circle per person or farm with a point
+    on the map, sized by the report's figure, its name and figure on hover
+    and a link to its page (report_map_controller.js). %>
+<% set = chart.datasets.first %>
+<% format = (set[:format] || :number).to_sym %>
+<% points = chart.options[:points].each_with_index.map do |point, index|
+     { latitude: point[:latitude], longitude: point[:longitude], label: chart.labels[index], value: set[:data][index],
+       text: "#{set[:label]}: #{format_report_value(set[:data][index], format)}",
+       url: (public_send(chart.options[:link], point[:link_id]) if chart.options[:link] && point[:link_id]) }
+   end %>
+<% if points.any? %>
+  <%= tag.div class: "relative h-96 overflow-hidden rounded-lg ring-1 ring-line", role: "img",
+        aria: { label: t("reports.charts.map.label", count: points.size) },
+        data: { controller: "report-map", report_map_points_value: points.to_json,
+                report_map_tiles_value: Rails.configuration.x.map_tiles_url.to_s,
+                report_map_attribution_value: t("addresses.map.attribution_html").to_str,
+                report_map_labels_value: map_labels.merge(open: t("reports.charts.map.open")).to_json } %>
+<% else %>
+  <p class="empty-state"><%= t("reports.charts.map.none") %></p>
+<% end %>
+<% if chart.options[:missing].positive? %>
+  <p class="mt-2 text-xs text-ink-muted"><%= t("reports.charts.map.missing", count: chart.options[:missing]) %></p>
+<% end %>

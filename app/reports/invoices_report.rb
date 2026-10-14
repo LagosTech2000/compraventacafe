@@ -121,7 +121,9 @@ class InvoicesReport < Report
       chart(:debtors, :hbar, labels: debtors.map(&:first), datasets: [ dataset(:pending, debtors.map(&:last), format: :money) ]),
       chart(:methods, :doughnut, labels: methods.map(&:first), datasets: [ dataset(:paid, methods.map(&:last), format: :money) ]),
       chart(:days_to_pay, :combo, labels: day_labels, datasets: [ dataset(:count, days[:count], format: :integer),
-                                                                 dataset(:days, days[:days], format: :number, kind: :line, axis: :y2) ])
+                                                                 dataset(:days, days[:days], format: :number, kind: :line, axis: :y2) ]),
+      locations(:map, relation, place: :person, measure: :to_pay, sql: "SUM(#{TO_PAY})", format: :money,
+                                link: :trading_producer_path, link_sql: "producers.id")
     ]
   end
 

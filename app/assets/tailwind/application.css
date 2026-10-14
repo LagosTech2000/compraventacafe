@@ -425,10 +425,10 @@
   }
 
   /* The modal as a drawer (the user's setting, User#drawer?): it slides in
-     from the right and covers 90% of the width, leaving the page in sight
+     from the right and covers up to 90% of the width (below, by content), leaving the page in sight
      on the left. Pages navigate inside it ("Atrás" goes back). */
   .modal.drawer {
-    @apply fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-dvh w-[90vw] max-w-none rounded-none rounded-l-[var(--radius-clay)];
+    @apply fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-dvh rounded-none rounded-l-[var(--radius-clay)];
     transform: translateX(100%);
     opacity: 1;
     transition: transform 0.25s ease, overlay 0.25s allow-discrete, display 0.25s allow-discrete;
@@ -436,6 +436,28 @@
 
   .modal.drawer[open] {
     transform: none;
+  }
+
+  /* As wide as its page needs, up to the 90% (Fernando, 2026-10-13): a
+     short form doesn't float in an empty panel. Paragraphs wrap to the
+     width the fields set instead of widening it; pages with tables or
+     container-sized layouts (@container) take the whole 90%. */
+  .modal.drawer {
+    width: fit-content;
+    min-width: min(34rem, 90vw);
+    max-width: 90vw;
+    interpolate-size: allow-keywords;
+    transition: transform 0.25s ease, width 0.2s ease, overlay 0.25s allow-discrete, display 0.25s allow-discrete;
+  }
+
+  /* Not inside rows that size to their content (flex, grid): there a
+     contained paragraph would shrink to nothing. */
+  .modal.drawer p:not(:is(.flex, .inline-flex, .grid) > p):not(:is(.flex, .inline-flex, .grid) > * > p) {
+    contain: inline-size;
+  }
+
+  .modal.drawer:has(table, .\@container) {
+    width: 90vw;
   }
 
   @starting-style {
@@ -860,4 +882,13 @@ tr.live-new > td {
 .leaflet-container {
   z-index: 0;
   font: inherit;
+}
+
+/* OpenStreetMap's credit: required (its license and tile policy), as small
+   as it can be while it can still be read. */
+.leaflet-container .leaflet-control-attribution {
+  padding: 0 3px;
+  font-size: 8px;
+  line-height: 1.4;
+  background: rgb(255 255 255 / 0.6);
 }

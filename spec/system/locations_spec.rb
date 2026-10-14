@@ -68,4 +68,18 @@ RSpec.describe "Locations on a map", type: :system do
     expect(page).to have_css(".leaflet-container .map-pin")
     expect(person.reload).to have_attributes(latitude: 14.1.to_d, longitude: -87.2.to_d)
   end
+
+  it "shows only the credit OpenStreetMap requires, as small as it can be" do
+    pixel = "data:image/png;base64,#{Base64.strict_encode64(File.binread(file_fixture("logo.png")))}"
+    allow(Rails.configuration.x).to receive(:map_tiles_url).and_return(pixel)
+    farm = create(:farm, latitude: 14.07, longitude: -87.19)
+    sign_in_as(admin)
+    visit farms_farm_path(farm)
+
+    credit = find(".leaflet-control-attribution")
+    expect(credit.text).to eq("© OpenStreetMap")
+    expect(credit).to have_link("OpenStreetMap", href: "https://www.openstreetmap.org/copyright")
+    expect(credit).to have_no_text("Leaflet")
+    expect(page.evaluate_script("getComputedStyle(document.querySelector('.leaflet-control-attribution')).fontSize")).to eq("8px")
+  end
 end

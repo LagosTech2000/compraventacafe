@@ -160,6 +160,52 @@
         89
       ],
       "note": "The order comes from a column the list's filter declares in code (ListFilter.sorts; sort keys outside it are ignored) and a direction that can only be asc or desc (ListFilter::DIRECTIONS)."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "b35137e9c9d1cd824344d07a6566c9ca639f4be1877086f47a8c1c83bb6d3031",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/reports/report.rb",
+      "line": 418,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "plain(relation).where(\"#{{ :person => ({ :id => \"people.id\", :label => \"people.first_names || ' ' || people.last_names\", :latitude => \"people.latitude\", :longitude => \"people.longitude\" }), :farm => ({ :id => \"farms.id\", :label => \"farms.name\", :latitude => \"farms.latitude\", :longitude => \"farms.longitude\" }) }.fetch(place)[:latitude]} IS NOT NULL AND #{{ :person => ({ :id => \"people.id\", :label => \"people.first_names || ' ' || people.last_names\", :latitude => \"people.latitude\", :longitude => \"people.longitude\" }), :farm => ({ :id => \"farms.id\", :label => \"farms.name\", :latitude => \"farms.latitude\", :longitude => \"farms.longitude\" }) }.fetch(place)[:longitude]} IS NOT NULL\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Report",
+        "method": "locations"
+      },
+      "user_input": "{ :person => ({ :id => \"people.id\", :label => \"people.first_names || ' ' || people.last_names\", :latitude => \"people.latitude\", :longitude => \"people.longitude\" }), :farm => ({ :id => \"farms.id\", :label => \"farms.name\", :latitude => \"farms.latitude\", :longitude => \"farms.longitude\" }) }.fetch(place)[:latitude]",
+      "confidence": "Weak",
+      "cwe_id": [
+        89
+      ],
+      "note": "Report#locations: the place's columns come from Report::PLACES or a report's own constant in code, never from a parameter."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "d4ae50a8864d83cef07b1c4baf450164aa4f4093106bbb6cb06c4a17d55cdd5a",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/reports/report.rb",
+      "line": 421,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "plain(relation).where(\"#{{ :person => ({ :id => \"people.id\", :label => \"people.first_names || ' ' || people.last_names\", :latitude => \"people.latitude\", :longitude => \"people.longitude\" }), :farm => ({ :id => \"farms.id\", :label => \"farms.name\", :latitude => \"farms.latitude\", :longitude => \"farms.longitude\" }) }.fetch(place)[:latitude]} IS NULL OR #{{ :person => ({ :id => \"people.id\", :label => \"people.first_names || ' ' || people.last_names\", :latitude => \"people.latitude\", :longitude => \"people.longitude\" }), :farm => ({ :id => \"farms.id\", :label => \"farms.name\", :latitude => \"farms.latitude\", :longitude => \"farms.longitude\" }) }.fetch(place)[:longitude]} IS NULL\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Report",
+        "method": "locations"
+      },
+      "user_input": "{ :person => ({ :id => \"people.id\", :label => \"people.first_names || ' ' || people.last_names\", :latitude => \"people.latitude\", :longitude => \"people.longitude\" }), :farm => ({ :id => \"farms.id\", :label => \"farms.name\", :latitude => \"farms.latitude\", :longitude => \"farms.longitude\" }) }.fetch(place)[:latitude]",
+      "confidence": "Weak",
+      "cwe_id": [
+        89
+      ],
+      "note": "Report#locations: the place's columns come from Report::PLACES or a report's own constant in code, never from a parameter."
     }
   ],
   "brakeman_version": "8.1.0"

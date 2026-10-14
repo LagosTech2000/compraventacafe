@@ -75,7 +75,9 @@ class PayrollPaymentsReport < Report
       chart(:kinds, :doughnut, labels: kinds.map(&:first), datasets: [ dataset(:gross_total, kinds.map(&:last), format: :money) ]),
       chart(:members, :combo, labels: member_labels, datasets: [ dataset(:gross_total, people[:gross], format: :money),
                                                                  dataset(:members, people[:members], format: :integer, kind: :line, axis: :y2) ],
-                              wide: true)
+                              wide: true),
+      locations(:map, relation, place: :farm, measure: :gross_total, sql: "SUM(payroll_payments.gross_total)", format: :money,
+                                link: :farms_farm_path, link_sql: "farms.id")
     ]
   end
 

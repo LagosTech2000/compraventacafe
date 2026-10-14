@@ -8,12 +8,14 @@ import "leaflet"
 // pasted from Google Maps). With `readonly`, it only shows the pin.
 export default class extends Controller {
   static targets = ["map", "latitude", "longitude", "clear", "status"]
-  static values = { tiles: String, attribution: String, center: Array, readonly: Boolean, point: Array, locateFailed: String }
+  static values = { tiles: String, attribution: String, center: Array, readonly: Boolean, point: Array, locateFailed: String, labels: Object }
 
   connect() {
     const L = window.L
-    this.map = L.map(this.mapTarget, { scrollWheelZoom: false, dragging: !this.readonlyValue || !L.Browser.mobile, zoomControl: true })
-    this.map.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>')
+    this.map = L.map(this.mapTarget, { scrollWheelZoom: false, dragging: !this.readonlyValue || !L.Browser.mobile, zoomControl: false })
+    L.control.zoom({ zoomInTitle: this.labelsValue.zoom_in, zoomOutTitle: this.labelsValue.zoom_out }).addTo(this.map)
+    // Only the credit OpenStreetMap requires; Leaflet's is not (BSD license).
+    this.map.attributionControl.setPrefix(false)
     if (this.tilesValue) L.tileLayer(this.tilesValue, { maxZoom: 19, attribution: this.attributionValue }).addTo(this.map)
     if (!this.readonlyValue) this.map.on("click", (event) => this.place(event.latlng))
 

@@ -318,7 +318,10 @@ es:
       locate_failed: "No se pudo saber dónde estás. Revisa que el navegador tenga permiso de ubicación, o toca el mapa."
       clear: "Quitar del mapa"
       directions: "Abrir en Google Maps"
-      attribution_html: "© <a href=\"https://www.openstreetmap.org/copyright\">colaboradores de OpenStreetMap</a>"
+      zoom_in: "Acercar"
+      zoom_out: "Alejar"
+      close: "Cerrar"
+      attribution_html: "© <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>"
 
   trading:
     lifecycle:
@@ -1501,6 +1504,8 @@ es:
       amount_in: "Entradas (L)"
       amount_out: "Salidas (L)"
       balance: "Saldo acumulado (L)"
+      lent: "Prestado (L)"
+      paid_to_them: "Les pagamos (L)"
     show:
       pickers: "Elegir reporte"
       report_type: "Reporte"
@@ -1538,6 +1543,15 @@ es:
       empty: "No hay datos para graficar con estos filtros."
       data: "Ver los datos"
       heat_cell: "%{day} %{hour}: %{count}"
+      map:
+        label:
+          one: "Mapa con 1 lugar"
+          other: "Mapa con %{count} lugares"
+        open: "Abrir"
+        none: "Nada de esto tiene ubicación en el mapa todavía. Agrégala en la ficha de la persona o de la finca."
+        missing:
+          one: "1 sin ubicación en el mapa: no sale aquí."
+          other: "%{count} sin ubicación en el mapa: no salen aquí."
     presets:
       purchases_today: "Compras de hoy"
       purchases_today_by_producer: "Compras de hoy por productor"
@@ -1617,6 +1631,9 @@ es:
           producers: "Productores"
           uninvoiced: "Sin facturar"
         charts:
+          map:
+            title: "De dónde viene el café"
+            help: "Cada círculo es la finca de la compra (o el productor, si la finca no tiene ubicación); más grande, más QQ. Toca uno para abrir su productor."
           volume:
             title: "Quintales y dinero en el tiempo"
             help: "Barras: QQ comprados. Línea: lempiras pagados."
@@ -1672,6 +1689,9 @@ es:
           pending_count: "Facturas sin cancelar"
           average_days: "Días prom. para pagar"
         charts:
+          map:
+            title: "Facturas en el mapa"
+            help: "Cada círculo es un productor con ubicación; más grande, más lempiras a pagar en sus facturas. Toca uno para abrir su ficha."
           by_status:
             title: "Lo facturado en el tiempo"
             help: "Lo que hay que pagar a los productores (sin los abonos con café), por estado: cancelada, pago parcial o pendiente."
@@ -1712,6 +1732,9 @@ es:
           not_selling: "No vendieron"
           pending: "Por pagarles (hoy)"
         charts:
+          map:
+            title: "Dónde están los productores"
+            help: "Cada círculo es un productor con ubicación; más grande, más QQ vendidos en el período. Toca uno para abrir su ficha."
           ranking:
             title: "Ranking de productores (Pareto)"
             help: "Los 20 que más vendieron. La línea suma su parte del total."
@@ -1752,6 +1775,9 @@ es:
           balance: "Se debe hoy (con interés)"
           overdue_owed: "Capital vencido"
         charts:
+          map:
+            title: "Préstamos en el mapa"
+            help: "Cada círculo es una persona con ubicación; más grande, más capital prestado. Toca uno para abrir su estado de cuenta."
           lent:
             title: "Lo prestado en el tiempo"
             help: "Capital prestado por tipo: efectivo, insumos o mixto."
@@ -1853,6 +1879,9 @@ es:
           expenses: "Gastos de planillas"
           total_cost: "Costo total"
         charts:
+          map:
+            title: "Planillas en el mapa"
+            help: "Cada círculo es una finca con ubicación; más grande, más pagado en planillas. Toca una para abrirla."
           by_farm:
             title: "Planillas pagadas en el tiempo"
             help: "Total de planilla de cada finca."
@@ -1924,6 +1953,9 @@ es:
           average: "Latas por cortador al día"
           best_day: "Mejor día (latas)"
         charts:
+          map:
+            title: "Latas en el mapa"
+            help: "Cada círculo es una finca con ubicación; más grande, más latas cortadas. Toca una para abrirla."
           cans:
             title: "Latas en el tiempo"
             help: "Barras: latas cortadas. Línea: cortadores que vinieron."
@@ -1955,6 +1987,9 @@ es:
           average: "Gasto promedio"
           categories: "Categorías"
         charts:
+          map:
+            title: "Gastos en el mapa"
+            help: "Cada círculo es una finca con ubicación; más grande, más gastos. Toca una para abrirla."
           categories:
             title: "En qué se gasta"
             help: "Monto por categoría."
@@ -1991,6 +2026,9 @@ es:
           repaid: "Abonado a préstamos"
           owed: "Capital pendiente (hoy)"
         charts:
+          map:
+            title: "Personas en el mapa"
+            help: "Cada círculo es una persona con ubicación; más grande, más le pagamos (café y planillas) en el período."
           paid_to_them:
             title: "A quién le pagó más el negocio"
             help: "Los 15 con más dinero entre café que vendieron y lo que ganaron en planillas."
@@ -2796,6 +2834,7 @@ es:
               - "«Agrupar por» suma los registros por día, mes, productor, zona… en vez de verlos uno por uno."
               - "Revisa las cifras de arriba: cada una se compara con el período anterior (▲ subió, ▼ bajó)."
               - "Los gráficos se pueden ocultar tocando «Gráficos». Bajo cada uno, «Ver los datos» muestra sus números."
+              - "Los reportes de compras, productores, facturas, préstamos, personas, planillas, latas y gastos traen un mapa: un círculo por persona o finca con ubicación, más grande cuanto más pesa en el reporte. Toca uno para ver su cifra y abrir su página."
               - "La tabla se carga sola a medida que bajas. Toca un encabezado para ordenar por esa columna."
               - "«Guardar filtros» guarda lo que elegiste con un nombre, para abrirlo después desde «Mis filtros»."
             tips:
@@ -2808,6 +2847,9 @@ es:
             steps:
               - "Pasa el dedo o el cursor sobre un gráfico para ver cada valor."
               - "Toca «Ver los datos» bajo un gráfico para ver sus números en una tabla."
+              - "En el mapa, acerca o aleja con + y −; toca un círculo para ver su cifra y «Abrir» su página. Debajo dice cuántos no salen por no tener ubicación."
+            tips:
+              - "La ubicación se agrega en la ficha de la persona o de la finca («Ubicación en el mapa»). En las compras se usa la de la finca de la compra, o la del productor si la finca no tiene."
         saved_reports:
           index:
             title: "Mis filtros"

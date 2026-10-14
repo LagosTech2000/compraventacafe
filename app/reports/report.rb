@@ -21,6 +21,12 @@ class Report
   CSV_LIMIT = 50_000
   # Bars or slices shown before the rest goes to "Otros".
   TOP = 12
+  # Where a map chart puts each record (see #locations).
+  PLACES = {
+    person: { id: "people.id", label: "people.first_names || ' ' || people.last_names",
+              latitude: "people.latitude", longitude: "people.longitude" },
+    farm: { id: "farms.id", label: "farms.name", latitude: "farms.latitude", longitude: "farms.longitude" }
+  }.freeze
 
   Column = Data.define(:key, :type, :sort, :priority, :value, :label)
   Measure = Data.define(:key, :type, :sql)
@@ -398,6 +404,25 @@ class Report
       running = 0
       shares = rows.map { |_, value| (running += value) && (total.to_d.positive? ? (running / total.to_d * 100).round(1).to_f : 0) }
       [ rows.map(&:first), rows.map(&:last), shares ]
+    end
+
+    # Where the records happen, on a map (Fernando, 2026-10-13): grouped by
+    # the person or farm they belong to that has coordinates (HasAddress), a
+    # point each, sized by the measure. `place` says which (PLACES, or its
+    # own SQL); `link` names the route of each point's page, called with the
+    # value of `link_sql`. Those without a point are counted apart.
+    def locations(key, relation, place:, measure:, sql:, format:, link: nil, link_sql: nil)
+      place = PLACES.fetch(place) if place.is_a?(Symbol)
+      plucks = [ place[:id], "MIN(#{place[:label]})", "MIN(#{place[:latitude]})", "MIN(#{place[:longitude]})", sql ]
+      plucks << "MIN(#{link_sql})" if link_sql
+      rows = plain(relation).where("#{place[:latitude]} IS NOT NULL AND #{place[:longitude]} IS NOT NULL")
+                            .group(Arel.sql(place[:id])).order(Arel.sql("#{sql} DESC"))
+                            .pluck(*plucks.map { Arel.sql(it) })
+      missing = plain(relation).where("#{place[:latitude]} IS NULL OR #{place[:longitude]} IS NULL").pick(Arel.sql("COUNT(DISTINCT #{place[:id]})"))
+      points = rows.map { |row| { latitude: row[2].to_f, longitude: row[3].to_f, link_id: (row[5] if link_sql) } }
+
+      chart(key, :map, labels: rows.map { it[1] }, datasets: [ dataset(measure, rows.map { number(it[4]) }, format:) ],
+                       points:, link:, missing: missing.to_i, wide: true)
     end
 
     # Count of records by weekday × hour, in Tegucigalpa time.

@@ -84,7 +84,8 @@ class PeopleReport < Report
                                                                            dataset(:earned, top.map { |row| number(row[2]) }, format: :money) ],
                                       wide: true),
       chart(:debtors, :hbar, labels: debtors.map(&:first), datasets: [ dataset(:owed, debtors.map { |row| number(row[1]) }, format: :money) ]),
-      chart(:roles, :doughnut, labels: roles.map(&:first), datasets: [ dataset(:people, roles.map(&:last), format: :integer) ])
+      chart(:roles, :doughnut, labels: roles.map(&:first), datasets: [ dataset(:people, roles.map(&:last), format: :integer) ]),
+      locations(:map, relation, place: :person, measure: :paid_to_them, sql: "SUM(#{PAID_TO_THEM})", format: :money)
     ]
   end
 

@@ -119,4 +119,29 @@ RSpec.describe "Reports access and tools" do
     delete reports_saved_report_path(saved)
     expect(SavedReport.exists?(saved.id)).to be(true)
   end
+
+  it "draws the map of where things are, linking each point to its page" do
+    ana = create(:producer, person: create(:person, first_names: "Ana", last_names: "Zelaya", latitude: 14.1, longitude: -86.9))
+    create(:purchase, producer: ana)
+    create(:purchase) # its producer has no point
+    sign_in create(:user, :admin)
+
+    get reports_report_charts_path("purchases", period: "all")
+    page = Nokogiri::HTML(response.body)
+    map = page.at_css("[data-controller=report-map]")
+    points = JSON.parse(map["data-report-map-points-value"])
+    expect(points).to contain_exactly(a_hash_including("label" => "Ana Zelaya", "latitude" => 14.1, "longitude" => -86.9,
+                                                       "url" => trading_producer_path(ana), "text" => a_string_starting_with("QQ: ")))
+    figure = map.ancestors("figure").first
+    expect(figure.text).to include("De dónde viene el café", "1 sin ubicación en el mapa")
+    expect(figure.at_css("details table").text).to include("Ana Zelaya")
+  end
+
+  it "says when nothing has a point on the map yet" do
+    create(:purchase)
+    sign_in create(:user, :admin)
+    get reports_report_charts_path("purchases", period: "all")
+
+    expect(response.body).to include("Nada de esto tiene ubicación en el mapa todavía")
+  end
 end

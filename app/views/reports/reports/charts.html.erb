@@ -12,35 +12,37 @@
           </figcaption>
           <% if chart.type == :heatmap %>
             <%= render "reports/reports/heatmap", values: chart.datasets.first[:data] %>
+          <% elsif chart.type == :map %>
+            <%= render "reports/reports/map", chart: %>
           <% else %>
             <div class="relative h-72" data-controller="report-chart" data-report-chart-config-value="<%= report_chart_config(@report, chart) %>">
               <canvas role="img" aria-label="<%= report_chart_title(@report, chart) %>"></canvas>
             </div>
-            <% if chart.type != :scatter && chart.labels.any? %>
-              <details class="mt-2 text-sm print:hidden">
-                <summary class="cursor-pointer text-xs font-medium text-primary"><%= t("reports.charts.data") %></summary>
-                <div class="mt-2 max-h-64 overflow-auto">
-                  <table class="data-table data-table-compact" data-controller="table-sort">
-                    <thead>
+          <% end %>
+          <% if chart.type != :scatter && chart.type != :heatmap && chart.labels.any? %>
+            <details class="mt-2 text-sm print:hidden">
+              <summary class="cursor-pointer text-xs font-medium text-primary"><%= t("reports.charts.data") %></summary>
+              <div class="mt-2 max-h-64 overflow-auto">
+                <table class="data-table data-table-compact" data-controller="table-sort">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <% chart.datasets.each do |set| %><th class="text-right"><%= set[:label] %></th><% end %>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% chart.labels.each_with_index do |label, index| %>
                       <tr>
-                        <th></th>
-                        <% chart.datasets.each do |set| %><th class="text-right"><%= set[:label] %></th><% end %>
+                        <th scope="row" class="text-left font-normal normal-case tracking-normal"><%= label %></th>
+                        <% chart.datasets.each do |set| %>
+                          <td class="whitespace-nowrap text-right tabular-nums"><%= format_report_value(set[:data][index], (set[:format] || :number).to_sym) %></td>
+                        <% end %>
                       </tr>
-                    </thead>
-                    <tbody>
-                      <% chart.labels.each_with_index do |label, index| %>
-                        <tr>
-                          <th scope="row" class="text-left font-normal normal-case tracking-normal"><%= label %></th>
-                          <% chart.datasets.each do |set| %>
-                            <td class="whitespace-nowrap text-right tabular-nums"><%= format_report_value(set[:data][index], (set[:format] || :number).to_sym) %></td>
-                          <% end %>
-                        </tr>
-                      <% end %>
-                    </tbody>
-                  </table>
-                </div>
-              </details>
-            <% end %>
+                    <% end %>
+                  </tbody>
+                </table>
+              </div>
+            </details>
           <% end %>
         </figure>
       <% end %>

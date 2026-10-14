@@ -635,8 +635,12 @@ cambiar el correo o la contraseña pide la contraseña actual
 `admin` ni `active`. Debajo, aparte del formulario, sus **huellas**
 (ver «Huella digital»). Las opciones de pantalla:
 - **Páginas que se abren encima** (`window_style`): `modal` (ventana al
-  centro) o `drawer` (panel que entra desde la derecha y cubre el 90 % del
-  ancho; `.modal.drawer`). En el drawer, un `modal_link_to` navega **dentro
+  centro) o `drawer` (panel que entra desde la derecha; `.modal.drawer`).
+  El drawer **mide lo que su página necesita, hasta el 90 % del ancho**
+  (Fernando, 2026-10-13): un formulario corto no queda en un panel vacío
+  (mínimo 34rem); los párrafos se ajustan al ancho de los campos en vez
+  de ensancharlo, y una página con tablas o con `@container` toma el
+  90 %. En el drawer, un `modal_link_to` navega **dentro
   del mismo panel** (`ModalSupport#modal_frame_for`), salvo un `?picker=1`,
   que se apila encima para no perder el formulario de abajo.
 - **Menú principal** (`nav_position`): `top` o `left` (`layouts/_sidebar`,
@@ -689,7 +693,10 @@ está en `shared/_address_fields` (`location_map_controller.js`, Leaflet
 coordenadas se pueden escribir o pegar de Google Maps. Los detalles de
 productor, persona y finca muestran el mapa con «Abrir en Google Maps»
 (`shared/_location`). Las teselas salen de `config.x.map_tiles_url`
-(en test, ninguna: los specs no salen a internet).
+(en test, ninguna: los specs no salen a internet). En el mapa solo va el
+crédito obligatorio, «© OpenStreetMap» con enlace a su página de derechos
+(licencia ODbL y política de teselas), en 8 px; el de Leaflet no se
+muestra (BSD no lo pide).
 
 **Respaldo de datos** (`DataBackup`, Administración → Respaldo, Fernando
 2026-10-12; **solo el usuario con id 1**, y mientras sea administrador:
@@ -1056,6 +1063,15 @@ sistema ya guarda**; no agregan reglas de negocio.
   horizontales, líneas, combinados con segundo eje, Pareto, dona,
   dispersión y mapa de calor (HTML). Bajo cada uno, «Ver los datos» muestra
   sus números.
+- **Mapa** (Fernando, 2026-10-13; `Report#locations`, `reports/reports/_map`,
+  `report_map_controller.js` con Leaflet): un círculo por persona o finca
+  con ubicación (`Report::PLACES`), su área según la cifra del reporte, con
+  su nombre y cifra al pasar y «Abrir» su página; abajo, cuántos no salen
+  por no tener ubicación. Lo traen compras (la finca de la compra, o el
+  productor si la finca no tiene punto), productores, facturas, préstamos
+  (abre el estado de cuenta), personas, planillas, latas y gastos (abren la
+  finca). Solo dibuja datos guardados; no estima ubicaciones. La demo trae
+  puntos ficticios alrededor de Morocelí.
 - **Permisos**: un reporte pide ver Reportería **y** ver el módulo de donde
   salen sus datos (`ReportPolicy`, `Report.module_keys`). Personas y
   Entradas y salidas cruzan módulos y piden los tres. Guardar filtros solo

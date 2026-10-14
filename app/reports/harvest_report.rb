@@ -65,7 +65,9 @@ class HarvestReport < Report
                                                 dataset(:pickers, daily[:pickers], format: :integer, kind: :line, axis: :y2) ], wide: true),
       chart(:top, :hbar, labels: top.map(&:first), datasets: [ dataset(:cans, top.map(&:last), format: :number) ]),
       chart(:average, :line, labels: average_labels, datasets: [ dataset(:average, averages[:average], format: :number) ]),
-      chart(:farms, :doughnut, labels: farms.map(&:first), datasets: [ dataset(:cans, farms.map(&:last), format: :number) ])
+      chart(:farms, :doughnut, labels: farms.map(&:first), datasets: [ dataset(:cans, farms.map(&:last), format: :number) ]),
+      locations(:map, relation, place: :farm, measure: :cans, sql: "SUM(harvest_entries.cans)", format: :number,
+                                link: :farms_farm_path, link_sql: "farms.id")
     ]
   end
 
