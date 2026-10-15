@@ -1,0 +1,141 @@
+<% person = @account.person %>
+<% content_for :title, person.full_name %>
+<%# The card beside the loan form (borrower_card_controller.js loads it on
+    each pick): who the person is, how they pay and, for a producer, the
+    coffee they sell this season. Only what the system already keeps. %>
+<%= turbo_frame_tag "borrower-card" do %>
+  <article class="panel overflow-hidden" aria-labelledby="borrower-name" data-borrower="<%= person.id %>">
+    <header class="bg-gradient-to-br from-primary-soft to-surface-2 px-5 pt-5 pb-4">
+      <div class="flex items-center gap-4">
+        <%= avatar(person, css: "size-14 text-lg ring-4 ring-surface") %>
+        <div class="min-w-0">
+          <h2 id="borrower-name" class="truncate text-lg font-bold leading-tight"><%= person.full_name %></h2>
+          <% if person.zone %>
+            <p class="mt-0.5 flex items-center gap-1 text-xs text-ink-muted"><%= icon(:map_pin, css: "size-3.5") %> <%= person.zone.name %></p>
+          <% end %>
+          <div class="mt-2"><%= render "administration/people/roles", person: %></div>
+        </div>
+      </div>
+    </header>
+
+    <% contact = {
+         dni: person.dni, rtn: person.rtn, phone: format_phone(person.phone), email: person.email, address: format_address(person)
+       }.compact_blank %>
+    <section class="border-t border-line px-5 py-4" aria-labelledby="borrower-contact">
+      <h3 id="borrower-contact" class="text-[0.7rem] font-semibold tracking-wide text-ink-muted uppercase"><%= t(".contact") %></h3>
+      <% if contact.any? %>
+        <dl class="mt-2 space-y-1.5 text-sm">
+          <% contact.each do |attribute, value| %>
+            <div class="flex justify-between gap-3">
+              <dt class="shrink-0 text-ink-muted"><%= Person.human_attribute_name(attribute == :address ? :address_line : attribute) %></dt>
+              <dd class="min-w-0 text-right font-medium break-words <%= "tabular-nums" if attribute.in?(%i[dni rtn phone]) %>"><%= value %></dd>
+            </div>
+          <% end %>
+        </dl>
+      <% else %>
+        <p class="mt-2 text-sm text-ink-muted"><%= t(".no_contact") %></p>
+      <% end %>
+    </section>
+
+    <section class="border-t border-line px-5 py-4" aria-labelledby="borrower-credit">
+      <div class="flex items-center justify-between gap-2">
+        <h3 id="borrower-credit" class="flex items-center gap-1.5 text-[0.7rem] font-semibold tracking-wide text-ink-muted uppercase">
+          <%= icon(:loans, css: "size-4 text-primary") %> <%= t(".credit") %>
+        </h3>
+        <%= payer_score_badge(@account.score) %>
+      </div>
+
+      <% if @account.loans.empty? %>
+        <p class="mt-2 text-sm text-ink-muted"><%= t(".first_loan") %></p>
+      <% else %>
+        <p class="mt-3 text-xs text-ink-muted"><%= t(".owed_today") %></p>
+        <p class="text-2xl font-bold tracking-tight tabular-nums <%= @account.overdue_loans.any? ? "text-danger" : "text-primary" %>" data-borrower-owed>
+          <%= format_money(@account.total_owed) %>
+        </p>
+        <p class="text-xs text-ink-muted">
+          <%= @account.score.value ? t(".score_basis", on_time: @account.score.on_time_count, count: @account.score.evaluated_count) : t("loans.credit_accounts.show.score_none") %>
+        </p>
+
+        <dl class="mt-3 grid grid-cols-3 gap-2 text-center">
+          <% { open_loans: @account.open_loans.size, overdue_loans: @account.overdue_loans.size, loans_count: @account.loans.size }.each do |key, value| %>
+            <div class="flex flex-col-reverse rounded-xl bg-surface-2 px-2 py-2 <%= "bg-danger-soft text-danger" if key == :overdue_loans && value.positive? %>">
+              <dt class="text-[0.65rem] leading-tight text-ink-muted"><%= t(".counts.#{key}") %></dt>
+              <dd class="text-lg font-bold tabular-nums"><%= value %></dd>
+            </div>
+          <% end %>
+        </dl>
+        <p class="mt-2 flex justify-between text-xs text-ink-muted">
+          <span><%= t(".lent") %></span><span class="font-medium tabular-nums text-ink"><%= format_money(@account.lent) %></span>
+        </p>
+
+        <% if @account.open_loans.any? %>
+          <ul class="mt-3 divide-y divide-line rounded-xl border border-line">
+            <% @account.open_loans.first(3).each do |loan| %>
+              <li class="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                <div class="min-w-0">
+                  <p class="font-medium"><%= t(".loan", number: loan.id) %></p>
+                  <p class="text-xs text-ink-muted"><%= t(".due", date: l(loan.due_on)) %></p>
+                </div>
+                <div class="text-right">
+                  <p class="font-semibold tabular-nums"><%= format_money(@account.balance(loan).total_owed) %></p>
+                  <%= loan_status_badge(loan) %>
+                </div>
+              </li>
+            <% end %>
+          </ul>
+          <% if (more = @account.open_loans.size - 3).positive? %>
+            <p class="mt-1 text-xs text-ink-muted"><%= t(".more_loans", count: more) %></p>
+          <% end %>
+        <% end %>
+      <% end %>
+    </section>
+
+    <% if @producer_profile %>
+      <% producer = @producer_profile.producer %>
+      <% season = @producer_profile.season_summary %>
+      <section class="border-t border-line px-5 py-4" aria-labelledby="borrower-coffee">
+        <h3 id="borrower-coffee" class="flex items-center gap-1.5 text-[0.7rem] font-semibold tracking-wide text-ink-muted uppercase">
+          <%= icon(:bean, css: "size-4 text-primary") %> <%= t(".coffee", season: @producer_profile.season.label) %>
+        </h3>
+        <p class="mt-1 text-xs text-ink-muted">
+          <%= [ producer.human_kind, producer.ihcafe_code&.then { |code| t(".ihcafe", code:) } ].compact.join(" · ") %>
+        </p>
+        <dl class="mt-3 grid grid-cols-2 gap-2">
+          <div class="rounded-xl bg-surface-2 px-3 py-2">
+            <dt class="text-[0.65rem] text-ink-muted"><%= t(".quintals") %></dt>
+            <dd class="font-bold tabular-nums"><%= number_with_precision(season.quintals, precision: 2, delimiter: ",") %></dd>
+          </div>
+          <div class="rounded-xl bg-surface-2 px-3 py-2">
+            <dt class="text-[0.65rem] text-ink-muted"><%= t(".sold", count: season.purchases_count) %></dt>
+            <dd class="font-bold tabular-nums"><%= format_money(season.total) %></dd>
+          </div>
+        </dl>
+        <% pending = { uninvoiced: @producer_profile.uninvoiced.total, unpaid: @producer_profile.unpaid_balance }.select { |_, amount| amount.positive? } %>
+        <% if pending.any? %>
+          <dl class="mt-2 space-y-1 text-xs">
+            <% pending.each do |key, amount| %>
+              <div class="flex justify-between gap-3">
+                <dt class="text-ink-muted"><%= t(".pending.#{key}") %></dt>
+                <dd class="font-semibold tabular-nums"><%= format_money(amount) %></dd>
+              </div>
+            <% end %>
+          </dl>
+        <% end %>
+        <% if (last = @producer_profile.last_purchased_at) %>
+          <p class="mt-2 text-xs text-ink-muted"><%= t(".last_purchase", date: l(last.to_date)) %></p>
+        <% end %>
+      </section>
+    <% end %>
+
+    <% if @account.loans.any? || @producer_profile %>
+      <footer class="flex flex-wrap gap-2 border-t border-line bg-surface-2 px-5 py-3">
+        <% if @account.loans.any? %>
+          <%= modal_link_to t(".credit_account"), loans_credit_account_path(person), class: "btn btn-sm" %>
+        <% end %>
+        <% if @producer_profile %>
+          <%= modal_link_to t(".producer"), trading_producer_path(@producer_profile.producer), class: "btn btn-sm" %>
+        <% end %>
+      </footer>
+    <% end %>
+  </article>
+<% end %>

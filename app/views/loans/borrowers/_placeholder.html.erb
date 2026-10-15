@@ -1,0 +1,6 @@
+<%# The card before a person is picked (also while theirs loads). %>
+<div class="hidden rounded-2xl border border-dashed border-line bg-surface-2/60 px-6 py-10 text-center @5xl:block" data-borrower-placeholder>
+  <span class="mx-auto grid size-14 place-items-center rounded-full bg-primary-soft text-primary"><%= icon(:people, css: "size-7") %></span>
+  <p class="mt-3 font-semibold"><%= t("loans.borrowers.placeholder.title") %></p>
+  <p class="mt-1 text-sm text-ink-muted"><%= t("loans.borrowers.placeholder.help") %></p>
+</div>

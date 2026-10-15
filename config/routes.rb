@@ -80,6 +80,8 @@ Rails.application.routes.draw do
       resources :payments, only: %i[ new create show destroy ]
     end
     resources :credit_accounts, only: %i[ index show ]
+    # The card beside the loan form with the person picked.
+    resources :borrowers, only: :show
     resources :supplies, only: %i[ index new create edit update ]
   end
 
