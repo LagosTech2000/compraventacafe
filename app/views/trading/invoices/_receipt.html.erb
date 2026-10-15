@@ -1,7 +1,7 @@
 <%# One printed copy of an invoice. `label` is ORIGINAL or COPIA. %>
 <article class="rounded-2xl border border-line bg-white p-5 shadow-[0_1px_2px_rgb(29_21_18/0.04)] print:p-3 print:shadow-none print:rounded-none print:border-ink">
   <%= render "shared/print_letterhead", title: t("trading.invoices.show.invoice"), number: invoice.display_number, label:,
-        badge: payment_status_badge(invoice) %>
+        badge: payment_status_badge(invoice), rtn: true %>
 
   <dl class="mt-4 grid grid-cols-1 gap-x-6 gap-y-1 text-sm min-[30rem]:grid-cols-2 sm:grid-cols-3 print:mt-2 print:grid-cols-3">
     <div><dt class="inline font-semibold"><%= t("trading.invoices.show.producer") %>:</dt> <dd class="inline"><%= invoice.producer.full_name %></dd></div>

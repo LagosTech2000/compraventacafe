@@ -17,7 +17,12 @@ module Presence
   # The user with id 1 never shows as online (Fernando, 2026-10-13); they
   # still see who else is.
   HIDDEN_USER_IDS = [ 1 ].freeze
+  # Who sees, on hover, each user's last activity and the page they are on
+  # (Fernando, 2026-10-15). Only they get those details: their home page
+  # listens to WATCH_STREAM instead of STREAM, and only theirs renders it.
+  WATCHER_IDS = [ 1 ].freeze
   STREAM = :presence
+  WATCH_STREAM = [ :presence, :watch ].freeze
   TARGET = "active-users"
   # Avatars shown; the rest go in a "+N" with their names.
   AVATARS = 6
@@ -40,6 +45,13 @@ module Presence
       broadcast if gone
     end
 
+    # Someone opened a page: only the watchers' panel says which.
+    def page_changed(user)
+      broadcast_to_watchers unless HIDDEN_USER_IDS.include?(user.id)
+    end
+
+    def watcher?(user) = user&.active? && WATCHER_IDS.include?(user.id)
+
     def online_user_ids = @lock.synchronize { @connections.keys }
 
     # The users to show: online, active and not hidden, by name.
@@ -57,8 +69,19 @@ module Presence
           .includes(:photo_info).order("last_seen_at DESC")
     end
 
-    # What dashboard/_active_users renders.
-    def panel_locals = { users: visible_users.to_a, recent: recent_users.to_a }
+    # What dashboard/_active_users renders. With pages: true (watchers
+    # only), each user's latest session too: last activity and its page.
+    def panel_locals(pages: false)
+      users = visible_users.to_a
+      recent = recent_users.to_a
+      { users:, recent:, pages: (latest_sessions(users + recent) if pages) }
+    end
+
+    # The most recently active session of each user, by user id.
+    def latest_sessions(users)
+      Session.where(user_id: users.map(&:id)).where.not(last_seen_at: nil)
+             .order(:user_id, last_seen_at: :desc).to_a.uniq(&:user_id).index_by(&:user_id)
+    end
 
     def reset! = @lock.synchronize { @connections.clear }
 
@@ -66,6 +89,12 @@ module Presence
       def broadcast
         Turbo::StreamsChannel.broadcast_replace_to(STREAM, target: TARGET, partial: "dashboard/active_users",
                                                            locals: panel_locals)
+        broadcast_to_watchers
+      end
+
+      def broadcast_to_watchers
+        Turbo::StreamsChannel.broadcast_replace_to(WATCH_STREAM, target: TARGET, partial: "dashboard/active_users",
+                                                                 locals: panel_locals(pages: true))
       end
   end
 end

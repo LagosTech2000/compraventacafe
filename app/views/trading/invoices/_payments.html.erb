@@ -3,7 +3,15 @@
 <% payments = invoice.payments.reject(&:new_record?) %>
 <section class="mt-4 panel p-4" aria-labelledby="invoice-payments">
   <div class="flex flex-wrap items-baseline justify-between gap-3">
-    <h2 id="invoice-payments" class="font-semibold"><%= t("trading.invoices.payments.title") %></h2>
+    <div class="flex flex-wrap items-center gap-3">
+      <h2 id="invoice-payments" class="font-semibold"><%= t("trading.invoices.payments.title") %></h2>
+      <%# Who is paid, at hand to call them: the producer's page, on top. %>
+      <% if policy(invoice.producer).show? %>
+        <%= modal_link_to trading_producer_path(invoice.producer), class: "btn btn-sm", data: { invoice_producer: true } do %>
+          <%= icon(:people, css: "size-4") %> <%= t("trading.invoices.payments.producer") %>
+        <% end %>
+      <% end %>
+    </div>
     <dl class="flex flex-wrap gap-x-6 gap-y-1 text-sm">
       <% { amount_to_pay: invoice.amount_to_pay, paid_total: invoice.paid_total, balance_due: invoice.balance_due }.each do |key, value| %>
         <div class="flex gap-2">

@@ -33,6 +33,8 @@ es:
     "on": "En vivo"
     "off": "Conectando…"
   shared:
+    print_letterhead:
+      rtn: "RTN %{rtn}"
     photo_field:
       choose: "Elegir foto"
       change: "Cambiar foto"
@@ -233,6 +235,10 @@ es:
         other: "%{count} con actividad en la última hora"
       online: "En línea"
       last_seen: "Última actividad: %{time}"
+      last_activity: "Última actividad: %{time}"
+      current_page: "Está en:"
+      last_page: "Última página:"
+      no_page: "Todavía no se sabe en qué página está."
     show:
       title: "Inicio"
       coffee_market_loading: "Cargando el precio del café en la bolsa…"
@@ -644,6 +650,7 @@ es:
         quintals_short: "%{quintals} QQ"
       payments:
         title: "Pagos al productor"
+        producer: "Ver productor"
         amount_to_pay: "A pagar"
         paid_total: "Abonado"
         balance_due: "Saldo"
@@ -1203,6 +1210,11 @@ es:
       table:
         open: "Abrir"
         dates: "Fechas"
+        people: "Personas"
+        people_count:
+          zero: "Sin personas"
+          one: "1 persona"
+          other: "%{count} personas"
         no_end: "sin fecha de fin"
         actions: "Acciones"
       index:
@@ -2566,16 +2578,17 @@ es:
         site_settings:
           show:
             title: "Configuración del sitio"
-            summary: "El nombre, la ubicación y el logo del negocio, y cómo se ven. Solo para administradores."
+            summary: "El nombre, la ubicación, el RTN y el logo del negocio, y cómo se ven. Solo para administradores."
             steps:
               - "Revisa los datos y la vista previa de la barra y del inicio de sesión."
               - "Toca «Editar» para cambiarlos."
           form:
             title: "Editar la configuración del sitio"
-            summary: "Cambia el nombre del negocio, su ubicación y su logo."
+            summary: "Cambia el nombre del negocio, su ubicación, su RTN y su logo."
             steps:
               - "Escribe el nombre como quieres que se vea en la barra y en los impresos."
               - "Escribe la ubicación (opcional)."
+              - "Escribe el RTN del negocio (opcional, 14 dígitos): sale en las facturas."
               - "Elige el logo: una imagen PNG, JPG, WebP o GIF de hasta 1 MB. La vista previa muestra cómo queda en la barra."
               - "Toca «Guardar»: se ve en todo el sistema de inmediato."
             tips:
@@ -2708,7 +2721,7 @@ es:
               - "Toca «Imprimir»: el original y la copia salen en hojas separadas."
               - "Si se abonaron préstamos con sus compras, la factura los resta y muestra el total a pagar."
               - "Cuando se le pague al productor, toca «Registrar abono»: puede ser el saldo completo o una parte."
-              - "En «Pagos al productor» ves cada abono con su recibo, lo abonado y el saldo. Con abonos que no cubren todo, la factura queda en «Pago parcial»; al cubrir el total pasa a «Cancelada»."
+              - "En «Pagos al productor» ves cada abono con su recibo, lo abonado y el saldo. «Ver productor» abre sus datos (teléfono, DNI, dirección…) encima, por si hay que llamarlo. Con abonos que no cubren todo, la factura queda en «Pago parcial»; al cubrir el total pasa a «Cancelada»."
             tips:
               - "Desde la ventana de detalle, «Imprimir» abre la factura en página completa."
               - "En pergamino, «Daño (lb)» y «Daño (L)» muestran lo que el daño restó de cada compra, con su porcentaje; en uva no aplica."
@@ -3178,7 +3191,7 @@ es:
     site_settings:
       show:
         title: "Configuración del sitio"
-        help: "Cómo se presenta el negocio: el nombre va en la barra de navegación, la pestaña del navegador, el inicio de sesión y los impresos (facturas, recibos, planillas y cierre diario); la ubicación, en el inicio de sesión y los impresos; el logo, en el botón de inicio de la barra y en el inicio de sesión."
+        help: "Cómo se presenta el negocio: el nombre va en la barra de navegación, la pestaña del navegador, el inicio de sesión y los impresos (facturas, recibos, planillas y cierre diario); la ubicación, en el inicio de sesión y los impresos; el RTN, en las facturas; el logo, en el botón de inicio de la barra y en el inicio de sesión."
         edit: "Editar"
         values: "Datos"
         no_logo: "Sin logo: se muestra el grano de café."
@@ -3192,6 +3205,8 @@ es:
         name_help: "Se ve en la barra, la pestaña del navegador, el inicio de sesión y los impresos."
         location_placeholder: "Por ejemplo: Mata de Plátano, Morocelí"
         location_help: "Opcional. Va debajo del nombre en el inicio de sesión y en los impresos."
+        rtn_placeholder: "14 dígitos"
+        rtn_help: "Opcional. El RTN del negocio, que sale en las facturas debajo del nombre y la ubicación."
         logo_help: "PNG, JPG, WebP o GIF de hasta %{size}. Mejor cuadrado: se muestra en un círculo pequeño."
         remove_logo: "Quitar el logo actual (%{name}) y volver al grano de café"
         preview: "Vista previa"
@@ -3908,6 +3923,7 @@ es:
       site_setting:
         business_name: "Nombre del negocio"
         location: "Ubicación"
+        rtn: "RTN del negocio"
         logo: "Logo"
         logo_filename: "Archivo del logo"
         logo_content_type: "Tipo de imagen del logo"

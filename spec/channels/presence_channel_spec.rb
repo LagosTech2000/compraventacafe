@@ -21,4 +21,22 @@ RSpec.describe PresenceChannel, type: :channel do
     unsubscribe
     expect(session.reload.last_seen_at).to be_within(5.seconds).of(Time.current)
   end
+
+  it "notes the page each tab opens, with its title, as activity" do
+    subscribe
+    perform :visit, path: "/trading/invoices/12?tab=pagos", title: "  Factura   0012 "
+
+    expect(session.reload).to have_attributes(last_path: "/trading/invoices/12?tab=pagos", last_page_title: "Factura 0012")
+    expect(session.last_seen_at).to be_within(5.seconds).of(Time.current)
+  end
+
+  it "keeps only paths of this site, and cuts long ones" do
+    subscribe
+    perform :visit, path: "https://example.com/x", title: ""
+    expect(session.reload).to have_attributes(last_path: nil, last_page_title: nil)
+
+    perform :visit, path: "/#{"a" * 400}", title: "x" * 200
+    expect(session.reload.last_path.length).to eq(Session::PATH_LENGTH)
+    expect(session.last_page_title.length).to eq(Session::TITLE_LENGTH)
+  end
 end

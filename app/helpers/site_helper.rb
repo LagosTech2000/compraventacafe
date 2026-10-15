@@ -1,4 +1,4 @@
-# The business as an admin set it up (SiteSetting): name, location, logo.
+# The business as an admin set it up (SiteSetting): name, location, RTN, logo.
 module SiteHelper
   # Read once per page, without the logo's bytes.
   def site_setting
@@ -7,6 +7,7 @@ module SiteHelper
 
   def business_name = site_setting.business_name
   def business_location = site_setting.location
+  def business_rtn = site_setting.rtn
 
   # The logo, or the coffee bean while there is none. Decorative: the
   # business name always goes next to it.
