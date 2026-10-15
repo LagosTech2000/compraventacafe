@@ -4,14 +4,13 @@ require "capybara/cuprite"
 # (Stimulus controllers) is tested as the user sees it. Chrome must be
 # installed: locally `google-chrome` in WSL, in CI the one GitHub Actions
 # ships. BROWSER_PATH points to another Chrome when needed.
-# Ferrum waits this long for Chrome to start (its default, 10 s, is too
-# short for a cold start on the CI runner).
-ENV["FERRUM_PROCESS_TIMEOUT"] ||= "30"
-
-Capybara.register_driver(:cuprite) do |app|
-  Capybara::Cuprite::Driver.new(app, window_size: [ 1440, 1000 ], headless: true, process_timeout: 20,
-                                     browser_options: { "no-sandbox" => nil })
-end
+#
+# The options go through driven_by: Rails registers its own :cuprite driver
+# there, so a Capybara.register_driver(:cuprite) of ours would be replaced
+# and never used. process_timeout: how long Ferrum waits for Chrome to start
+# (its default, 10 s, is too short for a cold start on the CI runner). The
+# window is the size the specs were written for (Rails' default).
+CUPRITE_OPTIONS = { process_timeout: 60, browser_options: { "no-sandbox" => nil } }.freeze
 
 Capybara.default_max_wait_time = 5
 # Icon buttons are named by aria-label (the × of a toast): find them by it.
@@ -20,7 +19,7 @@ Capybara.server = :puma, { Silent: true }
 
 RSpec.configure do |config|
   config.before(:each, type: :system) do
-    driven_by :cuprite
+    driven_by :cuprite, screen_size: [ 1400, 1400 ], options: CUPRITE_OPTIONS.dup
   end
 end
 
