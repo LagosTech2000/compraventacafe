@@ -843,6 +843,7 @@ es:
         person_placeholder: "Escribe para buscar una persona"
         person_missing: "Selecciona una persona de la lista"
         new_person: "¿No está? Registrar persona"
+        borrower_card: "Ficha de la persona elegida"
         rate_help: "Porcentaje por mes. El interés corre por día (mes de 30 días) sobre el capital pendiente."
         term_days: "Plazo (días)"
         term_days_help: "Escribe los días y se llena la fecha límite, o elige la fecha y aquí salen los días."
@@ -936,6 +937,41 @@ es:
         success: "Insumo creado."
       update:
         success: "Insumo actualizado."
+    borrowers:
+      placeholder:
+        title: "¿A quién se le presta?"
+        help: "Elige una persona y aquí sale su ficha: datos de contacto, lo que debe hoy, su score de pago y, si es productor, el café que vende."
+      show:
+        contact: "Datos de contacto"
+        no_contact: "Sin DNI, teléfono, correo ni dirección registrados."
+        credit: "Historial crediticio"
+        first_loan: "Sería su primer préstamo: todavía no tiene historial."
+        owed_today: "Debe hoy (capital más interés)"
+        score_basis:
+          one: "%{on_time} de 1 préstamo pagado a tiempo."
+          other: "%{on_time} de %{count} préstamos pagados a tiempo."
+        counts:
+          open_loans: "Por cobrar"
+          overdue_loans: "Vencidos"
+          loans_count: "En total"
+        lent: "Total prestado"
+        loan: "Préstamo %{number}"
+        due: "Vence el %{date}"
+        more_loans:
+          one: "Y 1 préstamo más por cobrar."
+          other: "Y %{count} préstamos más por cobrar."
+        coffee: "Café · Temporada %{season}"
+        ihcafe: "Clave IHCAFE %{code}"
+        quintals: "QQ vendidos"
+        sold:
+          one: "1 compra"
+          other: "%{count} compras"
+        pending:
+          uninvoiced: "Sin facturar"
+          unpaid: "Facturas por pagarle"
+        last_purchase: "Última compra: %{date}"
+        credit_account: "Estado de cuenta"
+        producer: "Ficha del productor"
     credit_accounts:
       index:
         title: "Estados de cuenta"
@@ -2966,6 +3002,16 @@ es:
               - "La tasa se define en cada préstamo; puede ser 0 si no cobra interés."
               - "La fecha límite cuenta para el score de pago de la persona."
               - "«Plazo (días)»: escribe los días y la fecha límite se llena sola; si eliges la fecha límite, salen los días. Al cambiar la fecha del préstamo, la fecha límite se mueve con el mismo plazo."
+              - "Al elegir la persona, a la derecha (abajo en el celular) sale su ficha: contacto, lo que debe hoy, su score de pago y sus préstamos por cobrar; si es productor, el café que ha vendido esta temporada."
+        borrowers:
+          show:
+            title: "Ficha de la persona"
+            summary: "La tarjeta que acompaña al formulario del préstamo con los datos de la persona elegida."
+            steps:
+              - "Revisa sus datos de contacto y sus roles."
+              - "Revisa lo que debe hoy, su score de pago y sus préstamos por cobrar antes de prestarle otra vez."
+              - "Si es productor, revisa el café que ha vendido esta temporada y lo que todavía falta facturarle o pagarle."
+              - "Toca «Estado de cuenta» o «Ficha del productor» para ver todo el detalle."
         payments:
           form:
             title: "Registrar un abono"

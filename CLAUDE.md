@@ -987,6 +987,15 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
   (`loan_term_controller.js`); se guardan solo las fechas y el detalle
   muestra el plazo (`Loan#term_days`).
 
+- **Ficha de la persona en «Nuevo préstamo»** (Fernando, 2026-10-15): el
+  formulario usa todo el ancho y a la derecha (abajo en angosto) lleva la
+  tarjeta de la persona elegida (`loans/borrowers#show`, frame
+  `borrower-card`, `borrower_card_controller.js` la recarga en cada
+  `record-picker:picked`): contacto, roles y zona; lo que debe hoy, score,
+  préstamos por cobrar y vencidos (`CreditAccount`); y, si es productor y
+  el usuario ve Compra de café, el café de la temporada y lo pendiente
+  (`ProducerProfile`). Pide ver Préstamos (`CreditAccountPolicy`).
+
 - **Recibo de abono**: cada abono tiene su recibo imprimible (original y
   copia, **cada uno en su hoja**, Fernando 2026-10-13) con el saldo que quedó a la fecha del abono. Al
   registrar un abono se abre solo en el modal (`close_modal_with visit:`).
