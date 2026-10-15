@@ -8,6 +8,8 @@
     <button type="button" data-action="modal#close" aria-label="<%= t("shared.modal.close") %>"
             class="grid size-9 cursor-pointer place-items-center rounded-full text-2xl leading-none text-ink-muted transition hover:bg-surface-2 hover:text-ink">&times;</button>
   </div>
+  <%# The page's title, for presence.js (which page the user is on). %>
+  <span hidden data-presence-title="<%= content_for(:title) %>"></span>
   <%= render "shared/flash" %>
   <%= yield %>
 </turbo-frame>

@@ -1,5 +1,5 @@
 module Administration
-  # Configuración del sitio: the business's name, location and logo.
+  # Configuración del sitio: the business's name, location, RTN and logo.
   class SiteSettingsController < ApplicationController
     before_action :set_site_setting
 
@@ -23,7 +23,7 @@ module Administration
       end
 
       def site_setting_params
-        params.expect(site_setting: [ :business_name, :location, :logo, :remove_logo ])
+        params.expect(site_setting: [ :business_name, :location, :rtn, :logo, :remove_logo ])
       end
   end
 end

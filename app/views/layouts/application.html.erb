@@ -8,10 +8,15 @@
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
+    <%# No prefetch on hover (Turbo 8's default): every link the pointer
+        rested on was a request, and the office shares one IP and its limit
+        (config/initializers/rack_attack.rb). Pages load on click. %>
+    <meta name="turbo-prefetch" content="false">
 
     <%= yield :head %>
-    <%# Signed-in pages keep the user online (presence.js, Presence). %>
-    <% if authenticated? %><meta name="presence" content="on"><% end %>
+    <%# Signed-in pages keep the user online (presence.js, Presence) and say
+        which page they are, for the user with id 1 (Presence::WATCHER_IDS). %>
+    <% if authenticated? %><meta name="presence" content="on" data-title="<%= content_for(:title) %>"><% end %>
 
     <%# ?v= busts the year-long cache of public/: bump it when the icon changes. %>
     <link rel="icon" href="/icon.png?v=2" type="image/png">

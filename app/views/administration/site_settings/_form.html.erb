@@ -1,4 +1,4 @@
-<%# Name, location and logo, with a preview of the navigation bar that follows what is typed or picked. %>
+<%# Name, location, RTN and logo, with a preview of the navigation bar that follows what is typed or picked. %>
 <%= form_with model: setting, url: administration_site_setting_path, method: :patch, multipart: true,
       class: form_surface_class("max-w-2xl space-y-5"),
       data: { controller: "form-validation site-preview",
@@ -19,6 +19,13 @@
     <%= form.label :location, class: "field-label" %>
     <%= form.text_field :location, maxlength: 120, class: "field-input", placeholder: t("administration.site_settings.form.location_placeholder") %>
     <p class="mt-1 text-xs text-ink-muted"><%= t("administration.site_settings.form.location_help") %></p>
+  </div>
+
+  <div>
+    <%= form.label :rtn, class: "field-label" %>
+    <%= form.text_field :rtn, class: "field-input max-w-xs", placeholder: t("administration.site_settings.form.rtn_placeholder"),
+          **field_format_attributes(SiteSetting, :rtn, :rtn) %>
+    <p class="mt-1 text-xs text-ink-muted"><%= t("administration.site_settings.form.rtn_help") %></p>
   </div>
 
   <div>

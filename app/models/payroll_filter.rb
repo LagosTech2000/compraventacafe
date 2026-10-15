@@ -11,6 +11,8 @@ class PayrollFilter < ListFilter
   # Status in the order of Payroll::STATUSES (active, upcoming, finished).
   sorts name: text("payrolls.name"), farm: { sql: text("farms.name"), joins: :farm },
         kind: "payrolls.kind", pay_frequency: "payrolls.pay_frequency", dates: [ "payrolls.starts_on", "payrolls.ends_on" ],
+        # How many people are in it (active members).
+        people: "(SELECT COUNT(*) FROM payroll_members WHERE payroll_members.payroll_id = payrolls.id AND payroll_members.active)",
         status: lambda {
           today = ActiveRecord::Base.connection.quote(Time.zone.today)
           "CASE WHEN payrolls.starts_on > #{today} THEN 1 WHEN payrolls.ends_on < #{today} THEN 2 ELSE 0 END"

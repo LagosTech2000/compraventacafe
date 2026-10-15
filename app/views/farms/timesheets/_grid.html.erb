@@ -1,7 +1,8 @@
 <%# One grid of members × days paid the same way: by day (attendance) or by cans.
     Fixed column widths so every day lines up with its heading and total
     (Fernando, 2026-10-14); members paid by day end their row with the
-    period's extra hours and extra days (PayrollOvertime). %>
+    period's extra hours and extra days (PayrollOvertime). The first heading
+    says how many people the grid has. %>
 <% by_day = basis == "daily" %>
 <% scope = "farms.timesheets.show" %>
 <% labels = { "" => t("#{scope}.fractions.none"), "1" => t("#{scope}.fractions.1"), "0.5" => t("#{scope}.fractions.0_5") } %>
@@ -23,7 +24,12 @@
       </colgroup>
       <thead>
         <tr>
-          <th class="sticky left-0 z-10 bg-surface-2"><%= PayrollMember.human_attribute_name(:person) %></th>
+          <%# How many people are in this grid, as in the payroll lists. %>
+          <th class="sticky left-0 z-10 bg-surface-2">
+            <%= t("farms.payrolls.table.people") %>
+            <span class="badge badge-neutral ml-1 tabular-nums normal-case tracking-normal" data-timesheet-people
+                  title="<%= t("farms.payrolls.table.people_count", count: members.size) %>"><%= members.size %></span>
+          </th>
           <% dates.each do |date| %>
             <th class="text-center align-top <%= "text-primary" if date == today %>">
               <span class="block whitespace-nowrap"><%= l(date, format: :short_day) %></span>

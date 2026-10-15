@@ -557,10 +557,13 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
   encabezado en cada impreso (`spec/requests/printables_spec.rb`).
 - `raise_on_missing_translations` está activo en desarrollo y test: una clave
   que falte en `es.yml` rompe la página o el spec.
-- El nombre del negocio, su ubicación y su logo se configuran en
+- El nombre del negocio, su ubicación, su RTN y su logo se configuran en
   Administración → Configuración del sitio (`SiteSetting`, solo
-  administradores) y se leen con `business_name`, `business_location` y
-  `business_logo` (`SiteHelper`). Mientras no se guarde, salen de
+  administradores) y se leen con `business_name`, `business_location`,
+  `business_rtn` y `business_logo` (`SiteHelper`). El RTN es opcional (14
+  dígitos, como el de una persona) y sale **solo en las facturas**, bajo el
+  nombre y la ubicación (`shared/_print_letterhead` con `rtn: true`;
+  Fernando, 2026-10-15). Mientras no se guarde, salen de
   `es.yml` (`negocio.*`). El logo se guarda en la base (no hay
   almacenamiento de archivos en el servidor), se sirve en `/site_logo`
   (público, por el inicio de sesión) y solo acepta PNG, JPG, WebP o GIF
@@ -580,12 +583,16 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 ## Seguridad y carga (Fernando, 2026-10-12)
 
 - **Límite por IP delante de la app** (`rack-attack`,
-  `config/initializers/rack_attack.rb`): 900 solicitudes por 5 minutos por
+  `config/initializers/rack_attack.rb`): 3,000 solicitudes por 5 minutos por
   IP (alto: la oficina sale por una sola IP de Starlink; no cuentan assets,
   logo ni `/up`), y una IP que pide direcciones de ataque (`/wp-admin`,
   `.env`, `.php`…) 3 veces en 10 minutos queda bloqueada 1 hora. Responde
   429 con `public/429.html` en español. En los tests está apagado;
   `with_rack_attack` lo enciende (`spec/support/rate_limits.rb`).
+  **Sin precarga al pasar el puntero** (Fernando, 2026-10-15: salía mucho
+  el 429): `<meta name="turbo-prefetch" content="false">` en el layout,
+  porque Turbo 8 pedía cada enlace sobre el que se detenía el puntero, y
+  toda la oficina comparte el límite. Las páginas se piden al hacer clic.
 - **Límite por usuario en pantallas caras**
   (`ApplicationController.rate_limit_per_user`): respaldo 3 por hora, CSV
   de reportes 10 por minuto, gráficos 60 por minuto. Pasado el límite,
@@ -660,7 +667,15 @@ también. Quien cierra sesión sale, porque su sesión se borra. El tooltip
 dice «En línea» o «Última actividad: 09:42». Al entrar o salir alguien se
 reemplazan por el stream de Turbo `presence` (solo nombres y horas). **El usuario con
 id 1 nunca sale como conectado** (`Presence::HIDDEN_USER_IDS`), pero ve a los
-demás. Vive en la memoria del proceso, como el adaptador `async`.
+demás.
+**Y solo él ve, al pasar el puntero, la última actividad y la página en
+que está cada uno** (`Presence::WATCHER_IDS`, Fernando 2026-10-15):
+`presence.js` avisa por el canal (`visit`) cada página que se abre, la de
+un modal o panel lateral y, al cerrarlo, la de abajo; se guarda en la sesión
+(`Session#visited!`: ruta y título, `last_path`, `last_page_title`, y
+cuenta como actividad). Con varias sesiones sale la más reciente. Su Inicio
+escucha `Presence::WATCH_STREAM` en vez de `presence`, y solo su página
+recibe ese stream firmado: a los demás no les llega ni la ruta. Vive en la memoria del proceso, como el adaptador `async`.
 
 **Café en la bolsa** (`CoffeeMarket`, Fernando, 2026-10-13): tarjeta del
 Inicio, a todo el ancho (precio, línea y rangos en una fila; apilados en

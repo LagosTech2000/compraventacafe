@@ -23,6 +23,34 @@ RSpec.describe "Site settings" do
     expect(response.body).to include("Café La Esperanza", "Danlí, El Paraíso")
   end
 
+  it "keeps the business's RTN (14 digits, optional) and prints it on invoices only" do
+    sign_in admin
+    patch administration_site_setting_path, params: { site_setting: { business_name: "Rey David", rtn: "0801-1999-123456" } }
+    expect(response).to redirect_to(administration_site_setting_path)
+    expect(SiteSetting.sole.rtn).to eq("08011999123456")
+
+    get administration_site_setting_path
+    expect(response.body).to include("RTN del negocio", "08011999123456")
+
+    invoice = create(:invoice)
+    get trading_invoice_path(invoice)
+    rtns = Nokogiri::HTML(response.body).css("header.border-b-2 [data-business-rtn]")
+    expect(rtns.map { |line| line.text.squish }).to eq([ "RTN 08011999123456" ] * 2) # original and copy
+
+    get loans_loan_payment_path(*create(:loan_payment).then { [ it.loan, it ] })
+    expect(response.body).not_to include("data-business-rtn")
+
+    patch administration_site_setting_path, params: { site_setting: { business_name: "Rey David", rtn: "123" } }
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("RTN del negocio debe tener 14 dígitos")
+    expect(SiteSetting.sole.rtn).to eq("08011999123456")
+
+    patch administration_site_setting_path, params: { site_setting: { business_name: "Rey David", rtn: "" } }
+    expect(SiteSetting.sole.rtn).to be_nil
+    get trading_invoice_path(invoice)
+    expect(response.body).not_to include("data-business-rtn")
+  end
+
   it "takes a logo, shows it in the navigation bar and serves it to anyone, cached by version" do
     sign_in admin
     patch administration_site_setting_path, params: { site_setting: { business_name: "Rey David", logo: logo("logo.png", "image/png") } }

@@ -17,8 +17,10 @@
     </p>
   </div>
   <div class="shrink-0 pt-1">
-    <%= turbo_stream_from Presence::STREAM %>
-    <%= render "dashboard/active_users", **Presence.panel_locals %>
+    <%# The watchers (user id 1) also see each user's activity and page. %>
+    <% watcher = Presence.watcher?(Current.user) %>
+    <%= turbo_stream_from(watcher ? Presence::WATCH_STREAM : Presence::STREAM) %>
+    <%= render "dashboard/active_users", **Presence.panel_locals(pages: watcher) %>
   </div>
 </div>
 

@@ -1,6 +1,7 @@
 # What identifies the business on screen and on paper: its name (navigation
 # bar, browser tab, sign-in page and printed documents), its location
-# (sign-in page and printed documents) and its logo (the home button of the
+# (sign-in page and printed documents), its RTN (invoices; optional, 14
+# digits like a person's) and its logo (the home button of the
 # navigation bar and the sign-in page). Admins set it in Administración →
 # Configuración del sitio.
 #
@@ -21,7 +22,7 @@ class SiteSetting < ApplicationRecord
   MAX_LOGO_SIZE = 1.megabyte
   # Every column but the logo's bytes, for pages that only need to know
   # whether there is a logo.
-  LIGHT_COLUMNS = %w[id business_name location logo_content_type logo_filename logo_byte_size created_at updated_at].freeze
+  LIGHT_COLUMNS = %w[id business_name location rtn logo_content_type logo_filename logo_byte_size created_at updated_at].freeze
 
   self.audit_skipped_attributes = %w[logo_data]
 
@@ -29,9 +30,11 @@ class SiteSetting < ApplicationRecord
   attr_accessor :logo, :remove_logo
 
   normalizes :business_name, :location, with: ->(value) { value.squish.presence }
+  normalizes :rtn, with: FieldFormats::DIGITS
 
   validates :business_name, presence: true, length: { maximum: 80 }
   validates :location, length: { maximum: 120 }
+  validates :rtn, field_format: :rtn
   validate :logo_is_an_image
 
   before_validation :take_logo

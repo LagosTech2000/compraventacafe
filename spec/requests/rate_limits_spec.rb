@@ -4,6 +4,20 @@ RSpec.describe "Rate limits" do
   let(:admin) { create(:user, :admin) }
 
   describe "in front of the app (rack-attack)" do
+    it "leaves room for the whole office behind one IP" do
+      expect(Rack::Attack::REQUEST_LIMIT).to eq(3_000)
+      expect(Rack::Attack::REQUEST_PERIOD).to eq(5.minutes)
+    end
+
+    it "turns off Turbo's prefetch on hover, which spent the limit on links nobody clicked" do
+      get new_session_path
+      expect(response.body).to include('<meta name="turbo-prefetch" content="false">')
+
+      sign_in admin
+      get root_path
+      expect(response.body).to include('<meta name="turbo-prefetch" content="false">')
+    end
+
     it "answers 429 in Spanish past the requests per IP, and audits it once" do
       stub_const("Rack::Attack::REQUEST_LIMIT", 3)
       with_rack_attack do

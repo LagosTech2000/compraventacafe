@@ -4,7 +4,8 @@
 #   requests_per_ip  every client IP gets REQUEST_LIMIT requests per
 #                    REQUEST_PERIOD. High on purpose: the whole office may
 #                    share one public IP (Starlink), and live filters, charts
-#                    and infinite scroll make many small requests. Assets,
+#                    and infinite scroll make many small requests, and a
+#                    save refreshes every open tab (live updates). Assets,
 #                    the logo and the health check do not count.
 #   scanner_ban      an IP that asks for addresses used to probe for holes
 #                    (/wp-admin, /.env, *.php…) SCANNER_HITS times within
@@ -23,7 +24,7 @@
 #
 # Tests turn it off; the specs that check it turn it on (spec/support/rate_limits.rb).
 class Rack::Attack
-  REQUEST_LIMIT = 900
+  REQUEST_LIMIT = 3_000
   REQUEST_PERIOD = 5.minutes
   SCANNER_HITS = 3
   SCANNER_WINDOW = 10.minutes

@@ -115,5 +115,28 @@ RSpec.describe "Home page" do
       expect(recent["aria-describedby"]).to eq("recent_user_#{ana.id}_status")
       expect(page.at_css("#active-users")["aria-label"]).to eq("1 usuario conectado, 1 con actividad en la última hora")
     end
+
+    it "shows the watcher, and only them, each user's last activity and page on hover" do
+      ana = create(:user, name: "Ana Zelaya")
+      seen = Time.zone.parse("2026-10-15 10:05")
+      ana.sessions.create!(last_seen_at: seen, last_path: "/trading/invoices/12", last_page_title: "Factura 0012")
+      Presence.join(ana)
+      stub_const("Presence::WATCHER_IDS", [ viewer.id ])
+
+      travel_to(seen + 1.minute) do
+        sign_in viewer
+        get root_path
+      end
+      card = page.at_css("#active-users li#online_user_#{ana.id} .online-tooltip")
+      expect(card.text.squish).to eq("Ana Zelaya En línea Última actividad: 10:05 Está en: Factura 0012 /trading/invoices/12")
+      expect(response.body).to include(Turbo::StreamsChannel.signed_stream_name(Presence::WATCH_STREAM))
+
+      sign_in create(:user, name: "Otro Usuario")
+      get root_path
+      expect(page.at_css("#active-users li#online_user_#{ana.id} .online-tooltip").text.squish).to eq("Ana Zelaya En línea")
+      expect(page.at_css("[data-presence-page]")).to be_nil
+      expect(response.body).not_to include("/trading/invoices/12")
+      expect(response.body).not_to include(Turbo::StreamsChannel.signed_stream_name(Presence::WATCH_STREAM))
+    end
   end
 end

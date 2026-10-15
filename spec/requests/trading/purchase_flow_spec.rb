@@ -191,7 +191,7 @@ RSpec.describe "Trading purchase flow" do
 
       get trading_invoice_path(invoice)
       page = Nokogiri::HTML(response.body)
-      expect(page.at_css("#invoice-payments").parent.text.squish).to include("A pagar: L 4,120.90", "Abonado: L 1,000.00", "Saldo: L 3,120.90")
+      expect(page.at_css("section[aria-labelledby=invoice-payments]").text.squish).to include("A pagar: L 4,120.90", "Abonado: L 1,000.00", "Saldo: L 3,120.90")
       expect(page.css("article").first.text.squish).to include("Pago parcial", "Abono #{payment.display_number}", "Saldo pendiente L 3,120.90")
 
       get trading_invoice_payment_path(invoice, payment)

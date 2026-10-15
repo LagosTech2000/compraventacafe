@@ -6,8 +6,43 @@ RSpec.describe Presence do
   let(:ana) { create(:user, name: "Ana Zelaya") }
   let(:beto) { create(:user, name: "Beto Mejía") }
 
-  it "never shows the user with id 1" do
+  it "never shows the user with id 1, who is also the only one to see pages" do
     expect(Presence::HIDDEN_USER_IDS).to eq([ 1 ])
+    expect(Presence::WATCHER_IDS).to eq([ 1 ])
+  end
+
+  describe "pages, for the watchers" do
+    it "gives each user's most recently active session" do
+      ana.sessions.create!(last_seen_at: 10.minutes.ago, last_path: "/loans")
+      phone = ana.sessions.create!(last_seen_at: 1.minute.ago, last_path: "/trading/purchases")
+      beto.sessions.create!(last_seen_at: 2.minutes.ago, last_path: "/farms")
+      described_class.join(ana)
+      described_class.join(beto)
+
+      pages = described_class.panel_locals(pages: true)[:pages]
+      expect(pages[ana.id]).to eq(phone)
+      expect(pages[beto.id].last_path).to eq("/farms")
+    end
+
+    it "is a watcher only while active" do
+      stub_const("Presence::WATCHER_IDS", [ ana.id ])
+      expect(described_class.watcher?(ana)).to be(true)
+      expect(described_class.watcher?(beto)).to be(false)
+      expect(described_class.watcher?(nil)).to be_falsey
+      ana.update!(active: false)
+      expect(described_class.watcher?(ana)).to be(false)
+    end
+
+    it "tells only the watchers' stream that someone changed page, never for the hidden user" do
+      stub_const("Presence::HIDDEN_USER_IDS", [ beto.id ])
+      allow(Turbo::StreamsChannel).to receive(:broadcast_replace_to)
+
+      described_class.page_changed(ana)
+      described_class.page_changed(beto)
+
+      expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).once
+      expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).with(Presence::WATCH_STREAM, hash_including(target: "active-users"))
+    end
   end
 
   it "shows a user while any of their tabs is connected, by name" do
@@ -40,9 +75,11 @@ RSpec.describe Presence do
     described_class.leave(ana)
 
     expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to)
-      .with(:presence, target: "active-users", partial: "dashboard/active_users", locals: { users: [ ana ], recent: [] }).once
+      .with(:presence, target: "active-users", partial: "dashboard/active_users", locals: { users: [ ana ], recent: [], pages: nil }).once
     expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to)
-      .with(:presence, target: "active-users", partial: "dashboard/active_users", locals: { users: [], recent: [] }).once
+      .with(Presence::WATCH_STREAM, target: "active-users", partial: "dashboard/active_users", locals: { users: [ ana ], recent: [], pages: {} }).once
+    expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to)
+      .with(:presence, target: "active-users", partial: "dashboard/active_users", locals: { users: [], recent: [], pages: nil }).once
   end
 
   describe "recent activity" do
@@ -75,10 +112,10 @@ RSpec.describe Presence do
     it "moves a user to recent when their last tab closes" do
       session_for(ana, seen: 1.minute.ago)
       described_class.join(ana)
-      expect(described_class.panel_locals).to eq(users: [ ana ], recent: [])
+      expect(described_class.panel_locals).to eq(users: [ ana ], recent: [], pages: nil)
 
       described_class.leave(ana)
-      expect(described_class.panel_locals).to eq(users: [], recent: [ ana ])
+      expect(described_class.panel_locals).to eq(users: [], recent: [ ana ], pages: nil)
     end
   end
 end

@@ -625,6 +625,11 @@
     @apply pointer-events-none invisible absolute top-full right-0 z-20 mt-2 w-max max-w-56 rounded-lg bg-ink px-2.5 py-1.5 text-xs font-medium text-surface opacity-0 shadow-lg transition;
   }
 
+  /* With the activity and page, for the watchers (Presence::WATCHER_IDS). */
+  .online-tooltip-wide {
+    @apply w-72 max-w-[80vw];
+  }
+
   .online-avatar:hover .online-tooltip,
   .online-avatar:focus-visible .online-tooltip {
     @apply visible opacity-100;
