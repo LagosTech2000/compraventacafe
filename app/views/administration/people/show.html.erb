@@ -14,6 +14,9 @@
     <% if policy(@person).update? %>
       <%= link_to t(".edit"), edit_administration_person_path(@person), class: "btn btn-primary" %>
     <% end %>
+    <% if policy([ :administration, PersonMerge ]).new? %>
+      <%= page_link_to t(".merge"), new_administration_person_merge_path(@person), class: "btn" %>
+    <% end %>
     <% if policy(@person).destroy? %>
       <%= button_to t(".destroy"), administration_person_path(@person), method: :delete, class: "btn",
             form: { data: { turbo_confirm: t(".confirm_destroy", name: @person.full_name) } } %>
@@ -35,6 +38,8 @@
 <% if @person.located? %>
   <div class="mt-4 panel p-4"><%= render "shared/location", record: @person %></div>
 <% end %>
+
+<%= render "administration/people/producer", producer: @person.producer if @person.producer %>
 
 <% unless modal_request? %>
   <p class="mt-6"><%= link_to t(".back"), administration_people_path, class: "text-sm link" %></p>

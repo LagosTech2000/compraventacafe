@@ -52,6 +52,6 @@ RSpec.describe "Report maps" do
 
   it "has a map in every report about people or farms" do
     keys = Report.catalog.select { |report| report.new({}, user:).charts.any? { it.type == :map } }.map(&:key)
-    expect(keys).to match_array(%w[purchases producers invoices loans payroll_payments harvest payroll_expenses people])
+    expect(keys).to match_array(%w[purchases producers invoices loans payroll_payments harvest payroll_expenses farms people])
   end
 end

@@ -1,0 +1,43 @@
+<% content_for :title, @farm.name %>
+<%= render "administration/nav" %>
+<%# The farm's record, what names it, and its page in Fincas for who sees it. %>
+<% purchases = @farm.purchases.count %>
+<% payrolls = @farm.payrolls.count %>
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="flex flex-wrap items-center gap-2 text-2xl font-bold">
+      <%= @farm.name %>
+      <% unless @farm.active? %><span class="badge badge-neutral"><%= t("farms.status_badges.farm.inactive") %></span><% end %>
+    </h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= @farm.producer ? t("farms.farms.show.owner", name: @farm.producer.full_name) : t("farms.farms.form.business") %></p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <% if policy([ :administration, @farm ]).update? %>
+      <%= modal_link_to t(".edit"), edit_administration_farm_path(@farm), class: "btn btn-primary" %>
+    <% end %>
+    <% if policy([ :administration, @farm ]).destroy? && purchases.zero? && payrolls.zero? %>
+      <%= button_to t(".destroy"), administration_farm_path(@farm), method: :delete, class: "btn",
+            form: { data: { turbo_confirm: t(".confirm_destroy", name: @farm.name) } } %>
+    <% end %>
+    <% if policy(@farm).show? %>
+      <%= page_link_to t(".open_in_farms"), farms_farm_path(@farm), class: "btn" %>
+    <% end %>
+  </div>
+</div>
+
+<dl class="mt-6 grid panel sm:grid-cols-2">
+  <% { t("farms.area.label") => format_farm_area(@farm), Farm.human_attribute_name(:address_line) => format_address(@farm).presence,
+       t(".purchases") => number_with_delimiter(purchases), t(".payrolls") => number_with_delimiter(payrolls),
+       Farm.human_attribute_name(:observations) => @farm.observations }.each do |label, value| %>
+    <div class="border-b border-line px-4 py-3">
+      <dt class="text-xs font-medium text-ink-muted"><%= label %></dt>
+      <dd class="mt-1 whitespace-pre-line text-sm"><%= value.presence || "—" %></dd>
+    </div>
+  <% end %>
+</dl>
+<% if purchases.positive? || payrolls.positive? %>
+  <p class="mt-3 text-xs text-ink-muted"><%= t(".kept") %></p>
+<% end %>
+<% if @farm.located? %>
+  <div class="mt-4 panel p-4"><%= render "shared/location", record: @farm %></div>
+<% end %>

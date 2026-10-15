@@ -1,16 +1,31 @@
-<%# One grid of members × days paid the same way: by day (attendance) or by cans. %>
+<%# One grid of members × days paid the same way: by day (attendance) or by cans.
+    Fixed column widths so every day lines up with its heading and total
+    (Fernando, 2026-10-14); members paid by day end their row with the
+    period's extra hours and extra days (PayrollOvertime). %>
 <% by_day = basis == "daily" %>
 <% scope = "farms.timesheets.show" %>
 <% labels = { "" => t("#{scope}.fractions.none"), "1" => t("#{scope}.fractions.1"), "0.5" => t("#{scope}.fractions.0_5") } %>
-<section class="mt-4" data-controller="timesheet" data-timesheet-labels-value="<%= labels.to_json %>">
+<% hour_rate = timesheet.overtime_hour_rate %>
+<% extra_columns = by_day ? 2 : 0 %>
+<%# rem: person + days + extra hours/days + total + amount. %>
+<% min_width = 13 + (dates.size * 5) + (extra_columns * 6) + 5 + 8 %>
+<section class="mt-4" data-controller="timesheet" data-timesheet-labels-value="<%= labels.to_json %>"
+         data-timesheet-hour-rate-value="<%= hour_rate.to_d %>">
   <% if heading %><h2 class="mb-2 text-lg font-semibold"><%= heading %></h2><% end %>
   <div class="panel overflow-x-auto">
-    <table class="data-table data-table-compact">
+    <table class="data-table data-table-compact timesheet-grid table-fixed" style="min-width: <%= min_width %>rem">
+      <colgroup>
+        <col class="w-52">
+        <% dates.each do %><col class="w-20"><% end %>
+        <% extra_columns.times do %><col class="w-24"><% end %>
+        <col class="w-20">
+        <col class="w-32">
+      </colgroup>
       <thead>
         <tr>
           <th class="sticky left-0 z-10 bg-surface-2"><%= PayrollMember.human_attribute_name(:person) %></th>
           <% dates.each do |date| %>
-            <th class="text-center <%= "text-primary" if date == today %>">
+            <th class="text-center align-top <%= "text-primary" if date == today %>">
               <span class="block whitespace-nowrap"><%= l(date, format: :short_day) %></span>
               <% if editable && by_day %>
                 <button type="button" class="link text-[0.65rem] normal-case" data-action="timesheet#fillColumn" data-date="<%= date.iso8601 %>"
@@ -18,16 +33,26 @@
               <% end %>
             </th>
           <% end %>
-          <th class="text-right"><%= t("#{scope}.total.#{basis}") %></th>
-          <th class="text-right"><%= t("#{scope}.amount") %></th>
+          <% if by_day %>
+            <th class="text-center align-top">
+              <span class="block"><%= t("#{scope}.overtime.hours") %></span>
+              <span class="block text-[0.65rem] font-normal normal-case"><%= hour_rate ? t("#{scope}.overtime.hour_rate", rate: format_money(hour_rate)) : t("#{scope}.overtime.no_rate_short") %></span>
+            </th>
+            <th class="text-center align-top">
+              <span class="block"><%= t("#{scope}.overtime.extra_days") %></span>
+              <span class="block text-[0.65rem] font-normal normal-case"><%= t("#{scope}.overtime.extra_days_rate") %></span>
+            </th>
+          <% end %>
+          <th class="text-right align-top"><%= t("#{scope}.total.#{basis}") %></th>
+          <th class="text-right align-top"><%= t("#{scope}.amount") %></th>
         </tr>
       </thead>
       <tbody>
         <% members.each do |member| %>
           <% rate = timesheet.rate_for(member) %>
           <tr data-timesheet-target="row" data-rate="<%= rate %>">
-            <th scope="row" class="sticky left-0 z-10 bg-surface text-left text-sm font-medium tracking-normal whitespace-nowrap text-ink normal-case">
-              <%= member.full_name %>
+            <th scope="row" class="sticky left-0 z-10 bg-surface text-left text-sm font-medium tracking-normal text-ink normal-case">
+              <span class="block truncate" title="<%= member.full_name %>"><%= member.full_name %></span>
               <% if by_day && member.role %><span class="block text-xs font-normal text-ink-muted"><%= member.role.name %></span><% end %>
               <% unless rate %><span class="block text-xs font-normal text-danger"><%= t("#{scope}.no_wage") %></span><% end %>
               <% if editable && by_day && dates.many? %>
@@ -39,7 +64,7 @@
               <% value = timesheet.value(member, date) %>
               <% name = "work[#{member.id}][#{date.iso8601}]" %>
               <% label = t("#{scope}.cell_label", person: member.full_name, date: l(date, format: :long)) %>
-              <td class="px-1 text-center">
+              <td class="text-center align-middle">
                 <% if by_day %>
                   <%# A button that cycles — → full day → half day; the hidden field is what is sent. %>
                   <% day_value = value ? (value == 1 ? "1" : "0.5") : "" %>
@@ -48,13 +73,30 @@
                           data-action="timesheet#cycle" aria-label="<%= label %>"
                           title="<%= t("#{scope}.cycle_hint") %>"><%= t("#{scope}.fractions.#{day_value.presence&.tr(".", "_") || "none"}") %></button>
                 <% else %>
-                  <%= number_field_tag name, value && number_with_precision(value, precision: 2, strip_insignificant_zeros: true),
+                  <%= number_field_tag name, value && number_with_precision(value, precision: 2, strip_insignificant_zeros: true, delimiter: ""),
                         id: nil, min: 0, max: 999.75, step: HarvestEntry::CAN_STEP, inputmode: "decimal",
                         title: t("#{scope}.cans_hint"), disabled: !editable, aria: { label: },
-                        class: "field-input w-16 px-1 text-center tabular-nums",
+                        class: "field-input timesheet-cell",
                         data: { date: date.iso8601, action: "timesheet#update", invalid_message: t("#{scope}.cans_hint") } %>
                 <% end %>
               </td>
+            <% end %>
+            <% if by_day %>
+              <%# The period's overtime: extra hours × the payroll's hour value, extra days × the daily wage. %>
+              <% { hours: [ 0.01, hour_rate.nil? ], extra_days: [ 0.5, false ] }.each do |field, (step, locked)| %>
+                <% amount = timesheet.overtime(member, field) %>
+                <td class="text-center align-middle">
+                  <%= number_field_tag "overtime[#{member.id}][#{field}]",
+                        (number_with_precision(amount, precision: 2, strip_insignificant_zeros: true, delimiter: "") if amount.positive?),
+                        id: nil, min: 0, max: field == :hours ? 999.75 : 99.5, step:, inputmode: "decimal", placeholder: "0",
+                        disabled: !editable || locked,
+                        title: (t("#{scope}.overtime.no_rate") if locked),
+                        aria: { label: t("#{scope}.overtime.#{field}_label", person: member.full_name) },
+                        class: "field-input timesheet-cell",
+                        data: { overtime: field, action: "timesheet#update",
+                                invalid_message: t("#{scope}.overtime.#{field}_hint") } %>
+                </td>
+              <% end %>
             <% end %>
             <td class="text-right font-medium tabular-nums" data-timesheet-target="rowTotal"><%= number_with_precision(timesheet.total_for(member), precision: 2, strip_insignificant_zeros: true) %></td>
             <td class="whitespace-nowrap text-right tabular-nums" data-timesheet-target="rowAmount"><%= (amount = timesheet.amount_for(member)) ? format_money(amount) : "—" %></td>
@@ -69,6 +111,13 @@
               <%= number_with_precision(timesheet.total_for_date(date, members), precision: 2, strip_insignificant_zeros: true) %>
             </td>
           <% end %>
+          <% if by_day %>
+            <% %i[hours extra_days].each do |field| %>
+              <td class="text-center tabular-nums" data-timesheet-target="overtimeTotal" data-overtime="<%= field %>">
+                <%= number_with_precision(members.sum { |member| timesheet.overtime(member, field) }, precision: 2, strip_insignificant_zeros: true) %>
+              </td>
+            <% end %>
+          <% end %>
           <td></td>
           <td class="whitespace-nowrap text-right tabular-nums" data-timesheet-target="grandTotal">
             <%= format_money(members.sum { |member| timesheet.amount_for(member) || 0 }) %>
@@ -77,4 +126,12 @@
       </tfoot>
     </table>
   </div>
+  <% if by_day && hour_rate.nil? && editable %>
+    <p class="mt-2 text-xs text-ink-muted">
+      <%= t("#{scope}.overtime.no_rate") %>
+      <% if policy(timesheet.payroll).update? %>
+        <%= modal_link_to t("#{scope}.overtime.set_rate"), edit_farms_payroll_path(timesheet.payroll), class: "link" %>
+      <% end %>
+    </p>
+  <% end %>
 </section>

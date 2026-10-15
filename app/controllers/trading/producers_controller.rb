@@ -44,7 +44,7 @@ module Trading
         close_modal_with notice: t(".success"), fallback: trading_producer_path(@producer),
                          event: "producer:created",
                          detail: { id: @producer.id, label: @producer.picker_label, zone_id: @producer.zone_id,
-                                   farms: @producer.farms.map { |farm| [ farm.id, farm.name ] }, missing: @producer.missing_fields }
+                                   farms: picker_farms, missing: @producer.missing_fields }
       else
         render :new, status: :unprocessable_content
       end
@@ -55,18 +55,23 @@ module Trading
 
     def update
       # From the purchase form (picker=1) the form stays: it learns the
-      # producer's new name, zone and empty details.
+      # producer's new name, zone, farms and empty details.
       if @producer.update(producer_params)
         close_modal_with notice: t(".success"), fallback: trading_producer_path(@producer),
                          event: "producer:updated",
                          detail: { id: @producer.id, label: @producer.picker_label, zone_id: @producer.zone_id,
-                                   missing: @producer.missing_fields }
+                                   farms: picker_farms, missing: @producer.missing_fields }
       else
         render :edit, status: :unprocessable_content
       end
     end
 
     private
+      # The farms a purchase can name, as the purchase form lists them.
+      def picker_farms
+        @producer.farms.reload.select(&:active?).map { |farm| [ farm.id, farm.name ] }
+      end
+
       def set_producer
         @producer = authorize Producer.find(params[:id])
       end

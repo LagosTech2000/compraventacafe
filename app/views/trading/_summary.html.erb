@@ -1,16 +1,17 @@
-<%# Totals of a DailyClose. %>
-<dl class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+<%# Totals of a PurchaseSummary (a day, a season, a filtered list): the
+    figures, then where the money stands (trading/_payment_states). They fill
+    each row, without gaps. %>
+<dl class="flex flex-wrap gap-3">
   <% {
        purchases: daily_close.purchases_count, producers: daily_close.producers_count,
        gross_weight: format_pounds(daily_close.gross_weight), sacks: format_pounds(daily_close.sacks),
        net_weight: format_pounds(daily_close.net_weight), quintals: format_pounds(daily_close.quintals),
-       total: format_money(daily_close.total),
-       paid_total: format_money(daily_close.paid_total), pending_total: format_money(daily_close.pending_total),
-       uninvoiced_total: format_money(daily_close.uninvoiced_total)
+       total: format_money(daily_close.total)
      }.each do |key, value| %>
-    <div class="stat">
+    <div class="stat min-w-0 flex-1 basis-36">
       <dt><%= t("trading.summary.#{key}") %></dt>
       <dd><%= value %></dd>
     </div>
   <% end %>
 </dl>
+<%= render "trading/payment_states", summary: daily_close %>

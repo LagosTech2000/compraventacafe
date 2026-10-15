@@ -1,9 +1,9 @@
 # Who did what to which record, and when. Written by Auditable and by the
 # session controller; never updated or deleted by the application.
 class AuditEvent < ApplicationRecord
-  ACTIONS = %w[create update destroy sign_in sign_out sign_in_failed backup error rate_limited].freeze
+  ACTIONS = %w[create update destroy sign_in sign_out sign_in_failed backup error rate_limited merge].freeze
   # Keep in sync with the models that include Auditable (a spec checks it).
-  AUDITED_TYPES = %w[User Permission Person Client Collaborator Producer Zone Purchase Invoice InvoicePayment Loan LoanPayment Supply LoanSupply PurchaseWeighing Farm ExpenseCategory Payroll PayrollRole PayrollMember PayrollAttendance HarvestEntry PayrollTask PayrollTaskParticipant PayrollPayment PayrollPaymentLine PayrollExpense SavedReport SiteSetting ProfilePhoto WebauthnCredential].freeze
+  AUDITED_TYPES = %w[User Permission Person Client Collaborator Producer Zone Purchase Invoice InvoicePayment Loan LoanPayment Supply LoanSupply PurchaseWeighing Farm ExpenseCategory Payroll PayrollRole PayrollMember PayrollAttendance HarvestEntry PayrollOvertime PayrollTask PayrollTaskParticipant PayrollPayment PayrollPaymentLine PayrollExpense SavedReport SiteSetting ProfilePhoto WebauthnCredential].freeze
   FILTERED = "[FILTERED]".freeze
 
   belongs_to :user, optional: true

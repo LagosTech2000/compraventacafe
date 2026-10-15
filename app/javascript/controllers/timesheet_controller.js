@@ -3,15 +3,16 @@ import { Controller } from "@hotwired/stimulus"
 // Timesheet grid (members × days). Attendance is a button per day that
 // cycles — → 1 (full day) → ½ → —, with a hidden field holding what is
 // sent; "Todos" fills a day for everyone and "Toda la semana" a member's
-// whole period. Cans are typed. The totals of each member (days or cans,
-// and pay) and of each day follow, and every change is announced
-// ("timesheet:changed") for the save bar. Only a preview: the server saves
-// and recalculates.
+// whole period. Cans are typed. Members paid by day end their row with the
+// period's extra hours (× the payroll's hour value) and extra days (× their
+// daily wage). The totals of each member (days or cans, and pay) and of
+// each day follow, and every change is announced ("timesheet:changed") for
+// the save bar. Only a preview: the server saves and recalculates.
 const NEXT = { "": "1", 1: "0.5", 0.5: "" }
 
 export default class extends Controller {
-  static targets = ["row", "rowTotal", "rowAmount", "dateTotal", "grandTotal", "dayValue"]
-  static values = { labels: Object }
+  static targets = ["row", "rowTotal", "rowAmount", "dateTotal", "grandTotal", "dayValue", "overtimeTotal"]
+  static values = { labels: Object, hourRate: Number }
 
   connect() {
     this.money = new Intl.NumberFormat("es-HN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -50,7 +51,9 @@ export default class extends Controller {
     this.rowTargets.forEach((row, index) => {
       const total = [...row.querySelectorAll("[data-date]")].reduce((sum, cell) => sum + this.value(cell), 0)
       const rate = parseFloat(row.dataset.rate)
-      const amount = Math.round(total * rate * 100) / 100
+      const hours = this.overtime(row, "hours")
+      const extraDays = this.overtime(row, "extra_days")
+      const amount = Math.round((total * rate + extraDays * rate + hours * this.hourRateValue) * 100) / 100
       this.rowTotalTargets[index].textContent = this.number.format(total)
       this.rowAmountTargets[index].textContent = rate > 0 ? `L ${this.money.format(amount)}` : "—"
       if (rate > 0) grand += amount
@@ -58,8 +61,16 @@ export default class extends Controller {
     this.dateTotalTargets.forEach((cell) => {
       cell.textContent = this.number.format(this.cells(cell.dataset.date).reduce((sum, input) => sum + this.value(input), 0))
     })
+    this.overtimeTotalTargets.forEach((cell) => {
+      cell.textContent = this.number.format(this.rowTargets.reduce((sum, row) => sum + this.overtime(row, cell.dataset.overtime), 0))
+    })
     this.grandTotalTarget.textContent = `L ${this.money.format(grand)}`
     this.dispatch("changed")
+  }
+
+  overtime(row, field) {
+    const input = row.querySelector(`[data-overtime='${field}']`)
+    return input ? this.value(input) : 0
   }
 
   cells(date) {

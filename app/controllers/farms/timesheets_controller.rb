@@ -13,7 +13,7 @@ module Farms
     def update
       authorize @payroll, :record_work?
 
-      if @timesheet.update(params.fetch(:work, {}).to_unsafe_h)
+      if @timesheet.update(params.fetch(:work, {}).to_unsafe_h, params.fetch(:overtime, {}).to_unsafe_h)
         redirect_to farms_payroll_timesheet_path(@payroll, period: @timesheet.period.to_param, day: @day&.iso8601),
                     notice: t(".success")
       else

@@ -21,9 +21,25 @@
   <%= render "trading/daily_closes/by_producer", daily_close: @daily_close %>
 <% end %>
 
+<% if @daily_close.partial_invoices.any? %>
+  <%= render "trading/daily_closes/partial_invoices", daily_close: @daily_close %>
+<% end %>
+
+<%# The day's purchases by payment state, each group with its money. %>
 <h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".purchases") %></h2>
 <% if @daily_close.purchases.any? %>
-  <%= render "trading/purchases/table", purchases: @daily_close.purchases %>
+  <div class="space-y-6">
+    <% @daily_close.groups.each do |state, purchases| %>
+      <section aria-labelledby="daily-close-<%= state %>" id="daily-close-group-<%= state %>">
+        <h3 id="daily-close-<%= state %>" class="mb-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="badge <%= TradingHelper::DAILY_CLOSE_BADGES.fetch(state) %>"><%= t("trading.payment_states.states.#{state}") %></span>
+          <span class="text-sm text-ink-muted"><%= t("trading.payment_states.purchases", count: purchases.size) %></span>
+          <span class="text-sm font-semibold tabular-nums"><%= format_money(purchases.sum(&:total)) %></span>
+        </h3>
+        <%= render "trading/purchases/table", purchases: purchases %>
+      </section>
+    <% end %>
+  </div>
 <% else %>
   <p class="empty-state"><%= t(".empty") %></p>
 <% end %>

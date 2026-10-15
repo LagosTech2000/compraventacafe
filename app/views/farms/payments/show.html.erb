@@ -44,7 +44,10 @@
         <% @payment.lines.sort_by { |line| line.member.sort_key }.each do |line| %>
           <tr class="break-inside-avoid">
             <td class="font-medium"><%= line.member.full_name %></td>
-            <td class="whitespace-nowrap"><%= format_work(line.basis, line.quantity, line.rate) %></td>
+            <td class="whitespace-nowrap">
+              <%= format_work(line.basis, line.quantity, line.rate) %>
+              <% if (overtime = format_overtime(line)) %><span class="block text-xs"><%= overtime %></span><% end %>
+            </td>
             <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(line.gross_amount) %></td>
             <td class="whitespace-nowrap text-right tabular-nums"><%= line.loans_amount.positive? ? "− #{format_money(line.loans_amount)}" : "—" %></td>
             <td class="whitespace-nowrap text-right font-semibold tabular-nums"><%= format_money(line.net_amount) %></td>

@@ -57,9 +57,11 @@ module AuditHelper
 
   # An error's details (ErrorAudit), in a fixed order with Spanish names.
   ERROR_DETAILS = %w[rule status method path controller error message reference params referer user_agent turbo_frame backtrace].freeze
+  # A merge's details (PersonMerge).
+  MERGE_DETAILS = %w[merged moved roles farms_joined chosen].freeze
 
   def audit_error_details(event)
-    ERROR_DETAILS.filter_map do |key|
+    (event.action == "merge" ? MERGE_DETAILS : ERROR_DETAILS).filter_map do |key|
       value = event.details[key]
       value = t("administration.audit_events.rules.#{value}", default: value) if key == "rule"
       [ t("administration.audit_events.details.#{key}"), value ] if value.present?

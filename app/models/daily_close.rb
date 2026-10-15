@@ -1,9 +1,10 @@
 # One day of purchases: its totals and the purchases themselves. Voided
-# purchases are left out.
+# purchases are left out. The money is split by where it stands: in paid
+# invoices, in invoices paid in part, in invoices not paid yet, not invoiced.
 class DailyClose < PurchaseSummary
-  # Paid first, then not fully paid (pending or partial), then not invoiced yet.
+  # Paid first, then paid in part, then not paid, then not invoiced yet.
   PAYMENT_ORDER = Arel.sql(<<~SQL.squish)
-    CASE invoices.payment_status WHEN 'paid' THEN 0 WHEN 'pending' THEN 1 WHEN 'partial' THEN 1 ELSE 2 END
+    CASE invoices.payment_status WHEN 'paid' THEN 0 WHEN 'partial' THEN 1 WHEN 'pending' THEN 2 ELSE 3 END
   SQL
 
   attr_reader :date
@@ -12,8 +13,6 @@ class DailyClose < PurchaseSummary
     @date = date
     super(Purchase.active.on(date))
   end
-
-  PAYMENT_STATES = %w[paid pending uninvoiced].freeze
 
   # [[state, purchases], ...] in PAYMENT_STATES order, skipping empty states.
   def groups
@@ -38,14 +37,18 @@ class DailyClose < PurchaseSummary
   end
 
   def payment_state(purchase)
-    return "uninvoiced" unless purchase.invoice
+    purchase.invoice&.payment_status || "uninvoiced"
+  end
 
-    purchase.invoice.paid? ? "paid" : "pending"
+  # The day's invoices paid in part, with what each has been paid and still
+  # owes (for the whole invoice), the lowest number first.
+  def partial_invoices
+    @partial_invoices ||= purchases.filter_map(&:invoice).select(&:partial?).uniq.sort_by(&:number)
   end
 
   # Grouped by payment state, newest first within each group.
   def purchases
     @purchase_list ||= Purchase.active.on(date).left_joins(:invoice).order(PAYMENT_ORDER).merge(Purchase.newest_first)
-                               .preload(:invoice, :zone, producer: :person).to_a
+                               .preload(:zone, :farm, :loan_payments, invoice: [ :payments, { purchases: :loan_payments } ], producer: :person).to_a
   end
 end

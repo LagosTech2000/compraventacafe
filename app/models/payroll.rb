@@ -28,6 +28,7 @@ class Payroll < ApplicationRecord
   has_many :expenses, class_name: "PayrollExpense", dependent: :restrict_with_error
   has_many :attendances, through: :members
   has_many :harvest_entries, through: :members
+  has_many :overtimes, through: :members
 
   normalizes :name, with: ->(value) { value.squish.presence }
   normalizes :observations, with: FieldFormats::STRIP
@@ -37,11 +38,15 @@ class Payroll < ApplicationRecord
   validates :pay_frequency, inclusion: { in: PayPeriod::FREQUENCIES }
   validates :starts_on, presence: true
   validates :can_price, numericality: { greater_than: 0, less_than: 100_000 }, if: :harvest?
+  # What an extra hour is worth (Fernando, 2026-10-14): optional; extra
+  # hours can be written only once it is set. Not for payrolls by task.
+  validates :overtime_hour_rate, numericality: { greater_than: 0, less_than: 100_000 }, allow_nil: true
   validates :observations, length: { maximum: 500 }
   validate :ends_after_start
   validate :periods_fixed_once_paid, on: :update
 
   before_validation { self.can_price = nil unless harvest? }
+  before_validation { self.overtime_hour_rate = nil if task? }
 
   scope :newest_first, -> { order(starts_on: :desc, id: :desc) }
   scope :active, ->(today = Time.zone.today) { where(starts_on: ..today).where("ends_on IS NULL OR ends_on >= ?", today) }
@@ -90,7 +95,8 @@ class Payroll < ApplicationRecord
   def members_for(period)
     days = attendances.where(worked_on: period.dates).select(:payroll_member_id)
     cans = harvest_entries.where(worked_on: period.dates).select(:payroll_member_id)
-    members.where(active: true).or(members.where(id: days)).or(members.where(id: cans))
+    extra = overtimes.where(period_starts_on: period.starts_on).select(:payroll_member_id)
+    members.where(active: true).or(members.where(id: days)).or(members.where(id: cans)).or(members.where(id: extra))
            .includes(:person, :role).sort_by(&:sort_key)
   end
 

@@ -1,0 +1,53 @@
+<%# The person as a producer (Fernando, 2026-10-14): its record, its farms
+    and what it sold, with the way to edit it from here (Administración
+    permissions) and to its page in Compra de café for who sees it. %>
+<% season = Season.current %>
+<% purchases = producer.purchases.active %>
+<% net = purchases.sum(:net_weight) %>
+<section class="mt-8" aria-labelledby="person-producer">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h2 id="person-producer" class="text-lg font-semibold"><%= t("administration.people.producer.title") %></h2>
+    <div class="flex flex-wrap gap-2">
+      <% if policy([ :administration, producer ]).update? %>
+        <%= modal_link_to t("administration.people.producer.edit"), edit_administration_producer_path(producer), class: "btn btn-sm btn-primary" %>
+      <% end %>
+      <% if policy(producer).show? %>
+        <%= page_link_to t("administration.people.producer.open"), trading_producer_path(producer), class: "btn btn-sm" %>
+      <% end %>
+    </div>
+  </div>
+
+  <dl class="mt-3 grid panel sm:grid-cols-2 lg:grid-cols-4">
+    <% { Producer.human_attribute_name(:kind) => producer.human_kind,
+         Producer.human_attribute_name(:ihcafe_code) => producer.ihcafe_code,
+         t("administration.people.producer.quintals") => format_pounds(PurchaseCalculation.quintals(net)),
+         t("administration.people.producer.season_quintals", season: season.label) => format_pounds(PurchaseCalculation.quintals(purchases.in_season(season).sum(:net_weight))),
+         t("administration.people.producer.purchases") => number_with_delimiter(purchases.count),
+         t("administration.people.producer.total") => format_money(purchases.sum(:total)),
+         t("administration.people.producer.invoices") => number_with_delimiter(producer.invoices.count),
+         t("administration.people.producer.unpaid") => number_with_delimiter(producer.invoices.unpaid.count) }.each do |label, value| %>
+      <div class="border-b border-line px-4 py-3" data-producer-figure>
+        <dt class="text-xs font-medium text-ink-muted"><%= label %></dt>
+        <dd class="mt-1 text-sm tabular-nums"><%= value.presence || "—" %></dd>
+      </div>
+    <% end %>
+  </dl>
+
+  <h3 class="mt-5 mb-2 text-sm font-semibold"><%= t("administration.people.producer.farms") %></h3>
+  <% if producer.farms.any? %>
+    <ul class="space-y-2">
+      <% producer.farms.each do |farm| %>
+        <li class="data-card flex flex-wrap items-center justify-between gap-2" id="<%= dom_id(farm, :producer) %>">
+          <span>
+            <span class="font-medium"><%= farm.name %></span>
+            <% unless farm.active? %><span class="badge badge-neutral"><%= t("farms.status_badges.farm.inactive") %></span><% end %>
+            <span class="block text-xs text-ink-muted"><%= [ format_farm_area(farm), format_address(farm).presence ].compact.join(" · ") %></span>
+          </span>
+          <%= modal_link_to t("administration.people.producer.farm_detail"), administration_farm_path(farm), class: "btn btn-sm", data: { row_link: true } %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="empty-state"><%= t("administration.people.producer.no_farms") %></p>
+  <% end %>
+</section>

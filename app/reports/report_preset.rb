@@ -43,6 +43,8 @@ class ReportPreset
     harvest_week_by_day: [ "harvest", { period: "this_week", group: "day" } ],
     harvest_season_by_person: [ "harvest", { period: "this_season", group: "person" } ],
     payroll_expenses_month_by_category: [ "payroll_expenses", { period: "this_month", group: "category" } ],
+    farms_season_per_manzana: [ "farms", { period: "this_season", sort: "quintals_per_manzana" } ],
+    farms_season_balance: [ "farms", { period: "this_season", sort: "balance", dir: "asc" } ],
     people_season: [ "people", { period: "this_season" } ],
     cash_movements_week: [ "cash_movements", { period: "this_week", group: "day" } ],
     cash_movements_month_by_source: [ "cash_movements", { period: "this_month", group: "source" } ]

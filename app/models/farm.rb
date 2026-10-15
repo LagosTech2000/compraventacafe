@@ -13,9 +13,14 @@ class Farm < ApplicationRecord
 
   normalizes :name, with: ->(value) { value.squish.presence }
   normalizes :observations, with: FieldFormats::STRIP
+  normalizes :area_unit, with: ->(value) { value.presence }
 
   validates :name, presence: true, length: { maximum: 100 }, uniqueness: { case_sensitive: false, scope: :producer_id }
   validates :observations, length: { maximum: 500 }
+  # Its land, optional: a figure in the unit chosen (FarmArea).
+  validates :area_value, numericality: { greater_than: 0, less_than: 10**9 }, allow_nil: true
+  validates :area_unit, inclusion: { in: FarmArea::UNITS }, if: :area_value
+  before_validation { self.area_unit = nil if area_value.nil? }
   validate :owner_kept_with_records, on: :update
 
   scope :ordered, -> { order(:name) }
@@ -35,6 +40,9 @@ class Farm < ApplicationRecord
   def display_name = producer ? "#{name} · #{producer.full_name}" : name
 
   def audit_label = name
+
+  # Its land in every unit (FarmArea), or nil when it was not written.
+  def area = (FarmArea.new(area_value, area_unit) if area_value && FarmArea::UNITS.include?(area_unit))
 
   # Who it belongs to can change while nothing names it yet.
   def owner_locked? = persisted? && (purchases.exists? || payrolls.exists?)

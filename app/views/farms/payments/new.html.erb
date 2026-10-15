@@ -39,6 +39,7 @@
             <div>
               <p class="font-medium"><%= line.member.full_name %></p>
               <p class="text-sm text-ink-muted"><%= format_work(line.basis, line.quantity, line.rate) %></p>
+              <% if (overtime = format_overtime(line)) %><p class="text-sm text-ink-muted"><%= overtime %></p><% end %>
             </div>
             <dl class="grid grid-cols-3 gap-4 text-right text-sm">
               <div><dt class="text-xs text-ink-muted"><%= t(".gross") %></dt><dd class="font-semibold tabular-nums"><%= format_money(line.gross_amount) %></dd></div>

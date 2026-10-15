@@ -1,0 +1,40 @@
+<%# Where the money of a PurchaseSummary stands: a bar split by payment
+    state (paid, paid in part, not paid, not invoiced) and, for each, its
+    money, purchases and share. Paid in part also says what its invoices
+    have been paid and still owe (the whole invoices). %>
+<% states = summary.payment_states %>
+<% total = states.sum(&:amount) %>
+<% colors = { "paid" => "bg-success", "partial" => "bg-warning", "pending" => "bg-danger", "uninvoiced" => "bg-ink-muted/40" } %>
+<% scope = "trading.payment_states" %>
+<section class="panel mt-3 p-4" aria-label="<%= t("#{scope}.title") %>">
+  <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+    <h3 class="text-sm font-semibold"><%= t("#{scope}.title") %></h3>
+    <p class="text-xs text-ink-muted"><%= t("#{scope}.help") %></p>
+  </div>
+  <% if total.positive? %>
+    <div class="mt-3 flex h-3 overflow-hidden rounded-full bg-surface-2" aria-hidden="true">
+      <% states.each do |row| %>
+        <% next unless row.amount.positive? %>
+        <span class="<%= colors.fetch(row.state) %> h-full" style="width: <%= (row.amount * 100 / total).round(2) %>%"
+              title="<%= t("#{scope}.states.#{row.state}") %>"></span>
+      <% end %>
+    </div>
+  <% end %>
+  <dl class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <% states.each do |row| %>
+      <div class="flex min-w-0 gap-2" data-payment-state="<%= row.state %>">
+        <span class="<%= colors.fetch(row.state) %> mt-1 size-3 shrink-0 rounded-full" aria-hidden="true"></span>
+        <div class="min-w-0">
+          <dt class="text-xs font-semibold tracking-wide text-ink-muted uppercase"><%= t("#{scope}.states.#{row.state}") %></dt>
+          <dd class="text-lg font-bold tabular-nums" data-live-value><%= format_money(row.amount) %></dd>
+          <dd class="text-xs text-ink-muted">
+            <%= t("#{scope}.purchases", count: row.count) %><% if total.positive? %> · <%= t("#{scope}.share", percent: number_to_percentage(row.amount * 100 / total, precision: 0)) %><% end %>
+          </dd>
+          <% if row.state == "partial" && row.count.positive? %>
+            <dd class="text-xs"><%= t("#{scope}.partial_detail", paid: format_money(summary.partial_paid), balance: format_money(summary.partial_balance)) %></dd>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </dl>
+</section>

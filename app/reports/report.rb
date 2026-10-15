@@ -67,7 +67,7 @@ class Report
   def self.catalog
     [ PurchasesReport, InvoicesReport, ProducersReport,
       LoansReport, LoanPaymentsReport, LoanSuppliesReport,
-      PayrollPaymentsReport, PayrollLinesReport, HarvestReport, PayrollExpensesReport,
+      PayrollPaymentsReport, PayrollLinesReport, HarvestReport, PayrollExpensesReport, FarmsReport,
       PeopleReport, CashMovementsReport ]
   end
 

@@ -1,0 +1,24 @@
+<%# The farm's land, optional (Fernando, 2026-10-14): one box per unit.
+    Typing in any of them calculates the others (farm_area_controller.js);
+    the one typed is what is saved, with its unit (FarmArea). %>
+<% area = farm.area %>
+<fieldset data-controller="farm-area" data-farm-area-factors-value="<%= FarmArea::SQUARE_METERS.transform_values(&:to_f).to_json %>">
+  <legend class="field-label"><%= t("farms.area.title") %></legend>
+  <p class="mb-2 text-xs text-ink-muted"><%= t("farms.area.help") %></p>
+  <div class="grid gap-3 sm:grid-cols-3">
+    <% FarmArea::UNITS.each do |unit| %>
+      <div>
+        <label for="farm_area_<%= unit %>" class="text-sm font-medium"><%= t("farms.area.units.#{unit}") %></label>
+        <input type="number" id="farm_area_<%= unit %>" min="0" step="any" inputmode="decimal" class="field-input tabular-nums"
+               value="<%= area && number_with_precision(area.in(unit), precision: unit == area.unit ? 4 : FarmsHelper::AREA_PRECISION.fetch(unit), strip_insignificant_zeros: true, delimiter: "", separator: ".") %>"
+               data-unit="<%= unit %>" data-farm-area-target="input" data-action="input->farm-area#typed">
+      </div>
+    <% end %>
+  </div>
+  <%= form.hidden_field :area_value, value: farm.area_value && number_with_precision(farm.area_value, precision: 4, strip_insignificant_zeros: true, delimiter: "", separator: "."),
+        data: { farm_area_target: "value" } %>
+  <%= form.hidden_field :area_unit, data: { farm_area_target: "unit" } %>
+  <p class="mt-1 text-xs text-ink-muted" data-farm-area-target="source" <%= "hidden" unless area %>>
+    <%= t("farms.area.source_html", unit: tag.span(area && t("farms.area.units.#{area.unit}"), data: { farm_area_target: "sourceName" })) %>
+  </p>
+</fieldset>

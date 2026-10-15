@@ -1,4 +1,6 @@
-<%= form_with model: [ :trading, producer ], class: form_surface_class("space-y-6"), data: { controller: "form-validation" } do |form| %>
+<%# namespace: :trading (its module) or :administration (from the person's page there). %>
+<% namespace = local_assigns.fetch(:namespace, :trading) %>
+<%= form_with model: [ namespace, producer ], class: form_surface_class("space-y-6"), data: { controller: "form-validation" } do |form| %>
   <%= hidden_field_tag :picker, "1" if picker_request? %>
   <%= render "shared/form_errors", record: producer %>
 
@@ -79,6 +81,6 @@
 
   <div class="flex flex-wrap gap-3">
     <%= form.submit class: "btn btn-primary" %>
-    <%= cancel_button trading_producers_path %>
+    <%= cancel_button namespace == :administration ? administration_person_path(producer.person) : trading_producers_path %>
   </div>
 <% end %>

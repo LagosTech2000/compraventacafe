@@ -82,7 +82,7 @@ module Farms
       end
 
       def payroll_params
-        params.expect(payroll: [ :farm_id, :name, :kind, :pay_frequency, :starts_on, :ends_on, :can_price, :observations, :lock_version ])
+        params.expect(payroll: [ :farm_id, :name, :kind, :pay_frequency, :starts_on, :ends_on, :can_price, :overtime_hour_rate, :observations, :lock_version ])
       end
   end
 end

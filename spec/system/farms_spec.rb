@@ -229,4 +229,103 @@ RSpec.describe "Farms screens", type: :system do
     expect(page).to have_select("Fincas del productor", options: [ "La Cumbre", "Las Brisas", "Santa Rosa" ])
     expect(page).to have_button("Quitar esta", visible: :hidden) # saved farms are not taken out here
   end
+
+  it "calculates the land in the other units from the one typed, and saves that one" do
+    visit new_farms_farm_path
+    fill_in "farm_name", with: "El Cerro"
+    fill_in "Manzanas", with: "10"
+    expect(page).to have_field("Hectáreas", with: "6.99")
+    expect(page).to have_field("Metros cuadrados (m²)", with: "69890")
+    expect(page).to have_text("Se guarda como la escribiste, en Manzanas.")
+
+    fill_in "Hectáreas", with: "2"
+    expect(page).to have_field("Manzanas", with: "2.86")
+    expect(page).to have_field("Metros cuadrados (m²)", with: "20000")
+    expect(page).to have_text("Se guarda como la escribiste, en Hectáreas.")
+
+    # Emptying the one typed empties them all: no land.
+    fill_in "Hectáreas", with: ""
+    expect(page).to have_field("Manzanas", with: "")
+    expect(page).to have_field("Metros cuadrados (m²)", with: "")
+
+    fill_in "Hectáreas", with: "2"
+    within("main form") { find("[type=submit]").click }
+    expect(page).to have_text("Finca registrada.")
+    expect(Farm.find_by!(name: "El Cerro")).to have_attributes(area_value: 2, area_unit: "hectare")
+
+    visit edit_farms_farm_path(Farm.find_by!(name: "El Cerro"))
+    expect(page).to have_field("Hectáreas", with: "2")
+    expect(page).to have_field("Manzanas", with: "2.86")
+    expect(page).to have_field("Metros cuadrados (m²)", with: "20000")
+  end
+
+  it "takes the period's extra hours and days at the end of each row, adding them to the pay before saving" do
+    payroll.update!(overtime_hour_rate: 50)
+    period = payroll.period_containing(today)
+    visit farms_payroll_timesheet_path(payroll, period: period.to_param)
+
+    row = find("tr", text: "Ana Zelaya")
+    within(row) do
+      fill_in "Ana Zelaya, horas extra del período", with: "2"
+      expect(page).to have_css("[data-timesheet-target='rowAmount']", text: "L 100.00")
+      fill_in "Ana Zelaya, días extra del período", with: "1"
+      expect(page).to have_css("[data-timesheet-target='rowAmount']", text: "L 400.00") # 1 × L 300 + 2 h × L 50
+    end
+    expect(page).to have_css("[data-timesheet-target='overtimeTotal'][data-overtime='hours']", text: "2")
+    expect(page).to have_css(".save-bar", text: "Tienes cambios sin guardar.")
+    click_button "Guardar"
+    expect(page).to have_text("Guardado")
+    expect(ana.overtimes.sole).to have_attributes(period_starts_on: period.starts_on, hours: 2, extra_days: 1)
+
+    # Emptying both removes it.
+    within(find("tr", text: "Ana Zelaya")) do
+      fill_in "Ana Zelaya, horas extra del período", with: ""
+      fill_in "Ana Zelaya, días extra del período", with: ""
+    end
+    click_button "Guardar"
+    expect(page).to have_text("Guardado")
+    expect(ana.overtimes.reload).to be_empty
+  end
+
+  it "keeps extra hours closed until the payroll has the value of an extra hour" do
+    visit farms_payroll_timesheet_path(payroll, period: payroll.period_containing(today).to_param)
+    expect(page).to have_field("Ana Zelaya, horas extra del período", disabled: true)
+    expect(page).to have_field("Ana Zelaya, días extra del período", disabled: false)
+    expect(page).to have_text("define primero el valor de la hora extra en la planilla")
+    expect(page).to have_link("Definir el valor de la hora extra")
+  end
+
+  it "lines up each day's cell with its heading and its total" do
+    harvest = create(:payroll, kind: "harvest", can_price: 25, starts_on: today.beginning_of_week - 7)
+    create_list(:payroll_member, 2, payroll: harvest)
+    [ [ harvest, "input[data-date]" ], [ payroll, "button.day-toggle" ] ].each do |sheet, cell|
+      visit farms_payroll_timesheet_path(sheet, period: sheet.period_containing(today).to_param)
+      offsets = page.evaluate_script(<<~JS)
+        (() => {
+          const table = document.querySelector(".timesheet-grid")
+          const center = (el) => { const r = el.getBoundingClientRect(); return r.left + r.width / 2 }
+          const heads = [...table.querySelectorAll("thead th")].slice(1)
+          return [...table.querySelectorAll("tbody tr")].flatMap((row) =>
+            [...row.querySelectorAll("#{cell}")].map((input, index) => Math.abs(center(input) - center(heads[index]))))
+        })()
+      JS
+      expect(offsets).not_to be_empty
+      expect(offsets.max).to be < 1.5
+    end
+  end
+
+  it "asks the value of an extra hour for payrolls by day and harvest, not by task" do
+    visit new_farms_payroll_path(farm_id: payroll.farm_id)
+    choose "Por día"
+    expect(page).to have_field("Valor de la hora extra (L)")
+    choose "Por obra (tarea)"
+    expect(page).to have_no_field("Valor de la hora extra (L)")
+    choose "Corte de café (por lata)"
+    fill_in "Nombre", with: "Corte grande"
+    fill_in "Precio de la lata (L)", with: "25"
+    fill_in "Valor de la hora extra (L)", with: "45"
+    within("main form") { find("[type=submit]").click }
+    expect(page).to have_text("Corte grande")
+    expect(Payroll.find_by!(name: "Corte grande")).to have_attributes(overtime_hour_rate: 45, can_price: 25)
+  end
 end

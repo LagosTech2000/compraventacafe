@@ -66,6 +66,15 @@
     <p class="mt-1 text-xs text-ink-muted"><%= t(".can_price_help") %></p>
   </div>
 
+  <%# What an extra hour is worth (Fernando, 2026-10-14): for the members
+      paid by day, in daily and harvest payrolls; optional. %>
+  <div class="max-w-xs" data-payroll-form-target="overtimeField" <%= "hidden" if payroll.task? %>>
+    <%= form.label :overtime_hour_rate, class: "field-label" %>
+    <%= form.number_field :overtime_hour_rate, disabled: payroll.task?, min: 0.01, max: 99_999.99, step: 0.01,
+          inputmode: "decimal", placeholder: "0.00", class: "field-input" %>
+    <p class="mt-1 text-xs text-ink-muted"><%= t(".overtime_hour_rate_help") %></p>
+  </div>
+
   <div>
     <%= form.label :observations, class: "field-label" %>
     <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>

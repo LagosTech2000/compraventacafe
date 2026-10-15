@@ -30,7 +30,7 @@
        data-producer-gaps-message-value="<%= t(".producer_gaps") %>"
        data-producer-gaps-edit-url-value="<%= edit_trading_producer_path("__id__", picker: 1) %>"
        data-producer-gaps-producer-value="<%= purchase.producer_id %>"
-       data-action="producer:created@window->producer-farms#addProducer producer:created@window->producer-gaps#addProducer producer:created@window->record-picker#add producer:updated@window->producer-gaps#updateProducer producer:updated@window->record-picker#replace record-picker:picked->producer-farms#show record-picker:picked->producer-gaps#show farm:created@window->producer-farms#add">
+       data-action="producer:created@window->producer-farms#addProducer producer:created@window->producer-gaps#addProducer producer:created@window->record-picker#add producer:updated@window->producer-farms#updateProducer producer:updated@window->producer-gaps#updateProducer producer:updated@window->record-picker#replace record-picker:picked->producer-farms#show record-picker:picked->producer-gaps#show farm:created@window->producer-farms#add">
     <div class="sm:col-span-2">
       <%= form.label :producer_id, for: "producer_search", class: "field-label" %>
       <input type="text" id="producer_search" list="producer_options" autocomplete="off" required
