@@ -48,6 +48,19 @@ RSpec.describe "Rate limits" do
       expect(AuditEvent.where(action: "rate_limited").pluck(:auditable_label)).to eq([ "scanner_ban GET /wp-login.php" ])
     end
 
+    it "keeps serving icons and the health check to a banned IP" do
+      with_rack_attack do
+        %w[/wp-login.php /.env /phpmyadmin/index.php].each { |path| get path }
+        get new_session_path
+        expect(response).to have_http_status(:too_many_requests)
+
+        %w[/favicon.ico /icon.svg /icon.png /apple-touch-icon.png /up].each do |path|
+          get path
+          expect(response).to have_http_status(:ok), path
+        end
+      end
+    end
+
     it "lets the app's own addresses through" do
       with_rack_attack do
         sign_in admin

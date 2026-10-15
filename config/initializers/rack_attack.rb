@@ -10,7 +10,9 @@
 #                    (/wp-admin, /.env, *.php…) SCANNER_HITS times within
 #                    SCANNER_WINDOW is banned for SCANNER_BAN. None of those
 #                    addresses exist in this app, so each of them is answered
-#                    429 right away too.
+#                    429 right away too. The ban leaves out the same paths
+#                    (assets, icons, logo, /up): a page that loads must not
+#                    lose its icon or styles to a ban.
 #
 # Both answer 429 with the static Spanish page public/429.html. The first
 # time an IP hits a limit in each period it goes to the audit log (action
@@ -47,6 +49,8 @@ class Rack::Attack
   end
 
   blocklist("scanner_ban") do |request|
+    next false if request.path.match?(UNCOUNTED_PATHS)
+
     Fail2Ban.filter("scanners/#{client_ip(request)}", maxretry: SCANNER_HITS, findtime: SCANNER_WINDOW, bantime: SCANNER_BAN) do
       request.path.match?(SCANNER_PATHS)
     end
