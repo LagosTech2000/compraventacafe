@@ -1,6 +1,8 @@
 # What one member got in a payroll payment. basis says what quantity counts:
 # days ("daily"), cans ("harvest") or tasks ("task"); rate is the daily
-# wage or can price used.
+# wage or can price used. Members paid by day also keep their overtime:
+# extra hours at the hour value used and extra days at the daily wage
+# (overtime_amount, included in gross_amount).
 class PayrollPaymentLine < ApplicationRecord
   include Auditable
 
@@ -15,6 +17,8 @@ class PayrollPaymentLine < ApplicationRecord
   validate :loans_within_pay
 
   before_validation { self.net_amount = gross_amount.to_d - loans_amount.to_d }
+
+  def overtime? = overtime_hours.to_d.positive? || extra_days.to_d.positive?
 
   def audit_label
     "#{member&.full_name} · #{payment&.audit_label}"

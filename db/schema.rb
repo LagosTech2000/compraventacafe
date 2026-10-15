@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_14_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_14_150100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -75,6 +75,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_14_120000) do
     t.bigint "producer_id"
     t.decimal "latitude", precision: 9, scale: 6
     t.decimal "longitude", precision: 9, scale: 6
+    t.decimal "area_value", precision: 14, scale: 4
+    t.string "area_unit"
     t.index "lower((name)::text)", name: "index_farms_on_lower_name", unique: true, where: "(producer_id IS NULL)"
     t.index "producer_id, lower((name)::text)", name: "index_farms_on_producer_and_lower_name", unique: true, where: "(producer_id IS NOT NULL)"
     t.index ["department_id"], name: "index_farms_on_department_id"
@@ -225,6 +227,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_14_120000) do
     t.index ["person_id"], name: "index_payroll_members_on_person_id"
   end
 
+  create_table "payroll_overtimes", force: :cascade do |t|
+    t.bigint "payroll_member_id", null: false
+    t.date "period_starts_on", null: false
+    t.decimal "hours", precision: 6, scale: 2, default: "0.0", null: false
+    t.decimal "extra_days", precision: 5, scale: 2, default: "0.0", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["payroll_member_id", "period_starts_on"], name: "idx_on_payroll_member_id_period_starts_on_ad56fa09ec", unique: true
+    t.index ["payroll_member_id"], name: "index_payroll_overtimes_on_payroll_member_id"
+  end
+
   create_table "payroll_payment_lines", force: :cascade do |t|
     t.bigint "payroll_payment_id", null: false
     t.bigint "payroll_member_id", null: false
@@ -236,6 +249,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_14_120000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "basis", null: false
+    t.decimal "overtime_hours", precision: 6, scale: 2, default: "0.0", null: false
+    t.decimal "overtime_hour_rate", precision: 10, scale: 2
+    t.decimal "extra_days", precision: 5, scale: 2, default: "0.0", null: false
+    t.decimal "overtime_amount", precision: 14, scale: 2, default: "0.0", null: false
     t.index ["payroll_member_id"], name: "index_payroll_payment_lines_on_payroll_member_id"
     t.index ["payroll_payment_id"], name: "index_payroll_payment_lines_on_payroll_payment_id"
   end
@@ -302,6 +319,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_14_120000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "lock_version", default: 0, null: false
+    t.decimal "overtime_hour_rate", precision: 10, scale: 2
     t.index ["created_by_id"], name: "index_payrolls_on_created_by_id"
     t.index ["farm_id"], name: "index_payrolls_on_farm_id"
   end
@@ -514,6 +532,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_14_120000) do
   add_foreign_key "payroll_members", "payroll_roles"
   add_foreign_key "payroll_members", "payrolls"
   add_foreign_key "payroll_members", "people"
+  add_foreign_key "payroll_overtimes", "payroll_members"
   add_foreign_key "payroll_payment_lines", "payroll_members"
   add_foreign_key "payroll_payment_lines", "payroll_payments"
   add_foreign_key "payroll_payments", "payrolls"

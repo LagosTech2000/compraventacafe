@@ -22,7 +22,7 @@
 
 <%# An error a user ran into: where, what and how (ErrorAudit). %>
 <% if @event.details.any? %>
-  <h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(@event.action == "rate_limited" ? ".limit_details" : ".error_details") %></h2>
+  <h2 class="mt-8 mb-3 text-lg font-semibold"><%= t({ "rate_limited" => ".limit_details", "merge" => ".merge_details" }.fetch(@event.action, ".error_details")) %></h2>
   <dl class="grid panel">
     <% audit_error_details(@event).each do |label, value| %>
       <div class="grid gap-1 border-b border-line px-4 py-3 sm:grid-cols-[12rem_minmax(0,1fr)]">

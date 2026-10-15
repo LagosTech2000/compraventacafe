@@ -5,7 +5,9 @@ class FarmFilter < ListFilter
   field :status, :choice, in: STATUSES, default: "active"
 
   sorts name: text("farms.name"),
+        owner: { sql: text("people.first_names", "people.last_names"), joins: { producer: :person } },
         location: { sql: text("departments.name", "municipalities.name", "farms.address_line"), joins: %i[department municipality] },
+        area: FarmArea.square_meters_sql,
         status: "NOT farms.active"
 
   def apply(scope)

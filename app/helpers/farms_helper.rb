@@ -1,4 +1,20 @@
 module FarmsHelper
+  AREA_PRECISION = { "manzana" => 2, "hectare" => 2, "square_meter" => 0 }.freeze
+
+  # "10.5 mz": an area in one unit (FarmArea::UNITS).
+  def format_area(value, unit)
+    number = number_with_precision(value, precision: AREA_PRECISION.fetch(unit), delimiter: ",", strip_insignificant_zeros: true)
+    t("farms.area.short.#{unit}", value: number)
+  end
+
+  # "10.5 mz · 7.34 ha · 73,384 m²", the unit it was written in first; "—" without one.
+  def format_farm_area(farm)
+    area = farm.area
+    return "—" unless area
+
+    [ area.unit, *(FarmArea::UNITS - [ area.unit ]) ].map { |unit| format_area(area.in(unit), unit) }.join(" · ")
+  end
+
   # "5 de oct – 11 de oct"
   def format_period(period)
     t("farms.period", from: l(period.starts_on, format: :short), to: l(period.ends_on, format: :short))
@@ -20,6 +36,20 @@ module FarmsHelper
   def period_status_badge(row)
     css = { "paid" => "badge-success", "to_pay" => "badge-danger", "in_progress" => "badge-neutral", "upcoming" => "badge-neutral" }.fetch(row.status)
     tag.span(t("farms.period_statuses.#{row.status}"), class: "badge #{css}")
+  end
+
+  # The overtime of a line paid by day: "+ 3 h extra × L 50.00 · + 1 día extra";
+  # nil without any (PayrollCalculation::Line or PayrollPaymentLine).
+  def format_overtime(line)
+    return unless line.overtime?
+
+    number = ->(value) { number_with_precision(value, precision: 2, strip_insignificant_zeros: true) }
+    parts = []
+    if line.overtime_hours.to_d.positive?
+      parts << t("farms.overtime.hours", hours: number.(line.overtime_hours), rate: format_money(line.overtime_hour_rate))
+    end
+    parts << t("farms.overtime.extra_days", count: line.extra_days.to_d == 1 ? 1 : 2, days: number.(line.extra_days)) if line.extra_days.to_d.positive?
+    parts.join(" · ")
   end
 
   # What the pay of a line is made of: "5.5 días × L 300.00", "40 latas ×

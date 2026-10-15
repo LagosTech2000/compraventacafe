@@ -1,0 +1,69 @@
+<%# What the farm produced and cost, under its payroll accounts (FarmProfile):
+    the coffee bought from it (only for who sees Compra de café), the cans
+    picked when it has harvest payrolls, the yield per manzana and hectare
+    when its land is written, and what it generated against what it cost.
+    All dates; Reportería → Rendimiento de fincas narrows by period. %>
+<% scope = "farms.farms.profile" %>
+<% sees_purchases = policy(Purchase).index? %>
+
+<% if sees_purchases %>
+  <section class="mt-6" aria-labelledby="farm-sales">
+    <h2 id="farm-sales" class="mb-2 text-sm font-semibold tracking-wide text-ink-muted uppercase"><%= t("#{scope}.sales") %></h2>
+    <%= render "farms/farms/figures", scope:, figures: [
+          [ :quintals, format_pounds(profile.quintals), t("#{scope}.season_quintals", quintals: format_pounds(profile.season_quintals)) ],
+          [ :sales_total, format_money(profile.sales_total) ],
+          [ :purchases_count, number_with_delimiter(profile.purchases_count) ],
+          [ :average_price, profile.average_price ? format_money(profile.average_price) : "—" ]
+        ] %>
+  </section>
+<% end %>
+
+<% if profile.harvest? %>
+  <section class="mt-6" aria-labelledby="farm-harvest">
+    <h2 id="farm-harvest" class="mb-2 text-sm font-semibold tracking-wide text-ink-muted uppercase"><%= t("#{scope}.harvest") %></h2>
+    <%= render "farms/farms/figures", scope:, figures: [
+          [ :cans, number_with_precision(profile.cans, precision: 2, delimiter: ",", strip_insignificant_zeros: true) ],
+          [ :cans_paid, format_money(profile.cans_paid) ],
+          [ :harvest_days, number_with_delimiter(profile.harvest_days) ],
+          [ :pickers, number_with_delimiter(profile.pickers) ]
+        ] %>
+  </section>
+<% end %>
+
+<section class="mt-6" aria-labelledby="farm-yield">
+  <h2 id="farm-yield" class="mb-2 text-sm font-semibold tracking-wide text-ink-muted uppercase"><%= t("#{scope}.yield") %></h2>
+  <% if profile.area %>
+    <% per_land = [ [ :area, format_area(profile.area.value, profile.area.unit),
+                      (FarmArea::UNITS - [ profile.area.unit ]).map { |unit| format_area(profile.area.in(unit), unit) }.join(" · ") ] ] %>
+    <% if sees_purchases %>
+      <% per_land += [ [ :quintals_per_manzana, format_pounds(profile.quintals_per_manzana) ],
+                       [ :quintals_per_hectare, format_pounds(profile.quintals_per_hectare) ],
+                       [ :sales_per_manzana, format_money(profile.sales_per_manzana) ] ] %>
+    <% end %>
+    <% per_land << [ :cans_per_manzana, number_with_precision(profile.cans_per_manzana, precision: 2, delimiter: ",") ] if profile.harvest? %>
+    <%= render "farms/farms/figures", scope:, figures: per_land %>
+  <% else %>
+    <p class="panel flex flex-wrap items-center justify-between gap-3 p-4 text-sm">
+      <span><%= t("#{scope}.no_area") %></span>
+      <% if policy(farm).update? %>
+        <%= modal_link_to t("#{scope}.add_area"), edit_farms_farm_path(farm), class: "btn btn-sm" %>
+      <% end %>
+    </p>
+  <% end %>
+</section>
+
+<% if sees_purchases %>
+  <section class="mt-6" aria-labelledby="farm-balance">
+    <h2 id="farm-balance" class="mb-2 text-sm font-semibold tracking-wide text-ink-muted uppercase"><%= t("#{scope}.balance_title") %></h2>
+    <% balance = profile.balance %>
+    <%= render "farms/farms/figures", scope:, figures: [
+          [ :generated, format_money(profile.sales_total), t("#{scope}.generated_help") ],
+          [ :cost, format_money(profile.cost), t("#{scope}.cost_help") ],
+          [ :balance, tag.span(format_money(balance), class: balance.negative? ? "text-danger" : "text-success") ],
+          [ :cost_per_quintal, profile.cost_per_quintal ? format_money(profile.cost_per_quintal) : "—" ]
+        ] %>
+    <% if policy(FarmsReport).show? %>
+      <p class="mt-2 text-sm"><%= link_to t("#{scope}.to_report"), report_path_for(FarmsReport, q: farm.name, period: "all", activity: ""), class: "link" %></p>
+    <% end %>
+  </section>
+<% end %>

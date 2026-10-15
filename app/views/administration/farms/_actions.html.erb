@@ -1,0 +1,6 @@
+<div class="flex shrink-0 justify-end gap-2">
+  <%= detail_button administration_farm_path(farm) %>
+  <% if policy([ :administration, farm ]).update? %>
+    <%= modal_link_to t("administration.farms.index.edit"), edit_administration_farm_path(farm), class: "btn btn-sm" %>
+  <% end %>
+</div>

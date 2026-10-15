@@ -1,4 +1,6 @@
-<%= form_with model: [ :trading, zone ], class: form_surface_class("max-w-md space-y-5"), data: { controller: "form-validation" } do |form| %>
+<%# namespace: :trading (its module) or :administration (Administración → Zonas). %>
+<% namespace = local_assigns.fetch(:namespace, :trading) %>
+<%= form_with model: [ namespace, zone ], class: form_surface_class("max-w-md space-y-5"), data: { controller: "form-validation" } do |form| %>
   <%= hidden_field_tag :picker, "1" if picker_request? %>
   <%= render "shared/form_errors", record: zone %>
   <div>
@@ -8,6 +10,6 @@
   </div>
   <div class="flex flex-wrap gap-3">
     <%= form.submit class: "btn btn-primary" %>
-    <%= cancel_button trading_zones_path %>
+    <%= cancel_button namespace == :administration ? administration_zones_path : trading_zones_path %>
   </div>
 <% end %>

@@ -391,9 +391,20 @@ es:
       net_weight: "Libras netas"
       quintals: "Quintales (QQ)"
       total: "Total comprado"
-      paid_total: "En facturas canceladas"
-      pending_total: "En facturas sin cancelar"
-      uninvoiced_total: "Sin facturar"
+    payment_states:
+      title: "Estado de pago"
+      help: "Del total comprado, cuánto está en cada estado."
+      share: "%{percent} del total"
+      partial_detail: "Abonado %{paid} · Falta %{balance}"
+      purchases:
+        zero: "Sin compras"
+        one: "1 compra"
+        other: "%{count} compras"
+      states:
+        paid: "Canceladas"
+        partial: "Con pago parcial"
+        pending: "Pendientes de pago"
+        uninvoiced: "Sin facturar"
     zones:
       index:
         title: "Zonas"
@@ -733,10 +744,6 @@ es:
         time: "Hora"
         subtotal: "Subtotal"
         generated: "Generado por %{name} el %{time}"
-        groups:
-          paid: "Canceladas"
-          pending: "Pendientes o con pago parcial"
-          uninvoiced: "Sin facturar"
         units: "Pesos en libras; precios y montos en Lempiras."
         columns:
           gross_weight: "Bruto"
@@ -758,6 +765,14 @@ es:
           other: "%{count} compras"
         see_producer: "Ver el productor"
         producer: "Productor"
+      partial_invoices:
+        title: "Facturas con pago parcial"
+        help: "Lo abonado y lo que falta son de la factura completa, aunque tenga compras de otros días."
+        invoice: "Factura"
+        to_pay: "Total a pagar"
+        paid: "Abonado"
+        balance: "Falta"
+        actions: "Acciones"
 
   loans:
     nav:
@@ -968,6 +983,24 @@ es:
         back: "Volver a estados de cuenta"
 
   farms:
+    overtime:
+      hours: "+ %{hours} h extra × %{rate}"
+      extra_days:
+        one: "+ 1 día extra"
+        other: "+ %{days} días extra"
+    area:
+      title: "Extensión territorial (opcional)"
+      help: "Escríbela en la unidad que prefieras: las otras se calculan solas. 1 manzana = 6,988.96 m²; 1 hectárea = 10,000 m²."
+      source_html: "Se guarda como la escribiste, en %{unit}."
+      label: "Extensión"
+      units:
+        manzana: "Manzanas"
+        hectare: "Hectáreas"
+        square_meter: "Metros cuadrados (m²)"
+      short:
+        manzana: "%{value} mz"
+        hectare: "%{value} ha"
+        square_meter: "%{value} m²"
     nav:
       home: "Resumen"
       new_payroll: "Nueva planilla"
@@ -1086,6 +1119,35 @@ es:
         owner: "De %{name}"
         payrolls: "Planillas de la finca"
         no_payrolls: "Esta finca no tiene planillas con esos filtros."
+      profile:
+        sales: "Café vendido de la finca"
+        harvest: "Corte de café"
+        yield: "Rendimiento por extensión"
+        balance_title: "Lo generado contra lo gastado"
+        season_quintals: "%{quintals} QQ esta temporada"
+        generated_help: "El valor del café comprado de la finca."
+        cost_help: "Planillas pagadas más gastos."
+        no_area: "Escribe la extensión de la finca para ver los QQ, el dinero y las latas por manzana y por hectárea."
+        add_area: "Agregar la extensión"
+        to_report: "Comparar fincas y ver por período en Reportería"
+        figures:
+          quintals: "QQ vendidos"
+          sales_total: "Valor del café"
+          purchases_count: "Compras"
+          average_price: "Precio prom. por libra"
+          cans: "Latas cortadas"
+          cans_paid: "Pagado por latas"
+          harvest_days: "Días de corte"
+          pickers: "Cortadores"
+          area: "Extensión"
+          quintals_per_manzana: "QQ por manzana"
+          quintals_per_hectare: "QQ por hectárea"
+          sales_per_manzana: "Valor del café por manzana"
+          cans_per_manzana: "Latas por manzana"
+          generated: "Generado"
+          cost: "Costo"
+          balance: "Diferencia"
+          cost_per_quintal: "Costo por QQ"
       new:
         title: "Nueva finca"
       edit:
@@ -1219,6 +1281,7 @@ es:
         frequency_help: "Semanal: se paga cada sábado. Quincenal: el 15 y el último día del mes. Mensual: el último día del mes."
         fixed_help: "La planilla ya tiene pagos: el tipo ya no se cambia. Si cambias la frecuencia o las fechas, los períodos pagados se quedan como están y los que faltan por pagar se recalculan."
         can_price_help: "Lo que se paga por cada lata cortada en esta planilla."
+        overtime_hour_rate_help: "Opcional. Lo que se paga por cada hora extra a quienes ganan por día. Sin este valor no se anotan horas extra; los días extra se pagan al salario por día de cada uno."
       create:
         success: "Planilla creada. Ahora agrega a sus empleados."
       update:
@@ -1256,8 +1319,8 @@ es:
         whole_period: "Todo el período"
         closed: "Este período ya se pagó: lo registrado ya no se cambia."
         help:
-          daily: "Toca cada casilla para cambiarla: — (no vino) → 1 (día completo) → ½ (medio día). «Todos» marca el día completo para todos y «Todo el período» todos los días de una persona."
-          harvest: "Escribe las latas que cortó cada persona cada día; deja vacío si no cortó. A los caporales toca su casilla para marcar — (no vino), 1 o ½."
+          daily: "Toca cada casilla para cambiarla: — (no vino) → 1 (día completo) → ½ (medio día). «Todos» marca el día completo para todos y «Todo el período» todos los días de una persona. Al final de cada fila van las horas y los días extra del período."
+          harvest: "Escribe las latas que cortó cada persona cada día; deja vacío si no cortó. A los caporales toca su casilla para marcar — (no vino), 1 o ½, y al final de su fila sus horas y días extra del período."
         fill_day: "Todos"
         fill_day_label: "Día completo para todos el %{date}"
         cell_label: "%{person}, %{date}"
@@ -1285,6 +1348,18 @@ es:
         cans_hint: "Latas de cuarto en cuarto: 0.25, 0.50, 0.75, 1.00, 1.25…"
         no_members: "Esta planilla no tiene empleados activos."
         add_members: "Agregar empleado"
+        overtime:
+          hours: "Horas extra"
+          extra_days: "Días extra"
+          hour_rate: "%{rate} la hora"
+          no_rate_short: "sin valor"
+          extra_days_rate: "al salario por día"
+          no_rate: "Para escribir horas extra, define primero el valor de la hora extra en la planilla."
+          set_rate: "Definir el valor de la hora extra"
+          hours_label: "%{person}, horas extra del período"
+          extra_days_label: "%{person}, días extra del período"
+          hours_hint: "Horas extra del período: un número de 0 en adelante."
+          extra_days_hint: "Días extra del período, de medio en medio: 0.5, 1, 1.5…"
       update:
         success: "Guardado."
     tasks:
@@ -1427,7 +1502,12 @@ es:
       payment_method: "Forma de pago"
       zone: "Zona"
       activity: "Actividad"
+      farm_owner: "Dueño"
+      farm_owners:
+        business: "Del negocio"
+        producers: "De productores"
       activities:
+        farm_activity: "Con compras, latas, pagos o gastos en el período"
         with_purchases: "Con compras en el período"
         without_purchases: "Sin compras en el período"
         with_activity: "Con algo en el período o deuda"
@@ -1480,6 +1560,8 @@ es:
       category: "Categoría"
       source: "Origen"
       direction: "Entrada o salida"
+      owner_kind: "Dueño"
+      department: "Departamento"
     series:
       count: "Cantidad"
       quintals: "QQ"
@@ -1582,6 +1664,8 @@ es:
       harvest_week_by_day: "Latas cortadas esta semana, día por día"
       harvest_season_by_person: "Mejores cortadores de la temporada"
       payroll_expenses_month_by_category: "Gastos de fincas del mes por categoría"
+      farms_season_per_manzana: "Fincas con más QQ por manzana en la temporada"
+      farms_season_balance: "Fincas que más costaron contra lo que produjeron en la temporada"
       people_season: "Cada persona con el negocio esta temporada"
       cash_movements_week: "Entradas y salidas de dinero de esta semana"
       cash_movements_month_by_source: "Entradas y salidas del mes por origen"
@@ -2007,6 +2091,49 @@ es:
           payrolls:
             title: "Planillas con más gastos"
             help: "Las 10 planillas con más gastos."
+      farms:
+        title: "Rendimiento de fincas"
+        description: "Cada finca con el café que se le compró (QQ y dinero), las latas cortadas, lo que costaron sus planillas y gastos, y la diferencia. Con la extensión escrita, los QQ por manzana y por hectárea."
+        business: "Del negocio"
+        columns:
+          farm: "Finca"
+          owner: "Dueño"
+          manzanas: "Manzanas"
+          hectares: "Hectáreas"
+          quintals: "QQ"
+          sales_total: "Valor del café"
+          cans: "Latas"
+          cost: "Costo (planillas y gastos)"
+          balance: "Diferencia"
+          quintals_per_manzana: "QQ por manzana"
+          quintals_per_hectare: "QQ por hectárea"
+          cost_per_quintal: "Costo por QQ"
+          farms: "Fincas"
+        kpis:
+          quintals: "Quintales (QQ)"
+          sales_total: "Valor del café"
+          cost: "Costo (planillas y gastos)"
+          balance: "Diferencia"
+          quintals_per_manzana: "QQ por manzana"
+          cans: "Latas cortadas"
+        series:
+          quintals_per_manzana: "QQ por manzana"
+          sales_total: "Valor del café (L)"
+          cost: "Costo (L)"
+          balance: "Diferencia (L)"
+        charts:
+          per_manzana:
+            title: "QQ por manzana"
+            help: "Las 15 fincas con más quintales por manzana. Solo salen las que tienen su extensión escrita."
+          money:
+            title: "Lo generado contra lo gastado"
+            help: "Valor del café comprado a cada finca contra lo que costaron sus planillas y gastos; la línea es la diferencia."
+          quintals:
+            title: "QQ por finca"
+            help: "De qué fincas viene el café."
+          map:
+            title: "Dónde están las fincas"
+            help: "Cada círculo es una finca con ubicación; más grande, más QQ en el período. Toca una para abrirla."
       people:
         title: "Personas (todo el sistema)"
         description: "Cada persona con todo lo que tiene con el negocio en el período: café que vendió, lo ganado en planillas, lo abonado a préstamos y lo que debe hoy."
@@ -2262,9 +2389,11 @@ es:
               - "Toca «Nueva persona» para registrar a alguien."
           show:
             title: "Detalle de la persona"
-            summary: "Foto, datos de identidad, contacto, zona, dirección, ubicación en el mapa y roles de la persona."
+            summary: "Foto, datos de identidad, contacto, zona, dirección, ubicación en el mapa y roles de la persona. Si es productor, su ficha, lo que ha vendido y sus fincas."
             steps:
               - "Toca «Editar» para cambiar sus datos o sus roles."
+              - "Si es productor, «Editar productor» cambia su tipo, clave IHCAFE y fincas; «Detalle» en una finca la abre."
+              - "Si la misma persona se registró dos veces, toca «Fusionar con otra persona» (solo administradores)."
               - "Toca «Borrar» para eliminarla; el sistema pide confirmación."
             tips:
               - "Una persona que es productor no se puede borrar."
@@ -2286,6 +2415,64 @@ es:
               - "Teléfono: 8 dígitos, con o sin +504."
               - "Agregar o quitar el rol de productor requiere permiso para crear en Compra de café. Su clave IHCAFE y sus fincas se escriben en el formulario del productor."
               - "No se puede quitar el rol de productor a quien ya tiene compras, facturas o fincas."
+        farms:
+          index:
+            title: "Fincas (Administración)"
+            summary: "Todas las fincas, del negocio y de los productores, con su dueño, extensión y ubicación."
+            steps:
+              - "Busca por nombre o filtra por activas e inactivas en «Filtros»."
+              - "Toca «Detalle» (o la fila) para ver una finca; «Editar» para cambiar sus datos."
+              - "Toca «Nueva finca» para registrar una, del negocio o de un productor."
+            tips:
+              - "Una finca con compras o planillas no se borra: se desactiva al editarla."
+          show:
+            title: "Detalle de la finca"
+            summary: "Dueño, extensión, dirección, cuántas compras y planillas la nombran, y su ubicación."
+            steps:
+              - "Toca «Editar» para cambiar sus datos."
+              - "«Borrar» solo aparece si ninguna compra ni planilla la nombra."
+              - "«Abrir en Fincas» lleva a su página con planillas y cifras, si tienes permiso de ver Fincas."
+          form:
+            title: "Registrar o editar una finca"
+            summary: "Nombre, dueño, extensión y ubicación de la finca."
+            steps:
+              - "Escribe el nombre."
+              - "Si es la finca de un productor, búscalo en «Productor»; déjalo vacío si es del negocio."
+              - "La extensión es opcional: escríbela en manzanas, hectáreas o metros cuadrados y las otras se calculan solas."
+              - "Elige departamento y municipio, escribe la dirección y, si quieres, pon el pin en el mapa."
+              - "Toca el botón de guardar."
+        zones:
+          index:
+            title: "Zonas (Administración)"
+            summary: "Las zonas de donde vienen las personas y las compras, con cuántas personas y compras tiene cada una."
+            steps:
+              - "Busca una zona por nombre en «Filtros»."
+              - "Toca «Editar» para cambiarle el nombre, o «Nueva zona» para crear una."
+              - "«Borrar» solo aparece en las zonas que ninguna persona ni compra usa."
+          form:
+            title: "Registrar o editar una zona"
+            summary: "El nombre de la zona; no se puede repetir."
+            steps:
+              - "Escribe el nombre y toca el botón de guardar."
+        producers:
+          form:
+            title: "Editar productor"
+            summary: "Los datos del productor desde su persona: tipo, clave IHCAFE, fincas y datos de la persona."
+            steps:
+              - "Cambia el tipo o la clave IHCAFE (XX-XX-XXXXX)."
+              - "Toca «Agregar finca» para darle otra finca; se crea al guardar."
+              - "Cambia los datos de la persona si hace falta y toca el botón de guardar."
+        person_merges:
+          form:
+            title: "Fusionar personas"
+            summary: "Junta en una sola a la misma persona registrada dos veces. Solo los administradores pueden hacerlo, y no se deshace."
+            steps:
+              - "Busca a la otra persona por nombre o DNI y elige cuál queda; toca «Comparar»."
+              - "En «Datos que son distintos», marca en cada fila el valor que se queda (nombre, DNI, teléfono, dirección, foto, clave IHCAFE…)."
+              - "Revisa lo que pasa a la que queda: compras, facturas, fincas, préstamos y planillas. Las fincas con el mismo nombre se juntan en una."
+              - "Toca «Fusionar» y confirma. La otra persona se borra y la fusión queda en la auditoría."
+            tips:
+              - "Si las dos están en la misma planilla no se pueden fusionar: quita a una de la planilla primero."
         users:
           index:
             title: "Usuarios"
@@ -2550,11 +2737,12 @@ es:
             summary: "Resumen y detalle de las compras de un día."
             steps:
               - "Elige la fecha: el cierre se actualiza solo."
-              - "Revisa los totales: comprado, en facturas canceladas, en facturas sin cancelar y sin facturar."
+              - "Revisa los totales y «Estado de pago»: cuánto del total comprado está en facturas canceladas, con pago parcial, pendientes de pago y sin facturar, con su barra."
+              - "En «Facturas con pago parcial» ves lo abonado y lo que falta de cada una; toca «Detalle» para registrar otro abono."
               - "En «Por productor» ves lo que vendió cada productor ese día; toca su nombre para ver sus compras."
               - "Toca «Imprimir» para sacar el reporte."
             tips:
-              - "El reporte impreso agrupa las compras en canceladas, pendientes o con pago parcial, y sin facturar, y trae la tabla por productor."
+              - "«Compras del día» y el reporte impreso agrupan las compras en canceladas, con pago parcial, pendientes de pago y sin facturar, cada grupo con su total."
               - "El productor que más vendió en el día sale primero."
       farms:
         home:
@@ -2581,18 +2769,24 @@ es:
               - "Una finca no se borra: se desactiva y deja de aparecer al crear planillas."
           show:
             title: "Detalle de la finca"
-            summary: "La finca, lo que han costado sus planillas y la lista de sus planillas."
+            summary: "La finca, lo que han costado sus planillas, el café que se le compró, lo cortado, su rendimiento por manzana y hectárea, y la lista de sus planillas."
             steps:
               - "Revisa las cifras: pagado en planillas, gastos y costo total de la finca."
+              - "En «Café vendido de la finca» ves los QQ, el valor, las compras y el precio promedio por libra de las compras que nombran esta finca."
+              - "Si la finca tiene planillas de corte, «Corte de café» muestra las latas cortadas, lo pagado por latas, los días de corte y los cortadores."
+              - "Con la extensión escrita, «Rendimiento por extensión» divide los QQ, el dinero y las latas entre las manzanas y hectáreas de la finca."
+              - "«Lo generado contra lo gastado» compara el valor del café con lo que costaron planillas y gastos, y da el costo por QQ."
               - "Filtra sus planillas por nombre, tipo o estado: se aplican solas y la lista se actualiza sin recargar. Quita un filtro con la × de su etiqueta."
               - "Toca «Nueva planilla» para crear una en esta finca, o «Abrir» en una planilla para entrar a ella."
             tips:
               - "Arriba, «Fincas ›» te regresa a la lista de fincas."
+              - "Las cifras son de todas las fechas. Para verlas por período o comparar fincas, usa «Comparar fincas y ver por período en Reportería»."
           form:
             title: "Registrar o editar una finca"
-            summary: "Nombre, dueño y ubicación de la finca."
+            summary: "Nombre, dueño, extensión y ubicación de la finca."
             steps:
               - "Escribe el nombre."
+              - "La extensión es opcional: escríbela en manzanas, hectáreas o metros cuadrados, la que prefieras, y las otras se calculan solas. Se guarda como la escribiste."
               - "Si es la finca de un productor, búscalo en «Productor»; déjalo vacío si es una finca del negocio. El dueño ya no cambia cuando la finca tiene compras o planillas."
               - "Elige departamento y municipio y escribe la dirección."
               - "En «Ubicación en el mapa», toca el mapa donde está para poner el pin (se puede arrastrar), toca «Usar mi ubicación» si estás ahí, o pega las coordenadas de Google Maps en latitud y longitud. Es opcional."
@@ -2627,6 +2821,7 @@ es:
               - "Elige el tipo: por día, por obra (tarea) o corte de café (por lata)."
               - "Elige cada cuánto se paga y la fecha de inicio. La fecha de fin es opcional."
               - "En corte de café, escribe el precio de la lata."
+              - "Si se pagan horas extra, escribe el valor de la hora extra (opcional; no aplica a planillas por obra). Sin ese valor no se anotan horas extra."
               - "Toca el botón de guardar y después agrega a los empleados."
             tips:
               - "Semanal: períodos que terminan cada sábado. Quincenal: del 1 al 15 y del 16 al fin de mes. Mensual: el mes completo."
@@ -2663,6 +2858,7 @@ es:
             steps:
               - "Elige el período con «Anterior», «Siguiente», la lista o «Hoy»; o un solo día (más cómodo en el celular)."
               - "Por día: toca cada casilla para pasar de — (no vino) a 1 (día completo) y a ½. «Todos» llena un día para todos y «Todo el período» todos los días de una persona. En corte: escribe las latas, de cuarto en cuarto (0.25, 0.50, 0.75, 1, 1.25…)."
+              - "Al final de la fila de quien gana por día (también los caporales del corte) escribe sus horas extra y días extra del período: las horas se pagan al valor de la hora extra de la planilla y los días, a su salario por día. «A pagar» ya las suma."
               - "Toca «Guardar» en la barra de abajo, que siempre está a la vista. Te avisa si tienes cambios sin guardar, y si sales sin guardar te pregunta antes."
               - "Cuando el período llegue a su día de pago, «Pagar este período» se resalta. «Ver la planilla» (o la ruta de arriba) te regresa a la planilla."
             tips:
@@ -2687,7 +2883,7 @@ es:
             title: "Pagar un período"
             summary: "Lo que gana cada empleado en el período y, si debe préstamos, cuánto descontarle."
             steps:
-              - "Revisa lo que gana cada empleado: días, latas o tareas."
+              - "Revisa lo que gana cada empleado: días, latas o tareas, más sus horas y días extra si los tiene."
               - "Si alguien debe, escribe cuánto descontarle de cada préstamo o toca «Saldar»."
               - "Revisa los totales: planilla, a préstamos y a entregar."
               - "Toca «Registrar pago» y luego imprime la planilla de pago para las firmas."
@@ -2876,6 +3072,8 @@ es:
     nav:
       home: "Resumen"
       people: "Personas"
+      farms: "Fincas"
+      zones: "Zonas"
       users: "Usuarios"
       audit_events: "Auditoría"
       site_setting: "Configuración del sitio"
@@ -2924,7 +3122,9 @@ es:
           Guarde este respaldo en un lugar seguro: base.dump contiene todos los datos del sistema.
     home:
       index:
-        people_description: "Personas del negocio: clientes y colaboradores."
+        people_description: "Personas del negocio: clientes, colaboradores y productores. Desde aquí también se fusionan personas repetidas."
+        farms_description: "Todas las fincas, del negocio y de los productores: crear, editar y borrar las que no se usan."
+        zones_description: "Las zonas de donde vienen las personas: crear, editar y borrar las que no se usan."
         backup_description: "Descarga una copia de todos los datos (base de datos y CSV)."
         users_description: "Crear usuarios, asignar permisos por módulo y restablecer contraseñas."
         audit_description: "Quién creó, modificó o borró qué, y cuándo."
@@ -2972,6 +3172,11 @@ es:
         turbo_frame: "Parte de la página"
         backtrace: "Dónde falló (código)"
         rule: "Límite superado"
+        merged: "Persona fusionada (se borró)"
+        moved: "Lo que pasó"
+        roles: "Roles agregados"
+        farms_joined: "Fincas que se juntaron"
+        chosen: "Datos que se tomaron de la persona fusionada"
       rules:
         requests_per_ip: "Demasiadas solicitudes desde la misma IP"
         scanner_ban: "IP bloqueada por buscar direcciones de ataque (/wp-admin, .env, .php…)"
@@ -3002,6 +3207,7 @@ es:
         payroll_member: "el empleado de planilla"
         payroll_attendance: "la asistencia"
         harvest_entry: "las latas del día"
+        payroll_overtime: "las horas y días extra"
         payroll_task: "la tarea"
         payroll_task_participant: "el participante de la tarea"
         payroll_payment: "el pago de planilla"
@@ -3019,6 +3225,7 @@ es:
         backup: "%{actor} descargó el respaldo %{record} el %{date} a las %{time}."
         error: "%{actor} recibió un error %{record} el %{date} a las %{time}."
         rate_limited: "%{actor} superó un límite de solicitudes (%{record}) el %{date} a las %{time}."
+        merge: "%{actor} fusionó otra persona en %{record} el %{date} a las %{time}."
       filtered: "(oculto)"
       "true": "Sí"
       "false": "No"
@@ -3057,6 +3264,7 @@ es:
         changes: "Cambios"
         error_details: "Detalle del error"
         limit_details: "Detalle del límite"
+        merge_details: "Detalle de la fusión"
         field: "Campo"
         before: "Antes"
         after: "Después"
@@ -3082,8 +3290,22 @@ es:
       show:
         edit: "Editar"
         destroy: "Borrar"
+        merge: "Fusionar con otra persona"
         confirm_destroy: "¿Borrar a %{name}? Esta acción no se puede deshacer."
         back: "Volver a personas"
+      producer:
+        title: "Como productor"
+        edit: "Editar productor"
+        open: "Abrir en Compra de café"
+        quintals: "QQ vendidos (todos)"
+        season_quintals: "QQ de la temporada %{season}"
+        purchases: "Compras"
+        total: "Total comprado"
+        invoices: "Facturas"
+        unpaid: "Facturas sin cancelar"
+        farms: "Sus fincas"
+        farm_detail: "Detalle"
+        no_farms: "Este productor no tiene fincas."
       new:
         title: "Nueva persona"
       edit:
@@ -3097,6 +3319,121 @@ es:
         success: "Persona actualizada."
       destroy:
         success: "Persona borrada."
+    farms:
+      index:
+        title: "Fincas"
+        new: "Nueva finca"
+        edit: "Editar"
+        help: "Todas las fincas: las del negocio y las de cada productor. Una finca con compras o planillas no se borra: se desactiva."
+      show:
+        edit: "Editar"
+        destroy: "Borrar"
+        confirm_destroy: "¿Borrar la finca «%{name}»? Esta acción no se puede deshacer."
+        open_in_farms: "Abrir en Fincas"
+        purchases: "Compras que la nombran"
+        payrolls: "Planillas"
+        kept: "Tiene compras o planillas: no se borra. Si ya no se usa, desactívala al editarla."
+      new:
+        title: "Nueva finca"
+      edit:
+        title: "Editar finca"
+      create:
+        success: "Finca registrada."
+      update:
+        success: "Finca actualizada."
+      destroy:
+        success: "Finca borrada."
+        in_use: "No se puede borrar: hay compras o planillas que la nombran. Desactívala en su lugar."
+    zones:
+      index:
+        title: "Zonas"
+        new: "Nueva zona"
+        edit: "Editar"
+        destroy: "Borrar"
+        confirm_destroy: "¿Borrar la zona «%{name}»?"
+        help: "Las zonas de donde vienen las personas y las compras. Una zona en uso no se borra."
+        people: "Personas"
+        purchases: "Compras"
+        actions: "Acciones"
+        empty: "No hay zonas que coincidan con los filtros."
+      new:
+        title: "Nueva zona"
+      edit:
+        title: "Editar zona"
+      create:
+        success: "Zona creada."
+      update:
+        success: "Zona actualizada."
+      destroy:
+        success: "Zona borrada."
+        in_use: "No se puede borrar: hay personas o compras de esta zona."
+    producers:
+      edit:
+        title: "Editar productor: %{name}"
+      update:
+        success: "Productor actualizado."
+    person_merges:
+      fields:
+        location: "Ubicación en el mapa"
+        photo: "Foto"
+      roles:
+        client: "Cliente"
+        collaborator: "Colaborador"
+        producer: "Productor"
+      moved:
+        purchases: "Compras"
+        invoices: "Facturas"
+        farms: "Fincas"
+        loans: "Préstamos"
+        payrolls: "Planillas"
+      new:
+        title: "Fusionar personas"
+        help: "Para cuando la misma persona se registró dos veces (por ejemplo, con el nombre escrito distinto). Elige a la otra persona y cuál queda; después, dato por dato, qué valor se conserva. Todo lo de la otra (compras, facturas, fincas, préstamos y planillas) pasa a la que queda, y la otra se borra."
+        other: "La otra persona"
+        other_placeholder: "Escribe para buscar por nombre o DNI"
+        other_missing: "Selecciona una persona de la lista"
+        keep: "¿Cuál queda?"
+        keep_this: "%{name} (esta)"
+        keep_other: "La otra"
+        compare: "Comparar"
+        stays: "Queda"
+        goes: "Se fusiona y se borra"
+        details: "Datos que son distintos"
+        details_help: "Marca, en cada fila, el valor que se queda."
+        detail: "Dato"
+        choose: "%{detail}: el de %{name}"
+        empty: "(vacío)"
+        no_differences: "Los datos de las dos personas son iguales."
+        moves: "Lo que pasa de %{name} a %{to}"
+        summary:
+          purchases:
+            zero: "Sin compras"
+            one: "1 compra"
+            other: "%{count} compras"
+          invoices:
+            zero: "Sin facturas"
+            one: "1 factura"
+            other: "%{count} facturas"
+          farms:
+            zero: "Sin fincas"
+            one: "1 finca"
+            other: "%{count} fincas"
+          loans:
+            zero: "Sin préstamos"
+            one: "1 préstamo"
+            other: "%{count} préstamos"
+          payrolls:
+            zero: "Sin planillas"
+            one: "Su lugar en 1 planilla"
+            other: "Su lugar en %{count} planillas"
+          roles: "Roles que se agregan: %{roles}"
+          farms_joined: "Fincas con el mismo nombre que se juntan en una: %{farms}"
+        irreversible: "%{name} se borra. La fusión no se puede deshacer; queda en la auditoría."
+        merge: "Fusionar"
+        confirm: "¿Fusionar a %{name} en %{to}? No se puede deshacer."
+        cancel: "Cancelar"
+      create:
+        success: "%{other} se fusionó en %{name}."
     users:
       index:
         title: "Usuarios"
@@ -3216,6 +3553,9 @@ es:
       harvest_entry:
         one: "Latas del día"
         other: "Latas del día"
+      payroll_overtime:
+        one: "Horas y días extra"
+        other: "Horas y días extra"
       payroll_task:
         one: "Tarea"
         other: "Tareas"
@@ -3364,6 +3704,7 @@ es:
         action/backup: "Descargó respaldo"
         action/error: "Error"
         action/rate_limited: "Límite de solicitudes"
+        action/merge: "Fusionó personas"
       client:
         person_id: "Persona"
       collaborator:
@@ -3423,6 +3764,8 @@ es:
         active: "Activa"
         latitude: "Latitud"
         longitude: "Longitud"
+        area_value: "Extensión"
+        area_unit: "Unidad de la extensión"
       expense_category:
         name: "Nombre"
         active: "Activa"
@@ -3441,6 +3784,7 @@ es:
         starts_on: "Fecha de inicio"
         ends_on: "Fecha de fin"
         can_price: "Precio de la lata (L)"
+        overtime_hour_rate: "Valor de la hora extra (L)"
         observations: "Observaciones"
         status: "Estado"
         status/active: "Activa"
@@ -3467,6 +3811,11 @@ es:
         payroll_member_id: "Empleado"
         worked_on: "Día"
         cans: "Latas"
+      payroll_overtime:
+        payroll_member_id: "Empleado"
+        period_starts_on: "Período"
+        hours: "Horas extra"
+        extra_days: "Días extra"
       payroll_task:
         payroll_id: "Planilla"
         name: "Tarea"
@@ -3582,6 +3931,16 @@ es:
             worked_on:
               outside_payroll: "está fuera de las fechas de la planilla"
               period_paid: "es de un período ya pagado"
+        payroll_overtime:
+          not_by_day: "Las horas y días extra son solo para quienes ganan por día."
+          period_paid: "Este período ya se pagó."
+          attributes:
+            hours:
+              no_rate: "no se pueden anotar: la planilla no tiene valor de la hora extra"
+            extra_days:
+              halves: "van de medio en medio (0.5, 1, 1.5…)"
+            period_starts_on:
+              outside_payroll: "no es un período de la planilla"
         harvest_entry:
           paid_by_day: "Este empleado gana por día: no se le anotan latas."
           attributes:
@@ -3679,10 +4038,16 @@ es:
           negative_amount: "Los descuentos no pueden ser negativos."
           unknown_loan: "Uno de los préstamos ya no está por cobrar. Vuelve a abrir la pantalla."
           over_pay: "A %{person} se le descuenta más de lo que gana (%{pay})."
+          no_overtime_rate: "Hay horas extra anotadas y la planilla no tiene valor de la hora extra. Defínelo en la planilla antes de pagar."
           loan_error: "Préstamo %{loan}: %{detail}"
+        person_merge:
+          same_person: "Elige a otra persona: no se puede fusionar una persona consigo misma."
+          shared_payroll: "Las dos personas están en la planilla %{payrolls}: quita a una de ella antes de fusionarlas."
+          failed: "No se pudo fusionar: %{detail}"
         payroll_timesheet:
           closed: "Este período ya se pagó: no se puede cambiar."
           cell: "%{person}, %{date}: %{detail}"
+          overtime: "%{person}, horas o días extra: %{detail}"
         purchase_loan_settlement:
           nothing_to_pay: "Escribe cuánto abonar al menos a un préstamo."
           negative_amount: "Los montos no pueden ser negativos."

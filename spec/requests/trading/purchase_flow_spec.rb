@@ -356,6 +356,33 @@ RSpec.describe "Trading purchase flow" do
     expect(report.css("a")).to be_empty
   end
 
+  it "shows where the day's money stands: paid, paid in part (with what was paid and owed), pending and not invoiced" do
+    producer = create(:producer)
+    paid = create(:purchase, producer:, gross_weight: 146)
+    partial = create(:purchase, producer:, gross_weight: 146)
+    create(:purchase, producer:, gross_weight: 146)
+    InvoiceIssuer.new(producer:, user:, purchase_ids: [ paid.id ], payment_status: "paid", payment_method: "cash").call
+    InvoiceIssuer.new(producer:, user:, purchase_ids: [ partial.id ], payment_status: "partial", payment_method: "cash", amount: "1000").call
+
+    get trading_daily_close_path
+    page = Nokogiri::HTML(response.body)
+    states = page.css("[data-payment-state]").to_h { |state| [ state["data-payment-state"], state.text.squish ] }
+    expect(states["paid"]).to include("Canceladas", "L 4,120.90", "1 compra · 33% del total")
+    expect(states["partial"]).to include("Con pago parcial", "L 4,120.90", "Abonado L 1,000.00 · Falta L 3,120.90")
+    expect(states["pending"]).to include("Pendientes de pago", "L 0.00", "Sin compras")
+    expect(states["uninvoiced"]).to include("Sin facturar", "L 4,120.90")
+
+    invoices = page.at_css("[aria-labelledby=daily-close-partial-invoices]")
+    expect(invoices.css("tbody tr").map { |row| row.text.squish }).to eq([ "#{partial.reload.invoice.display_number} #{producer.full_name} L 4,120.90 L 1,000.00 L 3,120.90 Detalle" ])
+    expect(page.css("[id^=daily-close-group-]").map { |group| group.at_css("h3").text.squish })
+      .to eq([ "Canceladas 1 compra L 4,120.90", "Con pago parcial 1 compra L 4,120.90", "Sin facturar 1 compra L 4,120.90" ])
+
+    printed = page.at_css("section.print\\:block")
+    expect(printed.css("caption").map { |caption| caption.text.squish })
+      .to eq([ "Canceladas (1)", "Con pago parcial (1)", "Sin facturar (1)", "Facturas con pago parcial", "Por productor" ])
+    expect(printed.text.squish).to include("Abonado L 1,000.00 · Falta L 3,120.90")
+  end
+
   it "details the day by producer, the one who sold the most first, on screen and printed" do
     big = create(:producer, person: create(:person, first_names: "Ana", last_names: "Zelaya"))
     small = create(:producer, person: create(:person, first_names: "Bruno", last_names: "Aguilar"))

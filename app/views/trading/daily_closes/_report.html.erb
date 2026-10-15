@@ -19,11 +19,18 @@
         <% end %>
       </tr>
       <tr>
-        <% { total: daily_close.total, paid_total: daily_close.paid_total,
-             pending_total: daily_close.pending_total, uninvoiced_total: daily_close.uninvoiced_total }.each_with_index do |(key, value), index| %>
-          <td class="border border-black px-2 py-1" <%= "colspan=2" if index.zero? %>>
-            <span class="block text-[7.5pt] uppercase tracking-wide"><%= t("trading.summary.#{key}") %></span>
-            <span class="font-bold tabular-nums"><%= format_money(value) %></span>
+        <td class="border border-black px-2 py-1">
+          <span class="block text-[7.5pt] uppercase tracking-wide"><%= t("trading.summary.total") %></span>
+          <span class="font-bold tabular-nums"><%= format_money(daily_close.total) %></span>
+        </td>
+        <% daily_close.payment_states.each do |row| %>
+          <td class="border border-black px-2 py-1">
+            <span class="block text-[7.5pt] uppercase tracking-wide"><%= t("trading.payment_states.states.#{row.state}") %></span>
+            <span class="font-bold tabular-nums"><%= format_money(row.amount) %></span>
+            <span class="block text-[7.5pt]"><%= t("trading.payment_states.purchases", count: row.count) %></span>
+            <% if row.state == "partial" && row.count.positive? %>
+              <span class="block text-[7.5pt]"><%= t("trading.payment_states.partial_detail", paid: format_money(daily_close.partial_paid), balance: format_money(daily_close.partial_balance)) %></span>
+            <% end %>
           </td>
         <% end %>
       </tr>
@@ -42,7 +49,7 @@
         <% widths.each do |width| %><col style="width: <%= width %>"><% end %>
       </colgroup>
       <caption class="mb-1 text-left text-[10pt] font-bold">
-        <%= t(".groups.#{state}") %> (<%= purchases.size %>)
+        <%= t("trading.payment_states.states.#{state}") %> (<%= purchases.size %>)
       </caption>
       <thead>
         <tr class="border-y border-black text-left whitespace-nowrap">
@@ -88,6 +95,34 @@
     </table>
   <% end %>
 
+  <%# The invoices paid in part: what each has been paid and still owes. %>
+  <% if daily_close.partial_invoices.any? %>
+    <table class="mt-4 w-full border-collapse text-[8.5pt] break-inside-avoid">
+      <caption class="mb-1 text-left text-[10pt] font-bold"><%= t("trading.daily_closes.partial_invoices.title") %></caption>
+      <thead>
+        <tr class="border-y border-black text-left whitespace-nowrap">
+          <th class="py-1 pr-1"><%= t("trading.daily_closes.partial_invoices.invoice") %></th>
+          <th class="py-1 pr-1"><%= t("trading.daily_closes.by_producer.producer") %></th>
+          <% %i[to_pay paid balance].each do |key| %>
+            <th class="py-1 pl-1 text-right"><%= t("trading.daily_closes.partial_invoices.#{key}") %></th>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody>
+        <% daily_close.partial_invoices.each do |invoice| %>
+          <tr class="border-b border-gray-300 break-inside-avoid">
+            <td class="py-0.5 pr-1 tabular-nums"><%= invoice.display_number %></td>
+            <td class="py-0.5 pr-1"><%= invoice.producer.full_name %></td>
+            <td class="whitespace-nowrap py-0.5 pl-1 text-right tabular-nums"><%= format_money(invoice.amount_to_pay) %></td>
+            <td class="whitespace-nowrap py-0.5 pl-1 text-right tabular-nums"><%= format_money(invoice.paid_total) %></td>
+            <td class="whitespace-nowrap py-0.5 pl-1 text-right tabular-nums"><%= format_money(invoice.balance_due) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <p class="mt-1 text-[7.5pt]"><%= t("trading.daily_closes.partial_invoices.help") %></p>
+  <% end %>
+
   <%# The day by producer, the one who sold the most first. %>
   <% if daily_close.purchases.any? %>
     <table class="mt-4 w-full border-collapse text-[8.5pt] break-inside-avoid">
@@ -99,8 +134,8 @@
           <th class="py-1 pl-1 text-right"><%= t(".columns.net_weight") %></th>
           <th class="py-1 pl-1 text-right"><%= t("trading.summary.quintals") %></th>
           <th class="py-1 pl-1 text-right"><%= t(".columns.total") %></th>
-          <% %w[paid pending uninvoiced].each do |state| %>
-            <th class="py-1 pl-1 text-right"><%= t(".groups.#{state}") %></th>
+          <% PurchaseSummary::PAYMENT_STATES.each do |state| %>
+            <th class="py-1 pl-1 text-right"><%= t("trading.payment_states.states.#{state}") %></th>
           <% end %>
         </tr>
       </thead>
@@ -112,7 +147,7 @@
             <td class="whitespace-nowrap py-0.5 pl-1 text-right tabular-nums"><%= format_pounds(day.net_weight) %></td>
             <td class="whitespace-nowrap py-0.5 pl-1 text-right tabular-nums"><%= format_pounds(day.quintals) %></td>
             <td class="whitespace-nowrap py-0.5 pl-1 text-right tabular-nums"><%= format_money(day.total) %></td>
-            <% %w[paid pending uninvoiced].each do |state| %>
+            <% PurchaseSummary::PAYMENT_STATES.each do |state| %>
               <td class="whitespace-nowrap py-0.5 pl-1 text-right tabular-nums"><%= format_money(day.total_in(state, daily_close)) %></td>
             <% end %>
           </tr>

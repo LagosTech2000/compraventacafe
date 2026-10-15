@@ -9,7 +9,8 @@
       <%= @farm.name %>
       <% unless @farm.active? %><span class="badge badge-neutral"><%= t("farms.status_badges.farm.inactive") %></span><% end %>
     </h1>
-    <% about = [ (t(".owner", name: @farm.producer.full_name) if @farm.producer), format_address(@farm).presence ].compact %>
+    <% about = [ (t(".owner", name: @farm.producer.full_name) if @farm.producer), format_address(@farm).presence,
+                 (format_farm_area(@farm) if @farm.area) ].compact %>
     <% if about.any? %><p class="mt-1 text-sm text-ink-muted"><%= about.join(" · ") %></p><% end %>
   </div>
   <div class="flex flex-wrap gap-3">
@@ -34,6 +35,8 @@
     </div>
   <% end %>
 </dl>
+
+<%= render "farms/farms/profile", farm: @farm, profile: @profile %>
 
 <% if @farm.observations.present? %>
   <p class="mt-4 text-sm"><span class="font-semibold"><%= Farm.human_attribute_name(:observations) %>:</span> <%= @farm.observations %></p>

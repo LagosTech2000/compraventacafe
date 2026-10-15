@@ -1,0 +1,10 @@
+<%# A row of the farm's figures: [key, value, note], filling the row. %>
+<dl class="flex flex-wrap gap-3">
+  <% figures.each do |key, value, note| %>
+    <div class="stat min-w-0 flex-1 basis-40" data-farm-figure="<%= key %>">
+      <dt><%= t("#{scope}.figures.#{key}") %></dt>
+      <dd><%= value %></dd>
+      <% if note %><p class="mt-1 text-xs text-ink-muted"><%= note %></p><% end %>
+    </div>
+  <% end %>
+</dl>

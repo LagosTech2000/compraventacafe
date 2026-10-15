@@ -1,0 +1,33 @@
+<%# The day's invoices paid in part: what each has to pay, what it has been
+    paid and what it still owes (the whole invoice, which can hold purchases
+    of other days), with the way to its detail or to record a payment. %>
+<section class="mt-8" aria-labelledby="daily-close-partial-invoices">
+  <h2 id="daily-close-partial-invoices" class="text-lg font-semibold"><%= t("trading.daily_closes.partial_invoices.title") %></h2>
+  <p class="mb-3 text-sm text-ink-muted"><%= t("trading.daily_closes.partial_invoices.help") %></p>
+  <div class="panel overflow-x-auto">
+    <table class="data-table" data-controller="table-sort">
+      <thead>
+        <tr>
+          <th><%= t("trading.daily_closes.partial_invoices.invoice") %></th>
+          <th><%= t("trading.daily_closes.by_producer.producer") %></th>
+          <th class="text-right"><%= t("trading.daily_closes.partial_invoices.to_pay") %></th>
+          <th class="text-right"><%= t("trading.daily_closes.partial_invoices.paid") %></th>
+          <th class="text-right"><%= t("trading.daily_closes.partial_invoices.balance") %></th>
+          <th class="cell-actions" data-sort="false"><span class="sr-only"><%= t("trading.daily_closes.partial_invoices.actions") %></span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% daily_close.partial_invoices.each do |invoice| %>
+          <tr id="<%= dom_id(invoice, :daily_close) %>">
+            <td class="tabular-nums"><%= invoice.display_number %></td>
+            <td><%= invoice.producer.full_name %></td>
+            <td class="text-right tabular-nums"><%= format_money(invoice.amount_to_pay) %></td>
+            <td class="text-right tabular-nums text-success"><%= format_money(invoice.paid_total) %></td>
+            <td class="text-right font-semibold tabular-nums text-danger"><%= format_money(invoice.balance_due) %></td>
+            <td class="cell-actions"><%= detail_button trading_invoice_path(invoice) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</section>

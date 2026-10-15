@@ -6,6 +6,8 @@
     <%= link_to t("administration.nav.home"), administration_root_path, class: nav_link_class(administration_root_path, exact: true),
           aria: { current: (current_page?(administration_root_path) ? "page" : nil) } %>
     <% { people: [ administration_people_path, policy(Person).index? ],
+         farms: [ administration_farms_path, policy([ :administration, Farm ]).index? ],
+         zones: [ administration_zones_path, policy([ :administration, Zone ]).index? ],
          users: [ administration_users_path, policy(User).index? ],
          audit_events: [ administration_audit_events_path, policy(AuditEvent).index? ],
          site_setting: [ administration_site_setting_path, policy(SiteSetting).show? ],

@@ -32,6 +32,8 @@ module TradingHelper
   end
 
   PAYMENT_STATUS_BADGES = { "paid" => "badge-success", "partial" => "badge-warning", "pending" => "badge-danger" }.freeze
+  # A purchase's payment state (PurchaseSummary::PAYMENT_STATES): its invoice's, or not invoiced.
+  DAILY_CLOSE_BADGES = PAYMENT_STATUS_BADGES.merge("uninvoiced" => "badge-neutral").freeze
 
   def payment_status_badge(invoice)
     tag.span(invoice.human_payment_status, class: "badge #{PAYMENT_STATUS_BADGES.fetch(invoice.payment_status)}")

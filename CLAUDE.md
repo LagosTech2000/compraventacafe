@@ -96,6 +96,10 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Score de pago | `PayerScore` |
 | Recibo de abono | `loans/payments#show` (`LoanPayment#display_number`) |
 | Finca (del negocio o de un productor) | `Farm` (`producer_id` vacío = del negocio) |
+| Extensión territorial (manzanas / hectáreas / m²) | `Farm#area_value` + `area_unit` (`manzana` / `hectare` / `square_meter`), `FarmArea` |
+| Cifras de la finca (café vendido, corte, rendimiento) | `FarmProfile`; reporte `FarmsReport` («Rendimiento de fincas») |
+| Horas extra / días extra / valor de la hora extra | `PayrollOvertime` (`hours`, `extra_days`, por período) / `Payroll#overtime_hour_rate` |
+| Fusionar personas | `PersonMerge` (`administration/person_merges`), acción de auditoría `merge` |
 | Planilla (por día / por obra o tarea / corte por lata) | `Payroll` (`kind`: `daily` / `task` / `harvest`) |
 | Rol de planilla / salario por día / salario propio | `PayrollRole` / `daily_wage` / `PayrollMember#daily_wage_override` |
 | Empleado de planilla | `PayrollMember` (una `Person` con rol `Collaborator`) |
@@ -197,6 +201,30 @@ espacios y se guardan solo los dígitos. **Ninguno es obligatorio**
 Los roles se asignan con casillas en el formulario de la persona. Las pantallas
 de personas, clientes y colaboradores viven en el módulo `administration` y usan
 sus permisos (`PersonPolicy`).
+
+**Administración amplía** (Fernando, 2026-10-14), con los permisos de
+Administración (no los de cada módulo):
+- **Fincas** (`administration/farms`, `Administration::FarmPolicy`) y
+  **Zonas** (`administration/zones`, `Administration::ZonePolicy`): listas,
+  detalle, crear, editar y borrar **solo lo que nada usa** (una finca con
+  compras o planillas se desactiva; una zona con personas o compras se
+  queda). Reusan los formularios de Fincas y Compra de café (`namespace:`).
+- El detalle de una persona productora muestra **su ficha de productor**
+  (tipo, clave IHCAFE, QQ, compras, facturas y sus fincas) y «Editar
+  productor» (`administration/producers#edit`, el formulario del
+  productor, `Administration::ProducerPolicy`).
+- **Fusionar personas** (`PersonMerge`, `administration/person_merges`,
+  **solo administradores**: no se deshace): para la misma persona
+  registrada dos veces. Se elige a la otra y cuál queda; después, **dato
+  por dato**, qué valor se conserva (nombres, DNI, RTN, teléfono, correo,
+  zona, dirección, ubicación, foto; tipo y clave IHCAFE si las dos son
+  productoras). Por defecto queda el de la principal, salvo que solo la
+  otra lo tenga. Todo lo de la otra pasa a la principal: roles, compras,
+  facturas, fincas (**las del mismo nombre se juntan en una**: sus compras
+  y planillas pasan a la que queda, que llena lo que le falte), préstamos y
+  su lugar en planillas; luego la otra **se borra**. **No se fusionan dos
+  personas de la misma planilla.** Todo o nada, y queda en la auditoría
+  (acción `merge`, con lo que pasó y qué datos se tomaron de la otra).
 
 ## Convenciones de formularios (obligatorias)
 
@@ -543,11 +571,11 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 
 | Clave | Estado |
 | --- | --- |
-| `administration` | Usuarios y permisos, auditoría y configuración del sitio (solo administradores); respaldo de datos (solo el usuario con id 1); personas, clientes y colaboradores (permisos del módulo) |
+| `administration` | Usuarios y permisos, auditoría y configuración del sitio (solo administradores); respaldo de datos (solo el usuario con id 1); personas, clientes y colaboradores, con su ficha de productor; fincas y zonas (permisos del módulo); fusionar personas (solo administradores) |
 | `trading` | Demo: zonas, productores (con pestañas y QQ por temporada), compras con cálculo por estado del café y anulación, facturas imprimibles (original y copia) con estado de pago, cierre diario |
 | `farms` | Fincas, planillas por día, por obra y de corte por lata, con roles y salarios, asistencia o latas por día, pagos por período (semanal, quincenal, mensual) con descuento a préstamos, planilla de pago imprimible y gastos por planilla |
 | `loans` | Préstamos en efectivo, insumos o mixtos a cualquier persona con interés simple, catálogo de insumos, abonos (también con café desde una compra o descontados en planilla) con recibo imprimible, estados de cuenta con historial crediticio y score de pago |
-| `reports` | Una pantalla para todos los reportes del sistema (compras, facturas, productores, préstamos, abonos, insumos, planillas, pagos por empleado, latas, gastos, personas y entradas/salidas de dinero) con filtros, cifras comparadas, gráficos, tabla con carga continua, reportes sugeridos, filtros guardados por usuario y exportación CSV |
+| `reports` | Una pantalla para todos los reportes del sistema (compras, facturas, productores, préstamos, abonos, insumos, planillas, pagos por empleado, latas, gastos, rendimiento de fincas, personas y entradas/salidas de dinero) con filtros, cifras comparadas, gráficos, tabla con carga continua, reportes sugeridos, filtros guardados por usuario y exportación CSV |
 
 ## Seguridad y carga (Fernando, 2026-10-12)
 
@@ -866,6 +894,17 @@ textos; la clave y el código siguen siendo `trading`.
   ni va antes de la fecha de la factura o del último abono; solo se quita el
   último; el pago con café de una compra facturada solo toma lo que la
   factura todavía debe (`Purchase#available_for_loans`).
+- **Cierre diario por estado de pago** (Fernando, 2026-10-14: «que tome en
+  cuenta las facturas sin pagar, pagadas e igual las parcialmente
+  pagadas»): el dinero del día se separa en **canceladas, con pago
+  parcial, pendientes de pago y sin facturar** (`PurchaseSummary::
+  PAYMENT_STATES`, `payment_states`), con una barra y, por estado, monto,
+  compras y parte del total (`trading/_payment_states`, también en el
+  Resumen y en Compras). «Con pago parcial» dice lo abonado y lo que falta
+  de sus facturas (`partial_paid`, `partial_balance`: de la factura
+  completa, aunque tenga compras de otros días), y el cierre lista esas
+  facturas (`DailyClose#partial_invoices`). «Compras del día» y el impreso
+  agrupan por los cuatro estados.
 - **Cierre diario por productor** [CONFIRMADO, Fernando, 2026-10-12, por
   observación del cliente: «detallar a diario la compra de café de cada
   productor»]: el cierre diario tiene la sección «Por productor»
@@ -1000,7 +1039,8 @@ Reglas decididas por Fernando el 2026-10-10 [CONFIRMADO]:
   que gana (abono normal con forma "Descuento de planilla"; requiere crear
   en `loans`). Un período pagado queda cerrado (asistencia, latas y tareas).
   Solo se quita el pago del último período, con sus abonos.
-- **Sin séptimo día, décimo, IHSS ni otras deducciones o bonos** por ahora.
+- **Sin séptimo día, décimo, IHSS ni otras deducciones o bonos** por ahora
+  (las horas y días extra sí, ver abajo).
 - **Gastos** por planilla con fecha, categoría (catálogo `ExpenseCategory`,
   se desactiva, no se borra), descripción y monto. Costo total de la
   planilla = pagado (bruto) + gastos.
@@ -1008,6 +1048,40 @@ Reglas decididas por Fernando el 2026-10-10 [CONFIRMADO]:
   tarjeta por planilla activa o por iniciar (período de hoy, día de pago,
   lo que lleva, empleados y «Asistencia/Latas de hoy»), la que se paga
   primero arriba.
+- **Extensión de la finca** (Fernando, 2026-10-14): opcional, en
+  manzanas, hectáreas o metros cuadrados, la que el usuario prefiera; se
+  guarda como se escribió (`area_value`, `area_unit`) y las otras se
+  calculan (`FarmArea`): **1 manzana = 6,988.96 m²** [CONFIRMADO], 1 ha =
+  10,000 m². El formulario tiene una casilla por unidad y al escribir en
+  una se llenan las otras (`farm_area_controller.js`, `farms/farms/
+  _area_fields`); la lista de fincas la muestra y ordena.
+- **Cifras de la finca** (Fernando, 2026-10-14; `FarmProfile`,
+  `farms/farms/_profile`): bajo las cuentas de planillas, «Café vendido de
+  la finca» (QQ, valor, compras y precio promedio por libra de las compras
+  que la nombran; solo para quien ve Compra de café), «Corte de café»
+  (latas, pagado por latas, días de corte y cortadores, si tiene
+  planillas de corte), «Rendimiento por extensión» (QQ por manzana y
+  hectárea, valor y latas por manzana; sin extensión, pide escribirla) y
+  «Lo generado contra lo gastado» (valor del café comprado − planillas
+  pagadas − gastos, y costo por QQ). Son de todas las fechas; por período
+  y para comparar fincas, el reporte **Rendimiento de fincas**
+  (`FarmsReport`, pide Fincas y Compra de café).
+- **Horas y días extra** (Fernando, 2026-10-14): cada planilla por día o de
+  corte tiene, opcional, el **valor de la hora extra**
+  (`Payroll#overtime_hour_rate`; no en planillas por obra). En la
+  asistencia, al final de la fila de quien gana por día (también los
+  caporales del corte), sus **horas extra y días extra del período**
+  (`PayrollOvertime`, uno por empleado y período). Horas × valor de la hora
+  de la planilla; días × su salario por día; se suman a «A pagar» y al pago
+  del período, y la línea de pago guarda horas, valor, días y monto
+  (`PayrollPaymentLine#overtime_*`). Sin valor de la hora no se anotan
+  horas (la casilla queda cerrada con el aviso). Decisiones de
+  implementación, **pendientes de confirmar**: los días extra van de medio
+  en medio (como la asistencia) y las horas aceptan cualquier decimal.
+- **Grilla de asistencia y latas** con columnas de ancho fijo
+  (`timesheet-grid`, `.timesheet-cell`): cada casilla queda centrada bajo
+  su día y su total (Fernando, 2026-10-14: «aparecen desalineados»; un
+  system spec mide la alineación).
 - **Navegación del módulo** (Fernando, 2026-10-13: «hay muchas
   redirecciones y en varias partes no hay manera de regresar»): la finca es
   una **página** (centro de sus planillas), no un modal; se abre con
@@ -1120,6 +1194,7 @@ sistema ya guarda**; no agregan reglas de negocio.
 | Pago con café: confirmar las reglas propuestas (ver Préstamos) | Ajustes al abono con compra | Fernando / Cliente |
 | Abonos a factura: confirmar orden por fecha, quitar solo el último y tope del pago con café (ver Compra de café) | Ajustes a los abonos | Fernando / Cliente |
 | Inventario de insumos (existencias, costo de compra) | Control de bodega de insumos | Cliente |
+| Horas y días extra: confirmar días extra de medio en medio y horas con cualquier decimal | Ajustes a las extras de planilla | Fernando / Cliente |
 | Planillas: séptimo día, décimo, IHSS u otras deducciones o bonos | Cálculo legal de planillas | Cliente |
 | Si la factura siempre agrupa hasta 4 compras | Hoy no hay límite | Cliente |
 | 160 lb/saco en salidas vs. 165 en compras | Salidas de camión | Cliente |

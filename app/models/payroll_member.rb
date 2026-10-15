@@ -12,6 +12,7 @@ class PayrollMember < ApplicationRecord
   belongs_to :role, class_name: "PayrollRole", foreign_key: :payroll_role_id, optional: true, inverse_of: :members
   has_many :attendances, class_name: "PayrollAttendance", dependent: :restrict_with_error
   has_many :harvest_entries, dependent: :restrict_with_error
+  has_many :overtimes, class_name: "PayrollOvertime", dependent: :restrict_with_error, inverse_of: :member
   has_many :task_participations, class_name: "PayrollTaskParticipant", dependent: :restrict_with_error
   has_many :payment_lines, class_name: "PayrollPaymentLine", dependent: :restrict_with_error
 

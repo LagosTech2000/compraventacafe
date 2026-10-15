@@ -137,4 +137,38 @@ RSpec.describe "Purchase form preview", type: :system do
     expect(page).to have_select("purchase_zone_id", selected: "El Rosario")
     expect(partial.reload.ihcafe_code).to eq("CD-34-56789")
   end
+
+  it "offers the farms added while completing the producer's details in the modal, keeping the one chosen" do
+    producer = create(:producer, person: create(:person, first_names: "Bruno", last_names: "Aguilar"))
+    create(:farm, producer:, name: "La Loma")
+    visit new_trading_purchase_path
+
+    fill_in "producer_search", with: producer.picker_label
+    select "La Loma", from: "purchase_farm_id"
+    within("[data-producer-gaps-target='notice']") { click_link "Completar datos" }
+    within("dialog[open]") do
+      click_button "Agregar finca"
+      fill_in "farm_adder_name", with: "El Cerro"
+      click_button "Agregar"
+      find("[type=submit]").click
+    end
+    expect(page).to have_no_css("dialog[open]")
+    expect(page).to have_select("purchase_farm_id", options: [ "Sin finca asignada", "El Cerro", "La Loma" ], selected: "La Loma")
+  end
+
+  it "offers the farms of a producer registered from the purchase form in the side panel too" do
+    user.update!(window_style: "drawer")
+    visit new_trading_purchase_path
+    click_link "¿No está? Registrar productor"
+    within(wait_for_drawer) do
+      fill_in "producer_person_attributes_first_names", with: "Carla"
+      fill_in "producer_person_attributes_last_names", with: "Mejía"
+      click_button "Agregar finca"
+      fill_in "farm_adder_name", with: "El Cerro"
+      click_button "Agregar"
+      find("[type=submit]").click
+    end
+    expect(page).to have_field("producer_search", with: /Carla Mejía/)
+    expect(page).to have_select("purchase_farm_id", options: [ "Sin finca asignada", "El Cerro" ])
+  end
 end

@@ -1,4 +1,6 @@
-<%= form_with model: [ :farms, farm ], class: form_surface_class("max-w-2xl space-y-5"), data: { controller: "form-validation" } do |form| %>
+<%# namespace: :farms (its module) or :administration (Administración → Fincas). %>
+<% namespace = local_assigns.fetch(:namespace, :farms) %>
+<%= form_with model: [ namespace, farm ], class: form_surface_class("max-w-2xl space-y-5"), data: { controller: "form-validation" } do |form| %>
   <%= hidden_field_tag :picker, "1" if picker_request? %>
   <%= render "shared/form_errors", record: farm %>
   <%# Whose farm it is: a producer (searched by name) or, left empty, the
@@ -26,6 +28,7 @@
     <%= form.text_field :name, autofocus: true, required: true, maxlength: 100, class: "field-input",
           data: { missing_message: "#{Farm.human_attribute_name(:name)} #{t("errors.messages.blank")}" } %>
   </div>
+  <%= render "farms/farms/area_fields", form:, farm: %>
   <%= render "shared/address_fields", form: form %>
   <div>
     <%= form.label :observations, class: "field-label" %>
@@ -40,6 +43,6 @@
   <% end %>
   <div class="flex flex-wrap gap-3">
     <%= form.submit class: "btn btn-primary" %>
-    <%= cancel_button farms_farms_path %>
+    <%= cancel_button namespace == :administration ? administration_farms_path : farms_farms_path %>
   </div>
 <% end %>

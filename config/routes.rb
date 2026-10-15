@@ -25,7 +25,13 @@ Rails.application.routes.draw do
 
   namespace :administration do
     root "home#index"
-    resources :people
+    resources :people do
+      # Merge another person into this one (Fernando, 2026-10-14).
+      resource :merge, only: %i[ new create ], controller: "person_merges"
+    end
+    resources :producers, only: %i[ edit update ]
+    resources :farms
+    resources :zones, except: :show
     resources :audit_events, only: %i[ index show ]
     resource :site_setting, only: %i[ show edit update ]
     # The data backup: a .zip with the database dump and a CSV per table.

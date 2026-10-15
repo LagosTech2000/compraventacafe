@@ -25,6 +25,7 @@
             <div class="min-w-0">
               <p class="font-medium"><%= farm.display_name %></p>
               <p class="text-xs text-ink-muted"><%= format_address(farm).presence || "—" %></p>
+              <% if farm.area %><p class="text-xs text-ink-muted"><%= format_farm_area(farm) %></p><% end %>
             </div>
             <%= link_to t(".open"), farms_farm_path(farm), class: "btn btn-sm", data: { row_link: true } %>
           </div>
@@ -38,6 +39,7 @@
           <tr>
             <%= sort_th Farm.human_attribute_name(:name), :name, sorting %>
             <%= sort_th t(".location"), :location, sorting %>
+            <%= sort_th t("farms.area.label"), :area, sorting %>
             <%= sort_th t(".status"), :status, sorting %>
             <th class="cell-actions"><span class="sr-only"><%= t(".actions") %></span></th>
           </tr>
@@ -47,6 +49,7 @@
             <tr id="<%= dom_id(farm) %>">
               <td class="font-medium"><%= farm.display_name %></td>
               <td><%= format_address(farm).presence || "—" %></td>
+              <td class="whitespace-nowrap tabular-nums"><%= format_farm_area(farm) %></td>
               <td><span class="badge <%= farm.active? ? "badge-success" : "badge-neutral" %>"><%= t("farms.status_badges.farm.#{farm.active? ? "active" : "inactive"}") %></span></td>
               <td class="cell-actions">
                 <div class="flex justify-end gap-2">

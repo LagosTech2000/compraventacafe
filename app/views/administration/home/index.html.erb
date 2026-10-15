@@ -8,6 +8,14 @@
     <%= render "shared/tile", path: administration_people_path, icon_name: :people,
           title: t("administration.people.index.title"), description: t(".people_description") %>
   <% end %>
+  <% if policy([ :administration, Farm ]).index? %>
+    <%= render "shared/tile", path: administration_farms_path, icon_name: :farms,
+          title: t("administration.farms.index.title"), description: t(".farms_description") %>
+  <% end %>
+  <% if policy([ :administration, Zone ]).index? %>
+    <%= render "shared/tile", path: administration_zones_path, icon_name: :map_pin,
+          title: t("administration.zones.index.title"), description: t(".zones_description") %>
+  <% end %>
   <% if policy(AuditEvent).index? %>
     <%= render "shared/tile", path: administration_audit_events_path, icon_name: :history,
           title: t("administration.audit_events.index.title"), description: t(".audit_description") %>

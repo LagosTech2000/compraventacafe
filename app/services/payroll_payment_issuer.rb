@@ -64,6 +64,7 @@ class PayrollPaymentIssuer
     def valid_request?
       errors.add(:base, :already_paid) if payroll.payments.exists?(period_starts_on: period.starts_on)
       errors.add(:base, :nothing_to_pay) if lines.empty?
+      errors.add(:base, :no_overtime_rate) if lines.any? { |line| line.overtime_hours.to_d.positive? && line.overtime_hour_rate.nil? }
       errors.add(:base, :negative_amount) if loan_amounts.values.compact.any?(&:negative?)
       known = lines.flat_map { |line| open_loans(line.member).map(&:id) }
       errors.add(:base, :unknown_loan) if (loan_amounts.compact.select { |_, amount| amount.positive? }.keys - known).any?
@@ -88,7 +89,9 @@ class PayrollPaymentIssuer
 
     def create_line(line)
       record = @payment.lines.create!(member: line.member, basis: line.basis, quantity: line.quantity, rate: line.rate,
-                                      gross_amount: line.gross_amount, loans_amount: loans_total_for(line.member))
+                                      gross_amount: line.gross_amount, loans_amount: loans_total_for(line.member),
+                                      overtime_hours: line.overtime_hours.to_d, overtime_hour_rate: line.overtime_hour_rate,
+                                      extra_days: line.extra_days.to_d, overtime_amount: line.overtime_amount.to_d)
       open_loans(line.member).each do |loan|
         amount = amount_for(loan)
         next unless amount&.positive?
