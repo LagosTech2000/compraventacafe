@@ -80,12 +80,36 @@ RSpec.describe "Error handling" do
     ActionController::Base.allow_forgery_protection = false
   end
 
+  it "answers 406, not a server error, to a page asked for in a format it does not have" do
+    get administration_people_path, headers: { "Accept" => "application/json" }
+    expect(response).to have_http_status(:not_acceptable)
+    expect(AuditEvent.where(action: "error").sole.details).to include("status" => 406, "error" => "ActionController::UnknownFormat")
+  end
+
   it "shows alerts as toasts the user closes, which do not go away by themselves" do
     get administration_person_path(id: 0)
     follow_redirect!
     toast = Nokogiri::HTML(response.body).at_css(".toast-region .toast-alert[role=alert]")
     expect(toast["data-toast-timeout-value"]).to eq("0")
     expect(toast.at_css("button[data-action='toast#dismiss']")).to be_present
+  end
+end
+
+RSpec.describe "Error handling for visitors" do
+  around do |example|
+    original = Rails.configuration.x.friendly_errors
+    Rails.configuration.x.friendly_errors = true
+    example.run
+  ensure
+    Rails.configuration.x.friendly_errors = original
+  end
+
+  it "answers 406 to bots asking for the sign-in page as JSON or text, without filling the audit log" do
+    [ "application/json", "text/plain" ].each do |accept|
+      get new_session_path, headers: { "Accept" => accept }
+      expect(response).to have_http_status(:not_acceptable), accept
+    end
+    expect(AuditEvent.where(action: "error")).to be_empty
   end
 end
 

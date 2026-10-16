@@ -75,6 +75,45 @@ RSpec.describe "Rate limits" do
       end
     end
 
+    describe "behind Cloudflare" do
+      # Cloudflare relays both, through the same server of its own.
+      let(:edge) { "162.158.42.91" }
+      let(:bot) { { "X-Forwarded-For" => "198.51.100.66, #{edge}" } }
+      let(:office) { { "X-Forwarded-For" => "203.0.113.7, #{edge}" } }
+
+      it "bans the bot, not the office that shares Cloudflare's server" do
+        with_rack_attack do
+          %w[/wp-login.php /.env /phpmyadmin/index.php].each { |path| get path, headers: bot }
+          get new_session_path, headers: bot
+          expect(response).to have_http_status(:too_many_requests)
+
+          get new_session_path, headers: office
+          expect(response).to have_http_status(:ok)
+        end
+
+        expect(AuditEvent.where(action: "rate_limited").sole.ip_address).to eq("198.51.100.66")
+      end
+
+      it "counts the requests per visitor, not per Cloudflare server" do
+        stub_const("Rack::Attack::REQUEST_LIMIT", 2)
+        with_rack_attack do
+          2.times { get new_session_path, headers: bot }
+          get new_session_path, headers: office
+          expect(response).to have_http_status(:ok)
+        end
+      end
+
+      it "does not let a request from outside Cloudflare choose its IP" do
+        with_rack_attack do
+          %w[/wp-login.php /.env /phpmyadmin/index.php].each do |path|
+            get path, headers: { "X-Forwarded-For" => "198.51.100.#{rand(1..250)}, 192.0.2.10" }
+          end
+          get new_session_path, headers: { "X-Forwarded-For" => "203.0.113.7, 192.0.2.10" }
+          expect(response).to have_http_status(:too_many_requests)
+        end
+      end
+    end
+
     it "lets the app's own addresses through" do
       with_rack_attack do
         sign_in admin

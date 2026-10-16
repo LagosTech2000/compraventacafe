@@ -4130,6 +4130,7 @@ es:
       not_found: "El registro que buscas no existe o fue borrado."
       page_not_found: "La página que buscas no existe. Revisa la dirección o usa el menú."
       bad_request: "La solicitud llegó incompleta. Vuelve a intentarlo."
+      not_acceptable: "Esta página no está disponible en ese formato."
       expired_form: "El formulario expiró. Recarga la página e inténtalo de nuevo."
       stale_record: "Alguien más guardó cambios en este registro mientras lo editabas. No se guardó nada: recarga la página y vuelve a intentarlo."
       rate_limited: "Hiciste esto demasiadas veces en poco tiempo. Espera unos minutos y vuelve a intentarlo."
