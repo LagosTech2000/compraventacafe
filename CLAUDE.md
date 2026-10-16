@@ -285,6 +285,7 @@ modal vuelve inerte lo que queda fuera de él.
 | Error | Qué ve el usuario |
 | --- | --- |
 | Sin permiso, registro inexistente, formulario incompleto | Alerta y vuelve al inicio (páginas) o al formulario (envíos) |
+| Página pedida en un formato que no tiene (bots que piden el login como JSON) | 406, no 500 |
 | Formulario expirado (CSRF) | Alerta para recargar e intentar de nuevo |
 | Error inesperado | Alerta genérica con un **código de referencia** |
 
@@ -593,6 +594,14 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
   el 429): `<meta name="turbo-prefetch" content="false">` en el layout,
   porque Turbo 8 pedía cada enlace sobre el que se detenía el puntero, y
   toda la oficina comparte el límite. Las páginas se piden al hacer clic.
+- **Cloudflare va delante** de `comreydavid.com` (Fernando, 2026-10-16):
+  sin más, `remote_ip` era el servidor de Cloudflare, compartido entre
+  usuarios y bots, y el bloqueo de un bot que buscaba `/.env` dejaba a
+  la oficina con 429 una hora (era la causa real, no Starlink).
+  `config/initializers/trusted_proxies.rb` confía en los rangos publicados
+  de Cloudflare: `remote_ip` es la IP real del visitante para rack-attack,
+  el límite del login y la auditoría. Si Cloudflare publica rangos nuevos,
+  se agregan ahí.
 - **Límite por usuario en pantallas caras**
   (`ApplicationController.rate_limit_per_user`): respaldo 3 por hora, CSV
   de reportes 10 por minuto, gráficos 60 por minuto. Pasado el límite,

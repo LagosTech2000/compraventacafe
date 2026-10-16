@@ -15,6 +15,7 @@ module ErrorHandling
     rescue_from ActionController::ParameterMissing, with: :handle_bad_request
     rescue_from ActiveRecord::RecordNotFound, with: :handle_not_found
     rescue_from ActionController::RoutingError, with: :handle_page_not_found
+    rescue_from ActionController::UnknownFormat, with: :handle_unknown_format
     rescue_from ActionController::InvalidAuthenticityToken, with: :handle_expired_form
     rescue_from Pundit::NotAuthorizedError, with: :handle_forbidden
     rescue_from ActiveRecord::StaleObjectError, with: :handle_stale_record
@@ -34,6 +35,13 @@ module ErrorHandling
     def handle_page_not_found(exception)
       audit_error(:not_found, exception)
       respond_with_error t("errors.handled.page_not_found"), status: :not_found
+    end
+
+    # A page asked for in a format it does not have (bots asking for the
+    # sign-in page as JSON or plain text): 406, not a server error.
+    def handle_unknown_format(exception)
+      audit_error(:not_acceptable, exception)
+      respond_with_error t("errors.handled.not_acceptable"), status: :not_acceptable
     end
 
     def handle_bad_request(exception)
