@@ -75,11 +75,11 @@ RSpec.describe Presence do
     described_class.leave(ana)
 
     expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to)
-      .with(:presence, target: "active-users", partial: "dashboard/active_users", locals: { users: [ ana ], recent: [], pages: nil }).once
+      .with(:presence, target: "active-users", partial: "dashboard/active_users", locals: { users: [ ana ], recent: [], pages: nil, visits: {}, changes: {} }, attributes: { method: :morph }).once
     expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to)
-      .with(Presence::WATCH_STREAM, target: "active-users", partial: "dashboard/active_users", locals: { users: [ ana ], recent: [], pages: {} }).once
+      .with(Presence::WATCH_STREAM, target: "active-users", partial: "dashboard/active_users", locals: { users: [ ana ], recent: [], pages: {}, visits: {}, changes: {} }, attributes: { method: :morph }).once
     expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to)
-      .with(:presence, target: "active-users", partial: "dashboard/active_users", locals: { users: [], recent: [], pages: nil }).once
+      .with(:presence, target: "active-users", partial: "dashboard/active_users", locals: { users: [], recent: [], pages: nil, visits: {}, changes: {} }, attributes: { method: :morph }).once
   end
 
   describe "recent activity" do
@@ -112,10 +112,29 @@ RSpec.describe Presence do
     it "moves a user to recent when their last tab closes" do
       session_for(ana, seen: 1.minute.ago)
       described_class.join(ana)
-      expect(described_class.panel_locals).to eq(users: [ ana ], recent: [], pages: nil)
+      expect(described_class.panel_locals).to eq(users: [ ana ], recent: [], pages: nil, visits: {}, changes: {})
 
       described_class.leave(ana)
-      expect(described_class.panel_locals).to eq(users: [], recent: [ ana ], pages: nil)
+      expect(described_class.panel_locals).to eq(users: [], recent: [ ana ], pages: nil, visits: {}, changes: {})
+    end
+  end
+
+  describe "the watchers' cards" do
+    it "brings the latest pages and changes of each user, up to CARD_ITEMS" do
+      stub_const("Presence::CARD_ITEMS", 2)
+      described_class.join(ana)
+      described_class.join(beto)
+      3.times { |i| PageVisit.record!(user: ana, path: "/ana/#{i}", title: nil, at: i.minutes.ago) }
+      PageVisit.record!(user: beto, path: "/beto", title: nil)
+      3.times do |i|
+        AuditEvent.create!(user: ana, user_email: "ana@example.com", action: "sign_in", auditable_label: "ana #{i}", created_at: i.minutes.ago)
+      end
+
+      locals = described_class.panel_locals(pages: true)
+      expect(locals[:visits][ana.id].map(&:path)).to eq(%w[/ana/0 /ana/1])
+      expect(locals[:visits][beto.id].map(&:path)).to eq(%w[/beto])
+      expect(locals[:changes][ana.id].map(&:auditable_label)).to eq([ "ana 0", "ana 1" ])
+      expect(locals[:changes]).not_to have_key(beto.id)
     end
   end
 end

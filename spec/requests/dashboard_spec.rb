@@ -105,21 +105,25 @@ RSpec.describe "Home page" do
         get root_path
       end
 
-      online = page.at_css("#active-users li#online_user_#{viewer.id}")
+      online = page.at_css("#active-users li[data-presence-state=online]#presence_user_#{viewer.id}")
       expect(online.at_css(".online-dot:not(.online-dot-recent)")).to be_present
-      expect(online.at_css(".online-tooltip").text.squish).to eq("Vera Luna En línea")
+      expect(online.at_css(".presence-card").text.squish).to eq("VL Vera Luna En línea")
 
-      recent = page.at_css("#active-users li#recent_user_#{ana.id}")
+      recent = page.at_css("#active-users li[data-presence-state=recent]#presence_user_#{ana.id}")
       expect(recent.at_css(".online-dot.online-dot-recent")).to be_present
-      expect(recent.at_css(".online-tooltip").text.squish).to eq("Ana Zelaya Última actividad: 09:42")
-      expect(recent["aria-describedby"]).to eq("recent_user_#{ana.id}_status")
+      expect(recent.at_css(".presence-card").text.squish).to eq("AZ Ana Zelaya Última actividad: 09:42")
+      expect(recent["aria-describedby"]).to eq("presence_user_#{ana.id}_status")
       expect(page.at_css("#active-users")["aria-label"]).to eq("1 usuario conectado, 1 con actividad en la última hora")
     end
 
-    it "shows the watcher, and only them, each user's last activity and page on hover" do
+    it "shows the watcher, and only them, each user's page, recent pages and changes, with links" do
       ana = create(:user, name: "Ana Zelaya")
       seen = Time.zone.parse("2026-10-15 10:05")
       ana.sessions.create!(last_seen_at: seen, last_path: "/trading/invoices/12", last_page_title: "Factura 0012")
+      PageVisit.record!(user: ana, path: "/trading/purchases", title: "Compras", at: seen - 1.day)
+      PageVisit.record!(user: ana, path: "/trading/invoices/12", title: "Factura 0012", at: seen)
+      change = AuditEvent.create!(user: ana, user_email: ana.email_address, action: "create", auditable_type: "Zone",
+                                  auditable_id: 7, auditable_label: "Morocelí", created_at: seen - 5.minutes)
       Presence.join(ana)
       stub_const("Presence::WATCHER_IDS", [ viewer.id ])
 
@@ -127,14 +131,24 @@ RSpec.describe "Home page" do
         sign_in viewer
         get root_path
       end
-      card = page.at_css("#active-users li#online_user_#{ana.id} .online-tooltip")
-      expect(card.text.squish).to eq("Ana Zelaya En línea Última actividad: 10:05 Está en: Factura 0012 /trading/invoices/12")
+      card = page.at_css("#active-users li[data-presence-state=online]#presence_user_#{ana.id} .presence-card")
+      expect(card.at_css("[data-presence-page]").text.squish).to eq("Última actividad: 10:05 Está en: Factura 0012 /trading/invoices/12")
+      expect(card.at_css("[data-presence-page] a[href='/trading/invoices/12'][data-turbo-frame='_top']")).to be_present
+
+      visits = card.css("[data-presence-visits] a")
+      expect(visits.map { it["href"] }).to eq([ "/trading/invoices/12", "/trading/purchases" ])
+      expect(visits.map { it.text.squish }).to eq([ "10:05 Factura 0012 /trading/invoices/12", "14 de oct 10:05 Compras /trading/purchases" ])
+
+      link = card.at_css("[data-presence-changes] a")
+      expect(link["href"]).to eq(administration_audit_event_path(change))
+      expect(link["data-turbo-frame"]).to eq("modal")
+      expect(link.text.squish).to eq("10:00 Creó la zona #7 (Morocelí)")
       expect(response.body).to include(Turbo::StreamsChannel.signed_stream_name(Presence::WATCH_STREAM))
 
       sign_in create(:user, name: "Otro Usuario")
       get root_path
-      expect(page.at_css("#active-users li#online_user_#{ana.id} .online-tooltip").text.squish).to eq("Ana Zelaya En línea")
-      expect(page.at_css("[data-presence-page]")).to be_nil
+      expect(page.at_css("#active-users li[data-presence-state=online]#presence_user_#{ana.id} .presence-card").text.squish).to eq("AZ Ana Zelaya En línea")
+      expect(page.at_css("[data-presence-page], [data-presence-visits], [data-presence-changes]")).to be_nil
       expect(response.body).not_to include("/trading/invoices/12")
       expect(response.body).not_to include(Turbo::StreamsChannel.signed_stream_name(Presence::WATCH_STREAM))
     end

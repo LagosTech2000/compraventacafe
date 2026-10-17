@@ -11,7 +11,7 @@
       <%= link_to t("trading.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>
     <% end %>
     <span class="mx-1 h-6 w-px shrink-0 self-center bg-primary/20" aria-hidden="true"></span>
-    <% { producers: trading_producers_path, zones: trading_zones_path }.each do |key, path| %>
+    <% { producers: trading_producers_path, haulers: trading_haulers_path, zones: trading_zones_path }.each do |key, path| %>
       <%= link_to t("trading.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>
     <% end %>
     <% if policy(Purchase).create? %>

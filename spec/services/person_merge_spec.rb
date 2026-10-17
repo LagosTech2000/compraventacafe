@@ -24,6 +24,26 @@ RSpec.describe PersonMerge do
     expect(Person.exists?(secondary.id)).to be(false)
   end
 
+  it "joins two carreros: the other's hauled purchases and payments go to the primary's" do
+    kept = create(:hauler, person: primary, commission_percent: 10)
+    other = create(:hauler, person: secondary, commission_percent: 5)
+    hauled = create(:purchase, hauler: other)
+    payment = create(:hauler_payment, hauler: other, amount: 1)
+    expect(merge.summary).to include(hauled_purchases: 1)
+
+    expect(merge.save).to be(true)
+    expect(hauled.reload).to have_attributes(hauler: kept, hauler_commission_percent: 5) # keeps the terms of its day
+    expect(payment.reload.hauler).to eq(kept)
+    expect(Hauler.exists?(other.id)).to be(false)
+  end
+
+  it "moves the carrero role when only the other has it" do
+    other = create(:hauler, person: secondary)
+    expect(merge.gained_roles).to include(:hauler)
+    expect(merge.save).to be(true)
+    expect(other.reload.person).to eq(primary)
+  end
+
   it "takes each detail from the side chosen, including a unique DNI held by the other" do
     primary.update!(dni: "0801199900000", rtn: "08011999000001")
     expect(merge("first_names" => "secondary", "dni" => "secondary", "phone" => "secondary").save).to be(true)

@@ -9,7 +9,7 @@ module Trading
       @payment = authorize @invoice.payments.build(paid_on: Time.zone.today, amount: @invoice.balance_due)
     end
 
-    # Its receipt: original and copy, printed on one sheet.
+    # Its receipt: original and copy, each printed on its own sheet.
     def show
       @payment = authorize @invoice.payments.find(params[:id])
     end

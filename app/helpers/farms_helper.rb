@@ -16,6 +16,17 @@ module FarmsHelper
   end
 
   # "5 de oct – 11 de oct"
+  # How a task priced by quantity got its value ("10 barriles de 200 L ×
+  # L 100.00"); nil for a fixed amount.
+  def task_quantity_label(task)
+    return if task.fixed? || task.quantity.nil?
+
+    key = task.per_fertilizer? ? "per_fertilizer_#{task.quantity_unit}" : task.pricing
+    t("farms.payrolls.tasks.quantity.#{key}", quantity: number_with_precision(task.quantity, precision: 2, strip_insignificant_zeros: true),
+                                               liters: number_with_precision(task.barrel_liters, precision: 2, strip_insignificant_zeros: true),
+                                               price: format_money(task.unit_price))
+  end
+
   def format_period(period)
     t("farms.period", from: l(period.starts_on, format: :short), to: l(period.ends_on, format: :short))
   end

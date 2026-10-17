@@ -40,6 +40,7 @@
 <% end %>
 
 <%= render "administration/people/producer", producer: @person.producer if @person.producer %>
+<%= render "administration/people/hauler", hauler: @person.hauler if @person.hauler %>
 
 <% unless modal_request? %>
   <p class="mt-6"><%= link_to t(".back"), administration_people_path, class: "text-sm link" %></p>

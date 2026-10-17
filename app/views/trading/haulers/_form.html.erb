@@ -1,0 +1,35 @@
+<%# A carrero: commission percent and can price (both required), and the
+    person, written here when new. %>
+<%= form_with model: [ :trading, hauler ], class: form_surface_class("space-y-6"), data: { controller: "form-validation" } do |form| %>
+  <%= render "shared/form_errors", record: hauler %>
+
+  <section>
+    <h2 class="mb-1 text-lg font-semibold"><%= t(".commission") %></h2>
+    <p class="mb-3 text-sm text-ink-muted"><%= t(".commission_help", pounds: number_with_precision(Hauler::CAN_POUNDS, precision: 1)) %></p>
+    <div class="grid gap-5 sm:grid-cols-2">
+      <%= render "trading/haulers/terms_fields", form:, percent: :commission_percent, price: :can_price, model: Hauler %>
+    </div>
+    <% if hauler.persisted? %>
+      <p class="mt-2 text-xs text-ink-muted"><%= t(".changes_help") %></p>
+      <label class="mt-4 flex items-center gap-2 text-sm">
+        <%= form.check_box :active, class: "size-4 accent-primary" %>
+        <%= t(".active") %>
+      </label>
+    <% end %>
+  </section>
+
+  <section>
+    <h2 class="mb-3 text-lg font-semibold"><%= Hauler.human_attribute_name(:person) %></h2>
+    <%= form.fields_for :person do |person_form| %>
+      <div class="grid gap-5 sm:grid-cols-2">
+        <%= render "shared/person_fields", form: person_form, autofocus: false %>
+      </div>
+      <div class="mt-5"><%= render "shared/person_roles", form: person_form, hauler_form: true %></div>
+    <% end %>
+  </section>
+
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= cancel_button hauler.persisted? ? trading_hauler_path(hauler) : trading_haulers_path %>
+  </div>
+<% end %>

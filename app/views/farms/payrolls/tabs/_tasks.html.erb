@@ -19,6 +19,7 @@
                 <p class="font-medium"><%= task.name %></p>
                 <p class="text-xs text-ink-muted"><%= task.completed? ? t("farms.payrolls.tasks.completed_on", date: l(task.completed_on)) : t("farms.payrolls.tasks.statuses.pending") %></p>
                 <p class="mt-1 font-semibold tabular-nums"><%= format_money(task.amount) %></p>
+                <% if (quantity = task_quantity_label(task)) %><p class="text-xs text-ink-muted"><%= quantity %></p><% end %>
                 <p class="text-xs text-ink-muted"><%= t("farms.payrolls.tasks.participants", count: task.participants.size) %></p>
               </div>
               <%= render "farms/payrolls/task_actions", payroll:, task: %>
@@ -51,7 +52,10 @@
                     <span class="badge badge-neutral"><%= t("farms.payrolls.tasks.statuses.pending") %></span>
                   <% end %>
                 </td>
-                <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(task.amount) %></td>
+                <td class="whitespace-nowrap text-right tabular-nums">
+                  <%= format_money(task.amount) %>
+                  <% if (quantity = task_quantity_label(task)) %><span class="block text-xs text-ink-muted"><%= quantity %></span><% end %>
+                </td>
                 <td><%= shares.keys.map(&:full_name).join(", ").presence || "—" %></td>
                 <td class="whitespace-nowrap text-right tabular-nums"><%= shares.any? ? format_money(shares.values.min) : "—" %></td>
                 <td class="cell-actions"><%= render "farms/payrolls/task_actions", payroll:, task: %></td>

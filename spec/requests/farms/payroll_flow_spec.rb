@@ -94,6 +94,50 @@ RSpec.describe "Farms flow" do
     expect(main).to include(payroll.name, "L 300.00")
   end
 
+  describe "tasks priced by quantity" do
+    let(:farm) { create(:farm, name: "El Roble") }
+    let(:by_task) { create(:payroll, farm:, kind: "task", starts_on: today) }
+    let(:workers) { create_list(:payroll_member, 2, payroll: by_task) }
+
+    it "records fumigation by barrel and shows how its value came out" do
+      post farms_payroll_tasks_path(by_task), params: { payroll_task: { name: "Fumigación", pricing: "per_barrel", quantity: "10",
+                                                                         barrel_liters: "200", unit_price: "100", amount: "1",
+                                                                         completed_on: today, member_ids: workers.map(&:id) } }
+      task = by_task.tasks.sole
+      expect(task).to have_attributes(amount: 1_000, quantity: 10, barrel_liters: 200, unit_price: 100)
+      expect(task.shares.values).to eq([ 500, 500 ])
+
+      get farms_payroll_path(by_task, tab: "tasks")
+      expect(response.body).to include("10 barriles de 200 L × L 100.00")
+    end
+
+    it "saves the farm's extension with the first task by manzana, or nothing" do
+      get new_farms_payroll_task_path(by_task)
+      expect(response.body).to include("La finca El Roble no tiene su extensión")
+
+      params = { payroll_task: { name: "Chapia", pricing: "per_manzana", quantity: "3", unit_price: "400", member_ids: workers.map(&:id) } }
+      post farms_payroll_tasks_path(by_task), params: params.merge(farm: { area_value: "2", area_unit: "manzana" })
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(by_task.tasks).to be_empty
+      expect(farm.reload.area_value).to be_nil # all or nothing
+
+      post farms_payroll_tasks_path(by_task), params: params.merge(farm: { area_value: "4", area_unit: "manzana" })
+      expect(by_task.tasks.sole.amount).to eq(1_200)
+      expect(farm.reload).to have_attributes(area_value: 4, area_unit: "manzana")
+      expect(AuditEvent.where(auditable: farm, action: "update")).to exist
+
+      get new_farms_payroll_task_path(by_task)
+      expect(response.body).not_to include("no tiene su extensión")
+      expect(response.body).to include("La finca tiene 4.00 manzanas.")
+    end
+
+    it "asks for the extension when it is not sent" do
+      post farms_payroll_tasks_path(by_task), params: { payroll_task: { name: "Chapia", pricing: "per_manzana", quantity: "1", unit_price: "400" } }
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("Para pagar por manzana, primero escribe la extensión de la finca.")
+    end
+  end
+
   it "records cans and tasks" do
     harvest = create(:payroll, kind: "harvest", can_price: 30, starts_on: today)
     picker = create(:payroll_member, payroll: harvest)

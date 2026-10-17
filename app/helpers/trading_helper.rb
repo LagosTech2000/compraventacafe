@@ -7,6 +7,16 @@ module TradingHelper
     number_to_currency(value)
   end
 
+  # "10 %", "2.5 %": a percent without trailing zeros.
+  def format_percent(value)
+    number_to_percentage(value, precision: 2, strip_insignificant_zeros: true, format: "%n %") if value
+  end
+
+  # "100.25": cans of a hauler's commission (Hauler::CAN_POUNDS).
+  def format_cans(value)
+    number_with_precision(value, precision: 2, delimiter: ",") if value
+  end
+
   # "Temporada 2026-2027"
   def format_season(season)
     t("trading.season.name", season: season.label) if season

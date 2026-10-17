@@ -54,6 +54,24 @@
 
 <%= render "trading/purchases/loans", purchase: @purchase, settlement: @settlement, loan_payments: @loan_payments %>
 
+<%# Hauled by a carrero: their commission, paid by the business apart. %>
+<% if (hauler = @purchase.hauler) %>
+  <section class="mt-6 panel flex flex-wrap items-center justify-between gap-4 p-4" aria-labelledby="purchase-hauler">
+    <div class="min-w-0">
+      <h2 id="purchase-hauler" class="text-sm font-semibold"><%= t(".hauled_by", name: hauler.full_name) %></h2>
+      <p class="mt-1 text-sm text-ink-muted">
+        <%= t(".hauler_commission", cans: format_cans(@purchase.hauler_cans), price: format_money(@purchase.hauler_can_price),
+                                    percent: format_percent(@purchase.hauler_commission_percent)) %>
+        <strong class="text-ink tabular-nums"><%= format_money(@purchase.hauler_commission) %></strong>
+      </p>
+      <p class="mt-1 text-xs text-ink-muted"><%= t(".hauler_paid_apart") %></p>
+    </div>
+    <% if policy(hauler).show? %>
+      <%= modal_link_to t(".view_hauler"), trading_hauler_path(hauler), class: "btn btn-sm" %>
+    <% end %>
+  </section>
+<% end %>
+
 <%# On wide screens the weighings sit beside the data instead of under it. %>
 <div class="mt-6 grid items-start gap-6 <%= "xl:grid-cols-[minmax(0,1fr)_22rem]" if @purchase.by_weighings? %>">
 <dl class="grid panel sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">

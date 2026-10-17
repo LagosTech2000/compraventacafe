@@ -18,6 +18,30 @@ RSpec.describe "Printable documents" do
     letterheads.each { |header| expect(header.text.squish).to include("Beneficio La Esperanza", "Marcala, La Paz", title) }
   end
 
+  # Original and copy always print each on its own sheet (Fernando, 2026-10-16).
+  def expect_copy_on_its_own_page
+    copy = letterheads.find { |header| header.text.include?("COPIA") }
+    expect(copy).to be_present
+    expect(copy.ancestors.any? { |node| node["class"].to_s.split.include?("print:break-before-page") }).to be(true)
+  end
+
+  it "prints original and copy on separate sheets" do
+    invoice = InvoiceIssuer.new(producer:, user:, purchase_ids: [ create(:purchase, producer:).id ], payment_status: "partial",
+                                payment_method: "cash", amount: "1000").call.invoice
+    loan = create(:loan, person: producer.person, cash_amount: 1_000, monthly_interest_rate: 0)
+    loan_payment = create(:loan_payment, loan:, amount: 100, payment_method: "cash")
+
+    hauler = create(:hauler)
+    create(:purchase, hauler:)
+    hauler_payment = create(:hauler_payment, hauler:, amount: 1)
+
+    [ trading_invoice_path(invoice), trading_invoice_payment_path(invoice, invoice.payments.first),
+      loans_loan_payment_path(loan, loan_payment), trading_hauler_payment_path(hauler, hauler_payment) ].each do |path|
+      get path
+      expect_copy_on_its_own_page
+    end
+  end
+
   it "puts it on invoices (original and copy) and their payment receipts" do
     invoice = InvoiceIssuer.new(producer:, user:, purchase_ids: [ create(:purchase, producer:).id ], payment_status: "partial",
                                 payment_method: "cash", amount: "1000").call.invoice

@@ -12,8 +12,8 @@ RSpec.describe "Pages of who is connected", type: :system do
   end
 
   def card_of(user)
-    find("#active-users li#online_user_#{user.id}").hover
-    find("#active-users li#online_user_#{user.id} .online-tooltip")
+    find("#active-users li[data-presence-state=online]#presence_user_#{user.id}").hover
+    find("#active-users li[data-presence-state=online]#presence_user_#{user.id} .presence-card")
   end
 
   it "follows the page, also one opened in a modal, without reloading" do
@@ -37,6 +37,29 @@ RSpec.describe "Pages of who is connected", type: :system do
     end
     expect(card_of(beto)).to have_text(/Está en:\s+Inicio/)
     expect(page.evaluate_script("window.pageMarker")).to eq("still here")
+  end
+
+  it "is a card you can move onto, scroll and click, which stays open while the panel updates" do
+    [ ana, beto ].each { it.update!(admin: true) } # so Compras lets them in
+    25.times { |i| PageVisit.record!(user: beto, path: "/trading/purchases?page=#{i}", title: "Compras #{i}", at: (30 - i).minutes.ago) }
+    sign_in_as(ana)
+    Capybara.using_session(:beto) { sign_in_as(beto) }
+
+    card = card_of(beto)
+    expect(card).to have_css("[data-presence-visits] li", count: Presence::CARD_ITEMS)
+    list = card.find("[data-presence-visits]")
+    list.hover # from the avatar onto the card: it stays open
+    expect(card).to be_visible
+    expect(list.evaluate_script("this.scrollHeight > this.clientHeight")).to be(true)
+    list.execute_script("this.scrollTop = 120")
+
+    Capybara.using_session(:beto) { visit trading_purchases_path }
+    expect(card).to have_text("/trading/purchases", wait: 5)
+    expect(card).to be_visible
+    expect(list.evaluate_script("this.scrollTop")).to eq(120) # morphed, not swapped
+
+    card.find("[data-presence-page] a").click
+    expect(page).to have_current_path(trading_purchases_path)
   end
 
   it "is not told to anyone else" do

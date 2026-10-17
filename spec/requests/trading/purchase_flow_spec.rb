@@ -163,7 +163,8 @@ RSpec.describe "Trading purchase flow" do
     expect(response).to redirect_to(trading_invoice_path(invoice))
 
     get trading_invoice_path(invoice)
-    expect(response.body).to include("ORIGINAL", "COPIA", "Compra de Café el Rey David", "Mata de Plátano, Moroceli", "Firma de quien factura")
+    expect(response.body).to include("ORIGINAL", "COPIA", "Compra de Café el Rey David", "Mata de Plátano, Moroceli",
+                                     "Firma del cliente (productor)", "Firma del comprador de café")
     expect(response.body).to include("L 8,241.80")
     expect(response.body).to include("Facturado por: #{user.name}")
 

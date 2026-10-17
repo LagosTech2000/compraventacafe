@@ -77,7 +77,8 @@ class PersonMerge
       invoices: producer ? producer.invoices.count : 0,
       farms: producer ? producer.farms.count : 0,
       loans: secondary.loans.count,
-      payrolls: secondary.payroll_members.count
+      payrolls: secondary.payroll_members.count,
+      **({ hauled_purchases: secondary.hauler.purchases.count } if secondary.hauler)
     }
   end
 
@@ -117,7 +118,8 @@ class PersonMerge
       @chosen = differences.select { |field| choice(field) == "secondary" }
       @moved = { roles: gained_roles.map(&:to_s), farms_joined: joining_farms }
       merge_producer
-      Person::ROLES.excluding(:producer).each { |role| merge_role(role) }
+      merge_hauler
+      Person::ROLES.excluding(:producer, :hauler).each { |role| merge_role(role) }
       @moved[:loans] = Loan.where(person_id: secondary.id).update_all(person_id: primary.id)
       @moved[:payrolls] = PayrollMember.where(person_id: secondary.id).update_all(person_id: primary.id)
       merge_photo
@@ -184,6 +186,23 @@ class PersonMerge
                         .flatten.index_with { farm.public_send(it) }
       same.update!(fill) if fill.any?
       Farm.find(farm.id).destroy!
+    end
+
+    # Carreros: both, the other's hauled purchases and payments go to the
+    # primary's (who keeps their own percent and can price; each purchase
+    # keeps the ones of its day). Only the other: it becomes the primary's.
+    def merge_hauler
+      kept = primary.hauler
+      other = secondary.hauler
+      return unless other
+
+      if kept
+        @moved[:hauled_purchases] = Purchase.where(hauler_id: other.id).update_all(hauler_id: kept.id)
+        @moved[:hauler_payments] = HaulerPayment.where(hauler_id: other.id).update_all(hauler_id: kept.id)
+        Hauler.find(other.id).destroy!
+      else
+        other.update!(person: primary)
+      end
     end
 
     def merge_role(role)

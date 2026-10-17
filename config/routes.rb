@@ -56,6 +56,10 @@ Rails.application.routes.draw do
       resources :payments, only: %i[ new create show destroy ], controller: "invoice_payments"
     end
     resources :producers, except: :destroy
+    # Carreros: their commissions and the payments of them, each with its receipt.
+    resources :haulers, except: :destroy do
+      resources :payments, only: %i[ new create show destroy ], controller: "hauler_payments"
+    end
     resources :zones, only: %i[ index new create edit update ]
     resource :daily_close, only: :show
   end

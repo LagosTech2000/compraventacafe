@@ -5,16 +5,77 @@
       scope: :payroll_task, class: form_surface_class("max-w-3xl space-y-5"), data: { controller: "form-validation task-split",
               task_split_count_labels_value: { one: t("farms.tasks.form.chosen.one"), other: t("farms.tasks.form.chosen.other") }.to_json } do |form| %>
   <%= render "shared/form_errors", record: task %>
-  <div class="grid gap-5 sm:grid-cols-3">
-    <div class="sm:col-span-2">
-      <%= form.label :name, class: "field-label" %>
-      <%= form.text_field :name, autofocus: true, required: true, maxlength: 150, class: "field-input", placeholder: t("farms.tasks.form.name_placeholder"),
-            data: { missing_message: "#{PayrollTask.human_attribute_name(:name)} #{t("errors.messages.blank")}" } %>
+  <%# Fixed amount, or quantity × price (task_pricing_controller.js shows the
+      fields of the chosen way and fills the value; the server recalculates). %>
+  <% farm = payroll.farm %>
+  <% manzanas = task.farm_manzanas %>
+  <% missing_area = farm.area_value_in_database.nil? %>
+  <div class="space-y-5" data-controller="task-pricing">
+    <div class="grid gap-5 sm:grid-cols-3">
+      <div class="sm:col-span-2">
+        <%= form.label :name, class: "field-label" %>
+        <%= form.text_field :name, autofocus: true, required: true, maxlength: 150, class: "field-input", placeholder: t("farms.tasks.form.name_placeholder"),
+              data: { missing_message: "#{PayrollTask.human_attribute_name(:name)} #{t("errors.messages.blank")}" } %>
+      </div>
+      <div>
+        <%= form.label :pricing, class: "field-label" %>
+        <%= form.select :pricing, PayrollTask::PRICINGS.map { [ t("farms.tasks.form.pricings.#{it}"), it ] }, {},
+              class: "field-input", data: { task_pricing_target: "pricing", action: "task-pricing#update" } %>
+      </div>
     </div>
-    <div>
+
+    <div class="grid gap-5 sm:grid-cols-3" data-pricings="per_manzana per_barrel per_fertilizer" hidden>
+      <div>
+        <%= form.label :quantity, class: "field-label" do %>
+          <% %w[per_manzana per_barrel per_fertilizer].each do |pricing| %>
+            <span data-pricings="<%= pricing %>" hidden><%= t("farms.tasks.form.quantity.#{pricing}") %></span>
+          <% end %>
+        <% end %>
+        <%= form.number_field :quantity, value: task.quantity&.to_s("F"), required: true, min: 0.01, step: 0.01, inputmode: "decimal",
+              max: (manzanas.round(2).to_s("F") if task.per_manzana? && manzanas), class: "field-input tabular-nums",
+              data: { task_pricing_target: "quantity", action: "task-pricing#update", manzanas: manzanas&.round(2)&.to_s("F") } %>
+        <p class="mt-1 text-xs text-ink-muted" data-pricings="per_manzana" hidden>
+          <%= t("farms.tasks.form.farm_manzanas", manzanas: number_with_precision(manzanas, precision: 2)) if manzanas && !missing_area %>
+        </p>
+      </div>
+      <div data-pricings="per_fertilizer" hidden>
+        <%= form.label :quantity_unit, class: "field-label" %>
+        <%= form.select :quantity_unit, PayrollTask::FERTILIZER_UNITS.map { [ t("farms.tasks.form.fertilizer_units.#{it}"), it ] }, {},
+              class: "field-input" %>
+      </div>
+      <div data-pricings="per_barrel" hidden>
+        <%= form.label :barrel_liters, class: "field-label" %>
+        <%= form.number_field :barrel_liters, value: (task.barrel_liters || PayrollTask::DEFAULT_BARREL_LITERS).to_d.to_s("F").delete_suffix(".0"),
+              required: true, min: 0.01, step: 0.01, inputmode: "decimal", class: "field-input tabular-nums" %>
+        <p class="mt-1 text-xs text-ink-muted"><%= t("farms.tasks.form.barrel_help") %></p>
+      </div>
+      <div>
+        <%= form.label :unit_price, class: "field-label" do %>
+          <% %w[per_manzana per_barrel per_fertilizer].each do |pricing| %>
+            <span data-pricings="<%= pricing %>" hidden><%= t("farms.tasks.form.unit_price.#{pricing}") %></span>
+          <% end %>
+        <% end %>
+        <%= form.number_field :unit_price, value: (format("%.2f", task.unit_price) if task.unit_price), required: true, min: 0.01,
+              max: Payroll::MAX_AMOUNT - 0.01, step: 0.01, inputmode: "decimal", placeholder: "0.00", class: "field-input tabular-nums",
+              data: { task_pricing_target: "unitPrice", action: "task-pricing#update" } %>
+      </div>
+    </div>
+
+    <% if missing_area %>
+      <%# Asked before a task by manzana can be saved; saved on the farm. %>
+      <div class="rounded-xl bg-warning-soft p-4 text-sm" data-pricings="per_manzana" hidden>
+        <p class="mb-3 font-medium text-warning"><%= t("farms.tasks.form.farm_area_missing", farm: farm.name) %></p>
+        <%= fields_for :farm, farm do |farm_form| %>
+          <%= render "farms/farms/area_fields", form: farm_form, farm:, required: true %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <div class="max-w-xs">
       <%= form.label :amount, class: "field-label" %>
       <%= form.number_field :amount, value: (format("%.2f", task.amount) if task.amount), required: true, min: 0.01, max: Payroll::MAX_AMOUNT - 0.01, step: 0.01, inputmode: "decimal",
-            placeholder: "0.00", class: "field-input text-lg", data: { task_split_target: "amount", action: "task-split#update" } %>
+            placeholder: "0.00", class: "field-input text-lg read-only:bg-surface-2", data: { task_split_target: "amount", task_pricing_target: "amount", action: "task-split#update" } %>
+      <p class="mt-1 text-xs text-ink-muted" data-pricings="per_manzana per_barrel per_fertilizer" hidden><%= t("farms.tasks.form.amount_calculated") %></p>
     </div>
   </div>
 

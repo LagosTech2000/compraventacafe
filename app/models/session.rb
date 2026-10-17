@@ -16,11 +16,18 @@ class Session < ApplicationRecord
   end
 
   # The page this session just opened (presence.js): its path and title, for
-  # the user with id 1 (Presence::WATCHER_IDS). Also counts as activity.
+  # the user with id 1 (Presence::WATCHER_IDS), who also sees the user's
+  # recent pages (PageVisit). Also counts as activity.
   def visited!(path:, title:)
     path = path.to_s.first(PATH_LENGTH)
-    path = nil unless path.start_with?("/")
-    update_columns(last_path: path, last_page_title: title.to_s.squish.first(TITLE_LENGTH).presence,
-                   last_seen_at: Time.current)
+    # Only this app's own paths: never "//host" or "/\host", which a
+    # browser opens as another site (the watcher's card links to it).
+    path = nil unless path.match?(%r{\A/(?![/\\])})
+    title = title.to_s.squish.first(TITLE_LENGTH).presence
+    now = Time.current
+    transaction do
+      update_columns(last_path: path, last_page_title: title, last_seen_at: now)
+      PageVisit.record!(user:, path:, title:, at: now) if path
+    end
   end
 end

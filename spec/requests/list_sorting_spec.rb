@@ -8,12 +8,14 @@ RSpec.describe "Sorting every list" do
   let(:producer) { create(:producer, person: create(:person, zone: create(:zone))) }
   let(:daily) { create(:payroll, starts_on: Time.zone.today - 10) }
   let(:task_payroll) { create(:payroll, kind: "task", starts_on: Time.zone.today - 10) }
+  let(:hauler) { create(:hauler) }
 
   def page = Nokogiri::HTML(response.body)
 
   before do
     purchase = create(:purchase, producer:)
-    create(:purchase, producer:)
+    create(:purchase, producer:, hauler:)
+    create(:hauler_payment, hauler:, amount: 10)
     InvoiceIssuer.new(producer:, user: admin, purchase_ids: [ purchase.id ], payment_status: "pending").call
     create(:loan, person: producer.person)
     create(:supply)
@@ -30,6 +32,8 @@ RSpec.describe "Sorting every list" do
     UserFilter => -> { administration_users_path },
     AuditEventFilter => -> { administration_audit_events_path },
     ProducerFilter => -> { trading_producers_path },
+    HaulerFilter => -> { trading_haulers_path },
+    HaulerPurchaseFilter => -> { trading_hauler_path(hauler) },
     SupplyFilter => -> { loans_supplies_path },
     FarmFilter => -> { farms_farms_path },
     CreditAccountFilter => -> { loans_credit_accounts_path },

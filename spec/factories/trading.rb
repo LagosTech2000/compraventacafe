@@ -3,6 +3,20 @@ FactoryBot.define do
     sequence(:name) { |n| "Zona #{("a".."zz").to_a[n % 702].capitalize}" }
   end
 
+  factory :hauler do
+    person
+    commission_percent { 10 }
+    can_price { 50 }
+  end
+
+  factory :hauler_payment do
+    hauler
+    association :created_by, factory: :user
+    amount { 100 }
+    paid_on { Time.zone.today }
+    payment_method { "cash" }
+  end
+
   factory :producer do
     person
     kind { "producer" }

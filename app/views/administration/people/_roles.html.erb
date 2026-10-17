@@ -8,4 +8,7 @@
   <% if person.collaborator? %>
     <span class="badge badge-neutral"><%= Collaborator.model_name.human %></span>
   <% end %>
+  <% if person.hauler? %>
+    <span class="badge badge-neutral"><%= Hauler.model_name.human %></span>
+  <% end %>
 </span>
