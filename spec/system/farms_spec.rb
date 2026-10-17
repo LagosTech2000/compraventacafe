@@ -157,6 +157,39 @@ RSpec.describe "Farms screens", type: :system do
     expect(page).to have_text("1 persona · Le toca a cada uno: L 900.00")
   end
 
+  it "shows the fields of each way to pay a task and calculates its value" do
+    task_payroll = create(:payroll, kind: "task", starts_on: today - 10, farm: create(:farm, name: "La Ceiba"))
+    2.times { create(:payroll_member, payroll: task_payroll) }
+    visit new_farms_payroll_task_path(task_payroll)
+    expect(page).to have_no_field("Barriles")
+    expect(find_field("payroll_task_amount")[:readonly]).to be_falsey
+
+    select "Por barril (fumigación, foliar)", from: "Cómo se paga"
+    expect(page).to have_field("Litros por barril", with: "200")
+    fill_in "Barriles", with: "10"
+    fill_in "Precio por barril (L)", with: "100"
+    expect(page).to have_field("payroll_task_amount", with: "1000.00", readonly: true)
+    click_button "Todos"
+    expect(page).to have_text("2 personas · Le toca a cada uno: L 500.00")
+
+    select "Por abono aplicado", from: "Cómo se paga"
+    expect(page).to have_no_field("Litros por barril")
+    expect(page).to have_select("Unidad del abono", options: [ "Quintales (QQ)", "Libras" ])
+
+    select "Por manzana", from: "Cómo se paga"
+    expect(page).to have_text("La finca La Ceiba no tiene su extensión")
+    fill_in "farm_area_manzana", with: "3"
+    fill_in "Manzanas trabajadas", with: "2"
+    fill_in "Precio por manzana (L)", with: "450"
+    expect(page).to have_field("payroll_task_amount", with: "900.00")
+    fill_in "Tarea", with: "Chapia"
+    click_button "Crear Tarea"
+
+    expect(page).to have_text("Tarea registrada.")
+    expect(task_payroll.tasks.sole).to have_attributes(pricing: "per_manzana", amount: 900, quantity: 2)
+    expect(task_payroll.farm.reload.area.manzanas).to eq(3)
+  end
+
   it "filters the payroll's people as the user goes" do
     bruno.update!(active: false)
     visit farms_payroll_path(payroll, tab: "members")

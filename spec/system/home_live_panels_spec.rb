@@ -34,9 +34,9 @@ RSpec.describe "Home page panels", type: :system do
     stub_const("Presence::HIDDEN_USER_IDS", [ hidden.id ])
     sign_in_as(ana)
     expect(page).to have_css("#active-users li[aria-label='Ana Zelaya']", text: "AZ")
-    expect(page).to have_no_css(".online-tooltip", text: "Ana Zelaya") # only on hover
+    expect(page).to have_no_css(".presence-card", text: "Ana Zelaya") # only on hover
     find("#active-users li[aria-label='Ana Zelaya']").hover
-    expect(page).to have_css(".online-tooltip", text: "Ana Zelaya")
+    expect(page).to have_css(".presence-card", text: "Ana Zelaya")
     page.execute_script("window.pageMarker = 'still here'")
 
     Capybara.using_session(:beto) { sign_in_as(beto) }

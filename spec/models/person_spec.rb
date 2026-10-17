@@ -81,7 +81,7 @@ RSpec.describe Person do
       person = create(:person, :client).reload
       person.assign_attributes(client_role: "0", collaborator_role: "0", producer_role: "0")
       expect(person).not_to be_valid
-      expect(person.errors[:base]).to eq([ "Marca al menos un rol: cliente, colaborador o productor." ])
+      expect(person.errors[:base]).to eq([ "Marca al menos un rol: cliente, colaborador, productor o carrero." ])
       expect(person.reload).to be_client
 
       expect(build(:person)).to be_valid

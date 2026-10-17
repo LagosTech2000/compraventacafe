@@ -18,6 +18,9 @@ class Purchase < ApplicationRecord
   belongs_to :zone, optional: true
   # Optional: one of its producer's farms.
   belongs_to :farm, optional: true
+  # Optional: the carrero who hauled it (Hauler). Their commission is
+  # calculated with their percent and can price of that moment, kept here.
+  belongs_to :hauler, optional: true
   belongs_to :invoice, optional: true
   belongs_to :created_by, class_name: "User"
   belongs_to :voided_by, class_name: "User", optional: true
@@ -45,12 +48,18 @@ class Purchase < ApplicationRecord
   validate :invoice_belongs_to_same_producer
   validate :farm_belongs_to_producer
   validate :voided_not_invoiced
+  validate :hauler_active, if: :will_save_change_to_hauler_id?
+  validate :hauler_commission_not_paid_out
 
   # First: by weighings, the gross weight and sacks come from them.
   before_validation :sum_weighings
   before_validation :clear_unused_inputs, if: :recalculate?
   before_validation :calculate, if: :recalculate?
   before_validation :assign_season
+  # After the calculation: it needs the net weight.
+  before_validation :apply_hauler_commission
+
+  before_destroy :ensure_hauler_commission_not_paid_out
 
   # Purchases of a day (or a range of days), in Tegucigalpa time.
   scope :on, ->(dates) { where(purchased_at: day_range(dates)) }
@@ -189,6 +198,48 @@ class Purchase < ApplicationRecord
       self.damage_weight = calculation.damage_weight
       self.damage_amount = calculation.damage_amount
       self.total = calculation.total
+    end
+
+    # Chosen (or changed), the hauler's percent and can price of now are
+    # kept; the commission follows the net weight with them. Without a
+    # hauler, nothing.
+    def apply_hauler_commission
+      if hauler.nil?
+        self.hauler_commission_percent = self.hauler_can_price = self.hauler_cans = self.hauler_commission = nil
+        return
+      end
+      if new_record? || will_save_change_to_hauler_id?
+        self.hauler_commission_percent = hauler.commission_percent
+        self.hauler_can_price = hauler.can_price
+      end
+      return unless net_weight && (new_record? || will_save_change_to_hauler_id? || will_save_change_to_net_weight? || hauler_commission.nil?)
+
+      self.hauler_cans, self.hauler_commission = Hauler.commission(net_weight:, percent: hauler_commission_percent, can_price: hauler_can_price)
+    end
+
+    def hauler_active
+      errors.add(:hauler, :inactive) if hauler && !hauler.active?
+    end
+
+    # What a hauler was already paid stays covered: a change that lowers
+    # their commissions (voiding, another hauler, less weight) cannot leave
+    # them owing the business.
+    def hauler_commission_not_paid_out(destroying: false)
+      return unless destroying || will_save_change_to_hauler_id? || will_save_change_to_hauler_commission? || will_save_change_to_voided_at?
+
+      [ hauler_id_in_database, hauler_id ].compact.uniq.each do |id|
+        before = hauler_id_in_database == id && voided_at_in_database.nil? ? hauler_commission_in_database.to_d : 0
+        after = !destroying && hauler_id == id && voided_at.nil? ? hauler_commission.to_d : 0
+        next if after >= before
+
+        paid_to = Hauler.find(id)
+        errors.add(:base, :hauler_paid, hauler: paid_to.full_name) if paid_to.balance - before + after < 0
+      end
+    end
+
+    def ensure_hauler_commission_not_paid_out
+      hauler_commission_not_paid_out(destroying: true)
+      throw :abort if errors.any?
     end
 
     def assign_season

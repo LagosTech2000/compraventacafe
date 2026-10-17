@@ -214,8 +214,9 @@ RSpec.describe "Farm payrolls" do
 
   it "lists the periods to come as upcoming, up to the end date (or just the next one)" do
     payroll = create(:payroll, starts_on: Date.new(2026, 10, 10), ends_on: Date.new(2026, 10, 31))
-    rows = payroll.period_rows(Date.new(2026, 10, 10))
-    expect(rows.map { |row| [ row.period.starts_on.day, row.status ] }).to eq([ [ 25, "upcoming" ], [ 18, "upcoming" ], [ 10, "in_progress" ] ])
+    today = Date.new(2026, 10, 10)
+    rows = payroll.period_rows(today)
+    expect(rows.map { |row| [ row.period.starts_on.day, row.status(today) ] }).to eq([ [ 25, "upcoming" ], [ 18, "upcoming" ], [ 10, "in_progress" ] ])
 
     payroll.update!(ends_on: nil)
     expect(payroll.period_rows(Date.new(2026, 10, 10)).map { |row| row.period.starts_on.day }).to eq([ 18, 10 ])

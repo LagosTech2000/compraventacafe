@@ -1,9 +1,10 @@
-# Identity and contact, stored once. Client, Collaborator and Producer are
-# roles on top. dni (13 digits) and rtn (14 digits) are unique per person and
+# Identity and contact, stored once. Client, Collaborator, Producer and
+# Hauler (carrero) are roles on top. dni (13 digits) and rtn (14 digits) are unique per person and
 # optional. The zone the person is from is optional too.
 #
 # Every person form has a checkbox per role (client_role, collaborator_role,
-# producer_role, with producer_kind for a new producer), and at least one
+# producer_role, with producer_kind for a new producer, and hauler_role,
+# with the new hauler's commission percent and can price), and at least one
 # must be checked (Fernando, 2026-10-12): the check applies whenever the
 # form sent them, not to people created in code.
 class Person < ApplicationRecord
@@ -11,12 +12,13 @@ class Person < ApplicationRecord
   include HasPhoto
   include Auditable
 
-  ROLES = %i[client collaborator producer].freeze
+  ROLES = %i[client collaborator producer hauler].freeze
 
   belongs_to :zone, optional: true
   has_one :client, dependent: :destroy, autosave: true
   has_one :collaborator, dependent: :destroy, autosave: true
   has_one :producer, dependent: :restrict_with_error, autosave: true
+  has_one :hauler, dependent: :restrict_with_error, autosave: true
   has_many :loans, dependent: :restrict_with_error
   has_many :payroll_members, dependent: :restrict_with_error
 
@@ -31,7 +33,7 @@ class Person < ApplicationRecord
   validates :phone, field_format: :phone
   validates :email, field_format: :email, length: { maximum: 254 }
   validate :role_chosen, if: :roles_from_form
-  validate :producer_removable
+  validate :producer_removable, :hauler_removable
 
   scope :alphabetical, -> { order(:last_names, :first_names) }
   scope :search, ->(term) {
@@ -41,6 +43,7 @@ class Person < ApplicationRecord
   scope :clients, -> { joins(:client) }
   scope :collaborators, -> { joins(:collaborator) }
   scope :producers, -> { joins(:producer) }
+  scope :haulers, -> { joins(:hauler) }
 
   def full_name
     "#{first_names} #{last_names}"
@@ -65,6 +68,10 @@ class Person < ApplicationRecord
     producer.present?
   end
 
+  def hauler?
+    hauler.present?
+  end
+
   attr_reader :roles_from_form
 
   # The form's checkboxes: each adds or removes its role.
@@ -82,6 +89,16 @@ class Person < ApplicationRecord
 
   def producer_kind = producer&.kind || @producer_kind || "producer"
 
+  # A new hauler's commission percent and can price, from the form (both
+  # required); an existing hauler edits them in its own form.
+  %i[commission_percent can_price].each do |field|
+    define_method(:"hauler_#{field}=") do |value|
+      instance_variable_set(:"@hauler_#{field}", value.presence)
+      hauler.public_send(:"#{field}=", value.presence) if hauler&.new_record?
+    end
+    define_method(:"hauler_#{field}") { hauler ? hauler.public_send(field) : instance_variable_get(:"@hauler_#{field}") }
+  end
+
   # Has the role, and it is not being removed.
   def role?(role)
     record = public_send(role)
@@ -97,9 +114,17 @@ class Person < ApplicationRecord
       if wanted && current&.marked_for_destruction?
         current.reload
       elsif wanted && current.nil?
-        public_send("build_#{role}", **(role == :producer ? { kind: producer_kind } : {}))
+        public_send("build_#{role}", **role_defaults(role))
       elsif !wanted && current
         current.new_record? ? public_send("#{role}=", nil) : current.mark_for_destruction
+      end
+    end
+
+    def role_defaults(role)
+      case role
+      when :producer then { kind: producer_kind }
+      when :hauler then { commission_percent: @hauler_commission_percent, can_price: @hauler_can_price }
+      else {}
       end
     end
 
@@ -113,5 +138,12 @@ class Person < ApplicationRecord
       return unless producer.purchases.exists? || producer.invoices.exists? || producer.farms.exists?
 
       errors.add(:base, :producer_in_use)
+    end
+
+    # A hauler with purchases or payments stays one (it can be deactivated).
+    def hauler_removable
+      return unless hauler&.marked_for_destruction? && hauler.in_use?
+
+      errors.add(:base, :hauler_in_use)
     end
 end

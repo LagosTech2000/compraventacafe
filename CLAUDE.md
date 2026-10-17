@@ -74,7 +74,10 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Fincas | `farms` |
 | Préstamos | `loans` |
 | Reportería | `reports` |
-| Productor / carrero / finca propia | `Producer` (`kind`: `producer` / `intermediary` / `own_farm`) |
+| Productor / intermediario / finca propia | `Producer` (`kind`: `producer` / `intermediary` / `own_farm`) |
+| Carrero (rol de persona: trae el café con los carros del negocio y gana comisión) / pago a carrero | `Hauler` / `HaulerPayment` (`trading/hauler_payments#show` = recibo) |
+| Lata (16.5 lb netas) / precio de la lata / comisión del carrero | `Hauler::CAN_POUNDS` / `Hauler#can_price` / `Hauler#commission_percent`; en la compra `hauler_cans`, `hauler_commission` |
+| Tarea por monto fijo / por manzana / por barril / por abono | `PayrollTask#pricing`: `fixed` / `per_manzana` / `per_barrel` / `per_fertilizer` (`quantity`, `unit_price`, `barrel_liters`, `quantity_unit`) |
 | Clave del IHCAFE (Instituto Hondureño del Café) | `Producer#ihcafe_code` |
 | Ficha / resumen del productor | `ProducerProfile` |
 | Zona | `Zone` |
@@ -118,7 +121,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Datos que le faltan al productor | `Producer#missing_fields` |
 | Límite de solicitudes (auditoría) | acción `rate_limited` (`RateLimitAudit`) |
 | Mi configuración (datos, foto, contraseña, ventana o panel lateral, menú arriba o a la izquierda, huellas) | `UserSettingsController`; `User#window_style` (`modal` / `drawer`), `User#nav_position` (`top` / `left`) |
-| Usuarios conectados | `Presence` + `PresenceChannel` |
+| Usuarios conectados / páginas recientes de un usuario | `Presence` + `PresenceChannel` / `PageVisit` |
 | Café en la bolsa | `CoffeeMarket` (`coffee_markets#show`) |
 | Foto de perfil (persona o usuario) | `ProfilePhoto` (`HasPhoto`) |
 | Ubicación en el mapa | `latitude` / `longitude` (`HasAddress#located?`) |
@@ -546,7 +549,10 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 - Íconos: `icon(:nombre)` (`IconsHelper`), decorativos y ocultos a lectores
   de pantalla; el texto al lado lleva el significado.
 - Impresión: `print:` oculta lo interactivo y las tablas se compactan en
-  papel; la factura cabe con original y copia en una hoja. **Todo impreso
+  papel. **Original y copia siempre en hojas separadas** (factura, recibos
+  de abono a factura, de abono a préstamo y de pago a carrero; Fernando,
+  2026-10-16): la copia va en un contenedor con `print:break-before-page`,
+  y `spec/requests/printables_spec.rb` lo revisa en cada uno. **Todo impreso
   empieza con `shared/_print_letterhead`** (logo, nombre y ubicación del
   negocio; a la derecha qué documento es, número, ORIGINAL/COPIA y estado):
   facturas, recibos de pago y de abono, planilla de pago, cierre diario,
@@ -576,7 +582,7 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 | Clave | Estado |
 | --- | --- |
 | `administration` | Usuarios y permisos, auditoría y configuración del sitio (solo administradores); respaldo de datos (solo el usuario con id 1); personas, clientes y colaboradores, con su ficha de productor; fincas y zonas (permisos del módulo); fusionar personas (solo administradores) |
-| `trading` | Demo: zonas, productores (con pestañas y QQ por temporada), compras con cálculo por estado del café y anulación, facturas imprimibles (original y copia) con estado de pago, cierre diario |
+| `trading` | Demo: zonas, productores (con pestañas y QQ por temporada), carreros con su comisión y pagos con recibo, compras con cálculo por estado del café y anulación, facturas imprimibles (original y copia) con estado de pago, cierre diario |
 | `farms` | Fincas, planillas por día, por obra y de corte por lata, con roles y salarios, asistencia o latas por día, pagos por período (semanal, quincenal, mensual) con descuento a préstamos, planilla de pago imprimible y gastos por planilla |
 | `loans` | Préstamos en efectivo, insumos o mixtos a cualquier persona con interés simple, catálogo de insumos, abonos (también con café desde una compra o descontados en planilla) con recibo imprimible, estados de cuenta con historial crediticio y score de pago |
 | `reports` | Una pantalla para todos los reportes del sistema (compras, facturas, productores, préstamos, abonos, insumos, planillas, pagos por empleado, latas, gastos, rendimiento de fincas, personas y entradas/salidas de dinero) con filtros, cifras comparadas, gráficos, tabla con carga continua, reportes sugeridos, filtros guardados por usuario y exportación CSV |
@@ -641,7 +647,7 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
   pedirla y aplica solo lo que cambió (morph, conserva el scroll). Por el
   canal no viaja ningún dato: cada usuario recibe la página con sus
   permisos. Quien hizo el cambio no se recarga dos veces (request id).
-- Avisan: `Purchase`, `Invoice`, `InvoicePayment`, `Producer` a `trading`;
+- Avisan: `Purchase`, `Invoice`, `InvoicePayment`, `Producer`, `Hauler`, `HaulerPayment` a `trading`;
   `Loan` a `loans`; `LoanPayment` a los dos (pago con café). Página nueva
   en vivo = `live_updates_from`; modelo nuevo = `include LiveUpdates`.
 - `live_refresh_controller.js` (en el `<body>`): con una ventana abierta
@@ -664,8 +670,10 @@ importado una vez en `application.js`; sobrevive a las visitas de Turbo y se
 suelta en una página sin `<meta name="presence">`, como el inicio de sesión
 tras salir). Un usuario está conectado mientras tenga alguna pestaña abierta.
 En el Inicio van en la fila del saludo, al otro extremo: círculos
-pequeños con las iniciales y un punto verde, el nombre en un tooltip al
-pasar el puntero o con el foco (`.online-avatar`); más de
+pequeños con las iniciales y un punto verde; al pasar el puntero o con el
+foco abren **su tarjeta** (`dashboard/_active_user_card`, `.presence-card`:
+una tarjeta clara, no un tooltip), que sigue abierta mientras el puntero o
+el foco estén dentro, para hacer clic y desplazarse (Fernando, 2026-10-16); más de
 `Presence::AVATARS` se juntan en «+N». Al lado, con un **anillo gris** en
 vez del punto verde, quienes no están conectados pero tuvieron actividad en
 la última hora (`Presence::RECENT_WINDOW`, Fernando 2026-10-14: un celular
@@ -682,7 +690,16 @@ que está cada uno** (`Presence::WATCHER_IDS`, Fernando 2026-10-15):
 `presence.js` avisa por el canal (`visit`) cada página que se abre, la de
 un modal o panel lateral y, al cerrarlo, la de abajo; se guarda en la sesión
 (`Session#visited!`: ruta y título, `last_path`, `last_page_title`, y
-cuenta como actividad). Con varias sesiones sale la más reciente. Su Inicio
+cuenta como actividad). Con varias sesiones sale la más reciente. Su tarjeta trae además, con
+enlaces y desplazamiento propio, la página en que está (abre la página
+completa), **las páginas recientes** (`PageVisit`, las últimas
+`PageVisit::KEEP` por usuario; fuera del respaldo, como las sesiones) y
+**lo que hizo** (sus eventos de auditoría; abre el detalle en el modal),
+los últimos `Presence::CARD_ITEMS` de cada uno. Solo se guardan rutas
+propias de la app (nunca `//otro-sitio`). El panel se reemplaza con
+**morph** y cada círculo tiene el mismo id en línea o reciente
+(`presence_user_N`): una tarjeta abierta no se cierra ni pierde su
+desplazamiento cuando llega una actualización. Su Inicio
 escucha `Presence::WATCH_STREAM` en vez de `presence`, y solo su página
 recibe ese stream firmado: a los demás no les llega ni la ruta. Vive en la memoria del proceso, como el adaptador `async`.
 
@@ -894,6 +911,8 @@ textos; la clave y el código siguen siendo `trading`.
   `producers.farm_name` se convirtió en fincas y se asignó a sus compras
   (`ProducerFarmBackfill`, migración `AssignFarmsToProducers`). En el
   módulo Fincas aparecen con su dueño («Finca X · Ana Zelaya»).
+- La factura lleva al pie **dos firmas**: la del cliente (el productor,
+  con su nombre debajo) y la del comprador de café (Fernando, 2026-10-16).
 - La factura muestra los **QQ** de cada compra y del total
   (`Invoice#quintals` = neto ÷ 125), también en su lista (Fernando,
   2026-10-13).
@@ -942,6 +961,31 @@ textos; la clave y el código siguen siendo `trading`.
   en el detalle de compra, el de factura y al facturar. El Resumen del módulo
   tiene el panel "Qué sigue" con el trabajo pendiente de cada paso. La
   retención de fin de temporada no es un paso todavía (punto abierto).
+- **Carreros** (`Hauler`, Fernando, 2026-10-16): gente que conoce
+  productores con café listo, lo trae con los carros del negocio y lo pesa
+  a cuenta del productor. Es un **rol de `Person`** (casilla «Carrero» en
+  todo formulario de persona; agregarlo o quitarlo pide crear en
+  `trading`), aparte del tipo de productor «Intermediario»
+  (`intermediary`; antes se llamaba «Carrero (intermediario)», Fernando
+  2026-10-16). **Comisión obligatoria al crearlo**: % y precio de
+  la lata, editables (`trading/haulers`). La compra puede llevar su carrero
+  (**opcional**, `Purchase#hauler`) y guarda la comisión y el precio de la
+  lata **de ese día** (cambiar el carrero solo cuenta para compras nuevas;
+  otro carrero en la compra toma los del nuevo). **Comisión = (libras
+  netas ÷ 16.5) × precio de la lata × %** (`Hauler.commission`,
+  `Hauler::CAN_POUNDS`), redondeada al centavo; `hauler_commission_
+  controller.js` la muestra como vista previa en «Nueva compra». **La paga
+  el negocio, aparte**: no cambia la factura ni lo que se le paga al
+  productor. Se le paga **por saldo acumulado** (comisiones de sus compras
+  activas − pagos): cada pago (`HaulerPayment`, pide editar en `trading`)
+  tiene su recibo imprimible, original y copia en hojas separadas, y
+  guarda el saldo que quedó (`balance_after`) para que el recibo no
+  cambie. Salen en «Entradas y salidas de dinero». Decisiones de
+  implementación, **pendientes de confirmar**: un pago no pasa del saldo
+  ni va antes del último; solo se quita el último; una compra no se anula,
+  borra ni cambia de carrero o de peso si eso deja al carrero debiendo lo
+  ya pagado; un carrero desactivado no se elige en compras nuevas. Al
+  fusionar dos carreros, compras y pagos pasan al que queda.
 - **Datos que le faltan al productor** (Fernando, 2026-10-12): en «Nueva
   compra», al elegir productor sale un aviso con lo que tiene vacío (DNI,
   RTN, teléfono, correo, zona, dirección, clave IHCAFE:
@@ -1036,7 +1080,16 @@ Reglas decididas por Fernando el 2026-10-10 [CONFIRMADO]:
     por día: completo (1), medio (½) o ausente (sin registro).
   - **Por obra / tarea** (`task`): el valor de la tarea se divide en **partes
     iguales** entre quienes la hicieron (L 1,000 entre 4 = L 250 c/u); se
-    paga en el período de la fecha en que se terminó. Una obra puede durar
+    paga en el período de la fecha en que se terminó. El valor es un
+    **monto fijo o cantidad × precio** (`PayrollTask#pricing`, Fernando,
+    2026-10-16): **por manzana** (las trabajadas, sin pasar de la
+    extensión de la finca; si la finca no la tiene, el formulario la pide
+    y se guarda en la finca junto con la tarea, todo o nada), **por
+    barril** (fumigación, foliar: barriles × precio por barril; los
+    litros del barril, 200 por defecto, solo se anotan) o **por abono
+    aplicado** (quintales o libras × precio). `task_pricing_controller.js`
+    muestra los campos de cada forma y calcula el valor; el servidor
+    manda. Una obra puede durar
     un día o unas horas: planilla con la misma fecha de inicio y fin. Los centavos que sobran van uno a uno a los primeros
     por apellido (decisión de implementación).
   - **Corte de café** (`harvest`): latas por empleado por día × precio de la
@@ -1208,7 +1261,7 @@ sistema ya guarda**; no agregan reglas de negocio.
 - **Exportar**: CSV con todas las filas filtradas (hasta 50,000), con BOM
   para que Excel lea los acentos.
 - **Entradas y salidas de dinero**: salen los abonos a facturas (cada uno
-  en su fecha), préstamos en efectivo (los insumos no son dinero),
+  en su fecha), los pagos a carreros, préstamos en efectivo (los insumos no son dinero),
   planillas (lo entregado) y gastos; entran los abonos en efectivo,
   transferencia o cheque (con café o por planilla no se mueve dinero). Las
   ventas de café todavía no existen en el sistema.
@@ -1226,6 +1279,7 @@ sistema ya guarda**; no agregan reglas de negocio.
 | Préstamos: recargo por mora | Mora | Cliente |
 | Pago con café: confirmar las reglas propuestas (ver Préstamos) | Ajustes al abono con compra | Fernando / Cliente |
 | Abonos a factura: confirmar orden por fecha, quitar solo el último y tope del pago con café (ver Compra de café) | Ajustes a los abonos | Fernando / Cliente |
+| Pagos a carreros: confirmar orden por fecha, quitar solo el último y que una compra no deje al carrero debiendo lo ya pagado (ver Carreros) | Ajustes a los pagos de carreros | Fernando / Cliente |
 | Inventario de insumos (existencias, costo de compra) | Control de bodega de insumos | Cliente |
 | Horas y días extra: confirmar días extra de medio en medio y horas con cualquier decimal | Ajustes a las extras de planilla | Fernando / Cliente |
 | Planillas: séptimo día, décimo, IHSS u otras deducciones o bonos | Cálculo legal de planillas | Cliente |

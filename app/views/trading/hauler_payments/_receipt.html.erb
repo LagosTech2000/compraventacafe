@@ -1,0 +1,47 @@
+<%# One printed copy of the receipt of a hauler's payment: what the carrero
+    received and what they were still owed after it (kept with the payment).
+    `label` is ORIGINAL or COPIA. %>
+<% hauler = payment.hauler %>
+<% person = hauler.person %>
+<article class="rounded-2xl border border-line bg-white p-5 shadow-[0_1px_2px_rgb(29_21_18/0.04)] break-inside-avoid print:p-3 print:shadow-none print:rounded-none print:border-ink">
+  <%= render "shared/print_letterhead", title: t("trading.hauler_payments.receipt.title"), number: payment.display_number, label: %>
+
+  <dl class="mt-4 grid grid-cols-1 gap-x-6 gap-y-1 text-sm min-[30rem]:grid-cols-2 print:mt-2 print:grid-cols-2">
+    <div><dt class="inline font-semibold"><%= Hauler.model_name.human %>:</dt> <dd class="inline"><%= person.full_name %></dd></div>
+    <% if person.dni.present? %>
+      <div><dt class="inline font-semibold"><%= Person.human_attribute_name(:dni) %>:</dt> <dd class="inline"><%= person.dni %></dd></div>
+    <% end %>
+    <div><dt class="inline font-semibold"><%= HaulerPayment.human_attribute_name(:paid_on) %>:</dt> <dd class="inline"><%= l(payment.paid_on, format: :long) %></dd></div>
+    <div><dt class="inline font-semibold"><%= HaulerPayment.human_attribute_name(:payment_method) %>:</dt> <dd class="inline"><%= payment.human_payment_method %></dd></div>
+  </dl>
+
+  <div class="mt-4 grid gap-4 sm:grid-cols-2 print:mt-2 print:grid-cols-2">
+    <dl class="text-sm">
+      <div class="flex justify-between gap-4 border-b border-ink py-1 text-base font-bold">
+        <dt><%= t("trading.hauler_payments.receipt.amount") %></dt>
+        <dd class="tabular-nums"><%= format_money(payment.amount) %></dd>
+      </div>
+      <p class="mt-1 text-xs text-ink-muted"><%= t("trading.hauler_payments.receipt.concept") %></p>
+    </dl>
+    <dl class="text-sm">
+      <div class="flex justify-between gap-4 py-0.5">
+        <dt><%= t("trading.hauler_payments.receipt.owed_before") %></dt>
+        <dd class="tabular-nums"><%= format_money(payment.balance_after + payment.amount) %></dd>
+      </div>
+      <div class="flex justify-between gap-4 border-t border-ink py-1 font-bold">
+        <dt><%= t("trading.hauler_payments.receipt.balance_after") %></dt>
+        <dd class="tabular-nums"><%= payment.balance_after.positive? ? format_money(payment.balance_after) : t("trading.hauler_payments.receipt.settled") %></dd>
+      </div>
+    </dl>
+  </div>
+
+  <% if payment.observations.present? %>
+    <p class="mt-3 text-sm"><span class="font-semibold"><%= HaulerPayment.human_attribute_name(:observations) %>:</span> <%= payment.observations %></p>
+  <% end %>
+
+  <footer class="mt-10 flex flex-wrap items-end justify-between gap-6 text-sm print:mt-8">
+    <div class="w-56 border-t border-ink pt-1 text-center"><%= t("trading.hauler_payments.receipt.receiver_signature") %></div>
+    <div class="w-56 border-t border-ink pt-1 text-center"><%= t("trading.hauler_payments.receipt.payer_signature") %></div>
+    <p class="w-full text-xs text-ink-muted"><%= t("trading.hauler_payments.receipt.registered_by", name: payment.created_by.name) %></p>
+  </footer>
+</article>

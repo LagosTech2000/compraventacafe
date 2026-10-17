@@ -18,11 +18,11 @@ RSpec.describe "Person form", type: :system do
 
     find("main form [type=submit]").click
     expect(find("#person_client_role").evaluate_script("this.validationMessage"))
-      .to eq("Marca al menos un rol: cliente, colaborador o productor.")
+      .to eq("Marca al menos un rol: cliente, colaborador, productor o carrero.")
     expect(Person.count).to eq(0)
 
     check "person_producer_role"
-    select "Carrero (intermediario)", from: "person_producer_kind"
+    select "Intermediario", from: "person_producer_kind"
     uncheck "person_producer_role"
     expect(page).to have_no_field("person_producer_kind")
     check "person_producer_role"

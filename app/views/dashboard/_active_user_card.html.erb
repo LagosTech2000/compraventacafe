@@ -1,0 +1,78 @@
+<%# The card of one user in "Conectados" (dashboard/_active_users): their
+    photo, name and status. For the watchers (pages: true) also the page
+    they are on, their recent pages and what they did (audit), each a link:
+    a page opens in full, a change opens its audit detail in the modal.
+    The lists scroll inside the card. %>
+<div class="presence-card<%= " presence-card-wide" if pages %>">
+  <div class="presence-card-body">
+    <div class="flex items-center gap-2.5">
+      <%= avatar(user, css: "size-9 text-xs") %>
+      <div class="min-w-0">
+        <p class="truncate font-semibold text-ink"><%= user.name %></p>
+        <p id="<%= id %>_status" class="flex items-center gap-1.5 text-ink-muted">
+          <span class="<%= seen_at ? "size-2 rounded-full border-2 border-ink-muted" : "size-2 rounded-full bg-success" %>" aria-hidden="true"></span>
+          <%= seen_at ? t("dashboard.active_users.last_seen", time: seen_at) : t("dashboard.active_users.online") %>
+        </p>
+      </div>
+    </div>
+
+    <% if pages %>
+      <div class="presence-card-section" data-presence-page>
+        <% if page&.last_path %>
+          <% unless seen_at %>
+            <p class="text-ink-muted"><%= t("dashboard.active_users.last_activity", time: presence_time(page.last_seen_at)) %></p>
+          <% end %>
+          <p class="text-ink-muted"><%= t(seen_at ? "dashboard.active_users.last_page" : "dashboard.active_users.current_page") %></p>
+          <%= link_to page.last_path, class: "presence-link", data: { turbo_frame: "_top" } do %>
+            <span class="block font-semibold"><%= page.last_page_title || page.last_path %></span>
+            <span class="block truncate font-mono text-[0.65rem] text-ink-muted"><%= page.last_path %></span>
+          <% end %>
+        <% else %>
+          <p class="text-ink-muted"><%= t("dashboard.active_users.no_page") %></p>
+        <% end %>
+      </div>
+
+      <section class="presence-card-section" aria-label="<%= t("dashboard.active_users.visits") %>">
+        <h3 class="presence-card-heading"><%= t("dashboard.active_users.visits") %></h3>
+        <% if visits.any? %>
+          <ul class="presence-card-list" role="list" data-presence-visits>
+            <% visits.each do |visit| %>
+              <li id="<%= dom_id(visit) %>">
+                <%= link_to visit.path, class: "presence-link flex gap-2", data: { turbo_frame: "_top" } do %>
+                  <span class="w-12 shrink-0 tabular-nums text-ink-muted"><%= presence_time(visit.visited_at) %></span>
+                  <span class="min-w-0">
+                    <span class="block truncate"><%= visit.title || visit.path %></span>
+                    <span class="block truncate font-mono text-[0.65rem] text-ink-muted"><%= visit.path %></span>
+                  </span>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="text-ink-muted"><%= t("dashboard.active_users.no_visits") %></p>
+        <% end %>
+      </section>
+
+      <section class="presence-card-section" aria-label="<%= t("dashboard.active_users.changes") %>">
+        <h3 class="presence-card-heading"><%= t("dashboard.active_users.changes") %></h3>
+        <% if changes.any? %>
+          <ul class="presence-card-list" role="list" data-presence-changes>
+            <% changes.each do |event| %>
+              <li id="<%= dom_id(event, :presence) %>">
+                <%= link_to administration_audit_event_path(event), class: "presence-link flex gap-2", data: { turbo_frame: "modal" } do %>
+                  <span class="w-12 shrink-0 tabular-nums text-ink-muted"><%= presence_time(event.created_at) %></span>
+                  <span class="min-w-0">
+                    <%= audit_action_badge(event) %>
+                    <span class="mt-0.5 block truncate"><%= audit_record_phrase(event) %></span>
+                  </span>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="text-ink-muted"><%= t("dashboard.active_users.no_changes") %></p>
+        <% end %>
+      </section>
+    <% end %>
+  </div>
+</div>

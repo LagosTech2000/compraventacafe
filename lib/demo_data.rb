@@ -8,6 +8,8 @@ class DemoData
   # Fictitious points around Morocelí (El Paraíso), for the maps.
   AREA = { latitude: 14.0..14.25, longitude: -87.0..-86.7 }.freeze
   WORKERS = [ %w[Ramón Demo\ Seis], %w[Teresa Demo\ Siete], %w[Hugo Demo\ Ocho], %w[Irma Demo\ Nueve], %w[Félix Demo\ Diez] ].freeze
+  # Carreros: [first names, last names, commission percent, can price].
+  HAULERS = [ [ "Rubén", "Demo Once", 10, 50 ], [ "Gloria", "Demo Doce", 8, 55 ] ].freeze
 
   def initialize(user)
     @user = user
@@ -18,7 +20,9 @@ class DemoData
     ActiveRecord::Base.transaction do
       zones = ZONES.map { |name| Zone.find_or_create_by!(name:) }
       producers = FIRST_NAMES.each_with_index.map { |first, i| producer(first, LAST_NAMES[i % LAST_NAMES.size], zones[i % zones.size], i) }
+      @haulers = haulers
       purchases = (0..6).flat_map { |days_ago| day_of_purchases(producers, Time.zone.today - days_ago) }
+      pay_haulers
       invoice_older_purchases(purchases)
       loans(producers.map(&:person))
       farms
@@ -34,6 +38,21 @@ class DemoData
       end
       Producer.find_or_create_by!(person:) do |producer|
         producer.kind = index % 5 == 0 ? "intermediary" : "producer"
+      end
+    end
+
+    def haulers
+      HAULERS.map do |first_names, last_names, commission_percent, can_price|
+        person = Person.find_or_create_by!(first_names:, last_names:)
+        Hauler.find_or_create_by!(person:) { |hauler| hauler.assign_attributes(commission_percent:, can_price:) }
+      end
+    end
+
+    # Half of each carrero's commissions paid, so their pages show both.
+    def pay_haulers
+      @haulers.each do |hauler|
+        amount = (hauler.balance / 2).round(2)
+        hauler.payments.create!(amount:, paid_on: Time.zone.today, payment_method: "cash", created_by: @user) if amount.positive?
       end
     end
 
@@ -53,6 +72,8 @@ class DemoData
         inputs[:damage_percent] = [ 0, 2, 2.2, 2.5 ].sample(random: @random) if inputs.key?(:damage_percent)
         Purchase.create!(
           producer:, zone: producer.zone, purchased_at: moment_of(date), created_by: @user, coffee_state:, **inputs,
+          # About one in three hauled by a carrero.
+          hauler: (@haulers.sample(random: @random) if @random.rand(3).zero?),
           gross_weight: @random.rand(40..330), price_per_pound: [ 55, 56, 57, 58 ].sample(random: @random)
         )
       end

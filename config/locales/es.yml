@@ -53,8 +53,8 @@ es:
     person_roles:
       legend: "Roles"
       help: "Marca al menos uno."
-      required: "Marca al menos un rol: cliente, colaborador o productor."
-      producer_needs_permission: "Agregar o quitar el rol de productor requiere permiso para crear en Compra de café."
+      required: "Marca al menos un rol: cliente, colaborador, productor o carrero."
+      producer_needs_permission: "Agregar o quitar el rol de productor o de carrero requiere permiso para crear en Compra de café."
     select:
       no_zone: "Sin zona asignada"
       no_farm: "Sin finca asignada"
@@ -66,6 +66,7 @@ es:
       pick_category: "Selecciona una categoría"
       no_role: "Sin rol asignado"
       pick_payment_method: "Selecciona la forma de pago"
+      no_hauler: "Sin carrero"
     filters:
       title: "Filtros"
       active: "activos"
@@ -239,6 +240,10 @@ es:
       current_page: "Está en:"
       last_page: "Última página:"
       no_page: "Todavía no se sabe en qué página está."
+      visits: "Páginas recientes"
+      no_visits: "Todavía no abrió ninguna página."
+      changes: "Lo que hizo"
+      no_changes: "No ha hecho cambios."
     show:
       title: "Inicio"
       coffee_market_loading: "Cargando el precio del café en la bolsa…"
@@ -356,6 +361,7 @@ es:
       invoices: "Facturas"
       daily_close: "Cierre diario"
       producers: "Productores"
+      haulers: "Carreros"
       zones: "Zonas"
     home:
       index:
@@ -572,6 +578,10 @@ es:
         confirm_void: "¿Anular esta compra? Deja de contar en listas, totales y facturación, pero queda registrada. No se puede deshacer."
         voided_notice: "Compra anulada el %{date} por %{name}. No cuenta en listas, totales ni facturación."
         invoiced_notice: "Esta compra ya está en la factura %{number} y no se puede modificar."
+        hauled_by: "Carreada por %{name}"
+        hauler_commission: "Comisión: %{cans} latas × %{price} × %{percent} ="
+        hauler_paid_apart: "La paga el negocio aparte: no cambia lo que se le paga al productor."
+        view_hauler: "Ver carrero"
         view_invoice: "Ver factura %{number}"
         invoice_now: "Facturar ahora"
         register_payment: "Registrar abono a la factura %{number}"
@@ -590,6 +600,10 @@ es:
         new_zone: "Nueva zona"
         new_farm: "Nueva finca"
         farm_pick_producer: "Elige primero el productor: aquí salen sus fincas."
+        hauler_help: "Si la trajo un carrero, gana su comisión por esta compra."
+        hauler_terms: "Comisión %{percent} · lata a %{price}"
+        hauler_commission: "Comisión del carrero"
+        hauler_paid_apart: "La paga el negocio aparte: no cambia lo que se le paga al productor."
         calculation: "Cálculo"
         cancel: "Cancelar"
         weighings_help: "Anota cada pesada con su peso y los sacos contados. El peso bruto y los sacos son la suma; la tara es 1 lb por saco contado."
@@ -701,7 +715,8 @@ es:
         date: "Fecha"
         producer: "Nombre"
         location: "Ubicación"
-        signature: "Firma de quien factura"
+        client_signature: "Firma del cliente (productor)"
+        buyer_signature: "Firma del comprador de café"
         issued_by: "Facturado por: %{name}"
         totals: "Totales"
         purchases_total: "Total de compras"
@@ -744,6 +759,84 @@ es:
         success: "Abono registrado."
       destroy:
         success: "Abono quitado."
+    haulers:
+      index:
+        title: "Carreros"
+        help: "Traen el café de los productores con los carros del negocio y ganan una comisión por compra: latas (libras netas ÷ %{pounds}) × precio de la lata × comisión. La paga el negocio, aparte del productor."
+        new: "Nuevo carrero"
+        search_placeholder: "Nombre, DNI o RTN"
+        status: "Estado"
+        statuses:
+          active: "Activos"
+          inactive: "Desactivados"
+        name: "Nombre"
+        terms: "%{percent} · lata a %{price}"
+        commissions: "Comisiones"
+        paid: "Pagado"
+        balance: "Se le debe"
+        empty: "No hay carreros con esos filtros."
+      show:
+        active: "Activo"
+        inactive: "Desactivado"
+        new_payment: "Registrar pago"
+        edit: "Editar carrero"
+        full_page: "Ver en página completa"
+        figures:
+          commissions: "Comisiones"
+          paid: "Pagado"
+          balance: "Se le debe"
+        record: "Ficha del carrero"
+        formula: "Comisión de cada compra = (libras netas ÷ %{pounds}) × precio de la lata × comisión. Cada compra guarda la comisión y el precio de su día."
+        payments: "Pagos"
+        receipt: "Recibo"
+        receipt_number: "Recibo %{number}"
+        remove_payment: "Quitar"
+        confirm_remove_payment: "¿Quitar este pago? Lo que cubría vuelve a quedar pendiente."
+        no_payments: "Todavía no se le ha pagado."
+        purchases: "Compras que carreó"
+        net_weight: "Neto (lb)"
+        cans: "Latas"
+        commission: "Comisión"
+        commission_line: "%{cans} latas × %{price} × %{percent} ="
+        no_purchases: "No hay compras carreadas con esos filtros."
+      new:
+        title: "Nuevo carrero"
+      edit:
+        title: "Editar carrero"
+      form:
+        commission: "Comisión"
+        commission_help: "Por cada compra que carree gana: latas (libras netas ÷ %{pounds}) × precio de la lata × comisión. Las dos son obligatorias."
+        changes_help: "Si las cambias, solo cuentan para las compras nuevas: cada compra guarda las de su día."
+        active: "Activo (se puede elegir en las compras nuevas)"
+      create:
+        success: "Carrero registrado."
+      update:
+        success: "Carrero actualizado."
+    hauler_payments:
+      new:
+        title: "Registrar pago al carrero"
+        amount_help: "Lo que se le debe completo o una parte: lo que falte queda pendiente."
+        submit: "Registrar pago"
+      show:
+        title: "Recibo de pago al carrero %{number}"
+        print: "Imprimir"
+        original: "ORIGINAL"
+        copy: "COPIA"
+        back: "Volver al carrero"
+      receipt:
+        title: "Recibo de pago a carrero"
+        amount: "Monto pagado"
+        concept: "Por comisiones de compras de café carreadas."
+        owed_before: "Se le debía"
+        balance_after: "Queda debiendo el negocio"
+        settled: "Pagado"
+        receiver_signature: "Recibí conforme (carrero)"
+        payer_signature: "Entregó"
+        registered_by: "Registrado por: %{name}"
+      create:
+        success: "Pago registrado."
+      destroy:
+        success: "Pago quitado."
     daily_closes:
       report:
         title: "Cierre diario"
@@ -1033,6 +1126,7 @@ es:
         other: "+ %{days} días extra"
     area:
       title: "Extensión territorial (opcional)"
+      title_required: "Extensión territorial de la finca"
       help: "Escríbela en la unidad que prefieras: las otras se calculan solas. 1 manzana = 6,988.96 m²; 1 hectárea = 10,000 m²."
       source_html: "Se guarda como la escribiste, en %{unit}."
       label: "Extensión"
@@ -1296,7 +1390,12 @@ es:
         remove: "Quitar"
         empty: "No hay empleados con esos filtros."
       tasks:
-        help: "El valor de cada tarea se divide en partes iguales entre quienes la hicieron, y se paga en el período en que se terminó."
+        help: "El valor de cada tarea (fijo, o cantidad × precio: por manzana, barril o abono) se divide en partes iguales entre quienes la hicieron, y se paga en el período en que se terminó."
+        quantity:
+          per_manzana: "%{quantity} mz × %{price}"
+          per_barrel: "%{quantity} barriles de %{liters} L × %{price}"
+          per_fertilizer_quintal: "%{quantity} QQ de abono × %{price}"
+          per_fertilizer_pound: "%{quantity} lb de abono × %{price}"
         status: "Estado"
         statuses:
           pending: "Pendientes"
@@ -1425,6 +1524,26 @@ es:
           one: "1 persona"
           other: "%{count} personas"
         completed_help: "Déjala vacía mientras la tarea no esté terminada. Se paga en el período de esta fecha."
+        pricings:
+          fixed: "Monto fijo"
+          per_manzana: "Por manzana"
+          per_barrel: "Por barril (fumigación, foliar)"
+          per_fertilizer: "Por abono aplicado"
+        quantity:
+          per_manzana: "Manzanas trabajadas"
+          per_barrel: "Barriles"
+          per_fertilizer: "Abono aplicado"
+        unit_price:
+          per_manzana: "Precio por manzana (L)"
+          per_barrel: "Precio por barril (L)"
+          per_fertilizer: "Precio por unidad (L)"
+        fertilizer_units:
+          quintal: "Quintales (QQ)"
+          pound: "Libras"
+        barrel_help: "Por lo general, 200 litros. El precio es por barril, sin importar sus litros."
+        farm_manzanas: "La finca tiene %{manzanas} manzanas."
+        farm_area_missing: "La finca %{farm} no tiene su extensión. Escríbela para pagar por manzana: se guarda en la finca junto con la tarea."
+        amount_calculated: "Cantidad × precio. Se divide en partes iguales."
       create:
         success: "Tarea registrada."
       update:
@@ -2220,9 +2339,10 @@ es:
             help: "Una persona puede tener varios roles."
       cash_movements:
         title: "Entradas y salidas de dinero"
-        description: "El dinero que salió (pagos de facturas, préstamos en efectivo, planillas y gastos) y el que entró (abonos en efectivo, transferencia o cheque), según lo registrado. Las ventas de café todavía no están en el sistema."
+        description: "El dinero que salió (pagos de facturas, pagos a carreros, préstamos en efectivo, planillas y gastos) y el que entró (abonos en efectivo, transferencia o cheque), según lo registrado. Las ventas de café todavía no están en el sistema."
         sources:
           invoices: "Pago de factura"
+          hauler_payments: "Pago a carrero"
           loans: "Préstamo en efectivo"
           loan_payments: "Abono a préstamo"
           payroll_payments: "Pago de planilla"
@@ -2231,6 +2351,7 @@ es:
           in: "Entrada"
           out: "Salida"
         invoice: "Factura %{number}"
+        hauler_payment: "Recibo %{number} de comisiones de carreo"
         loan: "Préstamo %{number}"
         loan_payment: "Recibo %{number} del préstamo %{loan}"
         payroll_payment: "%{payroll} · %{farm} (%{period})"
@@ -2670,12 +2791,62 @@ es:
               - "Un abono no puede pasar del saldo ni ser de una fecha anterior a la factura o al último abono."
           show:
             title: "Recibo de pago"
-            summary: "El comprobante de un abono a la factura, con original y copia en una hoja."
+            summary: "El comprobante de un abono a la factura, con original y copia, cada uno en su hoja."
             steps:
-              - "Toca «Imprimir»: el original y la copia salen en la misma hoja."
+              - "Toca «Imprimir»: el original y la copia salen cada uno en su hoja."
               - "El productor firma «Recibí conforme» y quien paga firma «Entregó»."
             tips:
               - "El recibo muestra lo que se pagó, lo abonado hasta ese día y el saldo que quedó."
+        haulers:
+          index:
+            title: "Carreros"
+            summary: "Quienes traen el café de los productores con los carros del negocio, y lo que se les debe por comisiones."
+            steps:
+              - "Busca por nombre, DNI o RTN, o mira los desactivados."
+              - "Toca un carrero (o «Detalle») para ver sus compras, sus pagos y lo que se le debe."
+              - "Con «Nuevo carrero» registras a uno con su comisión y su precio de la lata."
+            tips:
+              - "Comisión de cada compra = latas (libras netas ÷ 16.5) × precio de la lata × comisión."
+              - "La comisión la paga el negocio aparte: no cambia lo que se le paga al productor."
+          show:
+            title: "Ficha del carrero"
+            summary: "Sus compras carreadas con la comisión de cada una, lo que se le ha pagado y lo que se le debe."
+            steps:
+              - "Revisa las cifras: comisiones, pagado y lo que se le debe."
+              - "Toca «Registrar pago» para pagarle todo o una parte; se abre su recibo para imprimir."
+              - "En «Compras que carreó» filtra por temporada; cada una abre su detalle."
+            tips:
+              - "Cada compra guarda la comisión y el precio de la lata de su día: cambiarlos solo cuenta para las compras nuevas."
+              - "Solo se puede quitar el último pago."
+          form:
+            title: "Registrar o editar un carrero"
+            summary: "Su comisión (%), su precio de la lata y sus datos de persona."
+            steps:
+              - "Escribe la comisión y el precio de la lata: los dos son obligatorios."
+              - "Llena sus datos: solo nombres y apellidos son obligatorios."
+              - "Toca el botón de guardar."
+            tips:
+              - "Si la persona ya existe (por ejemplo, es productor), márcale «Carrero» en su formulario de persona en vez de registrarla de nuevo."
+              - "Un carrero desactivado ya no sale al registrar compras, pero conserva sus compras y pagos."
+        hauler_payments:
+          form:
+            title: "Registrar pago a un carrero"
+            summary: "Un pago de lo que se le debe por comisiones: todo o una parte."
+            steps:
+              - "Revisa sus comisiones, lo pagado y lo que se le debe."
+              - "Escribe el monto: empieza con lo que se le debe y puedes bajarlo."
+              - "Elige la forma de pago y la fecha, y toca «Registrar pago»."
+            tips:
+              - "Al registrarlo se abre su recibo para imprimirlo."
+              - "Un pago no puede pasar de lo que se le debe ni ser de una fecha anterior al último pago."
+          show:
+            title: "Recibo de pago a carrero"
+            summary: "El comprobante de un pago al carrero, con original y copia, cada uno en su hoja."
+            steps:
+              - "Toca «Imprimir»: el original y la copia salen cada uno en su hoja."
+              - "El carrero firma «Recibí conforme» y quien paga firma «Entregó»."
+            tips:
+              - "El recibo muestra lo que se le debía, lo pagado y lo que quedó debiendo el negocio."
         loan_settlements:
           form:
             title: "Abonar préstamos con una compra"
@@ -2719,6 +2890,7 @@ es:
             summary: "El recibo para el productor, con original y copia."
             steps:
               - "Toca «Imprimir»: el original y la copia salen en hojas separadas."
+              - "Al pie firman el cliente (el productor, con su nombre debajo) y el comprador de café."
               - "Si se abonaron préstamos con sus compras, la factura los resta y muestra el total a pagar."
               - "Cuando se le pague al productor, toca «Registrar abono»: puede ser el saldo completo o una parte."
               - "En «Pagos al productor» ves cada abono con su recibo, lo abonado y el saldo. «Ver productor» abre sus datos (teléfono, DNI, dirección…) encima, por si hay que llamarlo. Con abonos que no cubren todo, la factura queda en «Pago parcial»; al cubrir el total pasa a «Cancelada»."
@@ -2753,7 +2925,7 @@ es:
             title: "Registrar o editar un productor"
             summary: "Datos de compra del productor y sus datos personales."
             steps:
-              - "Elige el tipo: productor, carrero (intermediario) o finca propia."
+              - "Elige el tipo: productor, intermediario o finca propia."
               - "En «Fincas», la lista muestra las fincas del productor. Toca «Agregar finca», escribe el nombre y toca «Agregar»: sale en la lista como «(nueva)» y se crea al guardar el productor. «Quitar esta» saca una nueva antes de guardar. Si ya tiene una con ese nombre (aunque esté escrita con otras mayúsculas), se usa esa."
               - "Si tiene clave del IHCAFE, escríbela con el formato XX-XX-XXXXX (letras o números). Puedes escribirla sin guiones o en minúsculas: se guarda en mayúsculas y con guiones. No se puede repetir entre productores."
               - "Escribe nombres y apellidos; el resto de datos es opcional."
@@ -2919,12 +3091,15 @@ es:
             title: "Registrar o editar una tarea"
             summary: "Una tarea de una planilla por obra: su valor se divide en partes iguales entre quienes la hicieron."
             steps:
-              - "Escribe el nombre de la tarea y su valor."
+              - "Escribe el nombre de la tarea y elige cómo se paga: monto fijo, por manzana, por barril (fumigación, foliar) o por abono aplicado."
+              - "Con monto fijo, escribe su valor. Si no, escribe la cantidad (manzanas trabajadas, barriles con sus litros, o quintales o libras de abono) y su precio: el valor se calcula solo."
               - "Marca a los empleados que la hicieron: se muestra cuánto le toca a cada uno."
               - "Cuando esté terminada, escribe la fecha. Se paga en el período de esa fecha."
               - "Toca el botón de guardar."
             tips:
               - "Ejemplo: una tarea de L 1,000 hecha entre 4 personas da L 250 a cada una."
+              - "Ejemplo: 10 barriles × L 100 = L 1,000. El precio es por barril; los litros del barril solo se anotan."
+              - "Por manzana, la finca debe tener su extensión: si no la tiene, el formulario la pide y se guarda en la finca. No se pagan más manzanas que las que tiene la finca."
               - "Si la división no da exacta, los centavos que sobran van uno a uno a los primeros de la lista."
               - "Una tarea pagada ya no se edita ni se borra."
         payments:
@@ -3256,6 +3431,8 @@ es:
         purchase: "la compra"
         invoice: "la factura"
         invoice_payment: "el abono a factura"
+        hauler: "el carrero"
+        hauler_payment: "el pago a carrero"
         loan: "el préstamo"
         loan_payment: "el abono"
         supply: "el insumo"
@@ -3343,6 +3520,7 @@ es:
         clients: "Clientes"
         collaborators: "Colaboradores"
         producers: "Productores"
+        haulers: "Carreros"
         search: "Buscar"
         search_placeholder: "Nombre, apellido, DNI o RTN"
         name: "Nombre"
@@ -3354,6 +3532,9 @@ es:
         merge: "Fusionar con otra persona"
         confirm_destroy: "¿Borrar a %{name}? Esta acción no se puede deshacer."
         back: "Volver a personas"
+      hauler:
+        title: "Como carrero"
+        open: "Abrir en Compra de café"
       producer:
         title: "Como productor"
         edit: "Editar productor"
@@ -3441,12 +3622,15 @@ es:
         client: "Cliente"
         collaborator: "Colaborador"
         producer: "Productor"
+        hauler: "Carrero"
       moved:
         purchases: "Compras"
         invoices: "Facturas"
         farms: "Fincas"
         loans: "Préstamos"
         payrolls: "Planillas"
+        hauled_purchases: "Compras carreadas"
+        hauler_payments: "Pagos a carrero"
       new:
         title: "Fusionar personas"
         help: "Para cuando la misma persona se registró dos veces (por ejemplo, con el nombre escrito distinto). Elige a la otra persona y cuál queda; después, dato por dato, qué valor se conserva. Todo lo de la otra (compras, facturas, fincas, préstamos y planillas) pasa a la que queda, y la otra se borra."
@@ -3487,6 +3671,10 @@ es:
             zero: "Sin planillas"
             one: "Su lugar en 1 planilla"
             other: "Su lugar en %{count} planillas"
+          hauled_purchases:
+            zero: "Sin compras carreadas"
+            one: "1 compra carreada (con su comisión)"
+            other: "%{count} compras carreadas (con su comisión)"
           roles: "Roles que se agregan: %{roles}"
           farms_joined: "Fincas con el mismo nombre que se juntan en una: %{farms}"
         irreversible: "%{name} se borra. La fusión no se puede deshacer; queda en la auditoría."
@@ -3548,6 +3736,12 @@ es:
       invoice_payment:
         one: "Abono a factura"
         other: "Abonos a facturas"
+      hauler:
+        one: "Carrero"
+        other: "Carreros"
+      hauler_payment:
+        one: "Pago a carrero"
+        other: "Pagos a carreros"
       user:
         one: "Usuario"
         other: "Usuarios"
@@ -3684,7 +3878,7 @@ es:
       producer:
         kind: "Tipo"
         kind/producer: "Productor"
-        kind/intermediary: "Carrero (intermediario)"
+        kind/intermediary: "Intermediario"
         kind/own_farm: "Finca propia"
         farms: "Fincas"
         new_farm_name: "Finca"
@@ -3700,6 +3894,12 @@ es:
         producer_id: "Productor"
         farm: "Finca"
         farm_id: "Finca"
+        hauler: "Carrero"
+        hauler_id: "Carrero (opcional)"
+        hauler_commission_percent: "Comisión del carrero (%)"
+        hauler_can_price: "Precio de la lata del carrero (L)"
+        hauler_cans: "Latas"
+        hauler_commission: "Comisión"
         zone: "Zona"
         zone_id: "Zona"
         invoice: "Factura"
@@ -3755,6 +3955,21 @@ es:
         amount: "Monto"
         paid_on: "Fecha del abono"
         payment_method: "Forma de pago"
+      hauler:
+        person: "Persona"
+        person_id: "Persona"
+        commission_percent: "Comisión (%)"
+        can_price: "Precio de la lata (L)"
+        active: "Activo"
+      hauler_payment:
+        hauler: "Carrero"
+        hauler_id: "Carrero"
+        created_by_id: "Registró"
+        amount: "Monto (L)"
+        balance_after: "Saldo después del pago"
+        paid_on: "Fecha del pago"
+        payment_method: "Forma de pago"
+        observations: "Observaciones"
       audit_event:
         action/create: "Creó"
         action/update: "Modificó"
@@ -3880,7 +4095,12 @@ es:
       payroll_task:
         payroll_id: "Planilla"
         name: "Tarea"
+        pricing: "Cómo se paga"
         amount: "Valor de la tarea (L)"
+        quantity: "Cantidad"
+        quantity_unit: "Unidad del abono"
+        unit_price: "Precio (L)"
+        barrel_liters: "Litros por barril"
         completed_on: "Fecha en que se terminó"
         observations: "Observaciones"
         members: "Quiénes la hicieron"
@@ -3954,12 +4174,19 @@ es:
     errors:
       models:
         person:
-          role_required: "Marca al menos un rol: cliente, colaborador o productor."
+          role_required: "Marca al menos un rol: cliente, colaborador, productor o carrero."
           producer_in_use: "No se puede quitar el rol de productor: ya tiene compras, facturas o fincas."
+          hauler_in_use: "No se puede quitar el rol de carrero: ya tiene compras carreadas o pagos. Desactívalo en su ficha de carrero."
         farm:
           attributes:
             producer:
               locked: "no se puede cambiar: la finca ya tiene compras o planillas"
+        hauler_payment:
+          attributes:
+            amount:
+              over_balance: "es mayor que lo que se le debe al carrero (%{balance})"
+            paid_on:
+              before_last_payment: "no puede ser antes del último pago"
         invoice_payment:
           attributes:
             amount:
@@ -4014,7 +4241,10 @@ es:
         payroll_task:
           no_participants: "Marca quiénes hicieron la tarea antes de darla por terminada."
           paid: "La tarea ya se pagó: no se puede cambiar ni borrar."
+          farm_area_missing: "Para pagar por manzana, primero escribe la extensión de la finca."
           attributes:
+            quantity:
+              more_than_farm: "no puede pasar de la extensión de la finca (%{manzanas} manzanas)"
             completed_on:
               outside_payroll: "está fuera de las fechas de la planilla"
               period_paid: "es de un período ya pagado"
@@ -4042,7 +4272,10 @@ es:
               not_an_image: "debe ser una imagen PNG, JPG, WebP o GIF"
         purchase:
           voided_invoiced: "Una compra facturada no se puede anular."
+          hauler_paid: "No se puede: ya se le pagó al carrero %{hauler} la comisión de esta compra, y con el cambio quedaría debiendo. Quita primero su último pago."
           attributes:
+            hauler:
+              inactive: "está desactivado: elige otro o actívalo en su ficha"
             invoice:
               other_producer: "pertenece a otro productor"
             farm:

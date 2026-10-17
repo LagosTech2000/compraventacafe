@@ -24,9 +24,14 @@ module Presence
   STREAM = :presence
   WATCH_STREAM = [ :presence, :watch ].freeze
   TARGET = "active-users"
+  # The panel is morphed, not swapped: a card open under the pointer stays
+  # open, with its scroll and focus.
+  MORPH = { method: :morph }.freeze
   # Avatars shown; the rest go in a "+N" with their names.
   AVATARS = 6
   RECENT_WINDOW = 60.minutes
+  # Recent pages and changes on each user's card, for the watchers.
+  CARD_ITEMS = 20
 
   @connections = Hash.new(0)
   @lock = Mutex.new
@@ -70,11 +75,19 @@ module Presence
     end
 
     # What dashboard/_active_users renders. With pages: true (watchers
-    # only), each user's latest session too: last activity and its page.
+    # only), for each user too: their latest session (last activity and its
+    # page), the pages they opened (PageVisit) and what they did (their
+    # audit events), the latest CARD_ITEMS of each, by user id.
     def panel_locals(pages: false)
       users = visible_users.to_a
       recent = recent_users.to_a
-      { users:, recent:, pages: (latest_sessions(users + recent) if pages) }
+      locals = { users:, recent:, pages: nil, visits: {}, changes: {} }
+      return locals unless pages
+
+      ids = (users + recent).map(&:id)
+      locals.merge(pages: latest_sessions(users + recent),
+                   visits: latest_per_user(PageVisit.where(user_id: ids), "visited_at DESC, id DESC"),
+                   changes: latest_per_user(AuditEvent.where(user_id: ids), "created_at DESC, id DESC"))
     end
 
     # The most recently active session of each user, by user id.
@@ -83,18 +96,25 @@ module Presence
              .order(:user_id, last_seen_at: :desc).to_a.uniq(&:user_id).index_by(&:user_id)
     end
 
+    # The latest CARD_ITEMS rows of each user in one query.
+    def latest_per_user(scope, order)
+      table = scope.table_name
+      ranked = scope.select("#{table}.*, ROW_NUMBER() OVER (PARTITION BY #{table}.user_id ORDER BY #{order}) AS position")
+      scope.klass.from(ranked, table).where("position <= ?", CARD_ITEMS).order(Arel.sql(order)).group_by(&:user_id)
+    end
+
     def reset! = @lock.synchronize { @connections.clear }
 
     private
       def broadcast
         Turbo::StreamsChannel.broadcast_replace_to(STREAM, target: TARGET, partial: "dashboard/active_users",
-                                                           locals: panel_locals)
+                                                           locals: panel_locals, attributes: MORPH)
         broadcast_to_watchers
       end
 
       def broadcast_to_watchers
         Turbo::StreamsChannel.broadcast_replace_to(WATCH_STREAM, target: TARGET, partial: "dashboard/active_users",
-                                                                 locals: panel_locals(pages: true))
+                                                                 locals: panel_locals(pages: true), attributes: MORPH)
       end
   end
 end

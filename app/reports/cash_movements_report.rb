@@ -2,17 +2,17 @@
 # across modules:
 #
 #   out  payments to producers on their invoices (each on its date; an
-#        invoice paid in parts goes out part by part), cash lent (supplies are not
-#        money), payroll payments (what was handed to the members) and
-#        payroll expenses
+#        invoice paid in parts goes out part by part), payments of the
+#        haulers' commissions, cash lent (supplies are not money), payroll
+#        payments (what was handed to the members) and payroll expenses
 #   in   loan payments in cash, transfer or check (paid with coffee or
 #        from a payroll, no money moves)
 #
 # Coffee sales are not in the system yet, so they are not here. The
-# movements come from five tables and are few, so they are put together in
+# movements come from six tables and are few, so they are put together in
 # Ruby. Needs the read permission of the three modules.
 class CashMovementsReport < Report
-  SOURCES = %w[invoices loans loan_payments payroll_payments payroll_expenses].freeze
+  SOURCES = %w[invoices hauler_payments loans loan_payments payroll_payments payroll_expenses].freeze
   DIRECTIONS = %w[in out].freeze
   NAME = "people.first_names || ' ' || people.last_names".freeze
 
@@ -155,7 +155,7 @@ class CashMovementsReport < Report
     end
 
     def load(in_period)
-      invoices(in_period) + loans(in_period) + loan_payments(in_period) + payroll_payments(in_period) + expenses(in_period)
+      invoices(in_period) + hauler_payments(in_period) + loans(in_period) + loan_payments(in_period) + payroll_payments(in_period) + expenses(in_period)
     end
 
     def movement(id, date, source, description, amount_in: 0, amount_out: 0, person: nil, payment_method: nil, route: nil)
@@ -171,6 +171,17 @@ class CashMovementsReport < Report
           movement(id, date, "invoices", I18n.t("reports.types.cash_movements.invoice", number: format("%04d", number)),
                    amount_out: amount, person: name, payment_method: Invoice.human_attribute_name("payment_method/#{method}"),
                    route: [ :trading_invoice_path, invoice_id ])
+        end
+    end
+
+    def hauler_payments(in_period)
+      within(HaulerPayment.joins(hauler: :person), in_period, column: "hauler_payments.paid_on")
+        .pluck("hauler_payments.id", "hauler_payments.paid_on", "hauler_payments.payment_method", Arel.sql(NAME),
+               "hauler_payments.amount", "hauler_payments.hauler_id")
+        .map do |id, date, method, name, amount, hauler_id|
+          movement(id, date, "hauler_payments", I18n.t("reports.types.cash_movements.hauler_payment", number: format("%04d", id)),
+                   amount_out: amount, person: name, payment_method: Invoice.human_attribute_name("payment_method/#{method}"),
+                   route: [ :trading_hauler_payment_path, hauler_id, id ])
         end
     end
 

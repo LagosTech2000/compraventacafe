@@ -4,6 +4,7 @@ class User < ApplicationRecord
 
   has_secure_password
   has_many :sessions, dependent: :destroy
+  has_many :page_visits, dependent: :delete_all
   # Passkeys of their devices, to sign in with a fingerprint (one more way in).
   has_many :webauthn_credentials, dependent: :destroy
   has_many :permissions, dependent: :destroy

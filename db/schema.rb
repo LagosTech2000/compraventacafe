@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_15_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_16_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -93,6 +93,30 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_130000) do
     t.index ["payroll_member_id", "worked_on"], name: "index_harvest_entries_on_payroll_member_id_and_worked_on", unique: true
     t.index ["payroll_member_id"], name: "index_harvest_entries_on_payroll_member_id"
     t.index ["worked_on"], name: "index_harvest_entries_on_worked_on"
+  end
+
+  create_table "hauler_payments", force: :cascade do |t|
+    t.bigint "hauler_id", null: false
+    t.bigint "created_by_id", null: false
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.decimal "balance_after", precision: 12, scale: 2, null: false
+    t.date "paid_on", null: false
+    t.string "payment_method", null: false
+    t.text "observations"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_hauler_payments_on_created_by_id"
+    t.index ["hauler_id"], name: "index_hauler_payments_on_hauler_id"
+  end
+
+  create_table "haulers", force: :cascade do |t|
+    t.bigint "person_id", null: false
+    t.decimal "commission_percent", precision: 5, scale: 2, null: false
+    t.decimal "can_price", precision: 12, scale: 2, null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["person_id"], name: "index_haulers_on_person_id", unique: true
   end
 
   create_table "invoice_payments", force: :cascade do |t|
@@ -185,6 +209,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_130000) do
     t.datetime "updated_at", null: false
     t.index ["code"], name: "index_municipalities_on_code", unique: true
     t.index ["department_id"], name: "index_municipalities_on_department_id"
+  end
+
+  create_table "page_visits", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "path", null: false
+    t.string "title"
+    t.datetime "visited_at", null: false
+    t.index ["user_id", "visited_at"], name: "index_page_visits_on_user_id_and_visited_at"
   end
 
   create_table "payroll_attendances", force: :cascade do |t|
@@ -303,6 +335,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_130000) do
     t.text "observations"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "pricing", default: "fixed", null: false
+    t.decimal "quantity", precision: 12, scale: 2
+    t.string "quantity_unit"
+    t.decimal "unit_price", precision: 12, scale: 2
+    t.decimal "barrel_liters", precision: 8, scale: 2
     t.index ["payroll_id"], name: "index_payroll_tasks_on_payroll_id"
   end
 
@@ -416,8 +453,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_130000) do
     t.decimal "damage_amount", precision: 14, scale: 2
     t.bigint "farm_id"
     t.integer "lock_version", default: 0, null: false
+    t.bigint "hauler_id"
+    t.decimal "hauler_commission_percent", precision: 5, scale: 2
+    t.decimal "hauler_can_price", precision: 12, scale: 2
+    t.decimal "hauler_cans", precision: 12, scale: 2
+    t.decimal "hauler_commission", precision: 12, scale: 2
     t.index ["created_by_id"], name: "index_purchases_on_created_by_id"
     t.index ["farm_id"], name: "index_purchases_on_farm_id"
+    t.index ["hauler_id"], name: "index_purchases_on_hauler_id"
     t.index ["invoice_id"], name: "index_purchases_on_invoice_id"
     t.index ["producer_id"], name: "index_purchases_on_producer_id"
     t.index ["purchased_at"], name: "index_purchases_on_purchased_at"
@@ -515,6 +558,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_130000) do
   add_foreign_key "farms", "municipalities"
   add_foreign_key "farms", "producers"
   add_foreign_key "harvest_entries", "payroll_members"
+  add_foreign_key "hauler_payments", "haulers"
+  add_foreign_key "hauler_payments", "users", column: "created_by_id"
+  add_foreign_key "haulers", "people"
   add_foreign_key "invoice_payments", "invoices"
   add_foreign_key "invoice_payments", "users", column: "created_by_id"
   add_foreign_key "invoices", "producers"
@@ -528,6 +574,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_130000) do
   add_foreign_key "loans", "people"
   add_foreign_key "loans", "users", column: "created_by_id"
   add_foreign_key "municipalities", "departments"
+  add_foreign_key "page_visits", "users", on_delete: :cascade
   add_foreign_key "payroll_attendances", "payroll_members"
   add_foreign_key "payroll_expenses", "expense_categories"
   add_foreign_key "payroll_expenses", "payrolls"
@@ -553,6 +600,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_130000) do
   add_foreign_key "producers", "people"
   add_foreign_key "purchase_weighings", "purchases"
   add_foreign_key "purchases", "farms"
+  add_foreign_key "purchases", "haulers"
   add_foreign_key "purchases", "invoices"
   add_foreign_key "purchases", "producers"
   add_foreign_key "purchases", "users", column: "created_by_id"

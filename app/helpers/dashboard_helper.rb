@@ -1,5 +1,12 @@
 # Texts of the home page (Dashboard).
 module DashboardHelper
+  # When something happened, on a card of who is connected: the hour if it
+  # was today, else the day too ("15 de oct 17:42").
+  def presence_time(time)
+    time = time.in_time_zone
+    l(time, format: time.to_date == Time.zone.today ? :hour : :short)
+  end
+
   # The line under a recent record: its number and amount, as it has them.
   def activity_detail(item)
     detail = item.detail

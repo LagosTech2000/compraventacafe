@@ -142,7 +142,7 @@ RSpec.describe "Administration::People" do
       person = create(:person, :client)
       patch administration_person_path(person), params: { person: { client_role: "0", collaborator_role: "0" } }
       expect(response).to have_http_status(:unprocessable_content)
-      expect(response.body).to include("Marca al menos un rol: cliente, colaborador o productor.")
+      expect(response.body).to include("Marca al menos un rol: cliente, colaborador, productor o carrero.")
       expect(person.reload).to be_client
     end
 

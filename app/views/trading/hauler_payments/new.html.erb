@@ -1,0 +1,48 @@
+<% content_for :title, t(".title") %>
+<%= render "trading/nav" %>
+
+<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+<p class="mt-1 text-sm text-ink-muted"><%= @hauler.full_name %></p>
+
+<dl class="mt-4 grid grid-cols-3 gap-3">
+  <% { commissions: @hauler.commissions_total, paid: @hauler.paid_total, balance: @hauler.balance }.each do |key, value| %>
+    <div class="stat">
+      <dt><%= t("trading.haulers.show.figures.#{key}") %></dt>
+      <dd><%= format_money(value) %></dd>
+    </div>
+  <% end %>
+</dl>
+
+<%= form_with model: @payment, url: trading_hauler_payments_path(@hauler), class: form_surface_class("mt-6 space-y-6"),
+      data: { controller: "form-validation" } do |form| %>
+  <%= render "shared/form_errors", record: @payment %>
+
+  <div class="grid gap-5 sm:grid-cols-3">
+    <div>
+      <%= form.label :amount, class: "field-label" %>
+      <%= form.number_field :amount, required: true, min: 0.01, max: ([ @hauler.balance, 0.01 ].max), step: 0.01, inputmode: "decimal",
+            autofocus: true, class: "field-input text-lg" %>
+      <p class="mt-1 text-xs text-ink-muted"><%= t(".amount_help") %></p>
+    </div>
+    <div>
+      <%= form.label :payment_method, class: "field-label" %>
+      <%= form.select :payment_method, enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS),
+            { include_blank: t("shared.select.pick_payment_method") }, required: true, class: "field-input",
+            data: { missing_message: "#{HaulerPayment.human_attribute_name(:payment_method)} #{t("errors.messages.blank")}" } %>
+    </div>
+    <div>
+      <%= form.label :paid_on, class: "field-label" %>
+      <%= form.date_field :paid_on, required: true, min: @hauler.payments.maximum(:paid_on), class: "field-input" %>
+    </div>
+  </div>
+
+  <div>
+    <%= form.label :observations, class: "field-label" %>
+    <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+  </div>
+
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit t(".submit"), class: "btn btn-primary" %>
+    <%= cancel_button trading_hauler_path(@hauler) %>
+  </div>
+<% end %>

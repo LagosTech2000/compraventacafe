@@ -1,0 +1,19 @@
+<%# The person as a carrero (Hauler): its percent and can price and what it
+    is owed, with the way to its page in Compra de café for who sees it. %>
+<section class="mt-8" aria-labelledby="person-hauler">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h2 id="person-hauler" class="text-lg font-semibold"><%= t("administration.people.hauler.title") %></h2>
+    <% if policy(hauler).show? %>
+      <%= page_link_to t("administration.people.hauler.open"), trading_hauler_path(hauler), class: "btn btn-sm" %>
+    <% end %>
+  </div>
+  <dl class="mt-3 grid panel sm:grid-cols-2 lg:grid-cols-4">
+    <% { commission_percent: format_percent(hauler.commission_percent), can_price: format_money(hauler.can_price),
+         commissions: format_money(hauler.commissions_total), balance: format_money(hauler.balance) }.each do |key, value| %>
+      <div class="border-b border-line px-4 py-3">
+        <dt class="text-xs font-medium text-ink-muted"><%= key.in?(%i[commission_percent can_price]) ? Hauler.human_attribute_name(key) : t("trading.haulers.show.figures.#{key}") %></dt>
+        <dd class="mt-1 text-sm tabular-nums"><%= value %></dd>
+      </div>
+    <% end %>
+  </dl>
+</section>

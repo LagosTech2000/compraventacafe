@@ -15,8 +15,9 @@ require "open3"
 #   path = DataBackup.new.write   # a temporary .zip; the caller removes it
 class DataBackup
   # Never in the CSVs: password digests (the dump keeps them, it restores
-  # the whole system), sign-in sessions and Rails' own bookkeeping.
-  SKIPPED_TABLES = %w[schema_migrations ar_internal_metadata sessions].freeze
+  # the whole system), sign-in sessions, the pages each user opened
+  # (PageVisit) and Rails' own bookkeeping.
+  SKIPPED_TABLES = %w[schema_migrations ar_internal_metadata sessions page_visits].freeze
   SECRET_COLUMNS = Auditable::SENSITIVE_ATTRIBUTES
 
   Tools = Data.define(:pg_dump_version, :server_version) do
@@ -74,7 +75,7 @@ class DataBackup
       end
 
       output, status = Open3.capture2e(pg_env, "pg_dump", "--format=custom", "--no-owner", "--no-acl",
-                                       "--exclude-table-data=sessions", "--file=#{path}", *pg_target)
+                                       "--exclude-table-data=sessions", "--exclude-table-data=page_visits", "--file=#{path}", *pg_target)
       return true if status.success?
 
       @dump_error = I18n.t("administration.backups.readme.dump_failed", error: output.lines.last.to_s.strip)

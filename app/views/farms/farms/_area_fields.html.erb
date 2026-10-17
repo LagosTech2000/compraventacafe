@@ -1,9 +1,10 @@
 <%# The farm's land, optional (Fernando, 2026-10-14): one box per unit.
     Typing in any of them calculates the others (farm_area_controller.js);
-    the one typed is what is saved, with its unit (FarmArea). %>
+    the one typed is what is saved, with its unit (FarmArea). `required`:
+    asked for (a task by manzana), not optional. %>
 <% area = farm.area %>
 <fieldset data-controller="farm-area" data-farm-area-factors-value="<%= FarmArea::SQUARE_METERS.transform_values(&:to_f).to_json %>">
-  <legend class="field-label"><%= t("farms.area.title") %></legend>
+  <legend class="field-label"><%= local_assigns[:required] ? t("farms.area.title_required") : t("farms.area.title") %></legend>
   <p class="mb-2 text-xs text-ink-muted"><%= t("farms.area.help") %></p>
   <div class="grid gap-3 sm:grid-cols-3">
     <% FarmArea::UNITS.each do |unit| %>

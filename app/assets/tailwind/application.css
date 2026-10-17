@@ -621,18 +621,44 @@
     @apply border-2 border-ink-muted bg-surface;
   }
 
-  .online-tooltip {
-    @apply pointer-events-none invisible absolute top-full right-0 z-20 mt-2 w-max max-w-56 rounded-lg bg-ink px-2.5 py-1.5 text-xs font-medium text-surface opacity-0 shadow-lg transition;
+  /* The card of a user in "Conectados" (dashboard/_active_user_card): a
+     plain card, not a tooltip. It opens on hover or focus and stays open
+     while the pointer or the focus is inside it (the top padding bridges
+     the gap from the avatar), so its links can be clicked and its lists
+     scrolled. It closes a moment after the pointer leaves. */
+  .presence-card {
+    @apply invisible absolute top-full right-0 z-30 w-60 max-w-[85vw] pt-2 text-left text-xs font-normal opacity-0 transition-[opacity,visibility] delay-150 duration-150;
   }
 
-  /* With the activity and page, for the watchers (Presence::WATCHER_IDS). */
-  .online-tooltip-wide {
-    @apply w-72 max-w-[80vw];
+  /* With the page, recent pages and changes (Presence::WATCHER_IDS). */
+  .presence-card-wide {
+    @apply w-80;
   }
 
-  .online-avatar:hover .online-tooltip,
-  .online-avatar:focus-visible .online-tooltip {
-    @apply visible opacity-100;
+  .online-avatar:hover .presence-card,
+  .online-avatar:focus-within .presence-card {
+    @apply visible opacity-100 delay-0;
+  }
+
+  .presence-card-body {
+    @apply cursor-auto rounded-2xl border border-line bg-surface p-3 text-ink shadow-[0_12px_32px_rgb(29_21_18/0.14),0_2px_6px_rgb(29_21_18/0.08)];
+  }
+
+  .presence-card-section {
+    @apply mt-3 border-t border-line pt-2.5;
+  }
+
+  .presence-card-heading {
+    @apply mb-1 text-[0.65rem] font-semibold tracking-wide text-ink-muted uppercase;
+  }
+
+  /* Recent pages and changes: they scroll inside the card. */
+  .presence-card-list {
+    @apply -mx-1 max-h-40 space-y-0.5 overflow-y-auto overscroll-contain;
+  }
+
+  .presence-link {
+    @apply block rounded-lg px-1 py-1 text-ink no-underline outline-none hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-primary;
   }
 
   /* Small sketches of the screen in the user's settings: a page (frame),

@@ -1,0 +1,86 @@
+<% content_for :title, t(".title") %>
+<%# Updates itself while open when the data changes (LiveUpdates). %>
+<%= live_updates_from :trading %>
+<%= render "trading/nav" %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".help", pounds: number_with_precision(Hauler::CAN_POUNDS, precision: 1)) %></p>
+  </div>
+  <% if policy(Hauler).create? %>
+    <%= modal_link_to t(".new"), new_trading_hauler_path, class: "btn btn-primary" %>
+  <% end %>
+</div>
+
+<%= render layout: "shared/filters", locals: { filter: @filter, url: trading_haulers_path } do |form| %>
+  <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("trading.haulers.index.search_placeholder") %>
+  <%= filter_select form, :status, t("trading.haulers.index.status"),
+        HaulerFilter::STATUSES.map { [ t("trading.haulers.index.statuses.#{it}"), it ] }, selected: @filter.status %>
+<% end %>
+
+<%= list_frame "haulers-list" do %>
+<% sorting = { filter: @filter, frame: "haulers-list" } %>
+<% if @haulers.any? %>
+  <%# Narrow → cards; medium → key columns; wide → every column. %>
+  <div class="mt-6 @container">
+    <ul class="space-y-3 @3xl:hidden">
+      <% @haulers.each do |hauler| %>
+        <li class="data-card" id="<%= dom_id(hauler, :card) %>">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex min-w-0 items-center gap-3">
+              <%= avatar(hauler.person) %>
+              <div class="min-w-0">
+                <p class="font-medium"><%= hauler.full_name %></p>
+                <p class="text-xs text-ink-muted"><%= t(".terms", percent: format_percent(hauler.commission_percent), price: format_money(hauler.can_price)) %></p>
+              </div>
+            </div>
+            <%= detail_button trading_hauler_path(hauler) %>
+          </div>
+          <dl class="mt-3 grid grid-cols-2 gap-2 text-sm">
+            <div><dt class="text-xs text-ink-muted"><%= t(".commissions") %></dt><dd class="tabular-nums"><%= format_money(hauler.commissions_total) %></dd></div>
+            <div><dt class="text-xs text-ink-muted"><%= t(".balance") %></dt><dd class="font-semibold tabular-nums"><%= format_money(hauler.balance_total) %></dd></div>
+          </dl>
+        </li>
+      <% end %>
+    </ul>
+
+    <div class="hidden overflow-x-auto panel @3xl:block">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <%= sort_th t(".name"), :name, sorting %>
+            <%= sort_th Person.human_attribute_name(:phone), :phone, sorting, class: "hidden @5xl:table-cell" %>
+            <%= sort_th Hauler.human_attribute_name(:commission_percent), :commission_percent, sorting, class: "text-right" %>
+            <%= sort_th Hauler.human_attribute_name(:can_price), :can_price, sorting, class: "text-right" %>
+            <%= sort_th t(".commissions"), :commissions, sorting, class: "text-right" %>
+            <%= sort_th t(".paid"), :paid, sorting, class: "hidden text-right @5xl:table-cell" %>
+            <%= sort_th t(".balance"), :balance, sorting, class: "text-right" %>
+            <th class="cell-actions"><span class="sr-only"><%= t("trading.purchases.table.actions") %></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @haulers.each do |hauler| %>
+            <tr id="<%= dom_id(hauler) %>">
+              <td class="font-medium">
+                <%= hauler.full_name %>
+                <% unless hauler.active? %><span class="badge badge-neutral ml-1"><%= t(".statuses.inactive") %></span><% end %>
+              </td>
+              <td class="hidden whitespace-nowrap @5xl:table-cell"><%= format_phone(hauler.person.phone) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_percent(hauler.commission_percent) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(hauler.can_price) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(hauler.commissions_total) %></td>
+              <td class="hidden whitespace-nowrap text-right tabular-nums @5xl:table-cell"><%= format_money(hauler.paid_total) %></td>
+              <td class="whitespace-nowrap text-right font-semibold tabular-nums"><%= format_money(hauler.balance_total) %></td>
+              <td class="cell-actions"><%= detail_button trading_hauler_path(hauler) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "haulers-list" %>
+<% else %>
+  <p class="empty-state mt-6"><%= t(".empty") %></p>
+<% end %>
+<% end %>

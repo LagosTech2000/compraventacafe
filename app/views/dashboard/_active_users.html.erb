@@ -1,11 +1,15 @@
 <%# Who is online right now (Presence): small avatars with a green dot, then
     who was active in the last hour without being connected, with a grey
-    ring. The name and the status go in a tooltip on hover or focus.
-    Replaced by the "presence" stream when someone comes or goes, the same
-    for everyone who sees it. The watchers (Presence::WATCHER_IDS) get
-    `pages` too: the tooltip becomes a card with the last activity and the
-    page the user is on, from their latest session. %>
+    ring. On hover or focus each one opens its card
+    (dashboard/_active_user_card), which stays open while the pointer is
+    on it. Replaced by the "presence" stream when someone comes or goes,
+    the same for everyone who sees it, by morphing: an open card keeps its
+    place and scroll. The watchers (Presence::WATCHER_IDS) get `pages`,
+    `visits` and `changes` too: the page each user is on, their recent
+    pages and what they did, with links. %>
 <% pages = local_assigns[:pages] %>
+<% visits = local_assigns.fetch(:visits, {}) %>
+<% changes = local_assigns.fetch(:changes, {}) %>
 <% people = users.map { [ it, nil ] } + recent.map { [ it, l(it.last_seen_at.in_time_zone, format: :hour) ] } %>
 <% shown = people.first(Presence::AVATARS) %>
 <% rest = people.drop(Presence::AVATARS) %>
@@ -16,46 +20,32 @@
     <span class="hidden text-xs text-ink-muted sm:inline"><%= t("dashboard.active_users.title") %></span>
     <ul class="flex gap-1" role="list">
       <% shown.each do |user, seen_at| %>
-        <% id = dom_id(user, seen_at ? :recent : :online) %>
-        <li id="<%= id %>" class="online-avatar" tabindex="0" aria-label="<%= user.name %>" aria-describedby="<%= id %>_status">
+        <%# The same id online or recent: a morph keeps an open card open. %>
+        <% id = dom_id(user, :presence) %>
+        <li id="<%= id %>" class="online-avatar" tabindex="0" data-presence-state="<%= seen_at ? "recent" : "online" %>"
+            aria-label="<%= user.name %>" aria-describedby="<%= id %>_status">
           <% if (photo = user.photo_info) %>
             <%= image_tag profile_photo_path(photo, v: photo.version), alt: "", class: "size-full rounded-full object-cover" %>
           <% else %>
             <span aria-hidden="true"><%= initials(user.name) %></span>
           <% end %>
           <span class="<%= seen_at ? "online-dot online-dot-recent" : "online-dot" %>" aria-hidden="true"></span>
-          <% page = pages&.dig(user.id) %>
-          <span class="online-tooltip<%= " online-tooltip-wide" if pages %>" role="tooltip">
-            <%= user.name %>
-            <span id="<%= id %>_status" class="block font-normal opacity-75">
-              <%= seen_at ? t("dashboard.active_users.last_seen", time: seen_at) : t("dashboard.active_users.online") %>
-            </span>
-            <% if pages %>
-              <span class="mt-1.5 block border-t border-surface/20 pt-1.5 font-normal" data-presence-page>
-                <% if page %>
-                  <% unless seen_at %>
-                    <span class="block opacity-75"><%= t("dashboard.active_users.last_activity", time: l(page.last_seen_at.in_time_zone, format: :hour)) %></span>
-                  <% end %>
-                  <span class="block opacity-75"><%= t(seen_at ? "dashboard.active_users.last_page" : "dashboard.active_users.current_page") %></span>
-                  <% if page.last_path %>
-                    <span class="block font-semibold"><%= page.last_page_title || page.last_path %></span>
-                    <span class="block truncate font-mono text-[0.65rem] opacity-60"><%= page.last_path %></span>
-                  <% else %>
-                    <span class="block opacity-75"><%= t("dashboard.active_users.no_page") %></span>
-                  <% end %>
-                <% else %>
-                  <span class="block opacity-75"><%= t("dashboard.active_users.no_page") %></span>
-                <% end %>
-              </span>
-            <% end %>
-          </span>
+          <%= render "dashboard/active_user_card", user:, id:, seen_at:, pages: pages && true,
+                                                   page: pages&.dig(user.id), visits: visits.fetch(user.id, []),
+                                                   changes: changes.fetch(user.id, []) %>
         </li>
       <% end %>
       <% if rest.any? %>
-        <% names = rest.map { |user, seen_at| seen_at ? "#{user.name} (#{seen_at})" : user.name }.to_sentence %>
-        <li class="online-avatar online-avatar-more" tabindex="0" aria-label="<%= names %>">
+        <% names = rest.map { |user, seen_at| seen_at ? "#{user.name} (#{seen_at})" : user.name } %>
+        <li id="online_more" class="online-avatar online-avatar-more" tabindex="0" aria-label="<%= names.to_sentence %>">
           <span aria-hidden="true">+<%= rest.size %></span>
-          <span class="online-tooltip" role="tooltip"><%= names %></span>
+          <div class="presence-card">
+            <ul class="presence-card-body space-y-1" role="list">
+              <% names.each do |name| %>
+                <li><%= name %></li>
+              <% end %>
+            </ul>
+          </div>
         </li>
       <% end %>
     </ul>

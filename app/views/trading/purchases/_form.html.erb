@@ -3,10 +3,16 @@
 <% can_create_farm = policy(Farm).create? %>
 <% can_create_producer = policy(Producer).create? %>
 <% can_create_zone = policy(Zone).create? %>
+<%# Carreros to choose: the active ones, plus the one already on the purchase
+    (with the percent and can price it kept). %>
+<% haulers = Hauler.active.or(Hauler.where(id: purchase.hauler_id)).includes(:person).alphabetical %>
 <%# Wide (page or modal): the calculation and the buttons stay in a column on
     the right while typing; narrow: they follow the fields. %>
 <%= form_with model: [ :trading, purchase ], class: form_surface_class("@container max-w-none"),
-      data: { controller: "form-validation purchase-calculator",
+      data: { controller: "form-validation hauler-commission purchase-calculator",
+              action: "purchase-calculator:calculated->hauler-commission#calculated",
+              hauler_commission_can_pounds_value: Hauler::CAN_POUNDS.to_f,
+              hauler_commission_terms_label_value: t(".hauler_terms"),
               purchase_calculator_sack_weight_value: PurchaseCalculation::SACK_WEIGHT,
               purchase_calculator_tare_per_sack_value: PurchaseCalculation::TARE_PER_SACK,
               purchase_calculator_quintal_weight_value: PurchaseCalculation::QUINTAL_WEIGHT,
@@ -74,6 +80,20 @@
         <%= modal_link_to t(".new_farm"), new_farms_farm_path(picker: 1), class: "btn btn-sm mt-2",
               data: { producer_farms_target: "newLink", base_href: new_farms_farm_path(picker: 1) }, hidden: purchase.producer.nil? %>
       <% end %>
+    </div>
+
+    <%# Optional: the carrero who hauled it earns a commission (Hauler). %>
+    <div>
+      <%= form.label :hauler_id, class: "field-label" %>
+      <%= form.select :hauler_id,
+            haulers.map { |hauler|
+              kept = hauler.id == purchase.hauler_id_in_database && purchase.hauler_commission_percent
+              [ hauler.full_name, hauler.id, { data: { percent: (kept ? purchase.hauler_commission_percent : hauler.commission_percent).to_s,
+                                                       can_price: (kept ? purchase.hauler_can_price : hauler.can_price).to_s } } ]
+            },
+            { include_blank: t("shared.select.no_hauler") }, class: "field-input",
+            data: { hauler_commission_target: "select", action: "hauler-commission#update" } %>
+      <p class="mt-1 text-xs text-ink-muted"><%= t(".hauler_help") %></p>
     </div>
 
     <div>
@@ -182,6 +202,21 @@
           </div>
         <% end %>
       </dl>
+    </div>
+    <div class="panel p-4" data-hauler-commission-target="box" hidden>
+      <p class="text-sm font-semibold"><%= t(".hauler_commission") %></p>
+      <p class="text-xs text-ink-muted" data-hauler-commission-target="terms"></p>
+      <dl class="mt-2 grid grid-cols-2 gap-3">
+        <div>
+          <dt class="text-xs text-ink-muted"><%= Purchase.human_attribute_name(:hauler_cans) %></dt>
+          <dd class="text-xl font-bold tabular-nums" data-hauler-commission-target="cans">—</dd>
+        </div>
+        <div>
+          <dt class="text-xs text-ink-muted"><%= Purchase.human_attribute_name(:hauler_commission) %></dt>
+          <dd class="text-xl font-bold tabular-nums" data-hauler-commission-target="amount">—</dd>
+        </div>
+      </dl>
+      <p class="mt-2 text-xs text-ink-muted"><%= t(".hauler_paid_apart") %></p>
     </div>
     <div class="flex flex-wrap gap-3">
       <%= form.submit class: "btn btn-primary" %>

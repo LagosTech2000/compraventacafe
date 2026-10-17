@@ -107,7 +107,7 @@ export default class extends Controller {
     const money = (value) => price > 0 ? `L ${this.pounds.format(Math.round(value * price * 100) / 100)}` : "—"
 
     this.show(this.pounds.format(sacks), this.pounds.format(tare), this.pounds.format(damage), money(damage),
-              this.pounds.format(net), this.pounds.format(quintals), money(net))
+              this.pounds.format(net), this.pounds.format(quintals), money(net), net)
   }
 
   // Share of the weight after tare that counts, or null while incomplete.
@@ -160,7 +160,10 @@ export default class extends Controller {
     field.querySelectorAll("input").forEach((input) => { input.disabled = !visible })
   }
 
-  show(sacks, tare, damage, damageAmount, net, quintals, total) {
+  // `netWeight` (a number, or null while incomplete) goes out in a
+  // "purchase-calculator:calculated" event: the hauler's commission follows it.
+  show(sacks, tare, damage, damageAmount, net, quintals, total, netWeight = null) {
+    this.dispatch("calculated", { detail: { netWeight } })
     this.sacksTarget.textContent = sacks
     this.tareTarget.textContent = tare
     this.damageWeightTarget.textContent = damage
