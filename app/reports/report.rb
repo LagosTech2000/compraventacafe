@@ -61,6 +61,12 @@ class Report
     subclass.filter_class = Class.new(ReportFilter) do
       field :period, :text, default: -> { subclass.default_period }
     end
+    subclass.prepend(CachedCharts)
+  end
+
+  # Each report's #charts, from the cache when nothing changed (see #cached).
+  module CachedCharts
+    def charts = cached(:charts) { super }
   end
 
   # Reports in the order the picker lists them.
@@ -179,11 +185,11 @@ class Report
   end
 
   def total_count
-    @total_count ||= grouped? ? plain(records).distinct.count(Arel.sql(grouping_sql)) : plain(records).count
+    @total_count ||= cached(:total_count) { grouped? ? plain(records).distinct.count(Arel.sql(grouping_sql)) : plain(records).count }
   end
 
   def kpis
-    @kpis ||= begin
+    @kpis ||= cached(:kpis) do
       previous = period.previous
       kpi_definitions.map do |definition|
         current = kpi_value(definition, records, period)
@@ -205,7 +211,26 @@ class Report
   # Subclasses return a list of Chart (see the builders below).
   def charts = []
 
+  # Figures, charts and counts come from the cache while the data did not
+  # change (Fernando, 2026-10-18: reports always fast). The key has the
+  # report, its filters (not the sort or the page, which only order the
+  # table), today (periods count from it), the modules the user can see
+  # (cross-module reports show what each user may) and DataVersion, which
+  # every saved change bumps: a change is never hidden behind an old copy.
+  # CACHE_FOR is only a ceiling for what nothing bumps.
+  CACHE_FOR = 30.minutes
+
+  def cached(name, &)
+    Rails.cache.fetch(cache_key(name), expires_in: CACHE_FOR, &)
+  end
+
   private
+    def cache_key(name)
+      query = filter.to_params.except("sort", "dir", "page").sort.to_h.to_query
+      modules = user && (user.admin? ? "admin" : AppModule::KEYS.select { |key| user.can?(key, :read) }.join(","))
+      [ "report", key, name, DataVersion.current, today.iso8601, modules, Digest::SHA256.hexdigest(query) ].join("/")
+    end
+
     def default_sort_key
       return default_sort.to_s unless grouped?
 

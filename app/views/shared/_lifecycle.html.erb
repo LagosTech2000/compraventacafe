@@ -1,0 +1,39 @@
+<%# Steps of a record's life (LifecycleSteps) and what to do next, with the
+    next-step buttons in the block:
+      render layout: "shared/lifecycle", locals: { lifecycle:, scope: "trading.lifecycle", guide: :purchase_lifecycle }
+    scope holds label, next_badge, stages.<step> and hint.<step>. Optional:
+    summary, a line under the hint (what a loan owes today); note, a warning
+    under it (an overdue loan). %>
+<% steps = lifecycle.stages %>
+<section class="panel p-4 print:hidden" aria-label="<%= t("#{scope}.label") %>">
+  <ol class="flex items-center gap-2 text-xs sm:text-sm">
+    <% steps.each_with_index do |step, index| %>
+      <% status = lifecycle.status(step) %>
+      <li class="flex min-w-0 flex-1 items-center gap-2" <%= "aria-current=step" if status == :next %>>
+        <span class="grid size-7 shrink-0 place-items-center rounded-full text-xs font-bold
+                     <%= { done: "bg-primary text-on-primary", next: "bg-surface text-primary ring-2 ring-primary", upcoming: "bg-canvas text-ink-muted" }[status] %>">
+          <%= status == :done ? "✓" : lifecycle.step_number(step) %>
+        </span>
+        <span class="min-w-0 leading-tight <%= status == :upcoming ? "text-ink-muted" : "font-semibold" %>">
+          <%= t("#{scope}.stages.#{step}") %>
+          <% if status == :next %><span class="block text-xs font-normal text-primary"><%= t("#{scope}.next_badge") %></span><% end %>
+        </span>
+        <% unless index == steps.size - 1 %>
+          <span class="hidden h-0.5 flex-1 rounded sm:block <%= status == :done ? "bg-primary" : "bg-line" %>" aria-hidden="true"></span>
+        <% end %>
+      </li>
+    <% end %>
+  </ol>
+
+  <div class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
+    <div class="text-sm">
+      <p><%= t("#{scope}.hint.#{lifecycle.stage}") %></p>
+      <% if local_assigns[:summary] %><p class="mt-1"><%= summary %></p><% end %>
+      <% if local_assigns[:note] %><p class="mt-1 font-medium text-danger"><%= note %></p><% end %>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <%= yield %>
+      <%= help_guide_button HelpGuide.process(guide), label: true %>
+    </div>
+  </div>
+</section>

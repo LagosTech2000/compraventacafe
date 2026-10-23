@@ -17,6 +17,7 @@ class CreditAccountFilter < ListFilter
     scope = scope.where(id: Loan.unpaid.select(:person_id)) if standing == "owing"
     scope = scope.where(id: Loan.overdue.select(:person_id)) if standing == "overdue"
     scope = scope.search(q) if q
-    scope.newest_first
+    # Each row's account (CreditAccount) reads them: loaded at once.
+    scope.includes(:photo_info, loans: %i[payments supply_items]).newest_first
   end
 end

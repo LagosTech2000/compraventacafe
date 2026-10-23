@@ -7,6 +7,7 @@
 <p class="mt-1 text-sm text-ink-muted">
   <%= t(".subtitle", number: purchase.id, person: @settlement.person.full_name, date: l(purchase.purchased_at)) %>
 </p>
+<div class="mt-2"><%= help_guide_button HelpGuide.process(:coffee_payment), label: true %></div>
 
 <dl class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
   <% {

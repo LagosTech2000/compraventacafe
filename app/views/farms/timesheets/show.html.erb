@@ -24,6 +24,7 @@
       <%= link_to t(".pay"), new_farms_payroll_payment_path(@payroll, period: period.to_param), class: "btn #{"btn-primary" if period.due?(today)}" %>
     <% end %>
     <%= link_to t(".to_payroll"), farms_payroll_path(@payroll), class: "btn" %>
+    <%= help_guide_button HelpGuide.process(@payroll.harvest? ? :harvest : :payroll_payment), label: true %>
   </div>
 </div>
 

@@ -6,6 +6,7 @@
   <% content_for :modal_src, trading_invoice_payment_path(@invoice, params[:receipt]) %>
 <% end %>
 <%= render "trading/nav" %>
+<%= render "shared/breadcrumbs", crumbs: producer_crumbs(@invoice.producer, [ invoice_label(@invoice) ]) %>
 
 <div class="mb-6 flex flex-wrap items-start justify-between gap-4 print:hidden">
   <h1 class="text-2xl font-bold"><%= t(".title", number: @invoice.display_number) %></h1>

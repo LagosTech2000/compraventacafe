@@ -33,6 +33,17 @@ es:
     "on": "En vivo"
     "off": "Conectando…"
   shared:
+    unsaved_changes:
+      leave: "Tienes cambios sin guardar en este formulario. ¿Salir sin guardar?"
+    person_gaps:
+      message: "A esta persona le faltan datos por ingresar: %{fields}."
+      complete: "Completar datos"
+    record_picker:
+      short: "Escribe al menos %{count} letras o números para buscar."
+      searching: "Buscando…"
+      empty: "No se encontró a nadie con ese nombre o número."
+      more: "Hay más resultados: sigue escribiendo para afinar la búsqueda."
+      failed: "No se pudo buscar. Revisa la conexión e intenta de nuevo."
     print_letterhead:
       rtn: "RTN %{rtn}"
     photo_field:
@@ -73,6 +84,13 @@ es:
       apply: "Filtrar"
       clear: "Quitar filtros"
       all: "Todos"
+      all_feminine: "Todas"
+      count:
+        zero: "Ningún resultado"
+        one: "1 resultado"
+        other: "%{count} resultados"
+      chips:
+        q: "Búsqueda: «%{text}»"
       all_zones: "Todas las zonas"
       all_seasons: "Todas las temporadas"
       search: "Buscar"
@@ -434,6 +452,28 @@ es:
         success: "Zona creada."
       update:
         success: "Zona actualizada."
+    producer_cards:
+      placeholder:
+        title: "¿A quién se le compra?"
+        help: "Elige el productor y aquí sale su ficha: el café de la temporada, lo pendiente y lo que debe."
+      show:
+        season: "Café · Temporada %{season}"
+        quintals: "QQ vendidos"
+        sold:
+          one: "1 compra"
+          other: "%{count} compras"
+        last_purchase: "Última compra: %{date}"
+        pending_title: "Pendiente"
+        pending:
+          uninvoiced: "Sin facturar"
+          unpaid: "Facturas por pagarle"
+        loans: "Préstamos"
+        owed_today: "Debe hoy (capital más interés)"
+        overdue:
+          one: "1 préstamo vencido"
+          other: "%{count} préstamos vencidos"
+        producer: "Ficha del productor"
+        credit_account: "Estado de cuenta"
     producers:
       index:
         title: "Productores"
@@ -592,14 +632,18 @@ es:
       edit:
         title: "Editar compra"
       form:
-        producer_placeholder: "Escribe para buscar un productor"
+        producer_placeholder: "Escribe 3 letras del nombre, el DNI o la clave IHCAFE"
         producer_missing: "Selecciona un productor de la lista"
         new_producer: "¿No está? Registrar productor"
         producer_gaps: "A este productor le faltan datos por ingresar: %{fields}."
         complete_producer: "Completar datos"
         new_zone: "Nueva zona"
+        zone_help: "Si el productor no tiene zona, al guardar la compra queda con esta."
         new_farm: "Nueva finca"
         farm_pick_producer: "Elige primero el productor: aquí salen sus fincas."
+        farm_gaps: "A esta finca le faltan datos por ingresar: %{fields}."
+        complete_farm: "Completar datos de la finca"
+        new_hauler: "Nuevo carrero"
         hauler_help: "Si la trajo un carrero, gana su comisión por esta compra."
         hauler_terms: "Comisión %{percent} · lata a %{price}"
         hauler_commission: "Comisión del carrero"
@@ -612,6 +656,7 @@ es:
         gross_from_weighings: "Suma de las pesadas: se cambia en las pesadas."
       create:
         success: "Compra de %{producer} registrada."
+        zone_given: "%{producer} no tenía zona: quedó en %{zone}."
       update:
         success: "Compra actualizada."
       destroy:
@@ -794,6 +839,7 @@ es:
         confirm_remove_payment: "¿Quitar este pago? Lo que cubría vuelve a quedar pendiente."
         no_payments: "Todavía no se le ha pagado."
         purchases: "Compras que carreó"
+        tabs_label: "Secciones del carrero"
         net_weight: "Neto (lb)"
         cans: "Latas"
         commission: "Comisión"
@@ -875,6 +921,18 @@ es:
         actions: "Acciones"
 
   loans:
+    lifecycle:
+      label: "Etapas del préstamo"
+      next_badge: "Siguiente"
+      stages:
+        lent: "Préstamo entregado"
+        repaying: "Con abonos"
+        paid: "Pagado"
+      hint:
+        lent: "Siguiente paso: registrar los abonos de la persona (en efectivo, con café o en planilla)."
+        repaying: "Siguiente paso: seguir registrando abonos hasta cubrir lo que debe."
+        paid: "Ciclo completo: el préstamo está pagado."
+      overdue: "Vencido: la fecha límite era el %{date}. El interés sigue corriendo con la misma tasa."
     nav:
       home: "Resumen"
       new_loan: "Nuevo préstamo"
@@ -998,6 +1056,7 @@ es:
       new:
         title: "Registrar abono"
         loan: "Préstamo %{number} · %{person}"
+        from_payroll: "Desde la planilla «%{payroll}»: al registrarlo vuelves a ella."
         principal_owed: "Capital pendiente"
         interest_owed: "Interés acumulado"
         total_owed: "Debe hoy"
@@ -1106,6 +1165,7 @@ es:
         as_of_today: "Saldos calculados a hoy."
         loans: "Préstamos"
         history: "Historial crediticio"
+        tabs_label: "Secciones del estado de cuenta"
         columns:
           date: "Fecha"
           movement: "Movimiento"
@@ -1153,6 +1213,11 @@ es:
     statuses:
       active: "Activos"
       inactive: "Inactivos"
+    # Whose farms a list shows (FarmFilter#owner, Fernando, 2026-10-18).
+    owner: "Dueño"
+    owners:
+      business: "Fincas propias"
+      producers: "De productores"
     status_badges:
       member:
         active: "Activo"
@@ -1184,6 +1249,8 @@ es:
         person_placeholder: "Escribe para buscar un colaborador"
         person_missing: "Selecciona un colaborador de la lista"
         person_help: "Solo aparecen las personas con el rol de colaborador."
+        several_roles_help: "Una persona puede estar otra vez con otro rol (por ejemplo, chofer unos días y jornalero otros); cada día va en un solo rol."
+        already_as: "Ya está en esta planilla como %{roles}. Elige otro rol."
         new_person: "¿No está? Registrar colaborador"
         new_role: "Nuevo rol"
         harvest_help: "Los cortadores van sin rol ni salario: ganan por latas. Los caporales no cortan: dales el rol de caporal (o un salario propio) y ganan su salario por cada día que vienen."
@@ -1341,8 +1408,33 @@ es:
           label: "Secciones de la planilla"
           periods: "Períodos de pago"
           members: "Empleados"
+          loans: "Préstamos"
           tasks: "Tareas"
           expenses: "Gastos"
+      loans:
+        title: "Préstamos de los empleados"
+        help: "Lo que debe hoy cada empleado de esta planilla, con su estado de cuenta. Abona aquí un pago aparte, o descuéntalo del salario al pagar el período."
+        summary:
+          total_owed: "Deben hoy"
+          owing: "Empleados con deuda"
+          overdue: "Préstamos vencidos"
+        search_placeholder: "Nombre o DNI"
+        standing: "Situación"
+        standings:
+          owing: "Con deuda"
+          overdue: "Con préstamos vencidos"
+          clear: "Sin deuda"
+        chips:
+          q: "Buscar: %{text}"
+        open_loans: "Préstamos por cobrar"
+        overdue_loans: "Vencidos"
+        total_owed: "Debe hoy"
+        loan: "Préstamo %{number}"
+        owed: "Debe %{amount}"
+        due_on: "vence el %{date}"
+        pay: "Abonar"
+        none: "Sin préstamos por cobrar"
+        empty: "No hay empleados con esos filtros."
       periods:
         help_daily: "Cada período se paga con los días de asistencia × el salario por día de cada empleado."
         help_harvest: "Cada período se paga con las latas cortadas × el precio de la lata; los caporales, con sus días × su salario por día."
@@ -1386,6 +1478,7 @@ es:
         status: "Estado"
         daily_wage: "Salario por día"
         account: "Estado de cuenta"
+        other_role: "Otro rol"
         edit: "Editar"
         remove: "Quitar"
         empty: "No hay empleados con esos filtros."
@@ -2410,6 +2503,108 @@ es:
         - "Si aparece un error con un código de referencia, pásale ese código a un administrador."
         - "El Inicio y las pantallas de Compra de café y Préstamos se actualizan solas cuando otra persona registra algo: lo nuevo aparece con un brillo y las cifras que cambian dan un pulso. Abajo a la izquierda dice «En vivo». Si tienes una ventana abierta, se actualiza al cerrarla."
     processes:
+      invoice_payments:
+        title: "Pagar una factura por abonos"
+        summary: "Una factura se paga completa o en varios abonos, cada uno con su recibo."
+        steps:
+          - "Al facturar, elige si queda pendiente de pago, cancelada o con un pago parcial y su monto."
+          - "Después, en el detalle de la factura, toca «Registrar abono»: monto, fecha y forma de pago."
+          - "Cada abono tiene su recibo imprimible, original y copia en hojas separadas."
+          - "Sin abonos la factura está pendiente; con abonos que no cubren el total, en pago parcial; al cubrirlo, cancelada."
+        tips:
+          - "Un abono no pasa del saldo ni va antes de la fecha de la factura o del último abono."
+          - "Solo se quita el último abono."
+      hauler_commission:
+        title: "Comisión y pagos de un carrero"
+        summary: "El carrero trae el café con los carros del negocio y gana una comisión por cada compra que trae."
+        steps:
+          - "Al registrarlo se anotan su porcentaje y el precio de la lata; se pueden cambiar después y cuentan para las compras nuevas."
+          - "En «Nueva compra» elige al carrero: la compra guarda su porcentaje y su precio de la lata de ese día."
+          - "Comisión = (libras netas ÷ 16.5) × precio de la lata × porcentaje."
+          - "La paga el negocio aparte: no cambia la factura ni lo que se le paga al productor."
+          - "En su página está lo que ha ganado, lo pagado y el saldo; «Registrar pago» paga del saldo, con su recibo."
+        tips:
+          - "Un pago no pasa del saldo ni va antes del último, y solo se quita el último."
+          - "Un carrero desactivado no se elige en compras nuevas."
+      coffee_payment:
+        title: "Pagar préstamos con café"
+        summary: "Con el dinero de una compra se abonan o saldan los préstamos de la persona del productor."
+        steps:
+          - "En el detalle de la compra, toca «Abonar con esta compra»."
+          - "Escribe cuánto va a cada préstamo y la fecha del abono (hoy por defecto)."
+          - "Cada abono paga primero el interés y luego el capital, y salda el préstamo si cubre todo."
+          - "La factura muestra el total de compras, cada abono restado y el total a pagar al productor."
+        tips:
+          - "La suma de los abonos no pasa del total de la compra."
+          - "Una compra con abonos no se edita, anula ni borra: para cambiarla se quita el abono."
+      payroll_payment:
+        title: "Pagar un período de planilla"
+        summary: "Desde su día de pago, cada período se paga con lo que el sistema calcula de lo anotado."
+        steps:
+          - "Revisa la asistencia, las latas o las tareas del período («Revisar asistencia/latas»)."
+          - "En «Pagar período» sale cada empleado con lo que ganó, sus horas y días extra, y sus préstamos."
+          - "Si debe, escribe cuánto se le descuenta para abonar a su préstamo (nunca más de lo que gana)."
+          - "Elige la fecha y toca «Pagar período»: se guarda lo calculado y se abre la planilla de pago imprimible."
+        tips:
+          - "Un período pagado queda cerrado: su asistencia, latas y tareas ya no cambian."
+          - "Solo se quita el pago del último período, con sus abonos."
+      harvest:
+        title: "Planilla de corte por lata"
+        summary: "Los cortadores ganan por las latas que cortan; los caporales, por día."
+        steps:
+          - "Agrega a los cortadores sin rol ni salario propio: ganan latas × precio de la lata de la planilla."
+          - "Agrega a los caporales con un rol o un salario propio: ganan por día con su asistencia."
+          - "En «Latas de hoy» anota las latas de cada cortador, de cuarto en cuarto (0.25, 0.50, 0.75…)."
+          - "La asistencia de los caporales se marca igual que en una planilla por día."
+        tips:
+          - "Un empleado con latas no pasa a ganar por día, ni al revés."
+      person_merge:
+        title: "Fusionar dos registros de la misma persona"
+        summary: "Para una persona registrada dos veces: todo lo de la otra pasa a la que queda."
+        steps:
+          - "Busca a la otra persona y elige cuál de las dos queda."
+          - "Toca «Comparar» y elige, dato por dato, qué valor se conserva."
+          - "Revisa lo que se va a mover (compras, facturas, fincas, préstamos, planillas) y confirma."
+        tips:
+          - "No se puede deshacer y queda en la auditoría."
+          - "No se fusionan dos personas de la misma planilla."
+      saved_reports:
+        title: "Guardar los filtros de un reporte"
+        summary: "«Mis filtros» guarda un reporte con sus filtros para volver a él con un clic."
+        steps:
+          - "Arma el reporte: elige el reporte, el período y los filtros."
+          - "Toca «Guardar filtros» y ponle un nombre."
+          - "Vuelve a él desde «Mis filtros», arriba del reporte."
+        tips:
+          - "Se guarda el período, no las fechas: «Este mes» siempre es el mes en curso."
+          - "Tus filtros son solo tuyos: nadie más los ve."
+      payroll_several_roles:
+        title: "Una persona en varios roles"
+        summary: "En una planilla por día, la misma persona puede trabajar unos días en un rol y otros días en otro, cada uno con su salario. Ejemplo: chofer 3 días y jornalero 2 días."
+        steps:
+          - "En «Empleados», agrega a la persona con su primer rol (por ejemplo, Chofer)."
+          - "Toca «Otro rol» en su fila (o «Agregar empleado» otra vez) y elige el segundo rol (Jornalero)."
+          - "En la asistencia sale en dos filas, con el rol bajo el nombre. Marca los días de chofer en una fila y los de jornalero en la otra."
+          - "Al pagar el período sale en una sola tarjeta con lo que ganó en cada rol, y sus préstamos se descuentan una vez del total."
+          - "La planilla de pago trae una línea por rol, cada una con su firma."
+        tips:
+          - "Un mismo día va en un solo rol: no se puede marcar en los dos."
+          - "No se repite con el mismo rol. Un salario propio sin rol cuenta como un rol más."
+          - "Solo en planillas por día; en corte de café y por obra cada persona va una vez."
+          - "Las horas y días extra se anotan en la fila del rol al que corresponden."
+      payroll_loans:
+        title: "Préstamos de los empleados"
+        summary: "Dos formas de abonar a los préstamos de un empleado sin salir de la planilla: descontarlo del salario al pagar el período, o registrar un abono aparte."
+        steps:
+          - "Abre la planilla y toca la pestaña «Préstamos»: sale cada empleado con lo que debe hoy, sus préstamos por cobrar, los vencidos y su score de pago."
+          - "Toca «Estado de cuenta» (o la fila) para ver todos sus préstamos, el historial de préstamos y abonos, y para imprimirlo."
+          - "Para descontarlo del salario: en «Períodos de pago» toca «Pagar». Bajo cada empleado que debe, escribe cuánto descontar de cada préstamo o toca «Saldar»."
+          - "Para un abono aparte (efectivo, transferencia o cheque): en la pestaña «Préstamos» toca «Abonar» junto al préstamo. Al registrarlo vuelves a la planilla con el recibo abierto para imprimir."
+        tips:
+          - "El descuento no puede pasar de lo que gana el empleado en el período, y queda en la planilla de pago como «Descuento de planilla»."
+          - "Todo abono paga primero el interés acumulado y luego el capital, igual que en el módulo Préstamos."
+          - "Un descuento de planilla se quita solo quitando el pago del período."
+          - "Ver esta pestaña pide ver Préstamos; descontar o abonar pide crear en Préstamos."
       purchase_lifecycle:
         title: "Etapas de una compra"
         summary: "Cada compra pasa por tres etapas, en este orden. La barra de etapas muestra en cuál está y el botón del siguiente paso."
@@ -2486,6 +2681,14 @@ es:
             - "Cambiar el correo también pide tu contraseña actual."
             - "La huella es una forma más de entrar: la contraseña sigue sirviendo. Registra cada celular o computadora donde la quieras usar."
             - "Si pierdes un dispositivo, toca «Quitar» en su huella."
+      picker_searches:
+        show:
+          title: "Buscar al escribir"
+          summary: "Los campos para elegir un productor o una persona buscan mientras escribes, en vez de cargar la lista completa."
+          steps:
+            - "Escribe al menos 3 letras del nombre o números del DNI o del RTN (en productores, también la clave IHCAFE)."
+            - "Elige uno de la lista con el clic, o con las flechas y Enter."
+            - "Si no aparece, sigue escribiendo para afinar la búsqueda o regístralo con el botón de al lado."
       pending_work:
         show:
           title: "Tareas pendientes"
@@ -2898,6 +3101,14 @@ es:
               - "Desde la ventana de detalle, «Imprimir» abre la factura en página completa."
               - "En pergamino, «Daño (lb)» y «Daño (L)» muestran lo que el daño restó de cada compra, con su porcentaje; en uva no aplica."
               - "Una factura no se borra; una vez cancelada, ya no cambia."
+        producer_cards:
+          show:
+            title: "Ficha del productor en la compra"
+            summary: "La tarjeta que acompaña a «Nueva compra» con los datos del productor elegido."
+            steps:
+              - "Revisa los QQ y el dinero que ha vendido esta temporada, y su última compra."
+              - "Revisa lo que falta facturarle o pagarle."
+              - "Si ves Préstamos, revisa lo que debe hoy y su score de pago antes de abonar con café."
         producers:
           index:
             title: "Productores"
@@ -3026,6 +3237,7 @@ es:
             steps:
               - "Arriba están las cuentas: pagado, lo que fue a préstamos, gastos, costo total y lo que falta por pagar."
               - "En «Empleados» crea los roles con su salario por día y agrega a los colaboradores que trabajan."
+              - "En «Préstamos» ves lo que debe hoy cada empleado, abres su estado de cuenta y registras un abono a cualquiera de sus préstamos (solo si tienes permiso en Préstamos)."
               - "Registra el trabajo: «Asistencia» (por día), «Latas» (corte de café) o «Nueva tarea» (por obra)."
               - "En «Períodos de pago», el período de hoy sale arriba con lo que lleva, su día de pago y sus botones. Toca «Pagar» cuando termine."
               - "Toca un estado (Sin pagar, Pagados, Próximos) para ver solo esos períodos; cada uno dice cuántos tiene."
@@ -3072,6 +3284,7 @@ es:
             tips:
               - "El salario propio manda sobre el del rol."
               - "Si ya trabajó, no se quita: se desactiva y deja de aparecer en la asistencia."
+              - "En planillas por día, la misma persona puede estar otra vez con otro rol (por ejemplo, chofer unos días y jornalero otros): agrégala de nuevo eligiendo el otro rol, o toca «Otro rol» en la lista de empleados. Con el mismo rol no se repite."
         timesheets:
           show:
             title: "Asistencia o latas"
@@ -3084,6 +3297,7 @@ es:
               - "Cuando el período llegue a su día de pago, «Pagar este período» se resalta. «Ver la planilla» (o la ruta de arriba) te regresa a la planilla."
             tips:
               - "En el celular, elige un día arriba para ver solo esa columna."
+              - "Si una persona está en dos roles, sale en dos filas (su rol bajo el nombre). Cada día se marca en una sola de ellas: si lo marcas en las dos, no se guarda y te dice en cuál ya estaba."
               - "Un período pagado ya no se puede cambiar."
               - "Para pagar, toca «Pagar este período»."
         tasks:
@@ -3108,11 +3322,12 @@ es:
             summary: "Lo que gana cada empleado en el período y, si debe préstamos, cuánto descontarle."
             steps:
               - "Revisa lo que gana cada empleado: días, latas o tareas, más sus horas y días extra si los tiene."
-              - "Si alguien debe, escribe cuánto descontarle de cada préstamo o toca «Saldar»."
+              - "Si alguien debe, escribe cuánto descontarle de cada préstamo o toca «Saldar». «Estado de cuenta» muestra todos sus préstamos y abonos antes de decidir."
               - "Revisa los totales: planilla, a préstamos y a entregar."
               - "Toca «Registrar pago» y luego imprime la planilla de pago para las firmas."
             tips:
               - "Lo descontado no puede pasar de lo que gana la persona."
+              - "Quien trabajó en varios roles sale en una sola tarjeta con lo de cada rol; sus préstamos se descuentan una vez, del total. En la planilla de pago sale una línea por rol."
               - "Cada descuento es un abono al préstamo: paga primero el interés y luego el capital."
               - "Al pagar, el período queda cerrado."
           show:
@@ -3480,6 +3695,8 @@ es:
         all_actions: "Todas"
         all_entities: "Todas"
         show_bot_blocks: "Mostrar bloqueos de bots"
+        chips:
+          record_id: "Registro %{id}"
         when: "Fecha y hora"
         record: "Registro"
         record_id: "ID del registro"
@@ -3527,6 +3744,9 @@ es:
         roles: "Roles"
         empty: "No hay personas que coincidan con los filtros."
       show:
+        tabs:
+          label: "Secciones de la persona"
+          data: "Datos"
         edit: "Editar"
         destroy: "Borrar"
         merge: "Fusionar con otra persona"
@@ -4201,6 +4421,7 @@ es:
               before_recorded: "no puede ser antes del %{date}: ese día ya hay trabajo o un pago registrado"
             kind:
               fixed_once_paid: "ya no se puede cambiar: la planilla tiene pagos"
+              repeated_people: "no se puede cambiar: una persona está en varios roles, y eso solo se permite en planillas por día"
             starts_on:
               after_recorded: "no puede ser después del %{date}: ese día ya hay trabajo o un pago registrado"
         payroll_member:
@@ -4212,12 +4433,15 @@ es:
               not_collaborator: "debe tener el rol de colaborador"
             person_id:
               taken: "ya está en esta planilla"
+              taken_with_role: "ya está en esta planilla con ese rol. Para otro trabajo, agrégala con otro rol"
             role:
               other_payroll: "es de otra planilla"
         payroll_attendance:
           not_paid_by_day: "Este empleado gana por latas, no por día."
           attributes:
             worked_on:
+              other_role: "ya lo trabajó como %{role}: un día va en un solo rol"
+              other_role_own_wage: "ya lo trabajó con su salario propio: un día va en un solo rol"
               outside_payroll: "está fuera de las fechas de la planilla"
               period_paid: "es de un período ya pagado"
         payroll_overtime:

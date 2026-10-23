@@ -269,6 +269,29 @@
     @apply block min-h-10 w-full rounded-xl border border-line bg-white px-3.5 py-2 text-sm text-ink shadow-[0_1px_1px_rgb(29_21_18/0.04)] transition placeholder:text-ink-muted/60 focus:border-primary focus:ring-4 focus:ring-primary/15 focus:outline-none disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-ink-muted;
   }
 
+  /* Initials in place of a photo in lists (with_avatar): drawn here, so
+     the list's text is only the name. */
+  .avatar-initials {
+    @apply grid shrink-0 place-items-center rounded-full bg-primary-soft font-bold text-primary;
+  }
+
+  .avatar-initials::before {
+    content: attr(data-initials);
+  }
+
+  /* Matches of a searchable picker (record_picker_controller.js), under its box. */
+  .picker-list {
+    @apply absolute inset-x-0 top-full z-30 mt-1 max-h-72 overflow-y-auto rounded-xl border border-line bg-surface py-1 shadow-lg;
+  }
+
+  .picker-option {
+    @apply cursor-pointer px-3.5 py-2 text-sm text-ink hover:bg-surface-2 aria-selected:bg-primary-soft aria-selected:text-ink;
+  }
+
+  .picker-note {
+    @apply px-3.5 py-2 text-sm text-ink-muted;
+  }
+
   .flash-notice,
   .flash-alert {
     @apply rounded-2xl border px-4 py-3 text-sm;
@@ -716,6 +739,7 @@
     scrollbar-width: thin;
     scrollbar-color: var(--color-line) transparent;
   }
+
 }
 
 /* Live pages (live_refresh_controller.js): a row that arrives glows in
@@ -825,6 +849,11 @@ tr.live-new > td {
 @media print {
   body {
     background: #fff !important;
+  }
+
+  /* Every tab's panel goes on paper (shared/_tabs), not only the one shown. */
+  [role="tabpanel"][hidden] {
+    display: block !important;
   }
 
   .btn,

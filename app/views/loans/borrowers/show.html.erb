@@ -1,6 +1,6 @@
 <% person = @account.person %>
 <% content_for :title, person.full_name %>
-<%# The card beside the loan form (borrower_card_controller.js loads it on
+<%# The card beside the loan form (record_card_controller.js loads it on
     each pick): who the person is, how they pay and, for a producer, the
     coffee they sell this season. Only what the system already keeps. %>
 <%= turbo_frame_tag "borrower-card" do %>

@@ -1,4 +1,6 @@
 <% content_for :title, t(".title") %>
+<%# Live list: back and forward ask the server again (the frame changed the page). %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
 <%# Updates itself while open when the data changes (LiveUpdates). %>
 <%= live_updates_from :trading %>
 <%= render "trading/nav" %>
@@ -13,13 +15,16 @@
   <% end %>
 </div>
 
-<%= render layout: "shared/filters", locals: { filter: @filter, url: trading_haulers_path } do |form| %>
+<%# Filters apply as they change and only the results reload (live_filter_controller.js). %>
+<div data-controller="live-filter">
+<%= render layout: "shared/filters", locals: { filter: @filter, url: trading_haulers_path, frame: "haulers-list", live: true } do |form| %>
   <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("trading.haulers.index.search_placeholder") %>
   <%= filter_select form, :status, t("trading.haulers.index.status"),
         HaulerFilter::STATUSES.map { [ t("trading.haulers.index.statuses.#{it}"), it ] }, selected: @filter.status %>
 <% end %>
 
 <%= list_frame "haulers-list" do %>
+<%= live_list_status @filter, status: HaulerFilter::STATUSES.map { [ t("trading.haulers.index.statuses.#{it}"), it ] } %>
 <% sorting = { filter: @filter, frame: "haulers-list" } %>
 <% if @haulers.any? %>
   <%# Narrow → cards; medium → key columns; wide → every column. %>
@@ -84,3 +89,4 @@
   <p class="empty-state mt-6"><%= t(".empty") %></p>
 <% end %>
 <% end %>
+</div>

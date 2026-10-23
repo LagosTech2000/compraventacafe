@@ -57,6 +57,19 @@ module FiltersHelper
     chips
   end
 
+  # Above a live list's results (shared/filter_status): how many there are
+  # and a chip per active filter, with its × and «Limpiar todo». A search
+  # box (q) is named by what was typed; any other field needs its label:
+  # a lambda that gets the value, or the same [[label, value], ...] choices
+  # as its list. #results must have run (ListFilter#total_count).
+  def live_list_status(filter, periods: [], **labels)
+    labels = labels.transform_values do |label|
+      label.is_a?(Array) ? ->(value) { label.find { |_, option| option.to_s == value.to_s }&.first } : label
+    end
+    chips = filter_chips(filter, q: ->(text) { t("shared.filters.chips.q", text:) }, **labels)
+    render "shared/filter_status", filter:, count: t("shared.filters.count", count: filter.total_count), chips:, periods:
+  end
+
   def date_range_label(from, to)
     if from && to then from == to ? t("shared.filters.on_day", date: l(from)) : t("shared.filters.between", from: l(from), to: l(to))
     elsif from then t("shared.filters.since", date: l(from))

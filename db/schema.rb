@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_16_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_17_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -253,7 +253,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_16_140000) do
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["payroll_id", "person_id"], name: "index_payroll_members_on_payroll_id_and_person_id", unique: true
+    t.index ["payroll_id", "person_id", "payroll_role_id"], name: "index_payroll_members_on_payroll_person_role", unique: true, nulls_not_distinct: true
     t.index ["payroll_id"], name: "index_payroll_members_on_payroll_id"
     t.index ["payroll_role_id"], name: "index_payroll_members_on_payroll_role_id"
     t.index ["person_id"], name: "index_payroll_members_on_person_id"

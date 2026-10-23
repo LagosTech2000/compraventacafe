@@ -2,6 +2,10 @@
   <% if policy([ :loans, :credit_account ]).show? %>
     <%= modal_link_to t("farms.payrolls.members.account"), loans_credit_account_path(member.person), class: "btn btn-sm" %>
   <% end %>
+  <%# Daily payrolls: the same person in another role (never the same day). %>
+  <% if payroll.daily? && member.active? && policy(PayrollMember.new(payroll:)).create? %>
+    <%= modal_link_to t("farms.payrolls.members.other_role"), new_farms_payroll_member_path(payroll, person_id: member.person_id), class: "btn btn-sm" %>
+  <% end %>
   <% if policy(member).update? %>
     <%= modal_link_to t("farms.payrolls.members.edit"), edit_farms_payroll_member_path(payroll, member), class: "btn btn-sm" %>
   <% end %>

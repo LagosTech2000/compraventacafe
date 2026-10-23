@@ -86,7 +86,7 @@
         <%= link_to t(".latest.all"), trading_producer_path(producer, tab: "purchases"), class: "text-sm link" %>
       </div>
       <%= render "trading/purchases/table", show_producer: false,
-            purchases: producer.purchases.active.includes(:invoice, :zone, producer: :person).newest_first.limit(5) %>
+            purchases: producer.purchases.active.includes(:invoice, :zone, :farm, :loan_payments, producer: :person).newest_first.limit(5) %>
     </section>
   </div>
 <% end %>

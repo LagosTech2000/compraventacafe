@@ -60,6 +60,10 @@ class Purchase < ApplicationRecord
   before_validation :apply_hauler_commission
 
   before_destroy :ensure_hauler_commission_not_paid_out
+  # A producer without a zone takes the zone of the purchase registered for
+  # them (Fernando, 2026-10-18). Same transaction, audited as the person's
+  # change. A zone the producer already has is never replaced.
+  after_create :give_zone_to_producer
 
   # Purchases of a day (or a range of days), in Tegucigalpa time.
   scope :on, ->(dates) { where(purchased_at: day_range(dates)) }
@@ -70,6 +74,9 @@ class Purchase < ApplicationRecord
   scope :in_season, ->(season) { where(season_year: season.year) }
   # Most recent purchase first; same moment, last registered first.
   scope :newest_first, -> { order(purchased_at: :desc, id: :desc) }
+
+  # The zone given to the producer when this purchase was saved, if any.
+  attr_reader :zone_given_to_producer
 
   # A date, or a range of dates with open ends, as a range of moments.
   def self.day_range(dates)
@@ -244,6 +251,17 @@ class Purchase < ApplicationRecord
 
     def assign_season
       self.season_year = Season.for(purchased_at.to_date).year if purchased_at
+    end
+
+    def give_zone_to_producer
+      person = producer&.person
+      return unless zone && person && person.zone_id.nil?
+
+      # Only the zone changes: details the person was saved without (older
+      # rules) do not stop the purchase.
+      person.zone = zone
+      person.save!(validate: false)
+      @zone_given_to_producer = zone
     end
 
     def farm_belongs_to_producer

@@ -52,6 +52,11 @@ group :development, :test do
 
   gem "rspec-rails", "~> 8.0"
   gem "factory_bot_rails"
+
+  # Finds queries repeated per row (N+1) and preloads nobody uses
+  # (Fernando, 2026-10-18: the app always fast). Warns in development; fails
+  # request specs in test (spec/support/bullet.rb).
+  gem "bullet"
 end
 
 group :test do

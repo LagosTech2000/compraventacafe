@@ -1,0 +1,102 @@
+<%# The members' loans: what each one owes today, their account and a
+    payment for each open loan, without leaving the payroll. %>
+<section class="mt-6" aria-labelledby="payroll-loans">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <h2 id="payroll-loans" class="text-lg font-semibold"><%= t("farms.payrolls.loans.title") %></h2>
+      <p class="text-sm text-ink-muted"><%= t("farms.payrolls.loans.help") %></p>
+    </div>
+    <%= help_guide_button HelpGuide.process(:payroll_loans), label: true %>
+  </div>
+
+  <dl class="mt-4 flex flex-wrap gap-3">
+    <div class="stat min-w-0 flex-1 basis-40">
+      <dt><%= t("farms.payrolls.loans.summary.total_owed") %></dt>
+      <dd><%= format_money(@loans_summary[:total_owed]) %></dd>
+    </div>
+    <div class="stat min-w-0 flex-1 basis-40">
+      <dt><%= t("farms.payrolls.loans.summary.owing") %></dt>
+      <dd><%= @loans_summary[:owing] %></dd>
+    </div>
+    <div class="stat min-w-0 flex-1 basis-40">
+      <dt><%= t("farms.payrolls.loans.summary.overdue") %></dt>
+      <dd><%= @loans_summary[:overdue] %></dd>
+    </div>
+  </dl>
+
+  <%# Filters apply as they change; only the list reloads (live_filter_controller.js). %>
+  <div class="mt-4" data-controller="live-filter">
+  <%= render layout: "shared/filters", locals: { filter: @filter, url: farms_payroll_path(payroll, tab: "loans"), frame: "payroll-loans-list", live: true } do |form| %>
+    <%= hidden_field_tag :tab, "loans", id: nil %>
+    <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("farms.payrolls.loans.search_placeholder") %>
+    <%= filter_select form, :standing, t("farms.payrolls.loans.standing"),
+          PayrollLoanFilter::STANDINGS.map { |standing| [ t("farms.payrolls.loans.standings.#{standing}"), standing ] }, selected: @filter.standing %>
+  <% end %>
+  <%= turbo_frame_tag "payroll-loans-list", class: "query-frame block", target: "_top", data: { turbo_action: "advance" } do %>
+  <% sorting = { filter: @filter, frame: "payroll-loans-list", extra_params: { tab: "loans" } } %>
+  <%= render "shared/filter_status", filter: @filter, count: t("farms.payrolls.members.count", count: @loan_rows_count),
+        chips: filter_chips(@filter, q: ->(text) { t("farms.payrolls.loans.chips.q", text:) },
+                                     standing: ->(standing) { t("farms.payrolls.loans.standings.#{standing}") }) %>
+  <div class="mt-4">
+    <% if @loan_rows.any? %>
+      <% can_pay = policy(LoanPayment).create? %>
+      <div class="@container">
+        <ul class="space-y-3 @3xl:hidden">
+          <% @loan_rows.each do |row| %>
+            <li class="data-card" id="<%= dom_id(row.member, :loans_card) %>">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="font-medium"><%= row.person.full_name %></p>
+                  <p class="mt-1"><%= payer_score_badge(row.account.score) %></p>
+                </div>
+                <%= modal_link_to t("farms.payrolls.members.account"), loans_credit_account_path(row.person), class: "btn btn-sm", data: { row_link: true } %>
+              </div>
+              <dl class="mt-3 grid grid-cols-3 gap-2 text-sm">
+                <div><dt class="text-xs text-ink-muted"><%= t("farms.payrolls.loans.open_loans") %></dt><dd class="tabular-nums"><%= row.account.open_loans.size %></dd></div>
+                <div><dt class="text-xs text-ink-muted"><%= t("farms.payrolls.loans.overdue_loans") %></dt><dd class="tabular-nums"><%= row.account.overdue_loans.size %></dd></div>
+                <div><dt class="text-xs text-ink-muted"><%= t("farms.payrolls.loans.total_owed") %></dt><dd class="font-semibold tabular-nums"><%= format_money(row.account.total_owed) %></dd></div>
+              </dl>
+              <%= render "farms/payrolls/open_loans", payroll:, row:, can_pay: %>
+            </li>
+          <% end %>
+        </ul>
+        <div class="hidden overflow-x-auto panel @3xl:block">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <%= sort_th PayrollMember.human_attribute_name(:person), :person, sorting %>
+                <%= sort_th t("farms.payrolls.loans.open_loans"), :open_loans, sorting %>
+                <%= sort_th t("farms.payrolls.loans.overdue_loans"), :overdue_loans, sorting, class: "text-right" %>
+                <%= sort_th t("farms.payrolls.loans.total_owed"), :total_owed, sorting, class: "text-right" %>
+                <%= sort_th t("loans.score.label"), :score, sorting %>
+                <th class="cell-actions"><span class="sr-only"><%= t("farms.payrolls.table.actions") %></span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @loan_rows.each do |row| %>
+                <tr id="<%= dom_id(row.member, :loans) %>">
+                  <td class="font-medium">
+                    <%= row.person.full_name %>
+                    <% unless row.member.active? %><span class="badge badge-neutral ml-1"><%= t("farms.status_badges.member.inactive") %></span><% end %>
+                  </td>
+                  <td><%= render "farms/payrolls/open_loans", payroll:, row:, can_pay: %></td>
+                  <td class="text-right tabular-nums"><%= row.account.overdue_loans.size %></td>
+                  <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(row.account.total_owed) %></td>
+                  <td><%= payer_score_badge(row.account.score) %></td>
+                  <td class="cell-actions">
+                    <%= modal_link_to t("farms.payrolls.members.account"), loans_credit_account_path(row.person), class: "btn btn-sm", data: { row_link: true } %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "loans" }, frame: "payroll-loans-list" %>
+    <% else %>
+      <p class="empty-state"><%= t("farms.payrolls.loans.empty") %></p>
+    <% end %>
+  </div>
+  <% end %>
+  </div>
+</section>

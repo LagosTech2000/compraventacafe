@@ -1,5 +1,6 @@
 <% content_for :title, @user.name %>
 <%= render "administration/nav" %>
+<%= render "shared/breadcrumbs", crumbs: [ [ t("administration.nav.users"), administration_users_path ], [ @user.name ] ] %>
 
 <div class="flex flex-wrap items-start justify-between gap-4">
   <div>

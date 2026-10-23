@@ -68,7 +68,7 @@ RSpec.describe "Trading purchase flow" do
     result = Nokogiri::HTML(response.body).at_css("turbo-frame#modal [data-controller='modal-result']")
     expect(result["data-modal-result-event-value"]).to eq("producer:created")
     expect(JSON.parse(result["data-modal-result-detail-value"])).to eq("id" => producer.id, "label" => "Pedro Martínez", "zone_id" => zone.id,
-                                                                       "farms" => [ [ producer.farms.sole.id, "El Cerro" ] ],
+                                                                       "farms" => [ [ producer.farms.sole.id, "El Cerro", [ "Extensión", "Dirección", "Ubicación en el mapa" ] ] ],
                                                                        "missing" => [ "DNI", "RTN", "Correo electrónico", "Dirección", "Clave IHCAFE" ])
     expect(result["data-modal-result-refresh-value"]).to eq("false")
     expect(flash[:notice]).to be_nil

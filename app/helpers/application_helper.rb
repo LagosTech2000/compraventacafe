@@ -19,6 +19,12 @@ module ApplicationHelper
   # opens a second one on top; inside a drawer it navigates the drawer itself
   # (its "Atrás" goes back), except a picker, which stacks to keep the form
   # below it. Takes a block for the link's content, like link_to.
+  # A work form that asks before its changes are lost (unsaved_changes_controller.js):
+  # its fields mark it changed and sending it clears it.
+  def unsaved_changes_actions
+    "input->unsaved-changes#changed change->unsaved-changes#changed submit->unsaved-changes#saving"
+  end
+
   def modal_link_to(*args, **options, &block)
     path = block ? args.first : args.second
     link_to(*args, **options.merge(data: { **options.fetch(:data, {}), turbo_frame: modal_frame_for(path) }), &block)
@@ -65,6 +71,24 @@ module ApplicationHelper
     else
       tag.span initials_for(record), class: "#{css} grid shrink-0 place-items-center rounded-full bg-primary-soft font-bold text-primary", aria: { hidden: true }
     end
+  end
+
+  # A name in a list with the person's photo or initials before it (Fernando,
+  # 2026-10-18: the same as in the details). The initials are drawn by CSS
+  # (.avatar-initials), so the cell's text is only the name.
+  def with_avatar(person, name = person.full_name)
+    picture = if (photo = person.photo_info)
+      image_tag profile_photo_path(photo, v: photo.version), alt: "", class: "size-7 shrink-0 rounded-full object-cover", loading: "lazy"
+    else
+      tag.span class: "avatar-initials size-7 text-[0.6rem]", data: { initials: initials_for(person) }, aria: { hidden: true }
+    end
+    tag.span(class: "flex min-w-0 items-center gap-2") { picture + tag.span(name, class: "min-w-0 truncate") }
+  end
+
+  # A panel of shared/_tabs: hidden unless it is the one shown first.
+  def tab_panel(group, key, selected: false, &)
+    tag.section(id: "#{group}-#{key}", role: "tabpanel", aria: { labelledby: "#{group}-tab-#{key}" },
+                hidden: !selected, class: "mt-4", data: { tabs_target: "panel" }, &)
   end
 
   # The left navigation is collapsed to its icons (SidebarState).

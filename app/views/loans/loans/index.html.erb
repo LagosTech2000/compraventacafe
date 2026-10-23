@@ -1,11 +1,15 @@
 <% content_for :title, t(".title") %>
+<%# Live list: back and forward ask the server again (the frame changed the page). %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
 <%# Updates itself while open when the data changes (LiveUpdates). %>
 <%= live_updates_from :loans %>
 <%= render "loans/nav" %>
 
 <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
 
-<%= render layout: "shared/filters", locals: { filter: @filter, url: loans_loans_path } do |form| %>
+<%# Filters apply as they change and only the results reload (live_filter_controller.js). %>
+<div data-controller="live-filter">
+<%= render layout: "shared/filters", locals: { filter: @filter, url: loans_loans_path, frame: "loans-list", live: true } do |form| %>
   <%= filter_date_field form, :from, t("shared.filters.from"), value: @filter.from %>
   <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
   <%= filter_text_field form, :q, Loan.human_attribute_name(:person), value: @filter.q, placeholder: t("loans.loans.index.search_placeholder") %>
@@ -14,6 +18,7 @@
 <% end %>
 
 <%= list_frame "loans-list" do %>
+<%= live_list_status @filter, status: enum_options(Loan, :status, Loan::STATUSES), kind: enum_options(Loan, :kind, Loan::KINDS) %>
 <div class="mt-6">
   <% if @loans.any? %>
     <%= render "table", loans: @loans, balances: @loans.to_h { |loan| [ loan, loan.balance ] }, sorting: { filter: @filter, frame: "loans-list" } %>
@@ -23,3 +28,4 @@
   <% end %>
 </div>
 <% end %>
+</div>

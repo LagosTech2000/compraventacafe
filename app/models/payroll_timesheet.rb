@@ -80,11 +80,17 @@ class PayrollTimesheet
     errors.add(:base, :closed) and return false if closed?
 
     ActiveRecord::Base.transaction do
-      members.each do |member|
-        dates.each do |date|
+      # Days removed first: a day moved from one role of a person to
+      # another (PayrollAttendance#day_free_in_other_roles) frees it before
+      # it is taken.
+      cells = members.flat_map do |member|
+        dates.filter_map do |date|
           raw = @submitted.dig(member.id.to_s, date.iso8601)
-          save_cell(member, date, raw) unless raw.nil?
+          [ member, date, raw ] unless raw.nil?
         end
+      end
+      cells.sort_by { |_, _, raw| parse(raw).to_d.zero? ? 0 : 1 }.each { |member, date, raw| save_cell(member, date, raw) }
+      members.each do |member|
         save_overtime(member) if member.paid_by_day? && @submitted_overtime.key?(member.id.to_s)
       end
       raise ActiveRecord::Rollback if errors.any?
@@ -137,7 +143,7 @@ class PayrollTimesheet
 
     def copy_errors(record, member, date)
       record.errors.full_messages.each do |message|
-        errors.add(:base, :cell, person: member.full_name, date: I18n.l(date, format: :short_day), detail: message)
+        errors.add(:base, :cell, person: member.label, date: I18n.l(date, format: :short_day), detail: message)
       end
     end
 

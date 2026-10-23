@@ -72,6 +72,7 @@ RSpec.describe "Printable documents" do
 
     get loans_credit_account_path(producer.person)
     expect_letterhead("Estado de cuenta")
+    expect(Nokogiri::HTML(response.body).at("main").text).not_to include("%>", "tabs:")
 
     get reports_report_path("purchases")
     expect_letterhead("Compras")

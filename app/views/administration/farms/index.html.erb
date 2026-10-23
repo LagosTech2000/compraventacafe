@@ -1,4 +1,6 @@
 <% content_for :title, t(".title") %>
+<%# Live list: back and forward ask the server again (the frame changed the page). %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
 <%= render "administration/nav" %>
 
 <div class="flex flex-wrap items-center justify-between gap-4">
@@ -9,13 +11,18 @@
 </div>
 <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
 
-<%= render layout: "shared/filters", locals: { filter: @filter, url: administration_farms_path } do |form| %>
+<%# Filters apply as they change and only the results reload (live_filter_controller.js). %>
+<div data-controller="live-filter">
+<%= render layout: "shared/filters", locals: { filter: @filter, url: administration_farms_path, frame: "admin-farms-list", live: true } do |form| %>
   <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: Farm.human_attribute_name(:name) %>
   <%= filter_select form, :status, t("farms.farms.index.status"),
         FarmFilter::STATUSES.map { |status| [ t("farms.statuses.#{status}"), status ] }, selected: @filter.status %>
+  <%= filter_select form, :owner, t("farms.owner"),
+        FarmFilter::OWNERS.map { |owner| [ t("farms.owners.#{owner}"), owner ] }, selected: @filter.owner, all: t("shared.filters.all_feminine") %>
 <% end %>
 
 <%= list_frame "admin-farms-list" do %>
+<%= live_list_status @filter, status: FarmFilter::STATUSES.map { |status| [ t("farms.statuses.#{status}"), status ] }, owner: FarmFilter::OWNERS.map { |owner| [ t("farms.owners.#{owner}"), owner ] } %>
 <% sorting = { filter: @filter, frame: "admin-farms-list" } %>
 <% if @farms.any? %>
   <div class="@container mt-6">
@@ -65,3 +72,4 @@
   <p class="empty-state mt-6"><%= t("farms.farms.index.empty") %></p>
 <% end %>
 <% end %>
+</div>

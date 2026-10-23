@@ -23,7 +23,7 @@ RSpec.describe "Loan term in days", type: :system do
     set_date("loan_disbursed_on", "2026-10-22")
     expect(page).to have_field("loan_due_on", with: "2026-11-21")
 
-    fill_in "person_search", with: person.picker_label
+    pick_record "person_search", person.picker_label
     fill_in "loan_cash_amount", with: "1000"
     fill_in "loan_monthly_interest_rate", with: "2"
     find("main form [type=submit]").click

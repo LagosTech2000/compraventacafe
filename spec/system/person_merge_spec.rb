@@ -15,7 +15,7 @@ RSpec.describe "Merging people", type: :system do
     visit administration_person_path(kept.person)
     click_link "Fusionar con otra persona"
     expect(page).to have_css("h1", text: "Fusionar personas")
-    fill_in "La otra persona", with: other.picker_label
+    pick_record "merge_other_search", other.picker_label
     click_button "Comparar"
 
     expect(page).to have_css(".data-card", text: /Queda.*Ana María Zelaya/im)
@@ -36,6 +36,7 @@ RSpec.describe "Merging people", type: :system do
     sign_in_as(admin)
     visit new_administration_person_merge_path(person)
     fill_in "La otra persona", with: "Nadie así"
+    expect(page).to have_text("No se encontró a nadie con ese nombre o número.")
     click_button "Comparar"
     expect(page).to have_current_path(new_administration_person_merge_path(person))
     expect(find_field("La otra persona").evaluate_script("this.validationMessage")).to eq("Selecciona una persona de la lista")

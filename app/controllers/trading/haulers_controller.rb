@@ -27,7 +27,9 @@ module Trading
 
       if @hauler.save
         close_modal_with notice: t(".success"), fallback: trading_hauler_path(@hauler),
-                         event: "hauler:created", detail: { id: @hauler.id, label: @hauler.full_name }
+                         event: "hauler:created",
+                         detail: { id: @hauler.id, label: @hauler.full_name, name: @hauler.full_name,
+                                   data: { percent: @hauler.commission_percent.to_s, canPrice: @hauler.can_price.to_s } }
       else
         render :new, status: :unprocessable_content
       end

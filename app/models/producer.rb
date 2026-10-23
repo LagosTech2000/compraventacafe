@@ -39,6 +39,13 @@ class Producer < ApplicationRecord
   end
 
   # How the purchase form's producer search lists this producer.
+  # What a searchable picker types (PickerSearchesController): the person's
+  # names, DNI or RTN (Person.picker_search), or the IHCAFE code.
+  def self.picker_search(text)
+    code = "%#{sanitize_sql_like(text.to_s.strip)}%"
+    where(person_id: Person.picker_search(text).select(:id)).or(where("producers.ihcafe_code ILIKE ?", code))
+  end
+
   def picker_label
     [ full_name, person.dni ].compact.join(" — ")
   end
@@ -48,9 +55,7 @@ class Producer < ApplicationRecord
   # The details of its record still empty, by name, for the purchase form to
   # point them out. Only says what is blank; none of them is required.
   def missing_fields
-    fields = %i[dni rtn phone email zone_id].select { |field| person.public_send(field).blank? }
-                                             .map { |field| Person.human_attribute_name(field) }
-    fields << I18n.t("addresses.title") if [ person.department_id, person.municipality_id, person.address_line ].any?(&:blank?)
+    fields = person.missing_fields
     fields << self.class.human_attribute_name(:ihcafe_code) if ihcafe_code.blank?
     fields
   end

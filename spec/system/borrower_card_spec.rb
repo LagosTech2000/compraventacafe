@@ -1,6 +1,6 @@
 require "rails_helper"
 
-# The loan form's card (borrower_card_controller.js): it follows the person
+# The loan form's card (record_card_controller.js): it follows the person
 # picked and goes back to the hint when the field is emptied.
 RSpec.describe "Borrower card on the loan form", type: :system do
   let(:user) { create(:user, :admin) }
@@ -18,10 +18,10 @@ RSpec.describe "Borrower card on the loan form", type: :system do
     left = ->(selector) { page.evaluate_script("document.querySelector('#{selector}').getBoundingClientRect().left") }
     expect(left.("main aside")).to be > left.("#person_search") + 500
 
-    fill_in "person_search", with: rosa.picker_label
+    pick_record "person_search", rosa.picker_label
     within("turbo-frame#borrower-card") { expect(page).to have_text("Rosa Díaz").and have_text("L 2,000.00") }
 
-    fill_in "person_search", with: luis.picker_label
+    pick_record "person_search", luis.picker_label
     within("turbo-frame#borrower-card") { expect(page).to have_text("Luis Mejía").and have_text("Sería su primer préstamo") }
 
     # Erased with the keyboard (fill_in with "" sends no input event).

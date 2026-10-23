@@ -22,6 +22,8 @@ Rails.application.routes.draw do
   resource :coffee_market, only: :show
   # The home page's pending work in detail, with the way to solve each.
   resource :pending_work, only: :show, controller: "pending_work"
+  # What a searchable picker finds as the user types (JSON, PickerSearch).
+  get "picker_search/:kind", to: "picker_searches#show", as: :picker_search, defaults: { format: :json }
 
   namespace :administration do
     root "home#index"
@@ -56,6 +58,8 @@ Rails.application.routes.draw do
       resources :payments, only: %i[ new create show destroy ], controller: "invoice_payments"
     end
     resources :producers, except: :destroy
+    # The card beside the purchase form: the producer picked, at a glance.
+    resources :producer_cards, only: :show
     # Carreros: their commissions and the payments of them, each with its receipt.
     resources :haulers, except: :destroy do
       resources :payments, only: %i[ new create show destroy ], controller: "hauler_payments"

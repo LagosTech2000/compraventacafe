@@ -1,4 +1,6 @@
 <% content_for :title, t(".title") %>
+<%# Live list: back and forward ask the server again (the frame changed the page). %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
 <%= render "trading/nav" %>
 
 <div class="flex flex-wrap items-center justify-between gap-4">
@@ -9,11 +11,14 @@
 </div>
 <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
 
-<%= render layout: "shared/filters", locals: { filter: @filter, url: trading_zones_path } do |form| %>
+<%# Filters apply as they change and only the results reload (live_filter_controller.js). %>
+<div data-controller="live-filter">
+<%= render layout: "shared/filters", locals: { filter: @filter, url: trading_zones_path, frame: "zones-list", live: true } do |form| %>
   <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: Zone.human_attribute_name(:name) %>
 <% end %>
 
 <%= list_frame "zones-list" do %>
+<%= live_list_status @filter %>
 <% sorting = { filter: @filter, frame: "zones-list" } %>
 <% if @zones.any? %>
   <div class="mt-6 overflow-x-auto panel">
@@ -43,3 +48,4 @@
   <p class="empty-state mt-6"><%= t(".empty") %></p>
 <% end %>
 <% end %>
+</div>

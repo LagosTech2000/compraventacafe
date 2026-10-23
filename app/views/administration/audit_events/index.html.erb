@@ -1,10 +1,14 @@
 <% content_for :title, t(".title") %>
+<%# Live list: back and forward ask the server again (the frame changed the page). %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
 <%= render "administration/nav" %>
 
 <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
 <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
 
-<%= render layout: "shared/filters", locals: { filter: @filter, url: administration_audit_events_path } do |form| %>
+<%# Filters apply as they change and only the results reload (live_filter_controller.js). %>
+<div data-controller="live-filter">
+<%= render layout: "shared/filters", locals: { filter: @filter, url: administration_audit_events_path, frame: "audit-events-list", live: true } do |form| %>
   <%= filter_date_field form, :from, t("shared.filters.from"), value: @filter.from %>
   <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
   <%= filter_select form, :user_id, t("administration.audit_events.index.user"), User.order(:name).pluck(Arel.sql("name || ' (' || email_address || ')'"), :id), selected: @filter.user_id %>
@@ -18,6 +22,7 @@
 <% end %>
 
 <%= list_frame "audit-events-list" do %>
+<%= live_list_status @filter, user_id: ->(id) { User.find_by(id:)&.name }, event_action: AuditEvent::ACTIONS.map { |a| [ AuditEvent.human_attribute_name("action/#{a}"), a ] }, auditable_type: ->(type) { AuditEvent::AUDITED_TYPES.include?(type) ? type.constantize.model_name.human(count: 2) : nil }, auditable_id: ->(id) { t("administration.audit_events.index.chips.record_id", id:) }, show_bot_blocks: ->(_) { t("administration.audit_events.index.show_bot_blocks") } %>
 <% sorting = { filter: @filter, frame: "audit-events-list" } %>
 <% if @events.any? %>
   <div class="mt-6 overflow-x-auto panel">
@@ -47,3 +52,4 @@
   <p class="empty-state mt-6"><%= t(".empty") %></p>
 <% end %>
 <% end %>
+</div>

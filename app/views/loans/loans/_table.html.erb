@@ -9,7 +9,7 @@
       <li class="data-card" id="<%= dom_id(loan, :card) %>">
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0">
-            <p class="font-medium"><%= loan.person.full_name %></p>
+            <p class="font-medium"><%= with_avatar(loan.person) %></p>
             <p class="text-xs text-ink-muted"><%= t("loans.loans.table.dates", from: l(loan.disbursed_on), to: l(loan.due_on)) %></p>
           </div>
           <%= detail_button loans_loan_path(loan) %>
@@ -43,7 +43,7 @@
         <% loans.each do |loan| %>
           <tr id="<%= dom_id(loan) %>">
             <td class="hidden tabular-nums text-ink-muted @5xl:table-cell"><%= loan.id %></td>
-            <td class="font-medium"><%= loan.person.full_name %></td>
+            <td class="font-medium"><%= with_avatar(loan.person) %></td>
             <td class="whitespace-nowrap"><%= l(loan.disbursed_on) %></td>
             <td class="whitespace-nowrap"><%= l(loan.due_on) %></td>
             <td class="hidden whitespace-nowrap text-right tabular-nums @5xl:table-cell"><%= format_rate(loan.monthly_interest_rate) %></td>

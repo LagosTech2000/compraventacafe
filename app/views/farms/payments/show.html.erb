@@ -43,7 +43,10 @@
       <tbody>
         <% @payment.lines.sort_by { |line| line.member.sort_key }.each do |line| %>
           <tr class="break-inside-avoid">
-            <td class="font-medium"><%= line.member.full_name %></td>
+            <td class="font-medium">
+              <%= line.member.full_name %>
+              <% if line.member.role %><span class="block text-xs font-normal text-ink-muted"><%= line.member.role.name %></span><% end %>
+            </td>
             <td class="whitespace-nowrap">
               <%= format_work(line.basis, line.quantity, line.rate) %>
               <% if (overtime = format_overtime(line)) %><span class="block text-xs"><%= overtime %></span><% end %>

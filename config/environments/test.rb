@@ -52,4 +52,18 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions.
   config.action_controller.raise_on_missing_callback_actions = true
+
+  # One Action Cable worker: screen specs share one database connection
+  # (with a lock), and two workers closing channels at once when a page is
+  # left (PresenceChannel#unsubscribed) could wait on each other forever.
+  config.action_cable.worker_pool_size = 1
+
+  # A query repeated per row (N+1) fails the spec that loads the page
+  # (Bullet, Fernando, 2026-10-18: the app always fast).
+  config.after_initialize do
+    Bullet.enable = true
+    Bullet.raise = true
+    Bullet.unused_eager_loading_enable = false
+    Bullet.counter_cache_enable = false
+  end
 end

@@ -1,4 +1,9 @@
 <% content_for :title, @payroll.name %>
+<%# Right after a loan payment from the "Préstamos" tab: its receipt opens in
+    the modal, ready to print. %>
+<% if params[:receipt_loan].to_s.match?(/\A\d+\z/) && params[:receipt].to_s.match?(/\A\d+\z/) %>
+  <% content_for :modal_src, loans_loan_payment_path(params[:receipt_loan], params[:receipt]) %>
+<% end %>
 <%= render "farms/nav" %>
 <%# Always its farm above it, wherever it was opened from. %>
 <%= render "shared/breadcrumbs", crumbs: farm_crumbs(@payroll.farm, [ @payroll.name ]) %>
@@ -81,6 +86,7 @@
 <% case @tab %>
 <% when "periods" %><%= render "farms/payrolls/tabs/periods", payroll: @payroll %>
 <% when "members" %><%= render "farms/payrolls/tabs/members", payroll: @payroll %>
+<% when "loans" %><%= render "farms/payrolls/tabs/loans", payroll: @payroll %>
 <% when "tasks" %><%= render "farms/payrolls/tabs/tasks", payroll: @payroll %>
 <% when "expenses" %><%= render "farms/payrolls/tabs/expenses", payroll: @payroll %>
   <% end %>

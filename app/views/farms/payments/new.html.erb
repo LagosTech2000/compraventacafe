@@ -9,10 +9,13 @@
     <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
     <p class="mt-1 text-sm text-ink-muted"><%= @payroll.name %> · <%= @payroll.farm.name %> · <%= format_period(period) %></p>
   </div>
+  <div class="flex flex-wrap gap-2">
+  <%= help_guide_button HelpGuide.process(:payroll_payment), label: true %>
   <% unless @payroll.task? %>
     <%# To check or fix the days before paying. %>
     <%= link_to t(".check_#{@payroll.kind}"), farms_payroll_timesheet_path(@payroll, period: period.to_param), class: "btn" %>
   <% end %>
+  </div>
 </div>
 <% unless period.due? %>
   <p class="mt-4 flash-alert" role="status"><%= t(".not_ended", date: l(period.ends_on, format: :long)) %></p>
@@ -25,31 +28,49 @@
       a column on the right that stays in view while scrolling the list. %>
   <%= form_with model: issuer, url: farms_payroll_payments_path(@payroll, period: period.to_param), scope: :payroll_payment_issuer,
         class: form_surface_class("@container mt-6 max-w-none"),
-        data: { controller: "form-validation payroll-payment",
+        data: { controller: "form-validation payroll-payment unsaved-changes", action: unsaved_changes_actions,
+                unsaved_changes_message_value: t("shared.unsaved_changes.leave"),
                 payroll_payment_over_message_value: t(".over_pay") } do |form| %>
     <%= render "shared/form_errors", record: issuer %>
 
     <div class="grid items-start gap-6 @5xl:grid-cols-[minmax(0,1fr)_20rem]">
     <section aria-labelledby="pay-lines" class="min-w-0 space-y-3">
       <h2 id="pay-lines" class="text-lg font-semibold"><%= t(".lines") %></h2>
-      <% issuer.lines.each do |line| %>
-        <% loans = issuer.open_loans(line.member) %>
-        <div class="data-card space-y-3" data-payroll-payment-target="line" data-gross="<%= line.gross_amount %>">
+      <%# One card per person: a person working in several roles (daily
+          payrolls) has one row per role, and their loans are taken once
+          from what all of them add up to. %>
+      <% issuer.person_lines.each do |group| %>
+        <% member = group.first.member %>
+        <% loans = issuer.open_loans(member) %>
+        <div class="data-card space-y-3" data-payroll-payment-target="line" data-gross="<%= group.sum(&:gross_amount) %>">
           <div class="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p class="font-medium"><%= line.member.full_name %></p>
-              <p class="text-sm text-ink-muted"><%= format_work(line.basis, line.quantity, line.rate) %></p>
-              <% if (overtime = format_overtime(line)) %><p class="text-sm text-ink-muted"><%= overtime %></p><% end %>
+            <div class="min-w-0 space-y-1">
+              <p class="font-medium"><%= member.full_name %></p>
+              <% group.each do |line| %>
+                <p class="text-sm text-ink-muted">
+                  <% if group.size > 1 %>
+                    <span class="font-medium text-ink"><%= line.member.role&.name || t("farms.members.own_wage") %>:</span>
+                  <% end %>
+                  <%= format_work(line.basis, line.quantity, line.rate) %>
+                  <% if group.size > 1 %>· <span class="tabular-nums"><%= format_money(line.gross_amount) %></span><% end %>
+                </p>
+                <% if (overtime = format_overtime(line)) %><p class="text-sm text-ink-muted"><%= overtime %></p><% end %>
+              <% end %>
             </div>
             <dl class="grid grid-cols-3 gap-4 text-right text-sm">
-              <div><dt class="text-xs text-ink-muted"><%= t(".gross") %></dt><dd class="font-semibold tabular-nums"><%= format_money(line.gross_amount) %></dd></div>
+              <div><dt class="text-xs text-ink-muted"><%= t(".gross") %></dt><dd class="font-semibold tabular-nums"><%= format_money(group.sum(&:gross_amount)) %></dd></div>
               <div><dt class="text-xs text-ink-muted"><%= t(".loans") %></dt><dd class="tabular-nums" data-payroll-payment-target="lineLoans">—</dd></div>
               <div><dt class="text-xs text-ink-muted"><%= t(".net") %></dt><dd class="font-bold tabular-nums text-primary" data-payroll-payment-target="lineNet">—</dd></div>
             </dl>
           </div>
           <% if loans.any? %>
             <div class="space-y-2 border-t border-line pt-3">
-              <p class="text-sm font-medium"><%= t(".open_loans") %></p>
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <p class="text-sm font-medium"><%= t(".open_loans") %></p>
+                <% if policy([ :loans, :credit_account ]).show? %>
+                  <%= modal_link_to t("farms.payrolls.members.account"), loans_credit_account_path(member.person), class: "btn btn-sm" %>
+                <% end %>
+              </div>
               <% loans.each do |loan| %>
                 <% owed = issuer.balance(loan).total_owed %>
                 <div class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,12rem)] sm:items-end">
@@ -77,7 +98,7 @@
       <div>
         <%= form.label :paid_on, t(".paid_on"), class: "field-label" %>
         <%= form.date_field :paid_on, value: issuer.paid_on, required: true, class: "field-input" %>
-        <% if issuer.lines.any? { |line| issuer.open_loans(line.member).any? } %>
+        <% if issuer.person_lines.any? { |group| issuer.open_loans(group.first.member).any? } %>
           <p class="mt-1 text-xs text-ink-muted"><%= t(".paid_on_help") %></p>
         <% end %>
       </div>
@@ -103,6 +124,10 @@
         <%= form.label :observations, class: "field-label" %>
         <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
       </div>
+
+      <% if issuer.person_lines.any? { |group| issuer.open_loans(group.first.member).any? } %>
+        <%= help_guide_button HelpGuide.process(:payroll_loans), label: true %>
+      <% end %>
 
       <div class="flex flex-wrap gap-3">
         <%= form.submit t(".submit"), class: "btn btn-primary", data: { turbo_confirm: t(".confirm") } %>

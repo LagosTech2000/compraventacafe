@@ -61,6 +61,7 @@
     <% if policy(SavedReport).create? %>
       <%= modal_link_to t("reports.show.save"), new_reports_saved_report_path(report_key: report.key, filters: report.filter.to_params.except("page")),
             class: "btn btn-primary" %>
+      <%= help_guide_button HelpGuide.process(:saved_reports), label: true %>
     <% end %>
     <%= link_to t("reports.show.export"), report_path_for(report.class, report.filter.to_params.except("page").merge(format: :csv)),
           class: "btn", data: { turbo: false } %>

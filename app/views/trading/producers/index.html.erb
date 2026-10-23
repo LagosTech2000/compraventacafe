@@ -1,4 +1,6 @@
 <% content_for :title, t(".title") %>
+<%# Live list: back and forward ask the server again (the frame changed the page). %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
 <%# Updates itself while open when the data changes (LiveUpdates). %>
 <%= live_updates_from :trading %>
 <%= render "trading/nav" %>
@@ -10,13 +12,16 @@
   <% end %>
 </div>
 
-<%= render layout: "shared/filters", locals: { filter: @filter, url: trading_producers_path } do |form| %>
+<%# Filters apply as they change and only the results reload (live_filter_controller.js). %>
+<div data-controller="live-filter">
+<%= render layout: "shared/filters", locals: { filter: @filter, url: trading_producers_path, frame: "producers-list", live: true } do |form| %>
   <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("trading.producers.index.search_placeholder") %>
   <%= filter_select form, :kind, Producer.human_attribute_name(:kind), enum_options(Producer, :kind, Producer::KINDS), selected: @filter.kind %>
   <%= filter_select form, :zone_id, Producer.human_attribute_name(:zone), Zone.ordered.pluck(:name, :id), selected: @filter.zone_id, all: t("shared.filters.all_zones") %>
 <% end %>
 
 <%= list_frame "producers-list" do %>
+<%= live_list_status @filter, kind: enum_options(Producer, :kind, Producer::KINDS), zone_id: Zone.ordered.pluck(:name, :id) %>
 <% sorting = { filter: @filter, frame: "producers-list" } %>
 <% if @producers.any? %>
   <%# Narrow → cards; medium → key columns; wide → every column. %>
@@ -26,7 +31,7 @@
         <li class="data-card" id="<%= dom_id(producer, :card) %>">
           <div class="flex items-start justify-between gap-3">
             <div class="min-w-0">
-              <p class="font-medium"><%= producer.full_name %></p>
+              <p class="font-medium"><%= with_avatar(producer.person) %></p>
               <p class="text-xs text-ink-muted"><%= [ producer.human_kind, producer.zone&.name, producer.ihcafe_code ].compact.join(" · ") %></p>
             </div>
             <%= detail_button trading_producer_path(producer) %>
@@ -57,7 +62,7 @@
         <tbody>
           <% @producers.each do |producer| %>
             <tr id="<%= dom_id(producer) %>">
-              <td class="font-medium"><%= producer.full_name %></td>
+              <td class="font-medium"><%= with_avatar(producer.person) %></td>
               <td><%= producer.human_kind %></td>
               <td><%= producer.zone&.name %></td>
               <td class="hidden whitespace-nowrap font-mono text-sm @5xl:table-cell"><%= producer.ihcafe_code %></td>
@@ -77,3 +82,4 @@
   <p class="empty-state mt-6"><%= t(".empty") %></p>
 <% end %>
 <% end %>
+</div>

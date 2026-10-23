@@ -84,11 +84,11 @@ RSpec.describe "Purchase form preview", type: :system do
     expect(farm_options.call).to eq([ "Sin finca asignada" ])
     expect(page).to have_text("Elige primero el productor")
 
-    fill_in "producer_search", with: ana.picker_label
+    pick_record "producer_search", ana.picker_label
     expect(page).to have_select("purchase_farm_id", options: [ "Sin finca asignada", "El Mirador", "Santa Rosa" ])
     select "Santa Rosa", from: "purchase_farm_id"
 
-    fill_in "producer_search", with: bruno.picker_label
+    pick_record "producer_search", bruno.picker_label
     expect(page).to have_select("purchase_farm_id", options: [ "Sin finca asignada", "Las Brisas" ], selected: "Sin finca asignada")
     expect(page).to have_link("Nueva finca", href: /producer_id=#{bruno.id}/)
   end
@@ -117,15 +117,15 @@ RSpec.describe "Purchase form preview", type: :system do
     partial = create(:producer, person: create(:person, first_names: "Bruno", last_names: "Aguilar", phone: "99990000"))
     visit new_trading_purchase_path
 
-    fill_in "producer_search", with: complete.picker_label
-    expect(page).to have_no_css("[data-producer-gaps-target='notice']", visible: true)
+    pick_record "producer_search", complete.picker_label
+    expect(page).to have_no_css("[data-record-gaps-target='notice']", visible: true)
 
-    fill_in "producer_search", with: partial.picker_label
+    pick_record "producer_search", partial.picker_label
     expect(page).to have_css("[role=status]",
                              text: "A este productor le faltan datos por ingresar: DNI, RTN, Correo electrónico, Zona, Dirección, Clave IHCAFE.")
     fill_in "purchase_gross_weight", with: "330"
 
-    within("[data-producer-gaps-target='notice']") { click_link "Completar datos" }
+    within("[data-record-gaps-target='notice']") { click_link "Completar datos" }
     within("dialog[open]") do
       fill_in "producer_ihcafe_code", with: "CD-34-56789"
       select "El Rosario", from: "producer_person_attributes_zone_id"
@@ -143,9 +143,9 @@ RSpec.describe "Purchase form preview", type: :system do
     create(:farm, producer:, name: "La Loma")
     visit new_trading_purchase_path
 
-    fill_in "producer_search", with: producer.picker_label
+    pick_record "producer_search", producer.picker_label
     select "La Loma", from: "purchase_farm_id"
-    within("[data-producer-gaps-target='notice']") { click_link "Completar datos" }
+    within("[data-record-gaps-target='notice']") { click_link "Completar datos" }
     within("dialog[open]") do
       click_button "Agregar finca"
       fill_in "farm_adder_name", with: "El Cerro"

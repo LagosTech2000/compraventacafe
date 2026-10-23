@@ -1,0 +1,9 @@
+<%# Under a person picker (record_gaps_controller.js, person_gaps_data): the
+    person's empty details and «Completar datos», for whoever may edit
+    people. Only a notice: none of them is required. %>
+<div class="flash-notice mt-3 flex flex-wrap items-center justify-between gap-2" role="status" hidden data-record-gaps-target="notice">
+  <p data-record-gaps-target="text"></p>
+  <% if policy(Person).update? %>
+    <%= modal_link_to t("shared.person_gaps.complete"), "#", class: "btn btn-sm", data: { record_gaps_target: "link" } %>
+  <% end %>
+</div>

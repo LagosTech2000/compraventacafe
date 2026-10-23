@@ -1,5 +1,6 @@
 <% content_for :title, t(".title", name: @producer.full_name) %>
 <%= render "administration/nav" %>
+<%= render "shared/breadcrumbs", crumbs: person_crumbs(@producer.person, [ t("administration.producers.edit.title", name: @producer.full_name) ]) %>
 
 <h1 class="mb-6 text-2xl font-bold"><%= t(".title", name: @producer.full_name) %></h1>
 <%= render "trading/producers/form", producer: @producer, namespace: :administration %>

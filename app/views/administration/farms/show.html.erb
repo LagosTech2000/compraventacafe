@@ -1,5 +1,6 @@
 <% content_for :title, @farm.name %>
 <%= render "administration/nav" %>
+<%= render "shared/breadcrumbs", crumbs: [ [ t("administration.nav.farms"), administration_farms_path ], [ @farm.display_name ] ] %>
 <%# The farm's record, what names it, and its page in Fincas for who sees it. %>
 <% purchases = @farm.purchases.count %>
 <% payrolls = @farm.payrolls.count %>

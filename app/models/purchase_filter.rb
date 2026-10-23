@@ -31,6 +31,6 @@ class PurchaseFilter < ListFilter
     scope = scope.where(coffee_state:) if coffee_state
     scope = invoiced == "yes" ? scope.where.not(invoice_id: nil) : scope.uninvoiced if invoiced
     scope = scope.active unless show_voided
-    scope.includes(:invoice, :zone, producer: :person).newest_first
+    scope.includes(:invoice, :zone, :farm, :loan_payments, producer: :person).newest_first
   end
 end

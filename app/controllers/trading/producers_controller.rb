@@ -42,9 +42,7 @@ module Trading
 
       if @producer.save
         close_modal_with notice: t(".success"), fallback: trading_producer_path(@producer),
-                         event: "producer:created",
-                         detail: { id: @producer.id, label: @producer.picker_label, zone_id: @producer.zone_id,
-                                   farms: picker_farms, missing: @producer.missing_fields }
+                         event: "producer:created", detail: picker_detail
       else
         render :new, status: :unprocessable_content
       end
@@ -58,18 +56,19 @@ module Trading
       # producer's new name, zone, farms and empty details.
       if @producer.update(producer_params)
         close_modal_with notice: t(".success"), fallback: trading_producer_path(@producer),
-                         event: "producer:updated",
-                         detail: { id: @producer.id, label: @producer.picker_label, zone_id: @producer.zone_id,
-                                   farms: picker_farms, missing: @producer.missing_fields }
+                         event: "producer:updated", detail: picker_detail
       else
         render :edit, status: :unprocessable_content
       end
     end
 
     private
-      # The farms a purchase can name, as the purchase form lists them.
-      def picker_farms
-        @producer.farms.reload.select(&:active?).map { |farm| [ farm.id, farm.name ] }
+      # What the purchase form learns of the producer saved in the modal: its
+      # label, zone, the farms a purchase can name and the empty details
+      # (PickerSearch.data, as the producer search brings them).
+      def picker_detail
+        @producer.farms.reload
+        PickerSearch.data(@producer)
       end
 
       def set_producer

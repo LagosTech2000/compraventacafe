@@ -21,6 +21,6 @@ class LoanFilter < ListFilter
     scope = scope.where(person_id: Person.search(q).select(:id)) if q
     scope = scope.with_status(status) if status
     scope = scope.of_kind(kind) if kind
-    scope.includes(:person, :payments, :supply_items).newest_first
+    scope.includes(:payments, :supply_items, person: :photo_info).newest_first
   end
 end

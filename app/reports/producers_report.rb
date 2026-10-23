@@ -124,7 +124,7 @@ class ProducersReport < Report
 
   private
     def preload(relation)
-      relation.includes(:zone, :person)
+      relation.includes(:zone, person: :zone)
               .select("producers.*", "stats.purchases_count", "stats.net_weight", "stats.total",
                       "pending.amount AS pending_amount", "#{LAST_DATE} AS last_purchase_on")
     end

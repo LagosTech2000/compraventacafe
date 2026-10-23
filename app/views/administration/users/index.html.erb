@@ -1,4 +1,6 @@
 <% content_for :title, t(".title") %>
+<%# Live list: back and forward ask the server again (the frame changed the page). %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
 <%= render "administration/nav" %>
 
 <div class="flex flex-wrap items-center justify-between gap-4">
@@ -6,7 +8,9 @@
   <%= modal_link_to t(".new"), new_administration_user_path, class: "btn btn-primary" %>
 </div>
 
-<%= render layout: "shared/filters", locals: { filter: @filter, url: administration_users_path } do |form| %>
+<%# Filters apply as they change and only the results reload (live_filter_controller.js). %>
+<div data-controller="live-filter">
+<%= render layout: "shared/filters", locals: { filter: @filter, url: administration_users_path, frame: "users-list", live: true } do |form| %>
   <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("administration.users.index.search_placeholder") %>
   <%= filter_select form, :role, t("administration.users.index.role"),
         %w[admin regular].map { |r| [ t("administration.user_role.#{r}"), r ] }, selected: @filter.role %>
@@ -15,6 +19,7 @@
 <% end %>
 
 <%= list_frame "users-list" do %>
+<%= live_list_status @filter, role: %w[admin regular].map { |r| [ t("administration.user_role.#{r}"), r ] }, status: %w[active inactive].map { |s| [ t("administration.user_status.#{s}"), s ] } %>
 <% sorting = { filter: @filter, frame: "users-list" } %>
 <% if @users.any? %>
   <div class="mt-6 overflow-x-auto panel">
@@ -50,3 +55,4 @@
   <p class="empty-state mt-6"><%= t(".empty") %></p>
 <% end %>
 <% end %>
+</div>

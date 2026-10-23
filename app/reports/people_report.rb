@@ -55,7 +55,8 @@ class PeopleReport < Report
 
   # Names of each person's roles, for the roles column.
   def self.roles_of(person)
-    ROLES.select { |role| person.public_send(:"#{role}_role") }.map { |role| I18n.t("reports.types.people.roles.#{role}") }.join(" · ")
+    # The selected columns (#preload), not Person#<role>_role, which would load each role.
+    ROLES.select { |role| person.has_attribute?(:"#{role}_role") ? person[:"#{role}_role"] : person.public_send(:"#{role}_role") }.map { |role| I18n.t("reports.types.people.roles.#{role}") }.join(" · ")
   end
 
   def scope = Person.all

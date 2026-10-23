@@ -3,6 +3,9 @@
 
 <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
 <p class="mt-1 text-sm text-ink-muted"><%= t(".loan", number: @loan.id, person: @loan.person.full_name) %></p>
+<% if @payroll %>
+  <p class="mt-1 text-sm text-ink-muted"><%= t(".from_payroll", payroll: @payroll.name) %></p>
+<% end %>
 
 <dl class="mt-4 grid grid-cols-3 gap-3">
   <% { principal_owed: @balance.principal_owed, interest_owed: @balance.interest_owed, total_owed: @balance.total_owed }.each do |key, value| %>
@@ -16,6 +19,7 @@
 
 <%= form_with model: @payment, url: loans_loan_payments_path(@loan), class: form_surface_class("space-y-6"), data: { controller: "form-validation" } do |form| %>
   <%= render "shared/form_errors", record: @payment %>
+  <%= hidden_field_tag :payroll_id, @payroll.id, id: nil if @payroll %>
 
   <div class="grid gap-5 sm:grid-cols-3">
     <div>

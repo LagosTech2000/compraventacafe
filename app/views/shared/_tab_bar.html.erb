@@ -1,0 +1,17 @@
+<%# The bar of shared/_tabs, for a page that writes its own
+    <div data-controller="tabs"> around the bar and its panels (tab_panel).
+    tabs: { key => label } or { key => [label, count] }; the first is shown.
+    Nothing with one tab only. %>
+<% if tabs.size > 1 %>
+  <nav class="subnav mt-6 rounded-2xl print:hidden" role="tablist" aria-label="<%= label %>">
+    <% tabs.each_with_index do |(key, (title, count)), index| %>
+      <button type="button" role="tab" id="<%= id %>-tab-<%= key %>" aria-controls="<%= id %>-<%= key %>"
+              aria-selected="<%= index.zero? %>" tabindex="<%= index.zero? ? 0 : -1 %>"
+              class="nav-pill <%= "nav-pill-active" if index.zero? %>"
+              data-tabs-target="tab" data-action="tabs#select keydown->tabs#key">
+        <%= title %>
+        <% if count %><span class="badge badge-neutral ml-1"><%= count %></span><% end %>
+      </button>
+    <% end %>
+  </nav>
+<% end %>

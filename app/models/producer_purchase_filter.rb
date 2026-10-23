@@ -10,6 +10,6 @@ class ProducerPurchaseFilter < ListFilter
     scope = scope.where(season_year:) if season_year
     scope = invoiced == "yes" ? scope.where.not(invoice_id: nil) : scope.uninvoiced if invoiced
     scope = scope.active unless show_voided
-    scope.includes(:invoice, :zone, producer: :person).newest_first
+    scope.includes(:invoice, :zone, :farm, :loan_payments, producer: :person).newest_first
   end
 end

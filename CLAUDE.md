@@ -50,7 +50,7 @@ El doc técnico etiqueta cada afirmación: `[CONFIRMADO]` (decidido por el dueñ
 | CSS | Tailwind (`tailwindcss-rails`, binario standalone, sin Node) |
 | Autorización | Pundit |
 | Autenticación | Generador nativo de Rails 8. **No Devise.** |
-| Tests | RSpec (`rspec-rails`), `factory_bot_rails`, `pundit-matchers`; system specs con Capybara + Cuprite (Chrome sin ventana) |
+| Tests | RSpec (`rspec-rails`), `factory_bot_rails`, `pundit-matchers`; system specs con Capybara + Cuprite (Chrome sin ventana); `bullet` (consultas por fila) |
 | Tareas en segundo plano | Sin Solid Queue/Cache/Cable. Las actualizaciones en vivo usan Action Cable con el adaptador `async` (en el mismo proceso: una instancia, un proceso de Puma) |
 | Gráficos | Chart.js 4.4.7, build UMD oficial en `vendor/javascript/chart.umd.min.js` (importmap, sin Node) |
 | Hosting | Render, plan de pago |
@@ -118,7 +118,11 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Período del reporte (hoy, este mes, temporada…) | `ReportPeriod` |
 | Cifras del reporte / agrupar por | `Report.kpi` / `Report.group` |
 | Plazo del préstamo (días) | `Loan#term_days` (no se guarda: sale de las fechas) |
-| Datos que le faltan al productor | `Producer#missing_fields` |
+| Datos que le faltan al productor / a la persona / a la finca | `Producer#missing_fields` / `Person#missing_fields` / `Farm#missing_fields` |
+| Buscador al escribir (productor, persona, colaborador) | `PickerSearch` (`picker_searches#show`, `record_picker_controller.js`) |
+| Ficha del productor en «Nueva compra» | `trading/producer_cards#show` |
+| Etapas del préstamo (entregado, con abonos, pagado) | `LoanLifecycle` (`LifecycleSteps`, `shared/_lifecycle`) |
+| Versión de los datos (caché de reportes) | `DataVersion` |
 | Límite de solicitudes (auditoría) | acción `rate_limited` (`RateLimitAudit`) |
 | Mi configuración (datos, foto, contraseña, ventana o panel lateral, menú arriba o a la izquierda, huellas) | `UserSettingsController`; `User#window_style` (`modal` / `drawer`), `User#nav_position` (`top` / `left`) |
 | Usuarios conectados / páginas recientes de un usuario | `Presence` + `PresenceChannel` / `PageVisit` |
@@ -435,7 +439,12 @@ los errores).
   `steps` y `tips` opcionales. **Pantalla nueva = su guía**: un spec falla si
   una ruta GET no la tiene. Procesos que cruzan pantallas van en
   `help_guides.processes` y se ponen con
-  `help_guide_button HelpGuide.process(:nombre), label: true`. Las guías solo
+  `help_guide_button HelpGuide.process(:nombre), label: true` donde ocurre
+  el proceso (Fernando, 2026-10-18: en todos los módulos): etapas de la
+  compra, abonos a factura, carreros, pago con café, interés y score del
+  préstamo, pagar un período, corte por lata, varios roles y préstamos en
+  planilla, fusionar personas y filtros guardados
+  (`spec/requests/process_guides_spec.rb`). Las guías solo
   describen lo que el sistema ya hace; nunca reglas de negocio abiertas.
 - **Ancho de página**: el contenido llega a `max-w-[96rem]` para
   aprovechar monitores anchos; `form_surface_class` limita los formularios
@@ -466,7 +475,15 @@ los errores).
   ordenar). Cada caso lleva un system spec que comprueba que el `<body>` no
   se reemplazó. Aplica a Reportería y a las listas de Compras y Facturas;
   es la regla para pantallas nuevas.
-- **Listas con filtros en vivo** (Compras y Facturas, Fernando, 2026-10-12):
+- **Listas con filtros en vivo** (Compras y Facturas, Fernando, 2026-10-12;
+  **todas las listas con filtros**, Fernando, 2026-10-18: personas,
+  usuarios, zonas, fincas, auditoría, productores, carreros, préstamos,
+  estados de cuenta, insumos, categorías de gastos, planillas). Las listas
+  sencillas ponen arriba de sus resultados `live_list_status(@filter,
+  campo: opciones o lambda)`: cuántos hay (`ListFilter#total_count`, que
+  cuenta lo filtrado tras `#results`) y una etiqueta por filtro activo (la
+  búsqueda `q` sale como «Búsqueda: «…»»). `spec/system/live_lists_spec.rb`
+  las recorre.
   `shared/filters` con `live: true` y `frame:`, dentro de un elemento con
   `live_filter_controller.js`. Sin botón «Filtrar»: listas, fechas y
   casillas aplican al cambiar; la búsqueda, 350 ms después de dejar de
@@ -482,6 +499,45 @@ los errores).
   (`shared/pagination` con `frame:`, que pide solo el frame) y las
   etiquetas apuntan al frame con
   `data-turbo-frame`. Sin eso, un enlace a otra página da «Content missing».
+- **Buscador al escribir** (Fernando, 2026-10-18: «que al escribir más de 3
+  caracteres se muestre un dropdown con los resultados»): un campo que
+  elige de una lista que crece (productor de la compra o dueño de la
+  finca; persona del préstamo o de la fusión; colaborador de la planilla)
+  **no carga la lista con el formulario**. `record_picker_controller.js`
+  (con `shared/_record_picker_search` y `record_picker_data(:tipo,
+  selected:, missing_message:)`) pide `picker_search/:kind?q=` (JSON,
+  `PickerSearch`: 20 por vez, con «hay más») desde 3 caracteres, 250 ms
+  después de dejar de escribir, y muestra los resultados debajo: clic, o
+  flechas y Enter. Escribir o pegar la etiqueta completa la elige sola.
+  Busca cada palabra en nombres y apellidos sin mayúsculas ni acentos, y
+  números en DNI y RTN (`Person.picker_search`); productores también por
+  clave IHCAFE. Cada resultado trae lo que el formulario usa
+  (`PickerSearch.data`: zona, fincas, datos faltantes). Quién busca:
+  `PickerSearchPolicy` (quien puede abrir un formulario que elige ese
+  tipo). En los specs, `pick_record(campo, etiqueta)` espera a que quede
+  elegido. Listas cortas (zonas, carreros, insumos) siguen siendo
+  desplegables.
+- **Ruta de navegación en todos los módulos** (Fernando, 2026-10-18, como
+  en Fincas): `shared/_breadcrumbs` con `ModuleBreadcrumbsHelper` en los
+  detalles a página completa: compra y factura van por su productor
+  (Productores › productor › …), el préstamo por su estado de cuenta, cada
+  recibo por lo que pagó, el carrero, la persona, el usuario y la finca de
+  Administración. En el modal no sale (tiene «Atrás»).
+  `spec/requests/breadcrumbs_spec.rb`.
+- **Pestañas en los detalles** (`shared/_tabs` o `shared/_tab_bar` +
+  `tab_panel`, `tabs_controller.js`, cambian sin pedir al servidor):
+  estado de cuenta (préstamos / historial), carrero (compras / pagos) y
+  persona (datos / productor / carrero). En papel salen todas.
+- **Cambios sin guardar** (Fernando, 2026-10-18, como en la asistencia):
+  Nueva compra, Nuevo préstamo, Facturar compras, Pagar período y la tarea
+  llevan `unsaved-changes` (`unsaved_changes_actions`): con cambios, salir
+  de la página **o cerrar la ventana** (×, fondo, Escape, «Atrás»;
+  `modal_controller.js#mayLeave`, por `data-dirty`) pregunta antes.
+  Refrescar la misma página (al guardar algo en el modal) no pregunta.
+- **Fotos en las listas** de personas (personas, productores, préstamos,
+  estados de cuenta, empleados de planilla): `with_avatar(person)`; las
+  iniciales las dibuja el CSS (`.avatar-initials`), así el texto de la
+  celda sigue siendo el nombre. Precarga `photo_info`.
 - **Filtros**: los campos se acomodan por ancho (`auto-fill`, mínimo
   12rem) y el botón «Filtrar» va en la misma fila cuando cabe.
 - **Listas desplegables**: nunca con la primera opción en blanco. Campo
@@ -599,7 +655,11 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
   **Sin precarga al pasar el puntero** (Fernando, 2026-10-15: salía mucho
   el 429): `<meta name="turbo-prefetch" content="false">` en el layout,
   porque Turbo 8 pedía cada enlace sobre el que se detenía el puntero, y
-  toda la oficina comparte el límite. Las páginas se piden al hacer clic.
+  toda la oficina comparte el límite. **Carga al presionar** (Fernando,
+  2026-10-18: que siempre se sienta rápida): `instant_click.js` enciende
+  esa precarga solo para el enlace sobre el que **se presiona** el botón
+  del mouse; el clic usa esa misma petición (una por clic, como antes) y
+  se ganan los ~100–200 ms entre presionar y soltar.
 - **Cloudflare va delante** de `comreydavid.com` (Fernando, 2026-10-16):
   sin más, `remote_ip` era el servidor de Cloudflare, compartido entre
   usuarios y bots, y el bloqueo de un bot que buscaba `/.env` dejaba a
@@ -617,9 +677,26 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 - Cada límite superado queda en la auditoría **una vez por IP, regla y
   período** (acción `rate_limited`, `RateLimitAudit`), no por solicitud.
 - **Caché**: `:memory_store` acotado en producción y en test (lo usan los
-  contadores de `rate_limit` y la cotización de `CoffeeMarket`; nada más
-  se cachea). Los specs lo limpian
-  antes de cada ejemplo.
+  contadores de `rate_limit`, la cotización de `CoffeeMarket` y las cifras,
+  gráficos y conteos de Reportería). Los specs lo limpian antes de cada
+  ejemplo.
+- **Caché de reportes** (Fernando, 2026-10-18): `Report#cached` guarda
+  cifras, gráficos y conteo con una clave de reporte, filtros (sin el
+  orden ni la página), día, módulos que el usuario ve y `DataVersion`, que
+  **todo modelo `Auditable` cambia al confirmar su transacción**: un
+  cambio nunca queda tapado por una copia vieja. 30 min como tope. La
+  tabla (filas) no se cachea. `spec/reports/report_cache_spec.rb`.
+- **Consultas por fila** (N+1): la gema `bullet` avisa en desarrollo y
+  **hace fallar** el spec que carga la página en test;
+  `spec/requests/query_growth_spec.rb` comprueba que las listas y el
+  Inicio no hacen una consulta más por fila. `Payroll#periods_to_pay`
+  mira primero qué días tienen trabajo anotado y solo calcula esos
+  períodos; `CreditAccount` usa los préstamos precargados.
+- **Respuestas comprimidas** (gzip, `Rack::Deflater` en
+  `config/application.rb`): páginas, turbo streams, JSON y CSV; imágenes
+  y el zip del respaldo van tal cual. **YJIT** lo enciende Rails solo
+  (`config.yjit`) si el Ruby lo trae; el log de arranque dice si quedó
+  activo (`config/initializers/yjit.rb`): **verificar en Render**.
 - **Tiempo máximo por consulta** en producción: `statement_timeout` 15 s
   (`DB_STATEMENT_TIMEOUT` lo cambia; `bin/render-build.sh` lo pone en 0
   para migraciones y cargas).
@@ -955,7 +1032,8 @@ textos; la clave y el código siguen siendo `trading`.
   vendió primero, con su dinero en facturas canceladas, sin cancelar y sin
   facturar, desplegable con sus compras; también en el impreso. En
   Reportería, el sugerido «Compras de hoy por productor».
-- **Ciclo de vida guiado** (`TradingLifecycle`): compra registrada →
+- **Ciclo de vida guiado** (`TradingLifecycle`, `shared/_lifecycle`; el
+  préstamo tiene el suyo, `LoanLifecycle`): compra registrada →
   facturada → cancelada (pagada), como el flujo que describe el cliente. El
   parcial `trading/_lifecycle` muestra los pasos y el botón del siguiente paso
   en el detalle de compra, el de factura y al facturar. El Resumen del módulo
@@ -986,6 +1064,22 @@ textos; la clave y el código siguen siendo `trading`.
   borra ni cambia de carrero o de peso si eso deja al carrero debiendo lo
   ya pagado; un carrero desactivado no se elige en compras nuevas. Al
   fusionar dos carreros, compras y pagos pasan al que queda.
+- **Nueva compra, alrededor del productor** (Fernando, 2026-10-18):
+  - **Datos que le faltan a la finca** elegida (extensión, dirección,
+    ubicación: `Farm#missing_fields`), con «Completar datos de la finca»
+    en un modal sin perder la compra (`farm_gaps_controller.js`,
+    `farm:updated`). El botón sale a quien puede editar la finca (Fincas o
+    Administración → Fincas); los demás solo ven el aviso.
+  - **Un productor sin zona toma la zona de la compra** al registrarla
+    (`Purchase#give_zone_to_producer`, en la misma transacción y auditado
+    como cambio de la persona); nunca se reemplaza una zona que ya tiene,
+    ni al editar una compra. El aviso lo dice («… no tenía zona: quedó en
+    …»).
+  - «**Nuevo carrero**» junto al campo del carrero (`hauler:created`, que
+    trae su porcentaje y precio de la lata).
+  - **La ficha del productor** al lado (`trading/producer_cards#show`,
+    `record_card_controller.js`): café de la temporada, lo pendiente y, si
+    ve Préstamos, lo que debe.
 - **Datos que le faltan al productor** (Fernando, 2026-10-12): en «Nueva
   compra», al elegir productor sale un aviso con lo que tiene vacío (DNI,
   RTN, teléfono, correo, zona, dirección, clave IHCAFE:
@@ -1049,6 +1143,15 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
     (`PurchaseLoanSettlementPolicy`). Sin permiso de préstamos, la compra no
     muestra deudas.
 
+- **Etapas del préstamo** (Fernando, 2026-10-18, como las de la compra):
+  préstamo entregado → con abonos → pagado (`LoanLifecycle`, de sus
+  abonos y `paid_off_on`), con lo que debe hoy, «Registrar abono» y, si
+  pasó la fecha límite, el aviso de vencido. Vencido no es una etapa.
+- **Datos que le faltan a la persona** (`Person#missing_fields`, Fernando,
+  2026-10-18): Nuevo préstamo y el empleado de planilla avisan, bajo el
+  buscador, lo que la persona tiene vacío, con «Completar datos» en un
+  modal (`shared/_person_gaps`, `record_gaps_controller.js`,
+  `person:updated`); la ficha del préstamo se recarga. Solo avisa.
 - **Plazo en días** (Fernando, 2026-10-12): el formulario tiene «Plazo
   (días)» entre la fecha del préstamo y la fecha límite. Escribir los días
   llena la fecha límite y elegir la fecha muestra los días
@@ -1058,7 +1161,7 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
 - **Ficha de la persona en «Nuevo préstamo»** (Fernando, 2026-10-15): el
   formulario usa todo el ancho y a la derecha (abajo en angosto) lleva la
   tarjeta de la persona elegida (`loans/borrowers#show`, frame
-  `borrower-card`, `borrower_card_controller.js` la recarga en cada
+  `borrower-card`, `record_card_controller.js` la recarga en cada
   `record-picker:picked`): contacto, roles y zona; lo que debe hoy, score,
   préstamos por cobrar y vencidos (`CreditAccount`); y, si es productor y
   el usuario ve Compra de café, el café de la temporada y lo pendiente
@@ -1103,6 +1206,23 @@ Reglas decididas por Fernando el 2026-10-10 [CONFIRMADO]:
     pasa a ganar por día, ni al revés. Cada línea de pago guarda cómo se
     ganó (`PayrollPaymentLine#basis`).
 - Empleados = personas con rol **Colaborador** (`PayrollMember`).
+- **Una persona en varios roles** (Fernando, 2026-10-17: «trabajó como
+  chofer por 3 días y luego como jornalero por 2 días»): **solo en
+  planillas por día**, la misma persona puede estar varias veces, **una por
+  rol** (índice único `payroll_id, person_id, payroll_role_id` con
+  `NULLS NOT DISTINCT`: un salario propio sin rol cuenta como un rol más).
+  En corte y por obra cada persona va una vez, y una planilla con alguien
+  repetido no deja de ser por día. **Un día va en un solo rol**
+  (`PayrollAttendance#day_free_in_other_roles`; la asistencia borra antes
+  de marcar, así un día se pasa de un rol a otro en un solo guardado).
+  «Otro rol» en Empleados abre el formulario con la persona elegida.
+  Al pagar, **una tarjeta por persona** con lo de cada rol y sus préstamos
+  descontados **una vez, sin pasar de su total**
+  (`PayrollPaymentIssuer#person_lines`); la planilla de pago trae **una
+  línea por rol** con su firma. Decisión de implementación: el descuento se
+  reparte entre sus líneas en orden (ninguna queda bajo cero) y los abonos
+  apuntan a su primera línea. La pestaña «Préstamos» la muestra una vez.
+  Guía `help_guides.processes.payroll_several_roles`.
 - **Períodos** (`PayPeriod`): semanal (cierra el sábado), quincenal (1–15 y
   16–fin de mes) o mensual (fin de mes). El primero empieza en la fecha de
   inicio y el último termina en la de fin. **Un período nunca termina el
@@ -1125,6 +1245,17 @@ Reglas decididas por Fernando el 2026-10-10 [CONFIRMADO]:
   que gana (abono normal con forma "Descuento de planilla"; requiere crear
   en `loans`). Un período pagado queda cerrado (asistencia, latas y tareas).
   Solo se quita el pago del último período, con sus abonos.
+- **Préstamos de los empleados** (Fernando, 2026-10-17): la planilla tiene
+  la pestaña «Préstamos» (solo para quien ve Préstamos,
+  `Loans::CreditAccountPolicy`): cada empleado con lo que debe hoy, sus
+  préstamos por cobrar y vencidos, su score y «Estado de cuenta» en el
+  modal (`PayrollLoanFilter`, filas calculadas con `CreditAccount`).
+  «Abonar» junto a cada préstamo abre el abono normal (efectivo,
+  transferencia o cheque; pide crear en `loans`) con `payroll_id`: al
+  guardar vuelve a la pestaña con el recibo abierto. «Pagar período»
+  enlaza el estado de cuenta de quien debe. Guía de proceso
+  `help_guides.processes.payroll_loans`. No cambia ninguna regla del
+  descuento de planilla.
 - **Sin séptimo día, décimo, IHSS ni otras deducciones o bonos** por ahora
   (las horas y días extra sí, ver abajo).
 - **Gastos** por planilla con fecha, categoría (catálogo `ExpenseCategory`,
@@ -1134,6 +1265,9 @@ Reglas decididas por Fernando el 2026-10-10 [CONFIRMADO]:
   tarjeta por planilla activa o por iniciar (período de hoy, día de pago,
   lo que lleva, empleados y «Asistencia/Latas de hoy»), la que se paga
   primero arriba.
+- **Fincas propias** (Fernando, 2026-10-18): las listas de fincas (Fincas
+  y Administración) filtran por dueño: todas, las del negocio («Fincas
+  propias») o las de productores (`FarmFilter#owner`).
 - **Extensión de la finca** (Fernando, 2026-10-14): opcional, en
   manzanas, hectáreas o metros cuadrados, la que el usuario prefiera; se
   guarda como se escribió (`area_value`, `area_unit`) y las otras se

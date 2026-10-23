@@ -13,6 +13,13 @@ class Person < ApplicationRecord
   include Auditable
 
   ROLES = %i[client collaborator producer hauler].freeze
+  # picker_search: the names without case or Spanish accents, and with
+  # digits, the DNI and RTN too. Fixed SQL: the values go as parameters.
+  NAMES_MATCH = "translate(lower(people.first_names), 'áéíóúüñ', 'aeiouun') LIKE :name OR " \
+                "translate(lower(people.last_names), 'áéíóúüñ', 'aeiouun') LIKE :name".freeze
+  NAMES_OR_NUMBERS_MATCH = "#{NAMES_MATCH} OR people.dni LIKE :digits OR people.rtn LIKE :digits".freeze
+
+  def self.fold(text) = text.to_s.downcase.tr("áéíóúüñ", "aeiouun")
 
   belongs_to :zone, optional: true
   has_one :client, dependent: :destroy, autosave: true
@@ -40,6 +47,17 @@ class Person < ApplicationRecord
     pattern = "%#{sanitize_sql_like(term.strip)}%"
     where("first_names ILIKE :p OR last_names ILIKE :p OR dni ILIKE :p OR rtn ILIKE :p", p: pattern)
   }
+  # What a searchable picker types (PickerSearchesController): every word
+  # must be in the names (ignoring case and accents), or, with digits, in
+  # the DNI or RTN. "Ana Zelaya — 0801…" (a picker label) finds Ana.
+  scope :picker_search, ->(text) {
+    words = text.to_s.tr("—", " ").split.first(6)
+    words.reduce(all) do |scope, word|
+      digits = word.delete("^0-9")
+      clause = digits.length >= 3 && digits == word.delete("-") ? NAMES_OR_NUMBERS_MATCH : NAMES_MATCH
+      scope.where(clause, name: "%#{sanitize_sql_like(fold(word))}%", digits: "%#{digits}%")
+    end
+  }
   scope :clients, -> { joins(:client) }
   scope :collaborators, -> { joins(:collaborator) }
   scope :producers, -> { joins(:producer) }
@@ -50,6 +68,15 @@ class Person < ApplicationRecord
   end
 
   alias_method :audit_label, :full_name
+
+  # What is still empty, for the notices of the forms that pick the person
+  # (a loan, a payroll; Fernando, 2026-10-18, like Producer#missing_fields).
+  # Only a notice: none of them is required.
+  def missing_fields
+    fields = %i[dni rtn phone email zone_id].select { |field| public_send(field).blank? }.map { |field| self.class.human_attribute_name(field) }
+    fields << I18n.t("addresses.title") if [ department_id, municipality_id, address_line ].any?(&:blank?)
+    fields
+  end
 
   # Shown in searchable pickers: the DNI tells apart people with the same name.
   def picker_label
