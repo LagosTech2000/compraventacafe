@@ -41,6 +41,7 @@ class PeopleReport < Report
 
   column(:person, :text, sort: "people.last_names", &:full_name)
   column(:roles, :text, priority: 3) { |person| PeopleReport.roles_of(person) }
+  column(:net_weight, :pounds, sort: "sales.net_weight", priority: 3) { |person| person.sales_net_weight&.to_d }
   column(:quintals, :quintals, sort: "sales.net_weight", priority: 2) { |person| person.sales_net_weight.to_d / QUINTAL if person.sales_net_weight }
   column(:sales_total, :money, sort: "sales.total") { |person| person.sales_total }
   column(:earned, :money, sort: "earned.amount", priority: 2) { |person| person.earned_amount }

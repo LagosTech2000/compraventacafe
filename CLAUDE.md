@@ -130,6 +130,10 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Foto de perfil (persona o usuario) | `ProfilePhoto` (`HasPhoto`) |
 | Ubicación en el mapa | `latitude` / `longitude` (`HasAddress#located?`) |
 | Huella digital (passkey) / entrar con huella | `WebauthnCredential` / `PasskeySessionsController` |
+| Documentos privados (pagaré / contrato privado de préstamo) | `PrivateDocument` (`key`: `promissory_note` / `loan_contract`) |
+| Variable de un documento / impresión de un documento | `PrivateDocumentVariables` (`<span data-variable="person.full_name">`) / `PrivateDocumentPrint` |
+| Estado civil / nacionalidad | `Person#civil_status` / `Person#nationality` |
+| Número en letras | `NumberWords` (palabras en `es.yml`, `number_words`) |
 
 ## Modelo de permisos
 
@@ -177,8 +181,11 @@ relación entre ambas.
 
 Campos de `Person` [CONFIRMADO]: `first_names` (Nombres), `last_names`
 (Apellidos), `dni`, `rtn`, `phone`, `email`, `zone` (Zona), dirección
-(`HasAddress`, con ubicación opcional en el mapa) y foto de perfil
-opcional (`HasPhoto`, 2026-10-13). Solo los nombres y apellidos son obligatorios. El resto se
+(`HasAddress`, con ubicación opcional en el mapa), foto de perfil
+opcional (`HasPhoto`, 2026-10-13) y estado civil y nacionalidad
+opcionales (`civil_status`, `nationality`, texto con el formato de los
+nombres; Fernando, 2026-10-22: los pide el contrato de préstamo; se eligen
+dato por dato al fusionar personas). Solo los nombres y apellidos son obligatorios. El resto se
 agrega con migraciones cuando cada módulo lo pida.
 
 **Zona de la persona** (Fernando, 2026-10-12: «que aparezca la zona de
@@ -637,7 +644,7 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 
 | Clave | Estado |
 | --- | --- |
-| `administration` | Usuarios y permisos, auditoría y configuración del sitio (solo administradores); respaldo de datos (solo el usuario con id 1); personas, clientes y colaboradores, con su ficha de productor; fincas y zonas (permisos del módulo); fusionar personas (solo administradores) |
+| `administration` | Usuarios y permisos, auditoría, configuración del sitio y documentos privados (solo administradores); respaldo de datos (solo el usuario con id 1); personas, clientes y colaboradores, con su ficha de productor; fincas y zonas (permisos del módulo); fusionar personas (solo administradores) |
 | `trading` | Demo: zonas, productores (con pestañas y QQ por temporada), carreros con su comisión y pagos con recibo, compras con cálculo por estado del café y anulación, facturas imprimibles (original y copia) con estado de pago, cierre diario |
 | `farms` | Fincas, planillas por día, por obra y de corte por lata, con roles y salarios, asistencia o latas por día, pagos por período (semanal, quincenal, mensual) con descuento a préstamos, planilla de pago imprimible y gastos por planilla |
 | `loans` | Préstamos en efectivo, insumos o mixtos a cualquier persona con interés simple, catálogo de insumos, abonos (también con café desde una compra o descontados en planilla) con recibo imprimible, estados de cuenta con historial crediticio y score de pago |
@@ -899,6 +906,50 @@ nada se estima ni se inventa.
 
 Cada módulo tiene su namespace de controladores. Implementar una funcionalidad
 es llenar su carpeta, no crearla.
+
+### Documentos privados (Administración, Fernando, 2026-10-22)
+
+- **Dos documentos fijos**: el pagaré y el contrato privado de préstamo
+  (`PrivateDocument::KEYS`). No se agregan ni se borran: `PrivateDocument.
+  ensure_all!` crea las dos filas vacías si faltan (en GET, sin auditoría).
+  Ver y editar: **solo administradores** (`PrivateDocumentPolicy`).
+- **El texto es del cliente y nunca va al repositorio** (es público): vive
+  en la base. Las plantillas convertidas de sus Word, con sus variables,
+  están en `docs/2026-10-22/documentos_privados/` (local) y se cargan con
+  `bin/rails "private_documents:load[promissory_note|loan_contract,archivo.html]"`.
+  Para producción: copiar el HTML en la vista «Código fuente» del editor.
+- **Editor**: Jodit 4.17.1 (MIT), build «fat» vendorizado
+  (`vendor/javascript/jodit.js`, pin sin precarga; su CSS en
+  `vendor/stylesheets/jodit.css`, que no entra en `:app`), cargado solo
+  en el formulario (`document_editor_controller.js`): negrita, alineación,
+  tamaños, listas, tablas, pegar desde Word y vista HTML (área de texto,
+  nada de otros sitios). Sin imágenes, archivos ni enlaces.
+- **Variables**: `<span data-variable="grupo.nombre">` (`PrivateDocumentVariables`:
+  persona, préstamo, fecha de impresión, negocio), puestas desde el panel
+  derecho; en el editor son una sola pieza. Al guardar, `PrivateDocumentHtml`
+  limpia el HTML (solo formato; variables desconocidas se quitan). Montos y
+  tasas en letras con `NumberWords`. Un dato vacío se imprime como línea en
+  blanco.
+- **Imprimir, por préstamo** (Fernando, 2026-10-23; pide crear en
+  `loans`, `PrivateDocumentPrintPolicy`): cada préstamo (fila o tarjeta
+  del estado de cuenta y su detalle) lleva «Pagaré» y «Contrato»
+  (`loans/loans/_print_buttons`; la tabla con `document_prints:`,
+  `LoanDocumentPrints`). Abren la **vista previa** (`document_prints#new`,
+  página completa, nada se guarda): el documento lleno con la persona y
+  ese préstamo, el aviso de lo que saldrá en blanco y «Completar datos de
+  la persona» (su formulario en el modal, si puede editar personas; al
+  guardar la página se vuelve a llenar) o «del negocio» (admins).
+  «Imprimir» guarda la impresión tal como salió (`PrivateDocumentPrint#body`,
+  fuera de la auditoría) y la abre con la ventana de impresión
+  (`print_controller.js`, `auto`). No hay impresión sin préstamo ni
+  botones globales en el estado de cuenta.
+- **Contador por préstamo y documento** junto a cada botón, para todos los
+  que ven el préstamo; al pasar el puntero, **solo administradores** ven
+  las últimas `PrivateDocumentPrint::HISTORY_SIZE` (fecha y usuario; abren
+  el impreso), en una tarjeta fija en pantalla (`print_count_controller.js`)
+  que la tabla no corta. Papel carta, con el membrete.
+- El estado de cuenta de un productor lleva «Ver productor» (su página en
+  Compra de café), para quien ve ese módulo.
 
 ### Compra de café (`trading`)
 
@@ -1423,6 +1474,7 @@ sistema ya guarda**; no agregan reglas de negocio.
 | Reporte exacto que piden el contador y el SAR | Reportería | Cliente |
 | `pg_dump` en Render (versión ≥ 18) | Que el respaldo incluya `base.dump` en producción | Fernando + Render |
 | Numeración inicial de facturas (el Excel va por ~2,800) | Hoy empieza en 0001 | Cliente |
+| Documentos privados: «Pagaré No.», representante del negocio, lugar de pago, finca, forma de entrega, precio y calidad del café y garantía | Se quedan como línea en blanco para llenar a mano | Cliente |
 | Logo y colores (dijeron que tienen) | Pulido visual | Cliente |
 | Servicio de correo | Recuperación de contraseña por correo | Fernando |
 | Transferencia del workspace de Render al cliente | Pasar a Render de pago (etapa 3) | Fernando + Render |

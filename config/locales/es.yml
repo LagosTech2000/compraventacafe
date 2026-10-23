@@ -1,5 +1,72 @@
 # Único lugar donde vive el español de la aplicación.
 es:
+  # Números en letras (NumberWords): montos y tasas de los documentos privados.
+  number_words:
+    units: ["cero", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez", "once", "doce", "trece", "catorce", "quince", "dieciséis", "diecisiete", "dieciocho", "diecinueve", "veinte", "veintiuno", "veintidós", "veintitrés", "veinticuatro", "veinticinco", "veintiséis", "veintisiete", "veintiocho", "veintinueve"]
+    apocope:
+      one: "un"
+      twenty_one: "veintiún"
+    tens: [null, null, null, "treinta", "cuarenta", "cincuenta", "sesenta", "setenta", "ochenta", "noventa"]
+    hundreds: [null, "ciento", "doscientos", "trescientos", "cuatrocientos", "quinientos", "seiscientos", "setecientos", "ochocientos", "novecientos"]
+    one_hundred: "cien"
+    thousand: "mil"
+    one_million: "un millón"
+    millions: "millones"
+    and: "y"
+    point: "punto"
+    amount_exact: "%{words} lempiras exactos"
+    amount_with_cents: "%{words} lempiras con %{cents}/100"
+  # Documentos privados: el pagaré y el contrato de préstamo (PrivateDocument).
+  private_documents:
+    names:
+      promissory_note: "Pagaré"
+      loan_contract: "Contrato privado de préstamo"
+    descriptions:
+      promissory_note: "El deudor reconoce la deuda y se obliga a pagarla a la orden del negocio."
+      loan_contract: "Contrato de préstamo de dinero para mantenimiento de fincas cafetaleras, con pago en café."
+    variable_groups:
+      person: "Deudor (la persona)"
+      loan: "Préstamo elegido al imprimir"
+      today: "Fecha de impresión"
+      business: "Negocio"
+    variables:
+      person:
+        full_name: "Nombre completo"
+        dni: "DNI"
+        rtn: "RTN"
+        address: "Domicilio"
+        civil_status: "Estado civil"
+        nationality: "Nacionalidad"
+        phone: "Teléfono"
+        zone: "Zona"
+      loan:
+        number: "Número del préstamo"
+        amount: "Monto (capital)"
+        amount_in_words: "Monto en letras"
+        cash_amount: "Efectivo"
+        supplies_amount: "Valor de los insumos"
+        interest_rate: "Tasa mensual (%)"
+        interest_rate_in_words: "Tasa mensual en letras"
+        kind: "Tipo de préstamo"
+        disbursed_on: "Fecha del préstamo"
+        due_on: "Fecha límite"
+        due_on_long: "Fecha límite en letras"
+        due_day: "Día de la fecha límite"
+        due_month: "Mes de la fecha límite"
+        due_year: "Año de la fecha límite"
+        term: "Plazo"
+      today:
+        date: "Fecha en letras"
+        day: "Día"
+        month: "Mes"
+        year: "Año"
+      business:
+        name: "Nombre del negocio"
+        location: "Ubicación del negocio"
+        rtn: "RTN del negocio"
+    term_days:
+      one: "1 día"
+      other: "%{count} días"
   negocio:
     nombre: "Compra de Café el Rey David"
     ubicacion: "Mata de Plátano, Moroceli"
@@ -60,6 +127,8 @@ es:
     detail: "Detalle"
     cancel: "Cancelar"
     person_fields:
+      civil_status_placeholder: "Por ejemplo: casado, soltera, unión libre"
+      nationality_placeholder: "Por ejemplo: hondureña"
       new_zone: "Nueva zona"
     person_roles:
       legend: "Roles"
@@ -921,6 +990,22 @@ es:
         actions: "Acciones"
 
   loans:
+    document_prints:
+      new:
+        title: "%{name} · préstamo %{number}"
+        help: "Así sale el documento de %{name}, con los datos de este préstamo. Revísalo y toca «Imprimir»."
+        back: "Volver al préstamo"
+        print: "Imprimir"
+        missing: "Saldrá como línea en blanco, para llenarlo a mano: %{fields}."
+        complete_person: "Completar datos de la persona"
+        complete_business: "Completar datos del negocio"
+      show:
+        title: "%{name} · %{person}"
+        printed: "Impreso el %{at} por %{name}"
+        loan: "Préstamo %{number}"
+        no_loan: "Sin préstamo"
+        print_again: "Imprimir de nuevo"
+        back: "Volver al préstamo"
     lifecycle:
       label: "Etapas del préstamo"
       next_badge: "Siguiente"
@@ -958,6 +1043,19 @@ es:
         overdue_help: "Pasaron su fecha límite y todavía deben. Los más atrasados primero."
         no_overdue: "No hay préstamos vencidos."
     loans:
+      print_buttons:
+        promissory_note: "Pagaré"
+        loan_contract: "Contrato"
+        label: "Imprimir %{document} del préstamo %{number}"
+        blank: "El documento todavía no tiene texto: un administrador lo escribe en Administración → Documentos privados."
+        count:
+          zero: "No se ha impreso"
+          one: "Impreso 1 vez"
+          other: "Impreso %{count} veces"
+        latest: "Últimas impresiones: %{name}"
+        more:
+          one: "Y 1 más"
+          other: "Y %{count} más"
       table:
         number: "N.º"
         dates: "Del %{from} al %{to}"
@@ -1147,6 +1245,7 @@ es:
         actions: "Acciones"
         empty: "No hay personas que coincidan con los filtros."
       show:
+        producer: "Ver productor"
         title: "Estado de cuenta de %{name}"
         print_title: "Estado de cuenta"
         new_loan: "Nuevo préstamo"
@@ -1973,6 +2072,7 @@ es:
           net_weight: "Neto (lb)"
           producers: "Productores"
         kpis:
+          net_weight: "Libras netas"
           count: "Compras"
           quintals: "Quintales (QQ)"
           total: "Total comprado"
@@ -2012,6 +2112,7 @@ es:
         description: "Las facturas entregadas a productores: total, lo abonado a préstamos con café, lo que se les ha pagado, el saldo y cuánto se tardó en cancelarlas."
         no_single_method: "Sin pagar o varias formas"
         columns:
+          net_weight: "Neto (lb)"
           number: "Factura"
           issued_on: "Fecha"
           producer: "Productor"
@@ -2061,6 +2162,7 @@ es:
         description: "Cada productor con lo que vendió en el período, cuándo vendió por última vez y lo que falta pagarle. Sirve para ver quién vende más y quién dejó de vender."
         never: "Nunca ha vendido"
         columns:
+          net_weight: "Neto (lb)"
           producer: "Productor"
           kind: "Tipo"
           zone: "Zona"
@@ -2074,6 +2176,7 @@ es:
           producers: "Productores"
           selling: "Vendieron"
         kpis:
+          net_weight: "Libras netas"
           selling: "Productores que vendieron"
           quintals: "Quintales (QQ)"
           average_quintals: "QQ por productor"
@@ -2356,6 +2459,7 @@ es:
         description: "Cada finca con el café que se le compró (QQ y dinero), las latas cortadas, lo que costaron sus planillas y gastos, y la diferencia. Con la extensión escrita, los QQ por manzana y por hectárea."
         business: "Del negocio"
         columns:
+          net_weight: "Neto (lb)"
           farm: "Finca"
           owner: "Dueño"
           manzanas: "Manzanas"
@@ -2370,6 +2474,7 @@ es:
           cost_per_quintal: "Costo por QQ"
           farms: "Fincas"
         kpis:
+          net_weight: "Libras netas"
           quintals: "Quintales (QQ)"
           sales_total: "Valor del café"
           cost: "Costo (planillas y gastos)"
@@ -2404,6 +2509,7 @@ es:
           borrower: "Con préstamos"
           employee: "Empleado de planilla"
         columns:
+          net_weight: "Neto (lb)"
           person: "Persona"
           roles: "Roles"
           quintals: "QQ vendidos"
@@ -2503,6 +2609,19 @@ es:
         - "Si aparece un error con un código de referencia, pásale ese código a un administrador."
         - "El Inicio y las pantallas de Compra de café y Préstamos se actualizan solas cuando otra persona registra algo: lo nuevo aparece con un brillo y las cifras que cambian dan un pulso. Abajo a la izquierda dice «En vivo». Si tienes una ventana abierta, se actualiza al cerrarla."
     processes:
+      private_documents:
+        title: "Pagaré y contrato de préstamo"
+        summary: "Dos documentos fijos que se imprimen para cada préstamo, llenos con los datos de la persona y del préstamo."
+        steps:
+          - "Un administrador escribe o pega su texto en Administración → Documentos privados, y pone variables donde va cada dato (nombre, DNI, monto, plazo…)."
+          - "En el préstamo (en su detalle o en el estado de cuenta de la persona), toca «Pagaré» o «Contrato»."
+          - "Se abre el documento lleno, para revisarlo. Si a la persona le falta un dato (por ejemplo, estado civil), «Completar datos de la persona» abre su ficha encima; al guardar, el documento se vuelve a llenar."
+          - "Toca «Imprimir»: se abre la ventana de impresión."
+          - "Al lado de cada botón está cuántas veces se ha impreso ese documento para ese préstamo."
+        tips:
+          - "Un dato que falta sale como línea en blanco, para llenarlo a mano."
+          - "Cada impresión queda guardada tal como salió. Los administradores ven, al pasar el puntero sobre el contador, cuándo fueron las últimas y quién las imprimió."
+          - "Imprimir pide permiso de crear en Préstamos; completar los datos de la persona, el de editar en Administración."
       invoice_payments:
         title: "Pagar una factura por abonos"
         summary: "Una factura se paga completa o en varios abonos, cada uno con su recibo."
@@ -2731,6 +2850,34 @@ es:
           tips:
             - "Si no ves ningún módulo, pídele a un administrador que te asigne permisos."
       administration:
+        private_documents:
+          index:
+            title: "Documentos privados"
+            summary: "El pagaré y el contrato de préstamo, con una vista previa de cada uno. Solo para administradores."
+            steps:
+              - "Revisa la vista previa de cada documento."
+              - "Toca «Ver» para leerlo completo o «Editar» para cambiar su texto."
+            tips:
+              - "Siempre son estos dos: no se agregan ni se borran."
+              - "Se imprimen desde el estado de cuenta de cada persona, en Préstamos."
+          show:
+            title: "Documento privado"
+            summary: "El texto del documento como está guardado, con sus variables marcadas."
+            steps:
+              - "Lee el texto: lo marcado son variables, que al imprimir se llenan con los datos de la persona y del préstamo."
+              - "A la derecha están las variables que usa."
+              - "Toca «Editar» para cambiarlo."
+          form:
+            title: "Editar un documento privado"
+            summary: "Un editor de texto como el de Word: negrita, alineación, tamaños, listas, tablas y más."
+            steps:
+              - "Escribe el texto, o pégalo desde Word: conserva el formato."
+              - "Pon el cursor donde va un dato y toca su variable en el panel de la derecha (nombre, DNI, monto, plazo…)."
+              - "Toca «Guardar»."
+            tips:
+              - "Una variable se borra entera, como una sola letra."
+              - "«Código fuente» (</>) muestra el HTML: sirve para copiar el documento completo, con sus variables, de un sistema a otro."
+              - "Si sales con cambios sin guardar, el sistema pregunta antes."
         backups:
           show:
             title: "Respaldo de datos"
@@ -3361,6 +3508,23 @@ es:
             steps:
               - "Escribe el nombre y toca el botón de guardar."
       loans:
+        document_prints:
+          form:
+            title: "Revisar e imprimir un documento"
+            summary: "El pagaré o el contrato del préstamo, lleno con los datos de la persona y del préstamo, antes de imprimirlo."
+            steps:
+              - "Revisa el documento: así saldrá en papel."
+              - "Si falta algún dato, el aviso dice cuál. «Completar datos de la persona» abre su ficha encima; al guardar, el documento se vuelve a llenar."
+              - "Toca «Imprimir»: se abre la ventana de impresión."
+            tips:
+              - "Cada impresión cuenta en el préstamo, al lado de su botón."
+          show:
+            title: "Documento impreso"
+            summary: "El documento tal como salió: con los datos de ese día."
+            steps:
+              - "Revisa el documento; la ventana de impresión se abre sola al llegar aquí."
+              - "«Imprimir de nuevo» lo vuelve a imprimir (y cuenta otra vez)."
+              - "«Volver al préstamo» regresa al préstamo."
         home:
           index:
             title: "Resumen de préstamos"
@@ -3474,6 +3638,7 @@ es:
               - "Revisa los totales: prestado, pagado y lo que debe hoy."
               - "En «Historial crediticio» está cada préstamo otorgado y cada abono, lo más reciente primero."
               - "Toca «Imprimir» para entregarle una copia, o «Nuevo préstamo» para prestarle otra vez."
+              - "En cada préstamo, «Pagaré» y «Contrato» abren el documento lleno con sus datos para revisarlo e imprimirlo; al lado, cuántas veces se ha impreso."
       reports:
         reports:
           show:
@@ -3518,7 +3683,35 @@ es:
               - "Se guarda el período por su nombre: «Este mes» siempre es el mes en curso."
 
   administration:
+    private_documents:
+      index:
+        title: "Documentos privados"
+        help: "El pagaré y el contrato de préstamo. Su texto se edita aquí y se imprime, lleno con los datos de cada persona, desde su estado de cuenta en Préstamos. Siempre son estos dos: no se agregan ni se borran."
+        blank: "Todavía no tiene texto."
+        updated: "Editado el %{at} por %{name}"
+        variables:
+          zero: "Sin variables"
+          one: "1 variable"
+          other: "%{count} variables"
+        show: "Ver"
+        edit: "Editar"
+      show:
+        help: "Así se ve el texto. Lo marcado son variables: al imprimir se llenan con los datos de la persona y del préstamo elegido."
+        edit: "Editar"
+        blank: "Todavía no tiene texto. Toca «Editar» para escribirlo o pegarlo desde Word."
+        variables: "Variables que usa"
+        no_variables: "No usa variables: se imprime igual para todos."
+      edit:
+        title: "Editar: %{name}"
+        crumb: "Editar"
+        help: "Escribe o pega el texto (desde Word conserva el formato). Para que un dato salga de cada persona, pon el cursor donde va y toca su variable a la derecha."
+        variables: "Variables"
+        variables_help: "Toca una para ponerla donde está el cursor. En el texto se borra entera."
+        save: "Guardar"
+      update:
+        success: "Se guardó «%{name}»."
     nav:
+      private_documents: "Documentos privados"
       home: "Resumen"
       people: "Personas"
       farms: "Fincas"
@@ -3571,6 +3764,7 @@ es:
           Guarde este respaldo en un lugar seguro: base.dump contiene todos los datos del sistema.
     home:
       index:
+        private_documents_description: "El pagaré y el contrato de préstamo: su texto y sus variables."
         people_description: "Personas del negocio: clientes, colaboradores y productores. Desde aquí también se fusionan personas repetidas."
         farms_description: "Todas las fincas, del negocio y de los productores: crear, editar y borrar las que no se usan."
         zones_description: "Las zonas de donde vienen las personas: crear, editar y borrar las que no se usan."
@@ -3844,6 +4038,7 @@ es:
         producer: "Productor"
         hauler: "Carrero"
       moved:
+        document_prints: "Impresiones de documentos"
         purchases: "Compras"
         invoices: "Facturas"
         farms: "Fincas"
@@ -3871,6 +4066,9 @@ es:
         no_differences: "Los datos de las dos personas son iguales."
         moves: "Lo que pasa de %{name} a %{to}"
         summary:
+          document_prints:
+            one: "1 impresión de documentos (pagaré, contrato)"
+            other: "%{count} impresiones de documentos (pagaré, contrato)"
           purchases:
             zero: "Sin compras"
             one: "1 compra"
@@ -3947,6 +4145,12 @@ es:
 
   activerecord:
     models:
+      private_document:
+        one: "Documento privado"
+        other: "Documentos privados"
+      private_document_print:
+        one: "Impresión de documento"
+        other: "Impresiones de documentos"
       profile_photo:
         one: "Foto de perfil"
         other: "Fotos de perfil"
@@ -4053,6 +4257,21 @@ es:
         one: "Configuración del sitio"
         other: "Configuración del sitio"
     attributes:
+      private_document:
+        key: "Documento"
+        body: "Texto"
+        updated_by: "Editado por"
+        updated_by_id: "Editado por"
+      private_document_print:
+        private_document: "Documento"
+        private_document_id: "Documento"
+        person: "Persona"
+        person_id: "Persona"
+        loan: "Préstamo"
+        loan_id: "Préstamo"
+        user: "Imprimió"
+        user_id: "Imprimió"
+        body: "Texto impreso"
       user:
         name: "Nombre completo"
         email_address: "Correo electrónico"
@@ -4071,6 +4290,8 @@ es:
         current_password: "Contraseña actual"
         password_challenge: "Contraseña actual"
       person:
+        civil_status: "Estado civil"
+        nationality: "Nacionalidad"
         first_names: "Nombres"
         last_names: "Apellidos"
         dni: "DNI"
@@ -4393,6 +4614,12 @@ es:
         can_destroy: "Borrar"
     errors:
       models:
+        private_document_print:
+          attributes:
+            base:
+              document_blank: "El documento todavía no tiene texto: un administrador lo escribe en Administración → Documentos privados."
+            loan:
+              not_of_the_person: "no es de esta persona"
         person:
           role_required: "Marca al menos un rol: cliente, colaborador, productor o carrero."
           producer_in_use: "No se puede quitar el rol de productor: ya tiene compras, facturas o fincas."

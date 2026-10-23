@@ -34,6 +34,7 @@ class FarmsReport < Report
   column(:owner, :text, sort: OWNER, priority: 3) { |farm| farm.producer&.full_name || I18n.t("reports.types.farms.business") }
   column(:manzanas, :number, sort: MANZANAS, priority: 2) { |farm| farm.area&.manzanas }
   column(:hectares, :number, sort: HECTARES, priority: 3) { |farm| farm.area&.hectares }
+  column(:net_weight, :pounds, sort: "COALESCE(sales.net_weight, 0)", priority: 2) { |farm| farm.sales_net_weight.to_d }
   column(:quintals, :quintals, sort: QUINTALS) { |farm| farm.sales_net_weight.to_d / QUINTAL }
   column(:sales_total, :money, sort: "sales.total", priority: 2) { |farm| farm.sales_total.to_d }
   column(:cans, :number, sort: "picked.cans", priority: 3) { |farm| farm.picked_cans }
@@ -52,6 +53,7 @@ class FarmsReport < Report
 
   measure :farms, :integer, "COUNT(*)"
   measure :manzanas, :number, "COALESCE(SUM(#{MANZANAS}), 0)"
+  measure :net_weight, :pounds, "COALESCE(SUM(sales.net_weight), 0)"
   measure :quintals, :quintals, "SUM(#{QUINTALS})"
   measure :sales_total, :money, "COALESCE(SUM(sales.total), 0)"
   measure :cans, :number, "COALESCE(SUM(picked.cans), 0)"
@@ -64,6 +66,7 @@ class FarmsReport < Report
   group :department, sql: "farms.department_id", label_sql: "MIN(departments.name)"
 
   kpi :quintals, :quintals, "SUM(#{QUINTALS})", good: :up
+  kpi :net_weight, :pounds, "COALESCE(SUM(sales.net_weight), 0)", good: :up
   kpi :sales_total, :money, "COALESCE(SUM(sales.total), 0)", good: :up
   kpi :cost, :money, "SUM(#{COST})", good: :down
   kpi :balance, :money, "SUM(#{BALANCE})", good: :up

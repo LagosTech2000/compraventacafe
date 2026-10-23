@@ -1,6 +1,8 @@
 # Identity and contact, stored once. Client, Collaborator, Producer and
 # Hauler (carrero) are roles on top. dni (13 digits) and rtn (14 digits) are unique per person and
-# optional. The zone the person is from is optional too.
+# optional. The zone the person is from is optional too, and so are the
+# civil status and nationality (the private loan contract asks for both,
+# Fernando 2026-10-22).
 #
 # Every person form has a checkbox per role (client_role, collaborator_role,
 # producer_role, with producer_kind for a new producer, and hauler_role,
@@ -28,8 +30,9 @@ class Person < ApplicationRecord
   has_one :hauler, dependent: :restrict_with_error, autosave: true
   has_many :loans, dependent: :restrict_with_error
   has_many :payroll_members, dependent: :restrict_with_error
+  has_many :private_document_prints, dependent: :restrict_with_error
 
-  normalizes :first_names, :last_names, with: ->(value) { value.squish.presence }
+  normalizes :first_names, :last_names, :civil_status, :nationality, with: ->(value) { value.squish.presence }
   normalizes :dni, :rtn, with: FieldFormats::DIGITS
   normalizes :phone, with: FieldFormats::PHONE
   normalizes :email, with: FieldFormats::EMAIL
@@ -39,6 +42,7 @@ class Person < ApplicationRecord
   validates :rtn, field_format: :rtn, uniqueness: true, allow_nil: true
   validates :phone, field_format: :phone
   validates :email, field_format: :email, length: { maximum: 254 }
+  validates :civil_status, :nationality, field_format: :person_name, length: { maximum: 100 }
   validate :role_chosen, if: :roles_from_form
   validate :producer_removable, :hauler_removable
 

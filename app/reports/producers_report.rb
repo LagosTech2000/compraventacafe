@@ -51,6 +51,7 @@ class ProducersReport < Report
   column(:kind, :text, sort: "producers.kind", priority: 3, &:human_kind)
   column(:zone, :text, sort: "zones.name", priority: 3) { |producer| producer.zone&.name }
   column(:purchases_count, :integer, sort: "stats.purchases_count", priority: 2) { |producer| producer.purchases_count.to_i }
+  column(:net_weight, :pounds, sort: "stats.net_weight", priority: 2) { |producer| producer.net_weight.to_d }
   column(:quintals, :quintals, sort: "stats.net_weight") { |producer| producer.net_weight.to_d / QUINTAL }
   column(:total, :money, sort: "stats.total", priority: 2) { |producer| producer.total.to_d }
   column(:average_price, :money, sort: "stats.total / NULLIF(stats.net_weight, 0)", priority: 3) do |producer|
@@ -65,6 +66,7 @@ class ProducersReport < Report
   measure :producers, :integer, "COUNT(*)"
   measure :selling, :integer, "COUNT(*) FILTER (WHERE stats.purchases_count > 0)"
   measure :purchases_count, :integer, "COALESCE(SUM(stats.purchases_count), 0)"
+  measure :net_weight, :pounds, "COALESCE(SUM(stats.net_weight), 0)"
   measure :quintals, :quintals, "COALESCE(SUM(stats.net_weight), 0) / #{QUINTAL}"
   measure :total, :money, "COALESCE(SUM(stats.total), 0)"
   measure :pending, :money, "COALESCE(SUM(pending.amount), 0)"
@@ -74,6 +76,7 @@ class ProducersReport < Report
 
   kpi :selling, :integer, "COUNT(*) FILTER (WHERE stats.purchases_count > 0)", good: :up
   kpi :quintals, :quintals, "COALESCE(SUM(stats.net_weight), 0) / #{QUINTAL}", good: :up
+  kpi :net_weight, :pounds, "COALESCE(SUM(stats.net_weight), 0)", good: :up
   kpi :average_quintals, :quintals,
       "COALESCE(SUM(stats.net_weight), 0) / #{QUINTAL} / NULLIF(COUNT(*) FILTER (WHERE stats.purchases_count > 0), 0)", good: :up
   kpi(:top_share, :percent, good: :down) { |relation, _| top_share(relation) }

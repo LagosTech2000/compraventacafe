@@ -7,6 +7,35 @@ RSpec.describe "Reports (data)" do
   def run(report_class, **params) = report_class.new(params, user:)
   def kpi(report, key) = report.kpis.find { |figure| figure.key == key }
 
+  it "shows the net pounds (libras netas) wherever the quintals are, as a column, a figure and a sum by group" do
+    farm = create(:farm, producer: create(:producer))
+    producer = farm.producer
+    first = create(:purchase, producer:, farm:, purchased_at: Time.current)
+    second = create(:purchase, producer:, farm:, purchased_at: Time.current)
+    create(:invoice, producer:, purchases: [ second ])
+    net = first.net_weight + second.net_weight
+    value = ->(report_class, record) { report_class.columns.find { |column| column.key == :net_weight }.value.call(record) }
+
+    purchases = run(PurchasesReport, period: "this_month")
+    expect(kpi(purchases, :net_weight).value).to eq(net)
+    expect(purchases.page.first.map { value.(PurchasesReport, it) }).to contain_exactly(first.net_weight, second.net_weight)
+    expect(run(PurchasesReport, period: "this_month", group: "producer", measure: "net_weight").page.first.map { it["net_weight"] }).to eq([ net ])
+
+    producers = run(ProducersReport, period: "this_month")
+    expect(kpi(producers, :net_weight).value).to eq(net)
+    expect(value.(ProducersReport, producers.page.first.first)).to eq(net)
+
+    farms = run(FarmsReport, period: "this_month")
+    expect(kpi(farms, :net_weight).value).to eq(net)
+    expect(value.(FarmsReport, farms.page.first.find { it.id == farm.id })).to eq(net)
+
+    invoices = run(InvoicesReport, period: "this_month")
+    expect(value.(InvoicesReport, invoices.page.first.first)).to eq(second.net_weight)
+
+    people = run(PeopleReport, period: "this_month")
+    expect(value.(PeopleReport, people.page.first.find { it.id == producer.person_id })).to eq(net)
+  end
+
   describe PurchasesReport do
     it "sums the period's purchases, without voided ones, and compares with the period before" do
       producer = create(:producer)

@@ -14,6 +14,10 @@
     <% if policy(Loan).create? %>
       <%= page_link_to t(".new_loan"), new_loans_loan_path(person_id: person.id), class: "btn btn-primary" %>
     <% end %>
+    <%# A producer: its page in Compra de café (Fernando, 2026-10-23). %>
+    <% if person.producer && policy(person.producer).show? %>
+      <%= page_link_to t(".producer"), trading_producer_path(person.producer), class: "btn" %>
+    <% end %>
     <% if modal_request? %>
       <%= page_link_to t(".print"), loans_credit_account_path(person), class: "btn" %>
     <% else %>
@@ -66,7 +70,7 @@
                                             tabs: { loans: [ t(".loans"), @account.loans.size ], history: [ t(".history"), @account.movements.size ] } } do %>
   <%= tab_panel "account", :loans, selected: true do %>
     <h2 class="mb-3 hidden text-lg font-semibold print:block"><%= t("loans.credit_accounts.show.loans") %></h2>
-  <%= render "loans/loans/table", loans: @account.loans, balances: @account.loans.to_h { |loan| [ loan, @account.balance(loan) ] } %>
+  <%= render "loans/loans/table", loans: @account.loans, balances: @account.loans.to_h { |loan| [ loan, @account.balance(loan) ] }, document_prints: @document_prints %>
   <% end %>
   <%= tab_panel "account", :history do %>
 <h2 class="mt-6 mb-3 hidden text-lg font-semibold print:block"><%= t("loans.credit_accounts.show.history") %></h2>

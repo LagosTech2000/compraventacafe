@@ -1,0 +1,54 @@
+<% document = @print.private_document
+   loan = @print.loan
+   variables = PrivateDocumentVariables.new(person: @person, loan:)
+   missing = document.variable_keys.reject { |key| variables.value(key) }
+   missing_person = missing.select { |key| key.start_with?("person.") } %>
+<% content_for :title, t(".title", name: document.name, number: loan.id) %>
+<%# The person's form, saved on top, refreshes this page: it fills in again. %>
+<% content_for :head do %><style>@page { size: letter; margin: 2cm; }</style><% end %>
+<%= render "shared/breadcrumbs", crumbs: loan_crumbs(loan, [ document.name ]) %>
+
+<div class="flex flex-wrap items-start justify-between gap-4 print:hidden">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title", name: document.name, number: loan.id) %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".help", name: @person.full_name) %></p>
+  </div>
+  <div class="flex flex-wrap items-center gap-2">
+    <%= help_guide_button HelpGuide.process(:private_documents), label: true %>
+    <%= link_to t(".back"), loans_loan_path(loan), class: "btn" %>
+    <% if document.blank_body? %>
+      <button type="button" class="btn btn-primary" disabled><%= t(".print") %></button>
+    <% else %>
+      <%= button_to loans_credit_account_document_prints_path(@person), class: "btn btn-primary",
+            params: { private_document_print: { document_key: document.key, loan_id: loan.id } }, form: { data: { turbo_frame: "_top" } } do %>
+        <%= icon(:print, css: "size-4") %> <%= t(".print") %>
+      <% end %>
+    <% end %>
+  </div>
+</div>
+
+<%= render "shared/form_errors", record: @print %>
+
+<%# What will print as a blank line, and the way to complete it. %>
+<% if missing.any? %>
+  <div class="flash-notice mt-4 flex flex-wrap items-center justify-between gap-3 text-sm print:hidden" id="document-missing">
+    <p><%= t(".missing", fields: missing.map { |key| PrivateDocumentVariables.label(key) }.to_sentence) %></p>
+    <div class="flex flex-wrap gap-2">
+      <% if missing_person.any? && policy(@person).update? %>
+        <%= modal_link_to t(".complete_person"), edit_administration_person_path(@person), class: "btn btn-sm" %>
+      <% end %>
+      <% if missing.any? { |key| key.start_with?("business.") } && policy(SiteSetting).update? %>
+        <%= modal_link_to t(".complete_business"), edit_administration_site_setting_path, class: "btn btn-sm" %>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<article class="document-sheet mt-6">
+  <%= render "shared/print_letterhead", title: document.name, subtitle: @person.full_name %>
+  <% if document.blank_body? %>
+    <p class="empty-state mt-6"><%= t("loans.loans.print_buttons.blank") %></p>
+  <% else %>
+    <div class="document-body mt-6"><%= private_document_html(document.filled_body(person: @person, loan:)) %></div>
+  <% end %>
+</article>

@@ -37,6 +37,17 @@ RSpec.describe PersonMerge do
     expect(Hauler.exists?(other.id)).to be(false)
   end
 
+  it "chooses the civil status and nationality like the other details, and moves the prints of documents" do
+    secondary.update!(civil_status: "casada", nationality: "hondureña")
+    print = create(:private_document_print, person: secondary)
+    expect(merge.differences).to include("civil_status", "nationality")
+    expect(merge.summary).to include(document_prints: 1)
+
+    expect(merge.save).to be(true)
+    expect(primary.reload).to have_attributes(civil_status: "casada", nationality: "hondureña")
+    expect(print.reload.person).to eq(primary)
+  end
+
   it "moves the carrero role when only the other has it" do
     other = create(:hauler, person: secondary)
     expect(merge.gained_roles).to include(:hauler)

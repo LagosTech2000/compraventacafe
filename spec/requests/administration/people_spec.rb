@@ -54,6 +54,17 @@ RSpec.describe "Administration::People" do
   context "as a creator" do
     before { sign_in user_with(can_read: true, can_create: true) }
 
+    it "takes the civil status and nationality from the form and shows them" do
+      get new_administration_person_path
+      expect(Nokogiri::HTML(response.body).css("#person_civil_status, #person_nationality").size).to eq(2)
+
+      post administration_people_path, params: { person: valid_params[:person].merge(civil_status: "casado", nationality: "hondureño") }
+      person = Person.last
+      expect(person).to have_attributes(civil_status: "casado", nationality: "hondureño")
+      get administration_person_path(person)
+      expect(response.body).to include("Estado civil", "casado", "Nacionalidad", "hondureño")
+    end
+
     it "creates a person with both roles" do
       expect { post administration_people_path, params: valid_params }.to change(Person, :count).by(1)
       person = Person.last

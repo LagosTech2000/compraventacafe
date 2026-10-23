@@ -4,9 +4,10 @@
 # (field by field). Everything of the other one moves to the primary: its
 # roles, and as a producer its purchases, invoices and farms (a farm with
 # the same name as one of the primary's joins it: its purchases and
-# payrolls go there and the copy is removed); its loans and its places in
-# payrolls. Then the other person is deleted. All or nothing, recorded in
-# the audit (action "merge"). It cannot be undone.
+# payrolls go there and the copy is removed); its loans, its places in
+# payrolls and its prints of private documents. Then the other person is
+# deleted. All or nothing, recorded in the audit (action "merge"). It
+# cannot be undone.
 #
 #   merge = PersonMerge.new(primary:, secondary:, choices: { "dni" => "secondary" })
 #   merge.save   # => true, or false with merge.errors
@@ -20,7 +21,8 @@ class PersonMerge
   # Details chosen as a whole, and the attributes each one carries.
   PERSON_FIELDS = {
     "first_names" => %i[first_names], "last_names" => %i[last_names], "dni" => %i[dni], "rtn" => %i[rtn],
-    "phone" => %i[phone], "email" => %i[email], "zone" => %i[zone_id],
+    "phone" => %i[phone], "email" => %i[email], "civil_status" => %i[civil_status], "nationality" => %i[nationality],
+    "zone" => %i[zone_id],
     "address" => %i[department_id municipality_id address_line], "location" => %i[latitude longitude]
   }.freeze
   PRODUCER_FIELDS = { "kind" => %i[kind], "ihcafe_code" => %i[ihcafe_code] }.freeze
@@ -72,13 +74,15 @@ class PersonMerge
   # What moves from the other person, to say it before merging.
   def summary
     producer = secondary.producer
+    prints = secondary.private_document_prints.count
     {
       purchases: producer ? producer.purchases.count : 0,
       invoices: producer ? producer.invoices.count : 0,
       farms: producer ? producer.farms.count : 0,
       loans: secondary.loans.count,
       payrolls: secondary.payroll_members.count,
-      **({ hauled_purchases: secondary.hauler.purchases.count } if secondary.hauler)
+      **({ hauled_purchases: secondary.hauler.purchases.count } if secondary.hauler),
+      **({ document_prints: prints } if prints.positive?)
     }
   end
 
@@ -122,6 +126,7 @@ class PersonMerge
       Person::ROLES.excluding(:producer, :hauler).each { |role| merge_role(role) }
       @moved[:loans] = Loan.where(person_id: secondary.id).update_all(person_id: primary.id)
       @moved[:payrolls] = PayrollMember.where(person_id: secondary.id).update_all(person_id: primary.id)
+      @moved[:document_prints] = PrivateDocumentPrint.where(person_id: secondary.id).update_all(person_id: primary.id)
       merge_photo
       merge_details
       label = "#{secondary.full_name} ##{secondary.id}"

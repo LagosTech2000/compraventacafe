@@ -15,7 +15,8 @@
       <%= @loan.person.full_name %> <%= loan_status_badge(@loan) %> <%= loan_kind_badge(@loan) %>
     </p>
   </div>
-  <div class="flex flex-wrap gap-3">
+  <div class="flex flex-wrap items-center gap-3">
+    <%= render "loans/loans/print_buttons", loan: @loan, document_prints: @document_prints %>
     <% if policy(@loan).update? %>
       <%= link_to t(".edit"), edit_loans_loan_path(@loan), class: "btn" %>
     <% end %>

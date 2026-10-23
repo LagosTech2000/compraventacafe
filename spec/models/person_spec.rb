@@ -113,6 +113,14 @@ RSpec.describe Person do
     expect(build(:person, zone: nil)).to be_valid
   end
 
+  it "has an optional civil status and nationality, as words" do
+    person = create(:person, civil_status: "  casada ", nationality: "hondureña")
+    expect(person).to have_attributes(civil_status: "casada", nationality: "hondureña")
+    expect(build(:person, civil_status: "", nationality: nil)).to be_valid
+    expect(build(:person, civil_status: "123")).not_to be_valid
+    expect(build(:person, nationality: "<b>")).not_to be_valid
+  end
+
   describe ".search" do
     it "matches names, dni and rtn, case-insensitively" do
       ana = create(:person, first_names: "Ana", dni: "0801199912345", rtn: "08011999123456")
