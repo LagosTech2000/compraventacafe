@@ -269,6 +269,29 @@
     @apply block min-h-10 w-full rounded-xl border border-line bg-white px-3.5 py-2 text-sm text-ink shadow-[0_1px_1px_rgb(29_21_18/0.04)] transition placeholder:text-ink-muted/60 focus:border-primary focus:ring-4 focus:ring-primary/15 focus:outline-none disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-ink-muted;
   }
 
+  /* Initials in place of a photo in lists (with_avatar): drawn here, so
+     the list's text is only the name. */
+  .avatar-initials {
+    @apply grid shrink-0 place-items-center rounded-full bg-primary-soft font-bold text-primary;
+  }
+
+  .avatar-initials::before {
+    content: attr(data-initials);
+  }
+
+  /* Matches of a searchable picker (record_picker_controller.js), under its box. */
+  .picker-list {
+    @apply absolute inset-x-0 top-full z-30 mt-1 max-h-72 overflow-y-auto rounded-xl border border-line bg-surface py-1 shadow-lg;
+  }
+
+  .picker-option {
+    @apply cursor-pointer px-3.5 py-2 text-sm text-ink hover:bg-surface-2 aria-selected:bg-primary-soft aria-selected:text-ink;
+  }
+
+  .picker-note {
+    @apply px-3.5 py-2 text-sm text-ink-muted;
+  }
+
   .flash-notice,
   .flash-alert {
     @apply rounded-2xl border px-4 py-3 text-sm;
@@ -661,6 +684,82 @@
     @apply block rounded-lg px-1 py-1 text-ink no-underline outline-none hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-primary;
   }
 
+  /* How many times a private document printed for a loan (Fernando,
+     2026-10-22 and 23): a round counter. For admins it opens a
+     card with the latest prints, like a user's card in "Conectados"
+     (.presence-card-body, .presence-link): on hover or focus, and it stays
+     open while the pointer or the focus is inside it. */
+  .print-count {
+    @apply relative inline-flex cursor-default rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary;
+  }
+
+  .print-count-number {
+    @apply inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-surface-2 px-2 text-xs font-semibold tabular-nums ring-1 ring-line;
+  }
+
+  /* Fixed on the screen (print_count_controller.js places it under the
+     counter): a table that scrolls sideways would cut it. */
+  .print-count-card {
+    @apply invisible fixed top-0 left-0 z-30 w-64 max-w-[85vw] py-2 text-left text-xs font-normal whitespace-normal opacity-0 transition-[opacity,visibility] delay-150 duration-150;
+  }
+
+  .print-count:hover .print-count-card,
+  .print-count:focus-within .print-count-card {
+    @apply visible opacity-100 delay-0;
+  }
+
+  /* The text of a private document, in the editor, its previews and on
+     paper: the page's resets (Tailwind's preflight) undone, so paragraphs,
+     lists, headings and tables read as in a word processor. */
+  .document-body {
+    @apply text-[0.95rem] leading-relaxed text-ink;
+  }
+
+  .document-body p,
+  .document-body ul,
+  .document-body ol,
+  .document-body table,
+  .document-body blockquote {
+    margin: 0 0 0.75em;
+  }
+
+  .document-body h1 { @apply mb-3 text-2xl font-bold; }
+  .document-body h2 { @apply mb-3 text-xl font-bold; }
+  .document-body h3 { @apply mb-2 text-lg font-semibold; }
+  .document-body h4 { @apply mb-2 font-semibold; }
+  .document-body ul { @apply list-disc pl-8; }
+  .document-body ol { @apply list-decimal pl-8; }
+  .document-body blockquote { @apply border-l-4 border-line pl-4; }
+  .document-body hr { @apply my-4 border-ink; }
+  .document-body table { @apply w-full border-collapse; }
+  .document-body td,
+  .document-body th { @apply p-1 align-top; }
+
+  /* A variable not filled in yet (the editor and the admin's preview). */
+  .document-body span[data-variable] {
+    @apply rounded-md bg-primary/10 px-1 py-px font-medium whitespace-nowrap text-primary ring-1 ring-primary/30;
+  }
+
+  /* The page of a document: white, like the sheet it prints on. */
+  .document-sheet {
+    @apply mx-auto w-full max-w-[52rem] rounded-xl bg-white p-6 shadow-sm ring-1 ring-line sm:p-10 print:max-w-none print:rounded-none print:p-0 print:shadow-none print:ring-0;
+  }
+
+  /* A document in small, in the list of documents. */
+  .document-thumb {
+    @apply relative h-64 overflow-hidden rounded-lg bg-white ring-1 ring-line;
+  }
+
+  .document-thumb > .document-body {
+    @apply pointer-events-none absolute top-0 left-0 origin-top-left p-6;
+    width: 200%;
+    transform: scale(0.5);
+  }
+
+  .document-thumb::after {
+    @apply pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white content-[''];
+  }
+
   /* Small sketches of the screen in the user's settings: a page (frame),
      what opens over it (the inner box) or where the navigation goes. */
   .settings-sketch {
@@ -716,6 +815,7 @@
     scrollbar-width: thin;
     scrollbar-color: var(--color-line) transparent;
   }
+
 }
 
 /* Live pages (live_refresh_controller.js): a row that arrives glows in
@@ -825,6 +925,11 @@ tr.live-new > td {
 @media print {
   body {
     background: #fff !important;
+  }
+
+  /* Every tab's panel goes on paper (shared/_tabs), not only the one shown. */
+  [role="tabpanel"][hidden] {
+    display: block !important;
   }
 
   .btn,

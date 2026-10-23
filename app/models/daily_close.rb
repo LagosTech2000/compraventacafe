@@ -49,6 +49,6 @@ class DailyClose < PurchaseSummary
   # Grouped by payment state, newest first within each group.
   def purchases
     @purchase_list ||= Purchase.active.on(date).left_joins(:invoice).order(PAYMENT_ORDER).merge(Purchase.newest_first)
-                               .preload(:zone, :farm, :loan_payments, invoice: [ :payments, { purchases: :loan_payments } ], producer: :person).to_a
+                               .preload(:zone, :farm, :loan_payments, invoice: [ :payments, :producer, { purchases: :loan_payments } ], producer: :person).to_a
   end
 end

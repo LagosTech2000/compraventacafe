@@ -42,6 +42,7 @@ class InvoicesReport < Report
   column(:issued_on, :date, sort: "invoices.issued_on")
   column(:producer, :text, sort: "people.last_names") { |invoice| invoice.producer.full_name }
   column(:purchases_count, :integer, sort: "invoice_totals.purchases_count", priority: 3)
+  column(:net_weight, :pounds, sort: "invoice_totals.net_weight", priority: 3) { |invoice| invoice.net_weight_sum.to_d }
   column(:quintals, :quintals, sort: "invoice_totals.net_weight", priority: 2) do |invoice|
     invoice.net_weight_sum.to_d / PurchaseCalculation::QUINTAL_WEIGHT
   end
@@ -61,6 +62,7 @@ class InvoicesReport < Report
   end
 
   measure :count, :integer, "COUNT(*)"
+  measure :net_weight, :pounds, "SUM(invoice_totals.net_weight)"
   measure :quintals, :quintals, QUINTALS
   measure :total, :money, "SUM(#{TOTAL})"
   measure :coffee, :money, "SUM(#{COFFEE})"

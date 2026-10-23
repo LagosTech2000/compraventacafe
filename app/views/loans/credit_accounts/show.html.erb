@@ -3,6 +3,7 @@
 <%# Updates itself while open when the data changes (LiveUpdates). %>
 <%= live_updates_from :loans %>
 <%= render "loans/nav" %>
+<%= render "shared/breadcrumbs", crumbs: credit_account_crumbs(person) %>
 
 <div class="flex flex-wrap items-start justify-between gap-4 print:hidden">
   <div>
@@ -12,6 +13,10 @@
   <div class="flex flex-wrap gap-2">
     <% if policy(Loan).create? %>
       <%= page_link_to t(".new_loan"), new_loans_loan_path(person_id: person.id), class: "btn btn-primary" %>
+    <% end %>
+    <%# A producer: its page in Compra de café (Fernando, 2026-10-23). %>
+    <% if person.producer && policy(person.producer).show? %>
+      <%= page_link_to t(".producer"), trading_producer_path(person.producer), class: "btn" %>
     <% end %>
     <% if modal_request? %>
       <%= page_link_to t(".print"), loans_credit_account_path(person), class: "btn" %>
@@ -55,19 +60,29 @@
 </dl>
 <p class="mt-2 text-xs text-ink-muted"><%= t(".as_of_today") %></p>
 
-<h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".loans") %></h2>
-<%= render "loans/loans/table", loans: @account.loans, balances: @account.loans.to_h { |loan| [ loan, @account.balance(loan) ] } %>
+<%# Where the person lives, when it is on the map. %>
+<% if person.located? %>
+  <div class="mt-6 panel p-4 print:hidden"><%= render "shared/location", record: person %></div>
+<% end %>
 
-<h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".history") %></h2>
+<%# Its loans and its history, in tabs (shared/_tabs); both print. %>
+<%= render layout: "shared/tabs", locals: { id: "account", label: t(".tabs_label"),
+                                            tabs: { loans: [ t(".loans"), @account.loans.size ], history: [ t(".history"), @account.movements.size ] } } do %>
+  <%= tab_panel "account", :loans, selected: true do %>
+    <h2 class="mb-3 hidden text-lg font-semibold print:block"><%= t("loans.credit_accounts.show.loans") %></h2>
+  <%= render "loans/loans/table", loans: @account.loans, balances: @account.loans.to_h { |loan| [ loan, @account.balance(loan) ] }, document_prints: @document_prints %>
+  <% end %>
+  <%= tab_panel "account", :history do %>
+<h2 class="mt-6 mb-3 hidden text-lg font-semibold print:block"><%= t("loans.credit_accounts.show.history") %></h2>
 <div class="overflow-x-auto panel">
   <table class="data-table data-table-compact" data-controller="table-sort">
     <thead>
       <tr>
-        <th><%= t(".columns.date") %></th>
-        <th><%= t(".columns.movement") %></th>
-        <th class="text-right"><%= t(".columns.amount") %></th>
-        <th class="text-right"><%= t(".columns.interest") %></th>
-        <th class="text-right"><%= t(".columns.principal") %></th>
+        <th><%= t("loans.credit_accounts.show.columns.date") %></th>
+        <th><%= t("loans.credit_accounts.show.columns.movement") %></th>
+        <th class="text-right"><%= t("loans.credit_accounts.show.columns.amount") %></th>
+        <th class="text-right"><%= t("loans.credit_accounts.show.columns.interest") %></th>
+        <th class="text-right"><%= t("loans.credit_accounts.show.columns.principal") %></th>
       </tr>
     </thead>
     <tbody>
@@ -75,7 +90,7 @@
         <tr>
           <td class="whitespace-nowrap"><%= l(movement.date) %></td>
           <% kind = movement.kind == :payment && movement.record.with_coffee? ? :coffee_payment : movement.kind %>
-          <td><%= t(".movements.#{kind}", number: movement.loan.id, purchase: movement.record.try(:purchase_id)) %></td>
+          <td><%= t("loans.credit_accounts.show.movements.#{kind}", number: movement.loan.id, purchase: movement.record.try(:purchase_id)) %></td>
           <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(movement.amount) %></td>
           <td class="whitespace-nowrap text-right tabular-nums"><%= movement.interest ? format_money(movement.interest) : "—" %></td>
           <td class="whitespace-nowrap text-right tabular-nums"><%= movement.principal ? format_money(movement.principal) : "—" %></td>
@@ -84,6 +99,8 @@
     </tbody>
   </table>
 </div>
+  <% end %>
+<% end %>
 
 <% unless modal_request? %>
   <p class="mt-6 print:hidden"><%= link_to t(".back"), loans_credit_accounts_path, class: "text-sm link" %></p>

@@ -11,6 +11,7 @@ module Loans
     def show
       @balance = @loan.balance
       @payments = @loan.payments.includes(:purchase).newest_first
+      @document_prints = LoanDocumentPrints.new([ @loan ], history: policy(PrivateDocumentPrint).history?)
     end
 
     def new

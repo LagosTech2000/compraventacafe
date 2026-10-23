@@ -24,7 +24,7 @@ module Administration
 
       if @person.save
         close_modal_with notice: t(".success"), fallback: administration_person_path(@person),
-                         event: "person:created", detail: { id: @person.id, label: @person.picker_label }
+                         event: "person:created", detail: PickerSearch.data(@person)
       else
         render :new, status: :unprocessable_content
       end
@@ -38,8 +38,11 @@ module Administration
       authorize_producer_role
       authorize_hauler_role
 
+      # From a form that picked the person (picker=1, «Completar datos»): it
+      # stays and learns the new name and what is still empty.
       if @person.save
-        close_modal_with notice: t(".success"), fallback: administration_person_path(@person)
+        close_modal_with notice: t(".success"), fallback: administration_person_path(@person),
+                         event: "person:updated", detail: PickerSearch.data(@person)
       else
         render :edit, status: :unprocessable_content
       end
@@ -59,7 +62,7 @@ module Administration
       end
 
       def person_params
-        params.expect(person: [ :first_names, :last_names, :dni, :rtn, :phone, :email, :zone_id, :department_id, :municipality_id,
+        params.expect(person: [ :first_names, :last_names, :dni, :rtn, :phone, :email, :civil_status, :nationality, :zone_id, :department_id, :municipality_id,
                                 :address_line, :latitude, :longitude, :photo_upload, :remove_photo,
                                 :client_role, :collaborator_role, :producer_role, :producer_kind,
                                 :hauler_role, :hauler_commission_percent, :hauler_can_price ])

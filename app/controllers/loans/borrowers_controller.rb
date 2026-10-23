@@ -1,7 +1,7 @@
 module Loans
   # The card beside the loan form: who the person picked is, how they pay
   # (CreditAccount) and, for a producer, the coffee they sell. Loaded into
-  # its frame each time the form's picker changes (borrower_card_controller.js).
+  # its frame each time the form's picker changes (record_card_controller.js).
   class BorrowersController < ApplicationController
     def show
       person = authorize Person.includes(:zone, :department, :municipality, :photo_info, :client, :collaborator, producer: :farms).find(params[:id]),

@@ -79,10 +79,19 @@ class ListFilter
   # [records of this page, whether there is a next page]. The scope can be
   # a relation or an array (lists computed in Ruby, like pay periods).
   def results(scope, per_page: PER_PAGE)
-    filtered = sorted(apply(scope))
+    @filtered = apply(scope)
+    filtered = sorted(@filtered)
     skip = (page - 1) * per_page
     records = filtered.is_a?(Array) ? filtered.drop(skip).first(per_page + 1) : filtered.offset(skip).limit(per_page + 1).to_a
     [ records.first(per_page), records.size > per_page ]
+  end
+
+  # How many records match (every page), once #results ran: the count a
+  # live list shows above its results (shared/filter_status).
+  def total_count
+    return 0 unless @filtered
+
+    @total_count ||= @filtered.is_a?(Array) ? @filtered.size : @filtered.unscope(:order, :select).count(:all)
   end
 
   # True when the user changed something from the defaults.

@@ -135,9 +135,15 @@ class Payroll < ApplicationRecord
 
   # Periods due (their last day has come) and not paid yet, with something to pay.
   def periods_to_pay(today = Time.zone.today)
-    paid = payments.pluck(:period_starts_on)
-    periods(through: today).select { |period| period.due?(today) && paid.exclude?(period.starts_on) }
-                           .select { |period| calculation(period).gross_total.positive? }
+    paid = payments.map(&:period_starts_on)
+    due = periods(through: today).select { |period| period.due?(today) && paid.exclude?(period.starts_on) }
+    return [] if due.empty?
+
+    # Only periods with something recorded can have something to pay: one
+    # look at the dates first, instead of a calculation per period (the home
+    # page and the pending work read every payroll).
+    recorded = dates_with_work(due.first.starts_on..due.last.ends_on)
+    due.select { |period| recorded.any? { |date| period.dates.cover?(date) } && calculation(period).gross_total.positive? }
   end
 
   # The payroll's accounts: what was paid (gross: what the members earned,
@@ -149,6 +155,17 @@ class Payroll < ApplicationRecord
   def total_cost = gross_paid + expenses_total
 
   private
+    # The days with work recorded in a range (attendance, cans, tasks done)
+    # and the first days of the periods with overtime.
+    def dates_with_work(range)
+      dates = case kind
+      when "task" then tasks.where(completed_on: range).distinct.pluck(:completed_on)
+      when "harvest" then harvest_entries.where(worked_on: range).distinct.pluck(:worked_on) | attendances.where(worked_on: range).distinct.pluck(:worked_on)
+      else attendances.where(worked_on: range).distinct.pluck(:worked_on)
+      end
+      kind == "task" ? dates : dates | overtimes.where(period_starts_on: range).distinct.pluck(:period_starts_on)
+    end
+
     def ends_after_start
       errors.add(:ends_on, :before_start) if starts_on && ends_on && ends_on < starts_on
     end
@@ -158,6 +175,9 @@ class Payroll < ApplicationRecord
     # periods not paid yet follow them (see PayPeriod).
     def periods_fixed_once_paid
       errors.add(:kind, :fixed_once_paid) if will_save_change_to_kind? && payments.exists?
+      # Only daily payrolls take a person in several roles.
+      errors.add(:kind, :repeated_people) if will_save_change_to_kind? && !daily? &&
+                                             members.group(:person_id).having("COUNT(*) > 1").exists?
       first_day, last_day = recorded_dates.minmax
       errors.add(:starts_on, :after_recorded, date: I18n.l(first_day)) if starts_on && first_day && starts_on > first_day
       errors.add(:ends_on, :before_recorded, date: I18n.l(last_day)) if ends_on && last_day && ends_on < last_day

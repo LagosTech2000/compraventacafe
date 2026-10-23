@@ -1,0 +1,13 @@
+<%# The text box of a searchable picker (record_picker_controller.js, on an
+    element around it with record_picker_data) and its list of matches.
+      id, value: the box's id and text (the label of the record chosen)
+      placeholder, required, autofocus, missing_message: as on any field %>
+<div class="relative">
+  <%= tag.input type: "text", id:, value:, autocomplete: "off", spellcheck: false, class: "field-input",
+        placeholder: local_assigns[:placeholder], required: local_assigns.fetch(:required, false),
+        autofocus: local_assigns.fetch(:autofocus, false),
+        data: { record_picker_target: "search", missing_message: local_assigns[:missing_message],
+                action: "input->record-picker#type keydown->record-picker#navigate blur->record-picker#leave" }.compact %>
+  <ul id="<%= id %>_matches" class="picker-list" role="listbox" hidden
+      data-record-picker-target="list" data-action="mousedown->record-picker#press click->record-picker#click"></ul>
+</div>

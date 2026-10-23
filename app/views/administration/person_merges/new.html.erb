@@ -5,21 +5,20 @@
 
 <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
 <p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t(".help") %></p>
+<div class="mt-2"><%= help_guide_button HelpGuide.process(:person_merge), label: true %></div>
 
 <%# Step 1: the other person, and which one stays. %>
-<% people = Person.where.not(id: @person.id).alphabetical %>
 <%= form_with url: new_administration_person_merge_path(@person), method: :get, class: "panel mt-6 space-y-4 p-5",
       data: { controller: "form-validation", turbo_frame: "_top" } do |form| %>
-  <div data-controller="record-picker"
-       data-record-picker-records-value="<%= people.to_h { |person| [ person.id, { label: person.picker_label } ] }.to_json %>"
-       data-record-picker-missing-message-value="<%= t(".other_missing") %>">
+  <%= tag.div data: { controller: "record-picker",
+                      **record_picker_data(:people, selected: @other, missing_message: t(".other_missing"), except: @person.id) } do %>
     <label for="merge_other_search" class="field-label"><%= t(".other") %></label>
-    <input type="text" id="merge_other_search" list="merge_other_options" autocomplete="off" required class="field-input max-w-xl"
-           placeholder="<%= t(".other_placeholder") %>" value="<%= @other&.picker_label %>"
-           data-record-picker-target="search" data-action="record-picker#pick change->record-picker#pick" data-missing-message="<%= t(".other_missing") %>">
-    <datalist id="merge_other_options" data-record-picker-target="options"></datalist>
+    <div class="max-w-xl">
+      <%= render "shared/record_picker_search", id: "merge_other_search", value: @other&.picker_label, required: true,
+            placeholder: t(".other_placeholder"), missing_message: t(".other_missing") %>
+    </div>
     <%= hidden_field_tag :other_id, @other&.id, data: { record_picker_target: "id" } %>
-  </div>
+  <% end %>
   <fieldset>
     <legend class="field-label"><%= t(".keep") %></legend>
     <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm">

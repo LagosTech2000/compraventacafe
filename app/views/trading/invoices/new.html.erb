@@ -19,7 +19,9 @@
   <% end %>
 <% else %>
   <%# Wide: the payment and the button stay in a column on the right of the purchases. %>
-  <%= form_with model: @invoice, url: trading_invoices_path, class: form_surface_class("@container max-w-none"), data: { controller: "form-validation" } do |form| %>
+  <%= form_with model: @invoice, url: trading_invoices_path, class: form_surface_class("@container max-w-none"),
+        data: { controller: "form-validation unsaved-changes", action: unsaved_changes_actions,
+                unsaved_changes_message_value: t("shared.unsaved_changes.leave") } do |form| %>
     <%= hidden_field_tag :producer_id, @producer.id %>
     <%= render "shared/form_errors", record: @invoice %>
 

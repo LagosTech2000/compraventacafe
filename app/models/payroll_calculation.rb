@@ -17,11 +17,12 @@ class PayrollCalculation
     @period = period
   end
 
-  # One line per member with something earned, by name. Extra hours without
+  # One line per member with something earned, by name; a person in
+  # several roles, in the order the roles were added. Extra hours without
   # the payroll's hour value stay too, so paying says what is missing.
   def lines
     @lines ||= earned.select { |line| line.gross_amount.positive? || line.overtime_hours.to_d.positive? }
-                     .sort_by { |line| line.member.sort_key }
+                     .sort_by { |line| [ *line.member.sort_key, line.member.id ] }
   end
 
   def gross_total = lines.sum(0.to_d, &:gross_amount)

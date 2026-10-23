@@ -72,8 +72,15 @@ RSpec.describe "Printable documents" do
 
     get loans_credit_account_path(producer.person)
     expect_letterhead("Estado de cuenta")
+    expect(Nokogiri::HTML(response.body).at("main").text).not_to include("%>", "tabs:")
 
     get reports_report_path("purchases")
     expect_letterhead("Compras")
+  end
+
+  it "puts it on the private documents printed for a person (the promissory note, the loan contract)" do
+    print = create(:private_document_print, person: producer.person)
+    get loans_credit_account_document_print_path(producer.person, print)
+    expect_letterhead("Pagaré")
   end
 end

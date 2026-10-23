@@ -203,6 +203,54 @@ RSpec.describe "Farms screens", type: :system do
     expect(page_reloaded?).to be(false)
   end
 
+  it "shows the employees' loans in their tab, filters them and pays one without leaving the payroll" do
+    loan = create(:loan, person: ana.person, cash_amount: 1_000, monthly_interest_rate: 0)
+    visit farms_payroll_path(payroll)
+    mark_page
+    within("nav[aria-label='Secciones de la planilla']") { click_link "Préstamos" }
+    expect(page).to have_css("#payroll-loans")
+    expect(page).to have_current_path(/tab=loans/)
+    expect(page_reloaded?).to be(false)
+
+    select "Con deuda", from: "standing"
+    expect(page).to have_no_text("Bruno Aguilar")
+    expect(page).to have_text("Ana Zelaya")
+    expect(page_reloaded?).to be(false)
+
+    within("#payroll-loans-list") { click_link "Abonar", match: :first }
+    within("dialog[open]") do
+      expect(page).to have_text("Desde la planilla «Limpia»")
+      fill_in "Monto (L)", with: "250"
+      select "Efectivo", from: "Forma de pago"
+      click_button "Registrar abono"
+    end
+    expect(page).to have_current_path(/tab=loans/)
+    expect(page).to have_css("dialog[open]", text: "L 250.00") # the receipt, ready to print
+    expect(loan.payments.sum(:amount)).to eq(250)
+  end
+
+  it "adds a person in another role and keeps each day in one of their roles" do
+    create(:payroll_role, payroll:, name: "Jornalero", daily_wage: 300)
+    visit farms_payroll_path(payroll, tab: "members")
+    within("tr", text: "Ana Zelaya") { click_link "Otro rol" }
+    within("dialog[open]") do
+      expect(page).to have_text("Ya está en esta planilla como #{ana.role.name}")
+      find("#payroll_member_payroll_role_id option", text: "Jornalero").select_option
+      find("input[type=submit]").click
+    end
+    expect(page).to have_no_css("dialog[open]")
+    expect(payroll.members.where(person: ana.person).count).to eq(2)
+
+    period = payroll.period_containing(today)
+    visit farms_payroll_timesheet_path(payroll, period: period.to_param)
+    toggles = all("button.day-toggle[aria-label^='Ana Zelaya, #{I18n.l(period.starts_on, format: :long)}']")
+    expect(toggles.size).to eq(2) # one row per role
+    toggles.each(&:click)
+    within(".save-bar") { click_button "Guardar" }
+    expect(page).to have_text("un día va en un solo rol")
+    expect(PayrollAttendance.joins(:member).where(payroll_members: { person_id: ana.person_id })).to be_empty
+  end
+
   it "keeps the date, totals and button of a payment in view on the right" do
     period = payroll.periods.first
     PayrollTimesheet.new(payroll, period).update(ana.id.to_s => { period.starts_on.iso8601 => "1" })
@@ -216,7 +264,7 @@ RSpec.describe "Farms screens", type: :system do
     producer = create(:producer, person: create(:person, first_names: "Ana", last_names: "Zelaya"))
     visit new_farms_farm_path
     fill_in "farm_name", with: "El Mirador"
-    fill_in "farm_producer_search", with: producer.picker_label
+    pick_record "farm_producer_search", producer.picker_label
     within("main form") { find("[type=submit]").click }
     expect(page).to have_text("Finca registrada.")
     expect(producer.farms.pluck(:name)).to eq([ "El Mirador" ])

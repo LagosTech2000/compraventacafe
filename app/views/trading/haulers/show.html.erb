@@ -6,6 +6,7 @@
   <% content_for :modal_src, trading_hauler_payment_path(@hauler, params[:receipt]) %>
 <% end %>
 <%= render "trading/nav" %>
+<%= render "shared/breadcrumbs", crumbs: hauler_crumbs(@hauler) %>
 <% person = @hauler.person %>
 <% balance = @hauler.balance %>
 
@@ -31,6 +32,7 @@
     <% if modal_request? %>
       <%= page_link_to t(".full_page"), trading_hauler_path(@hauler), class: "btn" %>
     <% end %>
+    <%= help_guide_button HelpGuide.process(:hauler_commission), label: true %>
   </div>
 </div>
 
@@ -55,34 +57,17 @@
         <div class="col-span-2"><dt class="text-xs text-ink-muted"><%= Person.human_attribute_name(:zone) %></dt><dd><%= person.zone&.name || "—" %></dd></div>
       </dl>
       <p class="mt-3 text-xs text-ink-muted"><%= t(".formula", pounds: number_with_precision(Hauler::CAN_POUNDS, precision: 1)) %></p>
+      <%# Where the carrero lives, when it is on the map. %>
+      <% if person.located? %><div class="mt-3"><%= render "shared/location", record: person %></div><% end %>
     </section>
 
-    <section class="panel p-4" aria-labelledby="hauler-payments">
-      <h2 id="hauler-payments" class="font-semibold"><%= t(".payments") %></h2>
-      <% if @payments.any? %>
-        <ul class="mt-3 divide-y divide-line text-sm" role="list">
-          <% @payments.each do |payment| %>
-            <li id="<%= dom_id(payment) %>" class="flex items-center justify-between gap-3 py-2">
-              <div class="min-w-0">
-                <p class="font-medium tabular-nums"><%= format_money(payment.amount) %></p>
-                <p class="text-xs text-ink-muted"><%= l(payment.paid_on) %> · <%= payment.human_payment_method %> · <%= t(".receipt_number", number: payment.display_number) %></p>
-              </div>
-              <span class="flex shrink-0 gap-1">
-                <%= modal_link_to t(".receipt"), trading_hauler_payment_path(@hauler, payment), class: "btn btn-sm", data: { row_link: true } %>
-                <% if policy(payment).destroy? %>
-                  <%= button_to t(".remove_payment"), trading_hauler_payment_path(@hauler, payment), method: :delete, class: "btn btn-sm",
-                        form: { data: { turbo_confirm: t(".confirm_remove_payment") } } %>
-                <% end %>
-              </span>
-            </li>
-          <% end %>
-        </ul>
-      <% else %>
-        <p class="mt-3 text-sm text-ink-muted"><%= t(".no_payments") %></p>
-      <% end %>
-    </section>
   </aside>
 
+  <%# Its purchases and its payments, in tabs (shared/_tab_bar). %>
+  <div class="min-w-0" data-controller="tabs">
+  <%= render "shared/tab_bar", id: "hauler", label: t(".tabs_label"),
+        tabs: { purchases: t(".purchases"), payments: [ t(".payments"), @payments.size ] } %>
+  <%= tab_panel "hauler", :purchases, selected: true do %>
   <section aria-labelledby="hauler-purchases">
     <h2 id="hauler-purchases" class="mb-3 text-lg font-semibold"><%= t(".purchases") %></h2>
     <%= render layout: "shared/filters", locals: { filter: @filter, url: trading_hauler_path(@hauler), frame: "hauler-purchases-list" } do |form| %>
@@ -146,4 +131,32 @@
     <% end %>
     <% end %>
   </section>
+  <% end %>
+  <%= tab_panel "hauler", :payments do %>
+  <section class="panel p-4" aria-labelledby="hauler-payments">
+      <h2 id="hauler-payments" class="font-semibold"><%= t(".payments") %></h2>
+      <% if @payments.any? %>
+        <ul class="mt-3 divide-y divide-line text-sm" role="list">
+          <% @payments.each do |payment| %>
+            <li id="<%= dom_id(payment) %>" class="flex items-center justify-between gap-3 py-2">
+              <div class="min-w-0">
+                <p class="font-medium tabular-nums"><%= format_money(payment.amount) %></p>
+                <p class="text-xs text-ink-muted"><%= l(payment.paid_on) %> · <%= payment.human_payment_method %> · <%= t(".receipt_number", number: payment.display_number) %></p>
+              </div>
+              <span class="flex shrink-0 gap-1">
+                <%= modal_link_to t(".receipt"), trading_hauler_payment_path(@hauler, payment), class: "btn btn-sm", data: { row_link: true } %>
+                <% if policy(payment).destroy? %>
+                  <%= button_to t(".remove_payment"), trading_hauler_payment_path(@hauler, payment), method: :delete, class: "btn btn-sm",
+                        form: { data: { turbo_confirm: t(".confirm_remove_payment") } } %>
+                <% end %>
+              </span>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="mt-3 text-sm text-ink-muted"><%= t(".no_payments") %></p>
+      <% end %>
+    </section>
+  <% end %>
+  </div>
 </div>

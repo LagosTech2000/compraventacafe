@@ -35,7 +35,8 @@ module Administration
 
     def update
       if @farm.update(farm_params)
-        close_modal_with notice: t(".success"), fallback: administration_farms_path
+        close_modal_with notice: t(".success"), fallback: administration_farms_path,
+                         event: "farm:updated", detail: farm_picker_detail(@farm)
       else
         render :edit, status: :unprocessable_content
       end

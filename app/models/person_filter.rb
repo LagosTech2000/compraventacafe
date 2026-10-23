@@ -13,6 +13,6 @@ class PersonFilter < ListFilter
     scope = scope.public_send(role) if role
     scope = scope.search(q) if q
     scope = scope.where(department_id:) if department_id
-    scope.includes(:client, :collaborator, :producer, :hauler).newest_first
+    scope.includes(:client, :collaborator, :producer, :hauler, :photo_info).newest_first
   end
 end

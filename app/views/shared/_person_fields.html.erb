@@ -29,6 +29,17 @@
   <%= form.label :email, class: "field-label" %>
   <%= form.email_field :email, class: "field-input", **field_format_attributes(Person, :email, :email) %>
 </div>
+<%# Optional; the private loan contract prints them (Fernando, 2026-10-22). %>
+<div>
+  <%= form.label :civil_status, class: "field-label" %>
+  <%= form.text_field :civil_status, class: "field-input", placeholder: t("shared.person_fields.civil_status_placeholder"),
+        **field_format_attributes(Person, :civil_status, :person_name) %>
+</div>
+<div>
+  <%= form.label :nationality, class: "field-label" %>
+  <%= form.text_field :nationality, class: "field-input", placeholder: t("shared.person_fields.nationality_placeholder"),
+        **field_format_attributes(Person, :nationality, :person_name) %>
+</div>
 
 <div data-controller="option-picker" data-action="zone:created@window->option-picker#add">
   <%= form.label :zone_id, class: "field-label" %>

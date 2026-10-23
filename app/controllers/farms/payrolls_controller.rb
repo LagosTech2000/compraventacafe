@@ -9,12 +9,13 @@ module Farms
       @count = @filter.apply(policy_scope(Payroll)).unscope(:order, :includes).count
     end
 
-    TABS = %w[periods members tasks expenses].freeze
+    TABS = %w[periods members loans tasks expenses].freeze
 
     # Pinned accounts on top, then one tab: pay periods, members (and roles),
-    # tasks (payrolls by task) or expenses.
+    # the members' loans (for who sees the loans module), tasks (payrolls by
+    # task) or expenses.
     def show
-      @tabs = @payroll.task? ? TABS : TABS - %w[tasks]
+      @tabs = TABS.select { |tab| tab_available?(tab) }
       @tab = params[:tab].presence_in(@tabs) || @tabs.first
 
       case @tab
@@ -29,6 +30,16 @@ module Farms
         @filter = PayrollMemberFilter.new(params)
         @members, @next_page = @filter.results(@payroll.members)
         @members_count = @filter.apply(@payroll.members).size
+      when "loans"
+        @filter = PayrollLoanFilter.new(params)
+        all_rows = PayrollLoanFilter.rows(@payroll)
+        @loan_rows, @next_page = @filter.results(all_rows)
+        @loan_rows_count = @filter.apply(all_rows).size
+        @loans_summary = {
+          owing: all_rows.count { it.account.open_loans.any? },
+          overdue: all_rows.sum { it.account.overdue_loans.size },
+          total_owed: all_rows.sum { it.account.total_owed }
+        }
       when "tasks"
         @filter = PayrollTaskFilter.new(params)
         @tasks, @next_page = @filter.results(@payroll.tasks)
@@ -77,6 +88,14 @@ module Farms
     end
 
     private
+      def tab_available?(tab)
+        case tab
+        when "tasks" then @payroll.task?
+        when "loans" then policy([ :loans, :credit_account ]).show?
+        else true
+        end
+      end
+
       def set_payroll
         @payroll = authorize Payroll.find(params[:id])
       end

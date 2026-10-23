@@ -10,6 +10,9 @@ module Loans
     def show
       person = authorize Person.find(params[:id]), policy_class: CreditAccountPolicy
       @account = CreditAccount.new(person)
+      # Each loan's promissory note and contract: how many times each
+      # printed, and (admins) when and by whom.
+      @document_prints = LoanDocumentPrints.new(@account.loans, history: policy(PrivateDocumentPrint).history?)
     end
   end
 end

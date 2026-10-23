@@ -29,7 +29,11 @@ module Trading
       if @purchase.save
         # On the page: back to an empty form, with the saved purchase open in
         # the modal. In a modal: closes it and refreshes the page behind.
-        close_modal_with notice: t(".success", producer: @purchase.producer.full_name),
+        notice = t(".success", producer: @purchase.producer.full_name)
+        if (zone = @purchase.zone_given_to_producer)
+          notice = "#{notice} #{t(".zone_given", zone: zone.name, producer: @purchase.producer.full_name)}"
+        end
+        close_modal_with notice:,
                          fallback: new_trading_purchase_path(detail: @purchase.id)
       else
         render :new, status: :unprocessable_content

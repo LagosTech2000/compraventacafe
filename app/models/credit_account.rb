@@ -9,7 +9,12 @@ class CreditAccount
   def initialize(person, today: Time.zone.today)
     @person = person
     @today = today
-    @loans = person.loans.includes(:payments, :supply_items).newest_first.to_a
+    # Loaded once per list (preloaded loans, payments and supplies) or here.
+    @loans = if person.association(:loans).loaded?
+      person.loans.sort_by { |loan| [ loan.disbursed_on, loan.id ] }.reverse
+    else
+      person.loans.includes(:payments, :supply_items).newest_first.to_a
+    end
   end
 
   def balance(loan)

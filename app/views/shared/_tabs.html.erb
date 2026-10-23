@@ -1,0 +1,11 @@
+<%# Tabs inside one page (tabs_controller.js), without asking the server:
+      render layout: "shared/tabs", locals: { id: "account", label:, tabs: { loans: "Préstamos", history: "Historial" } } do
+        tab_panel "account", :loans, selected: true do … end
+    (No ERB tags in this comment: a closing tag here would end it early.)
+    tabs: { key => label } or { key => [label, count] }; the first is shown.
+    With one tab only its panel shows, without the bar. On paper every
+    panel prints (application.css). %>
+<div data-controller="tabs">
+  <%= render "shared/tab_bar", id:, label:, tabs: %>
+  <%= yield %>
+</div>

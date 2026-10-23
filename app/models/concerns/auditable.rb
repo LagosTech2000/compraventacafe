@@ -16,6 +16,8 @@ module Auditable
     after_create { record_audit("create", saved_changes) }
     after_update { record_audit("update", saved_changes) }
     after_destroy { record_audit("destroy", attributes.transform_values { |value| [ value, nil ] }) }
+    # Whatever was cached from the data is stale now (DataVersion).
+    after_commit { DataVersion.bump! }
   end
 
   def audit_label

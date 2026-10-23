@@ -1,4 +1,6 @@
 <% content_for :title, t(".title") %>
+<%# Live list: back and forward ask the server again (the frame changed the page). %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
 <%= render "farms/nav" %>
 
 <div class="flex flex-wrap items-center justify-between gap-4">
@@ -9,11 +11,16 @@
 </div>
 <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
 
-<%= render layout: "shared/filters", locals: { filter: @filter, url: farms_expense_categories_path } do |form| %>
+<%# Filters apply as they change and only the results reload (live_filter_controller.js). %>
+<div data-controller="live-filter">
+<%= render layout: "shared/filters", locals: { filter: @filter, url: farms_expense_categories_path, frame: "expense-categories-list", live: true } do |form| %>
   <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: ExpenseCategory.human_attribute_name(:name) %>
   <%= filter_select form, :status, t("farms.farms.index.status"),
         ExpenseCategoryFilter::STATUSES.map { |status| [ t("farms.statuses.#{status}"), status ] }, selected: @filter.status %>
 <% end %>
+
+<%= list_frame "expense-categories-list" do %>
+<%= live_list_status @filter, status: ExpenseCategoryFilter::STATUSES.map { |status| [ t("farms.statuses.#{status}"), status ] } %>
 
 <% if @categories.any? %>
   <ul class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -33,3 +40,5 @@
 <% else %>
   <p class="empty-state mt-6"><%= t(".empty") %></p>
 <% end %>
+<% end %>
+</div>

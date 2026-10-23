@@ -45,6 +45,7 @@ RSpec.describe "Sorting every list" do
     PayrollFilter => -> { farms_payrolls_path },
     PayrollPeriodFilter => -> { farms_payroll_path(daily, tab: "periods") },
     PayrollMemberFilter => -> { farms_payroll_path(daily, tab: "members") },
+    PayrollLoanFilter => -> { farms_payroll_path(daily, tab: "loans") },
     PayrollTaskFilter => -> { farms_payroll_path(task_payroll, tab: "tasks") },
     PayrollExpenseFilter => -> { farms_payroll_path(daily, tab: "expenses") }
   }.freeze

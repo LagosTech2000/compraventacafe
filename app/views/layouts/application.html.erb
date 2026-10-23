@@ -10,7 +10,8 @@
     <%= csp_meta_tag %>
     <%# No prefetch on hover (Turbo 8's default): every link the pointer
         rested on was a request, and the office shares one IP and its limit
-        (config/initializers/rack_attack.rb). Pages load on click. %>
+        (config/initializers/rack_attack.rb). A page starts loading when the
+        mouse button goes down on its link (instant_click.js). %>
     <meta name="turbo-prefetch" content="false">
 
     <%= yield :head %>

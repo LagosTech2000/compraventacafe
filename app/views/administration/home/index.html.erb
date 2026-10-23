@@ -20,6 +20,10 @@
     <%= render "shared/tile", path: administration_audit_events_path, icon_name: :history,
           title: t("administration.audit_events.index.title"), description: t(".audit_description") %>
   <% end %>
+  <% if policy(PrivateDocument).index? %>
+    <%= render "shared/tile", path: administration_private_documents_path, icon_name: :document,
+          title: t("administration.private_documents.index.title"), description: t(".private_documents_description") %>
+  <% end %>
   <% if policy(SiteSetting).show? %>
     <%= render "shared/tile", path: administration_site_setting_path, icon_name: :settings,
           title: t("administration.site_settings.show.title"), description: t(".site_description") %>

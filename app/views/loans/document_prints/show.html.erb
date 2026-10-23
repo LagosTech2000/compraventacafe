@@ -1,0 +1,32 @@
+<% document = @print.private_document %>
+<% content_for :title, t(".title", name: document.name, person: @person.full_name) %>
+<% content_for :head do %>
+  <%# Back and forward ask the server again: the dialog opens only once. %>
+  <meta name="turbo-cache-control" content="no-cache">
+  <%# The documents are on letter paper (as they came, in Word). %>
+  <style>@page { size: letter; margin: 2cm; }</style>
+<% end %>
+<%= render "shared/breadcrumbs", crumbs: (@print.loan ? loan_crumbs(@print.loan, [ document.name ]) : credit_account_crumbs(@person, [ document.name ])) %>
+
+<div class="mb-6 flex flex-wrap items-start justify-between gap-4 print:hidden">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title", name: document.name, person: @person.full_name) %></h1>
+    <p class="mt-1 text-sm text-ink-muted">
+      <%= t(".printed", at: l(@print.created_at, format: :default), name: @print.user.name) %> ·
+      <%= @print.loan_id ? t(".loan", number: @print.loan_id) : t(".no_loan") %>
+    </p>
+  </div>
+  <div class="flex flex-wrap gap-2" data-controller="print" data-print-auto-value="<%= params[:print].present? %>">
+    <% if @print.loan && policy(PrivateDocumentPrint).create? %>
+      <%# Each print counts: printing again records it again. %>
+      <%= button_to t(".print_again"), loans_credit_account_document_prints_path(@person), class: "btn btn-primary",
+            params: { private_document_print: { document_key: document.key, loan_id: @print.loan_id } }, form: { data: { turbo_frame: "_top" } } %>
+    <% end %>
+    <%= link_to t(".back"), (@print.loan ? loans_loan_path(@print.loan) : loans_credit_account_path(@person)), class: "btn" %>
+  </div>
+</div>
+
+<article class="document-sheet">
+  <%= render "shared/print_letterhead", title: document.name, subtitle: @person.full_name %>
+  <div class="document-body mt-6"><%= private_document_html(@print.body) %></div>
+</article>

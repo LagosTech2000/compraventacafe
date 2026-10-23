@@ -3,6 +3,7 @@
 
 <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
 <p class="mt-1 text-sm text-ink-muted"><%= @hauler.full_name %></p>
+<div class="mt-2"><%= help_guide_button HelpGuide.process(:hauler_commission), label: true %></div>
 
 <dl class="mt-4 grid grid-cols-3 gap-3">
   <% { commissions: @hauler.commissions_total, paid: @hauler.paid_total, balance: @hauler.balance }.each do |key, value| %>

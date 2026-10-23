@@ -1,0 +1,44 @@
+<% content_for :title, @document.name %>
+<%= render "administration/nav" %>
+<%= render "shared/breadcrumbs", crumbs: [ [ t("administration.nav.private_documents"), administration_private_documents_path ], [ @document.name ] ] %>
+
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= @document.name %></h1>
+    <p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t(".help") %></p>
+    <% if @document.updated_by %>
+      <p class="mt-1 text-xs text-ink-muted"><%= t("administration.private_documents.index.updated", at: l(@document.updated_at, format: :default), name: @document.updated_by.name) %></p>
+    <% end %>
+  </div>
+  <div class="flex flex-wrap items-center gap-2">
+    <%= help_guide_button HelpGuide.process(:private_documents), label: true %>
+    <% if policy(@document).update? %>
+      <%= link_to t(".edit"), edit_administration_private_document_path(@document), class: "btn btn-primary" %>
+    <% end %>
+  </div>
+</div>
+
+<div class="mt-6 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="document-sheet">
+    <% if @document.blank_body? %>
+      <p class="empty-state"><%= t(".blank") %></p>
+    <% else %>
+      <div class="document-body"><%= private_document_html(@document.body) %></div>
+    <% end %>
+  </div>
+
+  <%# What fills in when it prints, and with what. %>
+  <aside class="panel p-4" aria-labelledby="document-variables">
+    <h2 id="document-variables" class="text-sm font-semibold"><%= t(".variables") %></h2>
+    <% if (keys = @document.variable_keys).any? %>
+      <ul class="mt-2 space-y-1 text-sm">
+        <% keys.each do |key| %>
+          <li><span class="font-medium"><%= PrivateDocumentVariables.label(key) %></span>
+            <span class="text-xs text-ink-muted">· <%= PrivateDocumentVariables.group_label(key.split(".").first) %></span></li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="mt-2 text-sm text-ink-muted"><%= t(".no_variables") %></p>
+    <% end %>
+  </aside>
+</div>

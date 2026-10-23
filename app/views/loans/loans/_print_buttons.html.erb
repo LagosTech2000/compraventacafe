@@ -1,0 +1,48 @@
+<%# A loan's promissory note and contract (Fernando, 2026-10-23): a button
+    for each (who can print), which opens the document filled in with this
+    loan to check it before printing (Loans::DocumentPrintsController#new),
+    and how many times it printed, for everyone. Over the counter, admins
+    see the latest prints with their dates and users.
+    document_prints: LoanDocumentPrints of the page. %>
+<% can_print = policy(PrivateDocumentPrint).create? %>
+<% document_prints.documents.each do |document| %>
+  <% count = document_prints.count(loan, document)
+     prints = document_prints.history(loan, document)
+     label = t("loans.loans.print_buttons.#{document.key}") %>
+  <span class="inline-flex items-center gap-1.5" id="loan-<%= loan.id %>-<%= document.key %>">
+    <% if !can_print %>
+      <span class="text-xs font-medium text-ink-muted"><%= label %></span>
+    <% elsif document.blank_body? %>
+      <button type="button" class="btn btn-sm" disabled title="<%= t("loans.loans.print_buttons.blank") %>"><%= icon(:print, css: "size-4") %> <%= label %></button>
+    <% else %>
+      <%= link_to new_loans_credit_account_document_print_path(loan.person_id, document: document.key, loan_id: loan.id),
+            class: "btn btn-sm", data: { turbo_frame: "_top" },
+            aria: { label: t("loans.loans.print_buttons.label", document: document.name, number: loan.id) } do %>
+        <%= icon(:print, css: "size-4") %> <%= label %>
+      <% end %>
+    <% end %>
+    <%# The counter: everyone; its card with the latest prints: admins. %>
+    <span class="print-count" tabindex="0" data-print-count="<%= count %>" aria-label="<%= t("loans.loans.print_buttons.count", count:) %>"
+          <% if prints.any? %>data-controller="print-count" data-action="mouseenter->print-count#place focusin->print-count#place"<% else %>title="<%= t("loans.loans.print_buttons.count", count:) %>"<% end %>>
+      <span class="print-count-number"><%= count %></span>
+      <% if prints.any? %>
+        <span class="print-count-card" role="tooltip" data-print-count-target="card">
+          <span class="presence-card-body block">
+            <span class="presence-card-heading block"><%= t("loans.loans.print_buttons.latest", name: document.name) %></span>
+            <span class="block space-y-0.5">
+              <% prints.each do |print| %>
+                <%= link_to loans_credit_account_document_print_path(loan.person_id, print), class: "presence-link", data: { turbo_frame: "_top" } do %>
+                  <span class="block font-medium tabular-nums"><%= l(print.created_at, format: :default) %></span>
+                  <span class="block text-ink-muted"><%= print.user.name %></span>
+                <% end %>
+              <% end %>
+            </span>
+            <% if count > prints.size %>
+              <span class="mt-2 block text-ink-muted"><%= t("loans.loans.print_buttons.more", count: count - prints.size) %></span>
+            <% end %>
+          </span>
+        </span>
+      <% end %>
+    </span>
+  </span>
+<% end %>

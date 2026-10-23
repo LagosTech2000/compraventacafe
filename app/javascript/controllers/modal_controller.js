@@ -13,11 +13,13 @@ export default class extends Controller {
 
   connect() {
     this.history = []
+    this.element.addEventListener("cancel", this.cancelWithEscape)
     this.frameTarget.addEventListener("turbo:before-fetch-request", this.rememberMethod)
     this.frameTarget.addEventListener("turbo:frame-render", this.record)
   }
 
   disconnect() {
+    this.element.removeEventListener("cancel", this.cancelWithEscape)
     this.frameTarget.removeEventListener("turbo:before-fetch-request", this.rememberMethod)
     this.frameTarget.removeEventListener("turbo:frame-render", this.record)
   }
@@ -28,17 +30,33 @@ export default class extends Controller {
   }
 
   close() {
-    this.element.close()
+    if (this.mayLeave()) this.element.close()
   }
 
   back() {
+    if (!this.mayLeave()) return
     if (this.history.length > 1) {
       this.history.pop()
       this.goingBack = true
       this.frameTarget.src = this.history[this.history.length - 1]
     } else {
-      this.close()
+      this.element.close()
     }
+  }
+
+  // A form in here with changes not saved (unsaved_changes_controller.js)
+  // asks before they are lost; once leaving, it no longer asks.
+  mayLeave() {
+    const form = this.frameTarget.querySelector("[data-dirty='true']")
+    if (!form) return true
+    if (!window.confirm(form.dataset.unsavedChangesMessageValue)) return false
+
+    delete form.dataset.dirty
+    return true
+  }
+
+  cancelWithEscape = (event) => {
+    if (!this.mayLeave()) event.preventDefault()
   }
 
   // Runs on the dialog's "close" event, which can arrive after the closing

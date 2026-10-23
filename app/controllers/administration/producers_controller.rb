@@ -25,7 +25,7 @@ module Administration
       def producer_params
         params.expect(producer: [
           :kind, :ihcafe_code, new_farm_names: [],
-          person_attributes: [ :id, :first_names, :last_names, :dni, :rtn, :phone, :email, :zone_id,
+          person_attributes: [ :id, :first_names, :last_names, :dni, :rtn, :phone, :email, :civil_status, :nationality, :zone_id,
                                :department_id, :municipality_id, :address_line, :latitude, :longitude,
                                :photo_upload, :remove_photo, :client_role, :collaborator_role ]
         ])

@@ -41,6 +41,13 @@ module Compraventacafe
     # Off by default so development shows the full trace; on in production.
     config.x.friendly_errors = false
 
+    # Pages, turbo streams, JSON and CSV go compressed (gzip) to whoever asks
+    # for it: less to send on a slow connection (Fernando, 2026-10-18: the app
+    # always fast). Files already compressed (images, the backup's zip) are
+    # sent as they are.
+    config.middleware.use Rack::Deflater,
+                          if: ->(_env, _status, headers, _body) { headers["content-type"].to_s.match?(%r{\Atext/|json|javascript|csv}) }
+
     # Map tiles for the location of people and farms (OpenStreetMap: free, no
     # key; its usage policy asks for the attribution the map shows). Specs
     # set it to nil: they never reach the internet.

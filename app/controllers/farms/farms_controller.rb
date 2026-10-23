@@ -29,7 +29,7 @@ module Farms
 
       if @farm.save
         close_modal_with notice: t(".success"), fallback: farms_farm_path(@farm),
-                         event: "farm:created", detail: { id: @farm.id, name: @farm.name, producer_id: @farm.producer_id }
+                         event: "farm:created", detail: farm_picker_detail(@farm)
       else
         render :new, status: :unprocessable_content
       end
@@ -39,8 +39,11 @@ module Farms
     end
 
     def update
+      # From a purchase (picker=1, «Completar datos»): the form stays and
+      # learns what the farm still misses.
       if @farm.update(farm_params)
-        close_modal_with notice: t(".success"), fallback: farms_farm_path(@farm)
+        close_modal_with notice: t(".success"), fallback: farms_farm_path(@farm),
+                         event: "farm:updated", detail: farm_picker_detail(@farm)
       else
         render :edit, status: :unprocessable_content
       end

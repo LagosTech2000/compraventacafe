@@ -45,8 +45,9 @@ class Hauler < ApplicationRecord
 
   def audit_label = person.full_name
 
-  def commissions_total = purchases.active.sum(:hauler_commission)
-  def paid_total = payments.sum(:amount)
+  # From with_totals when the list selected them; asked for otherwise.
+  def commissions_total = has_attribute?(:commissions_total) ? self[:commissions_total] : purchases.active.sum(:hauler_commission)
+  def paid_total = has_attribute?(:paid_total) ? self[:paid_total] : payments.sum(:amount)
   def balance = commissions_total - paid_total
 
   # Has purchases or payments: it stays a hauler (deactivate it instead).

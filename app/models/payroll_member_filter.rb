@@ -14,6 +14,6 @@ class PayrollMemberFilter < ListFilter
   def apply(scope)
     scope = scope.where(person_id: Person.search(q).select(:id)) if q
     scope = scope.where(active: status == "active") if status
-    scope.includes(:person, :role).joins(:person).order("people.last_names", "people.first_names")
+    scope.includes(:role, person: :photo_info).joins(:person).order("people.last_names", "people.first_names")
   end
 end

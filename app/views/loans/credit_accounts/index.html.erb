@@ -1,4 +1,6 @@
 <% content_for :title, t(".title") %>
+<%# Live list: back and forward ask the server again (the frame changed the page). %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
 <%# Updates itself while open when the data changes (LiveUpdates). %>
 <%= live_updates_from :loans %>
 <%= render "loans/nav" %>
@@ -6,13 +8,16 @@
 <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
 <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
 
-<%= render layout: "shared/filters", locals: { filter: @filter, url: loans_credit_accounts_path } do |form| %>
+<%# Filters apply as they change and only the results reload (live_filter_controller.js). %>
+<div data-controller="live-filter">
+<%= render layout: "shared/filters", locals: { filter: @filter, url: loans_credit_accounts_path, frame: "credit-accounts-list", live: true } do |form| %>
   <%= filter_text_field form, :q, t("loans.credit_accounts.index.person"), value: @filter.q, placeholder: t("loans.credit_accounts.index.search_placeholder") %>
   <%= filter_select form, :standing, t("loans.credit_accounts.index.standing"),
         CreditAccountFilter::STANDINGS.map { |value| [ t("loans.credit_accounts.index.standings.#{value}"), value ] }, selected: @filter.standing %>
 <% end %>
 
 <%= list_frame "credit-accounts-list" do %>
+<%= live_list_status @filter, standing: CreditAccountFilter::STANDINGS.map { |value| [ t("loans.credit_accounts.index.standings.#{value}"), value ] } %>
 <% sorting = { filter: @filter, frame: "credit-accounts-list" } %>
 <div class="mt-6">
   <% if @accounts.any? %>
@@ -22,7 +27,7 @@
           <li class="data-card" id="<%= dom_id(account.person, :card) %>">
             <div class="flex items-start justify-between gap-3">
               <div class="min-w-0">
-                <p class="font-medium"><%= account.person.full_name %></p>
+                <p class="font-medium"><%= with_avatar(account.person) %></p>
                 <p class="mt-1"><%= payer_score_badge(account.score) %></p>
               </div>
               <%= detail_button loans_credit_account_path(account.person) %>
@@ -50,7 +55,7 @@
           <tbody>
             <% @accounts.each do |account| %>
               <tr id="<%= dom_id(account.person) %>">
-                <td class="font-medium"><%= account.person.full_name %></td>
+                <td class="font-medium"><%= with_avatar(account.person) %></td>
                 <td class="text-right tabular-nums"><%= account.open_loans.size %></td>
                 <td class="text-right tabular-nums"><%= account.overdue_loans.size %></td>
                 <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(account.total_owed) %></td>
@@ -68,3 +73,4 @@
   <% end %>
 </div>
 <% end %>
+</div>

@@ -41,6 +41,17 @@ class Farm < ApplicationRecord
 
   def audit_label = name
 
+  # What is still empty, for the notice of a purchase that names the farm
+  # (Fernando, 2026-10-18: like Producer#missing_fields). Only a notice:
+  # none of them is required.
+  def missing_fields
+    fields = []
+    fields << self.class.human_attribute_name(:area_value) if area_value.blank?
+    fields << I18n.t("addresses.title") if [ department_id, municipality_id, address_line ].any?(&:blank?)
+    fields << I18n.t("addresses.map.title") unless located?
+    fields
+  end
+
   # Its land in every unit (FarmArea), or nil when it was not written.
   def area = (FarmArea.new(area_value, area_unit) if area_value && FarmArea::UNITS.include?(area_unit))
 

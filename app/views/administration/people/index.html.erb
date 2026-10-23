@@ -1,4 +1,6 @@
 <% content_for :title, t(".title") %>
+<%# Live list: back and forward ask the server again (the frame changed the page). %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
 <%= render "administration/nav" %>
 
 <div class="flex flex-wrap items-center justify-between gap-4">
@@ -8,7 +10,9 @@
   <% end %>
 </div>
 
-<%= render layout: "shared/filters", locals: { filter: @filter, url: administration_people_path } do |form| %>
+<%# Filters apply as they change and only the results reload (live_filter_controller.js). %>
+<div data-controller="live-filter">
+<%= render layout: "shared/filters", locals: { filter: @filter, url: administration_people_path, frame: "people-list", live: true } do |form| %>
   <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("administration.people.index.search_placeholder") %>
   <%= filter_select form, :role, t("administration.people.index.roles"),
         PersonFilter::ROLES.map { |r| [ t("administration.people.index.#{r}"), r ] }, selected: @filter.role, all: t("administration.people.index.all") %>
@@ -17,6 +21,7 @@
 <% end %>
 
 <%= list_frame "people-list" do %>
+<%= live_list_status @filter, role: PersonFilter::ROLES.map { |r| [ t("administration.people.index.#{r}"), r ] }, department_id: Department.ordered.pluck(:name, :id) %>
 <% sorting = { filter: @filter, frame: "people-list" } %>
 <% if @people.any? %>
   <div class="mt-6 overflow-x-auto panel">
@@ -34,7 +39,7 @@
       <tbody>
         <% @people.each do |person| %>
           <tr id="<%= dom_id(person) %>">
-            <td class="font-medium"><%= person.full_name %></td>
+            <td class="font-medium"><%= with_avatar(person) %></td>
             <td class="whitespace-nowrap"><%= person.dni %></td>
             <td class="whitespace-nowrap"><%= person.rtn %></td>
             <td class="whitespace-nowrap"><%= format_phone(person.phone) %></td>
@@ -50,3 +55,4 @@
   <p class="empty-state mt-6"><%= t(".empty") %></p>
 <% end %>
 <% end %>
+</div>

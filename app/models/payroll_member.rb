@@ -4,6 +4,9 @@
 # member with a role or a wage of their own is paid by day like in a daily
 # payroll; the rest are paid by cans.
 # A member with work recorded is deactivated, never removed.
+# In a daily payroll the same person can be a member several times, once
+# per role (Fernando, 2026-10-17: driver some days, laborer others), never
+# on the same day (PayrollAttendance). Other payrolls take each person once.
 class PayrollMember < ApplicationRecord
   include Auditable
 
@@ -16,7 +19,8 @@ class PayrollMember < ApplicationRecord
   has_many :task_participations, class_name: "PayrollTaskParticipant", dependent: :restrict_with_error
   has_many :payment_lines, class_name: "PayrollPaymentLine", dependent: :restrict_with_error
 
-  validates :person_id, uniqueness: { scope: :payroll_id }
+  validates :person_id, uniqueness: { scope: :payroll_id }, unless: -> { payroll&.daily? }
+  validates :person_id, uniqueness: { scope: %i[payroll_id payroll_role_id], message: :taken_with_role }, if: -> { payroll&.daily? }
   validates :daily_wage_override, numericality: { greater_than: 0, less_than: 100_000 }, allow_nil: true
   validate :person_is_collaborator, :role_of_same_payroll
   validate :has_daily_wage, if: -> { payroll&.daily? }
@@ -29,6 +33,10 @@ class PayrollMember < ApplicationRecord
   end
 
   def full_name = person.full_name
+
+  # "Ana Zelaya · Chofer": the person and, if any, the role, to tell apart
+  # the same person working in two roles.
+  def label = [ full_name, role&.name ].compact.join(" · ")
 
   # Own wage first; otherwise the role's.
   def daily_wage

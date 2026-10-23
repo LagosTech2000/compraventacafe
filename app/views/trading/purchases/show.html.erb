@@ -2,6 +2,7 @@
 <%# Updates itself while open when the data changes (LiveUpdates). %>
 <%= live_updates_from :trading %>
 <%= render "trading/nav" %>
+<%= render "shared/breadcrumbs", crumbs: producer_crumbs(@purchase.producer, [ purchase_label(@purchase) ]) %>
 
 <div class="flex flex-wrap items-start justify-between gap-4">
   <div>

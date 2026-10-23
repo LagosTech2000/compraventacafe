@@ -2,7 +2,8 @@
 <% members = payroll.members.includes(:person).select { |member| member.active? || task.participants.map(&:payroll_member_id).include?(member.id) }.sort_by(&:sort_key) %>
 <% chosen = task.kept_participants.map(&:payroll_member_id) %>
 <%= form_with model: task, url: task.persisted? ? farms_payroll_task_path(payroll, task) : farms_payroll_tasks_path(payroll),
-      scope: :payroll_task, class: form_surface_class("max-w-3xl space-y-5"), data: { controller: "form-validation task-split",
+      scope: :payroll_task, class: form_surface_class("max-w-3xl space-y-5"), data: { controller: "form-validation task-split unsaved-changes", action: unsaved_changes_actions,
+              unsaved_changes_message_value: t("shared.unsaved_changes.leave"),
               task_split_count_labels_value: { one: t("farms.tasks.form.chosen.one"), other: t("farms.tasks.form.chosen.other") }.to_json } do |form| %>
   <%= render "shared/form_errors", record: task %>
   <%# Fixed amount, or quantity × price (task_pricing_controller.js shows the

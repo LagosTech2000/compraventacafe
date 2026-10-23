@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_16_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -253,7 +253,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_16_140000) do
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["payroll_id", "person_id"], name: "index_payroll_members_on_payroll_id_and_person_id", unique: true
+    t.index ["payroll_id", "person_id", "payroll_role_id"], name: "index_payroll_members_on_payroll_person_role", unique: true, nulls_not_distinct: true
     t.index ["payroll_id"], name: "index_payroll_members_on_payroll_id"
     t.index ["payroll_role_id"], name: "index_payroll_members_on_payroll_role_id"
     t.index ["person_id"], name: "index_payroll_members_on_person_id"
@@ -376,6 +376,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_16_140000) do
     t.bigint "zone_id"
     t.decimal "latitude", precision: 9, scale: 6
     t.decimal "longitude", precision: 9, scale: 6
+    t.string "civil_status"
+    t.string "nationality"
     t.index ["department_id"], name: "index_people_on_department_id"
     t.index ["dni"], name: "index_people_on_dni", unique: true, where: "(dni IS NOT NULL)"
     t.index ["last_names", "first_names"], name: "index_people_on_last_names_and_first_names"
@@ -394,6 +396,31 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_16_140000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id", "module_key"], name: "index_permissions_on_user_id_and_module_key", unique: true
+  end
+
+  create_table "private_document_prints", force: :cascade do |t|
+    t.bigint "private_document_id", null: false
+    t.bigint "person_id", null: false
+    t.bigint "loan_id"
+    t.bigint "user_id", null: false
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["loan_id"], name: "index_private_document_prints_on_loan_id"
+    t.index ["person_id", "private_document_id", "created_at"], name: "index_private_document_prints_on_person_document_and_time"
+    t.index ["private_document_id"], name: "index_private_document_prints_on_private_document_id"
+    t.index ["user_id"], name: "index_private_document_prints_on_user_id"
+  end
+
+  create_table "private_documents", force: :cascade do |t|
+    t.string "key", null: false
+    t.text "body", default: "", null: false
+    t.bigint "updated_by_id"
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_private_documents_on_key", unique: true
+    t.index ["updated_by_id"], name: "index_private_documents_on_updated_by_id"
   end
 
   create_table "producers", force: :cascade do |t|
@@ -597,6 +624,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_16_140000) do
   add_foreign_key "people", "municipalities"
   add_foreign_key "people", "zones"
   add_foreign_key "permissions", "users"
+  add_foreign_key "private_document_prints", "loans", on_delete: :nullify
+  add_foreign_key "private_document_prints", "people"
+  add_foreign_key "private_document_prints", "private_documents"
+  add_foreign_key "private_document_prints", "users"
+  add_foreign_key "private_documents", "users", column: "updated_by_id"
   add_foreign_key "producers", "people"
   add_foreign_key "purchase_weighings", "purchases"
   add_foreign_key "purchases", "farms"

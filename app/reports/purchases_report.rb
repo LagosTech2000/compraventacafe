@@ -38,6 +38,7 @@ class PurchasesReport < Report
   column(:coffee_state, :text, sort: "purchases.coffee_state", priority: 2, &:human_coffee_state)
   column(:gross_weight, :pounds, sort: "purchases.gross_weight", priority: 3)
   column(:humidity_percent, :percent, sort: "purchases.humidity_percent", priority: 3) { |purchase| purchase.humidity_percent unless purchase.cherry? }
+  column(:net_weight, :pounds, sort: "purchases.net_weight", priority: 2)
   column(:quintals, :quintals, sort: "purchases.net_weight")
   column(:price_per_pound, :money, sort: "purchases.price_per_pound", priority: 2)
   column(:total, :money, sort: "purchases.total")
@@ -74,6 +75,7 @@ class PurchasesReport < Report
 
   kpi :count, :integer, "COUNT(*)", good: :up
   kpi :quintals, :quintals, QUINTALS, good: :up
+  kpi :net_weight, :pounds, "SUM(purchases.net_weight)", good: :up
   kpi :total, :money, "SUM(purchases.total)"
   kpi :average_price, :money, AVERAGE_PRICE
   kpi :producers, :integer, "COUNT(DISTINCT purchases.producer_id)", good: :up

@@ -1,0 +1,24 @@
+<%# A member's open loans: what each owes today, its due date and a payment
+    that comes back to this tab with its receipt (Loans::PaymentsController). %>
+<% open_loans = row.account.open_loans %>
+<% if open_loans.any? %>
+  <ul class="mt-3 max-w-md space-y-2 @3xl:mt-0">
+    <% open_loans.each do |loan| %>
+      <li class="flex flex-wrap items-center justify-between gap-2 text-sm" id="<%= dom_id(loan, :payroll_open) %>">
+        <span class="min-w-0">
+          <%= modal_link_to t("farms.payrolls.loans.loan", number: loan.id), loans_loan_path(loan), class: "link" %>
+          <%= loan_status_badge(loan) %>
+          <span class="block text-xs text-ink-muted">
+            <%= t("farms.payrolls.loans.owed", amount: format_money(row.account.balance(loan).total_owed)) %> ·
+            <%= t("farms.payrolls.loans.due_on", date: l(loan.due_on)) %>
+          </span>
+        </span>
+        <% if can_pay %>
+          <%= modal_link_to t("farms.payrolls.loans.pay"), new_loans_loan_payment_path(loan, payroll_id: payroll.id), class: "btn btn-sm" %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <p class="mt-3 text-sm text-ink-muted @3xl:mt-0"><%= t("farms.payrolls.loans.none") %></p>
+<% end %>

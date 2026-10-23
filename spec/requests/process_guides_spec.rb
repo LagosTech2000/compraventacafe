@@ -1,0 +1,45 @@
+require "rails_helper"
+
+# Process guides where the process happens (Fernando, 2026-10-18: the same
+# convention in every module).
+RSpec.describe "Process guides" do
+  let(:admin) { create(:user, :admin) }
+
+  def guides = Nokogiri::HTML(response.body).css("[data-controller='help-guide'] button").map { it["aria-label"] }
+
+  before { sign_in admin }
+
+  it "explains paying invoices, carreros, coffee payments and merging where they are done" do
+    invoice = create(:invoice)
+    get new_trading_invoice_payment_path(invoice)
+    expect(guides).to include("Ayuda: Pagar una factura por abonos")
+
+    hauler = create(:hauler)
+    get trading_hauler_path(hauler)
+    expect(guides).to include("Ayuda: Comisión y pagos de un carrero")
+
+    loan = create(:loan)
+    purchase = create(:purchase, producer: create(:producer, person: loan.person))
+    get new_trading_purchase_loan_settlement_path(purchase)
+    expect(guides).to include("Ayuda: Pagar préstamos con café")
+
+    get new_administration_person_merge_path(loan.person)
+    expect(guides).to include("Ayuda: Fusionar dos registros de la misma persona")
+  end
+
+  it "explains paying a period and the harvest on the timesheet, and saved filters on the reports" do
+    payroll = create(:payroll, kind: "harvest", can_price: 40)
+    get farms_payroll_timesheet_path(payroll)
+    expect(guides).to include("Ayuda: Planilla de corte por lata")
+
+    get reports_report_path("purchases")
+    expect(guides).to include("Ayuda: Guardar los filtros de un reporte")
+  end
+
+  it "has every process guide in es.yml with a title, summary and steps" do
+    I18n.t("help_guides.processes").each_key do |name|
+      guide = HelpGuide.process(name)
+      expect([ guide.title, guide.summary, guide.steps ]).to all(be_present)
+    end
+  end
+end

@@ -41,6 +41,7 @@ class PeopleReport < Report
 
   column(:person, :text, sort: "people.last_names", &:full_name)
   column(:roles, :text, priority: 3) { |person| PeopleReport.roles_of(person) }
+  column(:net_weight, :pounds, sort: "sales.net_weight", priority: 3) { |person| person.sales_net_weight&.to_d }
   column(:quintals, :quintals, sort: "sales.net_weight", priority: 2) { |person| person.sales_net_weight.to_d / QUINTAL if person.sales_net_weight }
   column(:sales_total, :money, sort: "sales.total") { |person| person.sales_total }
   column(:earned, :money, sort: "earned.amount", priority: 2) { |person| person.earned_amount }
@@ -55,7 +56,8 @@ class PeopleReport < Report
 
   # Names of each person's roles, for the roles column.
   def self.roles_of(person)
-    ROLES.select { |role| person.public_send(:"#{role}_role") }.map { |role| I18n.t("reports.types.people.roles.#{role}") }.join(" · ")
+    # The selected columns (#preload), not Person#<role>_role, which would load each role.
+    ROLES.select { |role| person.has_attribute?(:"#{role}_role") ? person[:"#{role}_role"] : person.public_send(:"#{role}_role") }.map { |role| I18n.t("reports.types.people.roles.#{role}") }.join(" · ")
   end
 
   def scope = Person.all

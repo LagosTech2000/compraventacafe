@@ -29,8 +29,7 @@ RSpec.describe "Sorting tables", type: :system do
     expect(zone_names).to eq(%w[Zacapa Copán Bravo Álamo])
     expect(page_reloaded?).to be(false)
 
-    fill_in "q", with: "a"
-    click_button "Filtrar"
+    fill_in "q", with: "a" # a live list: no button
     expect(page).to have_current_path(/q=a/)
     expect(page).to have_css("#zones-list th[aria-sort=descending]")
     expect(zone_names).to eq(%w[Zacapa Bravo Álamo]) # "Copán" has no plain "a"

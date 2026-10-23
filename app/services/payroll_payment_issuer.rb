@@ -6,8 +6,13 @@
 #   issuer.save   # => true and issuer.payment, or false and issuer.errors
 #
 # Each loan payment is a normal LoanPayment (method "payroll", pointing to
-# the member's payment line): interest first, then principal. What goes to
-# a member's loans cannot be more than their pay.
+# the person's first payment line): interest first, then principal. What
+# goes to a person's loans cannot be more than their pay.
+#
+# A person working a daily payroll in several roles has one line per role
+# (PayrollMember), but their loans are taken once, from what all their
+# lines add up to (Fernando, 2026-10-17). Each line keeps the part of the
+# deduction that fits in it, first line first, so no line pays below zero.
 class PayrollPaymentIssuer
   include ActiveModel::Model
 
@@ -31,6 +36,11 @@ class PayrollPaymentIssuer
 
   delegate :lines, :gross_total, to: :calculation
 
+  # The lines of each person, in the lines' order: [[line, ...], ...].
+  def person_lines
+    @person_lines ||= lines.group_by { |line| line.member.person_id }.values
+  end
+
   # Unpaid loans of each member's person, the ones due first at the top
   # (only for whoever may register loan payments).
   def open_loans(member)
@@ -44,11 +54,12 @@ class PayrollPaymentIssuer
   def balance(loan) = loan.balance(as_of: paid_on)
   def amount_for(loan) = loan_amounts[loan.id]
 
+  # What goes to the loans of a member's person (all their roles).
   def loans_total_for(member)
     open_loans(member).sum { |loan| amount_for(loan) || 0 }
   end
 
-  def loans_total = lines.sum { |line| loans_total_for(line.member) }
+  def loans_total = person_lines.sum { |group| loans_total_for(group.first.member) }
 
   def save
     return false unless valid_request?
@@ -68,10 +79,11 @@ class PayrollPaymentIssuer
       errors.add(:base, :negative_amount) if loan_amounts.values.compact.any?(&:negative?)
       known = lines.flat_map { |line| open_loans(line.member).map(&:id) }
       errors.add(:base, :unknown_loan) if (loan_amounts.compact.select { |_, amount| amount.positive? }.keys - known).any?
-      lines.each do |line|
-        next unless loans_total_for(line.member) > line.gross_amount
+      person_lines.each do |group|
+        pay = group.sum(&:gross_amount)
+        next unless loans_total_for(group.first.member) > pay
 
-        errors.add(:base, :over_pay, person: line.member.full_name, pay: money(line.gross_amount))
+        errors.add(:base, :over_pay, person: group.first.member.full_name, pay: money(pay))
       end
       errors.empty?
     end
@@ -79,7 +91,7 @@ class PayrollPaymentIssuer
     def create_payment
       @payment = payroll.payments.create!(period_starts_on: period.starts_on, period_ends_on: period.ends_on, paid_on:,
                                           observations:, created_by: @user, gross_total: 0, loans_total: 0, net_total: 0)
-      lines.each { |line| create_line(line) }
+      person_lines.each { |group| create_person_lines(group) }
       return false if errors.any?
 
       @payment.update!(gross_total: gross_total, loans_total: @payment.lines.sum(:loans_amount),
@@ -87,12 +99,27 @@ class PayrollPaymentIssuer
       true
     end
 
-    def create_line(line)
-      record = @payment.lines.create!(member: line.member, basis: line.basis, quantity: line.quantity, rate: line.rate,
-                                      gross_amount: line.gross_amount, loans_amount: loans_total_for(line.member),
-                                      overtime_hours: line.overtime_hours.to_d, overtime_hour_rate: line.overtime_hour_rate,
-                                      extra_days: line.extra_days.to_d, overtime_amount: line.overtime_amount.to_d)
-      open_loans(line.member).each do |loan|
+    # One payment line per role; the person's deduction spread over them in
+    # order, and their loan payments on the first one.
+    def create_person_lines(group)
+      left = loans_total_for(group.first.member)
+      records = group.map do |line|
+        loans_amount = [ left, line.gross_amount ].min
+        left -= loans_amount
+        create_line(line, loans_amount)
+      end
+      pay_loans(group.first.member, records.first)
+    end
+
+    def create_line(line, loans_amount)
+      @payment.lines.create!(member: line.member, basis: line.basis, quantity: line.quantity, rate: line.rate,
+                             gross_amount: line.gross_amount, loans_amount:,
+                             overtime_hours: line.overtime_hours.to_d, overtime_hour_rate: line.overtime_hour_rate,
+                             extra_days: line.extra_days.to_d, overtime_amount: line.overtime_amount.to_d)
+    end
+
+    def pay_loans(member, record)
+      open_loans(member).each do |loan|
         amount = amount_for(loan)
         next unless amount&.positive?
 

@@ -10,6 +10,7 @@
          zones: [ administration_zones_path, policy([ :administration, Zone ]).index? ],
          users: [ administration_users_path, policy(User).index? ],
          audit_events: [ administration_audit_events_path, policy(AuditEvent).index? ],
+         private_documents: [ administration_private_documents_path, policy(PrivateDocument).index? ],
          site_setting: [ administration_site_setting_path, policy(SiteSetting).show? ],
          backup: [ administration_backup_path, policy(:backup).show? ] }.each do |key, (path, allowed)| %>
       <% next unless allowed %>
