@@ -1,0 +1,51 @@
+<% content_for :title, t(".title") %>
+<%= live_updates_from :finance %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= render "finance/nav" %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <%= help_guide_button HelpGuide.process(:finance_money), label: true %>
+</div>
+
+<% accounts = [ [ t("reports.types.cash_movements.no_account"), MovementFilter::NONE ] ] + MoneyAccount.alphabetical.pluck(:name, :id).map { |name, id| [ name, id.to_s ] } %>
+<% sources = MoneyMovements.sources_for(Current.user).map { [ t("reports.types.cash_movements.sources.#{it}"), it ] } %>
+<% directions = MovementFilter::DIRECTIONS.map { [ t("reports.types.cash_movements.directions.#{it}"), it ] } %>
+<div data-controller="live-filter">
+  <%= render layout: "shared/filters", locals: { filter: @filter, url: finance_movements_path, frame: "movements-list", live: true } do |form| %>
+    <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("finance.movements.index.search_placeholder") %>
+    <%= filter_date_field form, :from, t("shared.filters.from"), value: @filter.from %>
+    <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
+    <%= filter_select form, :account, t("finance.movements.columns.account"), accounts, selected: @filter.account, all: t("finance.movements.index.all_accounts") %>
+    <%= filter_select form, :source, t("finance.movements.columns.source"), sources, selected: @filter.source %>
+    <%= filter_select form, :direction, t("reports.filters.direction"), directions, selected: @filter.direction %>
+  <% end %>
+
+  <%= list_frame "movements-list" do %>
+    <%= render "shared/filter_status", filter: @filter, count: t(".count", count: @filter.total_count), periods: quick_periods(@filter),
+          chips: filter_chips(@filter, q: ->(text) { t("shared.filters.chips.q", text:) },
+                                       account: ->(value) { accounts.find { it.last == value.to_s }&.first },
+                                       source: ->(value) { t("reports.types.cash_movements.sources.#{value}") },
+                                       direction: ->(value) { t("reports.types.cash_movements.directions.#{value}") }) %>
+    <dl class="mt-4 flex flex-wrap gap-3">
+      <% if (opening = @filter.opening_balance) %>
+        <div class="stat min-w-0 flex-1 basis-40"><dt><%= t(".opening") %></dt><dd><%= format_money(opening) %></dd></div>
+      <% end %>
+      <div class="stat min-w-0 flex-1 basis-40"><dt><%= t(".in") %></dt><dd class="text-success"><%= format_money(@filter.total_in) %></dd></div>
+      <div class="stat min-w-0 flex-1 basis-40"><dt><%= t(".out") %></dt><dd><%= format_money(@filter.total_out) %></dd></div>
+      <div class="stat min-w-0 flex-1 basis-40"><dt><%= t(".net") %></dt><dd><%= signed_money(@filter.total_in - @filter.total_out) %></dd></div>
+      <% if opening %>
+        <div class="stat min-w-0 flex-1 basis-40"><dt><%= t(".closing") %></dt><dd><%= format_money(opening + @filter.total_in - @filter.total_out) %></dd></div>
+      <% end %>
+    </dl>
+    <% if @rows.any? %>
+      <div class="mt-6"><%= render "finance/movements_table", rows: @rows, sorting: { filter: @filter, frame: "movements-list" } %></div>
+      <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "movements-list" %>
+    <% else %>
+      <p class="empty-state mt-6"><%= t(".empty") %></p>
+    <% end %>
+  <% end %>
+</div>

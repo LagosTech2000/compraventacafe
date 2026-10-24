@@ -1,0 +1,89 @@
+<% content_for :title, t(".title") %>
+<%= live_updates_from :finance %>
+<%= render "finance/nav" %>
+<% sheet = @sheet %>
+<% editable = policy([ :finance, :budget ]).update? %>
+
+<div class="flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <%= form_with url: finance_budget_path, method: :get, class: "flex gap-2", data: { controller: "auto-submit" } do |form| %>
+    <%= form.select :season_year, (0..3).map { |back| Season.current.year + 1 - back }.map { [ format_season(Season.new(it)), it ] },
+          { selected: sheet.season.year }, aria: { label: t(".season") }, class: "field-input", data: { action: "change->auto-submit#submit" } %>
+  <% end %>
+</div>
+
+<%= form_with url: finance_budget_path(season_year: sheet.season.year), method: :patch, class: "mt-6",
+      data: { controller: "unsaved-changes", action: unsaved_changes_actions, unsaved_changes_message_value: t("shared.unsaved_changes.leave") } do %>
+  <% FinanceCategory::KINDS.each do |kind| %>
+    <% categories = sheet.categories(kind) %>
+    <section class="mb-8" aria-labelledby="budget-<%= kind %>">
+      <h2 id="budget-<%= kind %>" class="mb-3 text-lg font-semibold"><%= t(".kinds.#{kind}") %></h2>
+      <% if categories.any? %>
+        <div class="overflow-x-auto panel">
+          <table class="data-table data-table-compact min-w-[72rem]">
+            <thead>
+              <tr>
+                <th class="sticky left-0 z-10 bg-surface"><%= t(".category") %></th>
+                <% sheet.months.each do |month| %>
+                  <th class="text-right <%= "text-primary" if month == Time.zone.today.beginning_of_month %>"><%= l(month, format: :month_short) %></th>
+                <% end %>
+                <th class="text-right"><%= t(".total") %></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% categories.each do |category| %>
+                <tr id="<%= dom_id(category, :budget_row) %>">
+                  <td class="sticky left-0 z-10 bg-surface font-medium"><%= category.name %></td>
+                  <% sheet.months.each do |month| %>
+                    <% line = sheet.line(category, month) %>
+                    <td class="min-w-28 text-right align-top">
+                      <% if editable %>
+                        <%= number_field_tag "budgets[#{category.id}][#{month.iso8601}]", line.budget&.to_s("F")&.sub(/\.0\z/, ""), min: 0, step: 0.01,
+                              inputmode: "decimal", placeholder: "—", class: "field-input h-9 px-2 text-right tabular-nums",
+                              aria: { label: t(".cell", category: category.name, month: l(month, format: :month_year)) } %>
+                      <% else %>
+                        <span class="tabular-nums"><%= line.budget ? format_money(line.budget) : "—" %></span>
+                      <% end %>
+                      <% if line.spent.positive? %>
+                        <span class="mt-1 block text-xs tabular-nums <%= line.over? ? "font-semibold text-danger" : "text-ink-muted" %>">
+                          <%= t(".spent", amount: format_money(line.spent)) %><% if line.percent %> · <%= line.percent %> %<% end %>
+                        </span>
+                      <% end %>
+                    </td>
+                  <% end %>
+                  <td class="text-right align-top">
+                    <span class="font-semibold tabular-nums"><%= format_money(sheet.budget_total(category)) %></span>
+                    <span class="block text-xs text-ink-muted tabular-nums"><%= t(".spent", amount: format_money(sheet.spent_total(category))) %></span>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+            <tfoot>
+              <tr class="font-bold">
+                <td class="sticky left-0 z-10 bg-surface"><%= t(".total") %></td>
+                <% sheet.months.each do |month| %>
+                  <td class="text-right">
+                    <span class="tabular-nums"><%= format_money(sheet.month_budget(month, kind)) %></span>
+                    <span class="block text-xs font-normal text-ink-muted tabular-nums"><%= t(".spent", amount: format_money(sheet.month_spent(month, kind))) %></span>
+                  </td>
+                <% end %>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      <% else %>
+        <p class="empty-state"><%= t(".no_categories") %></p>
+      <% end %>
+    </section>
+  <% end %>
+  <% if editable %>
+    <div class="sticky bottom-4 flex flex-wrap items-center gap-3">
+      <%= submit_tag t(".submit"), class: "btn btn-primary" %>
+      <p class="text-xs text-ink-muted"><%= t(".submit_help") %></p>
+    </div>
+  <% end %>
+<% end %>

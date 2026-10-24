@@ -1,0 +1,54 @@
+<% content_for :title, @expense.description %>
+<%= live_updates_from :finance %>
+<%= render "finance/nav" %>
+<%= render "shared/breadcrumbs", crumbs: [ [ t("finance.nav.#{@kind == "investment" ? "investments" : "expenses"}"), expenses_path ], [ @expense.description ] ] %>
+
+<div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= @expense.description %></h1>
+    <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
+      <span class="badge badge-neutral"><%= @expense.human_kind %></span>
+      <span><%= @expense.category.full_name %> · <%= l(@expense.spent_on) %></span>
+    </p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <% if policy(@expense).update? %><%= modal_link_to t(".edit"), edit_expense_path(@expense), class: "btn" %><% end %>
+    <% if policy(@expense).destroy? %>
+      <%= button_to t(".destroy"), expense_path(@expense), method: :delete, class: "btn", form: { data: { turbo_confirm: t(".confirm_destroy") } } %>
+    <% end %>
+    <% if modal_request? %><%= page_link_to t(".full_page"), expense_path(@expense), class: "btn" %><% end %>
+  </div>
+</div>
+
+<div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+  <section class="panel p-4" aria-labelledby="expense-details">
+    <h2 id="expense-details" class="sr-only"><%= t(".details") %></h2>
+    <p class="text-3xl font-bold tabular-nums"><%= format_money(@expense.amount) %></p>
+    <dl class="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+      <% { category: @expense.category.full_name, payee: @expense.payee, spent_on: l(@expense.spent_on),
+           money_account: @expense.money_account.name, payment_method: @expense.human_payment_method,
+           receipt_number: @expense.receipt_number, created_by: @expense.created_by.name }.each do |key, value| %>
+        <div><dt class="text-xs text-ink-muted"><%= Expense.human_attribute_name(key) %></dt><dd><%= value.presence || "—" %></dd></div>
+      <% end %>
+    </dl>
+    <% if @expense.observations %>
+      <p class="mt-3 text-sm"><span class="font-semibold"><%= Expense.human_attribute_name(:observations) %>:</span> <%= @expense.observations %></p>
+    <% end %>
+  </section>
+  <section class="panel p-4" aria-labelledby="expense-receipt">
+    <h2 id="expense-receipt" class="font-semibold"><%= t(".receipt") %></h2>
+    <% if (receipt = @expense.receipt_info) %>
+      <% url = finance_expense_receipt_path(receipt, v: receipt.version) %>
+      <% if receipt.pdf? %>
+        <object data="<%= url %>" type="application/pdf" class="mt-3 h-96 w-full rounded-lg border border-line" aria-label="<%= t(".receipt") %>">
+          <p class="text-sm text-ink-muted"><%= t(".pdf_fallback") %></p>
+        </object>
+      <% else %>
+        <img src="<%= url %>" alt="<%= t(".receipt_alt", description: @expense.description) %>" class="mt-3 max-h-[32rem] w-full rounded-lg border border-line object-contain">
+      <% end %>
+      <%= link_to t(".open_receipt"), url, class: "btn btn-sm mt-3", target: "_blank", rel: "noopener" %>
+    <% else %>
+      <p class="mt-2 text-sm text-ink-muted"><%= t(".no_receipt") %></p>
+    <% end %>
+  </section>
+</div>

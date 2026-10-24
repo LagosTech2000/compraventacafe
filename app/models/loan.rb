@@ -6,6 +6,7 @@
 # cash plus the value of its supply lines, and interest runs on all of it.
 class Loan < ApplicationRecord
   include Auditable
+  include HasMoneyAccount
   include LiveUpdates
   live_updates :loans
 
@@ -114,6 +115,8 @@ class Loan < ApplicationRecord
     # left blank (supplies only) is 0.
     def compute_principal
       self.cash_amount = 0 if cash_amount.nil?
+      # The account is where the cash went out from: none without cash.
+      self.money_account = nil unless cash_amount.to_d.positive?
       self.principal = cash_amount.to_d + supplies_amount
     end
 

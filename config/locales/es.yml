@@ -77,6 +77,7 @@ es:
     sales: "Comercialización"
     farms: "Fincas"
     loans: "Préstamos"
+    finance: "Control financiero"
     reports: "Reportería"
     actions:
       read: "Ver"
@@ -103,6 +104,8 @@ es:
   shared:
     unsaved_changes:
       leave: "Tienes cambios sin guardar en este formulario. ¿Salir sin guardar?"
+    money_account_field:
+      none: "Todavía no hay cuentas: un usuario de Control financiero las registra."
     person_gaps:
       message: "A esta persona le faltan datos por ingresar: %{fields}."
       complete: "Completar datos"
@@ -148,6 +151,8 @@ es:
       no_role: "Sin rol asignado"
       pick_payment_method: "Selecciona la forma de pago"
       pick_buyer: "Selecciona el comprador"
+      pick_account: "Selecciona la cuenta"
+      no_account: "Sin cuenta"
       no_hauler: "Sin carrero"
     filters:
       title: "Filtros"
@@ -318,10 +323,24 @@ es:
           title: "Períodos de planilla por pagar"
           help: "Períodos que ya llegaron a su día de pago y no se han pagado."
           action: "Pagar"
+        over_budget:
+          title: "Presupuesto excedido"
+          help: "Categorías que este mes gastaron más de lo presupuestado."
+          detail: "Gastado %{spent} de %{budget}"
+          action: "Ver presupuesto"
         members_without_wage:
           title: "Empleados sin salario"
           help: "En planillas por día: sin rol ni salario propio, sus días no se pueden pagar."
           action: "Asignar salario"
+  money_movements:
+    invoice: "Factura %{number}"
+    hauler_payment: "Recibo %{number} de comisiones de carreo"
+    loan: "Préstamo %{number}"
+    loan_payment: "Recibo %{number} del préstamo %{loan}"
+    payroll_payment: "%{payroll} · %{farm} (%{period})"
+    payroll_expense: "%{description} · %{farm}"
+    sale_payment: "Cobro de la venta %{number}"
+    transfer: "De %{from} a %{to}"
   coffee_markets:
     show:
       title: "Café en la bolsa"
@@ -362,7 +381,7 @@ es:
       title: "Inicio"
       coffee_market_loading: "Cargando el precio del café en la bolsa…"
       welcome: "Hola, %{name}"
-      purpose: "Compra y venta de café, préstamos y planillas de %{business}"
+      purpose: "Compra y venta de café, préstamos, planillas y finanzas de %{business}"
       no_modules: "Todavía no tienes acceso a ningún módulo. Pídele a un administrador que te asigne permisos."
       modules: "Tus módulos"
       actions:
@@ -373,6 +392,7 @@ es:
         new_shipment: "Nueva salida de camión"
         new_sale: "Nueva venta"
         farms: "Fincas y planillas"
+        new_expense: "Registrar gasto"
         new_loan: "Nuevo préstamo"
         loans: "Préstamos"
         reports: "Reportes"
@@ -384,6 +404,8 @@ es:
         sales_owed: "Ventas por cobrar"
         open_loans: "Préstamos por cobrar"
         active_farms: "Fincas activas"
+        accounts_balance: "Saldo en cuentas"
+        month_spending: "Gastos del mes"
         pending: "Pendientes"
       hints:
         purchases_today: "%{quintals} QQ · %{total}"
@@ -395,6 +417,8 @@ es:
           zero: "Ninguna venta por cobrar"
           one: "1 venta por cobrar"
           other: "%{count} ventas por cobrar"
+        accounts_balance: "Caja y bancos, hoy"
+        month_spending: "Gastos e inversiones registrados en Control financiero"
         loans_owed: "Deben %{amount} hoy"
         overdue:
           one: "1 vencido"
@@ -430,6 +454,9 @@ es:
         periods_to_pay:
           one: "1 período de planilla por pagar"
           other: "%{count} períodos de planilla por pagar"
+        over_budget:
+          one: "1 categoría pasó su presupuesto del mes por"
+          other: "%{count} categorías pasaron su presupuesto del mes por"
         members_without_wage:
           one: "1 empleado de una planilla por día sin salario: sus días no se pueden pagar"
           other: "%{count} empleados de planillas por día sin salario: sus días no se pueden pagar"
@@ -442,6 +469,7 @@ es:
           overdue_loans: "Ver préstamos"
           periods_to_pay: "Pagar"
           members_without_wage: "Asignar salario"
+          over_budget: "Ver presupuesto"
       activity:
         title: "Actividad reciente"
         open: "Abrir"
@@ -454,6 +482,8 @@ es:
           loan: "Préstamo"
           loan_payment: "Abono"
           payroll_payment: "Pago de planilla"
+          expense: "Gasto"
+          investment: "Inversión"
         details:
           purchase: "Compra %{number} · %{quintals} QQ · %{total}"
           invoice: "Factura %{number} · %{status} · %{total}"
@@ -462,6 +492,7 @@ es:
           loan: "Préstamo %{number} · %{amount}"
           loan_payment: "Préstamo %{number} · %{amount}"
           payroll_payment: "%{farm} · %{amount}"
+          expense: "%{category} · %{amount}"
 
   addresses:
     title: "Dirección"
@@ -1428,6 +1459,241 @@ es:
           quintals: "QQ"
           in_transit: "En camino (lb)"
           unsold: "Sin vender (lb)"
+  finance:
+    nav:
+      home: "Resumen"
+      movements: "Movimientos"
+      expenses: "Gastos"
+      investments: "Inversiones"
+      accounts: "Cuentas"
+      budget: "Presupuesto"
+      categories: "Categorías"
+      new_expense: "Nuevo gasto"
+    home:
+      index:
+        no_accounts: "Todavía no hay cuentas. Registra la caja y los bancos para llevar sus saldos."
+        new_account: "Nueva cuenta"
+        without_account:
+          one: "1 movimiento de este mes no tiene cuenta: no cuenta en ningún saldo."
+          other: "%{count} movimientos de este mes no tienen cuenta: no cuentan en ningún saldo."
+        over_budget: "%{category} pasó su presupuesto del mes: %{spent} de %{budget}."
+        see: "Ver"
+        accounts: "Dónde está el dinero"
+        transfer: "Transferir entre cuentas"
+        income: "Otro ingreso"
+        total_balance: "Saldo de todas las cuentas"
+        as_of: "Al %{date}"
+        month: "Este mes (%{month})"
+        out: "Salió"
+        in: "Entró"
+        net: "Diferencia"
+        against_last: "%{change} contra los mismos días del mes pasado (%{amount})"
+        expenses_and_investments: "Gastos e inversiones"
+        by_source: "Por dónde salió"
+        by_source_help: "Todas las salidas del mes, por módulo y tipo de pago."
+        by_category: "Por categoría"
+        by_category_help: "Gastos e inversiones del mes, y gastos de planilla, por categoría."
+        budget: "Presupuesto del mes"
+        see_budget: "Ver el presupuesto"
+        no_budget: "sin presupuesto"
+        no_budget_yet: "Todavía no hay presupuesto ni gastos este mes."
+        percent_used: "%{percent} % usado"
+        latest: "Últimos movimientos"
+        see_movements: "Ver todos"
+        nothing: "Nada en este período."
+    movements:
+      open: "Abrir"
+      remove: "Quitar"
+      confirm_remove: "¿Quitar este movimiento? Cambia el saldo de su cuenta."
+      balance: "Saldo"
+      columns:
+        date: "Fecha"
+        source: "Origen"
+        description: "Detalle"
+        person: "Persona o beneficiario"
+        category: "Categoría"
+        account: "Cuenta"
+        amount_in: "Entró"
+        amount_out: "Salió"
+      index:
+        title: "Movimientos de dinero"
+        help: "Cada peso que entró o salió, de todos los módulos, registrado una sola vez donde ocurrió. Las transferencias entre cuentas salen al elegir una cuenta."
+        search_placeholder: "Detalle, persona o categoría"
+        all_accounts: "Todas"
+        opening: "Saldo al empezar"
+        in: "Entró"
+        out: "Salió"
+        net: "Diferencia"
+        closing: "Saldo al terminar"
+        empty: "No hay movimientos con estos filtros."
+        count:
+          zero: "Ningún movimiento"
+          one: "1 movimiento"
+          other: "%{count} movimientos"
+    expenses:
+      form:
+        description_placeholder:
+          expense: "Por ejemplo: diésel del camión"
+          investment: "Por ejemplo: báscula de 500 lb"
+        payee_placeholder: "A quién se le pagó"
+        new_category: "Nueva categoría"
+        receipt_help: "Opcional: foto (JPG, PNG o WebP) o PDF del comprobante, hasta %{size}."
+        remove_receipt: "Quitar el comprobante"
+        submit:
+          expense: "Registrar gasto"
+          investment: "Registrar inversión"
+      index:
+        title:
+          expense: "Gastos"
+          investment: "Inversiones"
+        help:
+          expense: "Los gastos del día a día del negocio, con su categoría, cuenta y comprobante."
+          investment: "Lo que se compra para quedarse: vehículos, básculas, terreno, maquinaria."
+        new:
+          expense: "Nuevo gasto"
+          investment: "Nueva inversión"
+        search_placeholder: "Detalle, beneficiario o comprobante"
+        total: "Total"
+        with_receipt: "Comprobante"
+        empty:
+          expense: "No hay gastos con estos filtros."
+          investment: "No hay inversiones con estos filtros."
+        count:
+          expense:
+            zero: "Ningún gasto"
+            one: "1 gasto"
+            other: "%{count} gastos"
+          investment:
+            zero: "Ninguna inversión"
+            one: "1 inversión"
+            other: "%{count} inversiones"
+      new:
+        title:
+          expense: "Nuevo gasto"
+          investment: "Nueva inversión"
+      edit:
+        title:
+          expense: "Editar gasto"
+          investment: "Editar inversión"
+      create:
+        success:
+          expense: "Gasto registrado."
+          investment: "Inversión registrada."
+      update:
+        success: "Cambios guardados."
+      destroy:
+        success: "Registro borrado."
+      show:
+        edit: "Editar"
+        destroy: "Borrar"
+        confirm_destroy: "¿Borrar este registro? Su cuenta vuelve a tener ese dinero."
+        full_page: "Abrir en página completa"
+        details: "Datos"
+        receipt: "Comprobante"
+        receipt_alt: "Comprobante de %{description}"
+        pdf_fallback: "El navegador no muestra el PDF aquí: ábrelo con el botón."
+        open_receipt: "Abrir el comprobante"
+        no_receipt: "Sin comprobante adjunto."
+    expense_receipts:
+      audit_label: "Comprobante de %{expense}"
+    money_accounts:
+      form:
+        name_placeholder: "Por ejemplo: Caja de la bodega, Banco Atlántida"
+        opening_help: "El saldo con que empieza la cuenta en el sistema, a esa fecha."
+        default_for_help: "Al registrar un pago con esa forma, se sugiere esta cuenta."
+      index:
+        title: "Cuentas"
+        help: "La caja y los bancos del negocio, con su saldo de hoy."
+        new: "Nueva cuenta"
+        open: "Abrir"
+        search_placeholder: "Nombre, banco o número"
+        status: "Estado"
+        statuses:
+          active: "Activas"
+          inactive: "Inactivas"
+        balance: "Saldo de hoy"
+        empty: "No hay cuentas con estos filtros."
+        unassigned: "Registrado sin cuenta (no cuenta en ningún saldo): entró %{in} y salió %{out}."
+        see_unassigned: "Ver esos movimientos"
+      new:
+        title: "Nueva cuenta"
+      edit:
+        title: "Editar %{name}"
+      create:
+        success: "Cuenta registrada."
+      update:
+        success: "Cuenta actualizada."
+      show:
+        income: "Otro ingreso"
+        transfer: "Transferir"
+        edit: "Editar"
+        print: "Imprimir estado de cuenta"
+        statement: "Estado de cuenta"
+        balance_today: "Saldo de hoy"
+        since: "desde el %{date}"
+        movements: "Movimientos de la cuenta"
+    account_transfers:
+      new:
+        title: "Transferir entre cuentas"
+        help: "El dinero sale de una cuenta y entra a la otra: no es gasto ni ingreso del negocio."
+        submit: "Registrar transferencia"
+      create:
+        success: "Transferencia registrada."
+      destroy:
+        success: "Transferencia quitada."
+    other_incomes:
+      new:
+        title: "Otro ingreso"
+        help: "Dinero que entra fuera de los módulos: aporte del dueño, préstamo del banco, venta de algo que no es café…"
+        concept_placeholder: "Por ejemplo: aporte del dueño"
+        submit: "Registrar ingreso"
+      create:
+        success: "Ingreso registrado."
+      destroy:
+        success: "Ingreso quitado."
+    categories:
+      form:
+        no_parent: "Ninguna: es de primer nivel"
+        parent_help: "Para una subcategoría (Transporte › Combustible), elige su categoría de primer nivel. El presupuesto va por el primer nivel."
+      index:
+        title: "Categorías"
+        help: "Cómo se clasifican los gastos y las inversiones, en dos niveles. Se desactivan; no se borran."
+        new: "Nueva categoría"
+        search_placeholder: "Nombre de la categoría"
+        status: "Estado"
+        statuses:
+          active: "Activas"
+          inactive: "Inactivas"
+        group: "Categoría"
+        first_level: "(primer nivel)"
+        add_child: "Agregar subcategoría"
+        edit: "Editar"
+        empty: "No hay categorías con estos filtros."
+      new:
+        title: "Nueva categoría"
+      edit:
+        title: "Editar %{name}"
+      create:
+        success: "Categoría registrada."
+      update:
+        success: "Categoría actualizada."
+    budgets:
+      show:
+        title: "Presupuesto"
+        help: "Cuánto se piensa gastar por categoría cada mes de la temporada, y debajo lo gastado (gastos e inversiones de la categoría y sus subcategorías)."
+        season: "Temporada"
+        kinds:
+          expense: "Gastos"
+          investment: "Inversiones"
+        category: "Categoría"
+        total: "Total"
+        cell: "Presupuesto de %{category} en %{month}"
+        spent: "Gastado %{amount}"
+        no_categories: "Todavía no hay categorías de primer nivel de este tipo."
+        submit: "Guardar presupuesto"
+        submit_help: "Una casilla vacía quita el presupuesto de ese mes."
+      update:
+        success: "Presupuesto guardado."
   loans:
     document_prints:
       new:
@@ -1535,6 +1801,7 @@ es:
       edit:
         title: "Editar préstamo"
       form:
+        account_help: "De dónde salió el efectivo (Control financiero). Sin efectivo, no lleva cuenta."
         person_placeholder: "Escribe para buscar una persona"
         person_missing: "Selecciona una persona de la lista"
         new_person: "¿No está? Registrar persona"
@@ -2365,6 +2632,9 @@ es:
       direction: "Entrada o salida"
       owner_kind: "Dueño"
       buyer: "Comprador"
+      account_id: "Cuenta"
+      subcategory: "Subcategoría"
+      payee: "Beneficiario"
       department: "Departamento"
     series:
       count: "Cantidad"
@@ -2486,6 +2756,10 @@ es:
       sales_season_by_month: "Ventas de la temporada, mes por mes"
       coffee_stock_month: "Inventario de este mes, día por día"
       coffee_stock_season_by_state: "Entradas y salidas de la temporada por estado del café"
+      expenses_month_by_category: "Gastos del mes por categoría"
+      investments_season: "Inversiones de la temporada"
+      expenses_season_by_month: "Gastos e inversiones de la temporada, mes por mes"
+      cash_movements_month_by_account: "Entradas y salidas del mes por cuenta"
       cash_movements_week: "Entradas y salidas de dinero de esta semana"
       cash_movements_month_by_source: "Entradas y salidas del mes por origen"
     saved_reports:
@@ -2617,6 +2891,41 @@ es:
           days_to_pay:
             title: "Rapidez de pago"
             help: "Barras: facturas canceladas. Línea: días promedio entre la factura y su pago."
+      expenses:
+        title: "Gastos e inversiones"
+        description: "Lo que el negocio gastó o invirtió (Control financiero): por categoría, cuenta, beneficiario y mes, contra el presupuesto de los meses del período."
+        columns:
+          spent_on: "Fecha"
+          kind: "Tipo"
+          description: "Detalle"
+          category: "Categoría"
+          payee: "Beneficiario"
+          account: "Cuenta"
+          payment_method: "Forma de pago"
+          receipt_number: "Comprobante"
+          amount: "Monto"
+          count: "Registros"
+          average: "Promedio"
+        kpis:
+          amount: "Total"
+          expenses: "Gastos"
+          investments: "Inversiones"
+          count: "Registros"
+          budget: "Presupuesto de esos meses"
+          budget_used: "Del presupuesto usado"
+        charts:
+          over_time:
+            title: "Gastos e inversiones en el tiempo"
+            help: "Lo registrado en Control financiero, por tipo."
+          categories:
+            title: "Por categoría"
+            help: "Por categoría de primer nivel."
+          payees:
+            title: "A quién se le pagó"
+            help: "Barras: lo pagado a cada beneficiario. Línea: el % acumulado del total."
+          accounts:
+            title: "De qué cuenta salió"
+            help: "Lo pagado desde cada cuenta."
       shipments:
         title: "Salidas de camiones"
         description: "Cada camión que salió con café (sin los anulados): lo que pesó en la báscula local, lo que pesó donde el comprador y la diferencia entre las dos."
@@ -3121,7 +3430,7 @@ es:
             help: "Una persona puede tener varios roles."
       cash_movements:
         title: "Entradas y salidas de dinero"
-        description: "El dinero que salió (pagos de facturas, pagos a carreros, préstamos en efectivo, planillas y gastos) y el que entró (abonos a préstamos en efectivo, transferencia o cheque, y cobros de ventas de café), según lo registrado."
+        description: "El dinero que salió (pagos de facturas, pagos a carreros, préstamos en efectivo, planillas, gastos de planilla, gastos e inversiones) y el que entró (abonos a préstamos en efectivo, transferencia o cheque, cobros de ventas de café y otros ingresos), según lo registrado; cada quien ve lo de los módulos que puede ver. Las transferencias entre cuentas salen al elegir una cuenta."
         sources:
           invoices: "Pago de factura"
           hauler_payments: "Pago a carrero"
@@ -3130,6 +3439,11 @@ es:
           payroll_payments: "Pago de planilla"
           payroll_expenses: "Gasto de planilla"
           sale_payments: "Cobro de venta"
+          expenses: "Gasto"
+          investments: "Inversión"
+          other_incomes: "Otro ingreso"
+          transfers: "Transferencia entre cuentas"
+        no_account: "Sin cuenta"
         directions:
           in: "Entrada"
           out: "Salida"
@@ -3141,6 +3455,8 @@ es:
         payroll_payment: "%{payroll} · %{farm} (%{period})"
         expense: "%{category}: %{description} (%{farm})"
         columns:
+          account: "Cuenta"
+          category: "Categoría"
           date: "Fecha"
           source: "Origen"
           description: "Detalle"
@@ -3194,6 +3510,19 @@ es:
         - "Si aparece un error con un código de referencia, pásale ese código a un administrador."
         - "El Inicio y las pantallas de Compra de café y Préstamos se actualizan solas cuando otra persona registra algo: lo nuevo aparece con un brillo y las cifras que cambian dan un pulso. Abajo a la izquierda dice «En vivo». Si tienes una ventana abierta, se actualiza al cerrarla."
     processes:
+      finance_money:
+        title: "Cuentas, gastos y movimientos"
+        summary: "Control financiero junta todo el dinero que entra y sale del negocio, de todos los módulos, y lleva el saldo de cada cuenta."
+        steps:
+          - "Registra la caja y los bancos en Cuentas, con su saldo inicial, y marca para qué forma de pago se sugiere cada una."
+          - "Cada pago o cobro de cualquier módulo (abonos a facturas, carreros, préstamos, planillas, cobros de ventas) pide la cuenta; se sugiere la de la forma de pago."
+          - "Los gastos e inversiones del negocio se registran aquí, con su categoría, cuenta y, si quieres, la foto o el PDF del comprobante."
+          - "El dinero que entra fuera de los módulos va en «Otro ingreso»; el que pasa de una cuenta a otra, en «Transferir»."
+          - "Movimientos muestra todo junto; al elegir una cuenta, el saldo después de cada movimiento."
+        tips:
+          - "Nada se registra dos veces: los pagos de los otros módulos se ven aquí, pero se registran donde ocurren."
+          - "Lo registrado sin cuenta no cuenta en ningún saldo; aparece aparte en Cuentas."
+          - "El presupuesto va por categoría de primer nivel y mes, contra los gastos e inversiones de Control financiero."
       sales_flow:
         title: "Salida, peso en destino, venta y cobro"
         summary: "El café sale del inventario en camiones, se pesa otra vez donde el comprador, se vende con el peso del comprador y se cobra por abonos."
@@ -4061,6 +4390,105 @@ es:
               - "Elige la fecha."
               - "Revisa las cifras, el inventario y las listas del día."
               - "Toca «Imprimir» para sacar el cierre."
+      finance:
+        home:
+          index:
+            title: "Resumen de Control financiero"
+            summary: "Dónde está el dinero, lo que salió este mes contra el pasado, el presupuesto del mes y los últimos movimientos."
+            steps:
+              - "Arriba, los avisos: movimientos sin cuenta y categorías que pasaron su presupuesto."
+              - "Las tarjetas de cuentas abren su estado de cuenta."
+              - "«Por dónde salió» y «Por categoría» muestran en qué se fue el dinero del mes."
+        movements:
+          index:
+            title: "Movimientos de dinero"
+            summary: "Todo el dinero que entró o salió, de todos los módulos."
+            steps:
+              - "Filtra por fechas, cuenta, origen, entrada o salida, o busca por detalle."
+              - "Al elegir una cuenta salen sus transferencias y el saldo después de cada movimiento."
+              - "Toca «Abrir» para ir al registro en su módulo."
+        expenses:
+          index:
+            title: "Gastos e inversiones"
+            summary: "Lo que el negocio gasta o invierte, con su categoría, cuenta y comprobante."
+            steps:
+              - "Filtra por fechas, categoría, cuenta o forma de pago; la lista se actualiza sola."
+              - "Toca una fila para ver el detalle y el comprobante."
+          show:
+            title: "Detalle del gasto o inversión"
+            summary: "Sus datos y la foto o el PDF del comprobante."
+            steps:
+              - "Toca «Editar» para cambiarlo o «Borrar» para quitarlo."
+          form:
+            title: "Registrar un gasto o inversión"
+            summary: "Detalle, categoría, beneficiario, fecha, monto, forma de pago, cuenta y comprobante."
+            steps:
+              - "Escribe el detalle y elige la categoría (o «Nueva categoría»)."
+              - "Escribe la fecha y el monto; al elegir la forma de pago se sugiere su cuenta."
+              - "Si quieres, adjunta la foto o el PDF del comprobante."
+            tips:
+              - "La foto o el PDF puede pesar hasta 1 MB."
+        expense_receipts:
+          show:
+            title: "Comprobante"
+            summary: "La foto o el PDF del comprobante de un gasto."
+            steps:
+              - "Se abre en el navegador; desde ahí se puede guardar o imprimir."
+        money_accounts:
+          index:
+            title: "Cuentas"
+            summary: "La caja y los bancos, con su saldo de hoy."
+            steps:
+              - "Toca una cuenta para ver su estado de cuenta."
+              - "«Nueva cuenta» registra una con su saldo inicial."
+          show:
+            title: "Estado de cuenta"
+            summary: "Los movimientos de una cuenta con el saldo después de cada uno."
+            steps:
+              - "Elige las fechas; arriba el saldo al empezar y al terminar."
+              - "«Otro ingreso» y «Transferir» registran dinero que entra o pasa a otra cuenta."
+              - "«Imprimir estado de cuenta» lo saca con el membrete."
+          form:
+            title: "Registrar o editar una cuenta"
+            summary: "Nombre, tipo, banco, número, saldo inicial y para qué forma de pago se sugiere."
+            steps:
+              - "Escribe el nombre y elige si es caja o banco."
+              - "Escribe el saldo con que empieza en el sistema y su fecha."
+              - "Marca las formas de pago para las que se sugiere al registrar un pago."
+        account_transfers:
+          form:
+            title: "Transferir entre cuentas"
+            summary: "Dinero que pasa de una cuenta a otra del negocio."
+            steps:
+              - "Elige de qué cuenta sale y a cuál entra, el monto y la fecha, y guarda."
+        other_incomes:
+          form:
+            title: "Otro ingreso"
+            summary: "Dinero que entra a una cuenta fuera de los módulos."
+            steps:
+              - "Escribe el concepto, el monto y la fecha; elige la forma de pago y la cuenta, y guarda."
+        categories:
+          index:
+            title: "Categorías"
+            summary: "Las categorías de gastos e inversiones, en dos niveles."
+            steps:
+              - "«Agregar subcategoría» crea una dentro de una de primer nivel."
+              - "Una categoría usada no se borra: se desactiva."
+          form:
+            title: "Registrar o editar una categoría"
+            summary: "Nombre, tipo (gasto o inversión) y, para una subcategoría, su categoría de primer nivel."
+            steps:
+              - "Escribe el nombre y elige el tipo."
+              - "Para una subcategoría, elige su categoría de primer nivel."
+        budgets:
+          show:
+            title: "Presupuesto"
+            summary: "Lo que se piensa gastar por categoría y mes, contra lo gastado."
+            steps:
+              - "Elige la temporada."
+              - "Escribe el presupuesto de cada categoría en cada mes y guarda."
+            tips:
+              - "Lo gastado sale en rojo cuando pasa el presupuesto."
       farms:
         home:
           index:
@@ -4586,6 +5014,13 @@ es:
         sale: "la venta"
         sale_line: "la salida vendida"
         sale_payment: "el cobro de venta"
+        money_account: "la cuenta"
+        finance_category: "la categoría financiera"
+        expense: "el gasto o inversión"
+        expense_receipt: "el comprobante del gasto"
+        other_income: "el otro ingreso"
+        account_transfer: "la transferencia entre cuentas"
+        budget: "el presupuesto"
         loan: "el préstamo"
         loan_payment: "el abono"
         supply: "el insumo"
@@ -4889,6 +5324,27 @@ es:
 
   activerecord:
     models:
+      money_account:
+        one: "Cuenta"
+        other: "Cuentas"
+      finance_category:
+        one: "Categoría financiera"
+        other: "Categorías financieras"
+      expense:
+        one: "Gasto o inversión"
+        other: "Gastos e inversiones"
+      expense_receipt:
+        one: "Comprobante de gasto"
+        other: "Comprobantes de gastos"
+      other_income:
+        one: "Otro ingreso"
+        other: "Otros ingresos"
+      account_transfer:
+        one: "Transferencia entre cuentas"
+        other: "Transferencias entre cuentas"
+      budget:
+        one: "Presupuesto"
+        other: "Presupuestos"
       buyer:
         one: "Comprador"
         other: "Compradores"
@@ -5016,6 +5472,66 @@ es:
         one: "Configuración del sitio"
         other: "Configuración del sitio"
     attributes:
+      money_account:
+        name: "Nombre"
+        kind: "Tipo"
+        kind/cash: "Caja (efectivo)"
+        kind/bank: "Banco"
+        bank_name: "Banco"
+        account_number: "Número de cuenta"
+        opening_balance: "Saldo inicial"
+        opening_on: "Fecha del saldo inicial"
+        default_for: "Se sugiere para"
+        observations: "Observaciones"
+        active: "Activa"
+      finance_category:
+        name: "Nombre"
+        kind: "Tipo"
+        kind/expense: "Gasto"
+        kind/investment: "Inversión"
+        parent: "Categoría de primer nivel"
+        parent_id: "Categoría de primer nivel"
+        active: "Activa"
+      expense:
+        kind: "Tipo"
+        kind/expense: "Gasto"
+        kind/investment: "Inversión"
+        spent_on: "Fecha"
+        category: "Categoría"
+        finance_category: "Categoría"
+        finance_category_id: "Categoría"
+        money_account: "Cuenta"
+        payee: "Beneficiario"
+        description: "Detalle"
+        amount: "Monto"
+        payment_method: "Forma de pago"
+        receipt_number: "Número de comprobante"
+        receipt_upload: "Foto o PDF del comprobante"
+        observations: "Observaciones"
+        created_by: "Registró"
+      expense_receipt:
+        expense: "Gasto"
+        content_type: "Tipo de archivo"
+        byte_size: "Tamaño"
+      other_income:
+        received_on: "Fecha"
+        money_account: "Cuenta"
+        concept: "Concepto"
+        amount: "Monto"
+        payment_method: "Forma de pago"
+        observations: "Observaciones"
+      account_transfer:
+        transferred_on: "Fecha"
+        from_account: "De la cuenta"
+        from_account_id: "De la cuenta"
+        to_account: "A la cuenta"
+        to_account_id: "A la cuenta"
+        amount: "Monto"
+        observations: "Observaciones"
+      budget:
+        category: "Categoría"
+        month: "Mes"
+        amount: "Monto"
       buyer:
         name: "Nombre o razón social"
         kind: "Tipo"
@@ -5463,6 +5979,41 @@ es:
         can_destroy: "Borrar"
     errors:
       models:
+        money_account:
+          attributes:
+            default_for:
+              inclusion: "tiene una forma de pago que no existe"
+        finance_category:
+          attributes:
+            parent:
+              not_first_level: "debe ser una categoría de primer nivel"
+              has_children: "no se puede poner: esta categoría tiene subcategorías"
+              other_kind: "es de otro tipo"
+        expense:
+          attributes:
+            category:
+              other_kind: "es de otro tipo (gasto o inversión)"
+              inactive: "está desactivada"
+            money_account:
+              inactive: "está desactivada"
+            receipt_upload:
+              too_big: "pesa más de %{size}"
+              not_a_receipt: "debe ser una foto (JPG, PNG o WebP) o un PDF"
+        other_income:
+          attributes:
+            money_account:
+              inactive: "está desactivada"
+        account_transfer:
+          attributes:
+            to_account:
+              same_account: "debe ser otra cuenta"
+              inactive: "está desactivada"
+            from_account:
+              inactive: "está desactivada"
+        budget:
+          attributes:
+            category:
+              not_first_level: "debe ser de primer nivel"
         shipment:
           sold: "La salida ya está en una venta: no se cambian su comprador, estado ni pesos. Anula la venta primero."
           attributes:
@@ -5763,6 +6314,7 @@ es:
       short: "%-d de %b"
       short_day: "%a %-d/%m"
       month_year: "%b %Y"
+      month_short: "%b"
     order: [day, month, year]
 
   time:

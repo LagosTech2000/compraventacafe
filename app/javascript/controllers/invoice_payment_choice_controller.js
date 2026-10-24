@@ -3,9 +3,10 @@ import { Controller } from "@hotwired/stimulus"
 // Payment when invoicing: "pending" needs nothing else; "paid" and
 // "partial" need the payment method and date, and "partial" the amount
 // paid now. Fields that do not apply are hidden, disabled (not sent) and
-// not required.
+// not required. The account (optionalPaidField) shows with the payment but
+// is never required.
 export default class extends Controller {
-  static targets = ["status", "paidField", "partialField"]
+  static targets = ["status", "paidField", "partialField", "optionalPaidField"]
 
   connect() {
     this.update()
@@ -15,6 +16,11 @@ export default class extends Controller {
     const status = this.statusTarget.value
     this.paidFieldTargets.forEach((field) => this.toggle(field, status !== "pending"))
     this.partialFieldTargets.forEach((field) => this.toggle(field, status === "partial"))
+    // Shown with the payment but never required (the account).
+    this.optionalPaidFieldTargets.forEach((field) => {
+      field.hidden = status === "pending"
+      field.querySelectorAll("input, select").forEach((input) => { input.disabled = status === "pending" })
+    })
   }
 
   toggle(field, visible) {

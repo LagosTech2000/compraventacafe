@@ -2,6 +2,6 @@
 <%= modal_link_to edit_user_setting_path, title: t("layouts.navigation.settings_for", email: Current.user.email_address),
       class: "flex min-w-0 items-center gap-2 rounded-full py-1 pr-3 pl-1 text-sm text-ink-muted transition hover:bg-surface-2 hover:text-ink #{local_assigns[:css]}" do %>
   <%= avatar(Current.user) %>
-  <span class="min-w-0 max-w-40 truncate"><%= Current.user.name %></span>
+  <span class="min-w-0 max-w-40 truncate <%= local_assigns[:name_css] %>"><%= Current.user.name %></span>
   <span class="sr-only"><%= t("layouts.navigation.settings") %></span>
 <% end %>

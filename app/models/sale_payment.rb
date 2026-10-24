@@ -4,6 +4,7 @@
 # Each has its printable receipt (original and copy).
 class SalePayment < ApplicationRecord
   include Auditable
+  include HasMoneyAccount
   include LiveUpdates
   live_updates :sales
 

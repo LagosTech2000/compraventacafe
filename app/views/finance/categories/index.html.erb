@@ -1,0 +1,65 @@
+<% content_for :title, t(".title") %>
+<%= live_updates_from :finance %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= render "finance/nav" %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <% if policy(FinanceCategory).create? %><%= modal_link_to t(".new"), new_finance_category_path, class: "btn btn-primary" %><% end %>
+</div>
+
+<% statuses = FinanceCategoryFilter::STATUSES.map { [ t("finance.categories.index.statuses.#{it}"), it ] } %>
+<% kinds = enum_options(FinanceCategory, :kind, FinanceCategory::KINDS) %>
+<div data-controller="live-filter">
+  <%= render layout: "shared/filters", locals: { filter: @filter, url: finance_categories_path, frame: "categories-list", live: true } do |form| %>
+    <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("finance.categories.index.search_placeholder") %>
+    <%= filter_select form, :kind, FinanceCategory.human_attribute_name(:kind), kinds, selected: @filter.kind %>
+    <%= filter_select form, :status, t("finance.categories.index.status"), statuses, selected: @filter.status %>
+  <% end %>
+  <%= list_frame "categories-list" do %>
+    <%= live_list_status @filter, status: statuses, kind: kinds %>
+    <% sorting = { filter: @filter, frame: "categories-list" } %>
+    <% if @categories.any? %>
+      <div class="mt-6 overflow-x-auto panel">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <%= sort_th t(".group"), :parent, sorting %>
+              <%= sort_th FinanceCategory.human_attribute_name(:name), :name, sorting %>
+              <%= sort_th FinanceCategory.human_attribute_name(:kind), :kind, sorting %>
+              <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @categories.each do |category| %>
+              <tr id="<%= dom_id(category) %>">
+                <td class="<%= category.top_level? ? "font-semibold" : "text-ink-muted" %>"><%= category.root.name %></td>
+                <td class="<%= "pl-8" unless category.top_level? %>">
+                  <%= category.top_level? ? t(".first_level") : "› #{category.name}" %>
+                  <% unless category.active? %><span class="badge badge-neutral ml-1"><%= t(".statuses.inactive") %></span><% end %>
+                </td>
+                <td><%= category.human_kind %></td>
+                <td class="cell-actions">
+                  <div class="flex justify-end gap-2">
+                    <% if category.top_level? && category.active? && policy(FinanceCategory).create? %>
+                      <%= modal_link_to t(".add_child"), new_finance_category_path(parent_id: category.id, kind: category.kind), class: "btn btn-sm" %>
+                    <% end %>
+                    <% if policy(category).update? %>
+                      <%= modal_link_to t(".edit"), edit_finance_category_path(category), class: "btn btn-sm", data: { row_link: true } %>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "categories-list" %>
+    <% else %>
+      <p class="empty-state mt-6"><%= t(".empty") %></p>
+    <% end %>
+  <% end %>
+</div>

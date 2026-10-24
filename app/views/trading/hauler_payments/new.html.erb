@@ -18,7 +18,7 @@
       data: { controller: "form-validation" } do |form| %>
   <%= render "shared/form_errors", record: @payment %>
 
-  <div class="grid gap-5 sm:grid-cols-3">
+  <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4" data-controller="money-account" data-money-account-defaults-value="<%= MoneyAccount.defaults_by_method.to_json %>">
     <div>
       <%= form.label :amount, class: "field-label" %>
       <%= form.number_field :amount, required: true, min: 0.01, max: ([ @hauler.balance, 0.01 ].max), step: 0.01, inputmode: "decimal",
@@ -29,8 +29,9 @@
       <%= form.label :payment_method, class: "field-label" %>
       <%= form.select :payment_method, enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS),
             { include_blank: t("shared.select.pick_payment_method") }, required: true, class: "field-input",
-            data: { missing_message: "#{HaulerPayment.human_attribute_name(:payment_method)} #{t("errors.messages.blank")}" } %>
+            data: { money_account_target: "method", action: "money-account#suggest", missing_message: "#{HaulerPayment.human_attribute_name(:payment_method)} #{t("errors.messages.blank")}" } %>
     </div>
+    <%= render "shared/money_account_field", form: %>
     <div>
       <%= form.label :paid_on, class: "field-label" %>
       <%= form.date_field :paid_on, required: true, min: @hauler.payments.maximum(:paid_on), class: "field-input" %>

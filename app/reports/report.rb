@@ -75,6 +75,7 @@ class Report
       ShipmentsReport, SalesReport, CoffeeStockReport,
       LoansReport, LoanPaymentsReport, LoanSuppliesReport,
       PayrollPaymentsReport, PayrollLinesReport, HarvestReport, PayrollExpensesReport, FarmsReport,
+      ExpensesReport,
       PeopleReport, CashMovementsReport ]
   end
 

@@ -34,11 +34,11 @@ module Trading
 
     private
       def set_invoice
-        @invoice = Invoice.includes(payments: :created_by, purchases: :loan_payments, producer: :person).find(params[:invoice_id])
+        @invoice = Invoice.includes(payments: %i[created_by money_account], purchases: :loan_payments, producer: :person).find(params[:invoice_id])
       end
 
       def payment_params
-        params.expect(invoice_payment: [ :paid_on, :amount, :payment_method ])
+        params.expect(invoice_payment: [ :paid_on, :amount, :payment_method, :money_account_id ])
       end
   end
 end

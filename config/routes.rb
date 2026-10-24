@@ -89,6 +89,22 @@ Rails.application.routes.draw do
     resource :daily_close, only: :show
   end
 
+  # Control financiero (Fernando, 2026-10-23): every money outflow of the
+  # business, its accounts, categories and budget.
+  namespace :finance do
+    root "home#index"
+    resources :movements, only: :index
+    resources :expenses, defaults: { kind: "expense" }
+    resources :investments, controller: "expenses", defaults: { kind: "investment" }
+    # The receipt's photo or PDF of an expense.
+    resources :expense_receipts, only: :show
+    resources :money_accounts, except: :destroy
+    resources :account_transfers, only: %i[ new create destroy ]
+    resources :other_incomes, only: %i[ new create destroy ]
+    resources :categories, only: %i[ index new create edit update ]
+    resource :budget, only: %i[ show update ]
+  end
+
   namespace :farms do
     root "home#index"
     resources :farms, only: %i[ index show new create edit update ]

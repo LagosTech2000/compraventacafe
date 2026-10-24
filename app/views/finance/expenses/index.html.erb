@@ -1,0 +1,97 @@
+<% content_for :title, t(".title.#{@kind}") %>
+<%= live_updates_from :finance %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= render "finance/nav" %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title.#{@kind}") %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".help.#{@kind}") %></p>
+  </div>
+  <% if policy(Expense).create? %>
+    <%= modal_link_to t(".new.#{@kind}"), new_expense_path, class: "btn btn-primary" %>
+  <% end %>
+</div>
+
+<% categories = FinanceCategory.options_for(@kind) %>
+<% accounts = MoneyAccount.alphabetical.pluck(:name, :id) %>
+<% methods = enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS) %>
+<% frame = "#{@kind}s-list" %>
+<div data-controller="live-filter">
+  <%= render layout: "shared/filters", locals: { filter: @filter, url: expenses_path, frame:, live: true } do |form| %>
+    <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("finance.expenses.index.search_placeholder") %>
+    <%= filter_date_field form, :from, t("shared.filters.from"), value: @filter.from %>
+    <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
+    <%= filter_select form, :category_id, Expense.human_attribute_name(:category), categories, selected: @filter.category_id, all: t("shared.filters.all_feminine") %>
+    <%= filter_select form, :money_account_id, Expense.human_attribute_name(:money_account), accounts, selected: @filter.money_account_id, all: t("shared.filters.all_feminine") %>
+    <%= filter_select form, :payment_method, Expense.human_attribute_name(:payment_method), methods, selected: @filter.payment_method, all: t("shared.filters.all_feminine") %>
+  <% end %>
+
+  <%= list_frame frame do %>
+    <%= render "shared/filter_status", filter: @filter, count: t(".count.#{@kind}", count: @filter.total_count), periods: quick_periods(@filter),
+          chips: filter_chips(@filter, q: ->(text) { t("shared.filters.chips.q", text:) },
+                                       category_id: ->(id) { categories.find { it.last == id }&.first },
+                                       money_account_id: ->(id) { accounts.find { it.last == id }&.first },
+                                       payment_method: ->(value) { Invoice.human_attribute_name("payment_method/#{value}") }) %>
+    <dl class="mt-4 flex flex-wrap gap-3">
+      <div class="stat min-w-0 flex-1 basis-40"><dt><%= t(".total") %></dt><dd><%= format_money(@total) %></dd></div>
+    </dl>
+    <% sorting = { filter: @filter, frame: } %>
+    <% if @expenses.any? %>
+      <div class="mt-6 @container">
+        <ul class="space-y-3 @3xl:hidden">
+          <% @expenses.each do |expense| %>
+            <li class="data-card" id="<%= dom_id(expense, :card) %>">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="font-medium"><%= expense.description %></p>
+                  <p class="text-xs text-ink-muted"><%= [ l(expense.spent_on), expense.category.full_name, expense.payee ].compact.join(" · ") %></p>
+                </div>
+                <%= detail_button expense_path(expense) %>
+              </div>
+              <p class="mt-2 text-sm"><strong class="tabular-nums"><%= format_money(expense.amount) %></strong> · <%= expense.money_account.name %></p>
+            </li>
+          <% end %>
+        </ul>
+        <div class="hidden overflow-x-auto panel @3xl:block">
+          <table class="data-table data-table-compact">
+            <thead>
+              <tr>
+                <%= sort_th Expense.human_attribute_name(:spent_on), :spent_on, sorting %>
+                <%= sort_th Expense.human_attribute_name(:description), :description, sorting %>
+                <%= sort_th Expense.human_attribute_name(:category), :category, sorting %>
+                <%= sort_th Expense.human_attribute_name(:payee), :payee, sorting, class: "hidden @5xl:table-cell" %>
+                <%= sort_th Expense.human_attribute_name(:money_account), :account, sorting, class: "hidden @5xl:table-cell" %>
+                <%= sort_th Expense.human_attribute_name(:payment_method), :payment_method, sorting, class: "hidden @5xl:table-cell" %>
+                <%= sort_th Expense.human_attribute_name(:receipt_number), :receipt_number, sorting, class: "hidden @5xl:table-cell" %>
+                <%= sort_th Expense.human_attribute_name(:amount), :amount, sorting, class: "text-right" %>
+                <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @expenses.each do |expense| %>
+                <tr id="<%= dom_id(expense) %>">
+                  <td class="whitespace-nowrap"><%= l(expense.spent_on) %></td>
+                  <td>
+                    <%= expense.description %>
+                    <% if expense.receipt_info %><span class="badge badge-neutral ml-1"><%= t(".with_receipt") %></span><% end %>
+                  </td>
+                  <td><%= expense.category.full_name %></td>
+                  <td class="hidden @5xl:table-cell"><%= expense.payee || "—" %></td>
+                  <td class="hidden @5xl:table-cell"><%= expense.money_account.name %></td>
+                  <td class="hidden @5xl:table-cell"><%= expense.human_payment_method %></td>
+                  <td class="hidden @5xl:table-cell"><%= expense.receipt_number || "—" %></td>
+                  <td class="whitespace-nowrap text-right font-semibold tabular-nums"><%= format_money(expense.amount) %></td>
+                  <td class="cell-actions"><%= detail_button expense_path(expense) %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: %>
+    <% else %>
+      <p class="empty-state mt-6"><%= t(".empty.#{@kind}") %></p>
+    <% end %>
+  <% end %>
+</div>

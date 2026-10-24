@@ -26,6 +26,7 @@ RSpec.describe "Sorting every list" do
     PayrollTask.create!(payroll: task_payroll, name: "Chapia", amount: 1_000)
     create(:sale, buyer:)
     create(:shipment, buyer:)
+    create(:expense)
     sign_in admin
   end
 
@@ -56,7 +57,11 @@ RSpec.describe "Sorting every list" do
     BuyerFilter => -> { sales_buyers_path },
     BuyerSaleFilter => -> { sales_buyer_path(buyer, tab: "sales") },
     BuyerShipmentFilter => -> { sales_buyer_path(buyer, tab: "shipments") },
-    StockLedgerFilter => -> { sales_stock_path }
+    StockLedgerFilter => -> { sales_stock_path },
+    MovementFilter => -> { finance_movements_path(from: "", to: "") },
+    ExpenseFilter => -> { finance_expenses_path(from: "", to: "") },
+    MoneyAccountFilter => -> { finance_money_accounts_path },
+    FinanceCategoryFilter => -> { finance_categories_path }
   }.freeze
 
   it "covers every list filter" do

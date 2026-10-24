@@ -1,0 +1,73 @@
+<%# Rows of MovementFilter: every movement of money of every module, with
+    its source, account and, when an account is chosen, the balance after it.
+    sorting: { filter:, frame: } (the server sorts). %>
+<% with_balance = rows.any? { it.balance } %>
+<div class="@container">
+  <ul class="space-y-3 @3xl:hidden">
+    <% rows.each do |row| %>
+      <li class="data-card" id="<%= "card_movement_#{row.key}" %>">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="font-medium"><%= row.description %></p>
+            <p class="text-xs text-ink-muted">
+              <%= [ l(row.date), t("reports.types.cash_movements.sources.#{row.source}"), row.person, row.account_name || t("reports.types.cash_movements.no_account") ].compact.join(" · ") %>
+            </p>
+          </div>
+          <% if (path = movement_path(row)) %><%= link_to t("finance.movements.open"), path, class: "btn btn-sm shrink-0", data: { row_link: true, turbo_frame: "_top" } %><% end %>
+        </div>
+        <p class="mt-2 text-sm">
+          <span class="font-semibold tabular-nums <%= row.amount_in.positive? ? "text-success" : "text-danger" %>">
+            <%= row.amount_in.positive? ? "+#{format_money(row.amount_in)}" : "−#{format_money(row.amount_out)}" %>
+          </span>
+          <% if row.balance %> · <%= t("finance.movements.balance") %> <strong class="tabular-nums"><%= format_money(row.balance) %></strong><% end %>
+        </p>
+      </li>
+    <% end %>
+  </ul>
+  <div class="hidden overflow-x-auto panel @3xl:block">
+    <table class="data-table data-table-compact">
+      <thead>
+        <tr>
+          <%= sort_th t("finance.movements.columns.date"), :date, sorting %>
+          <%= sort_th t("finance.movements.columns.source"), :source, sorting %>
+          <%= sort_th t("finance.movements.columns.description"), :description, sorting %>
+          <%= sort_th t("finance.movements.columns.person"), :person, sorting, class: "hidden @5xl:table-cell" %>
+          <%= sort_th t("finance.movements.columns.category"), :category, sorting, class: "hidden @5xl:table-cell" %>
+          <%= sort_th t("finance.movements.columns.account"), :account, sorting, class: "hidden @5xl:table-cell" %>
+          <%= sort_th t("finance.movements.columns.amount_in"), :amount_in, sorting, class: "text-right" %>
+          <%= sort_th t("finance.movements.columns.amount_out"), :amount_out, sorting, class: "text-right" %>
+          <% if with_balance %><%= sort_th t("finance.movements.balance"), :balance, sorting, class: "text-right" %><% end %>
+          <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% rows.each do |row| %>
+          <tr id="<%= "movement_#{row.key}" %>">
+            <td class="whitespace-nowrap"><%= l(row.date) %></td>
+            <td><span class="badge <%= row.amount_in.positive? ? "badge-success" : "badge-neutral" %>"><%= t("reports.types.cash_movements.sources.#{row.source}") %></span></td>
+            <td><%= row.description %></td>
+            <td class="hidden @5xl:table-cell"><%= row.person || "—" %></td>
+            <td class="hidden @5xl:table-cell"><%= row.category || "—" %></td>
+            <td class="hidden @5xl:table-cell">
+              <%= row.account_name || tag.span(t("reports.types.cash_movements.no_account"), class: "text-ink-muted") %>
+            </td>
+            <td class="whitespace-nowrap text-right tabular-nums text-success"><%= format_money(row.amount_in) if row.amount_in.positive? %></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(row.amount_out) if row.amount_out.positive? %></td>
+            <% if with_balance %>
+              <td class="whitespace-nowrap text-right font-semibold tabular-nums <%= "text-danger" if row.balance.to_d.negative? %>"><%= format_money(row.balance) %></td>
+            <% end %>
+            <td class="cell-actions">
+              <div class="flex justify-end gap-2">
+                <% if (path = movement_path(row)) %><%= link_to t("finance.movements.open"), path, class: "btn btn-sm", data: { row_link: true, turbo_frame: "_top" } %><% end %>
+                <% if (removal = movement_removal_path(row)) %>
+                  <%= button_to t("finance.movements.remove"), removal, method: :delete, class: "btn btn-sm",
+                        form: { data: { turbo_confirm: t("finance.movements.confirm_remove"), turbo_frame: "_top" } } %>
+                <% end %>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

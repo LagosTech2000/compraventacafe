@@ -2,4 +2,7 @@
 <%= filter_select form, :direction, t("reports.filters.direction"),
       CashMovementsReport::DIRECTIONS.map { |key| [ t("reports.types.cash_movements.directions.#{key}"), key ] }, selected: filter.direction %>
 <%= filter_select form, :source, t("reports.filters.source"),
-      CashMovementsReport::SOURCES.map { |key| [ t("reports.types.cash_movements.sources.#{key}"), key ] }, selected: filter.source %>
+      MoneyMovements.sources_for(Current.user).map { |key| [ t("reports.types.cash_movements.sources.#{key}"), key ] }, selected: filter.source %>
+<%= filter_select form, :account, t("reports.groups.account_id"),
+      [ [ t("reports.types.cash_movements.no_account"), CashMovementsReport::NONE ] ] + MoneyAccount.alphabetical.pluck(:name, :id).map { |name, id| [ name, id.to_s ] },
+      selected: filter.account, all: t("shared.filters.all_feminine") %>

@@ -40,7 +40,7 @@ module Farms
       end
 
       def expense_params
-        params.expect(payroll_expense: [ :spent_on, :expense_category_id, :description, :amount ])
+        params.expect(payroll_expense: [ :spent_on, :expense_category_id, :description, :amount, :money_account_id ])
       end
   end
 end

@@ -4,6 +4,7 @@
 # Payments are never edited; only the latest one can be removed.
 class InvoicePayment < ApplicationRecord
   include Auditable
+  include HasMoneyAccount
   include LiveUpdates
   live_updates :trading
 

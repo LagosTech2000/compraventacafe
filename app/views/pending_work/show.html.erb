@@ -19,6 +19,8 @@
   <% groups << :members_without_wage if dashboard.members_without_wage.any? %>
 <% end %>
 
+<% groups << :over_budget if dashboard.can?("finance") && dashboard.over_budget.any? %>
+
 <h1 class="text-xl font-bold"><%= t(".title") %></h1>
 <p class="mt-1 text-sm text-ink-muted"><%= t(".summary") %></p>
 
@@ -220,6 +222,22 @@
             <% if policy(member).update? %>
               <%= modal_link_to t(".groups.members_without_wage.action"), edit_farms_payroll_member_path(member.payroll, member), class: "btn btn-sm btn-primary" %>
             <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+  <% if groups.include?(:over_budget) %>
+    <section id="pending-over_budget" role="tabpanel" aria-labelledby="pending-tab-over_budget" data-tabs-target="panel" <%= "hidden" unless groups.first == :over_budget %>>
+      <p class="text-xs text-ink-muted"><%= t(".groups.over_budget.help") %></p>
+      <ul class="mt-2 divide-y divide-line">
+        <% dashboard.over_budget.each do |line| %>
+          <li class="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm" id="<%= dom_id(line.category, :pending) %>">
+            <span class="min-w-0">
+              <span class="block font-medium"><%= line.category.name %></span>
+              <span class="block text-xs text-ink-muted"><%= t(".groups.over_budget.detail", spent: format_money(line.spent), budget: format_money(line.budget)) %></span>
+            </span>
+            <%= page_link_to t(".groups.over_budget.action"), finance_budget_path, class: "btn btn-sm btn-primary" %>
           </li>
         <% end %>
       </ul>

@@ -12,6 +12,12 @@ class DemoData
   HAULERS = [ [ "Rubén", "Demo Once", 10, 50 ], [ "Gloria", "Demo Doce", 8, 55 ] ].freeze
   # Comercialización: [name, kind]. Fictitious, like everything here.
   BUYERS = [ [ "Exportadora Demo del Norte", "exporter" ], [ "Beneficio Demo El Paraíso", "processor" ] ].freeze
+  # Control financiero: [category, [subcategories]] and some expenses [subcategory, description, payee, amount, days ago].
+  CATEGORIES = { "Transporte (demo)" => [ "Combustible", "Fletes" ], "Mantenimiento (demo)" => [ "Vehículos", "Bodega" ],
+                 "Servicios (demo)" => [ "Energía", "Teléfono e internet" ] }.freeze
+  EXPENSES = [ [ "Combustible", "Diésel del camión", "Gasolinera Demo", 2_400, 6 ], [ "Fletes", "Flete a El Paraíso", "Transporte Demo", 1_800, 4 ],
+               [ "Vehículos", "Cambio de aceite", "Taller Demo", 950, 3 ], [ "Energía", "Factura de la luz", "Empresa de energía demo", 1_250, 2 ],
+               [ "Bodega", "Sacos nuevos", "Agroservicio Demo", 3_100, 1 ], [ "Combustible", "Gasolina de la moto", "Gasolinera Demo", 600, 0 ] ].freeze
 
   def initialize(user)
     @user = user
@@ -20,6 +26,7 @@ class DemoData
 
   def load
     ActiveRecord::Base.transaction do
+      @box, @bank = money_accounts
       zones = ZONES.map { |name| Zone.find_or_create_by!(name:) }
       producers = FIRST_NAMES.each_with_index.map { |first, i| producer(first, LAST_NAMES[i % LAST_NAMES.size], zones[i % zones.size], i) }
       @haulers = haulers
@@ -29,6 +36,7 @@ class DemoData
       coffee_sales
       loans(producers.map(&:person))
       farms
+      finance
     end
   end
 
@@ -172,6 +180,45 @@ class DemoData
 
     def pay(loan, paid_on, amount)
       loan.payments.create!(paid_on:, amount:, payment_method: "cash", created_by: @user)
+    end
+
+    def money_accounts
+      box = MoneyAccount.find_or_create_by!(name: "Caja de la bodega (demo)") do |account|
+        account.assign_attributes(kind: "cash", opening_balance: 150_000, opening_on: Time.zone.today - 30, default_for: %w[cash])
+      end
+      bank = MoneyAccount.find_or_create_by!(name: "Banco Demo") do |account|
+        account.assign_attributes(kind: "bank", bank_name: "Banco Demo", account_number: "0000-1234", opening_balance: 400_000,
+                                  opening_on: Time.zone.today - 30, default_for: %w[transfer check])
+      end
+      [ box, bank ]
+    end
+
+    # The week's expenses with their categories, an investment, this month's
+    # budget, an owner's contribution and cash taken to the bank. The demo's
+    # payments go to the account of their method.
+    def finance
+      subcategories = CATEGORIES.flat_map do |name, children|
+        parent = FinanceCategory.find_or_create_by!(name:, kind: "expense", parent: nil)
+        Budget.find_or_create_by!(category: parent, month: Time.zone.today.beginning_of_month) { |budget| budget.amount = 5_000 }
+        children.map { |child| FinanceCategory.find_or_create_by!(name: child, kind: "expense", parent:) }
+      end.index_by(&:name)
+      EXPENSES.each do |category, description, payee, amount, days_ago|
+        Expense.create!(kind: "expense", category: subcategories.fetch(category), description:, payee:, amount:, created_by: @user,
+                        spent_on: Time.zone.today - days_ago, payment_method: "cash", money_account: @box)
+      end
+      equipment = FinanceCategory.find_or_create_by!(name: "Equipo (demo)", kind: "investment", parent: nil)
+      Expense.create!(kind: "investment", category: equipment, description: "Báscula de plataforma", payee: "Básculas Demo", amount: 28_000,
+                      spent_on: Time.zone.today - 5, payment_method: "transfer", money_account: @bank, created_by: @user)
+      OtherIncome.create!(money_account: @bank, concept: "Aporte del dueño", amount: 50_000, received_on: Time.zone.today - 7,
+                          payment_method: "transfer", created_by: @user)
+      AccountTransfer.create!(from_account: @box, to_account: @bank, amount: 20_000, transferred_on: Time.zone.today - 1, created_by: @user)
+      [ InvoicePayment, HaulerPayment, LoanPayment, SalePayment ].each do |model|
+        model.where(money_account_id: nil, payment_method: "cash").update_all(money_account_id: @box.id)
+        model.where(money_account_id: nil, payment_method: %w[transfer check]).update_all(money_account_id: @bank.id)
+      end
+      Loan.where(money_account_id: nil).where("cash_amount > 0").update_all(money_account_id: @box.id)
+      PayrollPayment.where(money_account_id: nil).update_all(money_account_id: @box.id)
+      PayrollExpense.where(money_account_id: nil).update_all(money_account_id: @box.id)
     end
 
     # Trucks of the week's wet parchment: one sold and collected, one sold

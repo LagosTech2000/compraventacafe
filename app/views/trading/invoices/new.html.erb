@@ -99,7 +99,7 @@
     <%# Paid on the spot in full, in part (with the amount) or later. The
         fields that do not apply hide (invoice_payment_choice_controller.js). %>
     <aside class="space-y-5 @5xl:sticky @5xl:top-24">
-    <fieldset class="grid gap-5 @xl:grid-cols-2 @5xl:grid-cols-1" data-controller="invoice-payment-choice">
+    <fieldset class="grid gap-5 @xl:grid-cols-2 @5xl:grid-cols-1" data-controller="invoice-payment-choice money-account" data-money-account-defaults-value="<%= MoneyAccount.defaults_by_method.to_json %>">
       <legend class="mb-3 text-lg font-semibold"><%= t(".payment") %></legend>
       <div>
         <%= form.label :payment_status, class: "field-label" %>
@@ -116,7 +116,14 @@
         <%= form.label :payment_method, class: "field-label" %>
         <%= form.select :payment_method, enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS),
               { include_blank: t("shared.select.pick_payment_method") }, class: "field-input",
-              data: { missing_message: "#{Invoice.human_attribute_name(:payment_method)} #{t("errors.messages.blank")}" } %>
+              data: { money_account_target: "method", action: "money-account#suggest",
+                      missing_message: "#{Invoice.human_attribute_name(:payment_method)} #{t("errors.messages.blank")}" } %>
+      </div>
+      <div data-invoice-payment-choice-target="optionalPaidField">
+        <%= label_tag "invoice_money_account_id", MoneyAccount.model_name.human, class: "field-label" %>
+        <%= select_tag "invoice[money_account_id]", options_from_collection_for_select(MoneyAccount.active.alphabetical, :id, :name, params.dig(:invoice, :money_account_id)),
+              id: "invoice_money_account_id", include_blank: t("shared.select.no_account"), class: "field-input",
+              data: { money_account_target: "account", action: "money-account#pick" } %>
       </div>
       <div data-invoice-payment-choice-target="paidField">
         <%= form.label :paid_on, class: "field-label" %>

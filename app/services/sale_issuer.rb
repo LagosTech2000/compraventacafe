@@ -13,14 +13,14 @@ class SaleIssuer
 
   PAYMENT_CHOICES = Sale::PAYMENT_STATUSES
 
-  def initialize(buyer:, shipment_ids:, user:, sale: {}, payment_status: nil, payment_method: nil, paid_on: nil, amount: nil)
+  def initialize(buyer:, shipment_ids:, user:, sale: {}, payment_status: nil, payment_method: nil, paid_on: nil, amount: nil, money_account_id: nil)
     @buyer = buyer
     @shipment_ids = Array(shipment_ids).compact_blank.map(&:to_i)
     @user = user
     @attributes = sale.to_h.symbolize_keys.slice(:sold_on, :price_unit, :unit_price, :buyer_document_number, :observations)
     @payment_status = payment_status.presence_in(PAYMENT_CHOICES) || "pending"
     @payment = { payment_method: payment_method.presence, paid_on: paid_on.presence || @attributes[:sold_on].presence || Time.zone.today,
-                 amount: amount.presence }
+                 amount: amount.presence, money_account_id: money_account_id.presence }
   end
 
   def call
@@ -69,7 +69,8 @@ class SaleIssuer
         return false
       end
 
-      payment = sale.payments.create(amount:, paid_on: @payment[:paid_on], payment_method: @payment[:payment_method], created_by: @user)
+      payment = sale.payments.create(amount:, paid_on: @payment[:paid_on], payment_method: @payment[:payment_method],
+                                     money_account_id: @payment[:money_account_id], created_by: @user)
       payment.errors.each { |error| sale.errors.add(:base, error.full_message) }
       payment.persisted?
     end

@@ -47,6 +47,13 @@ class ReportDemoData
   # Comercialización: fictitious buyers [name, kind].
   BUYERS = [ [ "Exportadora Demo Montecillos", "exporter" ], [ "Exportadora Demo Copán", "exporter" ],
              [ "Beneficio Demo Danlí", "processor" ], [ "Comercial Demo Oriente", "other" ] ].freeze
+  # Control financiero: first-level categories and their subcategories, with
+  # what a usual expense of each costs.
+  BUSINESS_EXPENSES = { "Transporte" => { "Combustible" => 1_500, "Fletes" => 2_500, "Llantas y repuestos" => 3_000 },
+                        "Bodega" => { "Sacos" => 2_000, "Mantenimiento" => 1_200 },
+                        "Servicios" => { "Energía" => 1_400, "Teléfono e internet" => 900, "Agua" => 300 },
+                        "Administración" => { "Papelería" => 400, "Contador" => 3_500 } }.freeze
+  INVESTMENTS = [ [ "Vehículos", "Camión usado", 450_000 ], [ "Equipo", "Báscula de plataforma", 28_000 ], [ "Equipo", "Secadora de café", 180_000 ] ].freeze
   # A truck leaves once this many net pounds of a state are in stock.
   TRUCK_POUNDS = 1_500
 
@@ -73,6 +80,7 @@ class ReportDemoData
     (@from..@to).each_slice(7) do |week|
       ActiveRecord::Base.transaction { week.each { |date| day(date) } }
     end
+    ActiveRecord::Base.transaction { budget_and_accounts }
     self
   end
 
@@ -93,6 +101,15 @@ class ReportDemoData
       @producers = producers
       @workers = workers
       @farms = farms
+      @accounts = [ [ "Caja (demo)", "cash", %w[cash], 100_000 ], [ "Banco Demo Uno", "bank", %w[transfer check], 600_000 ] ].map do |name, kind, methods, opening|
+        MoneyAccount.find_or_create_by!(name:) do |account|
+          account.assign_attributes(kind:, default_for: methods, opening_balance: opening, opening_on: @from)
+        end
+      end
+      @business_categories = BUSINESS_EXPENSES.to_h do |name, children|
+        parent = FinanceCategory.find_or_create_by!(name:, kind: "expense", parent: nil)
+        [ parent, children.to_h { |child, cost| [ FinanceCategory.find_or_create_by!(name: child, kind: "expense", parent:), cost ] } ]
+      end
       @buyers = BUYERS.map { |name, kind| Buyer.find_or_create_by!(name:) { |buyer| buyer.kind = kind } }
     end
 
@@ -172,6 +189,7 @@ class ReportDemoData
       receive_and_sell(date)
       collect_sales(date)
       collect(date)
+      spend_business(date)
       work(date)
     end
 
@@ -338,6 +356,43 @@ class ReportDemoData
         end
         sale.payments.create!(amount: sale.reload.balance_due, paid_on: date, payment_method: method, created_by: pick(@clerks))
       end
+    end
+
+    # The business's own expenses, a few a week, and now and then an investment.
+    def spend_business(date)
+      return if date.sunday? || @random.rand > 0.45
+
+      top, children = @business_categories.to_a.sample(random: @random)
+      category, cost = children.to_a.sample(random: @random)
+      method = weighted("cash" => 6, "transfer" => 3, "check" => 1)
+      Expense.create!(kind: "expense", category:, description: "#{category.name} (#{top.name.downcase})", payee: pick([ "Proveedor Demo", "Comercial Demo", nil ]),
+                      amount: (cost * (0.6 + @random.rand * 0.8)).round(2), spent_on: date, payment_method: method,
+                      money_account: MoneyAccount.default_for(method), created_by: pick(@clerks))
+      @counts[:expenses] += 1
+      return unless date.day == 15 && @random.rand < 0.3 && (investment = INVESTMENTS[@counts[:investments]])
+
+      category = FinanceCategory.find_or_create_by!(name: investment.first, kind: "investment", parent: nil)
+      Expense.create!(kind: "investment", category:, description: investment.second, amount: investment.third, spent_on: date,
+                      payment_method: "transfer", money_account: MoneyAccount.default_for("transfer"), created_by: @user)
+      @counts[:investments] += 1
+    end
+
+    # A monthly budget for every first-level category, and every payment of
+    # the year on the account of its method.
+    def budget_and_accounts
+      months = (@from.beginning_of_month..@to).map(&:beginning_of_month).uniq
+      @business_categories.each do |top, children|
+        amount = (children.values.sum * 4).round(-2)
+        months.each { |month| Budget.find_or_create_by!(category: top, month:) { |budget| budget.amount = amount } }
+      end
+      cash, bank = @accounts
+      [ InvoicePayment, HaulerPayment, LoanPayment, SalePayment ].each do |model|
+        model.where(money_account_id: nil, payment_method: "cash").update_all(money_account_id: cash.id)
+        model.where(money_account_id: nil, payment_method: %w[transfer check]).update_all(money_account_id: bank.id)
+      end
+      Loan.where(money_account_id: nil).where("cash_amount > 0").update_all(money_account_id: cash.id)
+      PayrollPayment.where(money_account_id: nil).update_all(money_account_id: cash.id)
+      PayrollExpense.where(money_account_id: nil).update_all(money_account_id: cash.id)
     end
 
     # Cash payments on loans, about once a month; some never pay.

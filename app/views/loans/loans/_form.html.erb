@@ -45,6 +45,10 @@
             class: "field-input text-lg", autofocus: loan.person.present?,
             data: { loan_composition_target: "cash", action: "loan-composition#update" } %>
     </div>
+    <div class="max-w-xs" data-controller="money-account">
+      <%= render "shared/money_account_field", form: %>
+      <p class="mt-1 text-xs text-ink-muted"><%= t("loans.loans.form.account_help") %></p>
+    </div>
 
     <div>
       <div class="mb-2 flex flex-wrap items-center justify-between gap-2">

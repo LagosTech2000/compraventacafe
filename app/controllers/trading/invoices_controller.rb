@@ -50,10 +50,11 @@ module Trading
       end
 
       def issue_params
-        permitted = params.expect(invoice: [ :payment_status, :payment_method, :paid_on, :amount, purchase_ids: [] ])
+        permitted = params.expect(invoice: [ :payment_status, :payment_method, :paid_on, :amount, :money_account_id, purchase_ids: [] ])
         {
           purchase_ids: permitted[:purchase_ids], payment_status: permitted[:payment_status],
-          payment_method: permitted[:payment_method], paid_on: permitted[:paid_on], amount: permitted[:amount]
+          payment_method: permitted[:payment_method], paid_on: permitted[:paid_on], amount: permitted[:amount],
+          money_account_id: permitted[:money_account_id]
         }
       end
   end

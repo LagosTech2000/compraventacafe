@@ -5,6 +5,7 @@
 # so the receipt prints the same later.
 class HaulerPayment < ApplicationRecord
   include Auditable
+  include HasMoneyAccount
   include LiveUpdates
   live_updates :trading
 

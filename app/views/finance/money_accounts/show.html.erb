@@ -1,0 +1,60 @@
+<% content_for :title, @account.name %>
+<%= live_updates_from :finance %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= render "finance/nav" %>
+<%= render "shared/breadcrumbs", crumbs: [ [ t("finance.nav.accounts"), finance_money_accounts_path ], [ @account.name ] ] %>
+
+<div class="flex flex-wrap items-start justify-between gap-4 print:hidden">
+  <div>
+    <h1 class="text-2xl font-bold"><%= @account.name %></h1>
+    <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
+      <span class="badge badge-neutral"><%= @account.human_kind %></span>
+      <% unless @account.active? %><span class="badge badge-neutral"><%= t("finance.money_accounts.index.statuses.inactive") %></span><% end %>
+      <span><%= [ @account.bank_name, @account.account_number ].compact.join(" · ") %></span>
+    </p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <% if @account.active? && policy(OtherIncome).create? %><%= modal_link_to t(".income"), new_finance_other_income_path(account: @account.id), class: "btn" %><% end %>
+    <% if @account.active? && policy(AccountTransfer).create? %><%= modal_link_to t(".transfer"), new_finance_account_transfer_path(from: @account.id), class: "btn" %><% end %>
+    <% if policy(@account).update? %><%= modal_link_to t(".edit"), edit_finance_money_account_path(@account), class: "btn" %><% end %>
+    <div data-controller="print"><button type="button" class="btn" data-action="print#print"><%= t(".print") %></button></div>
+  </div>
+</div>
+
+<div class="hidden print:block">
+  <%= render "shared/print_letterhead", title: t(".statement"), subtitle: "#{@account.name} · #{date_range_label(@filter.from, @filter.to) || t("reports.periods.everything")}" %>
+</div>
+
+<dl class="mt-6 flex flex-wrap gap-3">
+  <div class="stat min-w-40 flex-1 ring-2 ring-primary"><dt><%= t(".balance_today") %></dt><dd data-live-value><%= signed_money(@balance.for(@account)) %></dd></div>
+  <div class="stat min-w-40 flex-1"><dt><%= MoneyAccount.human_attribute_name(:opening_balance) %></dt><dd><%= signed_money(@account.opening_balance) %></dd>
+    <dd class="text-xs font-normal text-ink-muted"><%= t(".since", date: l(@account.opening_on)) %></dd></div>
+</dl>
+
+<h2 class="mt-8 text-lg font-semibold"><%= t(".movements") %></h2>
+<div data-controller="live-filter">
+  <%= render layout: "shared/filters", locals: { filter: @filter, url: finance_money_account_path(@account), frame: "account-movements", live: true } do |form| %>
+    <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("finance.movements.index.search_placeholder") %>
+    <%= filter_date_field form, :from, t("shared.filters.from"), value: @filter.from %>
+    <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
+    <%= filter_select form, :direction, t("reports.filters.direction"),
+          MovementFilter::DIRECTIONS.map { [ t("reports.types.cash_movements.directions.#{it}"), it ] }, selected: @filter.direction %>
+  <% end %>
+  <%= list_frame "account-movements" do %>
+    <%= render "shared/filter_status", filter: @filter, count: t("finance.movements.index.count", count: @filter.total_count), periods: quick_periods(@filter),
+          chips: filter_chips(@filter, q: ->(text) { t("shared.filters.chips.q", text:) },
+                                       direction: ->(value) { t("reports.types.cash_movements.directions.#{value}") }) %>
+    <% opening = @filter.opening_balance %>
+    <dl class="mt-4 flex flex-wrap gap-3">
+      <% { opening:, in: @filter.total_in, out: @filter.total_out, closing: opening + @filter.total_in - @filter.total_out }.each do |key, value| %>
+        <div class="stat min-w-0 flex-1 basis-40"><dt><%= t("finance.movements.index.#{key}") %></dt><dd><%= signed_money(value) %></dd></div>
+      <% end %>
+    </dl>
+    <% if @rows.any? %>
+      <div class="mt-6"><%= render "finance/movements_table", rows: @rows, sorting: { filter: @filter, frame: "account-movements" } %></div>
+      <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "account-movements" %>
+    <% else %>
+      <p class="empty-state mt-6"><%= t("finance.movements.index.empty") %></p>
+    <% end %>
+  <% end %>
+</div>

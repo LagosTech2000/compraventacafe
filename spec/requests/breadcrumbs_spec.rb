@@ -39,6 +39,17 @@ RSpec.describe "Breadcrumbs" do
     expect(crumbs.first(3)).to eq([ "Compradores", "Beneficio Henola", "Venta #{sale.display_number}" ])
   end
 
+  it "goes up through its list from an expense, an investment and an account" do
+    expense = create(:expense, description: "Diésel")
+    investment = create(:expense, kind: "investment", description: "Báscula")
+    get finance_expense_path(expense)
+    expect(crumbs).to eq([ "Gastos", "Diésel" ])
+    get finance_investment_path(investment)
+    expect(crumbs).to eq([ "Inversiones", "Báscula" ])
+    get finance_money_account_path(expense.money_account)
+    expect(crumbs).to eq([ "Cuentas", expense.money_account.name ])
+  end
+
   it "goes up through the account from a loan and its receipt, and through the carrero from a payment" do
     loan = create(:loan, person: producer.person)
     payment = create(:loan_payment, loan:, amount: 100)

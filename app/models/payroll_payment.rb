@@ -4,6 +4,7 @@
 # payment of the payroll and its loan payments are the latest of their loans.
 class PayrollPayment < ApplicationRecord
   include Auditable
+  include HasMoneyAccount
 
   belongs_to :payroll
   belongs_to :created_by, class_name: "User"

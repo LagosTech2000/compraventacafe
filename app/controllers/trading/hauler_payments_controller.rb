@@ -40,7 +40,7 @@ module Trading
       end
 
       def payment_params
-        params.expect(hauler_payment: [ :paid_on, :amount, :payment_method, :observations ])
+        params.expect(hauler_payment: [ :paid_on, :amount, :payment_method, :observations, :money_account_id ])
       end
   end
 end

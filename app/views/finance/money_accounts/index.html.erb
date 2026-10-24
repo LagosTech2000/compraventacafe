@@ -1,0 +1,89 @@
+<% content_for :title, t(".title") %>
+<%= live_updates_from :finance %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= render "finance/nav" %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <%= help_guide_button HelpGuide.process(:finance_money), label: true %>
+    <% if policy(AccountTransfer).create? %><%= modal_link_to t("finance.home.index.transfer"), new_finance_account_transfer_path, class: "btn" %><% end %>
+    <% if policy(MoneyAccount).create? %><%= modal_link_to t(".new"), new_finance_money_account_path, class: "btn btn-primary" %><% end %>
+  </div>
+</div>
+
+<% statuses = MoneyAccountFilter::STATUSES.map { [ t("finance.money_accounts.index.statuses.#{it}"), it ] } %>
+<% kinds = enum_options(MoneyAccount, :kind, MoneyAccount::KINDS) %>
+<div data-controller="live-filter">
+  <%= render layout: "shared/filters", locals: { filter: @filter, url: finance_money_accounts_path, frame: "accounts-list", live: true } do |form| %>
+    <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("finance.money_accounts.index.search_placeholder") %>
+    <%= filter_select form, :kind, MoneyAccount.human_attribute_name(:kind), kinds, selected: @filter.kind %>
+    <%= filter_select form, :status, t("finance.money_accounts.index.status"), statuses, selected: @filter.status %>
+  <% end %>
+  <%= list_frame "accounts-list" do %>
+    <%= live_list_status @filter, status: statuses, kind: kinds %>
+    <% sorting = { filter: @filter, frame: "accounts-list" } %>
+    <% if @accounts.any? %>
+      <div class="mt-6 @container">
+        <ul class="space-y-3 @3xl:hidden">
+          <% @accounts.each do |account| %>
+            <li class="data-card" id="<%= dom_id(account, :card) %>">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="font-medium"><%= account.name %></p>
+                  <p class="text-xs text-ink-muted"><%= [ account.human_kind, account.bank_name, account.account_number ].compact.join(" · ") %></p>
+                </div>
+                <%= link_to t(".open"), finance_money_account_path(account), class: "btn btn-sm", data: { row_link: true } %>
+              </div>
+              <p class="mt-2 text-lg font-bold tabular-nums"><%= signed_money(@balance.for(account)) %></p>
+            </li>
+          <% end %>
+        </ul>
+        <div class="hidden overflow-x-auto panel @3xl:block">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <%= sort_th MoneyAccount.human_attribute_name(:name), :name, sorting %>
+                <%= sort_th MoneyAccount.human_attribute_name(:kind), :kind, sorting %>
+                <%= sort_th MoneyAccount.human_attribute_name(:bank_name), :bank_name, sorting, class: "hidden @5xl:table-cell" %>
+                <%= sort_th MoneyAccount.human_attribute_name(:account_number), :account_number, sorting, class: "hidden @5xl:table-cell" %>
+                <%= sort_th MoneyAccount.human_attribute_name(:opening_on), :opening_on, sorting, class: "hidden @5xl:table-cell" %>
+                <%= sort_th t(".balance"), :balance, sorting, class: "text-right" %>
+                <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @accounts.each do |account| %>
+                <tr id="<%= dom_id(account) %>">
+                  <td class="font-medium">
+                    <%= account.name %>
+                    <% unless account.active? %><span class="badge badge-neutral ml-1"><%= t(".statuses.inactive") %></span><% end %>
+                  </td>
+                  <td><%= account.human_kind %></td>
+                  <td class="hidden @5xl:table-cell"><%= account.bank_name || "—" %></td>
+                  <td class="hidden @5xl:table-cell"><%= account.account_number || "—" %></td>
+                  <td class="hidden @5xl:table-cell"><%= l(account.opening_on) %></td>
+                  <td class="whitespace-nowrap text-right font-semibold tabular-nums"><%= signed_money(@balance.for(account)) %></td>
+                  <td class="cell-actions"><%= link_to t(".open"), finance_money_account_path(account), class: "btn btn-sm", data: { row_link: true } %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "accounts-list" %>
+    <% else %>
+      <p class="empty-state mt-6"><%= t(".empty") %></p>
+    <% end %>
+    <% unassigned = @balance.unassigned %>
+    <% if unassigned.in.positive? || unassigned.out.positive? %>
+      <p class="mt-4 text-sm text-ink-muted">
+        <%= t(".unassigned", in: format_money(unassigned.in), out: format_money(unassigned.out)) %>
+        <%= link_to t(".see_unassigned"), finance_movements_path(account: MovementFilter::NONE, from: "", to: ""), class: "link", data: { turbo_frame: "_top" } %>
+      </p>
+    <% end %>
+  <% end %>
+</div>

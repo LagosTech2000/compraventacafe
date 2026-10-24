@@ -32,11 +32,11 @@ module Farms
     end
 
     private
-      def build_issuer(paid_on: nil, loan_amounts: {}, observations: nil)
+      def build_issuer(paid_on: nil, loan_amounts: {}, observations: nil, money_account_id: nil)
         period = period_param
         raise ActiveRecord::RecordNotFound unless period
 
-        PayrollPaymentIssuer.new(payroll: @payroll, period:, user: Current.user, paid_on:, loan_amounts:, observations:,
+        PayrollPaymentIssuer.new(payroll: @payroll, period:, user: Current.user, paid_on:, loan_amounts:, observations:, money_account_id:,
                                  with_loans: policy(PayrollPayment.new(payroll: @payroll)).deduct_loans?)
       end
 
@@ -49,9 +49,9 @@ module Farms
       end
 
       def issuer_params
-        permitted = params.expect(payroll_payment_issuer: [ :paid_on, :observations, loan_amounts: {} ])
+        permitted = params.expect(payroll_payment_issuer: [ :paid_on, :observations, :money_account_id, loan_amounts: {} ])
         loan_amounts = policy(PayrollPayment.new(payroll: @payroll)).deduct_loans? ? permitted[:loan_amounts].to_h : {}
-        { paid_on: permitted[:paid_on], observations: permitted[:observations], loan_amounts: }
+        { paid_on: permitted[:paid_on], observations: permitted[:observations], loan_amounts:, money_account_id: permitted[:money_account_id] }
       end
   end
 end

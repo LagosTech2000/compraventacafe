@@ -144,6 +144,14 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Tolerancia de diferencia de peso | `SiteSetting#weight_tolerance_percent` (`WeightTolerance`) |
 | Inventario / kárdex | `CoffeeStock` / `StockLedger` (`sales/stock#show`), reporte `CoffeeStockReport` |
 | Cierre de comercialización | `SalesDailyClose` |
+| Control financiero | `finance` |
+| Cuenta (caja / banco) / saldo de la cuenta | `MoneyAccount` (`kind`: `cash` / `bank`, `default_for`) / `AccountBalance` |
+| Gasto / inversión / comprobante | `Expense` (`kind`: `expense` / `investment`) / `ExpenseReceipt` |
+| Categoría financiera (dos niveles) | `FinanceCategory` (`parent`) |
+| Otro ingreso / transferencia entre cuentas | `OtherIncome` / `AccountTransfer` |
+| Presupuesto mensual | `Budget` / `BudgetSheet` |
+| Movimientos de dinero (libro único) | `MoneyMovements` (`MovementFilter`, `finance/movements`) |
+| Cuenta de un pago de cualquier módulo | `money_account_id` (`HasMoneyAccount`) |
 
 ## Modelo de permisos
 
@@ -656,6 +664,7 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 | --- | --- |
 | `administration` | Usuarios y permisos, auditoría, configuración del sitio y documentos privados (solo administradores); respaldo de datos (solo el usuario con id 1); personas, clientes y colaboradores, con su ficha de productor; fincas y zonas (permisos del módulo); fusionar personas (solo administradores) |
 | `sales` | Comercialización: salidas de camiones con báscula local y del comprador, ventas por libra o quintal de 100 lb con cobros por abonos, compradores, inventario por estado del café con kárdex y cierre diario |
+| `finance` | Control financiero: cuentas (caja y bancos) con saldo y estado de cuenta, gastos e inversiones con categoría de dos niveles y comprobante, otros ingresos, transferencias, presupuesto mensual y el libro único de movimientos de todos los módulos |
 | `trading` | Demo: zonas, productores (con pestañas y QQ por temporada), carreros con su comisión y pagos con recibo, compras con cálculo por estado del café y anulación, facturas imprimibles (original y copia) con estado de pago, cierre diario |
 | `farms` | Fincas, planillas por día, por obra y de corte por lata, con roles y salarios, asistencia o latas por día, pagos por período (semanal, quincenal, mensual) con descuento a préstamos, planilla de pago imprimible y gastos por planilla |
 | `loans` | Préstamos en efectivo, insumos o mixtos a cualquier persona con interés simple, catálogo de insumos, abonos (también con café desde una compra o descontados en planilla) con recibo imprimible, estados de cuenta con historial crediticio y score de pago |
@@ -742,7 +751,9 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
   pedirla y aplica solo lo que cambió (morph, conserva el scroll). Por el
   canal no viaja ningún dato: cada usuario recibe la página con sus
   permisos. Quien hizo el cambio no se recarga dos veces (request id).
-- Avisan: `Purchase`, `Invoice`, `InvoicePayment`, `Producer`, `Hauler`, `HaulerPayment` a `trading`;
+- Avisan: `Purchase` (también a `sales`), `Invoice`, `InvoicePayment`, `Producer`, `Hauler`, `HaulerPayment` a `trading`;
+  salidas, ventas, cobros y compradores a `sales`; cuentas, gastos,
+  ingresos, transferencias y presupuesto a `finance`;
   `Loan` a `loans`; `LoanPayment` a los dos (pago con café). Página nueva
   en vivo = `live_updates_from`; modelo nuevo = `include LiveUpdates`.
 - `live_refresh_controller.js` (en el `<body>`): con una ventana abierta
@@ -1020,6 +1031,46 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   (para quien ve Comercialización).
 - **Contratos con exportador** (anticipos, aplicar libras a contratos en
   orden): **no se construyen**, siguen abiertos.
+
+### Control financiero (`finance`, Fernando, 2026-10-23)
+
+Lo que ofrece el contrato: registro, clasificación y control de todas las
+salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
+
+- **Cuentas** (`MoneyAccount`): caja o banco, con saldo inicial y su
+  fecha; cada una dice para qué formas de pago se sugiere (`default_for`).
+  Saldo = inicial + entradas − salidas (`AccountBalance`, sumas en SQL de
+  todas las fuentes). Se desactivan; no se borran. Estado de cuenta
+  imprimible con el saldo después de cada movimiento.
+- **Cuenta en todos los pagos**: abonos a factura (también al facturar),
+  pagos a carreros, préstamos (la parte en efectivo), abonos a préstamos
+  (con café o por planilla no llevan), pagos de planilla, gastos de
+  planilla y cobros de ventas llevan `money_account_id` (opcional,
+  `HasMoneyAccount`); `money_account_controller.js` sugiere la de la forma
+  de pago hasta que el usuario elige otra. Lo viejo queda «sin cuenta» y
+  se muestra aparte. Los recibos dicen la cuenta.
+- **Libro único** (`MoneyMovements`, «Movimientos»): todo lo que entra y
+  sale de todos los módulos, **sin duplicar** (cada cosa se registra donde
+  ocurre). Cada quien ve las fuentes de los módulos que puede ver. Las
+  transferencias solo salen al elegir una cuenta. «Entradas y salidas de
+  dinero» (Reportería) lee de aquí, con filtro y agrupación por cuenta.
+- **Gastos e inversiones** (`Expense`): categoría **propia, de dos
+  niveles** (`FinanceCategory`; las de Fincas siguen aparte), detalle,
+  beneficiario, fecha, monto, forma de pago, cuenta (obligatoria),
+  número de comprobante y, **opcional, la foto o el PDF del comprobante**
+  (`ExpenseReceipt`, en la base, JPG/PNG/WebP/PDF revisados por contenido,
+  hasta 1 MB). Se editan y borran con permisos, auditados.
+- **Otro ingreso** (`OtherIncome`: aporte del dueño, préstamo del banco…)
+  y **transferencias** (`AccountTransfer`) se registran o se quitan.
+- **Presupuesto** (`Budget`, `BudgetSheet`): por categoría de primer nivel
+  y mes de la temporada, contra los gastos e inversiones de esa categoría
+  y sus subcategorías. Resaltado al pasarse; en el Inicio y en Tareas
+  pendientes.
+- Resumen: saldos, el mes contra los mismos días del anterior, por dónde
+  y en qué categoría salió, el presupuesto del mes y los últimos
+  movimientos. Reportería: `ExpensesReport` (con KPI de presupuesto).
+- **La ganancia no se calcula**: cómo la calcula el dueño sigue abierto
+  (pregunta 34).
 
 ### Compra de café (`trading`)
 
@@ -1539,6 +1590,8 @@ sistema ya guarda**; no agregan reglas de negocio.
 | Horas y días extra: confirmar días extra de medio en medio y horas con cualquier decimal | Ajustes a las extras de planilla | Fernando / Cliente |
 | Planillas: séptimo día, décimo, IHSS u otras deducciones o bonos | Cálculo legal de planillas | Cliente |
 | Si la factura siempre agrupa hasta 4 compras | Hoy no hay límite | Cliente |
+| Control financiero: confirmar decisiones de implementación (la cuenta es opcional en los pagos de los otros módulos y obligatoria en gastos e ingresos; el presupuesto solo cuenta los gastos e inversiones de Control financiero, no los gastos de planilla; otros ingresos y transferencias no se editan, se quitan y se registran de nuevo) | Ajustes a Control financiero | Fernando / Cliente |
+| Cómo calcula el dueño la ganancia | Reporte de ganancias | Cliente |
 | Comercialización: confirmar decisiones de implementación (una salida lleva un solo estado del café y una venta también; salir con más de lo que hay en inventario avisa y no bloquea; la tolerancia resalta la diferencia en ambos sentidos; cobros en orden de fecha, sin pasar del saldo y quitando solo el último; la venta no se edita, se anula y se rehace) | Ajustes a Comercialización | Fernando / Cliente |
 | Contratos: moneda, cobro, anticipos del exportador | Ventas / contratos | Cliente |
 | Reporte exacto que piden el contador y el SAR | Reportería | Cliente |

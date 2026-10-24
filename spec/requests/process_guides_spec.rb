@@ -35,6 +35,13 @@ RSpec.describe "Process guides" do
     end
   end
 
+  it "explains the money of the business on the movements and the accounts" do
+    [ finance_movements_path, finance_money_accounts_path ].each do |path|
+      get path
+      expect(guides).to include("Ayuda: Cuentas, gastos y movimientos"), path
+    end
+  end
+
   it "explains paying a period and the harvest on the timesheet, and saved filters on the reports" do
     payroll = create(:payroll, kind: "harvest", can_price: 40)
     get farms_payroll_timesheet_path(payroll)

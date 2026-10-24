@@ -1,0 +1,19 @@
+<%# Horizontal bars of [[label, amount], ...], largest first, as a share of the largest. %>
+<% top = rows.map(&:last).max.to_d %>
+<% if rows.any? %>
+  <ul class="mt-3 space-y-2.5">
+    <% rows.each do |label, amount| %>
+      <li class="text-sm">
+        <div class="flex items-baseline justify-between gap-3">
+          <span class="min-w-0 truncate"><%= label %></span>
+          <span class="shrink-0 font-semibold tabular-nums"><%= format_money(amount) %></span>
+        </div>
+        <div class="mt-1 h-2 overflow-hidden rounded-full bg-surface-2" aria-hidden="true">
+          <span class="block h-full rounded-full bg-primary" style="width: <%= top.positive? ? (amount.to_d * 100 / top).round(1) : 0 %>%"></span>
+        </div>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <p class="mt-3 text-sm text-ink-muted"><%= t("finance.home.index.nothing") %></p>
+<% end %>

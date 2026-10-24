@@ -57,6 +57,12 @@ RSpec.describe "Printable documents" do
     expect_letterhead("Cierre de comercialización")
   end
 
+  it "puts it on an account's statement" do
+    account = create(:money_account, name: "Caja de la bodega")
+    get finance_money_account_path(account)
+    expect_letterhead("Estado de cuenta")
+  end
+
   it "puts it on invoices (original and copy) and their payment receipts" do
     invoice = InvoiceIssuer.new(producer:, user:, purchase_ids: [ create(:purchase, producer:).id ], payment_status: "partial",
                                 payment_method: "cash", amount: "1000").call.invoice

@@ -26,6 +26,8 @@ RSpec.describe "Live lists", type: :system do
     create(:expense_category, name: "Mejía comida")
     create(:sale, buyer: create(:buyer, name: "Exportadora Zelaya"))
     create(:sale, buyer: create(:buyer, name: "Beneficio Mejía"))
+    create(:expense, description: "Flete Zelaya", category: create(:finance_category, name: "Zelaya fletes"), money_account: create(:money_account, name: "Caja Zelaya"))
+    create(:expense, description: "Comida Mejía", category: create(:finance_category, name: "Mejía comida"), money_account: create(:money_account, name: "Banco Mejía"))
     sign_in_as(user)
   end
 
@@ -35,7 +37,9 @@ RSpec.describe "Live lists", type: :system do
     "/trading/producers" => "producers-list", "/trading/zones" => "zones-list", "/loans/loans" => "loans-list",
     "/loans/credit_accounts" => "credit-accounts-list", "/loans/supplies" => "supplies-list",
     "/farms/farms" => "farms-list", "/farms/expense_categories" => "expense-categories-list",
-    "/sales/shipments" => "shipments-list", "/sales/sales" => "sales-list", "/sales/buyers" => "buyers-list"
+    "/sales/shipments" => "shipments-list", "/sales/sales" => "sales-list", "/sales/buyers" => "buyers-list",
+    "/finance/movements" => "movements-list", "/finance/expenses" => "expenses-list", "/finance/money_accounts" => "accounts-list",
+    "/finance/categories" => "categories-list"
   }.each do |path, frame|
     it "filters #{path} as the user types, in its frame" do
       visit path

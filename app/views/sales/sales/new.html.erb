@@ -135,7 +135,7 @@
         </div>
 
         <%# Collected now in full (contado), in part, or later (crédito). %>
-        <fieldset class="space-y-4" data-controller="invoice-payment-choice">
+        <fieldset class="space-y-4" data-controller="invoice-payment-choice money-account" data-money-account-defaults-value="<%= MoneyAccount.defaults_by_method.to_json %>">
           <legend class="mb-3 text-lg font-semibold"><%= t(".payment") %></legend>
           <div>
             <%= label_tag "sale_payment_status", Sale.human_attribute_name(:payment_status), class: "field-label" %>
@@ -153,7 +153,14 @@
             <%= label_tag "sale_payment_method", SalePayment.human_attribute_name(:payment_method), class: "field-label" %>
             <%= select_tag "sale[payment_method]", options_for_select(enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS), params.dig(:sale, :payment_method)),
                   id: "sale_payment_method", include_blank: t("shared.select.pick_payment_method"), class: "field-input",
-                  data: { missing_message: "#{SalePayment.human_attribute_name(:payment_method)} #{t("errors.messages.blank")}" } %>
+                  data: { money_account_target: "method", action: "money-account#suggest",
+                          missing_message: "#{SalePayment.human_attribute_name(:payment_method)} #{t("errors.messages.blank")}" } %>
+          </div>
+          <div data-invoice-payment-choice-target="optionalPaidField">
+            <%= label_tag "sale_money_account_id", MoneyAccount.model_name.human, class: "field-label" %>
+            <%= select_tag "sale[money_account_id]", options_from_collection_for_select(MoneyAccount.active.alphabetical, :id, :name, params.dig(:sale, :money_account_id)),
+                  id: "sale_money_account_id", include_blank: t("shared.select.no_account"), class: "field-input",
+                  data: { money_account_target: "account", action: "money-account#pick" } %>
           </div>
           <div data-invoice-payment-choice-target="paidField">
             <%= label_tag "sale_paid_on", SalePayment.human_attribute_name(:paid_on), class: "field-label" %>

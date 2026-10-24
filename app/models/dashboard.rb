@@ -39,6 +39,12 @@ class Dashboard
   def unpaid_sales = @unpaid_sales ||= Sale.unpaid.includes(:buyer, :payments).to_a
   def sales_owed = unpaid_sales.sum(&:balance_due)
 
+  # Control financiero: where the money is and what went out this month.
+  def accounts_balance = @accounts_balance ||= AccountBalance.new(as_of: today).total
+  def accounts? = MoneyAccount.active.exists?
+  def month_spending = @month_spending ||= Expense.where(spent_on: today.beginning_of_month..today).sum(:amount)
+  def over_budget = @over_budget ||= BudgetSheet.new(season).month_lines(today.beginning_of_month).select(&:over?)
+
   def active_farms_count = Farm.of_business.active.count
   def running_payrolls = @running_payrolls ||= Payroll.active(today).includes(:payments).to_a
 
@@ -88,6 +94,7 @@ class Dashboard
       items.concat(sales_activity) if can?("sales")
       items.concat(loans_activity) if can?("loans")
       items.concat(farms_activity) if can?("farms")
+      items.concat(finance_activity) if can?("finance")
       items.sort_by { |item| -item.at.to_f }.first(ACTIVITY_SIZE)
     end
   end
@@ -133,6 +140,14 @@ class Dashboard
           Activity.new(at: payment.created_at, kind: :loan_payment, title: payment.loan.person.full_name,
                        detail: { number: payment.loan_id, amount: payment.amount }, path: [ :loans_loan_path, payment.loan ])
         end
+    end
+
+    def finance_activity
+      latest(Expense.includes(category: :parent)).map do |expense|
+        Activity.new(at: expense.created_at, kind: expense.investment? ? :investment : :expense, title: expense.description,
+                     detail: { category: expense.category.full_name, amount: expense.amount },
+                     path: [ expense.investment? ? :finance_investment_path : :finance_expense_path, expense ])
+      end
     end
 
     def farms_activity

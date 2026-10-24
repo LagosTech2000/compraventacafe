@@ -4,8 +4,9 @@
 <% sales = dashboard.can?("sales") %>
 <% loans = dashboard.can?("loans") %>
 <% farms = dashboard.can?("farms") %>
+<% finance = dashboard.can?("finance") %>
 <%# Its figures, pending work and activity update while open (LiveUpdates). %>
-<%= live_updates_from(*[ (:trading if trading), (:sales if sales), (:loans if loans) ].compact) if trading || sales || loans %>
+<%= live_updates_from(*[ (:trading if trading), (:sales if sales), (:loans if loans), (:finance if finance) ].compact) if trading || sales || loans || finance %>
 
 <%# Greeting, what the platform is for and today's date; at the other end
     of the row, who is online now (small avatars, the name on hover). %>
@@ -33,6 +34,7 @@
      ([ t(".actions.new_shipment"), new_sales_shipment_path, false ] if sales && policy(Shipment).create?),
      ([ t(".actions.new_sale"), new_sales_sale_path, false ] if sales && policy(Sale).create?),
      ([ t(".actions.farms"), farms_root_path, false ] if farms),
+     ([ t(".actions.new_expense"), new_finance_expense_path, false ] if finance && policy(Expense).create?),
      ([ t(".actions.new_loan"), new_loans_loan_path, false ] if loans && policy(Loan).create?),
      ([ t(".actions.loans"), loans_loans_path, false ] if loans),
      ([ t(".actions.reports"), reports_root_path, false ] if dashboard.can?("reports"))
@@ -70,6 +72,12 @@
                   [ t(".hints.loans_owed", amount: format_money(dashboard.loans_owed)), (t(".hints.overdue", count: overdue) if overdue.positive?) ].compact.join(" · "),
                   loans_root_path ] %>
 <% end %>
+<% if finance %>
+  <% if dashboard.accounts? %>
+    <% figures << [ :accounts_balance, signed_money(dashboard.accounts_balance), t(".hints.accounts_balance"), finance_money_accounts_path ] %>
+  <% end %>
+  <% figures << [ :month_spending, format_money(dashboard.month_spending), t(".hints.month_spending"), finance_expenses_path ] %>
+<% end %>
 <% if farms %>
   <% figures << [ :active_farms, dashboard.active_farms_count, t(".hints.running_payrolls", count: dashboard.running_payrolls.size), farms_farms_path ] %>
 <% end %>
@@ -101,6 +109,9 @@
     <% payroll = without_wage.group_by(&:payroll).max_by { |_, members| members.size }.first %>
     <% pending << [ :members_without_wage, without_wage.size, nil, farms_payroll_path(payroll, tab: "members") ] %>
   <% end %>
+<% end %>
+<% if finance && (over = dashboard.over_budget).any? %>
+  <% pending << [ :over_budget, over.size, over.sum { it.spent - it.budget }, finance_budget_path ] %>
 <% end %>
 <%# Space used fully: figures and tiles stretch to fill each row (no
     half-empty rows); pending work and the modules on the left, recent

@@ -31,11 +31,11 @@ module Sales
 
     private
       def set_sale
-        @sale = Sale.includes(:buyer, payments: :created_by).find(params[:sale_id])
+        @sale = Sale.includes(:buyer, payments: %i[created_by money_account]).find(params[:sale_id])
       end
 
       def payment_params
-        params.expect(sale_payment: [ :paid_on, :amount, :payment_method, :observations ])
+        params.expect(sale_payment: [ :paid_on, :amount, :payment_method, :observations, :money_account_id ])
       end
   end
 end

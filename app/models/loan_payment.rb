@@ -12,6 +12,7 @@
 # the payroll payment, not one by one.
 class LoanPayment < ApplicationRecord
   include Auditable
+  include HasMoneyAccount
   include LiveUpdates
   # Paid with coffee, it also changes the purchase and its invoice.
   live_updates :loans, :trading
@@ -37,6 +38,8 @@ class LoanPayment < ApplicationRecord
   validate :coffee_comes_from_purchase, :payroll_comes_from_payroll
 
   before_validation :split, on: :create
+  # Paid with coffee or from a payroll, no money moves: no account.
+  before_validation { self.money_account = nil if payment_method.in?([ COFFEE, PAYROLL ]) }
   after_create :settle_loan
   after_destroy :reopen_loan
   # Paid with coffee: what the purchase's invoice has to pay changed.

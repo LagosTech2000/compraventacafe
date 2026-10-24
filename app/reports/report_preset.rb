@@ -54,6 +54,10 @@ class ReportPreset
     farms_season_per_manzana: [ "farms", { period: "this_season", sort: "quintals_per_manzana" } ],
     farms_season_balance: [ "farms", { period: "this_season", sort: "balance", dir: "asc" } ],
     people_season: [ "people", { period: "this_season" } ],
+    expenses_month_by_category: [ "expenses", { period: "this_month", group: "category" } ],
+    investments_season: [ "expenses", { period: "this_season", kind: "investment" } ],
+    expenses_season_by_month: [ "expenses", { period: "this_season", group: "month" } ],
+    cash_movements_month_by_account: [ "cash_movements", { period: "this_month", group: "account_id" } ],
     cash_movements_week: [ "cash_movements", { period: "this_week", group: "day" } ],
     cash_movements_month_by_source: [ "cash_movements", { period: "this_month", group: "source" } ]
   }.freeze
