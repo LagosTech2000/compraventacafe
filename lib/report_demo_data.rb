@@ -399,7 +399,9 @@ class ReportDemoData
     def collect(date)
       return if date.sunday?
 
-      Loan.unpaid.where(disbursed_on: ...date).where("loans.id % 26 = ?", date.day % 26).find_each do |loan|
+      # By position, not by id: ids change from run to run, the same seed must give the same year.
+      Loan.unpaid.where(disbursed_on: ...date).order(:id).to_a.each_with_index do |loan, index|
+        next unless (index % 26) == (date.day % 26)
         next if @bad_payers&.include?(loan.id) && @random.rand < 0.85
 
         owed = loan.balance(as_of: date).total_owed
