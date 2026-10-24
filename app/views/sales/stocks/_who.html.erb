@@ -1,0 +1,6 @@
+<%# Who a kardex entry is with: the producer of a purchase, the buyer of a shipment. %>
+<% if entry.kind == "purchase" %>
+  <%= entry.record.producer.full_name %>
+<% else %>
+  <%= t("sales.shipments.show.title", number: entry.record.display_number) %> · <%= entry.record.buyer.name %>
+<% end %>

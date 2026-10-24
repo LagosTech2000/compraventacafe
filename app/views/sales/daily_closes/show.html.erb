@@ -1,0 +1,86 @@
+<% content_for :title, t(".title", date: l(@daily_close.date)) %>
+<%= live_updates_from :sales %>
+<%= render "sales/nav" %>
+<% close = @daily_close %>
+
+<div class="print:hidden">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <h1 class="text-2xl font-bold"><%= t(".title", date: l(close.date, format: :long)) %></h1>
+    <div class="flex flex-wrap gap-2">
+      <%= form_with url: sales_daily_close_path, method: :get, class: "flex gap-2", data: { controller: "auto-submit" } do |form| %>
+        <%= form.date_field :date, value: close.date, aria: { label: t(".date") }, class: "field-input", data: { action: "change->auto-submit#submit" } %>
+      <% end %>
+      <div data-controller="print"><button type="button" class="btn" data-action="print#print"><%= t(".print") %></button></div>
+    </div>
+  </div>
+
+  <dl class="mt-6 flex flex-wrap gap-3">
+    <% { departed: close.departed.size, departed_net: format_pounds(close.departed_net), received: close.received.size,
+         received_difference: "#{format_pounds(close.received_difference)} (#{close.received_difference_percent ? format_percent(close.received_difference_percent) : "—"})",
+         sold: format_money(close.summary.total), collected: format_money(close.collected) }.each do |key, value| %>
+      <div class="stat min-w-0 flex-1 basis-36">
+        <dt><%= t(".figures.#{key}") %></dt>
+        <dd><%= value %></dd>
+      </div>
+    <% end %>
+  </dl>
+
+  <div class="mt-8"><%= render "sales/stock", stock: close.stock %></div>
+
+  <% [ [ :departed, close.departed ], [ :received, close.received ] ].each do |key, shipments| %>
+    <section class="mt-8" aria-labelledby="close-<%= key %>">
+      <h2 id="close-<%= key %>" class="mb-3 text-lg font-semibold"><%= t(".#{key}_title", count: shipments.size) %></h2>
+      <% if shipments.any? %>
+        <%= render "sales/shipments/table", shipments: shipments %>
+      <% else %>
+        <p class="empty-state"><%= t(".#{key}_empty") %></p>
+      <% end %>
+    </section>
+  <% end %>
+
+  <section class="mt-8" aria-labelledby="close-sales">
+    <h2 id="close-sales" class="mb-3 text-lg font-semibold"><%= t(".sales_title", count: close.sales.size) %></h2>
+    <% if close.sales.any? %>
+      <%= render "sales/summary", summary: close.summary %>
+      <div class="mt-4"><%= render "sales/sales/table", sales: close.sales %></div>
+    <% else %>
+      <p class="empty-state"><%= t(".sales_empty") %></p>
+    <% end %>
+  </section>
+
+  <section class="mt-8" aria-labelledby="close-payments">
+    <h2 id="close-payments" class="mb-3 text-lg font-semibold"><%= t(".payments_title", count: close.payments.size) %></h2>
+    <% if close.payments.any? %>
+      <div class="overflow-x-auto panel">
+        <table class="data-table data-table-compact" data-controller="table-sort">
+          <thead>
+            <tr>
+              <th><%= t("sales.sales.payments.number") %></th>
+              <th><%= Sale.human_attribute_name(:buyer) %></th>
+              <th><%= t("sales.sale_payments.receipt.sale") %></th>
+              <th><%= SalePayment.human_attribute_name(:payment_method) %></th>
+              <th class="text-right"><%= SalePayment.human_attribute_name(:amount) %></th>
+              <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% close.payments.each do |payment| %>
+              <tr id="<%= dom_id(payment, :close) %>">
+                <td class="tabular-nums"><%= payment.display_number %></td>
+                <td><%= payment.sale.buyer.name %></td>
+                <td class="tabular-nums"><%= payment.sale.display_number %></td>
+                <td><%= payment.human_payment_method %></td>
+                <td class="text-right font-medium tabular-nums"><%= format_money(payment.amount) %></td>
+                <td class="cell-actions"><%= modal_link_to t("sales.sales.payments.receipt"), sales_sale_payment_path(payment.sale, payment), class: "btn btn-sm", data: { row_link: true } %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <p class="empty-state"><%= t(".payments_empty") %></p>
+    <% end %>
+  </section>
+</div>
+
+<%= render "report", daily_close: close %>

@@ -9,7 +9,7 @@ RSpec.describe "Queries per page" do
   let(:admin) { create(:user, :admin) }
 
   PAGES = %w[/ /pending_work /trading /trading/purchases /trading/producers /trading/invoices /trading/daily_close
-             /trading/haulers /loans /loans/loans /loans/credit_accounts /farms/farms /administration/people].freeze
+             /trading/haulers /sales /sales/shipments /sales/sales /sales/buyers /sales/stock /sales/daily_close /loans /loans/loans /loans/credit_accounts /farms/farms /administration/people].freeze
 
   def queries(path)
     count = 0
@@ -33,6 +33,8 @@ RSpec.describe "Queries per page" do
       create(:purchase, producer:, zone:)
       create(:loan_payment, loan: create(:loan, person: producer.person), amount: 100)
       create(:hauler)
+      create(:sale, buyer: create(:buyer))
+      create(:shipment)
     end
   end
 

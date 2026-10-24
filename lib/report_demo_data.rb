@@ -7,6 +7,9 @@
 #            few days later; some paid with coffee to the producer's loans
 #   loans    lent mostly before the harvest (cash, supplies or both), paid
 #            with coffee, in cash or from payrolls; some fall overdue
+#   sales    trucks of parchment leave for the buyers when there is enough
+#            in stock, are weighed there a day or two later, sold on the
+#            buyer's weight and collected some days after
 #   farms    three farms with year-round maintenance (by day), coffee
 #            picking each harvest (by cans, with foremen by day) and works
 #            (by task), paid period by period, plus their expenses
@@ -41,6 +44,12 @@ class ReportDemoData
                "Mantenimiento" => [ "Reparación de la bomba", "Cambio de llantas", "Arreglo del beneficio" ],
                "Fertilizantes" => [ "Abono para el lote 3", "Foliar para el vivero" ] }.freeze
 
+  # Comercialización: fictitious buyers [name, kind].
+  BUYERS = [ [ "Exportadora Demo Montecillos", "exporter" ], [ "Exportadora Demo Copán", "exporter" ],
+             [ "Beneficio Demo Danlí", "processor" ], [ "Comercial Demo Oriente", "other" ] ].freeze
+  # A truck leaves once this many net pounds of a state are in stock.
+  TRUCK_POUNDS = 1_500
+
   ProducerPlan = Struct.new(:producer, :weight, :from, :until, keyword_init: true)
 
   attr_reader :counts
@@ -53,6 +62,8 @@ class ReportDemoData
     @counts = Hash.new(0)
     @uninvoiced = Hash.new { |hash, producer| hash[producer] = [] }
     @pending = []
+    @in_transit = []
+    @to_collect = []
   end
 
   def self.loaded? = Farm.exists?(name: MARKER_FARM)
@@ -82,6 +93,7 @@ class ReportDemoData
       @producers = producers
       @workers = workers
       @farms = farms
+      @buyers = BUYERS.map { |name, kind| Buyer.find_or_create_by!(name:) { |buyer| buyer.kind = kind } }
     end
 
     def person(zone: nil)
@@ -156,6 +168,9 @@ class ReportDemoData
       lend(date)
       buy(date)
       invoice_and_pay(date)
+      ship(date)
+      receive_and_sell(date)
+      collect_sales(date)
       collect(date)
       work(date)
     end
@@ -264,6 +279,64 @@ class ReportDemoData
           next false
         end
         invoice.mark_paid(method:, on: date)
+      end
+    end
+
+    # A truck of a parchment state leaves when its stock is enough, now and then.
+    def ship(date)
+      return if date.sunday?
+
+      stock = CoffeeStock.new(date)
+      %w[wet_parchment dry_parchment].each do |state|
+        available = stock.row(state).stock
+        next if available < TRUCK_POUNDS || @random.rand > 0.45
+
+        net = [ available, TRUCK_POUNDS + @random.rand(0..2_500) ].min
+        humidity = PurchaseDefaults::HUMIDITY_PERCENT.fetch(state)
+        gross = (net / (1 - humidity / 100.0)).round
+        sacks = (gross / PurchaseCalculation::SACK_WEIGHT.to_f).ceil
+        shipment = Shipment.create!(buyer: pick(@buyers), created_by: pick(@clerks), departed_at: moment(date), coffee_state: state,
+                                    remission_number: (400 + @counts[:shipments]).to_s, carrier_name: pick([ "Transporte Demo", "Camión propio" ]),
+                                    origin_gross_weight: gross + sacks, origin_sacks: sacks, origin_humidity_percent: humidity, origin_damage_percent: 0)
+        @in_transit << [ shipment, date + @random.rand(0..2) ]
+        @counts[:shipments] += 1
+      end
+    end
+
+    # Weighed at the buyer's (a little less, some with damage) and sold the
+    # same day: by the quintal of 100 lb to processors, by the pound to the rest.
+    def receive_and_sell(date)
+      arrived, @in_transit = @in_transit.partition { |_, on| on <= date }
+      arrived.each do |shipment, on|
+        loss = @random.rand(0.0..0.025)
+        shipment.update!(received_on: on, weight_note_number: "NP-#{shipment.number}", destination_gross_weight: (shipment.origin_gross_weight * (1 - loss)).round,
+                         destination_sacks: shipment.origin_sacks, destination_humidity_percent: shipment.origin_humidity_percent,
+                         destination_damage_percent: pick([ 0, 0, 0, 0.5, 1 ]))
+        next if @random.rand < 0.1 # a few wait for their sale
+
+        by_pound = shipment.buyer.kind != "processor"
+        price = price(shipment.coffee_state, date) + @random.rand(4..9)
+        result = SaleIssuer.new(buyer: shipment.buyer, user: pick(@clerks), shipment_ids: [ shipment.id ],
+                                sale: { sold_on: on, price_unit: by_pound ? "pound" : "quintal", unit_price: by_pound ? price : price * 100,
+                                        buyer_document_number: "Doc-#{shipment.number}" }).call
+        next unless result.success?
+
+        @to_collect << result.sale
+        @counts[:sales] += 1
+      end
+    end
+
+    # Buyers pay some days after the sale; a few in two parts.
+    def collect_sales(date)
+      @to_collect.reject! do |sale|
+        next false if @random.rand > ((date - sale.sold_on).to_i <= 3 ? 0.1 : 0.25)
+
+        method = weighted("transfer" => 7, "check" => 2, "cash" => 1)
+        if sale.payments.empty? && @random.rand < 0.2
+          sale.payments.create!(amount: (sale.total / 2).round(2), paid_on: date, payment_method: method, created_by: pick(@clerks))
+          next false
+        end
+        sale.payments.create!(amount: sale.reload.balance_due, paid_on: date, payment_method: method, created_by: pick(@clerks))
       end
     end
 

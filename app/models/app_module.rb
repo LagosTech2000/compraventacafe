@@ -4,7 +4,7 @@
 # and the permission screens list them: Administración last (Fernando,
 # 2026-10-13).
 class AppModule
-  KEYS = %w[trading farms loans reports administration].freeze
+  KEYS = %w[trading sales farms loans reports administration].freeze
   ACTIONS = %w[read create update destroy].freeze
 
   def self.human_name(key)

@@ -9,6 +9,7 @@ RSpec.describe "Sorting every list" do
   let(:daily) { create(:payroll, starts_on: Time.zone.today - 10) }
   let(:task_payroll) { create(:payroll, kind: "task", starts_on: Time.zone.today - 10) }
   let(:hauler) { create(:hauler) }
+  let(:buyer) { create(:buyer) }
 
   def page = Nokogiri::HTML(response.body)
 
@@ -23,6 +24,8 @@ RSpec.describe "Sorting every list" do
     create(:payroll_member, payroll: daily)
     create(:payroll_expense, payroll: daily)
     PayrollTask.create!(payroll: task_payroll, name: "Chapia", amount: 1_000)
+    create(:sale, buyer:)
+    create(:shipment, buyer:)
     sign_in admin
   end
 
@@ -47,7 +50,13 @@ RSpec.describe "Sorting every list" do
     PayrollMemberFilter => -> { farms_payroll_path(daily, tab: "members") },
     PayrollLoanFilter => -> { farms_payroll_path(daily, tab: "loans") },
     PayrollTaskFilter => -> { farms_payroll_path(task_payroll, tab: "tasks") },
-    PayrollExpenseFilter => -> { farms_payroll_path(daily, tab: "expenses") }
+    PayrollExpenseFilter => -> { farms_payroll_path(daily, tab: "expenses") },
+    ShipmentFilter => -> { sales_shipments_path },
+    SaleFilter => -> { sales_sales_path },
+    BuyerFilter => -> { sales_buyers_path },
+    BuyerSaleFilter => -> { sales_buyer_path(buyer, tab: "sales") },
+    BuyerShipmentFilter => -> { sales_buyer_path(buyer, tab: "shipments") },
+    StockLedgerFilter => -> { sales_stock_path }
   }.freeze
 
   it "covers every list filter" do

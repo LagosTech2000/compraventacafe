@@ -134,6 +134,16 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Variable de un documento / impresión de un documento | `PrivateDocumentVariables` (`<span data-variable="person.full_name">`) / `PrivateDocumentPrint` |
 | Estado civil / nacionalidad | `Person#civil_status` / `Person#nationality` |
 | Número en letras | `NumberWords` (palabras en `es.yml`, `number_words`) |
+| Comercialización | `sales` |
+| Comprador (exportador / beneficio / otro) | `Buyer` (`kind`: `exporter` / `processor` / `other`) |
+| Salida de camión / báscula local / báscula del comprador | `Shipment` / `origin_*` / `destination_*` (`ArrivalsController`, `shipments/:id/arrival`) |
+| Nota de peso / remisión | `Shipment#weight_note_number` / `remission_number` |
+| En camino / pesada sin vender / vendida | `Shipment#status`: `in_transit` / `received` / `sold` (+ `voided`) |
+| Venta / salida vendida / cobro de venta | `Sale` / `SaleLine` / `SalePayment` (`SaleIssuer`) |
+| Precio por libra / por quintal (100 lb) | `Sale#price_unit`: `pound` / `quintal` (`Sale::QUINTAL_POUNDS`) |
+| Tolerancia de diferencia de peso | `SiteSetting#weight_tolerance_percent` (`WeightTolerance`) |
+| Inventario / kárdex | `CoffeeStock` / `StockLedger` (`sales/stock#show`), reporte `CoffeeStockReport` |
+| Cierre de comercialización | `SalesDailyClose` |
 
 ## Modelo de permisos
 
@@ -645,6 +655,7 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 | Clave | Estado |
 | --- | --- |
 | `administration` | Usuarios y permisos, auditoría, configuración del sitio y documentos privados (solo administradores); respaldo de datos (solo el usuario con id 1); personas, clientes y colaboradores, con su ficha de productor; fincas y zonas (permisos del módulo); fusionar personas (solo administradores) |
+| `sales` | Comercialización: salidas de camiones con báscula local y del comprador, ventas por libra o quintal de 100 lb con cobros por abonos, compradores, inventario por estado del café con kárdex y cierre diario |
 | `trading` | Demo: zonas, productores (con pestañas y QQ por temporada), carreros con su comisión y pagos con recibo, compras con cálculo por estado del café y anulación, facturas imprimibles (original y copia) con estado de pago, cierre diario |
 | `farms` | Fincas, planillas por día, por obra y de corte por lata, con roles y salarios, asistencia o latas por día, pagos por período (semanal, quincenal, mensual) con descuento a préstamos, planilla de pago imprimible y gastos por planilla |
 | `loans` | Préstamos en efectivo, insumos o mixtos a cualquier persona con interés simple, catálogo de insumos, abonos (también con café desde una compra o descontados en planilla) con recibo imprimible, estados de cuenta con historial crediticio y score de pago |
@@ -950,6 +961,65 @@ es llenar su carpeta, no crearla.
   que la tabla no corta. Papel carta, con el membrete.
 - El estado de cuenta de un productor lleva «Ver productor» (su página en
   Compra de café), para quien ve ese módulo.
+
+### Comercialización (`sales`, Fernando, 2026-10-23)
+
+Lo que ofrece el contrato: vender el café en inventario a exportadoras,
+beneficios y otros compradores; el inventario sube con las compras y baja
+con las ventas. Reglas que decidió Fernando el 2026-10-23 (respuestas a
+`PREGUNTAS_COMPRAVENTA.md` §5–7, con las boletas de Beneficio Mendoza y
+Café Henola: venta por QQ en Lempiras, documento del comprador,
+contado/crédito, forma de pago) [CONFIRMADO]:
+
+- **Inventario** (`CoffeeStock`): libras netas **por estado del café**. Las
+  compras activas suman su `net_weight`; las salidas no anuladas restan su
+  neto local. Se muestra también en QQ de compra (÷125). A una fecha (fin
+  del día); de lo que salió, «en camino» y «pesado sin vender». El kárdex
+  (`StockLedger`, `sales/stock#show`) lista cada compra y salida con el
+  saldo después de cada una.
+- **Salida de camión** (`Shipment`): comprador, estado del café, remisión,
+  transportista, placa. Se pesa en la **báscula local** (`origin_*`) y, al
+  llegar, en la **del comprador** (`destination_*`, con nota de peso y
+  fecha; `ArrivalsController`). Cada neto usa **el mismo cálculo de la
+  compra** (`PurchaseCalculation` con sacos contados: bruto − 1 lb × saco,
+  menos humedad y daño; uva × rendimiento), que guarda tara y neto y solo
+  se recalcula si cambia una entrada. `weighing_calculator_controller.js`
+  es la vista previa (y avisa, sin bloquear, si sale más que el
+  inventario). Etapas (`SalesLifecycle`): salió → pesada en destino →
+  vendida → cobrada. Número correlativo con bloqueo consultivo.
+- **Diferencia entre básculas**: neto del comprador − neto local, en lb y
+  %, en la salida, la venta, las listas y los reportes. Se **resalta** si
+  pasa (más o menos) la **tolerancia** de Configuración del sitio
+  (`weight_tolerance_percent`, **vacía al inicio**: sin ella no se resalta
+  nada; `WeightTolerance`). Anular la venta antes de cobrarla lo decide el
+  usuario.
+- **Venta** (`Sale`, `SaleIssuer`, como «Facturar compras»): **salida
+  primero, venta después**: agrupa salidas **del mismo comprador** ya
+  pesadas en destino y libres (líneas `SaleLine`, con sus pesos y monto;
+  índice único parcial: una salida en una sola venta activa). Se cobra con
+  el **peso del comprador**, **por libra o por quintal de 100 lb**
+  (`Sale.amount_for`). Guarda netos y total. Documento del comprador
+  (factura o comprobante). Imprimible (nota de venta, original y copia).
+- **Cobro por abonos** (`SalePayment`), como las facturas: pendiente →
+  cobro parcial → cobrada; contado = un abono por el total al crear la
+  venta; cada cobro con recibo (original y copia). Registrar pide editar
+  en `sales`.
+- **Anular**: una venta **solo sin cobros** (con motivo); sus salidas
+  quedan **libres** para otra venta y sus líneas quedan como registro. Una
+  salida se anula aparte, solo si no está en una venta activa: su café
+  vuelve al inventario. Ninguna se borra.
+- **Comprador** (`Buyer`): catálogo propio para empresas (nombre o razón
+  social, tipo, RTN, contacto, teléfono, correo, dirección); se desactiva.
+  No es una `Person`.
+- Pantallas: Resumen (qué sigue, inventario, hoy y temporada), Salidas,
+  Ventas, Inventario, Cierre diario (impreso) y Compradores (con
+  pestañas). En vivo (`live_updates :sales`; las compras también avisan a
+  `sales`). Inicio: QQ en inventario, por cobrar y pendientes (salidas en
+  camino, sin vender, ventas por cobrar). Reportería: `ShipmentsReport`,
+  `SalesReport`, `CoffeeStockReport` y los cobros en «Entradas y salidas»
+  (para quien ve Comercialización).
+- **Contratos con exportador** (anticipos, aplicar libras a contratos en
+  orden): **no se construyen**, siguen abiertos.
 
 ### Compra de café (`trading`)
 
@@ -1469,7 +1539,7 @@ sistema ya guarda**; no agregan reglas de negocio.
 | Horas y días extra: confirmar días extra de medio en medio y horas con cualquier decimal | Ajustes a las extras de planilla | Fernando / Cliente |
 | Planillas: séptimo día, décimo, IHSS u otras deducciones o bonos | Cálculo legal de planillas | Cliente |
 | Si la factura siempre agrupa hasta 4 compras | Hoy no hay límite | Cliente |
-| 160 lb/saco en salidas vs. 165 en compras | Salidas de camión | Cliente |
+| Comercialización: confirmar decisiones de implementación (una salida lleva un solo estado del café y una venta también; salir con más de lo que hay en inventario avisa y no bloquea; la tolerancia resalta la diferencia en ambos sentidos; cobros en orden de fecha, sin pasar del saldo y quitando solo el último; la venta no se edita, se anula y se rehace) | Ajustes a Comercialización | Fernando / Cliente |
 | Contratos: moneda, cobro, anticipos del exportador | Ventas / contratos | Cliente |
 | Reporte exacto que piden el contador y el SAR | Reportería | Cliente |
 | `pg_dump` en Render (versión ≥ 18) | Que el respaldo incluya `base.dump` en producción | Fernando + Render |

@@ -1,0 +1,95 @@
+<%# One printed copy of a sale ("nota de venta"). `label` is ORIGINAL or COPIA. %>
+<% payments = sale.payments.reject(&:new_record?) %>
+<article class="rounded-2xl border border-line bg-white p-5 shadow-[0_1px_2px_rgb(29_21_18/0.04)] print:p-3 print:shadow-none print:rounded-none print:border-ink">
+  <%= render "shared/print_letterhead", title: t("sales.sales.receipt.title"), number: sale.display_number, label:, badge: sale_state_badge(sale), rtn: true %>
+
+  <dl class="mt-4 grid grid-cols-1 gap-x-6 gap-y-1 text-sm min-[30rem]:grid-cols-2 sm:grid-cols-3 print:mt-2 print:grid-cols-3">
+    <div><dt class="inline font-semibold"><%= Sale.human_attribute_name(:buyer) %>:</dt> <dd class="inline"><%= sale.buyer.name %></dd></div>
+    <% if sale.buyer.rtn %>
+      <div><dt class="inline font-semibold"><%= Buyer.human_attribute_name(:rtn) %>:</dt> <dd class="inline tabular-nums"><%= sale.buyer.rtn %></dd></div>
+    <% end %>
+    <div><dt class="inline font-semibold"><%= Sale.human_attribute_name(:sold_on) %>:</dt> <dd class="inline"><%= l(sale.sold_on) %></dd></div>
+    <div><dt class="inline font-semibold"><%= Sale.human_attribute_name(:coffee_state) %>:</dt> <dd class="inline"><%= sale.human_coffee_state %></dd></div>
+    <% if sale.buyer_document_number %>
+      <div><dt class="inline font-semibold"><%= Sale.human_attribute_name(:buyer_document_number) %>:</dt> <dd class="inline"><%= sale.buyer_document_number %></dd></div>
+    <% end %>
+    <div><dt class="inline font-semibold"><%= t("sales.sales.table.price") %>:</dt> <dd class="inline"><%= format_money(sale.unit_price) %> <%= sale.human_price_unit %></dd></div>
+  </dl>
+
+  <div class="-mx-5 mt-4 overflow-x-auto px-5 print:mx-0 print:mt-2 print:overflow-visible print:px-0">
+    <table class="data-table min-w-[44rem] whitespace-nowrap print:min-w-0 print:whitespace-normal">
+      <thead>
+        <tr>
+          <th><%= t("sales.sales.receipt.shipment") %></th>
+          <th><%= Shipment.human_attribute_name(:departed_at) %></th>
+          <th><%= Shipment.human_attribute_name(:remission_number) %></th>
+          <th><%= Shipment.human_attribute_name(:weight_note_number) %></th>
+          <th class="text-right"><%= t("sales.shipments.table.origin_net") %></th>
+          <th class="text-right"><%= t("sales.shipments.table.destination_net") %></th>
+          <th class="text-right"><%= t("sales.shipments.table.difference") %></th>
+          <th class="text-right"><%= t("sales.sales.receipt.amount") %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% sale.lines.each do |line| %>
+          <% shipment = line.shipment %>
+          <tr class="break-inside-avoid">
+            <td class="tabular-nums"><%= shipment.display_number %></td>
+            <td><%= l(shipment.departed_at, format: :short) %></td>
+            <td><%= shipment.remission_number || "—" %></td>
+            <td><%= shipment.weight_note_number || "—" %></td>
+            <td class="text-right tabular-nums"><%= format_pounds(line.origin_net_weight) %></td>
+            <td class="text-right tabular-nums"><%= format_pounds(line.net_weight) %></td>
+            <td class="text-right tabular-nums"><%= format_pounds(line.net_weight - line.origin_net_weight) %></td>
+            <td class="text-right tabular-nums"><%= format_money(line.amount) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+      <tfoot>
+        <tr class="font-bold">
+          <td colspan="4"><%= t("trading.invoices.show.totals") %></td>
+          <td class="text-right tabular-nums"><%= format_pounds(sale.origin_net_weight) %></td>
+          <td class="text-right tabular-nums"><%= format_pounds(sale.net_weight) %></td>
+          <td class="text-right tabular-nums"><%= format_pounds(sale.net_difference) %></td>
+          <td class="text-right tabular-nums"><%= format_money(sale.total) %></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <dl class="mt-3 ml-auto w-full max-w-sm text-sm print:mt-2">
+    <div class="flex justify-between gap-4 py-0.5">
+      <dt><%= t("sales.sales.receipt.charged", pounds: format_pounds(sale.net_weight), quintals: format_pounds(sale.quintals)) %></dt>
+      <dd></dd>
+    </div>
+    <div class="flex justify-between gap-4 border-t border-ink py-1 font-bold">
+      <dt><%= Sale.human_attribute_name(:total) %></dt>
+      <dd class="tabular-nums"><%= format_money(sale.total) %></dd>
+    </div>
+    <% payments.each do |payment| %>
+      <div class="flex justify-between gap-4 py-0.5">
+        <dt><%= t("sales.sales.receipt.payment", number: payment.display_number, date: l(payment.paid_on), method: payment.human_payment_method) %></dt>
+        <dd class="tabular-nums">− <%= format_money(payment.amount) %></dd>
+      </div>
+    <% end %>
+    <% if payments.any? %>
+      <div class="flex justify-between gap-4 border-t border-ink py-1 font-bold">
+        <dt><%= t("sales.sales.receipt.balance_due") %></dt>
+        <dd class="tabular-nums"><%= sale.balance_due.positive? ? format_money(sale.balance_due) : t("trading.invoices.show.settled") %></dd>
+      </div>
+    <% end %>
+  </dl>
+
+  <% if sale.observations %>
+    <p class="mt-3 text-sm"><span class="font-semibold"><%= Sale.human_attribute_name(:observations) %>:</span> <%= sale.observations %></p>
+  <% end %>
+
+  <footer class="mt-10 flex flex-wrap items-end justify-between gap-6 text-sm print:mt-6 print:break-inside-avoid">
+    <div class="w-64 border-t border-ink pt-1 text-center">
+      <%= t("sales.sales.receipt.buyer_signature") %>
+      <span class="block text-xs text-ink-muted"><%= sale.buyer.name %></span>
+    </div>
+    <div class="w-64 border-t border-ink pt-1 text-center"><%= t("sales.sales.receipt.seller_signature") %></div>
+    <p class="w-full text-xs text-ink-muted"><%= t("sales.sales.receipt.issued_by", name: sale.created_by.name) %></p>
+  </footer>
+</article>

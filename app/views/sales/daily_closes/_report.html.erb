@@ -1,0 +1,107 @@
+<%# Printed daily close of Comercialización (letter size): shown only when printing. %>
+<% close = daily_close %>
+<section class="hidden text-[9pt] leading-snug text-black print:block">
+  <%= render "shared/print_letterhead", title: t(".title"), subtitle: l(close.date, format: :long) %>
+
+  <table class="mt-3 w-full border-collapse">
+    <tbody>
+      <tr>
+        <% { departed: close.departed.size, departed_net: format_pounds(close.departed_net), received: close.received.size,
+             received_net: format_pounds(close.received_net), received_difference: format_pounds(close.received_difference),
+             sold: format_money(close.summary.total), collected: format_money(close.collected) }.each do |key, value| %>
+          <td class="border border-black px-2 py-1">
+            <span class="block text-[7.5pt] uppercase tracking-wide"><%= t("sales.daily_closes.show.figures.#{key}") %></span>
+            <span class="font-bold tabular-nums"><%= value %></span>
+          </td>
+        <% end %>
+      </tr>
+    </tbody>
+  </table>
+
+  <table class="mt-4 w-full border-collapse text-[8.5pt]">
+    <caption class="mb-1 text-left text-[10pt] font-bold"><%= t("sales.stock.title") %></caption>
+    <thead>
+      <tr class="border-y border-black text-left">
+        <th class="py-1 pr-1"><%= Purchase.human_attribute_name(:coffee_state) %></th>
+        <% %i[purchased shipped stock quintals in_transit unsold].each do |key| %>
+          <th class="py-1 pl-1 text-right"><%= t(".stock.#{key}") %></th>
+        <% end %>
+      </tr>
+    </thead>
+    <tbody>
+      <% close.stock.rows.each do |row| %>
+        <tr class="border-b border-gray-300">
+          <td class="py-0.5 pr-1"><%= row.human_coffee_state %></td>
+          <% [ row.purchased, row.shipped, row.stock, row.quintals, row.in_transit, row.unsold ].each do |value| %>
+            <td class="py-0.5 pl-1 text-right tabular-nums"><%= format_pounds(value) %></td>
+          <% end %>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <% [ [ :departed, close.departed ], [ :received, close.received ] ].each do |key, shipments| %>
+    <% next if shipments.empty? %>
+    <table class="mt-4 w-full border-collapse text-[8.5pt]">
+      <caption class="mb-1 text-left text-[10pt] font-bold"><%= t("sales.daily_closes.show.#{key}_title", count: shipments.size) %></caption>
+      <thead>
+        <tr class="border-y border-black text-left whitespace-nowrap">
+          <th class="py-1 pr-1"><%= t("sales.shipments.table.number") %></th>
+          <th class="py-1 pr-1"><%= Shipment.human_attribute_name(:buyer) %></th>
+          <th class="py-1 pr-1"><%= Purchase.human_attribute_name(:coffee_state) %></th>
+          <th class="py-1 pr-1"><%= Shipment.human_attribute_name(:remission_number) %></th>
+          <th class="py-1 pl-1 text-right"><%= t("sales.shipments.table.sacks") %></th>
+          <th class="py-1 pl-1 text-right"><%= t("sales.shipments.table.origin_net") %></th>
+          <th class="py-1 pl-1 text-right"><%= t("sales.shipments.table.destination_net") %></th>
+          <th class="py-1 pl-1 text-right"><%= t("sales.shipments.table.difference") %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% shipments.each do |shipment| %>
+          <tr class="border-b border-gray-300 break-inside-avoid">
+            <td class="py-0.5 pr-1 tabular-nums"><%= shipment.display_number %></td>
+            <td class="py-0.5 pr-1"><%= shipment.buyer.name %></td>
+            <td class="py-0.5 pr-1"><%= shipment.human_coffee_state %></td>
+            <td class="py-0.5 pr-1"><%= shipment.remission_number %></td>
+            <td class="py-0.5 pl-1 text-right tabular-nums"><%= shipment.origin_sacks %></td>
+            <td class="py-0.5 pl-1 text-right tabular-nums"><%= format_pounds(shipment.origin_net_weight) %></td>
+            <td class="py-0.5 pl-1 text-right tabular-nums"><%= shipment.destination_net_weight ? format_pounds(shipment.destination_net_weight) : "—" %></td>
+            <td class="py-0.5 pl-1 text-right tabular-nums"><%= shipment.net_difference ? format_pounds(shipment.net_difference) : "—" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+
+  <% if close.sales.any? %>
+    <table class="mt-4 w-full border-collapse text-[8.5pt]">
+      <caption class="mb-1 text-left text-[10pt] font-bold"><%= t("sales.daily_closes.show.sales_title", count: close.sales.size) %></caption>
+      <thead>
+        <tr class="border-y border-black text-left whitespace-nowrap">
+          <th class="py-1 pr-1"><%= t("sales.sales.table.number") %></th>
+          <th class="py-1 pr-1"><%= Sale.human_attribute_name(:buyer) %></th>
+          <th class="py-1 pl-1 text-right"><%= t("sales.sales.table.quintals") %></th>
+          <th class="py-1 pl-1 text-right"><%= t("sales.sales.table.price") %></th>
+          <th class="py-1 pl-1 text-right"><%= Sale.human_attribute_name(:total) %></th>
+          <th class="py-1 pl-1"><%= Sale.human_attribute_name(:payment_status) %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% close.sales.each do |sale| %>
+          <tr class="border-b border-gray-300 break-inside-avoid">
+            <td class="py-0.5 pr-1 tabular-nums"><%= sale.display_number %></td>
+            <td class="py-0.5 pr-1"><%= sale.buyer.name %></td>
+            <td class="py-0.5 pl-1 text-right tabular-nums"><%= format_pounds(sale.quintals) %></td>
+            <td class="py-0.5 pl-1 text-right tabular-nums"><%= format_money(sale.unit_price) %> <%= sale.human_price_unit %></td>
+            <td class="py-0.5 pl-1 text-right tabular-nums"><%= format_money(sale.total) %></td>
+            <td class="py-0.5 pl-1"><%= sale.human_payment_status %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+
+  <footer class="mt-6 border-t border-black pt-1 text-[7.5pt]">
+    <%= t("trading.daily_closes.report.generated", name: Current.user.name, time: l(Time.current, format: :audit)) %>
+  </footer>
+</section>

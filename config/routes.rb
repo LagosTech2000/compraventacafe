@@ -70,6 +70,25 @@ Rails.application.routes.draw do
     resource :daily_close, only: :show
   end
 
+  # Comercialización (Fernando, 2026-10-23): trucks leave with coffee for a
+  # buyer, are weighed again there, and are sold and collected.
+  namespace :sales do
+    root "home#index"
+    resources :shipments, except: :destroy do
+      patch :void, on: :member
+      # Weighed on the buyer's scale.
+      resource :arrival, only: %i[ edit update ]
+    end
+    resources :sales, only: %i[ index show new create ] do
+      patch :void, on: :member
+      # What the buyer pays ("cobros"), each with its receipt.
+      resources :payments, only: %i[ new create show destroy ], controller: "sale_payments"
+    end
+    resources :buyers, except: :destroy
+    resource :stock, only: :show
+    resource :daily_close, only: :show
+  end
+
   namespace :farms do
     root "home#index"
     resources :farms, only: %i[ index show new create edit update ]

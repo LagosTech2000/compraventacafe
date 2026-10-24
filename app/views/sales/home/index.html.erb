@@ -1,0 +1,55 @@
+<% content_for :title, AppModule.human_name("sales") %>
+<%# Updates itself while open when the data changes (LiveUpdates). %>
+<%= live_updates_from :sales %>
+
+<%= render "sales/nav" %>
+<h1 class="sr-only"><%= t("sales.nav.home") %></h1>
+
+<h2 class="mb-1 text-lg font-semibold"><%= t(".whats_next") %></h2>
+<p class="mb-3 text-sm text-ink-muted"><%= t(".whats_next_help") %></p>
+
+<%# The flow, in order: the truck leaves, is weighed at the buyer's, is sold
+    and collected. Each card says what is pending and links to do it. %>
+<ol class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+  <% [
+       { key: "ship", count: @daily_close.departed.size, pounds: @daily_close.departed_net, amount: nil,
+         path: new_sales_shipment_path, allowed: policy(Shipment).create?, pending: false },
+       { key: "receive", count: @in_transit.count, pounds: @in_transit.sum(:origin_net_weight), amount: nil,
+         path: sales_shipments_path(status: "in_transit"), allowed: policy(Shipment).index?, pending: @in_transit.exists? },
+       { key: "sell", count: @unsold.count, pounds: @unsold.sum(:destination_net_weight), amount: nil,
+         path: new_sales_sale_path, allowed: policy(Sale).create?, pending: @unsold.exists? },
+       { key: "collect", count: @unpaid.count, pounds: nil, amount: @unpaid_balance,
+         path: sales_sales_path(payment_status: "unpaid"), allowed: policy(Sale).index?, pending: @unpaid.exists? }
+     ].each_with_index do |step, index| %>
+    <li class="clay flex flex-col p-5 <%= step[:pending] ? "ring-2 ring-primary" : "ring-1 ring-line/60" %>">
+      <p class="flex items-center gap-2 text-[0.7rem] font-semibold uppercase tracking-wide text-primary">
+        <span class="grid size-6 place-items-center rounded-full <%= step[:pending] ? "bg-primary text-on-primary" : "bg-primary-soft" %>"><%= index + 1 %></span>
+        <%= t("trading.home.index.step", number: index + 1) %>
+      </p>
+      <p class="mt-1 font-semibold"><%= t(".steps.#{step[:key]}.title") %></p>
+      <p class="mt-1 flex-1 text-sm text-ink-muted" data-live-value="step-<%= step[:key] %>">
+        <%= t(".steps.#{step[:key]}.status_html", count: step[:count],
+              pounds: step[:pounds] && tag.span(format_pounds(step[:pounds]), class: "whitespace-nowrap"),
+              amount: step[:amount] && tag.span(format_money(step[:amount]), class: "whitespace-nowrap")) %>
+      </p>
+      <% if step[:allowed] %>
+        <%= link_to t(".steps.#{step[:key]}.action"), step[:path], class: "btn btn-sm mt-3 self-start #{"btn-primary" if step[:pending]}" %>
+      <% end %>
+    </li>
+  <% end %>
+</ol>
+
+<% if @over_tolerance.exists? %>
+  <div class="flash-alert mt-4 flex flex-wrap items-center justify-between gap-3" role="status">
+    <p><%= t(".over_tolerance", count: @over_tolerance.count, tolerance: format_percent(WeightTolerance.percent)) %></p>
+    <%= link_to t(".see_over_tolerance"), sales_shipments_path(over_tolerance: 1, season_year: Season.current.year), class: "btn btn-sm" %>
+  </div>
+<% end %>
+
+<div class="mt-8"><%= render "sales/stock", stock: @stock %></div>
+
+<h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".today", date: l(@daily_close.date, format: :long)) %></h2>
+<%= render "sales/summary", summary: @daily_close.summary %>
+
+<h2 class="mt-8 mb-3 text-lg font-semibold"><%= format_season_dates(@season) %></h2>
+<%= render "sales/summary", summary: @season_summary %>

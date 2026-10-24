@@ -1,0 +1,92 @@
+<% content_for :title, t(".title") %>
+<%= live_updates_from :sales %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= render "sales/nav" %>
+
+<h1 class="sr-only"><%= t(".title") %></h1>
+<%= render "sales/stock", stock: @stock %>
+
+<h2 class="mt-8 text-lg font-semibold"><%= t(".ledger") %></h2>
+<p class="mt-1 text-sm text-ink-muted"><%= t(".ledger_help") %></p>
+
+<div data-controller="live-filter">
+  <%= render layout: "shared/filters", locals: { filter: @filter, url: sales_stock_path, frame: "stock-ledger", live: true } do |form| %>
+    <%= filter_date_field form, :from, t("shared.filters.from"), value: @filter.from %>
+    <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
+    <%= filter_select form, :coffee_state, Purchase.human_attribute_name(:coffee_state),
+          enum_options(Purchase, :coffee_state, Purchase::COFFEE_STATES), selected: @filter.coffee_state %>
+  <% end %>
+
+  <%= list_frame "stock-ledger" do %>
+    <%= render "shared/filter_status", filter: @filter, count: t(".count", count: @filter.total_count), periods: quick_periods(@filter),
+          chips: filter_chips(@filter, coffee_state: ->(state) { Purchase.human_attribute_name("coffee_state/#{state}") }) %>
+
+    <dl class="mt-4 flex flex-wrap gap-3">
+      <% { opening: @ledger.opening, pounds_in: @ledger.pounds_in, pounds_out: @ledger.pounds_out, closing: @ledger.closing }.each do |key, value| %>
+        <div class="stat min-w-0 flex-1 basis-40">
+          <dt><%= t(".totals.#{key}") %></dt>
+          <dd><%= format_pounds(value) %></dd>
+          <dd class="text-sm font-normal text-ink-muted"><%= t("sales.stock.quintals", quintals: format_pounds(PurchaseCalculation.quintals(value))) %></dd>
+        </div>
+      <% end %>
+    </dl>
+
+    <% sorting = { filter: @filter, frame: "stock-ledger" } %>
+    <% if @entries.any? %>
+      <div class="mt-6 @container">
+        <ul class="space-y-3 @3xl:hidden">
+          <% @entries.each do |entry| %>
+            <li class="data-card" id="<%= dom_id(entry.record, :ledger_card) %>">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="font-medium"><%= render "sales/stocks/who", entry: entry %></p>
+                  <p class="text-xs text-ink-muted"><%= l(entry.at) %> · <%= entry.human_coffee_state %></p>
+                </div>
+                <% if (path = ledger_entry_path(entry)) %><%= detail_button(path) %><% end %>
+              </div>
+              <p class="mt-2 text-sm tabular-nums">
+                <%= entry.pounds_in.positive? ? "+#{format_pounds(entry.pounds_in)}" : "−#{format_pounds(entry.pounds_out)}" %> lb ·
+                <%= t(".balance") %> <strong><%= format_pounds(entry.balance) %></strong>
+              </p>
+            </li>
+          <% end %>
+        </ul>
+        <div class="hidden overflow-x-auto panel @3xl:block">
+          <table class="data-table data-table-compact">
+            <thead>
+              <tr>
+                <%= sort_th t(".columns.at"), :at, sorting %>
+                <%= sort_th t(".columns.kind"), :kind, sorting %>
+                <%= sort_th t(".columns.who"), :who, sorting %>
+                <%= sort_th Purchase.human_attribute_name(:coffee_state), :coffee_state, sorting %>
+                <%= sort_th t(".columns.pounds_in"), :pounds_in, sorting, class: "text-right" %>
+                <%= sort_th t(".columns.pounds_out"), :pounds_out, sorting, class: "text-right" %>
+                <%= sort_th t(".balance"), :balance, sorting, class: "text-right" %>
+                <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @entries.each do |entry| %>
+                <tr id="<%= dom_id(entry.record, :ledger) %>">
+                  <td class="whitespace-nowrap"><%= l(entry.at) %></td>
+                  <td><span class="badge <%= entry.kind == "purchase" ? "badge-success" : "badge-neutral" %>"><%= t(".kinds.#{entry.kind}") %></span></td>
+                  <td><%= render "sales/stocks/who", entry: entry %></td>
+                  <td><%= entry.human_coffee_state %></td>
+                  <td class="whitespace-nowrap text-right tabular-nums"><%= entry.pounds_in.positive? ? format_pounds(entry.pounds_in) : "" %></td>
+                  <td class="whitespace-nowrap text-right tabular-nums"><%= entry.pounds_out.positive? ? format_pounds(entry.pounds_out) : "" %></td>
+                  <td class="whitespace-nowrap text-right font-semibold tabular-nums <%= "text-danger" if entry.balance.negative? %>"><%= format_pounds(entry.balance) %></td>
+                  <td class="cell-actions">
+                    <% if (path = ledger_entry_path(entry)) %><%= detail_button(path) %><% end %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "stock-ledger" %>
+    <% else %>
+      <p class="empty-state mt-6"><%= t(".empty") %></p>
+    <% end %>
+  <% end %>
+</div>

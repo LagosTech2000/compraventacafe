@@ -34,6 +34,11 @@ class Dashboard
   def loans_owed = @loans_owed ||= open_loans.sum { |loan| loan.balance(as_of: today).total_owed }
   def overdue_loans = @overdue_loans ||= open_loans.select { |loan| loan.overdue?(today) }
 
+  # Comercialización: the coffee in stock and what the buyers owe.
+  def coffee_stock = @coffee_stock ||= CoffeeStock.new(today)
+  def unpaid_sales = @unpaid_sales ||= Sale.unpaid.includes(:buyer, :payments).to_a
+  def sales_owed = unpaid_sales.sum(&:balance_due)
+
   def active_farms_count = Farm.of_business.active.count
   def running_payrolls = @running_payrolls ||= Payroll.active(today).includes(:payments).to_a
 
@@ -52,6 +57,11 @@ class Dashboard
   end
 
   def unpaid_invoices = @unpaid_invoices ||= Invoice.unpaid.includes(:payments, producer: :person, purchases: :loan_payments).to_a
+
+  # Trucks on their way: their weight at the buyer's is missing.
+  def shipments_in_transit = @shipments_in_transit ||= Shipment.in_transit.includes(:buyer, :active_sale_line).order(:departed_at).to_a
+  # Weighed at the buyer's, waiting for a sale.
+  def unsold_shipments = @unsold_shipments ||= Shipment.unsold.includes(:buyer, :active_sale_line).order(:departed_at).to_a
 
   # Pay periods whose day has come and are not paid, with something to pay.
   def periods_to_pay
@@ -75,6 +85,7 @@ class Dashboard
     @activity ||= begin
       items = []
       items.concat(trading_activity) if can?("trading")
+      items.concat(sales_activity) if can?("sales")
       items.concat(loans_activity) if can?("loans")
       items.concat(farms_activity) if can?("farms")
       items.sort_by { |item| -item.at.to_f }.first(ACTIVITY_SIZE)
@@ -98,6 +109,18 @@ class Dashboard
           Activity.new(at: invoice.created_at, kind: :invoice, title: invoice.producer.full_name,
                        detail: { number: invoice.display_number, status: invoice.human_payment_status, total: invoice.amount_to_pay },
                        path: [ :trading_invoice_path, invoice ])
+        end
+    end
+
+    def sales_activity
+      latest(Shipment.active.includes(:buyer)).map do |shipment|
+        Activity.new(at: shipment.created_at, kind: :shipment, title: shipment.buyer.name,
+                     detail: { number: shipment.display_number, pounds: shipment.origin_net_weight }, path: [ :sales_shipment_path, shipment ])
+      end +
+        latest(Sale.active.includes(:buyer)).map do |sale|
+          Activity.new(at: sale.created_at, kind: :sale, title: sale.buyer.name,
+                       detail: { number: sale.display_number, status: sale.human_payment_status, total: sale.total },
+                       path: [ :sales_sale_path, sale ])
         end
     end
 

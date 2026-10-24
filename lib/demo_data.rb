@@ -10,6 +10,8 @@ class DemoData
   WORKERS = [ %w[Ramón Demo\ Seis], %w[Teresa Demo\ Siete], %w[Hugo Demo\ Ocho], %w[Irma Demo\ Nueve], %w[Félix Demo\ Diez] ].freeze
   # Carreros: [first names, last names, commission percent, can price].
   HAULERS = [ [ "Rubén", "Demo Once", 10, 50 ], [ "Gloria", "Demo Doce", 8, 55 ] ].freeze
+  # Comercialización: [name, kind]. Fictitious, like everything here.
+  BUYERS = [ [ "Exportadora Demo del Norte", "exporter" ], [ "Beneficio Demo El Paraíso", "processor" ] ].freeze
 
   def initialize(user)
     @user = user
@@ -24,6 +26,7 @@ class DemoData
       purchases = (0..6).flat_map { |days_ago| day_of_purchases(producers, Time.zone.today - days_ago) }
       pay_haulers
       invoice_older_purchases(purchases)
+      coffee_sales
       loans(producers.map(&:person))
       farms
     end
@@ -169,6 +172,30 @@ class DemoData
 
     def pay(loan, paid_on, amount)
       loan.payments.create!(paid_on:, amount:, payment_method: "cash", created_by: @user)
+    end
+
+    # Trucks of the week's wet parchment: one sold and collected, one sold
+    # in part, one weighed at the buyer's and waiting for its sale, and one
+    # still on its way.
+    def coffee_sales
+      buyers = BUYERS.map { |name, kind| Buyer.find_or_create_by!(name:) { |buyer| buyer.kind = kind } }
+      [ [ 5, 900, 6, 0, :paid ], [ 3, 800, 5, 1, :partial ], [ 2, 700, 5, -1.5, nil ], [ 0, 600, 4, nil, nil ] ].each_with_index do |(days_ago, gross, sacks, loss, sale), i|
+        buyer = buyers[i % buyers.size]
+        departed_at = moment_of(Time.zone.today - days_ago)
+        shipment = Shipment.create!(buyer:, created_by: @user, departed_at:, coffee_state: "wet_parchment", remission_number: (330 + i).to_s,
+                                    carrier_name: "Transporte Demo", origin_gross_weight: gross, origin_sacks: sacks,
+                                    origin_humidity_percent: 51, origin_damage_percent: 0)
+        next if loss.nil?
+
+        shipment.update!(received_on: departed_at.to_date, weight_note_number: "NP-DEMO-#{i + 1}", destination_gross_weight: gross - (gross * loss.abs / 100),
+                         destination_sacks: sacks, destination_humidity_percent: 51, destination_damage_percent: [ loss, 0 ].max)
+        next unless sale
+
+        result = SaleIssuer.new(buyer:, user: @user, shipment_ids: [ shipment.id ], payment_status: sale.to_s, payment_method: "transfer",
+                                paid_on: departed_at.to_date, amount: (1_000 if sale == :partial),
+                                sale: { sold_on: departed_at.to_date, price_unit: "quintal", unit_price: 6_000, buyer_document_number: "Comprobante demo #{i + 1}" }).call
+        raise ActiveRecord::RecordInvalid, result.sale unless result.success?
+      end
     end
 
     # Leaves today's purchases uninvoiced; older ones get invoices: some

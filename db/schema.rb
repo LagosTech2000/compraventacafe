@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_23_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -31,6 +31,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
     t.index ["auditable_type", "auditable_id"], name: "index_audit_events_on_auditable_type_and_auditable_id"
     t.index ["created_at"], name: "index_audit_events_on_created_at"
     t.index ["user_id"], name: "index_audit_events_on_user_id"
+  end
+
+  create_table "buyers", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "kind", null: false
+    t.string "rtn"
+    t.string "phone"
+    t.string "email"
+    t.string "contact_name"
+    t.bigint "department_id"
+    t.bigint "municipality_id"
+    t.text "address_line"
+    t.decimal "latitude", precision: 9, scale: 6
+    t.decimal "longitude", precision: 9, scale: 6
+    t.text "observations"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((name)::text)", name: "index_buyers_on_lower_name", unique: true
+    t.index ["department_id"], name: "index_buyers_on_department_id"
+    t.index ["municipality_id"], name: "index_buyers_on_municipality_id"
+    t.index ["rtn"], name: "index_buyers_on_rtn", unique: true, where: "(rtn IS NOT NULL)"
   end
 
   create_table "clients", force: :cascade do |t|
@@ -497,6 +519,64 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
     t.index ["zone_id"], name: "index_purchases_on_zone_id"
   end
 
+  create_table "sale_lines", force: :cascade do |t|
+    t.bigint "sale_id", null: false
+    t.bigint "shipment_id", null: false
+    t.decimal "origin_net_weight", precision: 12, scale: 2, null: false
+    t.decimal "net_weight", precision: 12, scale: 2, null: false
+    t.decimal "amount", precision: 14, scale: 2, null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["sale_id"], name: "index_sale_lines_on_sale_id"
+    t.index ["shipment_id"], name: "index_sale_lines_on_active_shipment", unique: true, where: "active"
+    t.index ["shipment_id"], name: "index_sale_lines_on_shipment_id"
+  end
+
+  create_table "sale_payments", force: :cascade do |t|
+    t.bigint "sale_id", null: false
+    t.bigint "created_by_id", null: false
+    t.decimal "amount", precision: 14, scale: 2, null: false
+    t.date "paid_on", null: false
+    t.string "payment_method", null: false
+    t.text "observations"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_sale_payments_on_created_by_id"
+    t.index ["paid_on"], name: "index_sale_payments_on_paid_on"
+    t.index ["sale_id"], name: "index_sale_payments_on_sale_id"
+  end
+
+  create_table "sales", force: :cascade do |t|
+    t.integer "number", null: false
+    t.bigint "buyer_id", null: false
+    t.bigint "created_by_id", null: false
+    t.date "sold_on", null: false
+    t.string "coffee_state", null: false
+    t.string "price_unit", null: false
+    t.decimal "unit_price", precision: 12, scale: 2, null: false
+    t.string "buyer_document_number"
+    t.text "observations"
+    t.decimal "origin_net_weight", precision: 14, scale: 2, null: false
+    t.decimal "net_weight", precision: 14, scale: 2, null: false
+    t.decimal "total", precision: 14, scale: 2, null: false
+    t.string "payment_status", null: false
+    t.string "payment_method"
+    t.date "paid_on"
+    t.datetime "voided_at"
+    t.bigint "voided_by_id"
+    t.string "void_reason"
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["buyer_id"], name: "index_sales_on_buyer_id"
+    t.index ["created_by_id"], name: "index_sales_on_created_by_id"
+    t.index ["number"], name: "index_sales_on_number", unique: true
+    t.index ["payment_status"], name: "index_sales_on_payment_status"
+    t.index ["sold_on"], name: "index_sales_on_sold_on"
+    t.index ["voided_by_id"], name: "index_sales_on_voided_by_id"
+  end
+
   create_table "saved_reports", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "report_key", null: false
@@ -521,6 +601,46 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "shipments", force: :cascade do |t|
+    t.integer "number", null: false
+    t.bigint "buyer_id", null: false
+    t.bigint "created_by_id", null: false
+    t.datetime "departed_at", null: false
+    t.integer "season_year", null: false
+    t.string "coffee_state", null: false
+    t.string "remission_number"
+    t.string "carrier_name"
+    t.string "vehicle_plate"
+    t.text "observations"
+    t.decimal "origin_gross_weight", precision: 12, scale: 2, null: false
+    t.integer "origin_sacks", null: false
+    t.decimal "origin_humidity_percent", precision: 5, scale: 2
+    t.decimal "origin_damage_percent", precision: 5, scale: 2
+    t.decimal "origin_yield_factor", precision: 6, scale: 4
+    t.decimal "origin_tare", precision: 12, scale: 2, null: false
+    t.decimal "origin_net_weight", precision: 12, scale: 2, null: false
+    t.date "received_on"
+    t.string "weight_note_number"
+    t.decimal "destination_gross_weight", precision: 12, scale: 2
+    t.integer "destination_sacks"
+    t.decimal "destination_humidity_percent", precision: 5, scale: 2
+    t.decimal "destination_damage_percent", precision: 5, scale: 2
+    t.decimal "destination_yield_factor", precision: 6, scale: 4
+    t.decimal "destination_tare", precision: 12, scale: 2
+    t.decimal "destination_net_weight", precision: 12, scale: 2
+    t.datetime "voided_at"
+    t.bigint "voided_by_id"
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["buyer_id"], name: "index_shipments_on_buyer_id"
+    t.index ["created_by_id"], name: "index_shipments_on_created_by_id"
+    t.index ["departed_at"], name: "index_shipments_on_departed_at"
+    t.index ["number"], name: "index_shipments_on_number", unique: true
+    t.index ["season_year"], name: "index_shipments_on_season_year"
+    t.index ["voided_by_id"], name: "index_shipments_on_voided_by_id"
+  end
+
   create_table "site_settings", force: :cascade do |t|
     t.string "business_name", null: false
     t.string "location"
@@ -531,6 +651,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "rtn"
+    t.decimal "weight_tolerance_percent", precision: 5, scale: 2
   end
 
   create_table "supplies", force: :cascade do |t|
@@ -579,6 +700,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
   end
 
   add_foreign_key "audit_events", "users", on_delete: :nullify
+  add_foreign_key "buyers", "departments"
+  add_foreign_key "buyers", "municipalities"
   add_foreign_key "clients", "people"
   add_foreign_key "collaborators", "people"
   add_foreign_key "farms", "departments"
@@ -638,7 +761,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
   add_foreign_key "purchases", "users", column: "created_by_id"
   add_foreign_key "purchases", "users", column: "voided_by_id"
   add_foreign_key "purchases", "zones"
+  add_foreign_key "sale_lines", "sales"
+  add_foreign_key "sale_lines", "shipments"
+  add_foreign_key "sale_payments", "sales"
+  add_foreign_key "sale_payments", "users", column: "created_by_id"
+  add_foreign_key "sales", "buyers"
+  add_foreign_key "sales", "users", column: "created_by_id"
+  add_foreign_key "sales", "users", column: "voided_by_id"
   add_foreign_key "saved_reports", "users"
   add_foreign_key "sessions", "users"
+  add_foreign_key "shipments", "buyers"
+  add_foreign_key "shipments", "users", column: "created_by_id"
+  add_foreign_key "shipments", "users", column: "voided_by_id"
   add_foreign_key "webauthn_credentials", "users"
 end

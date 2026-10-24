@@ -3,7 +3,7 @@
 class Purchase < ApplicationRecord
   include Auditable
   include LiveUpdates
-  live_updates :trading
+  live_updates :trading, :sales
 
   COFFEE_STATES = %w[cherry wet_parchment dry_parchment].freeze
   # The gross weight is typed in one figure, or is the sum of weighings

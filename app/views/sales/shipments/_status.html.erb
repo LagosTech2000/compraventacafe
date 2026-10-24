@@ -1,0 +1,5 @@
+<%# Where a shipment stands; sold ones name their sale. %>
+<%= shipment_status_badge(shipment) %>
+<% if shipment.sold? %>
+  <span class="ml-1 text-xs text-ink-muted tabular-nums"><%= t("sales.sales.show.title", number: shipment.sale.display_number) %></span>
+<% end %>

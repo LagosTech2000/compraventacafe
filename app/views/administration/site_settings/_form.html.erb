@@ -29,6 +29,12 @@
   </div>
 
   <div>
+    <%= form.label :weight_tolerance_percent, class: "field-label" %>
+    <%= form.number_field :weight_tolerance_percent, min: 0.01, max: 99.99, step: 0.01, inputmode: "decimal", class: "field-input max-w-xs" %>
+    <p class="mt-1 text-xs text-ink-muted"><%= t("administration.site_settings.form.weight_tolerance_help") %></p>
+  </div>
+
+  <div>
     <%= form.label :logo, class: "field-label" %>
     <%= form.file_field :logo, accept: SiteSetting::LOGO_SIGNATURES.keys.join(","), class: "field-input py-2",
           data: { site_preview_target: "file", action: "site-preview#pick" } %>

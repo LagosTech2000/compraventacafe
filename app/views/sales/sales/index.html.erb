@@ -1,0 +1,50 @@
+<% content_for :title, t(".title") %>
+<%= live_updates_from :sales %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= render "sales/nav" %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+  <% if policy(Sale).create? %>
+    <%= link_to t(".new"), new_sales_sale_path, class: "btn btn-primary" %>
+  <% end %>
+</div>
+
+<% status_labels = Sale::FILTER_STATUSES.map { [ t("sales.sales.statuses.#{it}"), it ] } %>
+<div data-controller="live-filter">
+  <%= render layout: "shared/filters", locals: { filter: @filter, url: sales_sales_path, frame: "sales-list", live: true } do |form| %>
+    <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("sales.sales.index.search_placeholder") %>
+    <%= filter_date_field form, :from, t("shared.filters.from"), value: @filter.from %>
+    <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
+    <%= filter_select form, :season_year, Purchase.human_attribute_name(:season_year),
+          season_options(Shipment.all), selected: @filter.season_year,
+          all: t("shared.filters.all_seasons"), data: { controller: "season-filter", action: "season-filter#clearDates" } %>
+    <%= filter_select form, :buyer_id, Sale.human_attribute_name(:buyer), Buyer.alphabetical.pluck(:name, :id), selected: @filter.buyer_id %>
+    <%= filter_select form, :coffee_state, Sale.human_attribute_name(:coffee_state),
+          enum_options(Purchase, :coffee_state, Purchase::COFFEE_STATES), selected: @filter.coffee_state %>
+    <%= filter_select form, :payment_status, Sale.human_attribute_name(:payment_status), status_labels,
+          selected: @filter.payment_status, all: t("sales.sales.index.all_active") %>
+  <% end %>
+
+  <%= turbo_frame_tag "sales-list", class: "query-frame block", target: "_top", data: { turbo_action: "advance", controller: "frame-scroll" } do %>
+    <%= render "shared/filter_status", filter: @filter, count: t(".count", count: @filter.total_count),
+          periods: quick_periods(@filter),
+          chips: filter_chips(@filter,
+                              season_year: ->(year) { format_season(Season.new(year)) },
+                              q: ->(text) { t("shared.filters.chips.q", text:) },
+                              buyer_id: ->(id) { Buyer.find_by(id:)&.name },
+                              coffee_state: ->(state) { Purchase.human_attribute_name("coffee_state/#{state}") },
+                              payment_status: ->(value) { t("sales.sales.statuses.#{value}") }) %>
+
+    <div class="mt-4"><%= render "sales/summary", summary: @summary %></div>
+
+    <div class="mt-6">
+      <% if @sales.any? %>
+        <%= render "table", sales: @sales, sorting: { filter: @filter, frame: "sales-list" } %>
+        <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "sales-list" %>
+      <% else %>
+        <p class="empty-state"><%= t(".empty") %></p>
+      <% end %>
+    </div>
+  <% end %>
+</div>

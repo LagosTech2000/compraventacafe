@@ -1,0 +1,44 @@
+require "rails_helper"
+
+RSpec.describe Sale do
+  let(:buyer) { create(:buyer) }
+  let(:user) { create(:user) }
+
+  it "charges the buyer's net by the quintal of 100 lb or by the pound" do
+    expect(described_class.amount_for(BigDecimal("1245"), unit_price: 6_000, price_unit: "quintal")).to eq(BigDecimal("74700"))
+    expect(described_class.amount_for(BigDecimal("100.5"), unit_price: 63, price_unit: "pound")).to eq(BigDecimal("6331.50"))
+  end
+
+  it "keeps the weights of its shipments and numbers the sales in order" do
+    shipments = create_list(:shipment, 2, :received, buyer:)
+    sale = SaleIssuer.new(buyer:, user:, shipment_ids: shipments.map(&:id), sale: { price_unit: "pound", unit_price: 60 }).call.sale
+    expect(sale).to have_attributes(number: 1, net_weight: BigDecimal("964.32"), origin_net_weight: BigDecimal("974.12"),
+                                    total: BigDecimal("57859.20"), payment_status: "pending")
+    expect(sale.quintals).to eq(BigDecimal("9.64"))
+    expect(sale.lines.map(&:amount)).to all(eq(BigDecimal("28929.60")))
+  end
+
+  it "is paid on the spot (contado) or in part, all or nothing" do
+    shipment = create(:shipment, :received, buyer:)
+    paid = SaleIssuer.new(buyer:, user:, shipment_ids: [ shipment.id ], payment_status: "paid", payment_method: "cash",
+                          sale: { price_unit: "pound", unit_price: 60 }).call.sale
+    expect(paid).to be_paid
+    expect(paid.payments.sum(:amount)).to eq(paid.total)
+
+    other = create(:shipment, :received, buyer:)
+    result = SaleIssuer.new(buyer:, user:, shipment_ids: [ other.id ], payment_status: "partial", payment_method: "cash", amount: 99_999_999,
+                            sale: { price_unit: "pound", unit_price: 60 }).call
+    expect(result).not_to be_success
+    expect(other.reload.status).to eq("received")
+  end
+
+  it "goes pending → partial → paid with its payments, never over what is owed" do
+    sale = create(:sale, buyer:)
+    create(:sale_payment, sale:, amount: 100)
+    expect(sale.reload).to be_partial
+    over = SalePayment.new(sale:, amount: sale.balance_due + 1, paid_on: Time.zone.today, payment_method: "cash", created_by: user)
+    expect(over).not_to be_valid
+    create(:sale_payment, sale:, amount: sale.balance_due)
+    expect(sale.reload).to be_paid
+  end
+end

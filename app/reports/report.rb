@@ -72,6 +72,7 @@ class Report
   # Reports in the order the picker lists them.
   def self.catalog
     [ PurchasesReport, InvoicesReport, ProducersReport,
+      ShipmentsReport, SalesReport, CoffeeStockReport,
       LoansReport, LoanPaymentsReport, LoanSuppliesReport,
       PayrollPaymentsReport, PayrollLinesReport, HarvestReport, PayrollExpensesReport, FarmsReport,
       PeopleReport, CashMovementsReport ]

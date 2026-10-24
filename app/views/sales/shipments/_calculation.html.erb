@@ -1,0 +1,19 @@
+<%# The weighing's result, calculated while typing (weighing-calculator). %>
+<div class="clay p-4">
+  <p class="text-sm font-semibold"><%= title %></p>
+  <dl class="mt-2 grid grid-cols-2 gap-3 @xl:grid-cols-3 @5xl:grid-cols-2">
+    <div>
+      <dt class="text-xs text-ink-muted"><%= t("sales.shipments.form.tare") %></dt>
+      <dd class="text-xl font-bold tabular-nums" data-weighing-calculator-target="tare">—</dd>
+    </div>
+    <div>
+      <dt class="text-xs text-ink-muted"><%= t("sales.shipments.form.quintals") %></dt>
+      <dd class="text-xl font-bold tabular-nums" data-weighing-calculator-target="quintals">—</dd>
+    </div>
+    <div class="col-span-2 border-t border-line pt-3 @xl:col-span-3 @5xl:col-span-2">
+      <dt class="text-xs text-ink-muted"><%= t("sales.shipments.form.net") %></dt>
+      <dd class="text-3xl font-bold tabular-nums" data-weighing-calculator-target="net">—</dd>
+    </div>
+  </dl>
+  <p class="mt-2 text-xs text-ink-muted"><%= t("sales.shipments.form.formula") %></p>
+</div>

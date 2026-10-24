@@ -74,6 +74,7 @@ es:
   app_modules:
     administration: "Administración"
     trading: "Compra de café"
+    sales: "Comercialización"
     farms: "Fincas"
     loans: "Préstamos"
     reports: "Reportería"
@@ -146,6 +147,7 @@ es:
       pick_category: "Selecciona una categoría"
       no_role: "Sin rol asignado"
       pick_payment_method: "Selecciona la forma de pago"
+      pick_buyer: "Selecciona el comprador"
       no_hauler: "Sin carrero"
     filters:
       title: "Filtros"
@@ -279,6 +281,31 @@ es:
             one: "emitida hace 1 día"
             other: "emitida hace %{count} días"
           action: "Registrar abono"
+        shipments_in_transit:
+          title: "Salidas en camino"
+          help: "Camiones que salieron y todavía no tienen el peso de la báscula del comprador."
+          name: "Salida %{number} · %{buyer}"
+          days:
+            zero: "salió hoy"
+            one: "salió hace 1 día"
+            other: "salió hace %{count} días"
+          action: "Registrar peso en destino"
+        unsold_shipments:
+          title: "Salidas sin vender"
+          help: "Por comprador: una venta agrupa las salidas pesadas de un mismo comprador."
+          detail:
+            one: "1 salida pesada en destino"
+            other: "%{count} salidas pesadas en destino"
+          action: "Vender"
+        unpaid_sales:
+          title: "Ventas por cobrar"
+          help: "Lo que falta que pague el comprador en cada venta."
+          name: "Venta %{number} · %{buyer}"
+          days:
+            zero: "vendida hoy"
+            one: "vendida hace 1 día"
+            other: "vendida hace %{count} días"
+          action: "Registrar cobro"
         overdue_loans:
           title: "Préstamos vencidos"
           help: "Lo que deben hoy, con el interés a la fecha."
@@ -335,7 +362,7 @@ es:
       title: "Inicio"
       coffee_market_loading: "Cargando el precio del café en la bolsa…"
       welcome: "Hola, %{name}"
-      purpose: "Compra de café, facturación, préstamos y planillas de %{business}"
+      purpose: "Compra y venta de café, préstamos y planillas de %{business}"
       no_modules: "Todavía no tienes acceso a ningún módulo. Pídele a un administrador que te asigne permisos."
       modules: "Tus módulos"
       actions:
@@ -343,6 +370,8 @@ es:
         new_purchase: "Registrar compra"
         invoice: "Facturar compras"
         producers: "Productores"
+        new_shipment: "Nueva salida de camión"
+        new_sale: "Nueva venta"
         farms: "Fincas y planillas"
         new_loan: "Nuevo préstamo"
         loans: "Préstamos"
@@ -351,6 +380,8 @@ es:
         title: "Resumen de operaciones"
         purchases_today: "Compras de hoy"
         season_quintals: "QQ de la temporada"
+        coffee_stock: "QQ en inventario"
+        sales_owed: "Ventas por cobrar"
         open_loans: "Préstamos por cobrar"
         active_farms: "Fincas activas"
         pending: "Pendientes"
@@ -359,6 +390,11 @@ es:
         season_quintals:
           one: "1 compra · %{total}"
           other: "%{count} compras · %{total}"
+        coffee_stock: "%{pounds} lb netas · %{in_transit} lb en camino"
+        sales_owed:
+          zero: "Ninguna venta por cobrar"
+          one: "1 venta por cobrar"
+          other: "%{count} ventas por cobrar"
         loans_owed: "Deben %{amount} hoy"
         overdue:
           one: "1 vencido"
@@ -379,6 +415,15 @@ es:
         unpaid_invoices:
           one: "1 factura sin cancelar: falta pagar"
           other: "%{count} facturas sin cancelar: falta pagar"
+        shipments_in_transit:
+          one: "1 salida espera su peso en destino"
+          other: "%{count} salidas esperan su peso en destino"
+        unsold_shipments:
+          one: "1 salida pesada sin vender"
+          other: "%{count} salidas pesadas sin vender"
+        unpaid_sales:
+          one: "1 venta por cobrar: falta"
+          other: "%{count} ventas por cobrar: falta"
         overdue_loans:
           one: "1 préstamo vencido, deben"
           other: "%{count} préstamos vencidos, deben"
@@ -391,6 +436,9 @@ es:
         go:
           uninvoiced: "Facturar"
           unpaid_invoices: "Ver facturas"
+          shipments_in_transit: "Ver salidas"
+          unsold_shipments: "Vender"
+          unpaid_sales: "Ver ventas"
           overdue_loans: "Ver préstamos"
           periods_to_pay: "Pagar"
           members_without_wage: "Asignar salario"
@@ -401,12 +449,16 @@ es:
           purchase: "Compra"
           producer: "Productor nuevo"
           invoice: "Factura"
+          shipment: "Salida de camión"
+          sale: "Venta"
           loan: "Préstamo"
           loan_payment: "Abono"
           payroll_payment: "Pago de planilla"
         details:
           purchase: "Compra %{number} · %{quintals} QQ · %{total}"
           invoice: "Factura %{number} · %{status} · %{total}"
+          shipment: "Salida %{number} · %{pounds} lb netas"
+          sale: "Venta %{number} · %{status} · %{total}"
           loan: "Préstamo %{number} · %{amount}"
           loan_payment: "Préstamo %{number} · %{amount}"
           payroll_payment: "%{farm} · %{amount}"
@@ -989,6 +1041,393 @@ es:
         balance: "Falta"
         actions: "Acciones"
 
+  sales:
+    nav:
+      home: "Resumen"
+      shipments: "Salidas"
+      sales: "Ventas"
+      stock: "Inventario"
+      daily_close: "Cierre diario"
+      buyers: "Compradores"
+      new_shipment: "Nueva salida"
+    stock:
+      title: "Café en inventario"
+      as_of: "Al %{date}"
+      total: "Todo el inventario"
+      pounds: "%{pounds} lb"
+      quintals: "%{quintals} QQ"
+      out_detail: "Fuera: %{in_transit} lb en camino · %{unsold} lb pesadas sin vender"
+      negative: "Hay más café en salidas que en compras para algún estado del café. Revisa que estén registradas todas las compras y que las salidas tengan el estado correcto."
+      help: "Libras netas: suben con cada compra (su peso neto) y bajan con cada salida de camión (su peso neto en la báscula local). Las anuladas no cuentan. QQ de 125 lb, como en las compras."
+    summary:
+      sales: "Ventas"
+      buyers: "Compradores"
+      net_weight: "Libras netas (comprador)"
+      quintals: "QQ de venta (100 lb)"
+      difference: "Diferencia de peso (lb)"
+      total: "Total vendido"
+      balance_due: "Por cobrar"
+      states_title: "Estado de cobro"
+      count:
+        zero: "Ninguna venta"
+        one: "1 venta"
+        other: "%{count} ventas"
+    difference:
+      over_tolerance: "Pasa la tolerancia"
+    lifecycle:
+      label: "Etapas de la salida"
+      next_badge: "Sigue"
+      stages:
+        shipped: "Salió el camión"
+        received: "Pesada en destino"
+        sold: "Vendida"
+        paid: "Cobrada"
+      hint:
+        shipped: "Cuando llegue al comprador, registra su peso en la báscula de destino."
+        received: "Ya tiene peso en destino: agrégala a una venta de su comprador."
+        sold: "La venta está por cobrar: registra los cobros del comprador."
+        paid: "La venta está cobrada."
+    home:
+      index:
+        whats_next: "Qué sigue"
+        whats_next_help: "La venta del café en cuatro pasos. Lo resaltado tiene trabajo pendiente."
+        today: "Hoy, %{date}"
+        over_tolerance:
+          one: "1 salida de esta temporada tiene una diferencia de peso mayor al %{tolerance} entre la báscula local y la del comprador."
+          other: "%{count} salidas de esta temporada tienen una diferencia de peso mayor al %{tolerance} entre la báscula local y la del comprador."
+        see_over_tolerance: "Ver esas salidas"
+        steps:
+          ship:
+            title: "Registrar salidas"
+            status_html:
+              zero: "Hoy no ha salido ningún camión."
+              one: "Hoy salió 1 camión con %{pounds} lb netas."
+              other: "Hoy salieron %{count} camiones con %{pounds} lb netas."
+            action: "Nueva salida"
+          receive:
+            title: "Pesar en destino"
+            status_html:
+              zero: "No hay camiones en camino."
+              one: "1 salida espera su peso en destino (%{pounds} lb al salir)."
+              other: "%{count} salidas esperan su peso en destino (%{pounds} lb al salir)."
+            action: "Ver salidas en camino"
+          sell:
+            title: "Vender"
+            status_html:
+              zero: "No hay salidas pesadas sin vender."
+              one: "1 salida pesada espera su venta (%{pounds} lb del comprador)."
+              other: "%{count} salidas pesadas esperan su venta (%{pounds} lb del comprador)."
+            action: "Nueva venta"
+          collect:
+            title: "Cobrar"
+            status_html:
+              zero: "No hay ventas por cobrar."
+              one: "1 venta por cobrar: faltan %{amount}."
+              other: "%{count} ventas por cobrar: faltan %{amount}."
+            action: "Ver ventas por cobrar"
+    shipments:
+      table:
+        number: "No."
+        sacks: "Sacos"
+        origin_net: "Neto local (lb)"
+        destination_net: "Neto comprador (lb)"
+        difference: "Diferencia"
+        status: "Estado"
+        actions: "Acciones"
+      index:
+        title: "Salidas de camiones"
+        help: "Cada camión que sale con café: su peso en la báscula local y, al llegar, en la del comprador."
+        new: "Nueva salida"
+        search_placeholder: "Comprador, número, remisión, nota de peso o transportista"
+        all_active: "Todas (sin anuladas)"
+        over_tolerance: "Solo con diferencia mayor al %{tolerance}"
+        over_tolerance_chip: "Fuera de tolerancia"
+        empty: "No hay salidas con estos filtros."
+        count:
+          zero: "Ninguna salida"
+          one: "1 salida"
+          other: "%{count} salidas"
+        totals:
+          sacks: "Sacos"
+          origin_net: "Neto local (lb)"
+          destination_net: "Neto comprador (lb)"
+          difference: "Diferencia de las pesadas en destino (lb)"
+      form:
+        new_buyer: "Nuevo comprador"
+        origin: "Báscula local"
+        origin_help: "El peso del camión antes de salir."
+        calculation: "Cálculo de la salida"
+        sacks_help: "Los sacos contados: se descuenta 1 lb por saco."
+        tare: "Tara (lb)"
+        net: "Peso neto (lb)"
+        quintals: "QQ (125 lb)"
+        formula: "Igual que en las compras: (bruto − 1 lb por saco) menos la humedad y el daño; en uva, por el rendimiento."
+        submit: "Registrar salida"
+        over_stock: "Sale más de lo que hay en inventario de este estado del café (%{stock} lb). Se puede guardar igual."
+      new:
+        title: "Nueva salida de camión"
+      edit:
+        title: "Editar la salida %{number}"
+      create:
+        success: "Salida %{number} registrada para %{buyer}."
+      update:
+        success: "Salida actualizada."
+      void:
+        success: "Salida anulada: su café vuelve al inventario."
+      show:
+        title: "Salida %{number}"
+        edit: "Editar"
+        void: "Anular"
+        confirm_void: "¿Anular esta salida? Su café vuelve al inventario. No se puede deshacer."
+        full_page: "Abrir en página completa"
+        receive: "Registrar peso en destino"
+        sell: "Vender"
+        see_sale: "Ver la venta"
+        voided: "Salida anulada el %{date} por %{name}. No cuenta en el inventario ni se puede vender."
+        origin: "Báscula local"
+        destination: "Báscula del comprador"
+        not_weighed: "Todavía no se ha pesado en destino."
+        gross: "Peso bruto (lb)"
+        sacks: "Sacos"
+        received_on: "Pesada el %{date}"
+        weight_note: "Nota de peso %{number}"
+        difference: "Diferencia entre básculas"
+        tolerance: "Se resalta si pasa del %{tolerance} (Configuración del sitio)."
+        no_tolerance: "Sin tolerancia configurada: un administrador la define en Configuración del sitio."
+        details: "Datos de la salida"
+    arrivals:
+      edit:
+        title: "Peso en destino · salida %{number}"
+        subtitle: "%{buyer} · %{state} · salió con %{net} lb netas"
+        weighing: "Báscula del comprador"
+        weighing_help: "Copia lo que dice la nota de peso del comprador. Empieza con los sacos, la humedad y el daño de la salida."
+        calculation: "Cálculo en destino"
+        difference: "Diferencia con la báscula local"
+        origin_net: "Neto local: %{net} lb"
+        submit: "Guardar peso en destino"
+      update:
+        success: "Peso en destino de la salida %{number} guardado."
+    sales:
+      voided: "Anulada"
+      statuses:
+        unpaid: "Por cobrar (pendiente o parcial)"
+        pending: "Pendiente de cobro"
+        partial: "Cobro parcial"
+        paid: "Cobrada"
+        voided: "Anuladas"
+      table:
+        number: "No."
+        net: "Neto (lb)"
+        quintals: "QQ (100 lb)"
+        price: "Precio"
+        difference: "Diferencia de peso"
+        balance: "Por cobrar"
+      index:
+        title: "Ventas"
+        new: "Nueva venta"
+        search_placeholder: "Comprador, número o documento del comprador"
+        all_active: "Todas (sin anuladas)"
+        empty: "No hay ventas con estos filtros."
+        count:
+          zero: "Ninguna venta"
+          one: "1 venta"
+          other: "%{count} ventas"
+      new:
+        title: "Nueva venta"
+        choose_buyer: "¿A qué comprador?"
+        ready:
+          one: "1 salida pesada · %{pounds} lb"
+          other: "%{count} salidas pesadas · %{pounds} lb"
+        nothing_to_sell: "No hay salidas pesadas en destino sin vender. Registra el peso en destino de una salida primero."
+        pick_shipments: "Salidas de %{buyer}"
+        all: "Todas"
+        none: "Ninguna"
+        received: "pesada el %{date}"
+        no_shipments: "Este comprador no tiene salidas pesadas sin vender."
+        document: "Documento del comprador"
+        document_help: "El número de la factura o comprobante que les dio el comprador."
+        price: "Precio"
+        count:
+          one: "1 salida elegida"
+          other: "%{count} salidas elegidas"
+        net: "Neto del comprador (lb)"
+        quintals: "QQ (100 lb)"
+        difference: "Diferencia con la báscula local"
+        mixed_states: "Elegiste salidas de dos estados del café: una venta lleva un solo estado. Haz una venta por cada uno."
+        payment: "Cobro"
+        amount: "Monto cobrado ahora"
+        submit: "Registrar venta"
+        choices:
+          pending: "A crédito (se cobra después)"
+          partial: "Cobro parcial ahora"
+          paid: "De contado (cobrada completa)"
+      create:
+        success: "Venta %{number} registrada."
+      void:
+        success: "Venta anulada: sus salidas quedan libres para otra venta."
+      show:
+        title: "Venta %{number}"
+        print: "Imprimir"
+        original: "ORIGINAL"
+        copy: "COPIA"
+        new_payment: "Registrar cobro"
+        voided: "Venta anulada el %{date} por %{name}."
+        void_reason: " Motivo: %{reason}"
+        over_tolerance: "La diferencia de peso de esta venta pasa la tolerancia del %{tolerance}:"
+        void: "Anular venta"
+        void_help: "Solo se anula una venta sin cobros. Sus salidas quedan libres para venderlas a otro comprador o en otra venta; si el café regresó, anula también la salida."
+        confirm_void: "¿Anular esta venta? No se puede deshacer."
+      payments:
+        title: "Cobros"
+        total: "Total"
+        paid_total: "Cobrado"
+        balance_due: "Por cobrar"
+        number: "Recibo"
+        receipt: "Recibo"
+        destroy: "Quitar"
+        confirm_destroy: "¿Quitar este cobro? La venta vuelve a quedar por cobrar."
+        none: "Todavía no hay cobros."
+      receipt:
+        title: "Nota de venta"
+        shipment: "Salida"
+        amount: "Monto"
+        charged: "Cobrado sobre %{pounds} lb del comprador (%{quintals} QQ de 100 lb)"
+        payment: "Cobro %{number} · %{date} · %{method}"
+        balance_due: "Por cobrar"
+        buyer_signature: "Firma del comprador"
+        seller_signature: "Firma por el negocio"
+        issued_by: "Registró: %{name}"
+    sale_payments:
+      new:
+        title: "Registrar cobro"
+        sale: "Venta %{number} · %{buyer}"
+        amount_help: "Empieza con lo que falta por cobrar."
+        submit: "Guardar cobro"
+      create:
+        success: "Cobro registrado."
+      destroy:
+        success: "Cobro quitado."
+      show:
+        title: "Recibo de cobro %{number}"
+        print: "Imprimir"
+        back: "Volver a la venta"
+      receipt:
+        title: "Recibo de cobro"
+        sale: "Venta"
+        amount: "Monto recibido"
+        paid_until: "Cobrado hasta este recibo"
+        balance_after: "Queda por cobrar"
+        payer_signature: "Firma del comprador"
+        receiver_signature: "Recibí conforme"
+    buyers:
+      index:
+        title: "Compradores"
+        help: "Exportadoras, beneficios y otros compradores del café."
+        new: "Nuevo comprador"
+        search_placeholder: "Nombre, RTN o contacto"
+        status: "Estado"
+        statuses:
+          active: "Activos"
+          inactive: "Inactivos"
+        shipped: "Enviado (lb)"
+        sold: "Vendido"
+        balance: "Por cobrar"
+        empty: "No hay compradores con estos filtros."
+      new:
+        title: "Nuevo comprador"
+      edit:
+        title: "Editar %{name}"
+      create:
+        success: "Comprador registrado."
+      update:
+        success: "Comprador actualizado."
+      show:
+        new_shipment: "Nueva salida"
+        new_sale: "Nueva venta"
+        edit: "Editar"
+        full_page: "Abrir en página completa"
+        record: "Ficha"
+        figures:
+          shipped: "Enviado (neto local)"
+          in_transit: "Salidas en camino"
+          sold: "Vendido"
+          collected: "Cobrado"
+          balance_due: "Por cobrar"
+        tabs:
+          label: "Secciones del comprador"
+          sales: "Ventas"
+          shipments: "Salidas"
+          payments: "Cobros"
+        no_sales: "No hay ventas con estos filtros."
+        no_shipments: "No hay salidas con estos filtros."
+        no_payments: "Todavía no hay cobros."
+    stocks:
+      show:
+        title: "Inventario"
+        ledger: "Movimientos del inventario"
+        ledger_help: "Cada compra que entró y cada salida que se fue, con el saldo después de cada una."
+        balance: "Saldo (lb)"
+        empty: "No hay movimientos en estas fechas."
+        count:
+          zero: "Ningún movimiento"
+          one: "1 movimiento"
+          other: "%{count} movimientos"
+        totals:
+          opening: "Saldo al empezar (lb)"
+          pounds_in: "Entró (lb)"
+          pounds_out: "Salió (lb)"
+          closing: "Saldo al terminar (lb)"
+        columns:
+          at: "Fecha"
+          kind: "Movimiento"
+          who: "Productor o salida"
+          pounds_in: "Entra (lb)"
+          pounds_out: "Sale (lb)"
+        kinds:
+          purchase: "Compra"
+          shipment: "Salida"
+    daily_closes:
+      show:
+        title: "Cierre de comercialización del %{date}"
+        date: "Fecha del cierre"
+        print: "Imprimir"
+        figures:
+          departed: "Camiones que salieron"
+          departed_net: "Neto que salió (lb)"
+          received: "Pesados en destino"
+          received_net: "Neto del comprador (lb)"
+          received_difference: "Diferencia en destino (lb)"
+          sold: "Vendido"
+          collected: "Cobrado"
+        departed_title:
+          zero: "Salidas del día"
+          one: "Salidas del día (1)"
+          other: "Salidas del día (%{count})"
+        departed_empty: "Ese día no salió ningún camión."
+        received_title:
+          zero: "Pesadas en destino ese día"
+          one: "Pesadas en destino ese día (1)"
+          other: "Pesadas en destino ese día (%{count})"
+        received_empty: "Ese día no se pesó ninguna salida en destino."
+        sales_title:
+          zero: "Ventas del día"
+          one: "Ventas del día (1)"
+          other: "Ventas del día (%{count})"
+        sales_empty: "Ese día no hubo ventas."
+        payments_title:
+          zero: "Cobros del día"
+          one: "Cobros del día (1)"
+          other: "Cobros del día (%{count})"
+        payments_empty: "Ese día no hubo cobros."
+      report:
+        title: "Cierre de comercialización"
+        stock:
+          purchased: "Comprado (lb)"
+          shipped: "Salió (lb)"
+          stock: "En inventario (lb)"
+          quintals: "QQ"
+          in_transit: "En camino (lb)"
+          unsold: "Sin vender (lb)"
   loans:
     document_prints:
       new:
@@ -1895,6 +2334,11 @@ es:
       direction: "Entrada o salida"
       source: "Origen"
       text_placeholder: "Persona o descripción"
+      buyer: "Comprador"
+      shipment_placeholder: "Comprador, remisión o nota de peso"
+      over_tolerance: "Solo con diferencia mayor al %{tolerance}"
+      collection_status: "Estado de cobro"
+      stock_kind: "Movimiento"
     groups:
       day: "Día"
       week: "Semana"
@@ -1920,6 +2364,7 @@ es:
       source: "Origen"
       direction: "Entrada o salida"
       owner_kind: "Dueño"
+      buyer: "Comprador"
       department: "Departamento"
     series:
       count: "Cantidad"
@@ -1952,6 +2397,13 @@ es:
       balance: "Saldo acumulado (L)"
       lent: "Prestado (L)"
       paid_to_them: "Les pagamos (L)"
+      origin_net: "Neto local (lb)"
+      destination_net: "Neto del comprador (lb)"
+      difference_percent: "Diferencia (%)"
+      price_per_quintal: "Precio promedio por QQ (L)"
+      pounds_in: "Entró (lb)"
+      pounds_out: "Salió (lb)"
+      stock: "En inventario (lb)"
     show:
       pickers: "Elegir reporte"
       report_type: "Reporte"
@@ -2026,6 +2478,14 @@ es:
       farms_season_per_manzana: "Fincas con más QQ por manzana en la temporada"
       farms_season_balance: "Fincas que más costaron contra lo que produjeron en la temporada"
       people_season: "Cada persona con el negocio esta temporada"
+      shipments_in_transit: "Salidas que esperan su peso en destino"
+      shipments_over_tolerance: "Salidas con diferencia de peso fuera de tolerancia"
+      shipments_season_by_buyer: "Café enviado a cada comprador esta temporada"
+      sales_unpaid: "Ventas por cobrar (las más viejas primero)"
+      sales_season_by_buyer: "Ventas de la temporada por comprador"
+      sales_season_by_month: "Ventas de la temporada, mes por mes"
+      coffee_stock_month: "Inventario de este mes, día por día"
+      coffee_stock_season_by_state: "Entradas y salidas de la temporada por estado del café"
       cash_movements_week: "Entradas y salidas de dinero de esta semana"
       cash_movements_month_by_source: "Entradas y salidas del mes por origen"
     saved_reports:
@@ -2157,6 +2617,129 @@ es:
           days_to_pay:
             title: "Rapidez de pago"
             help: "Barras: facturas canceladas. Línea: días promedio entre la factura y su pago."
+      shipments:
+        title: "Salidas de camiones"
+        description: "Cada camión que salió con café (sin los anulados): lo que pesó en la báscula local, lo que pesó donde el comprador y la diferencia entre las dos."
+        columns:
+          number: "Salida"
+          departed_at: "Salió"
+          buyer: "Comprador"
+          coffee_state: "Estado del café"
+          remission_number: "Remisión"
+          weight_note_number: "Nota de peso"
+          sacks: "Sacos"
+          origin_net: "Neto local (lb)"
+          destination_net: "Neto comprador (lb)"
+          difference: "Diferencia (lb)"
+          difference_percent: "Diferencia (%)"
+          status: "Estado"
+          count: "Salidas"
+        kpis:
+          count: "Salidas"
+          origin_net: "Neto que salió (lb)"
+          destination_net: "Neto del comprador (lb)"
+          difference: "Diferencia (lb)"
+          difference_percent: "Diferencia (%)"
+          in_transit: "En camino hoy"
+        charts:
+          weights:
+            title: "Lo que salió y lo que pesó el comprador"
+            help: "Libras netas en la báscula local y en la del comprador (las que ya se pesaron en destino)."
+          difference:
+            title: "Diferencia entre básculas en el tiempo"
+            help: "Diferencia del comprador contra la báscula local, en %, de las salidas pesadas en destino. Negativa: el comprador pesó menos."
+          buyers:
+            title: "Café enviado por comprador"
+            help: "Libras netas que salieron hacia cada comprador."
+          buyer_difference:
+            title: "Diferencia de peso por comprador"
+            help: "Diferencia promedio, en %, de las salidas pesadas en destino de cada comprador. Arriba, quien pesa menos."
+          states:
+            title: "Por estado del café"
+            help: "Libras netas que salieron de cada estado."
+      sales:
+        title: "Ventas de café"
+        description: "Cada venta (sin las anuladas): libras del comprador, QQ de 100 lb, precio, total, lo cobrado, lo que falta y cuánto tardan en pagar."
+        columns:
+          number: "Venta"
+          sold_on: "Fecha"
+          buyer: "Comprador"
+          coffee_state: "Estado del café"
+          buyer_document_number: "Documento del comprador"
+          net_weight: "Neto (lb)"
+          quintals: "QQ (100 lb)"
+          unit_price: "Precio"
+          difference_percent: "Diferencia de peso (%)"
+          total: "Total"
+          paid: "Cobrado"
+          balance: "Por cobrar"
+          payment_status: "Estado de cobro"
+          days: "Días"
+          count: "Ventas"
+          price_per_quintal: "Precio prom. por QQ"
+          pending: "Por cobrar"
+        kpis:
+          count: "Ventas"
+          quintals: "QQ vendidos (100 lb)"
+          total: "Total vendido"
+          price_per_quintal: "Precio promedio por QQ"
+          paid: "Cobrado"
+          pending: "Por cobrar"
+          difference_percent: "Diferencia de peso (%)"
+          average_days: "Días prom. para cobrar"
+        charts:
+          by_status:
+            title: "Lo vendido en el tiempo"
+            help: "El total de las ventas por estado de cobro: cobrada, cobro parcial o pendiente."
+          prices:
+            title: "QQ vendidos y precio promedio"
+            help: "Barras: QQ de 100 lb vendidos. Línea: precio promedio por QQ (total ÷ QQ)."
+          buyers:
+            title: "A quién se le vende más"
+            help: "Total vendido a cada comprador."
+          debtors:
+            title: "Quién debe más"
+            help: "Los 10 compradores con más por cobrar."
+          pending_age:
+            title: "Antigüedad de lo por cobrar"
+            help: "Lo que falta cobrar según los días desde la venta."
+          methods:
+            title: "Cómo se cobró"
+            help: "Lo cobrado en estas ventas, por forma de pago de cada cobro."
+      coffee_stock:
+        title: "Inventario de café"
+        description: "Cada compra que entró al inventario (su peso neto) y cada salida de camión que se fue (su neto local), por estado del café, con el inventario al empezar y al terminar el período."
+        purchase: "Compra %{number} · %{name}"
+        shipment: "Salida %{number} · %{name}"
+        kinds:
+          purchase: "Compra"
+          shipment: "Salida"
+        columns:
+          at: "Fecha"
+          kind: "Movimiento"
+          description: "Detalle"
+          coffee_state: "Estado del café"
+          pounds_in: "Entró (lb)"
+          pounds_out: "Salió (lb)"
+          count: "Movimientos"
+          net: "Neto (lb)"
+        series:
+          pounds_in: "Entró (lb)"
+          pounds_out: "Salió (lb)"
+          stock: "En inventario (lb)"
+        kpis:
+          pounds_in: "Entró (lb)"
+          pounds_out: "Salió (lb)"
+          net: "Diferencia (lb)"
+          opening: "Inventario al empezar (lb)"
+          closing: "Inventario al terminar (lb)"
+        charts:
+          flow:
+            title: "Entradas, salidas e inventario"
+            help: "Barras: libras netas que entraron con las compras y que salieron en camiones. Línea: el inventario al final de cada día, semana o mes."
+          by_state:
+            title: "Inventario por estado del café"
+            help: "Libras netas en inventario al final del período, por estado."
       producers:
         title: "Productores"
         description: "Cada productor con lo que vendió en el período, cuándo vendió por última vez y lo que falta pagarle. Sirve para ver quién vende más y quién dejó de vender."
@@ -2538,7 +3121,7 @@ es:
             help: "Una persona puede tener varios roles."
       cash_movements:
         title: "Entradas y salidas de dinero"
-        description: "El dinero que salió (pagos de facturas, pagos a carreros, préstamos en efectivo, planillas y gastos) y el que entró (abonos en efectivo, transferencia o cheque), según lo registrado. Las ventas de café todavía no están en el sistema."
+        description: "El dinero que salió (pagos de facturas, pagos a carreros, préstamos en efectivo, planillas y gastos) y el que entró (abonos a préstamos en efectivo, transferencia o cheque, y cobros de ventas de café), según lo registrado."
         sources:
           invoices: "Pago de factura"
           hauler_payments: "Pago a carrero"
@@ -2546,11 +3129,13 @@ es:
           loan_payments: "Abono a préstamo"
           payroll_payments: "Pago de planilla"
           payroll_expenses: "Gasto de planilla"
+          sale_payments: "Cobro de venta"
         directions:
           in: "Entrada"
           out: "Salida"
         invoice: "Factura %{number}"
         hauler_payment: "Recibo %{number} de comisiones de carreo"
+        sale_payment: "Cobro de la venta %{number}"
         loan: "Préstamo %{number}"
         loan_payment: "Recibo %{number} del préstamo %{loan}"
         payroll_payment: "%{payroll} · %{farm} (%{period})"
@@ -2609,6 +3194,20 @@ es:
         - "Si aparece un error con un código de referencia, pásale ese código a un administrador."
         - "El Inicio y las pantallas de Compra de café y Préstamos se actualizan solas cuando otra persona registra algo: lo nuevo aparece con un brillo y las cifras que cambian dan un pulso. Abajo a la izquierda dice «En vivo». Si tienes una ventana abierta, se actualiza al cerrarla."
     processes:
+      sales_flow:
+        title: "Salida, peso en destino, venta y cobro"
+        summary: "El café sale del inventario en camiones, se pesa otra vez donde el comprador, se vende con el peso del comprador y se cobra por abonos."
+        steps:
+          - "Nueva salida: elige el comprador, el estado del café y escribe el peso bruto y los sacos de la báscula local (con la humedad y el daño, o el rendimiento en uva). El inventario baja con su peso neto."
+          - "Cuando el camión llega, en la salida toca «Registrar peso en destino» y copia la nota de peso del comprador. El sistema muestra la diferencia entre las dos básculas."
+          - "Nueva venta: elige el comprador y marca sus salidas ya pesadas en destino (todas del mismo estado del café). Escribe el precio por quintal (100 lb) o por libra y el número de documento del comprador."
+          - "Elige cómo se cobra: de contado (cobrada completa), con un cobro parcial o a crédito."
+          - "Después, en la venta, «Registrar cobro» por cada pago del comprador. Cada cobro tiene su recibo, original y copia en hojas separadas."
+        tips:
+          - "La venta se cobra con el peso del comprador; la diferencia con la báscula local se muestra en la salida, en la venta y en los reportes."
+          - "Si la diferencia pasa la tolerancia de Configuración del sitio, sale resaltada. Si es mucha, la venta se puede anular antes de cobrarla: sus salidas quedan libres para otra venta."
+          - "Si el café regresa al beneficio, anula la salida (cuando no esté en una venta): vuelve al inventario."
+          - "Los cobros van en orden de fecha, no pasan de lo que falta y solo se quita el último."
       private_documents:
         title: "Pagaré y contrato de préstamo"
         summary: "Dos documentos fijos que se imprimen para cada préstamo, llenos con los datos de la persona y del préstamo."
@@ -3323,6 +3922,145 @@ es:
             tips:
               - "«Compras del día» y el reporte impreso agrupan las compras en canceladas, con pago parcial, pendientes de pago y sin facturar, cada grupo con su total."
               - "El productor que más vendió en el día sale primero."
+      sales:
+        home:
+          index:
+            title: "Resumen de comercialización"
+            summary: "La venta del café en cuatro pasos, el café en inventario y cómo van el día y la temporada."
+            steps:
+              - "Registrar salidas: cada camión que sale con café para un comprador."
+              - "Pesar en destino: el peso que da la báscula del comprador."
+              - "Vender: agrupa las salidas pesadas de un comprador en una venta."
+              - "Cobrar: registra lo que paga el comprador."
+            tips:
+              - "El inventario sube con cada compra y baja con cada salida, en libras netas por estado del café."
+              - "Si hay salidas con una diferencia de peso mayor a la tolerancia, sale un aviso con el enlace a ellas."
+        shipments:
+          index:
+            title: "Salidas de camiones"
+            summary: "Cada camión que salió con café, con su peso local, su peso en destino y la diferencia."
+            steps:
+              - "Los filtros se aplican solos: busca por comprador, número, remisión, nota de peso o transportista, o elige fechas, temporada, comprador, estado del café o estado de la salida."
+              - "Toca una fila para ver la salida y registrar su peso en destino."
+              - "Toca «Nueva salida» para registrar un camión."
+            tips:
+              - "Las salidas anuladas no aparecen; elige el estado «Anulada» para verlas."
+              - "Con tolerancia configurada, «Solo con diferencia mayor…» deja las que se pasaron."
+          show:
+            title: "Detalle de la salida"
+            summary: "Las dos pesadas lado a lado, la diferencia y en qué etapa está."
+            steps:
+              - "Revisa la barra de etapas: salió, pesada en destino, vendida, cobrada."
+              - "Usa el botón del siguiente paso: registrar el peso en destino, vender o ver la venta."
+              - "Mientras no esté en una venta, puedes editarla o anularla."
+            tips:
+              - "Anular una salida devuelve su café al inventario."
+          form:
+            title: "Registrar o editar una salida"
+            summary: "El camión que sale: comprador, papeles y el peso en la báscula local. El sistema calcula la tara, el peso neto y los QQ mientras escribes."
+            steps:
+              - "Elige el comprador (o «Nuevo comprador»), la fecha y hora y el estado del café."
+              - "Escribe la remisión, el transportista y la placa si los tienes."
+              - "Escribe el peso bruto y los sacos contados. En pergamino, revisa la humedad y el daño; en uva, el rendimiento."
+              - "Revisa el cálculo y guarda."
+            tips:
+              - "Tara: 1 libra por saco contado. Neto: como en las compras."
+              - "Si sale más café del que hay en inventario de ese estado, aparece un aviso; se puede guardar igual."
+        arrivals:
+          form:
+            title: "Peso en destino"
+            summary: "El peso que dio la báscula del comprador, con su nota de peso."
+            steps:
+              - "Escribe la fecha y el número de la nota de peso."
+              - "Copia el peso bruto, los sacos, la humedad y el daño (o el rendimiento) de la nota."
+              - "Revisa la diferencia con la báscula local y guarda."
+            tips:
+              - "La venta se cobra con este peso."
+              - "Si la diferencia pasa la tolerancia, el recuadro se marca en rojo."
+        sales:
+          index:
+            title: "Ventas"
+            summary: "Las ventas de café con su total, lo cobrado y lo que falta."
+            steps:
+              - "Filtra por fechas, temporada, comprador, estado del café o estado de cobro; la lista se actualiza sola."
+              - "Toca una fila para ver la venta, registrar un cobro o imprimirla."
+              - "Toca «Nueva venta» para vender salidas ya pesadas en destino."
+            tips:
+              - "Las ventas anuladas no cuentan en los totales; elige «Anuladas» para verlas."
+          show:
+            title: "Detalle de la venta"
+            summary: "La nota de venta con sus salidas, el peso de cada báscula, el total y los cobros."
+            steps:
+              - "Toca «Registrar cobro» por cada pago del comprador."
+              - "Toca «Imprimir» para sacar la nota de venta (original y copia)."
+              - "Mientras no tenga cobros, puedes anularla con su motivo."
+            tips:
+              - "Al anular, sus salidas quedan libres para otra venta."
+          form:
+            title: "Nueva venta"
+            summary: "Agrupa salidas de un comprador, ya pesadas en destino, en una venta."
+            steps:
+              - "Elige el comprador."
+              - "Marca sus salidas (todas del mismo estado del café)."
+              - "Escribe la fecha, si el precio es por quintal (100 lb) o por libra, y el precio."
+              - "Escribe el número de la factura o comprobante del comprador."
+              - "Elige el cobro: a crédito, parcial o de contado, y guarda."
+            tips:
+              - "Total = libras netas del comprador ÷ 100 × precio por quintal, o libras × precio por libra."
+              - "La columna de la derecha muestra el total y la diferencia de peso mientras eliges."
+        sale_payments:
+          show:
+            title: "Recibo de cobro"
+            summary: "El recibo de un cobro: lo que pagó el comprador y lo que falta."
+            steps:
+              - "Toca «Imprimir»: sale el original y la copia, cada uno en su hoja."
+          form:
+            title: "Registrar cobro"
+            summary: "Un pago del comprador sobre una venta."
+            steps:
+              - "Escribe el monto (empieza con lo que falta), la forma de pago y la fecha."
+              - "Guarda: se abre el recibo listo para imprimir."
+            tips:
+              - "No puede pasar de lo que falta ni ir antes de la venta o del último cobro."
+        buyers:
+          index:
+            title: "Compradores"
+            summary: "Exportadoras, beneficios y otros compradores, con lo enviado, lo vendido y lo que deben."
+            steps:
+              - "Busca por nombre, RTN o contacto; filtra por tipo o estado."
+              - "Toca una fila para ver sus ventas, salidas y cobros."
+              - "Toca «Nuevo comprador» para registrar uno."
+          show:
+            title: "Ficha del comprador"
+            summary: "Sus datos, sus cifras y, en pestañas, sus ventas, salidas y cobros."
+            steps:
+              - "Usa las pestañas para ver ventas, salidas o cobros; filtra por temporada."
+              - "«Nueva salida» y «Nueva venta» empiezan con este comprador."
+          form:
+            title: "Registrar o editar un comprador"
+            summary: "Nombre o razón social, tipo, RTN, contacto y dirección."
+            steps:
+              - "Escribe el nombre y elige el tipo: exportador, beneficio u otro."
+              - "Agrega RTN, contacto, teléfono, correo y dirección si los tienes."
+            tips:
+              - "Un comprador con salidas no se borra: se desactiva y deja de salir en las salidas nuevas."
+        stocks:
+          show:
+            title: "Inventario"
+            summary: "El café en inventario por estado y sus movimientos."
+            steps:
+              - "Arriba, el saldo de hoy por estado del café, en libras netas y QQ."
+              - "Abajo, cada compra que entró y cada salida que se fue en las fechas elegidas, con el saldo después de cada una."
+            tips:
+              - "Las compras y salidas anuladas no cuentan."
+        daily_closes:
+          show:
+            title: "Cierre diario de comercialización"
+            summary: "Lo que salió, lo que se pesó en destino, lo que se vendió y se cobró en un día, y el inventario al cerrar."
+            steps:
+              - "Elige la fecha."
+              - "Revisa las cifras, el inventario y las listas del día."
+              - "Toca «Imprimir» para sacar el cierre."
       farms:
         home:
           index:
@@ -3791,6 +4529,7 @@ es:
         location_help: "Opcional. Va debajo del nombre en el inicio de sesión y en los impresos."
         rtn_placeholder: "14 dígitos"
         rtn_help: "Opcional. El RTN del negocio, que sale en las facturas debajo del nombre y la ubicación."
+        weight_tolerance_help: "Opcional. En Comercialización, una salida cuya báscula del comprador difiere de la local en más de este porcentaje (más o menos) sale resaltada. Vacía, no se resalta ninguna."
         logo_help: "PNG, JPG, WebP o GIF de hasta %{size}. Mejor cuadrado: se muestra en un círculo pequeño."
         remove_logo: "Quitar el logo actual (%{name}) y volver al grano de café"
         preview: "Vista previa"
@@ -3842,6 +4581,11 @@ es:
         invoice_payment: "el abono a factura"
         hauler: "el carrero"
         hauler_payment: "el pago a carrero"
+        buyer: "el comprador"
+        shipment: "la salida de camión"
+        sale: "la venta"
+        sale_line: "la salida vendida"
+        sale_payment: "el cobro de venta"
         loan: "el préstamo"
         loan_payment: "el abono"
         supply: "el insumo"
@@ -4145,6 +4889,21 @@ es:
 
   activerecord:
     models:
+      buyer:
+        one: "Comprador"
+        other: "Compradores"
+      shipment:
+        one: "Salida de camión"
+        other: "Salidas de camiones"
+      sale:
+        one: "Venta"
+        other: "Ventas"
+      sale_line:
+        one: "Salida vendida"
+        other: "Salidas vendidas"
+      sale_payment:
+        one: "Cobro de venta"
+        other: "Cobros de ventas"
       private_document:
         one: "Documento privado"
         other: "Documentos privados"
@@ -4257,6 +5016,95 @@ es:
         one: "Configuración del sitio"
         other: "Configuración del sitio"
     attributes:
+      buyer:
+        name: "Nombre o razón social"
+        kind: "Tipo"
+        kind/exporter: "Exportador"
+        kind/processor: "Beneficio"
+        kind/other: "Otro comprador"
+        rtn: "RTN"
+        phone: "Teléfono"
+        email: "Correo"
+        contact_name: "Contacto"
+        department: "Departamento"
+        municipality: "Municipio"
+        address_line: "Dirección"
+        latitude: "Latitud"
+        longitude: "Longitud"
+        observations: "Observaciones"
+        active: "Activo"
+      shipment:
+        number: "Número"
+        buyer: "Comprador"
+        created_by: "Registró"
+        departed_at: "Fecha y hora de salida"
+        season_year: "Temporada"
+        coffee_state: "Estado del café"
+        remission_number: "Remisión"
+        carrier_name: "Transportista"
+        vehicle_plate: "Placa del camión"
+        observations: "Observaciones"
+        origin_gross_weight: "Peso bruto local (lb)"
+        origin_sacks: "Sacos"
+        origin_humidity_percent: "Humedad (%)"
+        origin_damage_percent: "Daño (%)"
+        origin_yield_factor: "Rendimiento"
+        origin_tare: "Tara local"
+        origin_net_weight: "Neto local"
+        received_on: "Fecha de la pesada en destino"
+        weight_note_number: "Nota de peso"
+        destination_gross_weight: "Peso bruto en destino (lb)"
+        destination_sacks: "Sacos en destino"
+        destination_humidity_percent: "Humedad en destino (%)"
+        destination_damage_percent: "Daño en destino (%)"
+        destination_yield_factor: "Rendimiento en destino"
+        destination_tare: "Tara en destino"
+        destination_net_weight: "Neto del comprador"
+        voided_at: "Anulada"
+        voided_by: "Anuló"
+        status/in_transit: "En camino"
+        status/received: "Pesada, sin vender"
+        status/sold: "Vendida"
+        status/voided: "Anulada"
+      sale:
+        number: "Número"
+        buyer: "Comprador"
+        created_by: "Registró"
+        sold_on: "Fecha de la venta"
+        coffee_state: "Estado del café"
+        price_unit: "Precio por"
+        price_unit/pound: "Por libra"
+        price_unit/quintal: "Por quintal (100 lb)"
+        unit_price: "Precio (L)"
+        buyer_document_number: "Factura o comprobante del comprador"
+        observations: "Observaciones"
+        origin_net_weight: "Neto local"
+        net_weight: "Neto del comprador"
+        total: "Total"
+        payment_status: "Estado de cobro"
+        payment_status/pending: "Pendiente de cobro"
+        payment_status/partial: "Cobro parcial"
+        payment_status/paid: "Cobrada"
+        payment_method: "Forma de cobro"
+        paid_on: "Fecha de cobro"
+        voided_at: "Anulada"
+        voided_by: "Anuló"
+        void_reason: "Motivo de la anulación"
+        lines: "Salidas"
+      sale_line:
+        sale: "Venta"
+        shipment: "Salida"
+        origin_net_weight: "Neto local"
+        net_weight: "Neto del comprador"
+        amount: "Monto"
+        active: "Activa"
+      sale_payment:
+        sale: "Venta"
+        amount: "Monto"
+        paid_on: "Fecha"
+        payment_method: "Forma de pago"
+        observations: "Observaciones"
+        created_by: "Registró"
       private_document:
         key: "Documento"
         body: "Texto"
@@ -4589,6 +5437,7 @@ es:
         logo_filename: "Archivo del logo"
         logo_content_type: "Tipo de imagen del logo"
         logo_byte_size: "Tamaño del logo (bytes)"
+        weight_tolerance_percent: "Tolerancia de diferencia de peso (%)"
       purchase/weighings:
         gross_weight: "Peso de la pesada (lb)"
         sacks: "Sacos de la pesada"
@@ -4614,6 +5463,33 @@ es:
         can_destroy: "Borrar"
     errors:
       models:
+        shipment:
+          sold: "La salida ya está en una venta: no se cambian su comprador, estado ni pesos. Anula la venta primero."
+          attributes:
+            base:
+              sold: "La salida ya está en una venta: no se cambian su comprador, estado ni pesos. Anula la venta primero."
+            buyer:
+              inactive: "está desactivado"
+            received_on:
+              before_departure: "no puede ser antes de la salida"
+        sale:
+          attributes:
+            base:
+              partial_not_less: "El cobro parcial debe ser menor que el total; si cobras todo, elige «De contado»."
+              has_payments: "La venta tiene cobros: quítalos antes de anularla."
+            lines:
+              blank: "Elige al menos una salida."
+              unavailable: "Alguna salida ya no está disponible (se vendió, se anuló o es de otro comprador). Revisa la lista."
+              mixed_states: "Las salidas son de distintos estados del café: haz una venta por cada estado."
+        sale_payment:
+          attributes:
+            base:
+              sale_voided: "La venta está anulada."
+            amount:
+              over_balance: "es mayor que lo que falta por cobrar (%{balance})"
+            paid_on:
+              before_sale: "no puede ser antes de la fecha de la venta"
+              before_last_payment: "no puede ser antes del último cobro"
         private_document_print:
           attributes:
             base:

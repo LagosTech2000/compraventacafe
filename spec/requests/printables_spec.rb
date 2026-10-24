@@ -42,6 +42,21 @@ RSpec.describe "Printable documents" do
     end
   end
 
+  it "puts it on sales (original and copy), their payment receipts and the sales daily close" do
+    sale = create(:sale, payment_status: "partial", amount: 1_000, user:)
+    get sales_sale_path(sale)
+    expect_letterhead("Nota de venta #{sale.display_number}", count: 2)
+    expect_copy_on_its_own_page
+
+    payment = create(:sale_payment, sale:, amount: 1)
+    get sales_sale_payment_path(sale, payment)
+    expect_letterhead("Recibo de cobro", count: 2)
+    expect_copy_on_its_own_page
+
+    get sales_daily_close_path
+    expect_letterhead("Cierre de comercialización")
+  end
+
   it "puts it on invoices (original and copy) and their payment receipts" do
     invoice = InvoiceIssuer.new(producer:, user:, purchase_ids: [ create(:purchase, producer:).id ], payment_status: "partial",
                                 payment_method: "cash", amount: "1000").call.invoice

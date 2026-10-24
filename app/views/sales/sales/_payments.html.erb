@@ -1,0 +1,52 @@
+<%# What the buyer has paid on the sale ("cobros") and what is left. Each has
+    its receipt; only the latest one can be removed. %>
+<% payments = sale.payments.reject(&:new_record?) %>
+<section class="mt-4 panel p-4" aria-labelledby="sale-payments">
+  <div class="flex flex-wrap items-baseline justify-between gap-3">
+    <h2 id="sale-payments" class="font-semibold"><%= t("sales.sales.payments.title") %></h2>
+    <dl class="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+      <% { total: sale.total, paid_total: sale.paid_total, balance_due: sale.balance_due }.each do |key, value| %>
+        <div class="flex gap-2">
+          <dt class="text-ink-muted"><%= t("sales.sales.payments.#{key}") %>:</dt>
+          <dd class="font-semibold tabular-nums <%= "text-danger" if key == :balance_due && value.positive? %>"><%= format_money(value) %></dd>
+        </div>
+      <% end %>
+    </dl>
+  </div>
+  <% if payments.any? %>
+    <div class="mt-3 overflow-x-auto">
+      <table class="data-table data-table-compact" data-controller="table-sort">
+        <thead>
+          <tr>
+            <th><%= t("sales.sales.payments.number") %></th>
+            <th><%= SalePayment.human_attribute_name(:paid_on) %></th>
+            <th><%= SalePayment.human_attribute_name(:payment_method) %></th>
+            <th class="text-right"><%= SalePayment.human_attribute_name(:amount) %></th>
+            <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% payments.each do |payment| %>
+            <tr id="<%= dom_id(payment) %>">
+              <td class="tabular-nums"><%= payment.display_number %></td>
+              <td class="whitespace-nowrap"><%= l(payment.paid_on) %></td>
+              <td><%= payment.human_payment_method %></td>
+              <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(payment.amount) %></td>
+              <td class="cell-actions">
+                <div class="flex justify-end gap-2">
+                  <%= modal_link_to t("sales.sales.payments.receipt"), sales_sale_payment_path(sale, payment), class: "btn btn-sm", data: { row_link: true } %>
+                  <% if policy(payment).destroy? %>
+                    <%= button_to t("sales.sales.payments.destroy"), sales_sale_payment_path(sale, payment), method: :delete,
+                          class: "btn btn-sm", form: { data: { turbo_confirm: t("sales.sales.payments.confirm_destroy") } } %>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p class="mt-2 text-sm text-ink-muted"><%= t("sales.sales.payments.none") %></p>
+  <% end %>
+</section>

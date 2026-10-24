@@ -13,5 +13,8 @@ RSpec.describe DemoData do
     expect(Payroll.pluck(:kind)).to contain_exactly("daily", "harvest", "task")
     expect(PayrollPayment.sole.loans_total).to eq(500)
     expect(Payroll.find_by(kind: "daily").periods_to_pay).not_to be_empty
+    expect(Buyer.pluck(:name)).to all(include("Demo"))
+    expect(Shipment.all.map(&:status)).to contain_exactly("sold", "sold", "received", "in_transit")
+    expect(Sale.pluck(:payment_status)).to contain_exactly("paid", "partial")
   end
 end

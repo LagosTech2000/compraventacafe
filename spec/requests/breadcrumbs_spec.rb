@@ -26,6 +26,19 @@ RSpec.describe "Breadcrumbs" do
     expect(crumbs.size).to eq(4)
   end
 
+  it "goes up through the buyer from a shipment, a sale and its receipt" do
+    buyer = create(:buyer, name: "Beneficio Henola")
+    sale = create(:sale, buyer:)
+    payment = create(:sale_payment, sale:, amount: 1)
+
+    get sales_shipment_path(sale.shipments.first)
+    expect(crumbs).to eq([ "Compradores", "Beneficio Henola", "Salida #{sale.shipments.first.display_number}" ])
+    get sales_sale_path(sale)
+    expect(crumbs).to eq([ "Compradores", "Beneficio Henola", "Venta #{sale.display_number}" ])
+    get sales_sale_payment_path(sale, payment)
+    expect(crumbs.first(3)).to eq([ "Compradores", "Beneficio Henola", "Venta #{sale.display_number}" ])
+  end
+
   it "goes up through the account from a loan and its receipt, and through the carrero from a payment" do
     loan = create(:loan, person: producer.person)
     payment = create(:loan_payment, loan:, amount: 100)

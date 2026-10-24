@@ -1,0 +1,32 @@
+<%# One scale's inputs (side: "origin" or "destination"): gross weight,
+    sacks counted, and humidity and damage (parchment) or yield (cherry).
+    The fields that do not apply are hidden and disabled (not sent). %>
+<% cherry = shipment.cherry? %>
+<div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+  <div>
+    <%= form.label :"#{side}_gross_weight", class: "field-label" %>
+    <%= form.number_field :"#{side}_gross_weight", required: true, min: 0.01, max: Shipment::MAX_WEIGHT - 0.01, step: 0.01, inputmode: "decimal",
+          class: "field-input text-lg", data: { weighing_calculator_target: "gross", action: "weighing-calculator#update" } %>
+  </div>
+  <div>
+    <%= form.label :"#{side}_sacks", class: "field-label" %>
+    <%= form.number_field :"#{side}_sacks", required: true, min: 1, max: Shipment::MAX_SACKS - 1, step: 1, inputmode: "numeric",
+          class: "field-input text-lg", data: { weighing_calculator_target: "sacks", action: "weighing-calculator#update" } %>
+    <p class="mt-1 text-xs text-ink-muted"><%= t("sales.shipments.form.sacks_help") %></p>
+  </div>
+  <div data-weighing-calculator-target="parchmentField" <%= "hidden" if cherry %>>
+    <%= form.label :"#{side}_humidity_percent", class: "field-label" %>
+    <%= form.number_field :"#{side}_humidity_percent", required: true, min: 0, max: 99.99, step: 0.01, inputmode: "decimal",
+          disabled: cherry, class: "field-input text-lg", data: { weighing_calculator_target: "humidity", action: "weighing-calculator#update" } %>
+  </div>
+  <div data-weighing-calculator-target="parchmentField" <%= "hidden" if cherry %>>
+    <%= form.label :"#{side}_damage_percent", class: "field-label" %>
+    <%= form.number_field :"#{side}_damage_percent", min: 0, max: 99.99, step: 0.01, inputmode: "decimal",
+          disabled: cherry, class: "field-input text-lg", data: { weighing_calculator_target: "damage", action: "weighing-calculator#update" } %>
+  </div>
+  <div data-weighing-calculator-target="cherryField" <%= "hidden" unless cherry %>>
+    <%= form.label :"#{side}_yield_factor", class: "field-label" %>
+    <%= form.number_field :"#{side}_yield_factor", required: true, min: 0.0001, max: 1, step: 0.0001, inputmode: "decimal",
+          disabled: !cherry, class: "field-input text-lg", data: { weighing_calculator_target: "yield", action: "weighing-calculator#update" } %>
+  </div>
+</div>

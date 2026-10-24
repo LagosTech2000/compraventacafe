@@ -1,0 +1,71 @@
+<% content_for :title, t(".title") %>
+<%= live_updates_from :sales %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= render "sales/nav" %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <%= help_guide_button HelpGuide.process(:sales_flow), label: true %>
+    <% if policy(Shipment).create? %>
+      <%= modal_link_to t(".new"), new_sales_shipment_path, class: "btn btn-primary" %>
+    <% end %>
+  </div>
+</div>
+
+<% status_labels = ShipmentFilter::STATUSES.map { [ Shipment.human_attribute_name("status/#{it}"), it ] } %>
+<div data-controller="live-filter">
+  <%= render layout: "shared/filters", locals: { filter: @filter, url: sales_shipments_path, frame: "shipments-list", live: true } do |form| %>
+    <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("sales.shipments.index.search_placeholder") %>
+    <%= filter_date_field form, :from, t("shared.filters.from"), value: @filter.from %>
+    <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
+    <%= filter_select form, :season_year, Purchase.human_attribute_name(:season_year),
+          season_options(Shipment.all), selected: @filter.season_year,
+          all: t("shared.filters.all_seasons"), data: { controller: "season-filter", action: "season-filter#clearDates" } %>
+    <%= filter_select form, :buyer_id, Shipment.human_attribute_name(:buyer), Buyer.alphabetical.pluck(:name, :id), selected: @filter.buyer_id %>
+    <%= filter_select form, :coffee_state, Shipment.human_attribute_name(:coffee_state),
+          enum_options(Purchase, :coffee_state, Purchase::COFFEE_STATES), selected: @filter.coffee_state %>
+    <%= filter_select form, :status, t("sales.shipments.table.status"), status_labels, selected: @filter.status,
+          all: t("sales.shipments.index.all_active") %>
+    <% if WeightTolerance.percent %>
+      <%= filter_check_box form, :over_tolerance, t("sales.shipments.index.over_tolerance", tolerance: format_percent(WeightTolerance.percent)), checked: @filter.over_tolerance.present? %>
+    <% end %>
+  <% end %>
+
+  <%= turbo_frame_tag "shipments-list", class: "query-frame block", target: "_top", data: { turbo_action: "advance", controller: "frame-scroll" } do %>
+    <%= render "shared/filter_status", filter: @filter, count: t(".count", count: @totals[:count]),
+          periods: quick_periods(@filter),
+          chips: filter_chips(@filter,
+                              season_year: ->(year) { format_season(Season.new(year)) },
+                              q: ->(text) { t("shared.filters.chips.q", text:) },
+                              buyer_id: ->(id) { Buyer.find_by(id:)&.name },
+                              coffee_state: ->(state) { Purchase.human_attribute_name("coffee_state/#{state}") },
+                              status: ->(value) { Shipment.human_attribute_name("status/#{value}") },
+                              over_tolerance: ->(_) { t(".over_tolerance_chip") }) %>
+
+    <dl class="mt-4 flex flex-wrap gap-3">
+      <% compared = @totals[:compared_origin] %>
+      <% difference = @totals[:destination_net] - compared %>
+      <% { sacks: format_pounds(@totals[:sacks]).delete_suffix(".00"), origin_net: format_pounds(@totals[:origin_net]),
+           destination_net: format_pounds(@totals[:destination_net]),
+           difference: "#{format_pounds(difference)} (#{compared.positive? ? format_percent((difference * 100 / compared).round(2)) : "—"})" }.each do |key, value| %>
+        <div class="stat min-w-0 flex-1 basis-40">
+          <dt><%= t(".totals.#{key}") %></dt>
+          <dd><%= value %></dd>
+        </div>
+      <% end %>
+    </dl>
+
+    <div class="mt-6">
+      <% if @shipments.any? %>
+        <%= render "table", shipments: @shipments, sorting: { filter: @filter, frame: "shipments-list" } %>
+        <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "shipments-list" %>
+      <% else %>
+        <p class="empty-state"><%= t(".empty") %></p>
+      <% end %>
+    </div>
+  <% end %>
+</div>

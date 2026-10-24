@@ -6,13 +6,15 @@
 #        haulers' commissions, cash lent (supplies are not money), payroll
 #        payments (what was handed to the members) and payroll expenses
 #   in   loan payments in cash, transfer or check (paid with coffee or
-#        from a payroll, no money moves)
+#        from a payroll, no money moves) and what buyers paid on coffee
+#        sales (Comercialización), for whoever can read that module
 #
-# Coffee sales are not in the system yet, so they are not here. The
-# movements come from six tables and are few, so they are put together in
-# Ruby. Needs the read permission of the three modules.
+# The movements come from several tables and are few, so they are put
+# together in Ruby. Needs the read permission of the three modules.
 class CashMovementsReport < Report
-  SOURCES = %w[invoices hauler_payments loans loan_payments payroll_payments payroll_expenses].freeze
+  include InMemoryReport
+
+  SOURCES = %w[invoices hauler_payments loans loan_payments payroll_payments payroll_expenses sale_payments].freeze
   DIRECTIONS = %w[in out].freeze
   NAME = "people.first_names || ' ' || people.last_names".freeze
 
@@ -59,11 +61,6 @@ class CashMovementsReport < Report
   kpi(:net, :money, good: :up) { |movements, _| movements.sum(0.to_d, &:net) }
   kpi(:count, :integer) { |movements, _| movements.size }
 
-  def records(in_period = period)
-    @records ||= {}
-    @records[in_period.range] ||= apply_filters(load(in_period))
-  end
-
   def apply_filters(movements)
     movements = movements.select { |movement| movement.direction == filter.direction } if filter.direction
     movements = movements.select { |movement| movement.source == filter.source } if filter.source
@@ -73,16 +70,6 @@ class CashMovementsReport < Report
     end
     movements
   end
-
-  def total_count = grouped? ? grouped_rows.size : records.size
-
-  def page(number = filter.page)
-    rows = grouped? ? grouped_rows : sorted_movements
-    from = (number - 1) * PER_PAGE
-    [ rows[from, PER_PAGE] || [], rows.size > from + PER_PAGE ]
-  end
-
-  def each_row(&) = (grouped? ? grouped_rows : sorted_movements).first(CSV_LIMIT).each(&)
 
   def charts
     movements = records
@@ -109,53 +96,23 @@ class CashMovementsReport < Report
   end
 
   private
-    def sorted_movements
-      key = sort_key.to_sym
-      present, missing = records.partition { |movement| !movement.public_send(key).nil? }
-      present = present.sort_by { |movement| [ movement.public_send(key), movement.date, movement.id ] }
-      present.reverse! if sort_direction == "desc"
-      present + missing
-    end
-
-    def grouped_rows
-      @grouped_rows ||= begin
-        rows = records.group_by { |movement| group_key(movement) }.map do |key, movements|
-          values = { "count" => movements.size, "amount_in" => movements.sum(0.to_d, &:amount_in),
-                     "amount_out" => movements.sum(0.to_d, &:amount_out), "net" => movements.sum(0.to_d, &:net) }
-          GroupRow.new(key, group_label(key, nil), values)
-        end
-        rows = rows.sort_by { |row| sort_key == "group" ? row.key : row[sort_key] }
-        sort_direction == "desc" ? rows.reverse : rows
-      end
-    end
-
-    def group_key(movement)
-      grouping.unit ? bucket(movement.date, grouping.unit) : movement.public_send(grouping.key)
-    end
-
-    def bucket(date, unit)
-      case unit
-      when "week" then date.beginning_of_week
-      when "month" then date.beginning_of_month
-      else date
-      end
-    end
-
-    def bucket_unit(_ = nil)
-      dates = records.map(&:date)
-      days = period.length_in_days || (dates.any? ? (dates.max - dates.min).to_i + 1 : 1)
-      if days <= 45 then "day"
-      elsif days <= 190 then "week"
-      else "month"
-      end
-    end
-
-    def sum_by(movements, amount, &label)
-      movements.group_by(&label).map { |name, list| [ name, number(list.sum(0, &amount)) ] }.sort_by { |_, value| -value }
-    end
-
     def load(in_period)
-      invoices(in_period) + hauler_payments(in_period) + loans(in_period) + loan_payments(in_period) + payroll_payments(in_period) + expenses(in_period)
+      invoices(in_period) + hauler_payments(in_period) + loans(in_period) + loan_payments(in_period) + payroll_payments(in_period) +
+        expenses(in_period) + sale_payments(in_period)
+    end
+
+    # What buyers paid on coffee sales; only for who reads Comercialización.
+    def sale_payments(in_period)
+      return [] if user && !user.can?("sales", :read)
+
+      within(SalePayment.joins(sale: :buyer).merge(Sale.active), in_period, column: "sale_payments.paid_on")
+        .pluck("sale_payments.id", "sale_payments.paid_on", "sales.number", "sale_payments.payment_method", "buyers.name",
+               "sale_payments.amount", "sales.id")
+        .map do |id, date, number, method, name, amount, sale_id|
+          movement(id, date, "sale_payments", I18n.t("reports.types.cash_movements.sale_payment", number: format("%04d", number)),
+                   amount_in: amount, person: name, payment_method: Invoice.human_attribute_name("payment_method/#{method}"),
+                   route: [ :sales_sale_payment_path, sale_id, id ])
+        end
     end
 
     def movement(id, date, source, description, amount_in: 0, amount_out: 0, person: nil, payment_method: nil, route: nil)
