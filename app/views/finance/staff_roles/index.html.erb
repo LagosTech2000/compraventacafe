@@ -63,8 +63,10 @@
                     <%= role.name %>
                     <% unless role.active? %><span class="badge badge-neutral ml-1"><%= t("finance.staff_members.statuses.inactive") %></span><% end %>
                   </td>
-                  <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(role.salary) %></td>
-                  <td><%= role.human_pay_frequency %></td>
+                  <td class="whitespace-nowrap text-right tabular-nums">
+                    <%= role.salary ? format_money(role.salary) : tag.span(t("finance.staff_roles.no_salary"), class: "badge badge-warning") %>
+                  </td>
+                  <td><%= role.human_pay_frequency || "—" %></td>
                   <td class="whitespace-nowrap text-right tabular-nums"><%= role.overtime_hour_rate ? format_money(role.overtime_hour_rate) : "—" %></td>
                   <td class="text-right tabular-nums"><%= role.members_count %></td>
                   <td class="cell-actions">

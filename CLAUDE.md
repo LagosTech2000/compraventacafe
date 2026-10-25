@@ -78,7 +78,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Carrero (rol de persona: trae el café con los carros del negocio y gana comisión) / pago a carrero | `Hauler` / `HaulerPayment` (`trading/hauler_payments#show` = recibo) |
 | Precio por libra neta del carrero / comisión del carrero | `Hauler#price_per_pound`; en la compra `hauler_price_per_pound`, `hauler_commission` (las de antes del 2026-10-24: `hauler_cans`, `hauler_can_price`, `hauler_commission_percent`, `Hauler::CAN_POUNDS`) |
 | Tipo de daño (amarillo, broca, verde, pulpa, pelado) | `Purchase#damage_types` (`Purchase::DAMAGE_TYPES`: `yellow` / `borer` / `green` / `pulp` / `peeled`) |
-| Días sin interés de un intermediario | `Loan#interest_grace` (`Loan::GRACE_DAYS`, `Loan#interest_starts_on`) |
+| Préstamo tipo intermediario (10 días sin interés, para cualquiera) | `Loan#interest_grace` (`Loan::GRACE_DAYS`, `Loan#interest_starts_on`) |
 | Tarea por monto fijo / por manzana / por barril / por abono | `PayrollTask#pricing`: `fixed` / `per_manzana` / `per_barrel` / `per_fertilizer` (`quantity`, `unit_price`, `barrel_liters`, `quantity_unit`) |
 | Clave del IHCAFE (Instituto Hondureño del Café) | `Producer#ihcafe_code` |
 | Ficha / resumen del productor | `ProducerProfile` |
@@ -1096,9 +1096,14 @@ salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
 - **Consolidación** (`finance/consolidation`, Fernando, 2026-10-25): los
   pagos y cobros de los otros módulos registrados sin cuenta, con filtros;
   se marcan (o «Marcar todos») y se les da una cuenta, o **la de su forma
-  de pago** (los de planilla, sin forma de pago, esperan). Solo cambia la
-  cuenta, auditado como cambio del registro (`AccountConsolidation`); pide
-  editar en `finance`. «Entradas y salidas de
+  de pago** (los de planilla, sin forma de pago, esperan). **También la
+  categoría** (Fernando, 2026-10-24: «que no se cambie para las entidades
+  que no aplica»): solo en lo que la lleva (`AccountConsolidation::
+  CATEGORIES`: los gastos de planilla, con las categorías de Fincas); al
+  resto no se le toca y el aviso dice cuántos. Filtros: fechas, búsqueda,
+  origen, forma de pago, entrada o salida y monto desde/hasta. Solo cambian
+  cuenta y categoría, auditado como cambio del registro; pide editar en
+  `finance`. «Entradas y salidas de
   dinero» (Reportería) lee de aquí, con filtro y agrupación por cuenta.
 - **Gastos e inversiones** (`Expense`): categoría **propia, de dos
   niveles** (`FinanceCategory`; las de Fincas siguen aparte), detalle,
@@ -1125,7 +1130,12 @@ salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
   - **Roles** (`StaffRole`): salario **fijo por período**, que se paga
     completo cada período (sin asistencia); frecuencia semanal, quincenal o
     mensual (los períodos de `PayPeriod`, como Fincas); y **valor de la
-    hora extra por rol** (sin él no se anotan horas).
+    hora extra por rol** (sin él no se anotan horas). Los del Excel del
+    cliente (CEO, Administración, Chofer, Cargador, Bodeguero, Trabajadora
+    DMC, Cargador de bodega) los crea la migración `AddExcelStaffRoles`
+    **sin salario**: un rol puede esperar sin salario ni frecuencia (las dos
+    o ninguna, `StaffRole#priced?`) y nadie de ese rol tiene períodos por
+    pagar hasta llenarlos (Fernando, 2026-10-24).
   - **Empleados** (`StaffMember`): una persona con rol Colaborador, una
     vez, en un rol, desde una fecha (fin opcional); se desactivan. Sus
     períodos siguen la frecuencia del rol; los pagados se quedan.
@@ -1413,13 +1423,12 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
   buscador, lo que la persona tiene vacío, con «Completar datos» en un
   modal (`shared/_person_gaps`, `record_gaps_controller.js`,
   `person:updated`); la ficha del préstamo se recarga. Solo avisa.
-- **Primeros 10 días sin interés para intermediarios** (Fernando,
-  2026-10-24) [CONFIRMADO]: si la persona es productor intermediario, el
-  préstamo lleva la casilla «los primeros 10 días no generan interés»
-  (`Loan#interest_grace`, `loan_grace_controller.js` la muestra al
-  elegirlo). Los días 1–10 nunca cobran; desde el día 11 corre normal
-  (`LoanBalance` cuenta desde `Loan#interest_starts_on`). Solo se da a un
-  intermediario.
+- **Préstamo tipo intermediario** (Fernando, 2026-10-24) [CONFIRMADO]: la
+  casilla «Préstamo tipo intermediario: los primeros 10 días no generan
+  interés» (`Loan#interest_grace`) se le puede dar **a cualquier persona**,
+  no solo a los productores intermediarios (Fernando, el mismo día). Los
+  días 1–10 nunca cobran; desde el día 11 corre normal (`LoanBalance`
+  cuenta desde `Loan#interest_starts_on`).
 - **Plazo en días** (Fernando, 2026-10-12): el formulario tiene «Plazo
   (días)» entre la fecha del préstamo y la fecha límite. Escribir los días
   llena la fecha límite y elegir la fecha muestra los días

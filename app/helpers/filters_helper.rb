@@ -6,6 +6,13 @@ module FiltersHelper
     end
   end
 
+  # An amount in lempiras (filtered as it is typed, like the search).
+  def filter_number_field(form, name, label, value:, placeholder: nil)
+    filter_field(form, name, label) do
+      form.number_field name, value:, min: 0, step: 0.01, inputmode: "decimal", placeholder:, class: "field-input"
+    end
+  end
+
   def filter_date_field(form, name, label, value:)
     filter_field(form, name, label) { form.date_field name, value:, class: "field-input" }
   end

@@ -88,6 +88,20 @@ RSpec.describe "Planilla interna" do
     expect(second.destroy).to be_truthy
   end
 
+  it "lets a role wait without salary nor frequency (both or none), with nothing to pay meanwhile" do
+    waiting = create(:staff_role, name: "Cargador", salary: nil, pay_frequency: nil)
+    expect(waiting).not_to be_priced
+    expect(build(:staff_role, salary: 5_000, pay_frequency: nil)).not_to be_valid
+    expect(build(:staff_role, salary: nil, pay_frequency: "weekly")).not_to be_valid
+
+    loader = create(:staff_member, role: waiting, starts_on: Date.new(2026, 10, 1))
+    expect([ loader.periods, loader.period_to_pay, loader.due_periods ]).to eq([ [], nil, [] ])
+    expect(StaffOverview.new.due).to be_empty
+
+    waiting.update!(salary: 4_000, pay_frequency: "biweekly")
+    expect(loader.reload.period_to_pay.starts_on).to eq(Date.new(2026, 10, 1))
+  end
+
   it "takes a collaborator once, in an active role" do
     expect(build(:staff_member, person: create(:person, :client))).not_to be_valid
     expect(build(:staff_member, person: member.person)).not_to be_valid

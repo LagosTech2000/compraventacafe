@@ -75,6 +75,23 @@ RSpec.describe "Finance staff payroll" do
     expect(response).to redirect_to(root_path)
   end
 
+  it "shows a role without salary and pays nobody in it until it has one" do
+    role = create(:staff_role, name: "Bodeguero", salary: nil, pay_frequency: nil)
+    member = create(:staff_member, role:, starts_on: Date.new(2026, 10, 1))
+
+    get finance_staff_roles_path
+    expect(page.at_css("#staff_role_#{role.id}").text.squish).to include("Bodeguero", "Sin salario")
+    get finance_staff_member_path(member)
+    expect(response.body).to include("El rol Bodeguero todavía no tiene salario", "Poner el salario")
+    get new_finance_staff_member_staff_payment_path(member)
+    expect(response).to redirect_to(finance_staff_member_path(member))
+    expect(flash[:alert]).to include("El rol Bodeguero todavía no tiene salario")
+
+    patch finance_staff_role_path(role), params: { staff_role: { salary: "4000", pay_frequency: "biweekly" } }
+    get new_finance_staff_member_staff_payment_path(member)
+    expect(response).to have_http_status(:ok)
+  end
+
   it "edits a role and an employee, and removes a role nobody used" do
     role = create(:staff_role)
     get edit_finance_staff_role_path(role)

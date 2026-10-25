@@ -106,7 +106,27 @@ RSpec.describe "Finance flow" do
     expect(AuditEvent.where(auditable: check, action: "update").last.changeset).to include("money_account_id")
 
     patch finance_consolidation_path, params: { items: [ "invoices:#{check.id}" ] }
-    expect(flash[:alert]).to eq("Elige la cuenta que les vas a asignar.")
+    expect(flash[:alert]).to eq("Elige la cuenta o la categoría que les vas a asignar.")
+  end
+
+  it "changes the category only of what has one, and filters by method, direction and amount" do
+    create(:permission, user:, module_key: "trading", can_read: true)
+    create(:permission, user:, module_key: "farms", can_read: true)
+    invoice = create(:invoice)
+    payment = invoice.payments.create!(amount: 10, paid_on: Time.zone.today, payment_method: "cash", created_by: user)
+    expense = create(:payroll_expense, amount: 700)
+    fuel = create(:expense_category, name: "Combustible")
+
+    get finance_consolidation_path(amount_min: "500")
+    expect(response.body).to include("1 movimiento sin cuenta")
+    get finance_consolidation_path(payment_method: "cash", direction: "out")
+    expect(response.body).to include("1 movimiento sin cuenta", "Factura #{invoice.display_number}")
+
+    patch finance_consolidation_path, params: { category_id: fuel.id, items: [ "invoices:#{payment.id}", "payroll_expenses:#{expense.id}" ] }
+    expect(flash[:notice]).to eq("1 movimiento quedó en la categoría Combustible. 1 marcado no lleva categoría: quedó igual.")
+    expect(expense.reload).to have_attributes(category: fuel, money_account: nil)
+    expect(payment.reload.money_account).to be_nil
+    expect(AuditEvent.where(auditable: expense, action: "update").last.changeset).to include("expense_category_id")
   end
 
   it "takes the account in every module's payments, suggested by the payment method" do

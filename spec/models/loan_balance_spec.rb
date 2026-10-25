@@ -37,9 +37,8 @@ RSpec.describe LoanBalance do
     expect(described_class.new(loan, as_of: start + 90).total_owed).to eq(10_000)
   end
 
-  describe "an intermediary's first 10 days without interest" do
-    let(:intermediary) { create(:producer, kind: "intermediary").person }
-    let(:loan) { create(:loan, person: intermediary, interest_grace: true, cash_amount: 10_000, monthly_interest_rate: 3, disbursed_on: start, due_on: start + 120) }
+  describe "a loan of the intermediary type: its first 10 days without interest" do
+    let(:loan) { create(:loan, interest_grace: true, cash_amount: 10_000, monthly_interest_rate: 3, disbursed_on: start, due_on: start + 120) }
 
     it "charges nothing up to day 10 and from day 11 as usual" do
       expect(described_class.new(loan, as_of: start + 10).interest_owed).to eq(0)
@@ -54,11 +53,8 @@ RSpec.describe LoanBalance do
       expect(described_class.new(loan, as_of: start + 40).interest_owed).to eq(180) # 6,000 × 3 % × 30/30
     end
 
-    it "is only for an intermediary" do
-      other = build(:loan, interest_grace: true)
-      expect(other).not_to be_valid
-      expect(other.errors[:interest_grace]).to include("solo se da a un productor intermediario")
-      expect(loan).to be_valid
+    it "is for anyone, not only intermediaries" do
+      expect(create(:loan, person: create(:person, :client), interest_grace: true)).to be_persisted
     end
   end
 end

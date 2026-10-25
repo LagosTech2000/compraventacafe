@@ -5,7 +5,7 @@
 #     interest = principal owed × monthly rate × days / 30
 #   a payment covers the interest owed first; the rest lowers the principal
 #
-# With the grace of an intermediary (Loan#interest_grace), the first 10 days
+# A loan of the intermediary type (Loan#interest_grace): the first 10 days
 # bring no interest: it counts from Loan#interest_starts_on.
 #
 # Interest keeps running after the due date at the same rate: there is no

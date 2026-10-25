@@ -5,9 +5,9 @@
 # A loan can be cash, supplies (fertilizer...) or both: its principal is the
 # cash plus the value of its supply lines, and interest runs on all of it.
 #
-# Lent to an intermediary (a producer of that kind), it can be marked so its
-# first GRACE_DAYS days bring no interest (Fernando, 2026-10-24); from day
-# 11 the interest runs as usual.
+# A loan can be of the intermediary type: its first GRACE_DAYS days bring no
+# interest (Fernando, 2026-10-24); from day 11 it runs as usual. Any person
+# can get one, not only intermediaries (Fernando, the same day).
 class Loan < ApplicationRecord
   include Auditable
   include HasMoneyAccount
@@ -34,7 +34,6 @@ class Loan < ApplicationRecord
   validates :disbursed_on, :due_on, presence: true
   validates :observations, length: { maximum: 500 }
   validate :due_on_not_before_disbursement
-  validate :grace_for_intermediaries, if: -> { interest_grace? && (will_save_change_to_interest_grace? || will_save_change_to_person_id?) }
 
   before_validation :compute_principal
 
@@ -133,10 +132,6 @@ class Loan < ApplicationRecord
 
     def something_lent
       errors.add(:base, :nothing_lent) unless principal.to_d.positive?
-    end
-
-    def grace_for_intermediaries
-      errors.add(:interest_grace, :only_intermediaries) unless person&.intermediary?
     end
 
     def due_on_not_before_disbursement

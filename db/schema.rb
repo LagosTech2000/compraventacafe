@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_25_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_25_180000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -855,8 +855,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_170000) do
 
   create_table "staff_roles", force: :cascade do |t|
     t.string "name", null: false
-    t.decimal "salary", precision: 12, scale: 2, null: false
-    t.string "pay_frequency", null: false
+    t.decimal "salary", precision: 12, scale: 2
+    t.string "pay_frequency"
     t.decimal "overtime_hour_rate", precision: 10, scale: 2
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false

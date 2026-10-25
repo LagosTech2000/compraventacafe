@@ -7,6 +7,8 @@ module Finance
 
     def new
       authorize StaffPayment
+      return redirect_to(finance_staff_member_path(@member), alert: t(".no_salary", role: @member.role.name)) unless @member.role.priced?
+
       @period = @member.period_to_pay
       return redirect_to(finance_staff_member_path(@member), alert: t(".nothing_to_pay")) unless @period
 

@@ -28,6 +28,26 @@ RSpec.describe "Finance screens", type: :system do
     expect(Expense.last).to have_attributes(money_account: box, payment_method: "check")
   end
 
+  it "filters what is without an account by an amount as it is typed, and gives a category only where it applies" do
+    small = create(:loan, cash_amount: 300)
+    create(:loan, cash_amount: 900)
+    expense = create(:payroll_expense, amount: 450, description: "Diésel")
+    fuel = create(:expense_category, name: "Combustible")
+    visit finance_consolidation_path
+    expect(page).to have_text("3 movimientos sin cuenta")
+
+    fill_in "amount_max", with: "500"
+    expect(page).to have_text("2 movimientos sin cuenta")
+    expect(page).to have_css(".chip-filter", text: "Hasta L 500")
+
+    check "Préstamo #{small.id}"
+    check "Diésel"
+    select "Combustible", from: "category_id"
+    accept_confirm { click_button "Asignar a los marcados" }
+    expect(page).to have_text("1 movimiento quedó en la categoría Combustible.")
+    expect(expense.reload.category).to eq(fuel)
+  end
+
   it "marks movements without an account and gives them one" do
     loans = create_list(:loan, 2, cash_amount: 500)
     visit finance_consolidation_path

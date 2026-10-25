@@ -11,13 +11,15 @@
     </div>
     <div>
       <%= form.label :salary, class: "field-label" %>
-      <%= form.number_field :salary, required: true, min: 0.01, max: StaffRole::MAX_AMOUNT - 0.01, step: 0.01, inputmode: "decimal",
+      <%= form.number_field :salary, min: 0.01, max: StaffRole::MAX_AMOUNT - 0.01, step: 0.01, inputmode: "decimal",
             class: "field-input text-lg", placeholder: "0.00" %>
       <p class="mt-1 text-xs text-ink-muted"><%= t("finance.staff_roles.form.salary_help") %></p>
+      <p class="mt-1 text-xs text-ink-muted"><%= t("finance.staff_roles.form.salary_later_help") %></p>
     </div>
     <div>
       <%= form.label :pay_frequency, class: "field-label" %>
-      <%= form.select :pay_frequency, enum_options(StaffRole, :pay_frequency, PayPeriod::FREQUENCIES), {}, required: true, class: "field-input" %>
+      <%= form.select :pay_frequency, enum_options(StaffRole, :pay_frequency, PayPeriod::FREQUENCIES),
+            { include_blank: t("finance.staff_roles.form.no_frequency") }, class: "field-input" %>
       <p class="mt-1 text-xs text-ink-muted"><%= t("finance.staff_roles.form.frequency_help") %></p>
     </div>
     <div>

@@ -32,5 +32,9 @@ module FinanceHelper
   end
 
   # "L 6,000.00 quincenal"
-  def staff_salary(role) = t("finance.staff_roles.salary_per", amount: format_money(role.salary), frequency: role.human_pay_frequency.downcase)
+  def staff_salary(role)
+    return t("finance.staff_roles.no_salary") unless role.priced?
+
+    t("finance.staff_roles.salary_per", amount: format_money(role.salary), frequency: role.human_pay_frequency.downcase)
+  end
 end

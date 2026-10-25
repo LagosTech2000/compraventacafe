@@ -132,10 +132,6 @@ class Person < ApplicationRecord
     define_method(:"hauler_#{field}") { hauler ? hauler.public_send(field) : instance_variable_get(:"@hauler_#{field}") }
   end
 
-  # A producer of the intermediary kind (its loans can have 10 days without
-  # interest).
-  def intermediary? = producer.present? && producer.kind == "intermediary"
-
   # Has the role, and it is not being removed.
   def role?(role)
     record = public_send(role)

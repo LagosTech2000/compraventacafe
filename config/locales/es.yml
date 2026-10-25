@@ -1579,6 +1579,8 @@ es:
       show:
         pay: "Pagar %{period}"
         pay_short: "Pagar"
+        no_salary: "El rol %{role} todavía no tiene salario ni frecuencia de pago: llénalos para poder pagarle."
+        fill_salary: "Poner el salario"
         new_advance: "Dar anticipo"
         new_goal: "Poner meta"
         edit: "Editar empleado"
@@ -1638,6 +1640,7 @@ es:
         success: "Empleado quitado de la planilla."
     staff_roles:
       salary_per: "%{amount} %{frequency}"
+      no_salary: "Sin salario"
       index:
         title: "Roles de la planilla"
         help: "Cada rol con su salario por período, cada cuánto se paga y el valor de su hora extra."
@@ -1652,6 +1655,8 @@ es:
       form:
         name_placeholder: "Por ejemplo: Contador, Bodeguero, Chofer"
         salary_help: "Se paga completo en cada período."
+        salary_later_help: "Se puede dejar vacío por ahora (junto con la frecuencia): nadie de este rol se paga hasta llenarlo."
+        no_frequency: "Sin frecuencia asignada"
         frequency_help: "Semanal (cierra el sábado), quincenal (1–15 y 16–fin de mes) o mensual."
         overtime_help: "Opcional. Sin este valor no se anotan horas extra."
         changes_help: "Si lo cambias, cuenta para los períodos que faltan por pagar: los pagados se quedan como se pagaron."
@@ -1691,6 +1696,7 @@ es:
       new:
         title: "Pagar período"
         nothing_to_pay: "No hay período por pagar: todavía no empieza o ya se pagó."
+        no_salary: "El rol %{role} todavía no tiene salario: ponlo en «Editar rol» para poder pagar."
         earned: "Lo ganado"
         salary_help: "El del rol: %{salary}. Se puede cambiar para este pago."
         overtime_help: "Cada hora a %{rate}."
@@ -1926,13 +1932,23 @@ es:
         mark_all: "Marcar todos"
         account: "Cuenta"
         assign: "Asignar a los marcados"
-        confirm: "¿Asignar esta cuenta a los movimientos marcados? Cambia el saldo de la cuenta."
+        confirm: "¿Aplicar la cuenta y la categoría elegidas a los movimientos marcados? La cuenta cambia su saldo."
         by_method: "Asignar la cuenta de su forma de pago"
         by_method_help: "Con «la cuenta de su forma de pago», cada movimiento marcado toma la cuenta que se sugiere para su forma de pago (Cuentas → «Se sugiere para»); los que no tienen forma de pago (planillas) esperan."
         payment_method: "Forma de pago"
+        category: "Categoría"
+        no_category: "No lleva"
+        keep_account: "Sin cambiar la cuenta"
+        keep_category: "Sin cambiar la categoría"
+        category_help: "La categoría solo se cambia en lo que la lleva (los gastos de planilla); al resto no se le toca."
+        amount_min: "Monto desde (L)"
+        amount_max: "Monto hasta (L)"
+        chips:
+          amount_min: "Desde L %{amount}"
+          amount_max: "Hasta L %{amount}"
         empty: "No hay movimientos sin cuenta con estos filtros. ¡Todo consolidado!"
       update:
-        pick_account: "Elige la cuenta que les vas a asignar."
+        pick_account: "Elige la cuenta o la categoría que les vas a asignar."
         success:
           zero: "No se asignó ninguna cuenta."
           one: "Se asignó la cuenta a 1 movimiento."
@@ -1940,6 +1956,13 @@ es:
         skipped:
           one: "1 movimiento sin cuenta sugerida quedó pendiente."
           other: "%{count} movimientos sin cuenta sugerida quedaron pendientes."
+        categorized:
+          zero: "No se cambió ninguna categoría."
+          one: "1 movimiento quedó en la categoría %{category}."
+          other: "%{count} movimientos quedaron en la categoría %{category}."
+        uncategorized:
+          one: "1 marcado no lleva categoría: quedó igual."
+          other: "%{count} marcados no llevan categoría: quedaron igual."
     budgets:
       show:
         title: "Presupuesto"
@@ -2044,7 +2067,7 @@ es:
         new_payment: "Registrar abono"
         credit_account: "Estado de cuenta"
         frozen_notice: "Este préstamo ya tiene abonos: no se puede editar ni borrar."
-        interest_grace: "Intermediario: los primeros %{days} días sin interés (corre desde el %{date})"
+        interest_grace: "Tipo intermediario: los primeros %{days} días sin interés (corre desde el %{date})"
         principal: "Capital (efectivo + insumos)"
         supplies: "Insumos prestados"
         supplies_amount: "Valor de los insumos"
@@ -2071,7 +2094,7 @@ es:
         new_person: "¿No está? Registrar persona"
         borrower_card: "Ficha de la persona elegida"
         rate_help: "Porcentaje por mes. El interés corre por día (mes de 30 días) sobre el capital pendiente."
-        interest_grace: "Intermediario: los primeros %{days} días no generan interés"
+        interest_grace: "Préstamo tipo intermediario: los primeros %{days} días no generan interés"
         term_days: "Plazo (días)"
         term_days_help: "Escribe los días y se llena la fecha límite, o elige la fecha y aquí salen los días."
         what_is_lent: "Qué se presta"
@@ -4864,11 +4887,12 @@ es:
             title: "Consolidación"
             summary: "Los pagos y cobros de los otros módulos que se registraron sin cuenta, para asignarles una."
             steps:
-              - "Filtra por fechas, origen o busca por detalle o persona."
+              - "Filtra por fechas, origen, forma de pago, entrada o salida, o un monto entre dos cifras; o busca por detalle o persona."
               - "Marca los movimientos (o «Marcar todos»)."
-              - "Elige la cuenta y toca «Asignar a los marcados», o toca «Asignar la cuenta de su forma de pago» para que cada uno tome la que se sugiere para su forma de pago."
+              - "Elige la cuenta, la categoría o las dos, y toca «Asignar a los marcados»; o toca «Asignar la cuenta de su forma de pago» para que cada uno tome la que se sugiere para su forma de pago."
             tips:
-              - "Solo cambia la cuenta; el pago queda como estaba y el cambio queda en la auditoría."
+              - "La categoría solo se cambia en lo que la lleva (los gastos de planilla, con las categorías de Fincas); a lo demás no se le toca."
+              - "Solo cambian la cuenta y la categoría; el pago queda como estaba y el cambio queda en la auditoría."
               - "Los gastos, inversiones, otros ingresos y transferencias siempre llevan cuenta: no salen aquí."
         budgets:
           show:
@@ -5117,7 +5141,7 @@ es:
               - "Para prestar insumos, toca «Agregar insumo», elígelo y escribe la cantidad. El precio se pone solo y lo puedes cambiar."
               - "Revisa el resumen: efectivo, insumos y capital del préstamo."
               - "Escribe la tasa de interés mensual, revisa la fecha del préstamo y elige la fecha límite."
-              - "Si la persona es un productor intermediario, puedes marcar que los primeros 10 días no generen interés: desde el día 11 corre normal."
+              - "Marca «Préstamo tipo intermediario» para que los primeros 10 días no generen interés (a cualquier persona): desde el día 11 corre normal."
               - "Toca el botón de guardar."
             tips:
               - "El capital es el efectivo más el valor de los insumos; el interés corre sobre todo el capital."
@@ -6865,7 +6889,6 @@ es:
       accepted: "debe ser aceptado"
       blank: "no puede estar en blanco"
       choose_at_least_one: "elige al menos uno"
-      only_intermediaries: "solo se da a un productor intermediario"
       confirmation: "no coincide con %{attribute}"
       empty: "no puede estar vacío"
       equal_to: "debe ser igual a %{count}"

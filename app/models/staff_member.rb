@@ -33,8 +33,9 @@ class StaffMember < ApplicationRecord
 
   def audit_label = person&.full_name
 
-  # Its periods that have started by `through`, oldest first (PayPeriod).
-  def periods(through: Time.zone.today) = PayPeriod.for(self, through:)
+  # Its periods that have started by `through`, oldest first (PayPeriod);
+  # none while its role has no salary.
+  def periods(through: Time.zone.today) = role&.priced? ? PayPeriod.for(self, through:) : []
 
   def paid_period?(period) = payments.any? { it.persisted? && it.period_starts_on == period.starts_on }
 
