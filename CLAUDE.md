@@ -144,6 +144,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Pesadas de la salida (báscula local) | `ShipmentWeighing` (`Shipment#origin_weight_mode`: `single` / `weighings`) |
 | En camino / pesada sin vender / vendida | `Shipment#status`: `in_transit` / `received` / `sold` (+ `voided`) |
 | Venta / salida vendida / cobro de venta | `Sale` / `SaleLine` / `SalePayment` (`SaleIssuer`) |
+| Anticipo del comprador / cobro con anticipo | `BuyerAdvance` (`Buyer#advance_balance`) / `SalePayment` con `payment_method: "advance"` |
 | Precio por libra / por quintal (100 lb) | `Sale#price_unit`: `pound` / `quintal` (`Sale::QUINTAL_POUNDS`) |
 | Tolerancia de diferencia de peso | `SiteSetting#weight_tolerance_percent` (`WeightTolerance`) |
 | Inventario / kárdex | `CoffeeStock` / `StockLedger` (`sales/stock#show`), reporte `CoffeeStockReport` |
@@ -1058,8 +1059,19 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   camino, sin vender, ventas por cobrar). Reportería: `ShipmentsReport`,
   `SalesReport`, `CoffeeStockReport` y los cobros en «Entradas y salidas»
   (para quien ve Comercialización).
-- **Contratos con exportador** (anticipos, aplicar libras a contratos en
-  orden): **no se construyen**, siguen abiertos.
+- **Anticipos del comprador** (`BuyerAdvance`, Fernando, 2026-10-25)
+  [CONFIRMADO]: el comprador adelanta dinero que se le paga con café, **sin
+  intereses**. Entra a una cuenta al recibirlo (`MoneyMovements`:
+  `buyer_advances`; sale en Ingresos), con su recibo. El saldo
+  (`Buyer#advance_balance`) baja con cada **cobro «con anticipo»**
+  (`SalePayment#payment_method = "advance"`), que se elige cuánto: al
+  vender («Descontar de anticipos», `SaleIssuer`) o después como cobro;
+  no mueve dinero (no lleva cuenta ni sale en el libro) y no pasa del
+  saldo ni de lo que falta. Quitar ese cobro devuelve el monto al saldo;
+  un anticipo ya descontado no se quita. Pestaña «Anticipos» del
+  comprador.
+- **Contratos con exportador** (aplicar libras a contratos en orden):
+  **no se construyen**, siguen abiertos.
 
 ### Control financiero (`finance`, Fernando, 2026-10-23)
 
@@ -1731,7 +1743,7 @@ sistema ya guarda**; no agregan reglas de negocio.
 | Control financiero: confirmar decisiones de implementación (la cuenta es opcional en los pagos de los otros módulos y obligatoria en gastos e ingresos; el presupuesto solo cuenta los gastos e inversiones de Control financiero, no los gastos de planilla; otros ingresos y transferencias no se editan, se quitan y se registran de nuevo) | Ajustes a Control financiero | Fernando / Cliente |
 | Cómo calcula el dueño la ganancia | Reporte de ganancias | Cliente |
 | Comercialización: confirmar decisiones de implementación (una salida lleva un solo estado del café y una venta también; salir con más de lo que hay en inventario avisa y no bloquea; la tolerancia resalta la diferencia en ambos sentidos; cobros en orden de fecha, sin pasar del saldo y quitando solo el último; la venta no se edita, se anula y se rehace) | Ajustes a Comercialización | Fernando / Cliente |
-| Contratos: moneda, cobro, anticipos del exportador | Ventas / contratos | Cliente |
+| Contratos: moneda, cobro, aplicar libras a contratos | Ventas / contratos | Cliente |
 | Reporte exacto que piden el contador y el SAR | Reportería | Cliente |
 | `pg_dump` en Render (versión ≥ 18) | Que el respaldo incluya `base.dump` en producción | Fernando + Render |
 | Numeración inicial de facturas (el Excel va por ~2,800) | Hoy empieza en 0001 | Cliente |

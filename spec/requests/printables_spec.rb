@@ -53,6 +53,11 @@ RSpec.describe "Printable documents" do
     expect_letterhead("Recibo de cobro", count: 2)
     expect_copy_on_its_own_page
 
+    advance = create(:buyer_advance, buyer: sale.buyer)
+    get sales_buyer_buyer_advance_path(sale.buyer, advance)
+    expect_letterhead("Recibo de anticipo", count: 2)
+    expect_copy_on_its_own_page
+
     get sales_daily_close_path
     expect_letterhead("Cierre de comercialización")
   end

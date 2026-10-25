@@ -4,7 +4,7 @@ module Sales
   class BuyersController < ApplicationController
     before_action :set_buyer, only: %i[ show edit update ]
 
-    TABS = %w[sales shipments payments].freeze
+    TABS = %w[sales shipments payments advances].freeze
 
     def index
       authorize Buyer
@@ -23,6 +23,9 @@ module Sales
       when "shipments"
         @filter = BuyerShipmentFilter.new(params)
         @shipments, @next_page = @filter.results(@buyer.shipments)
+      when "advances"
+        @advances = @buyer.advances.includes(:money_account, :created_by).newest_first.to_a
+        @taken = @buyer.sale_payments.advance.includes(:sale).merge(SalePayment.newest_first).to_a
       when "payments"
         @payments = @buyer.sale_payments.includes(:sale, :created_by).merge(SalePayment.newest_first).to_a
       end

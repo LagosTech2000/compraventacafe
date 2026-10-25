@@ -6,7 +6,8 @@
 #        payroll payments, payroll expenses, expenses and investments, and
 #        the Planilla interna's payments and advances
 #   in   loan payments in cash, transfer or check, collections of coffee
-#        sales and other income
+#        sales (not the ones «con anticipo»: that money came in with the
+#        buyer's advance), buyers' advances and other income
 #   both transfers between accounts: out of one, into the other (the
 #        business's totals leave them out: the money stays home)
 #
@@ -16,11 +17,11 @@
 # 2026-10-25: «fechas con hora»), newest last.
 class MoneyMovements
   SOURCES = %w[invoices hauler_payments loans loan_payments payroll_payments payroll_expenses
-               sale_payments expenses investments staff_payments staff_advances other_incomes transfers].freeze
+               sale_payments buyer_advances expenses investments staff_payments staff_advances other_incomes transfers].freeze
   # Which module each source's records belong to (who may read it).
   MODULES = {
     "invoices" => "trading", "hauler_payments" => "trading", "loans" => "loans", "loan_payments" => "loans",
-    "payroll_payments" => "farms", "payroll_expenses" => "farms", "sale_payments" => "sales",
+    "payroll_payments" => "farms", "payroll_expenses" => "farms", "sale_payments" => "sales", "buyer_advances" => "sales",
     "expenses" => "finance", "investments" => "finance", "staff_payments" => "finance", "staff_advances" => "finance",
     "other_incomes" => "finance", "transfers" => "finance"
   }.freeze
@@ -147,13 +148,24 @@ class MoneyMovements
     end
 
     def sale_payments
-      narrowed(SalePayment.joins(sale: :buyer).merge(Sale.active), "sale_payments.paid_on", "sale_payments.money_account_id")
+      narrowed(SalePayment.in_money.joins(sale: :buyer).merge(Sale.active), "sale_payments.paid_on", "sale_payments.money_account_id")
         .pluck("sale_payments.id", "sale_payments.paid_on", "sales.number", "sale_payments.payment_method", "buyers.name",
                "sale_payments.amount", "sales.id", "sale_payments.money_account_id", "sale_payments.created_at")
         .map do |id, date, number, method, name, amount, sale_id, account_id, created_at|
           movement(id:, date:, created_at:, source: "sale_payments", description: I18n.t("money_movements.sale_payment", number: format("%04d", number)),
                    person: name, payment_method: method_label(Invoice, method), amount_in: amount, account_id:,
                    route: [ :sales_sale_payment_path, sale_id, id ])
+        end
+    end
+
+    def buyer_advances
+      narrowed(BuyerAdvance.joins(:buyer), "buyer_advances.received_on", "buyer_advances.money_account_id")
+        .pluck("buyer_advances.id", "buyer_advances.buyer_id", "buyer_advances.received_on", "buyer_advances.amount", "buyer_advances.payment_method",
+               "buyers.name", "buyer_advances.money_account_id", "buyer_advances.created_at")
+        .map do |id, buyer_id, date, amount, method, name, account_id, created_at|
+          movement(id:, date:, created_at:, source: "buyer_advances", description: I18n.t("money_movements.buyer_advance", number: format("%04d", id)),
+                   person: name, payment_method: method_label(Invoice, method), amount_in: amount, account_id:,
+                   route: [ :sales_buyer_buyer_advance_path, buyer_id, id ])
         end
     end
 

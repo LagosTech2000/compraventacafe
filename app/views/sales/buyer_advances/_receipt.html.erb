@@ -1,0 +1,30 @@
+<%# One printed copy of the receipt of a buyer's advance: what the business
+    received, to be paid back with coffee. `label` is ORIGINAL or COPIA. %>
+<% buyer = advance.buyer %>
+<article class="rounded-2xl border border-line bg-white p-5 shadow-[0_1px_2px_rgb(29_21_18/0.04)] break-inside-avoid print:p-3 print:shadow-none print:rounded-none print:border-ink">
+  <%= render "shared/print_letterhead", title: t("sales.buyer_advances.receipt.title"), number: advance.display_number, label: %>
+
+  <dl class="mt-4 grid grid-cols-1 gap-x-6 gap-y-1 text-sm min-[30rem]:grid-cols-2 print:mt-2 print:grid-cols-2">
+    <div><dt class="inline font-semibold"><%= Buyer.model_name.human %>:</dt> <dd class="inline"><%= buyer.name %></dd></div>
+    <% if buyer.rtn %><div><dt class="inline font-semibold"><%= Buyer.human_attribute_name(:rtn) %>:</dt> <dd class="inline"><%= buyer.rtn %></dd></div><% end %>
+    <div><dt class="inline font-semibold"><%= BuyerAdvance.human_attribute_name(:received_on) %>:</dt> <dd class="inline"><%= l(advance.received_on, format: :long) %></dd></div>
+    <div><dt class="inline font-semibold"><%= BuyerAdvance.human_attribute_name(:payment_method) %>:</dt> <dd class="inline"><%= advance.human_payment_method %></dd></div>
+    <div><dt class="inline font-semibold"><%= MoneyAccount.model_name.human %>:</dt> <dd class="inline"><%= advance.money_account.name %></dd></div>
+    <% if advance.document_number %><div><dt class="inline font-semibold"><%= BuyerAdvance.human_attribute_name(:document_number) %>:</dt> <dd class="inline"><%= advance.document_number %></dd></div><% end %>
+  </dl>
+
+  <div class="mt-4 flex justify-between gap-4 border-y border-ink py-2 text-base font-bold print:mt-2">
+    <span><%= t("sales.buyer_advances.receipt.amount") %></span>
+    <span class="tabular-nums"><%= format_money(advance.amount) %></span>
+  </div>
+  <p class="mt-2 text-sm"><%= t("sales.buyer_advances.receipt.concept") %></p>
+  <% if advance.observations.present? %>
+    <p class="mt-2 text-sm"><span class="font-semibold"><%= BuyerAdvance.human_attribute_name(:observations) %>:</span> <%= advance.observations %></p>
+  <% end %>
+
+  <footer class="mt-10 flex flex-wrap items-end justify-between gap-6 text-sm print:mt-8">
+    <div class="w-56 border-t border-ink pt-1 text-center"><%= t("sales.buyer_advances.receipt.giver_signature") %></div>
+    <div class="w-56 border-t border-ink pt-1 text-center"><%= t("sales.buyer_advances.receipt.receiver_signature") %></div>
+    <p class="w-full text-xs text-ink-muted"><%= t("sales.buyer_advances.receipt.registered_by", name: advance.created_by.name) %></p>
+  </footer>
+</article>

@@ -64,4 +64,13 @@ FactoryBot.define do
     sequence(:plate) { |n| format("HAA %04d", n) }
     brand_model { "Isuzu NPR" }
   end
+
+  factory :buyer_advance do
+    buyer
+    money_account
+    association :created_by, factory: :user
+    received_on { Time.zone.today }
+    amount { 10_000 }
+    payment_method { "transfer" }
+  end
 end

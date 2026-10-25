@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_25_210000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_25_220000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -55,6 +55,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_210000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["finance_category_id", "month"], name: "index_budgets_on_finance_category_id_and_month", unique: true
+  end
+
+  create_table "buyer_advances", force: :cascade do |t|
+    t.bigint "buyer_id", null: false
+    t.date "received_on", null: false
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.string "payment_method", null: false
+    t.bigint "money_account_id", null: false
+    t.string "document_number"
+    t.text "observations"
+    t.bigint "created_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["buyer_id"], name: "index_buyer_advances_on_buyer_id"
+    t.index ["created_by_id"], name: "index_buyer_advances_on_created_by_id"
+    t.index ["money_account_id"], name: "index_buyer_advances_on_money_account_id"
   end
 
   create_table "buyers", force: :cascade do |t|
@@ -956,6 +972,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_210000) do
   add_foreign_key "account_transfers", "users", column: "created_by_id"
   add_foreign_key "audit_events", "users", on_delete: :nullify
   add_foreign_key "budgets", "finance_categories"
+  add_foreign_key "buyer_advances", "buyers"
+  add_foreign_key "buyer_advances", "money_accounts"
+  add_foreign_key "buyer_advances", "users", column: "created_by_id"
   add_foreign_key "buyers", "departments"
   add_foreign_key "buyers", "municipalities"
   add_foreign_key "clients", "people"

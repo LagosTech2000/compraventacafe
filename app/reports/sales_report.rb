@@ -94,7 +94,7 @@ class SalesReport < Report
     pending = plain(relation).where(UNPAID).group(:sold_on).pluck(:sold_on, Arel.sql("SUM(#{BALANCE})"))
     ages = age_buckets(pending.map { |date, amount| [ (today - date).to_i, amount ] }, [ 0, 8, 16, 31, 61 ])
     methods = SalePayment.where(sale_id: plain(relation).select(:id)).group(:payment_method).order(Arel.sql("SUM(amount) DESC"))
-                         .sum(:amount).map { |method, amount| [ Invoice.human_attribute_name("payment_method/#{method}"), number(amount) ] }
+                         .sum(:amount).map { |method, amount| [ SalePayment.human_method(method), number(amount) ] }
 
     [
       chart(:by_status, :stacked, labels:, datasets: by_status.map { |set| set.merge(format: :money) }, wide: true,

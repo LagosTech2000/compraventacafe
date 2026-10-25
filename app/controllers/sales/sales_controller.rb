@@ -59,12 +59,13 @@ module Sales
 
       def issue_params
         permitted = params.expect(sale: [ :sold_on, :price_unit, :unit_price, :buyer_document_number, :observations,
-                                          :payment_status, :payment_method, :paid_on, :amount, :money_account_id, shipment_ids: [] ])
+                                          :payment_status, :payment_method, :paid_on, :amount, :money_account_id, :advance_amount, shipment_ids: [] ])
         {
           shipment_ids: permitted[:shipment_ids],
           sale: permitted.slice(:sold_on, :price_unit, :unit_price, :buyer_document_number, :observations).to_h,
           payment_status: permitted[:payment_status], payment_method: permitted[:payment_method],
-          paid_on: permitted[:paid_on], amount: permitted[:amount], money_account_id: permitted[:money_account_id]
+          paid_on: permitted[:paid_on], amount: permitted[:amount], money_account_id: permitted[:money_account_id],
+          advance_amount: permitted[:advance_amount]
         }
       end
   end

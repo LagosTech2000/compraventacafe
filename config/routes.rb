@@ -84,7 +84,10 @@ Rails.application.routes.draw do
       # What the buyer pays ("cobros"), each with its receipt.
       resources :payments, only: %i[ new create show destroy ], controller: "sale_payments"
     end
-    resources :buyers, except: :destroy
+    resources :buyers, except: :destroy do
+      # Advances the buyer gives, paid back with coffee.
+      resources :buyer_advances, path: "advances", only: %i[ new create show destroy ]
+    end
     resources :carriers, except: :destroy
     resources :trucks, except: :destroy
     resource :stock, only: :show

@@ -13,6 +13,8 @@ class Buyer < ApplicationRecord
   has_many :shipments, dependent: :restrict_with_error
   has_many :sales, dependent: :restrict_with_error
   has_many :sale_payments, through: :sales, source: :payments
+  # Advances it gave the business, paid back with coffee (BuyerAdvance).
+  has_many :advances, -> { order(:received_on, :id) }, class_name: "BuyerAdvance", dependent: :restrict_with_error
 
   normalizes :name, :contact_name, with: ->(value) { value.squish.presence }
   normalizes :rtn, with: FieldFormats::DIGITS
@@ -34,6 +36,11 @@ class Buyer < ApplicationRecord
   def audit_label = name
 
   def human_kind = self.class.human_attribute_name("kind/#{kind}")
+
+  # Advances given minus what was taken off its active sales «con anticipo».
+  def advance_balance
+    advances.sum(:amount) - SalePayment.advance.joins(:sale).merge(Sale.active).where(sales: { buyer_id: id }).sum(:amount)
+  end
 
   # What its active sales still owe.
   def balance_due

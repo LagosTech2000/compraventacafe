@@ -25,7 +25,11 @@
     </div>
     <div>
       <%= form.label :payment_method, class: "field-label" %>
-      <%= form.select :payment_method, enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS),
+      <%# «Con anticipo» takes it off the buyer's advances (no money moves, no account). %>
+      <% advance_balance = @sale.buyer.advance_balance %>
+      <% methods = enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS) %>
+      <% methods << [ t(".advance_option", balance: format_money(advance_balance)), SalePayment::ADVANCE ] if advance_balance.positive? %>
+      <%= form.select :payment_method, methods,
             { include_blank: t("shared.select.pick_payment_method") }, required: true, class: "field-input",
             data: { money_account_target: "method", action: "money-account#suggest", missing_message: "#{SalePayment.human_attribute_name(:payment_method)} #{t("errors.messages.blank")}" } %>
     </div>

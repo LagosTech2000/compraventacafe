@@ -42,7 +42,10 @@ class AccountConsolidation
     counts = Hash.new(0)
     ActiveRecord::Base.transaction do
       @items.group_by(&:first).each do |source, pairs|
-        records = MODELS.fetch(source).constantize.where(id: pairs.map(&:last), money_account_id: nil).lock.to_a
+        records = MODELS.fetch(source).constantize.where(id: pairs.map(&:last), money_account_id: nil)
+        # A collection «con anticipo» moved no money: it takes no account.
+        records = records.in_money if source == "sale_payments"
+        records = records.lock.to_a
         ActiveRecord::Associations::Preloader.new(records:, associations: PRELOADS.fetch(source)).call
         records.each { |record| consolidate(record, source, defaults, counts) }
       end

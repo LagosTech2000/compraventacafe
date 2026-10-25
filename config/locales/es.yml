@@ -342,6 +342,7 @@ es:
     payroll_payment: "%{payroll} · %{farm} (%{period})"
     payroll_expense: "%{description} · %{farm}"
     sale_payment: "Cobro de la venta %{number}"
+    buyer_advance: "Anticipo %{number} de comprador"
     staff_payment: "Planilla interna %{number} · %{role} (%{period})"
     staff_advance: "Anticipo %{number} de planilla interna"
     transfer: "De %{from} a %{to}"
@@ -1362,6 +1363,8 @@ es:
         difference: "Diferencia con la báscula local"
         mixed_states: "Elegiste salidas de dos estados del café: una venta lleva un solo estado. Haz una venta por cada uno."
         payment: "Cobro"
+        advance_amount: "Descontar de anticipos (L)"
+        advance_help: "El comprador tiene %{balance} en anticipos. Lo que escribas se descuenta como un cobro «con anticipo», sin mover dinero; lo que quede se cobra como elijas abajo."
         amount: "Monto cobrado ahora"
         submit: "Registrar venta"
         choices:
@@ -1404,8 +1407,32 @@ es:
         buyer_signature: "Firma del comprador"
         seller_signature: "Firma por el negocio"
         issued_by: "Registró: %{name}"
+    buyer_advances:
+      new:
+        title: "Registrar anticipo"
+        help: "Dinero que adelanta el comprador y se le paga con café, sin intereses."
+        document_placeholder: "Cheque, transferencia o comprobante del comprador"
+        submit: "Registrar anticipo"
+      create:
+        success: "Anticipo registrado."
+      destroy:
+        success: "Anticipo quitado."
+      show:
+        title: "Recibo de anticipo %{number}"
+        print: "Imprimir"
+        original: "ORIGINAL"
+        copy: "COPIA"
+        back: "Volver al comprador"
+      receipt:
+        title: "Recibo de anticipo"
+        amount: "Recibimos"
+        concept: "Anticipo del comprador, a pagar con café, sin intereses."
+        giver_signature: "Entregó (comprador)"
+        receiver_signature: "Recibió"
+        registered_by: "Registró: %{name}"
     sale_payments:
       new:
+        advance_option: "Con anticipo (saldo %{balance})"
         title: "Registrar cobro"
         sale: "Venta %{number} · %{buyer}"
         amount_help: "Empieza con lo que falta por cobrar."
@@ -1460,11 +1487,20 @@ es:
           sold: "Vendido"
           collected: "Cobrado"
           balance_due: "Por cobrar"
+          advance_balance: "Anticipos por pagar con café"
         tabs:
           label: "Secciones del comprador"
           sales: "Ventas"
           shipments: "Salidas"
           payments: "Cobros"
+          advances: "Anticipos"
+        new_advance: "Registrar anticipo"
+        advances_help: "Lo que el comprador adelantó (entró a la cuenta) y lo que se ha descontado de sus ventas «con anticipo», sin intereses."
+        advance_number: "Recibo"
+        remove_advance: "Quitar"
+        confirm_remove_advance: "¿Quitar este anticipo? Deja de contar en la cuenta donde entró y en el saldo del comprador."
+        no_advances: "No ha dado anticipos."
+        taken_title: "Descontado de ventas"
         no_sales: "No hay ventas con estos filtros."
         no_shipments: "No hay salidas con estos filtros."
         no_payments: "Todavía no hay cobros."
@@ -3872,6 +3908,7 @@ es:
           payroll_payments: "Pago de planilla"
           payroll_expenses: "Gasto de planilla"
           sale_payments: "Cobro de venta"
+          buyer_advances: "Anticipo de comprador"
           expenses: "Gasto"
           investments: "Inversión"
           staff_payments: "Pago de planilla interna"
@@ -4010,6 +4047,18 @@ es:
         tips:
           - "Los períodos se pagan en orden; solo se quita el último pago."
           - "Los anticipos salen de la cuenta el día que se dan; al pagar solo se restan de lo que se entrega."
+      buyer_advances:
+        title: "Anticipos de compradores"
+        summary: "El comprador adelanta dinero y se le paga con café, sin intereses: se descuenta de sus ventas."
+        steps:
+          - "En la ficha del comprador toca «Registrar anticipo»: el dinero entra a la cuenta elegida y sube su saldo de anticipos."
+          - "En «Nueva venta», si el comprador tiene anticipos, escribe cuánto descontar en «Descontar de anticipos»; lo que quede se cobra como siempre."
+          - "También después: «Registrar cobro» en la venta, con la forma de pago «Con anticipo»."
+          - "La pestaña «Anticipos» del comprador muestra lo que dio y lo descontado de cada venta."
+        tips:
+          - "Un cobro con anticipo no mueve dinero: el dinero ya entró con el anticipo. No lleva cuenta."
+          - "No se descuenta más que el saldo de anticipos ni más de lo que falta por cobrar."
+          - "Si se quita un cobro con anticipo, el monto vuelve al saldo del comprador."
       hauler_commission:
         title: "Comisión y pagos de un carrero"
         summary: "El carrero trae el café con los carros del negocio y gana una comisión por cada compra que trae."
@@ -4862,6 +4911,19 @@ es:
               - "Escribe la placa (se guarda en mayúsculas); lo demás es opcional."
             tips:
               - "Uno con salidas no se borra: se desactiva y deja de salir en las salidas nuevas."
+        buyer_advances:
+          form:
+            title: "Registrar un anticipo de comprador"
+            summary: "Dinero que adelanta el comprador y se le paga con café, sin intereses."
+            steps:
+              - "Escribe el monto, la fecha, la forma de pago y la cuenta donde entró."
+              - "Si tienes el número del cheque o del comprobante, escríbelo en «Documento»."
+              - "Toca «Registrar anticipo»: se abre su recibo para imprimir."
+          show:
+            title: "Recibo de anticipo"
+            summary: "El comprobante de un anticipo, con original y copia, cada uno en su hoja."
+            steps:
+              - "Toca «Imprimir»: el original y la copia salen cada uno en su hoja."
         stocks:
           show:
             title: "Inventario"
@@ -5626,6 +5688,7 @@ es:
         hauler: "el carrero"
         hauler_payment: "el pago a carrero"
         buyer: "el comprador"
+        buyer_advance: "el anticipo del comprador"
         carrier: "el transportista"
         truck: "el camión"
         shipment: "la salida de camión"
@@ -5995,6 +6058,9 @@ es:
       sale_payment:
         one: "Cobro de venta"
         other: "Cobros de ventas"
+      buyer_advance:
+        one: "Anticipo de comprador"
+        other: "Anticipos de compradores"
       private_document:
         one: "Documento privado"
         other: "Documentos privados"
@@ -6425,8 +6491,23 @@ es:
         amount: "Monto"
         paid_on: "Fecha"
         payment_method: "Forma de pago"
+        payment_method/cash: "Efectivo"
+        payment_method/transfer: "Transferencia"
+        payment_method/check: "Cheque"
+        payment_method/advance: "Con anticipo"
         observations: "Observaciones"
         created_by: "Registró"
+      buyer_advance:
+        buyer: "Comprador"
+        buyer_id: "Comprador"
+        received_on: "Fecha"
+        amount: "Monto (L)"
+        payment_method: "Forma de pago"
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
+        document_number: "Documento"
+        observations: "Observaciones"
+        created_by_id: "Registró"
       private_document:
         key: "Documento"
         body: "Texto"
@@ -6918,12 +6999,19 @@ es:
               blank: "faltan: elige al menos una salida"
               unavailable: "no están todas disponibles (alguna se vendió, se anuló o es de otro comprador): revisa la lista"
               mixed_states: "son de distintos estados del café: haz una venta por cada estado"
+        buyer_advance:
+          attributes:
+            base:
+              used: "Este anticipo ya se descontó de una venta: quita primero ese cobro con anticipo."
+            money_account:
+              inactive: "está desactivada"
         sale_payment:
           attributes:
             base:
               sale_voided: "La venta está anulada."
             amount:
               over_balance: "es mayor que lo que falta por cobrar (%{balance})"
+              over_advances: "es mayor que el saldo de anticipos del comprador (%{balance})"
             paid_on:
               before_sale: "no puede ser antes de la fecha de la venta"
               before_last_payment: "no puede ser antes del último cobro"

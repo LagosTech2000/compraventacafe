@@ -36,7 +36,7 @@ class Sale < ApplicationRecord
   validates :price_unit, inclusion: { in: PRICE_UNITS }
   validates :unit_price, numericality: { greater_than: 0, less_than: 10_000_000 }
   validates :payment_status, inclusion: { in: PAYMENT_STATUSES }
-  validates :payment_method, inclusion: { in: Invoice::PAYMENT_METHODS }, allow_nil: true
+  validates :payment_method, inclusion: { in: SalePayment::METHODS }, allow_nil: true
   validates :buyer_document_number, length: { maximum: 60 }
   validates :void_reason, length: { maximum: 200 }
   validates :observations, length: { maximum: 500 }
@@ -94,7 +94,7 @@ class Sale < ApplicationRecord
 
   # "Varias formas" when its payments used more than one.
   def human_payment_method
-    return Invoice.human_attribute_name("payment_method/#{payment_method}") if payment_method
+    return SalePayment.human_method(payment_method) if payment_method
 
     I18n.t("trading.invoices.mixed_payment_methods") if payments.many?
   end

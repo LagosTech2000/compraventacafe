@@ -134,6 +134,17 @@
           <p class="flash-alert mt-3" role="status" hidden data-sale-builder-target="mixed"><%= t(".mixed_states") %></p>
         </div>
 
+        <%# Taken off the buyer's advances first (a collection «con anticipo»), if it has any. %>
+        <% advance_balance = @buyer.advance_balance %>
+        <% if advance_balance.positive? %>
+          <div class="panel p-4">
+            <%= label_tag "sale_advance_amount", t(".advance_amount"), class: "field-label" %>
+            <%= number_field_tag "sale[advance_amount]", params.dig(:sale, :advance_amount), id: "sale_advance_amount", min: 0, max: advance_balance,
+                  step: 0.01, inputmode: "decimal", class: "field-input", placeholder: "0.00" %>
+            <p class="mt-1 text-xs text-ink-muted"><%= t(".advance_help", balance: format_money(advance_balance)) %></p>
+          </div>
+        <% end %>
+
         <%# Collected now in full (contado), in part, or later (crédito). %>
         <fieldset class="space-y-4" data-controller="invoice-payment-choice money-account" data-money-account-defaults-value="<%= MoneyAccount.defaults_by_method.to_json %>">
           <legend class="mb-3 text-lg font-semibold"><%= t(".payment") %></legend>

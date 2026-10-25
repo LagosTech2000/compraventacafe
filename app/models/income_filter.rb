@@ -4,7 +4,7 @@
 # this month by default, newest first. Transfers between accounts are not
 # income: the money stays home.
 class IncomeFilter < ListFilter
-  SOURCES = %w[sale_payments loan_payments other_incomes].freeze
+  SOURCES = %w[sale_payments buyer_advances loan_payments other_incomes].freeze
 
   field :from, :date, default: -> { Time.zone.today.beginning_of_month }
   field :to, :date, default: -> { Time.zone.today }
