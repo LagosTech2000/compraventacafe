@@ -1,0 +1,72 @@
+<%# Sales list: narrow → cards; medium → key columns; wide → every column.
+    show_buyer: false on a buyer's own page. sorting: as trading/purchases/_table. %>
+<% show_buyer = local_assigns.fetch(:show_buyer, true) %>
+<% sorting = local_assigns[:sorting] %>
+<div class="@container">
+  <ul class="space-y-3 @3xl:hidden">
+    <% sales.each do |sale| %>
+      <li class="data-card" id="<%= dom_id(sale, :card) %>">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="font-medium"><%= t("sales.sales.show.title", number: sale.display_number) %><% if show_buyer %> · <%= sale.buyer.name %><% end %></p>
+            <p class="text-xs text-ink-muted"><%= [ l(sale.sold_on), sale.human_coffee_state, sale.buyer_document_number ].compact.join(" · ") %></p>
+          </div>
+          <%= detail_button sales_sale_path(sale) %>
+        </div>
+        <dl class="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+          <div><dt class="text-xs text-ink-muted"><%= t("sales.sales.table.quintals") %></dt><dd class="tabular-nums"><%= format_pounds(sale.quintals) %></dd></div>
+          <div><dt class="text-xs text-ink-muted"><%= Sale.human_attribute_name(:total) %></dt><dd class="font-semibold tabular-nums"><%= format_money(sale.total) %></dd></div>
+          <div><dt class="text-xs text-ink-muted"><%= t("sales.sales.table.balance") %></dt><dd class="tabular-nums"><%= format_money(sale.balance_due) %></dd></div>
+          <div><dt class="text-xs text-ink-muted"><%= t("sales.sales.table.difference") %></dt><dd><%= weight_difference(sale) %></dd></div>
+        </dl>
+        <p class="mt-2 text-sm"><%= sale_state_badge(sale) %></p>
+      </li>
+    <% end %>
+  </ul>
+
+  <div class="hidden overflow-x-auto panel @3xl:block">
+    <table class="data-table data-table-compact" <%= tag.attributes(data: table_sort_data(sorting)) %>>
+      <thead>
+        <tr>
+          <%= sort_th t("sales.sales.table.number"), :number, sorting %>
+          <%= sort_th Sale.human_attribute_name(:sold_on), :sold_on, sorting %>
+          <%= show_buyer ? sort_th(Sale.human_attribute_name(:buyer), :buyer, sorting) : sort_th(Sale.human_attribute_name(:coffee_state), :coffee_state, sorting) %>
+          <%= sort_th t("sales.sales.table.net"), :net, sorting, class: "hidden text-right @5xl:table-cell" %>
+          <%= sort_th t("sales.sales.table.quintals"), :quintals, sorting, class: "text-right" %>
+          <%= sort_th t("sales.sales.table.price"), :price, sorting, class: "hidden text-right @5xl:table-cell" %>
+          <%= sort_th t("sales.sales.table.difference"), :difference, sorting, class: "hidden text-right @5xl:table-cell" %>
+          <%= sort_th Sale.human_attribute_name(:total), :total, sorting, class: "text-right" %>
+          <%= sort_th t("sales.sales.table.balance"), :balance, sorting, class: "text-right" %>
+          <%= sort_th Sale.human_attribute_name(:payment_status), :payment_status, sorting %>
+          <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% sales.each do |sale| %>
+          <tr id="<%= dom_id(sale) %>" class="<%= "text-ink-muted" if sale.voided? %>">
+            <td class="tabular-nums"><%= sale.display_number %></td>
+            <td class="whitespace-nowrap"><%= l(sale.sold_on) %></td>
+            <td>
+              <% if show_buyer %>
+                <span class="font-medium"><%= sale.buyer.name %></span>
+                <span class="block text-xs text-ink-muted"><%= sale.human_coffee_state %></span>
+              <% else %>
+                <%= sale.human_coffee_state %>
+              <% end %>
+            </td>
+            <td class="hidden whitespace-nowrap text-right tabular-nums @5xl:table-cell"><%= format_pounds(sale.net_weight) %></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(sale.quintals) %></td>
+            <td class="hidden whitespace-nowrap text-right tabular-nums @5xl:table-cell">
+              <%= format_money(sale.unit_price) %> <span class="text-xs text-ink-muted"><%= sale.human_price_unit %></span>
+            </td>
+            <td class="hidden text-right @5xl:table-cell"><%= weight_difference(sale) %></td>
+            <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(sale.total) %></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(sale.balance_due) %></td>
+            <td><%= sale_state_badge(sale) %></td>
+            <td class="cell-actions"><div class="flex justify-end gap-2"><%= detail_button sales_sale_path(sale) %></div></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

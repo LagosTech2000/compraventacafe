@@ -26,6 +26,30 @@ RSpec.describe "Breadcrumbs" do
     expect(crumbs.size).to eq(4)
   end
 
+  it "goes up through the buyer from a shipment, a sale and its receipt" do
+    buyer = create(:buyer, name: "Beneficio Henola")
+    sale = create(:sale, buyer:)
+    payment = create(:sale_payment, sale:, amount: 1)
+
+    get sales_shipment_path(sale.shipments.first)
+    expect(crumbs).to eq([ "Compradores", "Beneficio Henola", "Salida #{sale.shipments.first.display_number}" ])
+    get sales_sale_path(sale)
+    expect(crumbs).to eq([ "Compradores", "Beneficio Henola", "Venta #{sale.display_number}" ])
+    get sales_sale_payment_path(sale, payment)
+    expect(crumbs.first(3)).to eq([ "Compradores", "Beneficio Henola", "Venta #{sale.display_number}" ])
+  end
+
+  it "goes up through its list from an expense, an investment and an account" do
+    expense = create(:expense, description: "Diésel")
+    investment = create(:expense, kind: "investment", description: "Báscula")
+    get finance_expense_path(expense)
+    expect(crumbs).to eq([ "Gastos", "Diésel" ])
+    get finance_investment_path(investment)
+    expect(crumbs).to eq([ "Inversiones", "Báscula" ])
+    get finance_money_account_path(expense.money_account)
+    expect(crumbs).to eq([ "Cuentas", expense.money_account.name ])
+  end
+
   it "goes up through the account from a loan and its receipt, and through the carrero from a payment" do
     loan = create(:loan, person: producer.person)
     payment = create(:loan_payment, loan:, amount: 100)
@@ -43,6 +67,20 @@ RSpec.describe "Breadcrumbs" do
     expect(crumbs).to eq([ "Carreros", "Ana Zelaya" ])
     get trading_hauler_payment_path(hauler, hauler_payment)
     expect(crumbs.first(2)).to eq([ "Carreros", "Ana Zelaya" ])
+  end
+
+  it "goes up through the Planilla interna from an employee, their payment and the roles" do
+    member = create(:staff_member, person: producer.person.tap { it.update!(collaborator_role: "1") }, starts_on: Time.zone.today - 40)
+    issuer = StaffPaymentIssuer.new(member:, period: member.period_to_pay, user: admin, payment_method: "cash",
+                                    money_account_id: create(:money_account).id)
+    issuer.call
+
+    get finance_staff_member_path(member)
+    expect(crumbs).to eq([ "Planilla interna", "Ana Zelaya" ])
+    get finance_staff_member_staff_payment_path(member, issuer.payment)
+    expect(crumbs.first(2)).to eq([ "Planilla interna", "Ana Zelaya" ])
+    get finance_staff_roles_path
+    expect(crumbs).to eq([ "Planilla interna", "Roles de la planilla" ])
   end
 
   it "goes up from a person, a user and a farm in Administración" do

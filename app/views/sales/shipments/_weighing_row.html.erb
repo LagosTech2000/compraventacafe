@@ -1,0 +1,24 @@
+<%# One weighing of a truck on the local scale: its weight and the sacks
+    counted. Rendered for each saved weighing and once inside a <template>
+    (index NEW_RECORD) the form copies to add weighings. Disabled (not
+    sent) while the truck is weighed in one figure. %>
+<% weighing = form.object %>
+<div class="data-card grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-3"
+     data-weighing-calculator-target="weighing" <%= "hidden" if weighing.marked_for_destruction? %>>
+  <%= form.hidden_field :id, disabled: !enabled if weighing.persisted? %>
+  <%= form.hidden_field :_destroy, value: weighing.marked_for_destruction? ? "1" : "0", disabled: !enabled,
+        data: { weighing_calculator_target: "weighingDestroy" } %>
+  <div>
+    <%= form.label :gross_weight, class: "field-label" %>
+    <%= form.number_field :gross_weight, required: true, min: 0.01, max: Shipment::MAX_WEIGHT - 0.01, step: 0.01, inputmode: "decimal",
+          disabled: !enabled, class: "field-input text-lg",
+          data: { weighing_calculator_target: "weighingGross", action: "weighing-calculator#update" } %>
+  </div>
+  <div>
+    <%= form.label :sacks, class: "field-label" %>
+    <%= form.number_field :sacks, required: true, min: 1, max: Shipment::MAX_SACKS - 1, step: 1, inputmode: "numeric",
+          disabled: !enabled, class: "field-input text-lg",
+          data: { weighing_calculator_target: "weighingSacks", action: "weighing-calculator#update" } %>
+  </div>
+  <button type="button" class="btn btn-sm mb-1" data-action="weighing-calculator#removeWeighing"><%= t("trading.purchases.form.remove_weighing") %></button>
+</div>

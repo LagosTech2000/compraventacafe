@@ -1,0 +1,139 @@
+<%# A truck leaving: its buyer, papers and the local scale. The net weight
+    is calculated while typing; leaving with more than the stock of that
+    coffee state warns, without stopping it (stock: CoffeeStock). %>
+<% buyers = Buyer.active.or(Buyer.where(id: shipment.buyer_id)).alphabetical %>
+<%# The stock this shipment can take: editing, its own weight is back in it. %>
+<% available = stock.rows.to_h { |row| [ row.coffee_state, row.stock.to_f ] } %>
+<% if shipment.persisted? && shipment.coffee_state_in_database %>
+  <% available[shipment.coffee_state_in_database] += shipment.origin_net_weight_in_database.to_f %>
+<% end %>
+<%= form_with model: [ :sales, shipment ], class: form_surface_class("@container max-w-none"),
+      data: { controller: "form-validation weighing-calculator unsaved-changes", action: unsaved_changes_actions,
+              unsaved_changes_message_value: t("shared.unsaved_changes.leave"),
+              weighing_calculator_tare_per_sack_value: PurchaseCalculation::TARE_PER_SACK,
+              weighing_calculator_quintal_weight_value: PurchaseCalculation::QUINTAL_WEIGHT,
+              weighing_calculator_defaults_value: PurchaseDefaults.by_coffee_state.to_json,
+              weighing_calculator_stock_value: available.to_json,
+              weighing_calculator_stock_message_value: t("sales.shipments.form.over_stock") } do |form| %>
+  <%= render "shared/form_errors", record: shipment %>
+  <%= form.hidden_field :lock_version if shipment.persisted? %>
+  <div class="grid items-start gap-6 @5xl:grid-cols-[minmax(0,1fr)_20rem]">
+    <div class="min-w-0 space-y-6">
+      <section class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="sm:col-span-2" data-controller="option-picker" data-action="buyer:created@window->option-picker#add">
+          <%= form.label :buyer_id, class: "field-label" %>
+          <%= form.collection_select :buyer_id, buyers, :id, :name, { prompt: t("shared.select.pick_buyer") }, required: true,
+                class: "field-input", autofocus: shipment.buyer.nil?, data: { option_picker_target: "select" } %>
+          <% if policy(Buyer).create? %>
+            <%= modal_link_to t(".new_buyer"), new_sales_buyer_path(picker: 1), class: "btn btn-sm mt-2" %>
+          <% end %>
+        </div>
+        <div>
+          <%= form.label :departed_at, class: "field-label" %>
+          <%= form.datetime_local_field :departed_at, required: true, class: "field-input" %>
+        </div>
+        <div>
+          <%= form.label :coffee_state, class: "field-label" %>
+          <%= form.select :coffee_state, enum_options(Purchase, :coffee_state, Purchase::COFFEE_STATES), {}, required: true, class: "field-input",
+                data: { weighing_calculator_target: "coffeeState", action: "weighing-calculator#changeCoffeeState" } %>
+        </div>
+        <div>
+          <%= form.label :remission_number, class: "field-label" %>
+          <%= form.text_field :remission_number, maxlength: 60, class: "field-input" %>
+        </div>
+      </section>
+
+      <%# Who hauls it: the carrier and the truck from their catalogs (each
+          with «Nuevo» in a modal), and the driver: an employee of the
+          Planilla interna, or a name typed. %>
+      <section aria-labelledby="shipment-transport" class="space-y-3">
+        <h2 id="shipment-transport" class="font-semibold"><%= t(".transport") %></h2>
+        <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div data-controller="option-picker" data-action="carrier:created@window->option-picker#add">
+            <%= form.label :carrier_id, class: "field-label" %>
+            <% carriers = Carrier.active.or(Carrier.where(id: shipment.carrier_id)).alphabetical %>
+            <%= form.collection_select :carrier_id, carriers, :id, :name, { include_blank: t("shared.select.no_carrier") },
+                  class: "field-input", data: { option_picker_target: "select" } %>
+            <% if policy(Carrier).create? %>
+              <%= modal_link_to t(".new_carrier"), new_sales_carrier_path(picker: 1), class: "btn btn-sm mt-2" %>
+            <% end %>
+          </div>
+          <div data-controller="option-picker" data-action="truck:created@window->option-picker#add">
+            <%= form.label :truck_id, class: "field-label" %>
+            <% trucks = Truck.active.or(Truck.where(id: shipment.truck_id)).alphabetical %>
+            <%= form.collection_select :truck_id, trucks, :id, :label, { include_blank: t("shared.select.no_truck") },
+                  class: "field-input", data: { option_picker_target: "select" } %>
+            <% if policy(Truck).create? %>
+              <%= modal_link_to t(".new_truck"), new_sales_truck_path(picker: 1), class: "btn btn-sm mt-2" %>
+            <% end %>
+          </div>
+          <div>
+            <%= form.label :driver_id, class: "field-label" %>
+            <% drivers = StaffMember.active.or(StaffMember.where(id: shipment.driver_id)).includes(:person, :role).newest_first %>
+            <%= form.select :driver_id, drivers.map { [ "#{it.full_name} · #{it.role.name}", it.id ] },
+                  { include_blank: t(".driver_typed") }, class: "field-input" %>
+            <%= form.text_field :driver_name, maxlength: 120, class: "field-input mt-2", placeholder: t(".driver_name_placeholder"),
+                  aria: { label: Shipment.human_attribute_name(:driver_name) } %>
+            <p class="mt-1 text-xs text-ink-muted"><%= t(".driver_help") %></p>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="shipment-origin" class="space-y-3">
+        <div>
+          <h2 id="shipment-origin" class="font-semibold"><%= t(".origin") %></h2>
+          <p class="text-sm text-ink-muted"><%= t(".origin_help") %></p>
+        </div>
+        <%# In one figure, or by weighings (as in the purchases): then the
+            gross weight and the sacks are their sums. %>
+        <fieldset>
+          <legend class="field-label"><%= Shipment.human_attribute_name(:origin_weight_mode) %></legend>
+          <div class="flex flex-wrap gap-x-6 gap-y-2">
+            <% Shipment::WEIGHT_MODES.each do |mode| %>
+              <label class="flex min-h-11 cursor-pointer items-center gap-2 text-sm font-medium">
+                <%= form.radio_button :origin_weight_mode, mode, class: "size-4 accent-primary",
+                      data: { weighing_calculator_target: "weightMode", action: "weighing-calculator#changeWeightMode" } %>
+                <%= Purchase.human_attribute_name("weight_mode/#{mode}") %>
+              </label>
+            <% end %>
+          </div>
+        </fieldset>
+        <section aria-labelledby="shipment-weighings" class="space-y-3" data-weighing-calculator-target="weighingsSection"
+                 <%= "hidden" unless shipment.by_weighings? %>>
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 id="shipment-weighings" class="font-semibold"><%= Shipment.human_attribute_name(:weighings) %></h3>
+              <p class="text-sm text-ink-muted"><%= t(".weighings_help") %></p>
+            </div>
+            <button type="button" class="btn btn-sm btn-primary" data-action="weighing-calculator#addWeighing"><%= t("trading.purchases.form.add_weighing") %></button>
+          </div>
+          <div class="space-y-3" data-weighing-calculator-target="weighings">
+            <%= form.fields_for :weighings do |weighing_form| %>
+              <%= render "sales/shipments/weighing_row", form: weighing_form, enabled: shipment.by_weighings? %>
+            <% end %>
+          </div>
+          <template data-weighing-calculator-target="weighingTemplate">
+            <%= form.fields_for :weighings, ShipmentWeighing.new, child_index: "NEW_RECORD" do |weighing_form| %>
+              <%= render "sales/shipments/weighing_row", form: weighing_form, enabled: true %>
+            <% end %>
+          </template>
+        </section>
+        <%= render "sales/shipments/weighing_fields", form:, shipment:, side: "origin" %>
+      </section>
+
+      <div>
+        <%= form.label :observations, class: "field-label" %>
+        <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+      </div>
+    </div>
+
+    <aside class="space-y-4 @5xl:sticky @5xl:top-24">
+      <%= render "sales/shipments/calculation", title: t(".calculation") %>
+      <p class="flash-alert" role="status" hidden data-weighing-calculator-target="stockNotice"></p>
+      <div class="flex flex-wrap gap-3">
+        <%= form.submit shipment.persisted? ? t("helpers.submit.update") : t("sales.shipments.form.submit"), class: "btn btn-primary" %>
+        <%= cancel_button sales_shipments_path %>
+      </div>
+    </aside>
+  </div>
+<% end %>

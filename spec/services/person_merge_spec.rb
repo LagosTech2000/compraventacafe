@@ -14,6 +14,19 @@ RSpec.describe PersonMerge do
 
   def merge(choices = {}) = described_class.new(primary:, secondary:, choices:)
 
+  it "moves the other's place in the Planilla interna, but not when both are in it" do
+    [ primary, secondary ].each { it.update!(collaborator_role: "1") }
+    member = create(:staff_member, person: secondary)
+    expect(merge.save).to be(true)
+    expect(member.reload.person).to eq(primary)
+
+    other = create(:person, :collaborator, first_names: "Ana", last_names: "Zelaya")
+    create(:staff_member, person: other)
+    both = described_class.new(primary:, secondary: other, choices: {})
+    expect(both.save).to be(false)
+    expect(both.errors[:base]).to include(a_string_including("Las dos personas están en la planilla interna"))
+  end
+
   it "keeps the primary's details by default, but takes the other's where the primary has none" do
     m = merge
     expect(m.differences).to eq(%w[first_names dni phone zone])
@@ -25,14 +38,14 @@ RSpec.describe PersonMerge do
   end
 
   it "joins two carreros: the other's hauled purchases and payments go to the primary's" do
-    kept = create(:hauler, person: primary, commission_percent: 10)
-    other = create(:hauler, person: secondary, commission_percent: 5)
+    kept = create(:hauler, person: primary, price_per_pound: "0.3")
+    other = create(:hauler, person: secondary, price_per_pound: "0.2")
     hauled = create(:purchase, hauler: other)
     payment = create(:hauler_payment, hauler: other, amount: 1)
     expect(merge.summary).to include(hauled_purchases: 1)
 
     expect(merge.save).to be(true)
-    expect(hauled.reload).to have_attributes(hauler: kept, hauler_commission_percent: 5) # keeps the terms of its day
+    expect(hauled.reload).to have_attributes(hauler: kept, hauler_price_per_pound: BigDecimal("0.2")) # keeps the terms of its day
     expect(payment.reload.hauler).to eq(kept)
     expect(Hauler.exists?(other.id)).to be(false)
   end

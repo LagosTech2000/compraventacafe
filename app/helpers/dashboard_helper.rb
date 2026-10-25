@@ -14,6 +14,9 @@ module DashboardHelper
     when :purchase then t("dashboard.show.activity.details.purchase", number: detail[:number], quintals: format_pounds(detail[:quintals]), total: format_money(detail[:total]))
     when :producer then detail[:kind]
     when :invoice then t("dashboard.show.activity.details.invoice", number: detail[:number], status: detail[:status], total: format_money(detail[:total]))
+    when :shipment then t("dashboard.show.activity.details.shipment", number: detail[:number], pounds: format_pounds(detail[:pounds]))
+    when :sale then t("dashboard.show.activity.details.sale", number: detail[:number], status: detail[:status], total: format_money(detail[:total]))
+    when :expense, :investment then t("dashboard.show.activity.details.expense", category: detail[:category], amount: format_money(detail[:amount]))
     when :loan then t("dashboard.show.activity.details.loan", number: detail[:number], amount: format_money(detail[:amount]))
     when :loan_payment then t("dashboard.show.activity.details.loan_payment", number: detail[:number], amount: format_money(detail[:amount]))
     when :payroll_payment then t("dashboard.show.activity.details.payroll_payment", farm: detail[:farm], amount: format_money(detail[:amount]))
@@ -42,9 +45,13 @@ module DashboardHelper
     case key
     when :uninvoiced then dashboard.uninvoiced_by_producer.size
     when :unpaid_invoices then dashboard.unpaid_invoices.size
+    when :shipments_in_transit then dashboard.shipments_in_transit.size
+    when :unsold_shipments then dashboard.unsold_shipments.size
+    when :unpaid_sales then dashboard.unpaid_sales.size
     when :overdue_loans then dashboard.overdue_loans.size
     when :periods_to_pay then dashboard.periods_to_pay.size
     when :members_without_wage then dashboard.members_without_wage.size
+    when :over_budget then dashboard.over_budget.size
     end
   end
 end

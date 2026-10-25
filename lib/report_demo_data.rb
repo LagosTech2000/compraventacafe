@@ -7,6 +7,9 @@
 #            few days later; some paid with coffee to the producer's loans
 #   loans    lent mostly before the harvest (cash, supplies or both), paid
 #            with coffee, in cash or from payrolls; some fall overdue
+#   sales    trucks of parchment leave for the buyers when there is enough
+#            in stock, are weighed there a day or two later, sold on the
+#            buyer's weight and collected some days after
 #   farms    three farms with year-round maintenance (by day), coffee
 #            picking each harvest (by cans, with foremen by day) and works
 #            (by task), paid period by period, plus their expenses
@@ -41,6 +44,19 @@ class ReportDemoData
                "Mantenimiento" => [ "Reparación de la bomba", "Cambio de llantas", "Arreglo del beneficio" ],
                "Fertilizantes" => [ "Abono para el lote 3", "Foliar para el vivero" ] }.freeze
 
+  # Comercialización: fictitious buyers [name, kind].
+  BUYERS = [ [ "Exportadora Demo Montecillos", "exporter" ], [ "Exportadora Demo Copán", "exporter" ],
+             [ "Beneficio Demo Danlí", "processor" ], [ "Comercial Demo Oriente", "other" ] ].freeze
+  # Control financiero: first-level categories and their subcategories, with
+  # what a usual expense of each costs.
+  BUSINESS_EXPENSES = { "Transporte" => { "Combustible" => 1_500, "Fletes" => 2_500, "Llantas y repuestos" => 3_000 },
+                        "Bodega" => { "Sacos" => 2_000, "Mantenimiento" => 1_200 },
+                        "Servicios" => { "Energía" => 1_400, "Teléfono e internet" => 900, "Agua" => 300 },
+                        "Administración" => { "Papelería" => 400, "Contador" => 3_500 } }.freeze
+  INVESTMENTS = [ [ "Vehículos", "Camión usado", 450_000 ], [ "Equipo", "Báscula de plataforma", 28_000 ], [ "Equipo", "Secadora de café", 180_000 ] ].freeze
+  # A truck leaves once this many net pounds of a state are in stock.
+  TRUCK_POUNDS = 1_500
+
   ProducerPlan = Struct.new(:producer, :weight, :from, :until, keyword_init: true)
 
   attr_reader :counts
@@ -53,6 +69,8 @@ class ReportDemoData
     @counts = Hash.new(0)
     @uninvoiced = Hash.new { |hash, producer| hash[producer] = [] }
     @pending = []
+    @in_transit = []
+    @to_collect = []
   end
 
   def self.loaded? = Farm.exists?(name: MARKER_FARM)
@@ -62,6 +80,7 @@ class ReportDemoData
     (@from..@to).each_slice(7) do |week|
       ActiveRecord::Base.transaction { week.each { |date| day(date) } }
     end
+    ActiveRecord::Base.transaction { budget_and_accounts }
     self
   end
 
@@ -82,6 +101,21 @@ class ReportDemoData
       @producers = producers
       @workers = workers
       @farms = farms
+      @accounts = [ [ "Caja (demo)", "cash", %w[cash], 100_000 ], [ "Cuenta principal (demo)", "bank", %w[transfer check], 600_000 ] ].map do |name, kind, methods, opening|
+        MoneyAccount.find_or_create_by!(name:) do |account|
+          account.assign_attributes(kind:, bank_key: ("atlantida" if kind == "bank"), default_for: methods, opening_balance: opening, opening_on: @from)
+        end
+      end
+      @business_categories = BUSINESS_EXPENSES.to_h do |name, children|
+        parent = FinanceCategory.find_or_create_by!(name:, kind: "expense", parent: nil)
+        [ parent, children.to_h { |child, cost| [ FinanceCategory.find_or_create_by!(name: child, kind: "expense", parent:), cost ] } ]
+      end
+      @buyers = BUYERS.map { |name, kind| Buyer.find_or_create_by!(name:) { |buyer| buyer.kind = kind } }
+      # Who carries the trucks: a carrier with its truck, or the business's own.
+      @transport = {
+        "Transporte Demo" => [ Carrier.find_or_create_by!(name: "Transporte Demo"), Truck.find_or_create_by!(plate: "HDM 0002") { it.brand_model = "Hino 500 (demo)" } ],
+        "Camión propio" => [ nil, Truck.find_or_create_by!(plate: "HDM 0003") { it.assign_attributes(brand_model: "Isuzu NPR (demo)", own: true) } ]
+      }
     end
 
     def person(zone: nil)
@@ -156,7 +190,11 @@ class ReportDemoData
       lend(date)
       buy(date)
       invoice_and_pay(date)
+      ship(date)
+      receive_and_sell(date)
+      collect_sales(date)
       collect(date)
+      spend_business(date)
       work(date)
     end
 
@@ -201,6 +239,8 @@ class ReportDemoData
       inputs = PurchaseDefaults.inputs_for(state)
       inputs[:humidity_percent] = (inputs[:humidity_percent] + @random.rand(-3.0..3.0)).round(1) if inputs[:humidity_percent]
       inputs[:damage_percent] = pick([ 0, 0, 1.5, 2, 2.2, 2.5 ]) if inputs.key?(:damage_percent)
+      # Damage names its kind; picked from the percent, so the random sequence stays the same.
+      inputs[:damage_types] = [ Purchase::DAMAGE_TYPES[(inputs[:damage_percent] * 10).to_i % Purchase::DAMAGE_TYPES.size] ] if inputs[:damage_percent].to_d.positive?
       inputs[:yield_factor] = (0.17 + @random.rand * 0.03).round(4) if inputs[:yield_factor]
       size = producer.kind == "intermediary" ? @random.rand(300..1_200) : @random.rand(60..520)
       weight = if @random.rand < 0.3
@@ -267,11 +307,109 @@ class ReportDemoData
       end
     end
 
+    # A truck of a parchment state leaves when its stock is enough, now and then.
+    def ship(date)
+      return if date.sunday?
+
+      stock = CoffeeStock.new(date)
+      %w[wet_parchment dry_parchment].each do |state|
+        available = stock.row(state).stock
+        next if available < TRUCK_POUNDS || @random.rand > 0.45
+
+        net = [ available, TRUCK_POUNDS + @random.rand(0..2_500) ].min
+        humidity = PurchaseDefaults::HUMIDITY_PERCENT.fetch(state)
+        gross = (net / (1 - humidity / 100.0)).round
+        sacks = (gross / PurchaseCalculation::SACK_WEIGHT.to_f).ceil
+        shipment = Shipment.create!(buyer: pick(@buyers), created_by: pick(@clerks), departed_at: moment(date), coffee_state: state,
+                                    remission_number: (400 + @counts[:shipments]).to_s,
+                                    **[ :carrier, :truck ].zip(@transport.fetch(pick([ "Transporte Demo", "Camión propio" ]))).to_h,
+                                    origin_gross_weight: gross + sacks, origin_sacks: sacks, origin_humidity_percent: humidity, origin_damage_percent: 0)
+        @in_transit << [ shipment, date + @random.rand(0..2) ]
+        @counts[:shipments] += 1
+      end
+    end
+
+    # Weighed at the buyer's (a little less, some with damage) and sold the
+    # same day: by the quintal (Sale::QUINTAL_POUNDS) to processors, by the pound to the rest.
+    def receive_and_sell(date)
+      arrived, @in_transit = @in_transit.partition { |_, on| on <= date }
+      arrived.each do |shipment, on|
+        loss = @random.rand(0.0..0.025)
+        shipment.update!(received_on: on, weight_note_number: "NP-#{shipment.number}", destination_gross_weight: (shipment.origin_gross_weight * (1 - loss)).round,
+                         destination_sacks: shipment.origin_sacks, destination_humidity_percent: shipment.origin_humidity_percent,
+                         destination_damage_percent: pick([ 0, 0, 0, 0.5, 1 ]))
+        next if @random.rand < 0.1 # a few wait for their sale
+
+        by_pound = shipment.buyer.kind != "processor"
+        price = price(shipment.coffee_state, date) + @random.rand(4..9)
+        result = SaleIssuer.new(buyer: shipment.buyer, user: pick(@clerks), shipment_ids: [ shipment.id ],
+                                sale: { sold_on: on, price_unit: by_pound ? "pound" : "quintal", unit_price: by_pound ? price : price * Sale::QUINTAL_POUNDS,
+                                        buyer_document_number: "Doc-#{shipment.number}" }).call
+        next unless result.success?
+
+        @to_collect << result.sale
+        @counts[:sales] += 1
+      end
+    end
+
+    # Buyers pay some days after the sale; a few in two parts.
+    def collect_sales(date)
+      @to_collect.reject! do |sale|
+        next false if @random.rand > ((date - sale.sold_on).to_i <= 3 ? 0.1 : 0.25)
+
+        method = weighted("transfer" => 7, "check" => 2, "cash" => 1)
+        if sale.payments.empty? && @random.rand < 0.2
+          sale.payments.create!(amount: (sale.total / 2).round(2), paid_on: date, payment_method: method, created_by: pick(@clerks))
+          next false
+        end
+        sale.payments.create!(amount: sale.reload.balance_due, paid_on: date, payment_method: method, created_by: pick(@clerks))
+      end
+    end
+
+    # The business's own expenses, a few a week, and now and then an investment.
+    def spend_business(date)
+      return if date.sunday? || @random.rand > 0.45
+
+      top, children = @business_categories.to_a.sample(random: @random)
+      category, cost = children.to_a.sample(random: @random)
+      method = weighted("cash" => 6, "transfer" => 3, "check" => 1)
+      Expense.create!(kind: "expense", category:, description: "#{category.name} (#{top.name.downcase})", payee: pick([ "Proveedor Demo", "Comercial Demo", nil ]),
+                      amount: (cost * (0.6 + @random.rand * 0.8)).round(2), spent_on: date, payment_method: method,
+                      money_account: MoneyAccount.default_for(method), created_by: pick(@clerks))
+      @counts[:expenses] += 1
+      return unless date.day == 15 && @random.rand < 0.3 && (investment = INVESTMENTS[@counts[:investments]])
+
+      category = FinanceCategory.find_or_create_by!(name: investment.first, kind: "investment", parent: nil)
+      Expense.create!(kind: "investment", category:, description: investment.second, amount: investment.third, spent_on: date,
+                      payment_method: "transfer", money_account: MoneyAccount.default_for("transfer"), created_by: @user)
+      @counts[:investments] += 1
+    end
+
+    # A monthly budget for every first-level category, and every payment of
+    # the year on the account of its method.
+    def budget_and_accounts
+      months = (@from.beginning_of_month..@to).map(&:beginning_of_month).uniq
+      @business_categories.each do |top, children|
+        amount = (children.values.sum * 4).round(-2)
+        months.each { |month| Budget.find_or_create_by!(category: top, month:) { |budget| budget.amount = amount } }
+      end
+      cash, bank = @accounts
+      [ InvoicePayment, HaulerPayment, LoanPayment, SalePayment ].each do |model|
+        model.where(money_account_id: nil, payment_method: "cash").update_all(money_account_id: cash.id)
+        model.where(money_account_id: nil, payment_method: %w[transfer check]).update_all(money_account_id: bank.id)
+      end
+      Loan.where(money_account_id: nil).where("cash_amount > 0").update_all(money_account_id: cash.id)
+      PayrollPayment.where(money_account_id: nil).update_all(money_account_id: cash.id)
+      PayrollExpense.where(money_account_id: nil).update_all(money_account_id: cash.id)
+    end
+
     # Cash payments on loans, about once a month; some never pay.
     def collect(date)
       return if date.sunday?
 
-      Loan.unpaid.where(disbursed_on: ...date).where("loans.id % 26 = ?", date.day % 26).find_each do |loan|
+      # By position, not by id: ids change from run to run, the same seed must give the same year.
+      Loan.unpaid.where(disbursed_on: ...date).order(:id).to_a.each_with_index do |loan, index|
+        next unless (index % 26) == (date.day % 26)
         next if @bad_payers&.include?(loan.id) && @random.rand < 0.85
 
         owed = loan.balance(as_of: date).total_owed

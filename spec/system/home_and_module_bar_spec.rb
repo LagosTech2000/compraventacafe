@@ -54,7 +54,7 @@ RSpec.describe "Home layout and module bar", type: :system do
     main_bg, _, main_radius = styles.call(main)
     tab_bg, tab_border, tab_radius = styles.call(tab)
     expect(tab_bg).not_to eq(main_bg)
-    expect(tab_border).to eq("2px")
+    expect(tab_border).to eq("3px")
     expect(tab_radius).to eq("0px")
     expect(main_radius).not_to eq("0px")
     expect(page).to have_css(".subnav .subnav-action a", text: "Nueva compra")

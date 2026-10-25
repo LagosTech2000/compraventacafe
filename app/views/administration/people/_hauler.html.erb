@@ -1,4 +1,4 @@
-<%# The person as a carrero (Hauler): its percent and can price and what it
+<%# The person as a carrero (Hauler): its price per pound and what it
     is owed, with the way to its page in Compra de café for who sees it. %>
 <section class="mt-8" aria-labelledby="person-hauler">
   <div class="flex flex-wrap items-center justify-between gap-3">
@@ -7,11 +7,11 @@
       <%= page_link_to t("administration.people.hauler.open"), trading_hauler_path(hauler), class: "btn btn-sm" %>
     <% end %>
   </div>
-  <dl class="mt-3 grid panel sm:grid-cols-2 lg:grid-cols-4">
-    <% { commission_percent: format_percent(hauler.commission_percent), can_price: format_money(hauler.can_price),
+  <dl class="mt-3 grid panel sm:grid-cols-3">
+    <% { price_per_pound: format_price_per_pound(hauler.price_per_pound),
          commissions: format_money(hauler.commissions_total), balance: format_money(hauler.balance) }.each do |key, value| %>
       <div class="border-b border-line px-4 py-3">
-        <dt class="text-xs font-medium text-ink-muted"><%= key.in?(%i[commission_percent can_price]) ? Hauler.human_attribute_name(key) : t("trading.haulers.show.figures.#{key}") %></dt>
+        <dt class="text-xs font-medium text-ink-muted"><%= key == :price_per_pound ? Hauler.human_attribute_name(key) : t("trading.haulers.show.figures.#{key}") %></dt>
         <dd class="mt-1 text-sm tabular-nums"><%= value %></dd>
       </div>
     <% end %>

@@ -4,14 +4,20 @@
 #
 # A loan can be cash, supplies (fertilizer...) or both: its principal is the
 # cash plus the value of its supply lines, and interest runs on all of it.
+#
+# A loan can be of the intermediary type: its first GRACE_DAYS days bring no
+# interest (Fernando, 2026-10-24); from day 11 it runs as usual. Any person
+# can get one, not only intermediaries (Fernando, the same day).
 class Loan < ApplicationRecord
   include Auditable
+  include HasMoneyAccount
   include LiveUpdates
   live_updates :loans
 
   STATUSES = %w[active overdue paid_off].freeze
   KINDS = %w[cash supplies mixed].freeze
   MAX_AMOUNT = 10_000_000
+  GRACE_DAYS = 10
 
   belongs_to :person
   belongs_to :created_by, class_name: "User"
@@ -50,6 +56,11 @@ class Loan < ApplicationRecord
 
   def audit_label
     "#{self.class.model_name.human} #{id} · #{person.full_name}"
+  end
+
+  # The day its interest starts to count, with the grace of an intermediary.
+  def interest_starts_on
+    interest_grace? ? disbursed_on + GRACE_DAYS : disbursed_on
   end
 
   # Days from the loan's date to its due date.
@@ -114,6 +125,8 @@ class Loan < ApplicationRecord
     # left blank (supplies only) is 0.
     def compute_principal
       self.cash_amount = 0 if cash_amount.nil?
+      # The account is where the cash went out from: none without cash.
+      self.money_account = nil unless cash_amount.to_d.positive?
       self.principal = cash_amount.to_d + supplies_amount
     end
 

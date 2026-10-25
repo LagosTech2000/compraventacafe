@@ -23,7 +23,7 @@ module Administration
       end
 
       def site_setting_params
-        params.expect(site_setting: [ :business_name, :location, :rtn, :logo, :remove_logo ])
+        params.expect(site_setting: [ :business_name, :location, :rtn, :weight_tolerance_percent, :logo, :remove_logo ])
       end
   end
 end

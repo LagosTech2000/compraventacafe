@@ -74,8 +74,10 @@ es:
   app_modules:
     administration: "Administración"
     trading: "Compra de café"
+    sales: "Comercialización"
     farms: "Fincas"
     loans: "Préstamos"
+    finance: "Control financiero"
     reports: "Reportería"
     actions:
       read: "Ver"
@@ -102,6 +104,8 @@ es:
   shared:
     unsaved_changes:
       leave: "Tienes cambios sin guardar en este formulario. ¿Salir sin guardar?"
+    money_account_field:
+      none: "Todavía no hay cuentas: un usuario de Control financiero las registra."
     person_gaps:
       message: "A esta persona le faltan datos por ingresar: %{fields}."
       complete: "Completar datos"
@@ -146,6 +150,11 @@ es:
       pick_category: "Selecciona una categoría"
       no_role: "Sin rol asignado"
       pick_payment_method: "Selecciona la forma de pago"
+      pick_buyer: "Selecciona el comprador"
+      no_carrier: "Sin transportista asignado"
+      no_truck: "Sin camión asignado"
+      pick_account: "Selecciona la cuenta"
+      no_account: "Sin cuenta"
       no_hauler: "Sin carrero"
     filters:
       title: "Filtros"
@@ -279,6 +288,31 @@ es:
             one: "emitida hace 1 día"
             other: "emitida hace %{count} días"
           action: "Registrar abono"
+        shipments_in_transit:
+          title: "Salidas en camino"
+          help: "Camiones que salieron y todavía no tienen el peso de la báscula del comprador."
+          name: "Salida %{number} · %{buyer}"
+          days:
+            zero: "salió hoy"
+            one: "salió hace 1 día"
+            other: "salió hace %{count} días"
+          action: "Registrar peso en destino"
+        unsold_shipments:
+          title: "Salidas sin vender"
+          help: "Por comprador: una venta agrupa las salidas pesadas de un mismo comprador."
+          detail:
+            one: "1 salida pesada en destino"
+            other: "%{count} salidas pesadas en destino"
+          action: "Vender"
+        unpaid_sales:
+          title: "Ventas por cobrar"
+          help: "Lo que falta que pague el comprador en cada venta."
+          name: "Venta %{number} · %{buyer}"
+          days:
+            zero: "vendida hoy"
+            one: "vendida hace 1 día"
+            other: "vendida hace %{count} días"
+          action: "Registrar cobro"
         overdue_loans:
           title: "Préstamos vencidos"
           help: "Lo que deben hoy, con el interés a la fecha."
@@ -291,10 +325,27 @@ es:
           title: "Períodos de planilla por pagar"
           help: "Períodos que ya llegaron a su día de pago y no se han pagado."
           action: "Pagar"
+        over_budget:
+          title: "Presupuesto excedido"
+          help: "Categorías que este mes gastaron más de lo presupuestado."
+          detail: "Gastado %{spent} de %{budget}"
+          action: "Ver presupuesto"
         members_without_wage:
           title: "Empleados sin salario"
           help: "En planillas por día: sin rol ni salario propio, sus días no se pueden pagar."
           action: "Asignar salario"
+  money_movements:
+    invoice: "Factura %{number}"
+    hauler_payment: "Recibo %{number} de comisiones de carreo"
+    loan: "Préstamo %{number}"
+    loan_payment: "Recibo %{number} del préstamo %{loan}"
+    payroll_payment: "%{payroll} · %{farm} (%{period})"
+    payroll_expense: "%{description} · %{farm}"
+    sale_payment: "Cobro de la venta %{number}"
+    buyer_advance: "Anticipo %{number} de comprador"
+    staff_payment: "Planilla interna %{number} · %{role} (%{period})"
+    staff_advance: "Anticipo %{number} de planilla interna"
+    transfer: "De %{from} a %{to}"
   coffee_markets:
     show:
       title: "Café en la bolsa"
@@ -335,7 +386,7 @@ es:
       title: "Inicio"
       coffee_market_loading: "Cargando el precio del café en la bolsa…"
       welcome: "Hola, %{name}"
-      purpose: "Compra de café, facturación, préstamos y planillas de %{business}"
+      purpose: "Compra y venta de café, préstamos, planillas y finanzas de %{business}"
       no_modules: "Todavía no tienes acceso a ningún módulo. Pídele a un administrador que te asigne permisos."
       modules: "Tus módulos"
       actions:
@@ -343,7 +394,10 @@ es:
         new_purchase: "Registrar compra"
         invoice: "Facturar compras"
         producers: "Productores"
+        new_shipment: "Nueva salida de camión"
+        new_sale: "Nueva venta"
         farms: "Fincas y planillas"
+        new_expense: "Registrar gasto"
         new_loan: "Nuevo préstamo"
         loans: "Préstamos"
         reports: "Reportes"
@@ -351,14 +405,25 @@ es:
         title: "Resumen de operaciones"
         purchases_today: "Compras de hoy"
         season_quintals: "QQ de la temporada"
+        coffee_stock: "QQ en inventario"
+        sales_owed: "Ventas por cobrar"
         open_loans: "Préstamos por cobrar"
         active_farms: "Fincas activas"
+        accounts_balance: "Saldo en cuentas"
+        month_spending: "Gastos del mes"
         pending: "Pendientes"
       hints:
         purchases_today: "%{quintals} QQ · %{total}"
         season_quintals:
           one: "1 compra · %{total}"
           other: "%{count} compras · %{total}"
+        coffee_stock: "%{pounds} lb netas · %{in_transit} lb en camino"
+        sales_owed:
+          zero: "Ninguna venta por cobrar"
+          one: "1 venta por cobrar"
+          other: "%{count} ventas por cobrar"
+        accounts_balance: "Caja y bancos, hoy"
+        month_spending: "Gastos e inversiones registrados en Control financiero"
         loans_owed: "Deben %{amount} hoy"
         overdue:
           one: "1 vencido"
@@ -379,21 +444,37 @@ es:
         unpaid_invoices:
           one: "1 factura sin cancelar: falta pagar"
           other: "%{count} facturas sin cancelar: falta pagar"
+        shipments_in_transit:
+          one: "1 salida espera su peso en destino"
+          other: "%{count} salidas esperan su peso en destino"
+        unsold_shipments:
+          one: "1 salida pesada sin vender"
+          other: "%{count} salidas pesadas sin vender"
+        unpaid_sales:
+          one: "1 venta por cobrar: falta"
+          other: "%{count} ventas por cobrar: falta"
         overdue_loans:
           one: "1 préstamo vencido, deben"
           other: "%{count} préstamos vencidos, deben"
         periods_to_pay:
           one: "1 período de planilla por pagar"
           other: "%{count} períodos de planilla por pagar"
+        over_budget:
+          one: "1 categoría pasó su presupuesto del mes por"
+          other: "%{count} categorías pasaron su presupuesto del mes por"
         members_without_wage:
           one: "1 empleado de una planilla por día sin salario: sus días no se pueden pagar"
           other: "%{count} empleados de planillas por día sin salario: sus días no se pueden pagar"
         go:
           uninvoiced: "Facturar"
           unpaid_invoices: "Ver facturas"
+          shipments_in_transit: "Ver salidas"
+          unsold_shipments: "Vender"
+          unpaid_sales: "Ver ventas"
           overdue_loans: "Ver préstamos"
           periods_to_pay: "Pagar"
           members_without_wage: "Asignar salario"
+          over_budget: "Ver presupuesto"
       activity:
         title: "Actividad reciente"
         open: "Abrir"
@@ -401,15 +482,22 @@ es:
           purchase: "Compra"
           producer: "Productor nuevo"
           invoice: "Factura"
+          shipment: "Salida de camión"
+          sale: "Venta"
           loan: "Préstamo"
           loan_payment: "Abono"
           payroll_payment: "Pago de planilla"
+          expense: "Gasto"
+          investment: "Inversión"
         details:
           purchase: "Compra %{number} · %{quintals} QQ · %{total}"
           invoice: "Factura %{number} · %{status} · %{total}"
+          shipment: "Salida %{number} · %{pounds} lb netas"
+          sale: "Venta %{number} · %{status} · %{total}"
           loan: "Préstamo %{number} · %{amount}"
           loan_payment: "Préstamo %{number} · %{amount}"
           payroll_payment: "%{farm} · %{amount}"
+          expense: "%{category} · %{amount}"
 
   addresses:
     title: "Dirección"
@@ -688,7 +776,7 @@ es:
         voided_notice: "Compra anulada el %{date} por %{name}. No cuenta en listas, totales ni facturación."
         invoiced_notice: "Esta compra ya está en la factura %{number} y no se puede modificar."
         hauled_by: "Carreada por %{name}"
-        hauler_commission: "Comisión: %{cans} latas × %{price} × %{percent} ="
+        hauler_commission: "Comisión: %{terms} ="
         hauler_paid_apart: "La paga el negocio aparte: no cambia lo que se le paga al productor."
         view_hauler: "Ver carrero"
         view_invoice: "Ver factura %{number}"
@@ -714,12 +802,15 @@ es:
         complete_farm: "Completar datos de la finca"
         new_hauler: "Nuevo carrero"
         hauler_help: "Si la trajo un carrero, gana su comisión por esta compra."
-        hauler_terms: "Comisión %{percent} · lata a %{price}"
+        hauler_terms: "%{price} por libra neta"
+        hauler_terms_by_cans: "Calculada por latas (antes del cambio): comisión %{percent} · lata a %{price}"
         hauler_commission: "Comisión del carrero"
         hauler_paid_apart: "La paga el negocio aparte: no cambia lo que se le paga al productor."
         calculation: "Cálculo"
         cancel: "Cancelar"
         weighings_help: "Anota cada pesada con su peso y los sacos contados. El peso bruto y los sacos son la suma; la tara es 1 lb por saco contado."
+        damage_types_help: "Con daño, elige uno o más tipos."
+        damage_types_missing: "Elige al menos un tipo de daño."
         add_weighing: "Agregar pesada"
         remove_weighing: "Quitar pesada"
         gross_from_weighings: "Suma de las pesadas: se cambia en las pesadas."
@@ -874,9 +965,11 @@ es:
       destroy:
         success: "Abono quitado."
     haulers:
+      terms_per_pound: "%{price} por libra neta"
+      terms_by_cans: "%{cans} latas × %{price} × %{percent}"
       index:
         title: "Carreros"
-        help: "Traen el café de los productores con los carros del negocio y ganan una comisión por compra: latas (libras netas ÷ %{pounds}) × precio de la lata × comisión. La paga el negocio, aparte del productor."
+        help: "Traen el café de los productores con los carros del negocio y ganan por compra: libras netas × su precio por libra. La paga el negocio, aparte del productor."
         new: "Nuevo carrero"
         search_placeholder: "Nombre, DNI o RTN"
         status: "Estado"
@@ -884,7 +977,6 @@ es:
           active: "Activos"
           inactive: "Desactivados"
         name: "Nombre"
-        terms: "%{percent} · lata a %{price}"
         commissions: "Comisiones"
         paid: "Pagado"
         balance: "Se le debe"
@@ -900,7 +992,7 @@ es:
           paid: "Pagado"
           balance: "Se le debe"
         record: "Ficha del carrero"
-        formula: "Comisión de cada compra = (libras netas ÷ %{pounds}) × precio de la lata × comisión. Cada compra guarda la comisión y el precio de su día."
+        formula: "Comisión de cada compra = libras netas × precio por libra. Cada compra guarda el precio de su día; las de antes del cambio conservan su cálculo por latas."
         payments: "Pagos"
         receipt: "Recibo"
         receipt_number: "Recibo %{number}"
@@ -910,9 +1002,7 @@ es:
         purchases: "Compras que carreó"
         tabs_label: "Secciones del carrero"
         net_weight: "Neto (lb)"
-        cans: "Latas"
         commission: "Comisión"
-        commission_line: "%{cans} latas × %{price} × %{percent} ="
         no_purchases: "No hay compras carreadas con esos filtros."
       new:
         title: "Nuevo carrero"
@@ -920,8 +1010,8 @@ es:
         title: "Editar carrero"
       form:
         commission: "Comisión"
-        commission_help: "Por cada compra que carree gana: latas (libras netas ÷ %{pounds}) × precio de la lata × comisión. Las dos son obligatorias."
-        changes_help: "Si las cambias, solo cuentan para las compras nuevas: cada compra guarda las de su día."
+        commission_help: "Por cada compra que carree gana: libras netas × su precio por libra. Es obligatorio."
+        changes_help: "Si lo cambias, solo cuenta para las compras nuevas: cada compra guarda el de su día."
         active: "Activo (se puede elegir en las compras nuevas)"
       create:
         success: "Carrero registrado."
@@ -989,6 +1079,1088 @@ es:
         balance: "Falta"
         actions: "Acciones"
 
+  sales:
+    nav:
+      home: "Resumen"
+      shipments: "Salidas"
+      sales: "Ventas"
+      stock: "Inventario"
+      daily_close: "Cierre diario"
+      buyers: "Compradores"
+      carriers: "Transportistas"
+      trucks: "Camiones"
+      new_shipment: "Nueva salida"
+    carriers:
+      index:
+        title: "Transportistas"
+        help: "Quienes llevan el café al comprador, con cuántas salidas han llevado."
+        new: "Nuevo transportista"
+        search_placeholder: "Nombre, RTN o contacto"
+        shipments: "Salidas"
+        shipments_count:
+          zero: "Sin salidas"
+          one: "1 salida"
+          other: "%{count} salidas"
+        empty: "No hay transportistas con esos filtros."
+      show:
+        edit: "Editar transportista"
+        record: "Ficha del transportista"
+      new:
+        title: "Nuevo transportista"
+      edit:
+        title: "Editar %{name}"
+      create:
+        success: "Transportista registrado."
+      update:
+        success: "Transportista actualizado."
+    trucks:
+      owners:
+        own: "Del negocio"
+        others: "De terceros"
+      index:
+        title: "Camiones"
+        help: "Los camiones que llevan el café al comprador: los del negocio y los de terceros."
+        new: "Nuevo camión"
+        search_placeholder: "Placa, marca o color"
+        owner: "De quién"
+        capacity: "%{quintals} QQ"
+        shipments: "Salidas"
+        empty: "No hay camiones con esos filtros."
+      form:
+        brand_model_placeholder: "Por ejemplo: Isuzu NPR"
+        own: "Es del negocio"
+      show:
+        edit: "Editar camión"
+        record: "Ficha del camión"
+      new:
+        title: "Nuevo camión"
+      edit:
+        title: "Editar %{plate}"
+      create:
+        success: "Camión registrado."
+      update:
+        success: "Camión actualizado."
+    stock:
+      title: "Café en inventario"
+      as_of: "Al %{date}"
+      total: "Todo el inventario"
+      pounds: "%{pounds} lb"
+      quintals: "%{quintals} QQ"
+      out_detail: "Fuera: %{in_transit} lb en camino · %{unsold} lb pesadas sin vender"
+      negative: "Hay más café en salidas que en compras para algún estado del café. Revisa que estén registradas todas las compras y que las salidas tengan el estado correcto."
+      help: "Libras netas: suben con cada compra (su peso neto) y bajan con cada salida de camión (su peso neto en la báscula local). Las anuladas no cuentan. QQ de 125 lb, como en las compras."
+    summary:
+      sales: "Ventas"
+      buyers: "Compradores"
+      net_weight: "Libras netas (comprador)"
+      quintals: "QQ de venta (120 lb)"
+      difference: "Diferencia de peso (lb)"
+      total: "Total vendido"
+      balance_due: "Por cobrar"
+      states_title: "Estado de cobro"
+      count:
+        zero: "Ninguna venta"
+        one: "1 venta"
+        other: "%{count} ventas"
+    difference:
+      over_tolerance: "Pasa la tolerancia"
+    lifecycle:
+      label: "Etapas de la salida"
+      next_badge: "Sigue"
+      stages:
+        shipped: "Salió el camión"
+        received: "Pesada en destino"
+        sold: "Vendida"
+        paid: "Cobrada"
+      hint:
+        shipped: "Cuando llegue al comprador, registra su peso en la báscula de destino."
+        received: "Ya tiene peso en destino: agrégala a una venta de su comprador."
+        sold: "La venta está por cobrar: registra los cobros del comprador."
+        paid: "La venta está cobrada."
+    home:
+      index:
+        whats_next: "Qué sigue"
+        whats_next_help: "La venta del café en cuatro pasos. Lo resaltado tiene trabajo pendiente."
+        today: "Hoy, %{date}"
+        over_tolerance:
+          one: "1 salida de esta temporada tiene una diferencia de peso mayor al %{tolerance} entre la báscula local y la del comprador."
+          other: "%{count} salidas de esta temporada tienen una diferencia de peso mayor al %{tolerance} entre la báscula local y la del comprador."
+        see_over_tolerance: "Ver esas salidas"
+        steps:
+          ship:
+            title: "Registrar salidas"
+            status_html:
+              zero: "Hoy no ha salido ningún camión."
+              one: "Hoy salió 1 camión con %{pounds} lb netas."
+              other: "Hoy salieron %{count} camiones con %{pounds} lb netas."
+            action: "Nueva salida"
+          receive:
+            title: "Pesar en destino"
+            status_html:
+              zero: "No hay camiones en camino."
+              one: "1 salida espera su peso en destino (%{pounds} lb al salir)."
+              other: "%{count} salidas esperan su peso en destino (%{pounds} lb al salir)."
+            action: "Ver salidas en camino"
+          sell:
+            title: "Vender"
+            status_html:
+              zero: "No hay salidas pesadas sin vender."
+              one: "1 salida pesada espera su venta (%{pounds} lb del comprador)."
+              other: "%{count} salidas pesadas esperan su venta (%{pounds} lb del comprador)."
+            action: "Nueva venta"
+          collect:
+            title: "Cobrar"
+            status_html:
+              zero: "No hay ventas por cobrar."
+              one: "1 venta por cobrar: faltan %{amount}."
+              other: "%{count} ventas por cobrar: faltan %{amount}."
+            action: "Ver ventas por cobrar"
+    shipments:
+      table:
+        number: "No."
+        sacks: "Sacos"
+        origin_net: "Neto local (lb)"
+        destination_net: "Neto comprador (lb)"
+        difference: "Diferencia"
+        status: "Estado"
+        actions: "Acciones"
+      index:
+        title: "Salidas de camiones"
+        help: "Cada camión que sale con café: su peso en la báscula local y, al llegar, en la del comprador."
+        new: "Nueva salida"
+        search_placeholder: "Comprador, número, remisión, nota de peso o transportista"
+        all_active: "Todas (sin anuladas)"
+        over_tolerance: "Solo con diferencia mayor al %{tolerance}"
+        over_tolerance_chip: "Fuera de tolerancia"
+        empty: "No hay salidas con estos filtros."
+        count:
+          zero: "Ninguna salida"
+          one: "1 salida"
+          other: "%{count} salidas"
+        totals:
+          sacks: "Sacos"
+          origin_net: "Neto local (lb)"
+          destination_net: "Neto comprador (lb)"
+          difference: "Diferencia de las pesadas en destino (lb)"
+      of_record:
+        title: "Sus salidas"
+        empty: "No hay salidas con esos filtros."
+      form:
+        new_buyer: "Nuevo comprador"
+        transport: "Transporte"
+        new_carrier: "Nuevo transportista"
+        new_truck: "Nuevo camión"
+        driver_typed: "Escribirlo abajo"
+        driver_name_placeholder: "Nombre del motorista"
+        driver_help: "Un chofer de la planilla interna, o escribe el nombre del motorista del transportista."
+        origin: "Báscula local"
+        origin_help: "El peso del camión antes de salir."
+        calculation: "Cálculo de la salida"
+        sacks_help: "Los sacos contados: se descuenta 1 lb por saco."
+        from_weighings: "Suma de las pesadas."
+        weighings_help: "Cada pesada con su peso y los sacos contados; el peso bruto y los sacos son la suma."
+        tare: "Tara (lb)"
+        net: "Peso neto (lb)"
+        quintals: "QQ (125 lb)"
+        formula: "Igual que en las compras: (bruto − 1 lb por saco) menos la humedad y el daño; en uva, por el rendimiento."
+        submit: "Registrar salida"
+        over_stock: "Sale más de lo que hay en inventario de este estado del café (%{stock} lb). Se puede guardar igual."
+      new:
+        title: "Nueva salida de camión"
+      edit:
+        title: "Editar la salida %{number}"
+      create:
+        success: "Salida %{number} registrada para %{buyer}."
+      update:
+        success: "Salida actualizada."
+      void:
+        success: "Salida anulada: su café vuelve al inventario."
+      show:
+        title: "Salida %{number}"
+        edit: "Editar"
+        void: "Anular"
+        confirm_void: "¿Anular esta salida? Su café vuelve al inventario. No se puede deshacer."
+        full_page: "Abrir en página completa"
+        receive: "Registrar peso en destino"
+        sell: "Vender"
+        see_sale: "Ver la venta"
+        voided: "Salida anulada el %{date} por %{name}. No cuenta en el inventario ni se puede vender."
+        origin: "Báscula local"
+        destination: "Báscula del comprador"
+        not_weighed: "Todavía no se ha pesado en destino."
+        weighings:
+          one: "Por pesadas: 1 pesada"
+          other: "Por pesadas: %{count} pesadas"
+        weighing: "Pesada %{number}"
+        weighing_sacks:
+          one: "1 saco"
+          other: "%{count} sacos"
+        gross: "Peso bruto (lb)"
+        sacks: "Sacos"
+        received_on: "Pesada el %{date}"
+        weight_note: "Nota de peso %{number}"
+        difference: "Diferencia entre básculas"
+        tolerance: "Se resalta si pasa del %{tolerance} (Configuración del sitio)."
+        no_tolerance: "Sin tolerancia configurada: un administrador la define en Configuración del sitio."
+        details: "Datos de la salida"
+    arrivals:
+      edit:
+        title: "Peso en destino · salida %{number}"
+        subtitle: "%{buyer} · %{state} · salió con %{net} lb netas"
+        weighing: "Báscula del comprador"
+        weighing_help: "Copia lo que dice la nota de peso del comprador. Empieza con los sacos, la humedad y el daño de la salida."
+        calculation: "Cálculo en destino"
+        difference: "Diferencia con la báscula local"
+        origin_net: "Neto local: %{net} lb"
+        submit: "Guardar peso en destino"
+      update:
+        success: "Peso en destino de la salida %{number} guardado."
+    sales:
+      voided: "Anulada"
+      statuses:
+        unpaid: "Por cobrar (pendiente o parcial)"
+        pending: "Pendiente de cobro"
+        partial: "Cobro parcial"
+        paid: "Cobrada"
+        voided: "Anuladas"
+      table:
+        number: "No."
+        net: "Neto (lb)"
+        quintals: "QQ (120 lb)"
+        price: "Precio"
+        difference: "Diferencia de peso"
+        balance: "Por cobrar"
+      index:
+        title: "Ventas"
+        new: "Nueva venta"
+        search_placeholder: "Comprador, número o documento del comprador"
+        all_active: "Todas (sin anuladas)"
+        empty: "No hay ventas con estos filtros."
+        count:
+          zero: "Ninguna venta"
+          one: "1 venta"
+          other: "%{count} ventas"
+      new:
+        title: "Nueva venta"
+        choose_buyer: "¿A qué comprador?"
+        ready:
+          one: "1 salida pesada · %{pounds} lb"
+          other: "%{count} salidas pesadas · %{pounds} lb"
+        nothing_to_sell: "No hay salidas pesadas en destino sin vender. Registra el peso en destino de una salida primero."
+        pick_shipments: "Salidas de %{buyer}"
+        all: "Todas"
+        none: "Ninguna"
+        received: "pesada el %{date}"
+        no_shipments: "Este comprador no tiene salidas pesadas sin vender."
+        document: "Documento del comprador"
+        document_help: "El número de la factura o comprobante que les dio el comprador."
+        price: "Precio"
+        count:
+          one: "1 salida elegida"
+          other: "%{count} salidas elegidas"
+        net: "Neto del comprador (lb)"
+        quintals: "QQ (120 lb)"
+        difference: "Diferencia con la báscula local"
+        mixed_states: "Elegiste salidas de dos estados del café: una venta lleva un solo estado. Haz una venta por cada uno."
+        payment: "Cobro"
+        advance_amount: "Descontar de anticipos (L)"
+        advance_help: "El comprador tiene %{balance} en anticipos. Lo que escribas se descuenta como un cobro «con anticipo», sin mover dinero; lo que quede se cobra como elijas abajo."
+        amount: "Monto cobrado ahora"
+        submit: "Registrar venta"
+        choices:
+          pending: "A crédito (se cobra después)"
+          partial: "Cobro parcial ahora"
+          paid: "De contado (cobrada completa)"
+      create:
+        success: "Venta %{number} registrada."
+      void:
+        success: "Venta anulada: sus salidas quedan libres para otra venta."
+      show:
+        title: "Venta %{number}"
+        print: "Imprimir"
+        original: "ORIGINAL"
+        copy: "COPIA"
+        new_payment: "Registrar cobro"
+        voided: "Venta anulada el %{date} por %{name}."
+        void_reason: " Motivo: %{reason}"
+        over_tolerance: "La diferencia de peso de esta venta pasa la tolerancia del %{tolerance}:"
+        void: "Anular venta"
+        void_help: "Solo se anula una venta sin cobros. Sus salidas quedan libres para venderlas a otro comprador o en otra venta; si el café regresó, anula también la salida."
+        confirm_void: "¿Anular esta venta? No se puede deshacer."
+      payments:
+        title: "Cobros"
+        total: "Total"
+        paid_total: "Cobrado"
+        balance_due: "Por cobrar"
+        number: "Recibo"
+        receipt: "Recibo"
+        destroy: "Quitar"
+        confirm_destroy: "¿Quitar este cobro? La venta vuelve a quedar por cobrar."
+        none: "Todavía no hay cobros."
+      receipt:
+        title: "Nota de venta"
+        shipment: "Salida"
+        amount: "Monto"
+        charged: "Cobrado sobre %{pounds} lb del comprador (%{quintals} QQ de 120 lb)"
+        payment: "Cobro %{number} · %{date} · %{method}"
+        balance_due: "Por cobrar"
+        buyer_signature: "Firma del comprador"
+        seller_signature: "Firma por el negocio"
+        issued_by: "Registró: %{name}"
+    buyer_advances:
+      new:
+        title: "Registrar anticipo"
+        help: "Dinero que adelanta el comprador y se le paga con café, sin intereses."
+        document_placeholder: "Cheque, transferencia o comprobante del comprador"
+        submit: "Registrar anticipo"
+      create:
+        success: "Anticipo registrado."
+      destroy:
+        success: "Anticipo quitado."
+      show:
+        title: "Recibo de anticipo %{number}"
+        print: "Imprimir"
+        original: "ORIGINAL"
+        copy: "COPIA"
+        back: "Volver al comprador"
+      receipt:
+        title: "Recibo de anticipo"
+        amount: "Recibimos"
+        concept: "Anticipo del comprador, a pagar con café, sin intereses."
+        giver_signature: "Entregó (comprador)"
+        receiver_signature: "Recibió"
+        registered_by: "Registró: %{name}"
+    sale_payments:
+      new:
+        advance_option: "Con anticipo (saldo %{balance})"
+        title: "Registrar cobro"
+        sale: "Venta %{number} · %{buyer}"
+        amount_help: "Empieza con lo que falta por cobrar."
+        submit: "Guardar cobro"
+      create:
+        success: "Cobro registrado."
+      destroy:
+        success: "Cobro quitado."
+      show:
+        title: "Recibo de cobro %{number}"
+        print: "Imprimir"
+        back: "Volver a la venta"
+      receipt:
+        title: "Recibo de cobro"
+        sale: "Venta"
+        amount: "Monto recibido"
+        paid_until: "Cobrado hasta este recibo"
+        balance_after: "Queda por cobrar"
+        payer_signature: "Firma del comprador"
+        receiver_signature: "Recibí conforme"
+    buyers:
+      index:
+        title: "Compradores"
+        help: "Exportadoras, beneficios y otros compradores del café."
+        new: "Nuevo comprador"
+        search_placeholder: "Nombre, RTN o contacto"
+        status: "Estado"
+        statuses:
+          active: "Activos"
+          inactive: "Inactivos"
+        shipped: "Enviado (lb)"
+        sold: "Vendido"
+        balance: "Por cobrar"
+        empty: "No hay compradores con estos filtros."
+      new:
+        title: "Nuevo comprador"
+      edit:
+        title: "Editar %{name}"
+      create:
+        success: "Comprador registrado."
+      update:
+        success: "Comprador actualizado."
+      show:
+        new_shipment: "Nueva salida"
+        new_sale: "Nueva venta"
+        edit: "Editar"
+        full_page: "Abrir en página completa"
+        record: "Ficha"
+        figures:
+          shipped: "Enviado (neto local)"
+          in_transit: "Salidas en camino"
+          sold: "Vendido"
+          collected: "Cobrado"
+          balance_due: "Por cobrar"
+          advance_balance: "Anticipos por pagar con café"
+        tabs:
+          label: "Secciones del comprador"
+          sales: "Ventas"
+          shipments: "Salidas"
+          payments: "Cobros"
+          advances: "Anticipos"
+        new_advance: "Registrar anticipo"
+        advances_help: "Lo que el comprador adelantó (entró a la cuenta) y lo que se ha descontado de sus ventas «con anticipo», sin intereses."
+        advance_number: "Recibo"
+        remove_advance: "Quitar"
+        confirm_remove_advance: "¿Quitar este anticipo? Deja de contar en la cuenta donde entró y en el saldo del comprador."
+        no_advances: "No ha dado anticipos."
+        taken_title: "Descontado de ventas"
+        no_sales: "No hay ventas con estos filtros."
+        no_shipments: "No hay salidas con estos filtros."
+        no_payments: "Todavía no hay cobros."
+    stocks:
+      show:
+        title: "Inventario"
+        ledger: "Movimientos del inventario"
+        ledger_help: "Cada compra que entró y cada salida que se fue, con el saldo después de cada una."
+        balance: "Saldo (lb)"
+        empty: "No hay movimientos en estas fechas."
+        count:
+          zero: "Ningún movimiento"
+          one: "1 movimiento"
+          other: "%{count} movimientos"
+        totals:
+          opening: "Saldo al empezar (lb)"
+          pounds_in: "Entró (lb)"
+          pounds_out: "Salió (lb)"
+          closing: "Saldo al terminar (lb)"
+        columns:
+          at: "Fecha"
+          kind: "Movimiento"
+          who: "Productor o salida"
+          pounds_in: "Entra (lb)"
+          pounds_out: "Sale (lb)"
+        kinds:
+          purchase: "Compra"
+          shipment: "Salida"
+    daily_closes:
+      show:
+        title: "Cierre de comercialización del %{date}"
+        date: "Fecha del cierre"
+        print: "Imprimir"
+        figures:
+          departed: "Camiones que salieron"
+          departed_net: "Neto que salió (lb)"
+          received: "Pesados en destino"
+          received_net: "Neto del comprador (lb)"
+          received_difference: "Diferencia en destino (lb)"
+          sold: "Vendido"
+          collected: "Cobrado"
+        departed_title:
+          zero: "Salidas del día"
+          one: "Salidas del día (1)"
+          other: "Salidas del día (%{count})"
+        departed_empty: "Ese día no salió ningún camión."
+        received_title:
+          zero: "Pesadas en destino ese día"
+          one: "Pesadas en destino ese día (1)"
+          other: "Pesadas en destino ese día (%{count})"
+        received_empty: "Ese día no se pesó ninguna salida en destino."
+        sales_title:
+          zero: "Ventas del día"
+          one: "Ventas del día (1)"
+          other: "Ventas del día (%{count})"
+        sales_empty: "Ese día no hubo ventas."
+        payments_title:
+          zero: "Cobros del día"
+          one: "Cobros del día (1)"
+          other: "Cobros del día (%{count})"
+        payments_empty: "Ese día no hubo cobros."
+      report:
+        title: "Cierre de comercialización"
+        stock:
+          purchased: "Comprado (lb)"
+          shipped: "Salió (lb)"
+          stock: "En inventario (lb)"
+          quintals: "QQ"
+          in_transit: "En camino (lb)"
+          unsold: "Sin vender (lb)"
+  finance:
+    nav:
+      home: "Resumen"
+      movements: "Movimientos"
+      incomes: "Ingresos"
+      expenses: "Gastos"
+      investments: "Inversiones"
+      accounts: "Cuentas"
+      consolidation: "Consolidación"
+      budget: "Presupuesto"
+      staff: "Planilla"
+      categories: "Categorías"
+      new_expense: "Nuevo gasto"
+    home:
+      index:
+        no_accounts: "Todavía no hay cuentas. Registra la caja y los bancos para llevar sus saldos."
+        new_account: "Nueva cuenta"
+        staff_due:
+          one: "1 período de la planilla interna ya llegó a su día de pago."
+          other: "%{count} períodos de la planilla interna ya llegaron a su día de pago."
+        without_account:
+          one: "1 movimiento de este mes no tiene cuenta: no cuenta en ningún saldo."
+          other: "%{count} movimientos de este mes no tienen cuenta: no cuentan en ningún saldo."
+        over_budget: "%{category} pasó su presupuesto del mes: %{spent} de %{budget}."
+        see: "Ver"
+        consolidate: "Asignarles cuenta"
+        accounts: "Dónde está el dinero"
+        transfer: "Transferir entre cuentas"
+        income: "Otro ingreso"
+        total_balance: "Saldo de todas las cuentas"
+        as_of: "Al %{date}"
+        month: "Este mes (%{month})"
+        out: "Salió"
+        in: "Entró"
+        net: "Diferencia"
+        against_last: "%{change} contra los mismos días del mes pasado (%{amount})"
+        expenses_and_investments: "Gastos e inversiones"
+        by_source: "Por dónde salió"
+        by_source_help: "Todas las salidas del mes, por módulo y tipo de pago."
+        by_category: "Por categoría"
+        by_category_help: "Gastos e inversiones del mes, y gastos de planilla, por categoría."
+        budget: "Presupuesto del mes"
+        see_budget: "Ver el presupuesto"
+        no_budget: "sin presupuesto"
+        no_budget_yet: "Todavía no hay presupuesto ni gastos este mes."
+        percent_used: "%{percent} % usado"
+        latest: "Últimos movimientos"
+        see_movements: "Ver todos"
+        nothing: "Nada en este período."
+    movements:
+      open: "Abrir"
+      remove: "Quitar"
+      confirm_remove: "¿Quitar este movimiento? Cambia el saldo de su cuenta."
+      balance: "Saldo"
+      columns:
+        date: "Fecha y hora"
+        source: "Origen"
+        description: "Detalle"
+        person: "Persona o beneficiario"
+        category: "Categoría"
+        account: "Cuenta"
+        amount_in: "Entró"
+        amount_out: "Salió"
+      index:
+        title: "Movimientos de dinero"
+        help: "Cada peso que entró o salió, de todos los módulos, registrado una sola vez donde ocurrió. Las transferencias entre cuentas salen al elegir una cuenta."
+        search_placeholder: "Detalle, persona o categoría"
+        all_accounts: "Todas"
+        opening: "Saldo al empezar"
+        in: "Entró"
+        out: "Salió"
+        net: "Diferencia"
+        closing: "Saldo al terminar"
+        empty: "No hay movimientos con estos filtros."
+        count:
+          zero: "Ningún movimiento"
+          one: "1 movimiento"
+          other: "%{count} movimientos"
+    staff_members:
+      own_salary: "propio"
+      statuses:
+        active: "Activos"
+        inactive: "Desactivados"
+      period_status:
+        paid: "Pagado"
+        due: "Por pagar"
+        running: "En curso"
+      index:
+        title: "Planilla interna"
+        help: "Los empleados del negocio: cada uno en un rol con su salario por período. Al pagar un período se suman horas extra y bonos, y se restan sus anticipos."
+        new: "Nuevo empleado"
+        roles: "Roles"
+        sheet: "Hoja de planilla"
+        search_placeholder: "Nombre, DNI o RTN"
+        status: "Estado"
+        name: "Nombre"
+        next_period: "Período por pagar"
+        pay: "Pagar"
+        open: "Abrir"
+        empty: "No hay empleados con esos filtros."
+        due_title: "Períodos por pagar"
+        figures:
+          members: "Empleados activos"
+          due: "Períodos por pagar"
+          due_amount: "A pagar (sin bonos)"
+          advances: "Anticipos sin descontar"
+      show:
+        pay: "Pagar %{period}"
+        pay_short: "Pagar"
+        no_salary: "El rol %{role} todavía no tiene salario ni frecuencia de pago: llénalos para poder pagarle."
+        fill_salary: "Poner el salario"
+        new_advance: "Dar anticipo"
+        new_goal: "Poner meta"
+        edit: "Editar empleado"
+        record: "Ficha del empleado"
+        tabs_label: "Secciones del empleado"
+        tabs:
+          periods: "Períodos"
+          payments: "Pagos"
+          advances: "Anticipos"
+          goals: "Metas"
+        figures:
+          next: "Período %{period}"
+          next_none: "Sin período por pagar"
+          advances: "Anticipos sin descontar"
+          paid: "Pagado en total"
+        paid_line: "Pagado: %{amount} el %{date}"
+        estimate_line: "%{days} días trabajados · a pagar hoy: %{amount} (sin bonos)"
+        receipt: "Recibo"
+        remove: "Quitar"
+        no_periods: "Todavía no empieza su primer período."
+        no_payments: "Todavía no se le ha pagado."
+        no_advances: "No tiene anticipos."
+        no_goals: "No tiene metas."
+        columns:
+          number: "Recibo"
+          period: "Período"
+        advance_status:
+          pending: "Por descontar"
+          taken_off: "Descontado"
+        goal_status:
+          pending: "Por revisar"
+          met: "Cumplida"
+          missed: "No cumplida"
+        goal_line: "Bono %{bonus} · %{period}"
+        confirm_remove_payment: "¿Quitar este pago? Sus anticipos y metas vuelven a quedar pendientes."
+        confirm_remove_advance: "¿Quitar este anticipo?"
+        confirm_remove_goal: "¿Quitar esta meta?"
+      form:
+        person_placeholder: "Escribe el nombre, DNI o RTN"
+        person_missing: "Elige al empleado de la lista"
+        person_help: "Una persona con el rol de colaborador."
+        new_person: "¿No está? Registrar persona"
+        pick_role: "Selecciona un rol"
+        role_help: "El rol dice su salario, cada cuánto se le paga y el valor de su hora extra."
+        salary_override_placeholder: "El del rol"
+        salary_override_help: "Opcional, mensual: si gana distinto que su rol (por ejemplo, un chofer 7,000 y otro 15,000). Manda sobre el salario del rol; la frecuencia y la hora extra siguen siendo las del rol."
+        new_role: "Nuevo rol"
+        ends_on_help: "Opcional: el último día que trabajó."
+        active: "Activo (sale en la planilla)"
+      new:
+        title: "Nuevo empleado"
+      edit:
+        title: "Editar empleado"
+      create:
+        success: "Empleado agregado a la planilla."
+      update:
+        success: "Empleado actualizado."
+      destroy:
+        success: "Empleado quitado de la planilla."
+    staff_sheets:
+      show:
+        title: "Hoja de planilla"
+        help: "Como el Excel: la asistencia de cada empleado, sus días, lo devengado (salario mensual ÷ 30 × días), los anticipos y el total; por quincena, por mes o acumulado."
+        print: "Imprimir"
+        employees: "Empleados"
+        views_label: "Vistas de la hoja"
+        views:
+          fortnight: "Quincena"
+          month: "Mes"
+          history: "Acumulado"
+        halves:
+          "1": "1ª quincena (1–15)"
+          "2": "2ª quincena (16–fin)"
+        subtitle:
+          fortnight: "%{fortnight} de %{month}"
+          month: "Mes de %{month}"
+        fortnight: "Quincena"
+        month: "Mes"
+        season: "Temporada"
+        previous: "Anterior"
+        next: "Siguiente"
+        empty: "No hay empleados trabajando en estas fechas."
+      fortnight:
+        employee: "Empleado"
+        fill_row: "Toda la quincena"
+        days: "Días"
+        earned: "Devengado"
+        advances: "Anticipos"
+        total: "Total"
+        signature_or_state: "Estado / firma"
+        totals: "Totales"
+        mark_all: "Marcar a todos para pagar"
+        pay_member: "Pagar a %{name}"
+        pay_help:
+          one: "1 empleado tiene su quincena por pagar. Márcalo en la última columna y págale aquí, o ábrelo para pagarle con horas extra o bonos."
+          other: "%{count} empleados tienen su quincena por pagar. Marca a quienes vas a pagar (última columna) y págales juntos con la misma fecha, forma de pago y cuenta; para horas extra o bonos, paga a cada uno desde su estado."
+        pay: "Pagar a los marcados"
+        confirm_pay: "¿Pagar la quincena a los empleados marcados? Sale de la cuenta elegida."
+        save: "Guardar asistencia"
+        rule: "Días: una quincena trabajada completa cuenta 15, aunque tenga 16 o 13 días; si faltó, cuentan los días marcados (medio día = ½), sin pasar de 15. Devengado = salario mensual ÷ 30 × días. Total = devengado − anticipos (sin horas extra ni bonos, que se ponen al pagar)."
+        status:
+          paid: "Pagado"
+          due: "Por pagar"
+          running: "En curso"
+          other_period: "Otro período"
+      month:
+        employee: "Empleado"
+        open_fortnight: "Abrir la quincena"
+        first_days: "Días 1ª"
+        second_days: "Días 2ª"
+        days: "Días"
+        earned: "Devengado"
+        advances: "Anticipos"
+        total: "Total del mes"
+        paid: "Pagado"
+        pending: "Falta"
+        totals: "Totales"
+        help: "La asistencia se marca en cada quincena (toca un día del encabezado). «Pagado» es lo que ganaron los períodos ya pagados de este mes (lo entregado más los anticipos descontados), sin horas extra ni bonos aparte."
+      history:
+        employee: "Empleado"
+        paid_now: "Pagado %{month}"
+        pending_now: "Por pagar (estimado)"
+        month_total: "Total del mes"
+        season_total: "Pagado en la temporada"
+        totals: "Totales"
+        help: "Cada mes: lo que ganaron sus períodos ya pagados (lo entregado más los anticipos descontados). Mes actual: lo pagado más los anticipos ya entregados, y lo que falta pagar como si trabajara los días que quedan."
+      update:
+        success: "Asistencia guardada."
+      pay:
+        success:
+          zero: "No se pagó a nadie."
+          one: "Se pagó la quincena a 1 empleado."
+          other: "Se pagó la quincena a %{count} empleados."
+        failed: "No se pudo pagar: %{list}"
+    staff_roles:
+      salary_per: "%{amount} al mes · pago %{frequency}"
+      no_salary: "Sin salario"
+      index:
+        title: "Roles de la planilla"
+        help: "Cada rol con su salario por período, cada cuánto se paga y el valor de su hora extra."
+        new: "Nuevo rol"
+        search_placeholder: "Nombre del rol"
+        members_column: "Empleados"
+        members:
+          one: "1 empleado"
+          other: "%{count} empleados"
+        edit: "Editar"
+        empty: "No hay roles con esos filtros."
+      form:
+        name_placeholder: "Por ejemplo: Contador, Bodeguero, Chofer"
+        salary_help: "Mensual. Cada período paga salario ÷ 30 × los días trabajados (una quincena completa cuenta 15)."
+        salary_later_help: "Se puede dejar vacío por ahora (junto con la frecuencia): nadie de este rol se paga hasta llenarlo."
+        no_frequency: "Sin frecuencia asignada"
+        frequency_help: "Semanal (cierra el sábado), quincenal (1–15 y 16–fin de mes) o mensual."
+        overtime_help: "Opcional. Sin este valor no se anotan horas extra."
+        changes_help: "Si lo cambias, cuenta para los períodos que faltan por pagar: los pagados se quedan como se pagaron."
+        active: "Activo (se puede elegir para un empleado)"
+      new:
+        title: "Nuevo rol"
+      edit:
+        title: "Editar rol"
+        remove: "Quitar el rol"
+        confirm_remove: "¿Quitar este rol? Nadie lo ha usado todavía."
+      create:
+        success: "Rol registrado."
+      update:
+        success: "Rol actualizado."
+      destroy:
+        success: "Rol quitado."
+    staff_advances:
+      new:
+        title: "Dar anticipo"
+        help: "Se resta completo del pago del período en que se da."
+        submit: "Registrar anticipo"
+      create:
+        success: "Anticipo registrado."
+      destroy:
+        success: "Anticipo quitado."
+    staff_goals:
+      new:
+        title: "Poner meta"
+        help: "Al pagar el período se marca si la cumplió; si la cumplió, el bono se suma."
+        description_placeholder: "Por ejemplo: ordenar la bodega antes del viernes"
+        submit: "Poner meta"
+      create:
+        success: "Meta registrada."
+      destroy:
+        success: "Meta quitada."
+    staff_payments:
+      new:
+        title: "Pagar período"
+        nothing_to_pay: "No hay período por pagar: todavía no empieza o ya se pagó."
+        no_salary: "El rol %{role} todavía no tiene salario: ponlo en «Editar rol» para poder pagar."
+        earned: "Lo ganado"
+        salary_help: "(salario del rol)"
+        own_salary_help: "(su salario propio)"
+        days_formula: "%{salary} al mes ÷ 30 × %{days} días"
+        see_attendance: "Ver o cambiar la asistencia"
+        overtime_help: "Cada hora a %{rate}."
+        no_overtime_rate: "El rol no tiene valor de la hora extra: defínelo en el rol para anotar horas."
+        goals: "Metas y bonos"
+        goals_help: "Marca las metas que cumplió: su bono se suma."
+        no_goals: "No tiene metas para este período."
+        extra_bonus_placeholder: "Por qué se le da"
+        advances: "Anticipos del período"
+        advances_help: "Se restan completos."
+        no_advances: "No tiene anticipos en este período."
+        negative: "Los anticipos pasan de lo ganado: no se puede pagar así."
+        submit: "Pagar"
+        totals:
+          salary: "Salario"
+          overtime: "Horas extra"
+          bonuses: "Bonos"
+          gross: "Total ganado"
+          advances: "Anticipos"
+          net: "Se le entrega"
+      create:
+        success: "Período pagado."
+        nothing_to_pay: "No hay período por pagar: todavía no empieza o ya se pagó."
+      show:
+        title: "Recibo %{number} de planilla interna"
+        print: "Imprimir"
+        original: "ORIGINAL"
+        copy: "COPIA"
+        back: "Volver al empleado"
+      destroy:
+        success: "Pago quitado: sus anticipos y metas vuelven a quedar pendientes."
+      receipt:
+        title: "Recibo de pago de planilla"
+        employee: "Empleado"
+        period: "Período"
+        overtime: "Horas extra: %{hours} × %{rate}"
+        goal: "Bono por meta: %{description}"
+        extra_bonus: "Bono: %{reason}"
+        advance: "Anticipo del %{date}"
+        net: "Se le entrega"
+        receiver_signature: "Recibí conforme"
+        payer_signature: "Entregó"
+        registered_by: "Registró: %{name}"
+    incomes:
+      index:
+        title: "Ingresos"
+        help: "Todo el dinero que entró: cobros de ventas de café, abonos a préstamos y otros ingresos (aporte del dueño, préstamo del banco…). Las transferencias entre cuentas no son ingresos."
+        new: "Registrar ingreso"
+        search_placeholder: "Detalle o persona"
+        total: "Total ingresado"
+        person: "Quién pagó"
+        amount: "Monto"
+        empty: "No hay ingresos con estos filtros."
+        count:
+          zero: "Ningún ingreso"
+          one: "1 ingreso"
+          other: "%{count} ingresos"
+    expenses:
+      form:
+        description_placeholder:
+          expense: "Por ejemplo: diésel del camión"
+          investment: "Por ejemplo: báscula de 500 lb"
+        payee_placeholder: "A quién se le pagó"
+        new_category: "Nueva categoría"
+        receipt_help: "Opcional: foto (JPG, PNG o WebP) o PDF del comprobante, hasta %{size}."
+        remove_receipt: "Quitar el comprobante"
+        submit:
+          expense: "Registrar gasto"
+          investment: "Registrar inversión"
+      index:
+        title:
+          expense: "Gastos"
+          investment: "Inversiones"
+        help:
+          expense: "Los gastos del día a día del negocio, con su categoría, cuenta y comprobante."
+          investment: "Lo que se compra para quedarse: vehículos, básculas, terreno, maquinaria."
+        new:
+          expense: "Nuevo gasto"
+          investment: "Nueva inversión"
+        search_placeholder: "Detalle, beneficiario o comprobante"
+        total: "Total"
+        with_receipt: "Comprobante"
+        empty:
+          expense: "No hay gastos con estos filtros."
+          investment: "No hay inversiones con estos filtros."
+        count:
+          expense:
+            zero: "Ningún gasto"
+            one: "1 gasto"
+            other: "%{count} gastos"
+          investment:
+            zero: "Ninguna inversión"
+            one: "1 inversión"
+            other: "%{count} inversiones"
+      new:
+        title:
+          expense: "Nuevo gasto"
+          investment: "Nueva inversión"
+      edit:
+        title:
+          expense: "Editar gasto"
+          investment: "Editar inversión"
+      create:
+        success:
+          expense: "Gasto registrado."
+          investment: "Inversión registrada."
+      update:
+        success: "Cambios guardados."
+      destroy:
+        success: "Registro borrado."
+      show:
+        edit: "Editar"
+        destroy: "Borrar"
+        confirm_destroy: "¿Borrar este registro? Su cuenta vuelve a tener ese dinero."
+        full_page: "Abrir en página completa"
+        details: "Datos"
+        receipt: "Comprobante"
+        receipt_alt: "Comprobante de %{description}"
+        pdf_fallback: "El navegador no muestra el PDF aquí: ábrelo con el botón."
+        open_receipt: "Abrir el comprobante"
+        no_receipt: "Sin comprobante adjunto."
+    expense_receipts:
+      audit_label: "Comprobante de %{expense}"
+    money_accounts:
+      form:
+        name_placeholder: "Por ejemplo: Caja de la bodega, Banco Atlántida"
+        opening_help: "El saldo con que empieza la cuenta en el sistema, a esa fecha."
+        default_for_help: "Al registrar un pago con esa forma, se sugiere esta cuenta."
+        pick_bank: "Selecciona el banco"
+        other_bank: "Otro banco (escribirlo)"
+        bank_name: "Nombre del banco"
+        bank_name_placeholder: "Por ejemplo: Banpaís, Davivienda, Lafise"
+      index:
+        title: "Cuentas"
+        help: "La caja y los bancos del negocio, con su saldo de hoy."
+        new: "Nueva cuenta"
+        open: "Abrir"
+        search_placeholder: "Nombre, banco o número"
+        status: "Estado"
+        statuses:
+          active: "Activas"
+          inactive: "Inactivas"
+        balance: "Saldo de hoy"
+        empty: "No hay cuentas con estos filtros."
+        unassigned: "Registrado sin cuenta (no cuenta en ningún saldo): entró %{in} y salió %{out}."
+        see_unassigned: "Asignarles cuenta en Consolidación"
+      card:
+        balance: "Saldo de hoy"
+        cash: "Dinero en efectivo"
+        cash_label: "Caja · Efectivo"
+        currency: "Lempiras"
+        open: "Abrir %{name}, saldo %{balance}"
+      new:
+        title: "Nueva cuenta"
+      edit:
+        title: "Editar %{name}"
+      create:
+        success: "Cuenta registrada."
+      update:
+        success: "Cuenta actualizada."
+      show:
+        income: "Otro ingreso"
+        transfer: "Transferir"
+        edit: "Editar"
+        print: "Imprimir estado de cuenta"
+        statement: "Estado de cuenta"
+        balance_today: "Saldo de hoy"
+        since: "desde el %{date}"
+        month_in: "Entró este mes"
+        month_out: "Salió este mes"
+        details: "Datos de la cuenta"
+        "yes": "Sí"
+        "no": "No"
+        movements: "Movimientos de la cuenta"
+    account_transfers:
+      new:
+        title: "Transferir entre cuentas"
+        help: "El dinero sale de una cuenta y entra a la otra: no es gasto ni ingreso del negocio."
+        submit: "Registrar transferencia"
+      create:
+        success: "Transferencia registrada."
+      destroy:
+        success: "Transferencia quitada."
+    other_incomes:
+      new:
+        title: "Otro ingreso"
+        help: "Dinero que entra fuera de los módulos: aporte del dueño, préstamo del banco, venta de algo que no es café…"
+        concept_placeholder: "Por ejemplo: aporte del dueño"
+        submit: "Registrar ingreso"
+      create:
+        success: "Ingreso registrado."
+      destroy:
+        success: "Ingreso quitado."
+    categories:
+      form:
+        no_parent: "Ninguna: es de primer nivel"
+        parent_help: "Para una subcategoría (Transporte › Combustible), elige su categoría de primer nivel. El presupuesto va por el primer nivel."
+      index:
+        title: "Categorías"
+        help: "Cómo se clasifican los gastos y las inversiones, en dos niveles. Se desactivan; no se borran."
+        new: "Nueva categoría"
+        search_placeholder: "Nombre de la categoría"
+        status: "Estado"
+        statuses:
+          active: "Activas"
+          inactive: "Inactivas"
+        group: "Categoría"
+        first_level: "(primer nivel)"
+        add_child: "Agregar subcategoría"
+        edit: "Editar"
+        empty: "No hay categorías con estos filtros."
+      new:
+        title: "Nueva categoría"
+      edit:
+        title: "Editar %{name}"
+      create:
+        success: "Categoría registrada."
+      update:
+        success: "Categoría actualizada."
+    consolidations:
+      show:
+        title: "Consolidación"
+        help: "Los pagos y cobros de los módulos que se registraron sin cuenta. Asígnales una para que los saldos de las cuentas estén completos."
+        search_placeholder: "Detalle o persona"
+        count:
+          zero: "Ningún movimiento sin cuenta"
+          one: "1 movimiento sin cuenta"
+          other: "%{count} movimientos sin cuenta"
+        marked:
+          zero: "Ninguno marcado"
+          one: "1 marcado"
+          other: "%{count} marcados"
+        mark_all: "Marcar todos"
+        account: "Cuenta"
+        assign: "Asignar a los marcados"
+        confirm: "¿Aplicar la cuenta y la categoría elegidas a los movimientos marcados? La cuenta cambia su saldo."
+        by_method: "Asignar la cuenta de su forma de pago"
+        by_method_help: "Con «la cuenta de su forma de pago», cada movimiento marcado toma la cuenta que se sugiere para su forma de pago (Cuentas → «Se sugiere para»); los que no tienen forma de pago (planillas) esperan."
+        payment_method: "Forma de pago"
+        category: "Categoría"
+        no_category: "No lleva"
+        keep_account: "Sin cambiar la cuenta"
+        keep_category: "Sin cambiar la categoría"
+        category_help: "La categoría solo se cambia en lo que la lleva (los gastos de planilla); al resto no se le toca."
+        amount_min: "Monto desde (L)"
+        amount_max: "Monto hasta (L)"
+        chips:
+          amount_min: "Desde L %{amount}"
+          amount_max: "Hasta L %{amount}"
+        empty: "No hay movimientos sin cuenta con estos filtros. ¡Todo consolidado!"
+      update:
+        pick_account: "Elige la cuenta o la categoría que les vas a asignar."
+        success:
+          zero: "No se asignó ninguna cuenta."
+          one: "Se asignó la cuenta a 1 movimiento."
+          other: "Se asignó la cuenta a %{count} movimientos."
+        skipped:
+          one: "1 movimiento sin cuenta sugerida quedó pendiente."
+          other: "%{count} movimientos sin cuenta sugerida quedaron pendientes."
+        categorized:
+          zero: "No se cambió ninguna categoría."
+          one: "1 movimiento quedó en la categoría %{category}."
+          other: "%{count} movimientos quedaron en la categoría %{category}."
+        uncategorized:
+          one: "1 marcado no lleva categoría: quedó igual."
+          other: "%{count} marcados no llevan categoría: quedaron igual."
+    budgets:
+      show:
+        title: "Presupuesto"
+        help: "Cuánto se piensa gastar por categoría cada mes de la temporada, y debajo lo gastado (gastos e inversiones de la categoría y sus subcategorías)."
+        season: "Temporada"
+        kinds:
+          expense: "Gastos"
+          investment: "Inversiones"
+        category: "Categoría"
+        total: "Total"
+        cell: "Presupuesto de %{category} en %{month}"
+        spent: "Gastado %{amount}"
+        no_categories: "Todavía no hay categorías de primer nivel de este tipo."
+        submit: "Guardar presupuesto"
+        submit_help: "Una casilla vacía quita el presupuesto de ese mes."
+      update:
+        success: "Presupuesto guardado."
   loans:
     document_prints:
       new:
@@ -1076,6 +2248,7 @@ es:
         new_payment: "Registrar abono"
         credit_account: "Estado de cuenta"
         frozen_notice: "Este préstamo ya tiene abonos: no se puede editar ni borrar."
+        interest_grace: "Tipo intermediario: los primeros %{days} días sin interés (corre desde el %{date})"
         principal: "Capital (efectivo + insumos)"
         supplies: "Insumos prestados"
         supplies_amount: "Valor de los insumos"
@@ -1096,11 +2269,13 @@ es:
       edit:
         title: "Editar préstamo"
       form:
+        account_help: "De dónde salió el efectivo (Control financiero). Sin efectivo, no lleva cuenta."
         person_placeholder: "Escribe para buscar una persona"
         person_missing: "Selecciona una persona de la lista"
         new_person: "¿No está? Registrar persona"
         borrower_card: "Ficha de la persona elegida"
         rate_help: "Porcentaje por mes. El interés corre por día (mes de 30 días) sobre el capital pendiente."
+        interest_grace: "Préstamo tipo intermediario: los primeros %{days} días no generan interés"
         term_days: "Plazo (días)"
         term_days_help: "Escribe los días y se llena la fecha límite, o elige la fecha y aquí salen los días."
         what_is_lent: "Qué se presta"
@@ -1895,6 +3070,11 @@ es:
       direction: "Entrada o salida"
       source: "Origen"
       text_placeholder: "Persona o descripción"
+      buyer: "Comprador"
+      shipment_placeholder: "Comprador, remisión o nota de peso"
+      over_tolerance: "Solo con diferencia mayor al %{tolerance}"
+      collection_status: "Estado de cobro"
+      stock_kind: "Movimiento"
     groups:
       day: "Día"
       week: "Semana"
@@ -1920,6 +3100,10 @@ es:
       source: "Origen"
       direction: "Entrada o salida"
       owner_kind: "Dueño"
+      buyer: "Comprador"
+      account_id: "Cuenta"
+      subcategory: "Subcategoría"
+      payee: "Beneficiario"
       department: "Departamento"
     series:
       count: "Cantidad"
@@ -1952,6 +3136,13 @@ es:
       balance: "Saldo acumulado (L)"
       lent: "Prestado (L)"
       paid_to_them: "Les pagamos (L)"
+      origin_net: "Neto local (lb)"
+      destination_net: "Neto del comprador (lb)"
+      difference_percent: "Diferencia (%)"
+      price_per_quintal: "Precio promedio por QQ (L)"
+      pounds_in: "Entró (lb)"
+      pounds_out: "Salió (lb)"
+      stock: "En inventario (lb)"
     show:
       pickers: "Elegir reporte"
       report_type: "Reporte"
@@ -2026,6 +3217,18 @@ es:
       farms_season_per_manzana: "Fincas con más QQ por manzana en la temporada"
       farms_season_balance: "Fincas que más costaron contra lo que produjeron en la temporada"
       people_season: "Cada persona con el negocio esta temporada"
+      shipments_in_transit: "Salidas que esperan su peso en destino"
+      shipments_over_tolerance: "Salidas con diferencia de peso fuera de tolerancia"
+      shipments_season_by_buyer: "Café enviado a cada comprador esta temporada"
+      sales_unpaid: "Ventas por cobrar (las más viejas primero)"
+      sales_season_by_buyer: "Ventas de la temporada por comprador"
+      sales_season_by_month: "Ventas de la temporada, mes por mes"
+      coffee_stock_month: "Inventario de este mes, día por día"
+      coffee_stock_season_by_state: "Entradas y salidas de la temporada por estado del café"
+      expenses_month_by_category: "Gastos del mes por categoría"
+      investments_season: "Inversiones de la temporada"
+      expenses_season_by_month: "Gastos e inversiones de la temporada, mes por mes"
+      cash_movements_month_by_account: "Entradas y salidas del mes por cuenta"
       cash_movements_week: "Entradas y salidas de dinero de esta semana"
       cash_movements_month_by_source: "Entradas y salidas del mes por origen"
     saved_reports:
@@ -2157,6 +3360,164 @@ es:
           days_to_pay:
             title: "Rapidez de pago"
             help: "Barras: facturas canceladas. Línea: días promedio entre la factura y su pago."
+      expenses:
+        title: "Gastos e inversiones"
+        description: "Lo que el negocio gastó o invirtió (Control financiero): por categoría, cuenta, beneficiario y mes, contra el presupuesto de los meses del período."
+        columns:
+          spent_on: "Fecha"
+          kind: "Tipo"
+          description: "Detalle"
+          category: "Categoría"
+          payee: "Beneficiario"
+          account: "Cuenta"
+          payment_method: "Forma de pago"
+          receipt_number: "Comprobante"
+          amount: "Monto"
+          count: "Registros"
+          average: "Promedio"
+        kpis:
+          amount: "Total"
+          expenses: "Gastos"
+          investments: "Inversiones"
+          count: "Registros"
+          budget: "Presupuesto de esos meses"
+          budget_used: "Del presupuesto usado"
+        charts:
+          over_time:
+            title: "Gastos e inversiones en el tiempo"
+            help: "Lo registrado en Control financiero, por tipo."
+          categories:
+            title: "Por categoría"
+            help: "Por categoría de primer nivel."
+          payees:
+            title: "A quién se le pagó"
+            help: "Barras: lo pagado a cada beneficiario. Línea: el % acumulado del total."
+          accounts:
+            title: "De qué cuenta salió"
+            help: "Lo pagado desde cada cuenta."
+      shipments:
+        title: "Salidas de camiones"
+        description: "Cada camión que salió con café (sin los anulados): lo que pesó en la báscula local, lo que pesó donde el comprador y la diferencia entre las dos."
+        columns:
+          number: "Salida"
+          departed_at: "Salió"
+          buyer: "Comprador"
+          coffee_state: "Estado del café"
+          remission_number: "Remisión"
+          weight_note_number: "Nota de peso"
+          sacks: "Sacos"
+          origin_net: "Neto local (lb)"
+          destination_net: "Neto comprador (lb)"
+          difference: "Diferencia (lb)"
+          difference_percent: "Diferencia (%)"
+          status: "Estado"
+          count: "Salidas"
+        kpis:
+          count: "Salidas"
+          origin_net: "Neto que salió (lb)"
+          destination_net: "Neto del comprador (lb)"
+          difference: "Diferencia (lb)"
+          difference_percent: "Diferencia (%)"
+          in_transit: "En camino hoy"
+        charts:
+          weights:
+            title: "Lo que salió y lo que pesó el comprador"
+            help: "Libras netas en la báscula local y en la del comprador (las que ya se pesaron en destino)."
+          difference:
+            title: "Diferencia entre básculas en el tiempo"
+            help: "Diferencia del comprador contra la báscula local, en %, de las salidas pesadas en destino. Negativa: el comprador pesó menos."
+          buyers:
+            title: "Café enviado por comprador"
+            help: "Libras netas que salieron hacia cada comprador."
+          buyer_difference:
+            title: "Diferencia de peso por comprador"
+            help: "Diferencia promedio, en %, de las salidas pesadas en destino de cada comprador. Arriba, quien pesa menos."
+          states:
+            title: "Por estado del café"
+            help: "Libras netas que salieron de cada estado."
+      sales:
+        title: "Ventas de café"
+        description: "Cada venta (sin las anuladas): libras del comprador, QQ de 120 lb, precio, total, lo cobrado, lo que falta y cuánto tardan en pagar."
+        columns:
+          number: "Venta"
+          sold_on: "Fecha"
+          buyer: "Comprador"
+          coffee_state: "Estado del café"
+          buyer_document_number: "Documento del comprador"
+          net_weight: "Neto (lb)"
+          quintals: "QQ (120 lb)"
+          unit_price: "Precio"
+          difference_percent: "Diferencia de peso (%)"
+          total: "Total"
+          paid: "Cobrado"
+          balance: "Por cobrar"
+          payment_status: "Estado de cobro"
+          days: "Días"
+          count: "Ventas"
+          price_per_quintal: "Precio prom. por QQ"
+          pending: "Por cobrar"
+        kpis:
+          count: "Ventas"
+          quintals: "QQ vendidos (120 lb)"
+          total: "Total vendido"
+          price_per_quintal: "Precio promedio por QQ"
+          paid: "Cobrado"
+          pending: "Por cobrar"
+          difference_percent: "Diferencia de peso (%)"
+          average_days: "Días prom. para cobrar"
+        charts:
+          by_status:
+            title: "Lo vendido en el tiempo"
+            help: "El total de las ventas por estado de cobro: cobrada, cobro parcial o pendiente."
+          prices:
+            title: "QQ vendidos y precio promedio"
+            help: "Barras: QQ de 120 lb vendidos. Línea: precio promedio por QQ (total ÷ QQ)."
+          buyers:
+            title: "A quién se le vende más"
+            help: "Total vendido a cada comprador."
+          debtors:
+            title: "Quién debe más"
+            help: "Los 10 compradores con más por cobrar."
+          pending_age:
+            title: "Antigüedad de lo por cobrar"
+            help: "Lo que falta cobrar según los días desde la venta."
+          methods:
+            title: "Cómo se cobró"
+            help: "Lo cobrado en estas ventas, por forma de pago de cada cobro."
+      coffee_stock:
+        title: "Inventario de café"
+        description: "Cada compra que entró al inventario (su peso neto) y cada salida de camión que se fue (su neto local), por estado del café, con el inventario al empezar y al terminar el período."
+        purchase: "Compra %{number} · %{name}"
+        shipment: "Salida %{number} · %{name}"
+        kinds:
+          purchase: "Compra"
+          shipment: "Salida"
+        columns:
+          at: "Fecha"
+          kind: "Movimiento"
+          description: "Detalle"
+          coffee_state: "Estado del café"
+          pounds_in: "Entró (lb)"
+          pounds_out: "Salió (lb)"
+          count: "Movimientos"
+          net: "Neto (lb)"
+        series:
+          pounds_in: "Entró (lb)"
+          pounds_out: "Salió (lb)"
+          stock: "En inventario (lb)"
+        kpis:
+          pounds_in: "Entró (lb)"
+          pounds_out: "Salió (lb)"
+          net: "Diferencia (lb)"
+          opening: "Inventario al empezar (lb)"
+          closing: "Inventario al terminar (lb)"
+        charts:
+          flow:
+            title: "Entradas, salidas e inventario"
+            help: "Barras: libras netas que entraron con las compras y que salieron en camiones. Línea: el inventario al final de cada día, semana o mes."
+          by_state:
+            title: "Inventario por estado del café"
+            help: "Libras netas en inventario al final del período, por estado."
       producers:
         title: "Productores"
         description: "Cada productor con lo que vendió en el período, cuándo vendió por última vez y lo que falta pagarle. Sirve para ver quién vende más y quién dejó de vender."
@@ -2538,7 +3899,7 @@ es:
             help: "Una persona puede tener varios roles."
       cash_movements:
         title: "Entradas y salidas de dinero"
-        description: "El dinero que salió (pagos de facturas, pagos a carreros, préstamos en efectivo, planillas y gastos) y el que entró (abonos en efectivo, transferencia o cheque), según lo registrado. Las ventas de café todavía no están en el sistema."
+        description: "El dinero que salió (pagos de facturas, pagos a carreros, préstamos en efectivo, planillas, gastos de planilla, gastos e inversiones, pagos y anticipos de la planilla interna) y el que entró (abonos a préstamos en efectivo, transferencia o cheque, cobros de ventas de café y otros ingresos), según lo registrado; cada quien ve lo de los módulos que puede ver. Las transferencias entre cuentas salen al elegir una cuenta."
         sources:
           invoices: "Pago de factura"
           hauler_payments: "Pago a carrero"
@@ -2546,16 +3907,28 @@ es:
           loan_payments: "Abono a préstamo"
           payroll_payments: "Pago de planilla"
           payroll_expenses: "Gasto de planilla"
+          sale_payments: "Cobro de venta"
+          buyer_advances: "Anticipo de comprador"
+          expenses: "Gasto"
+          investments: "Inversión"
+          staff_payments: "Pago de planilla interna"
+          staff_advances: "Anticipo de planilla interna"
+          other_incomes: "Otro ingreso"
+          transfers: "Transferencia entre cuentas"
+        no_account: "Sin cuenta"
         directions:
           in: "Entrada"
           out: "Salida"
         invoice: "Factura %{number}"
         hauler_payment: "Recibo %{number} de comisiones de carreo"
+        sale_payment: "Cobro de la venta %{number}"
         loan: "Préstamo %{number}"
         loan_payment: "Recibo %{number} del préstamo %{loan}"
         payroll_payment: "%{payroll} · %{farm} (%{period})"
         expense: "%{category}: %{description} (%{farm})"
         columns:
+          account: "Cuenta"
+          category: "Categoría"
           date: "Fecha"
           source: "Origen"
           description: "Detalle"
@@ -2609,6 +3982,34 @@ es:
         - "Si aparece un error con un código de referencia, pásale ese código a un administrador."
         - "El Inicio y las pantallas de Compra de café y Préstamos se actualizan solas cuando otra persona registra algo: lo nuevo aparece con un brillo y las cifras que cambian dan un pulso. Abajo a la izquierda dice «En vivo». Si tienes una ventana abierta, se actualiza al cerrarla."
     processes:
+      finance_money:
+        title: "Cuentas, gastos y movimientos"
+        summary: "Control financiero junta todo el dinero que entra y sale del negocio, de todos los módulos, y lleva el saldo de cada cuenta."
+        steps:
+          - "Registra la caja y los bancos en Cuentas, con su saldo inicial, y marca para qué forma de pago se sugiere cada una."
+          - "Cada pago o cobro de cualquier módulo (abonos a facturas, carreros, préstamos, planillas, cobros de ventas) pide la cuenta; se sugiere la de la forma de pago."
+          - "Los gastos e inversiones del negocio se registran aquí, con su categoría, cuenta y, si quieres, la foto o el PDF del comprobante."
+          - "El dinero que entra fuera de los módulos va en «Otro ingreso»; el que pasa de una cuenta a otra, en «Transferir»."
+          - "Movimientos muestra todo junto; al elegir una cuenta, el saldo después de cada movimiento."
+          - "Consolidación lista lo registrado sin cuenta para asignarle una, de uno en uno o varios a la vez."
+        tips:
+          - "Nada se registra dos veces: los pagos de los otros módulos se ven aquí, pero se registran donde ocurren."
+          - "Lo registrado sin cuenta no cuenta en ningún saldo; aparece aparte en Cuentas."
+          - "El presupuesto va por categoría de primer nivel y mes, contra los gastos e inversiones de Control financiero."
+      sales_flow:
+        title: "Salida, peso en destino, venta y cobro"
+        summary: "El café sale del inventario en camiones, se pesa otra vez donde el comprador, se vende con el peso del comprador y se cobra por abonos."
+        steps:
+          - "Nueva salida: elige el comprador, el estado del café y escribe el peso bruto y los sacos de la báscula local (con la humedad y el daño, o el rendimiento en uva). El inventario baja con su peso neto."
+          - "Cuando el camión llega, en la salida toca «Registrar peso en destino» y copia la nota de peso del comprador. El sistema muestra la diferencia entre las dos básculas."
+          - "Nueva venta: elige el comprador y marca sus salidas ya pesadas en destino (todas del mismo estado del café). Escribe el precio por quintal (120 lb) o por libra y el número de documento del comprador."
+          - "Elige cómo se cobra: de contado (cobrada completa), con un cobro parcial o a crédito."
+          - "Después, en la venta, «Registrar cobro» por cada pago del comprador. Cada cobro tiene su recibo, original y copia en hojas separadas."
+        tips:
+          - "La venta se cobra con el peso del comprador; la diferencia con la báscula local se muestra en la salida, en la venta y en los reportes."
+          - "Si la diferencia pasa la tolerancia de Configuración del sitio, sale resaltada. Si es mucha, la venta se puede anular antes de cobrarla: sus salidas quedan libres para otra venta."
+          - "Si el café regresa al beneficio, anula la salida (cuando no esté en una venta): vuelve al inventario."
+          - "Los cobros van en orden de fecha, no pasan de lo que falta y solo se quita el último."
       private_documents:
         title: "Pagaré y contrato de préstamo"
         summary: "Dos documentos fijos que se imprimen para cada préstamo, llenos con los datos de la persona y del préstamo."
@@ -2633,13 +4034,38 @@ es:
         tips:
           - "Un abono no pasa del saldo ni va antes de la fecha de la factura o del último abono."
           - "Solo se quita el último abono."
+      staff_payroll:
+        title: "Planilla interna del negocio"
+        summary: "Los empleados del negocio cobran el salario de su rol en cada período, con horas extra, metas con bono y anticipos."
+        steps:
+          - "En «Roles» crea cada rol con su salario por período, su frecuencia (semanal, quincenal o mensual) y el valor de su hora extra."
+          - "Con «Nuevo empleado» agrega a un colaborador en un rol, desde su fecha de inicio."
+          - "Durante el período, «Dar anticipo» le entrega dinero y «Poner meta» le pone una meta con su bono."
+          - "Marca la asistencia en la «Hoja de planilla» (por quincena, como el Excel): cada período paga salario mensual ÷ 30 × días trabajados (una quincena completa cuenta 15)."
+          - "Cuando llega el día de pago, «Pagar» (uno por uno o a todos desde la hoja): devengado + horas extra + bonos de las metas cumplidas + bono adicional − anticipos del período."
+          - "Al pagar se abre el recibo para imprimir (original y copia). El pago sale de la cuenta elegida y aparece en Movimientos."
+        tips:
+          - "Los períodos se pagan en orden; solo se quita el último pago."
+          - "Los anticipos salen de la cuenta el día que se dan; al pagar solo se restan de lo que se entrega."
+      buyer_advances:
+        title: "Anticipos de compradores"
+        summary: "El comprador adelanta dinero y se le paga con café, sin intereses: se descuenta de sus ventas."
+        steps:
+          - "En la ficha del comprador toca «Registrar anticipo»: el dinero entra a la cuenta elegida y sube su saldo de anticipos."
+          - "En «Nueva venta», si el comprador tiene anticipos, escribe cuánto descontar en «Descontar de anticipos»; lo que quede se cobra como siempre."
+          - "También después: «Registrar cobro» en la venta, con la forma de pago «Con anticipo»."
+          - "La pestaña «Anticipos» del comprador muestra lo que dio y lo descontado de cada venta."
+        tips:
+          - "Un cobro con anticipo no mueve dinero: el dinero ya entró con el anticipo. No lleva cuenta."
+          - "No se descuenta más que el saldo de anticipos ni más de lo que falta por cobrar."
+          - "Si se quita un cobro con anticipo, el monto vuelve al saldo del comprador."
       hauler_commission:
         title: "Comisión y pagos de un carrero"
         summary: "El carrero trae el café con los carros del negocio y gana una comisión por cada compra que trae."
         steps:
-          - "Al registrarlo se anotan su porcentaje y el precio de la lata; se pueden cambiar después y cuentan para las compras nuevas."
-          - "En «Nueva compra» elige al carrero: la compra guarda su porcentaje y su precio de la lata de ese día."
-          - "Comisión = (libras netas ÷ 16.5) × precio de la lata × porcentaje."
+          - "Al registrarlo se anota su precio por libra neta; se puede cambiar después y cuenta para las compras nuevas."
+          - "En «Nueva compra» elige al carrero: la compra guarda su precio por libra de ese día."
+          - "Comisión = libras netas × precio por libra."
           - "La paga el negocio aparte: no cambia la factura ni lo que se le paga al productor."
           - "En su página está lo que ha ganado, lo pagado y el saldo; «Registrar pago» paga del saldo, con su recibo."
         tips:
@@ -3154,9 +4580,9 @@ es:
             steps:
               - "Busca por nombre, DNI o RTN, o mira los desactivados."
               - "Toca un carrero (o «Detalle») para ver sus compras, sus pagos y lo que se le debe."
-              - "Con «Nuevo carrero» registras a uno con su comisión y su precio de la lata."
+              - "Con «Nuevo carrero» registras a uno con su precio por libra neta."
             tips:
-              - "Comisión de cada compra = latas (libras netas ÷ 16.5) × precio de la lata × comisión."
+              - "Comisión de cada compra = libras netas × precio por libra."
               - "La comisión la paga el negocio aparte: no cambia lo que se le paga al productor."
           show:
             title: "Ficha del carrero"
@@ -3166,13 +4592,13 @@ es:
               - "Toca «Registrar pago» para pagarle todo o una parte; se abre su recibo para imprimir."
               - "En «Compras que carreó» filtra por temporada; cada una abre su detalle."
             tips:
-              - "Cada compra guarda la comisión y el precio de la lata de su día: cambiarlos solo cuenta para las compras nuevas."
+              - "Cada compra guarda el precio por libra de su día: cambiarlo solo cuenta para las compras nuevas. Las compras de antes del cambio conservan su cálculo por latas."
               - "Solo se puede quitar el último pago."
           form:
             title: "Registrar o editar un carrero"
-            summary: "Su comisión (%), su precio de la lata y sus datos de persona."
+            summary: "Su precio por libra neta y sus datos de persona."
             steps:
-              - "Escribe la comisión y el precio de la lata: los dos son obligatorios."
+              - "Escribe el precio por libra neta: es obligatorio."
               - "Llena sus datos: solo nombres y apellidos son obligatorios."
               - "Toca el botón de guardar."
             tips:
@@ -3323,6 +4749,423 @@ es:
             tips:
               - "«Compras del día» y el reporte impreso agrupan las compras en canceladas, con pago parcial, pendientes de pago y sin facturar, cada grupo con su total."
               - "El productor que más vendió en el día sale primero."
+      sales:
+        home:
+          index:
+            title: "Resumen de comercialización"
+            summary: "La venta del café en cuatro pasos, el café en inventario y cómo van el día y la temporada."
+            steps:
+              - "Registrar salidas: cada camión que sale con café para un comprador."
+              - "Pesar en destino: el peso que da la báscula del comprador."
+              - "Vender: agrupa las salidas pesadas de un comprador en una venta."
+              - "Cobrar: registra lo que paga el comprador."
+            tips:
+              - "El inventario sube con cada compra y baja con cada salida, en libras netas por estado del café."
+              - "Si hay salidas con una diferencia de peso mayor a la tolerancia, sale un aviso con el enlace a ellas."
+        shipments:
+          index:
+            title: "Salidas de camiones"
+            summary: "Cada camión que salió con café, con su peso local, su peso en destino y la diferencia."
+            steps:
+              - "Los filtros se aplican solos: busca por comprador, número, remisión, nota de peso o transportista, o elige fechas, temporada, comprador, estado del café o estado de la salida."
+              - "Toca una fila para ver la salida y registrar su peso en destino."
+              - "Toca «Nueva salida» para registrar un camión."
+            tips:
+              - "Las salidas anuladas no aparecen; elige el estado «Anulada» para verlas."
+              - "Con tolerancia configurada, «Solo con diferencia mayor…» deja las que se pasaron."
+          show:
+            title: "Detalle de la salida"
+            summary: "Las dos pesadas lado a lado, la diferencia y en qué etapa está."
+            steps:
+              - "Revisa la barra de etapas: salió, pesada en destino, vendida, cobrada."
+              - "Usa el botón del siguiente paso: registrar el peso en destino, vender o ver la venta."
+              - "Mientras no esté en una venta, puedes editarla o anularla."
+            tips:
+              - "Anular una salida devuelve su café al inventario."
+          form:
+            title: "Registrar o editar una salida"
+            summary: "El camión que sale: comprador, papeles y el peso en la báscula local. El sistema calcula la tara, el peso neto y los QQ mientras escribes."
+            steps:
+              - "Elige el comprador (o «Nuevo comprador»), la fecha y hora y el estado del café."
+              - "Escribe la remisión, el transportista y la placa si los tienes."
+              - "Escribe el peso bruto y los sacos contados. En pergamino, revisa la humedad y el daño; en uva, el rendimiento."
+              - "Revisa el cálculo y guarda."
+            tips:
+              - "Tara: 1 libra por saco contado. Neto: como en las compras."
+              - "Si sale más café del que hay en inventario de ese estado, aparece un aviso; se puede guardar igual."
+        arrivals:
+          form:
+            title: "Peso en destino"
+            summary: "El peso que dio la báscula del comprador, con su nota de peso."
+            steps:
+              - "Escribe la fecha y el número de la nota de peso."
+              - "Copia el peso bruto, los sacos, la humedad y el daño (o el rendimiento) de la nota."
+              - "Revisa la diferencia con la báscula local y guarda."
+            tips:
+              - "La venta se cobra con este peso."
+              - "Si la diferencia pasa la tolerancia, el recuadro se marca en rojo."
+        sales:
+          index:
+            title: "Ventas"
+            summary: "Las ventas de café con su total, lo cobrado y lo que falta."
+            steps:
+              - "Filtra por fechas, temporada, comprador, estado del café o estado de cobro; la lista se actualiza sola."
+              - "Toca una fila para ver la venta, registrar un cobro o imprimirla."
+              - "Toca «Nueva venta» para vender salidas ya pesadas en destino."
+            tips:
+              - "Las ventas anuladas no cuentan en los totales; elige «Anuladas» para verlas."
+          show:
+            title: "Detalle de la venta"
+            summary: "La nota de venta con sus salidas, el peso de cada báscula, el total y los cobros."
+            steps:
+              - "Toca «Registrar cobro» por cada pago del comprador."
+              - "Toca «Imprimir» para sacar la nota de venta (original y copia)."
+              - "Mientras no tenga cobros, puedes anularla con su motivo."
+            tips:
+              - "Al anular, sus salidas quedan libres para otra venta."
+          form:
+            title: "Nueva venta"
+            summary: "Agrupa salidas de un comprador, ya pesadas en destino, en una venta."
+            steps:
+              - "Elige el comprador."
+              - "Marca sus salidas (todas del mismo estado del café)."
+              - "Escribe la fecha, si el precio es por quintal (120 lb) o por libra, y el precio."
+              - "Escribe el número de la factura o comprobante del comprador."
+              - "Elige el cobro: a crédito, parcial o de contado, y guarda."
+            tips:
+              - "Total = libras netas del comprador ÷ 100 × precio por quintal, o libras × precio por libra."
+              - "La columna de la derecha muestra el total y la diferencia de peso mientras eliges."
+        sale_payments:
+          show:
+            title: "Recibo de cobro"
+            summary: "El recibo de un cobro: lo que pagó el comprador y lo que falta."
+            steps:
+              - "Toca «Imprimir»: sale el original y la copia, cada uno en su hoja."
+          form:
+            title: "Registrar cobro"
+            summary: "Un pago del comprador sobre una venta."
+            steps:
+              - "Escribe el monto (empieza con lo que falta), la forma de pago y la fecha."
+              - "Guarda: se abre el recibo listo para imprimir."
+            tips:
+              - "No puede pasar de lo que falta ni ir antes de la venta o del último cobro."
+        buyers:
+          index:
+            title: "Compradores"
+            summary: "Exportadoras, beneficios y otros compradores, con lo enviado, lo vendido y lo que deben."
+            steps:
+              - "Busca por nombre, RTN o contacto; filtra por tipo o estado."
+              - "Toca una fila para ver sus ventas, salidas y cobros."
+              - "Toca «Nuevo comprador» para registrar uno."
+          show:
+            title: "Ficha del comprador"
+            summary: "Sus datos, sus cifras y, en pestañas, sus ventas, salidas y cobros."
+            steps:
+              - "Usa las pestañas para ver ventas, salidas o cobros; filtra por temporada."
+              - "«Nueva salida» y «Nueva venta» empiezan con este comprador."
+          form:
+            title: "Registrar o editar un comprador"
+            summary: "Nombre o razón social, tipo, RTN, contacto y dirección."
+            steps:
+              - "Escribe el nombre y elige el tipo: exportador, beneficio u otro."
+              - "Agrega RTN, contacto, teléfono, correo y dirección si los tienes."
+            tips:
+              - "Un comprador con salidas no se borra: se desactiva y deja de salir en las salidas nuevas."
+        carriers:
+          index:
+            title: "Transportistas"
+            summary: "Quienes llevan el café al comprador, con cuántas salidas han llevado."
+            steps:
+              - "Busca por nombre, RTN o contacto, o mira los desactivados."
+              - "Toca una fila para ver su ficha y sus salidas."
+              - "Toca «Nuevo transportista» para registrar uno; también se puede desde «Nueva salida»."
+          show:
+            title: "Ficha del transportista"
+            summary: "Sus datos y las salidas que ha llevado, por temporada y estado."
+            steps:
+              - "Filtra sus salidas por temporada o estado; cada una abre su detalle."
+          form:
+            title: "Registrar o editar un transportista"
+            summary: "Nombre o razón social, RTN, teléfono y contacto."
+            steps:
+              - "Escribe el nombre; lo demás es opcional."
+            tips:
+              - "Uno con salidas no se borra: se desactiva y deja de salir en las salidas nuevas."
+        trucks:
+          index:
+            title: "Camiones"
+            summary: "Los camiones que llevan el café: los del negocio y los de terceros."
+            steps:
+              - "Busca por placa, marca o color; filtra los del negocio o los de terceros."
+              - "Toca una fila para ver su ficha y sus salidas."
+              - "Toca «Nuevo camión» para registrar uno; también se puede desde «Nueva salida»."
+          show:
+            title: "Ficha del camión"
+            summary: "Sus datos y las salidas en que ha ido, por temporada y estado."
+            steps:
+              - "Filtra sus salidas por temporada o estado; cada una abre su detalle."
+          form:
+            title: "Registrar o editar un camión"
+            summary: "Placa, marca y modelo, color, capacidad en QQ y si es del negocio."
+            steps:
+              - "Escribe la placa (se guarda en mayúsculas); lo demás es opcional."
+            tips:
+              - "Uno con salidas no se borra: se desactiva y deja de salir en las salidas nuevas."
+        buyer_advances:
+          form:
+            title: "Registrar un anticipo de comprador"
+            summary: "Dinero que adelanta el comprador y se le paga con café, sin intereses."
+            steps:
+              - "Escribe el monto, la fecha, la forma de pago y la cuenta donde entró."
+              - "Si tienes el número del cheque o del comprobante, escríbelo en «Documento»."
+              - "Toca «Registrar anticipo»: se abre su recibo para imprimir."
+          show:
+            title: "Recibo de anticipo"
+            summary: "El comprobante de un anticipo, con original y copia, cada uno en su hoja."
+            steps:
+              - "Toca «Imprimir»: el original y la copia salen cada uno en su hoja."
+        stocks:
+          show:
+            title: "Inventario"
+            summary: "El café en inventario por estado y sus movimientos."
+            steps:
+              - "Arriba, el saldo de hoy por estado del café, en libras netas y QQ."
+              - "Abajo, cada compra que entró y cada salida que se fue en las fechas elegidas, con el saldo después de cada una."
+            tips:
+              - "Las compras y salidas anuladas no cuentan."
+        daily_closes:
+          show:
+            title: "Cierre diario de comercialización"
+            summary: "Lo que salió, lo que se pesó en destino, lo que se vendió y se cobró en un día, y el inventario al cerrar."
+            steps:
+              - "Elige la fecha."
+              - "Revisa las cifras, el inventario y las listas del día."
+              - "Toca «Imprimir» para sacar el cierre."
+      finance:
+        home:
+          index:
+            title: "Resumen de Control financiero"
+            summary: "Dónde está el dinero, lo que salió este mes contra el pasado, el presupuesto del mes y los últimos movimientos."
+            steps:
+              - "Arriba, los avisos: movimientos sin cuenta y categorías que pasaron su presupuesto."
+              - "Las tarjetas de cuentas abren su estado de cuenta."
+              - "«Por dónde salió» y «Por categoría» muestran en qué se fue el dinero del mes."
+        movements:
+          index:
+            title: "Movimientos de dinero"
+            summary: "Todo el dinero que entró o salió, de todos los módulos."
+            steps:
+              - "Filtra por fechas, cuenta, origen, entrada o salida, o busca por detalle."
+              - "Al elegir una cuenta salen sus transferencias y el saldo después de cada movimiento."
+              - "Toca «Abrir» para ir al registro en su módulo."
+        staff_members:
+          index:
+            title: "Planilla interna"
+            summary: "Los empleados del negocio, su rol, su salario y el período que sigue por pagar."
+            steps:
+              - "Arriba, cuántos períodos ya llegaron a su día de pago y cuánto se pagaría (sin bonos)."
+              - "En «Períodos por pagar», toca «Pagar» en el que sigue de cada empleado."
+              - "Toca un empleado para ver sus períodos, pagos, anticipos y metas."
+              - "Con «Nuevo empleado» agregas a un colaborador en un rol; con «Roles», los salarios y frecuencias."
+            tips:
+              - "Cada período se paga una vez y en orden."
+              - "Un empleado que ya no trabaja se desactiva desde «Editar empleado»: sus pagos se conservan."
+          show:
+            title: "Ficha del empleado"
+            summary: "Sus períodos con lo pagado o lo que falta, sus recibos, anticipos y metas."
+            steps:
+              - "«Pagar» abre el pago del período que sigue."
+              - "«Dar anticipo» entrega dinero que se resta completo del pago de ese período."
+              - "«Poner meta» le pone una meta con su bono a un período: al pagarlo se marca si la cumplió."
+            tips:
+              - "Solo se quita el último pago; al quitarlo, sus anticipos y metas vuelven a quedar pendientes."
+              - "Un anticipo o una meta de un período ya pagado no se puede quitar."
+          form:
+            title: "Agregar o editar un empleado"
+            summary: "Un colaborador del negocio en un rol, desde una fecha."
+            steps:
+              - "Escribe el nombre del colaborador y elígelo de la lista. Si no existe, regístralo con «¿No está? Registrar persona»."
+              - "Elige su rol: dice su salario, cada cuánto se le paga y el valor de su hora extra."
+              - "Si gana distinto que su rol, escribe su salario propio: manda sobre el del rol."
+              - "Revisa la fecha de inicio: su primer período empieza ese día."
+              - "Toca el botón de guardar."
+            tips:
+              - "Cambiar el rol cuenta para los períodos que faltan por pagar."
+        staff_sheets:
+          show:
+            title: "Hoja de planilla"
+            summary: "El Excel de la planilla, pero vivo: por quincena se marca la asistencia y se paga; por mes y acumulado se ve lo pagado y lo que falta."
+            steps:
+              - "En «Quincena», elige la quincena y el mes; toca cada día para pasar de — a 1 y a ½. «Todos» llena un día y «Toda la quincena» a una persona."
+              - "Los días, lo devengado y el total se calculan al marcar. Toca «Guardar asistencia»."
+              - "Cuando llega el día de pago, marca a quienes vas a pagar, elige fecha, forma de pago y cuenta, y toca «Pagar a los marcados»."
+              - "«Mes» muestra el mes entero con los días de cada quincena, lo pagado y lo que falta; «Acumulado», lo pagado mes por mes en la temporada y lo que se le va a pagar este mes."
+            tips:
+              - "Una quincena completa cuenta 15 días aunque tenga 16 o 13; si faltó, cuentan los días marcados, sin pasar de 15."
+              - "Devengado = salario mensual ÷ 30 × días. Total = devengado − anticipos."
+              - "Quien tiene metas por revisar u horas extra se paga desde su estado («Por pagar»), uno por uno."
+              - "Los días de un período ya pagado no se cambian."
+        staff_roles:
+          index:
+            title: "Roles de la planilla interna"
+            summary: "Cada rol con su salario por período, su frecuencia de pago y el valor de su hora extra."
+            steps:
+              - "Busca un rol o mira los desactivados."
+              - "Toca «Editar» para cambiar su salario, frecuencia o valor de la hora extra."
+              - "Toca «Nuevo rol» para crear uno."
+            tips:
+              - "Un cambio cuenta para los períodos que faltan por pagar: lo pagado se queda como se pagó."
+          form:
+            title: "Registrar o editar un rol"
+            summary: "Nombre, salario por período, frecuencia de pago y, si aplica, el valor de la hora extra."
+            steps:
+              - "Escribe el nombre y el salario: se paga completo en cada período."
+              - "Elige la frecuencia: semanal (cierra el sábado), quincenal (1–15 y 16–fin de mes) o mensual."
+              - "Si se pagan horas extra, escribe el valor de la hora."
+              - "Toca el botón de guardar."
+        staff_advances:
+          form:
+            title: "Dar un anticipo"
+            summary: "Dinero que se le adelanta a un empleado y se resta completo del pago de su período."
+            steps:
+              - "Escribe el monto y la fecha: el anticipo se resta del período que tiene esa fecha."
+              - "Elige la forma de pago y la cuenta de donde salió."
+              - "Toca «Registrar anticipo»."
+            tips:
+              - "No se puede dar con fecha de un período ya pagado."
+        staff_goals:
+          form:
+            title: "Poner una meta"
+            summary: "Una meta para un período, con el bono que gana si la cumple."
+            steps:
+              - "Elige el período, escribe la meta y el bono en lempiras."
+              - "Al pagar el período, marca si la cumplió: si sí, el bono se suma al pago."
+        staff_payments:
+          form:
+            title: "Pagar un período"
+            summary: "Lo que se le paga al empleado por el período que sigue: salario, horas extra y bonos, menos sus anticipos."
+            steps:
+              - "Revisa el salario: es su salario propio o, si no tiene, el del rol; se puede cambiar para este pago."
+              - "Anota las horas extra, si el rol tiene valor de la hora."
+              - "Marca las metas que cumplió y, si quieres, agrega un bono con su motivo."
+              - "Revisa los anticipos del período: se restan completos."
+              - "Elige la fecha, la forma de pago y la cuenta, y toca «Pagar»: se abre su recibo."
+            tips:
+              - "Los totales de la derecha son una vista previa: el sistema los calcula de nuevo al guardar."
+              - "Si los anticipos pasan de lo ganado, no se puede pagar."
+          show:
+            title: "Recibo de planilla interna"
+            summary: "El comprobante del pago de un período, con original y copia, cada uno en su hoja."
+            steps:
+              - "Toca «Imprimir»: el original y la copia salen cada uno en su hoja."
+              - "El empleado firma «Recibí conforme»."
+        incomes:
+          index:
+            title: "Ingresos"
+            summary: "Todo el dinero que entró: cobros de ventas de café, abonos a préstamos y otros ingresos."
+            steps:
+              - "Filtra por fechas, cuenta u origen, o busca por detalle o persona; la lista se actualiza sola."
+              - "Arriba, el total ingresado y lo que trajo cada origen."
+              - "Toca «Registrar ingreso» para anotar dinero que no viene de otro módulo: un aporte del dueño, un préstamo del banco…"
+              - "Toca «Abrir» para ir al cobro o al abono en su módulo."
+            tips:
+              - "Cada ingreso se registra una sola vez, donde ocurre: aquí solo se juntan."
+              - "Las transferencias entre cuentas no son ingresos: el dinero sigue en el negocio."
+              - "Un otro ingreso no se edita: se quita y se registra de nuevo."
+        expenses:
+          index:
+            title: "Gastos e inversiones"
+            summary: "Lo que el negocio gasta o invierte, con su categoría, cuenta y comprobante."
+            steps:
+              - "Filtra por fechas, categoría, cuenta o forma de pago; la lista se actualiza sola."
+              - "Toca una fila para ver el detalle y el comprobante."
+          show:
+            title: "Detalle del gasto o inversión"
+            summary: "Sus datos y la foto o el PDF del comprobante."
+            steps:
+              - "Toca «Editar» para cambiarlo o «Borrar» para quitarlo."
+          form:
+            title: "Registrar un gasto o inversión"
+            summary: "Detalle, categoría, beneficiario, fecha, monto, forma de pago, cuenta y comprobante."
+            steps:
+              - "Escribe el detalle y elige la categoría (o «Nueva categoría»)."
+              - "Escribe la fecha y el monto; al elegir la forma de pago se sugiere su cuenta."
+              - "Si quieres, adjunta la foto o el PDF del comprobante."
+            tips:
+              - "La foto o el PDF puede pesar hasta 1 MB."
+        expense_receipts:
+          show:
+            title: "Comprobante"
+            summary: "La foto o el PDF del comprobante de un gasto."
+            steps:
+              - "Se abre en el navegador; desde ahí se puede guardar o imprimir."
+        money_accounts:
+          index:
+            title: "Cuentas"
+            summary: "La caja y los bancos, con su saldo de hoy."
+            steps:
+              - "Toca una cuenta para ver su estado de cuenta."
+              - "«Nueva cuenta» registra una con su saldo inicial."
+          show:
+            title: "Estado de cuenta"
+            summary: "Los movimientos de una cuenta con el saldo después de cada uno."
+            steps:
+              - "Elige las fechas; arriba el saldo al empezar y al terminar."
+              - "«Otro ingreso» y «Transferir» registran dinero que entra o pasa a otra cuenta."
+              - "«Imprimir estado de cuenta» lo saca con el membrete."
+          form:
+            title: "Registrar o editar una cuenta"
+            summary: "Nombre, tipo, banco, número, saldo inicial y para qué forma de pago se sugiere."
+            steps:
+              - "Escribe el nombre y elige si es caja o banco."
+              - "Escribe el saldo con que empieza en el sistema y su fecha."
+              - "Marca las formas de pago para las que se sugiere al registrar un pago."
+        account_transfers:
+          form:
+            title: "Transferir entre cuentas"
+            summary: "Dinero que pasa de una cuenta a otra del negocio."
+            steps:
+              - "Elige de qué cuenta sale y a cuál entra, el monto y la fecha, y guarda."
+        other_incomes:
+          form:
+            title: "Otro ingreso"
+            summary: "Dinero que entra a una cuenta fuera de los módulos."
+            steps:
+              - "Escribe el concepto, el monto y la fecha; elige la forma de pago y la cuenta, y guarda."
+        categories:
+          index:
+            title: "Categorías"
+            summary: "Las categorías de gastos e inversiones, en dos niveles."
+            steps:
+              - "«Agregar subcategoría» crea una dentro de una de primer nivel."
+              - "Una categoría usada no se borra: se desactiva."
+          form:
+            title: "Registrar o editar una categoría"
+            summary: "Nombre, tipo (gasto o inversión) y, para una subcategoría, su categoría de primer nivel."
+            steps:
+              - "Escribe el nombre y elige el tipo."
+              - "Para una subcategoría, elige su categoría de primer nivel."
+        consolidations:
+          show:
+            title: "Consolidación"
+            summary: "Los pagos y cobros de los otros módulos que se registraron sin cuenta, para asignarles una."
+            steps:
+              - "Filtra por fechas, origen, forma de pago, entrada o salida, o un monto entre dos cifras; o busca por detalle o persona."
+              - "Marca los movimientos (o «Marcar todos»)."
+              - "Elige la cuenta, la categoría o las dos, y toca «Asignar a los marcados»; o toca «Asignar la cuenta de su forma de pago» para que cada uno tome la que se sugiere para su forma de pago."
+            tips:
+              - "La categoría solo se cambia en lo que la lleva (los gastos de planilla, con las categorías de Fincas); a lo demás no se le toca."
+              - "Solo cambian la cuenta y la categoría; el pago queda como estaba y el cambio queda en la auditoría."
+              - "Los gastos, inversiones, otros ingresos y transferencias siempre llevan cuenta: no salen aquí."
+        budgets:
+          show:
+            title: "Presupuesto"
+            summary: "Lo que se piensa gastar por categoría y mes, contra lo gastado."
+            steps:
+              - "Elige la temporada."
+              - "Escribe el presupuesto de cada categoría en cada mes y guarda."
+            tips:
+              - "Lo gastado sale en rojo cuando pasa el presupuesto."
       farms:
         home:
           index:
@@ -3561,6 +5404,7 @@ es:
               - "Para prestar insumos, toca «Agregar insumo», elígelo y escribe la cantidad. El precio se pone solo y lo puedes cambiar."
               - "Revisa el resumen: efectivo, insumos y capital del préstamo."
               - "Escribe la tasa de interés mensual, revisa la fecha del préstamo y elige la fecha límite."
+              - "Marca «Préstamo tipo intermediario» para que los primeros 10 días no generen interés (a cualquier persona): desde el día 11 corre normal."
               - "Toca el botón de guardar."
             tips:
               - "El capital es el efectivo más el valor de los insumos; el interés corre sobre todo el capital."
@@ -3791,6 +5635,7 @@ es:
         location_help: "Opcional. Va debajo del nombre en el inicio de sesión y en los impresos."
         rtn_placeholder: "14 dígitos"
         rtn_help: "Opcional. El RTN del negocio, que sale en las facturas debajo del nombre y la ubicación."
+        weight_tolerance_help: "Opcional. En Comercialización, una salida cuya báscula del comprador difiere de la local en más de este porcentaje (más o menos) sale resaltada. Vacía, no se resalta ninguna."
         logo_help: "PNG, JPG, WebP o GIF de hasta %{size}. Mejor cuadrado: se muestra en un círculo pequeño."
         remove_logo: "Quitar el logo actual (%{name}) y volver al grano de café"
         preview: "Vista previa"
@@ -3842,6 +5687,28 @@ es:
         invoice_payment: "el abono a factura"
         hauler: "el carrero"
         hauler_payment: "el pago a carrero"
+        buyer: "el comprador"
+        buyer_advance: "el anticipo del comprador"
+        carrier: "el transportista"
+        truck: "el camión"
+        shipment: "la salida de camión"
+        shipment_weighing: "la pesada de la salida"
+        sale: "la venta"
+        sale_line: "la salida vendida"
+        sale_payment: "el cobro de venta"
+        money_account: "la cuenta"
+        finance_category: "la categoría financiera"
+        expense: "el gasto o inversión"
+        expense_receipt: "el comprobante del gasto"
+        other_income: "el otro ingreso"
+        account_transfer: "la transferencia entre cuentas"
+        budget: "el presupuesto"
+        staff_role: "el rol de la planilla interna"
+        staff_member: "el empleado de la planilla interna"
+        staff_payment: "el pago de la planilla interna"
+        staff_advance: "el anticipo"
+        staff_goal: "la meta"
+        staff_attendance: "la asistencia"
         loan: "el préstamo"
         loan_payment: "el abono"
         supply: "el insumo"
@@ -4046,6 +5913,7 @@ es:
         payrolls: "Planillas"
         hauled_purchases: "Compras carreadas"
         hauler_payments: "Pagos a carrero"
+        staff: "Planilla interna"
       new:
         title: "Fusionar personas"
         help: "Para cuando la misma persona se registró dos veces (por ejemplo, con el nombre escrito distinto). Elige a la otra persona y cuál queda; después, dato por dato, qué valor se conserva. Todo lo de la otra (compras, facturas, fincas, préstamos y planillas) pasa a la que queda, y la otra se borra."
@@ -4145,6 +6013,54 @@ es:
 
   activerecord:
     models:
+      money_account:
+        one: "Cuenta"
+        other: "Cuentas"
+      finance_category:
+        one: "Categoría financiera"
+        other: "Categorías financieras"
+      expense:
+        one: "Gasto o inversión"
+        other: "Gastos e inversiones"
+      expense_receipt:
+        one: "Comprobante de gasto"
+        other: "Comprobantes de gastos"
+      other_income:
+        one: "Otro ingreso"
+        other: "Otros ingresos"
+      account_transfer:
+        one: "Transferencia entre cuentas"
+        other: "Transferencias entre cuentas"
+      budget:
+        one: "Presupuesto"
+        other: "Presupuestos"
+      carrier:
+        one: "Transportista"
+        other: "Transportistas"
+      truck:
+        one: "Camión"
+        other: "Camiones"
+      buyer:
+        one: "Comprador"
+        other: "Compradores"
+      shipment:
+        one: "Salida de camión"
+        other: "Salidas de camiones"
+      sale:
+        one: "Venta"
+        other: "Ventas"
+      shipment_weighing:
+        one: "Pesada de salida"
+        other: "Pesadas de salidas"
+      sale_line:
+        one: "Salida vendida"
+        other: "Salidas vendidas"
+      sale_payment:
+        one: "Cobro de venta"
+        other: "Cobros de ventas"
+      buyer_advance:
+        one: "Anticipo de comprador"
+        other: "Anticipos de compradores"
       private_document:
         one: "Documento privado"
         other: "Documentos privados"
@@ -4166,6 +6082,24 @@ es:
       hauler_payment:
         one: "Pago a carrero"
         other: "Pagos a carreros"
+      staff_role:
+        one: "Rol de planilla interna"
+        other: "Roles de planilla interna"
+      staff_member:
+        one: "Empleado de planilla interna"
+        other: "Empleados de planilla interna"
+      staff_payment:
+        one: "Pago de planilla interna"
+        other: "Pagos de planilla interna"
+      staff_advance:
+        one: "Anticipo"
+        other: "Anticipos"
+      staff_goal:
+        one: "Meta"
+        other: "Metas"
+      staff_attendance:
+        one: "Día de asistencia"
+        other: "Días de asistencia"
       user:
         one: "Usuario"
         other: "Usuarios"
@@ -4257,6 +6191,323 @@ es:
         one: "Configuración del sitio"
         other: "Configuración del sitio"
     attributes:
+      staff_role:
+        name: "Nombre del rol"
+        salary: "Salario mensual (L)"
+        pay_frequency: "Frecuencia de pago"
+        pay_frequency/weekly: "Semanal"
+        pay_frequency/biweekly: "Quincenal"
+        pay_frequency/monthly: "Mensual"
+        overtime_hour_rate: "Valor de la hora extra (L)"
+        active: "Activo"
+      staff_member:
+        person: "Empleado"
+        person_id: "Empleado"
+        role: "Rol"
+        staff_role_id: "Rol"
+        salary_override: "Salario mensual propio (L)"
+        starts_on: "Fecha de inicio"
+        ends_on: "Fecha de salida"
+        active: "Activo"
+        observations: "Observaciones"
+      staff_payment:
+        member: "Empleado"
+        staff_member_id: "Empleado"
+        role: "Rol"
+        staff_role_id: "Rol"
+        period_starts_on: "Inicio del período"
+        period_ends_on: "Fin del período"
+        salary: "Salario devengado (L)"
+        monthly_salary: "Salario mensual (L)"
+        days_worked: "Días trabajados"
+        overtime_hours: "Horas extra"
+        overtime_hour_rate: "Valor de la hora extra (L)"
+        overtime_amount: "Horas extra (L)"
+        goals_bonus: "Bonos por metas (L)"
+        extra_bonus: "Bono adicional (L)"
+        extra_bonus_reason: "Motivo del bono"
+        gross_total: "Total ganado (L)"
+        advances_total: "Anticipos (L)"
+        net_total: "Entregado (L)"
+        paid_on: "Fecha de pago"
+        payment_method: "Forma de pago"
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
+        observations: "Observaciones"
+        created_by_id: "Registró"
+      staff_advance:
+        member: "Empleado"
+        staff_member_id: "Empleado"
+        given_on: "Fecha del anticipo"
+        amount: "Monto (L)"
+        payment_method: "Forma de pago"
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
+        observations: "Observaciones"
+        payment: "Pago donde se descontó"
+        staff_payment_id: "Pago donde se descontó"
+        created_by_id: "Registró"
+      staff_attendance:
+        member: "Empleado"
+        staff_member_id: "Empleado"
+        worked_on: "Día"
+        day_fraction: "Día trabajado"
+      staff_goal:
+        member: "Empleado"
+        staff_member_id: "Empleado"
+        period_starts_on: "Período"
+        description: "Meta"
+        bonus_amount: "Bono (L)"
+        met: "Cumplida"
+        payment: "Pago"
+        staff_payment_id: "Pago"
+        created_by_id: "Registró"
+      webauthn_credential:
+        user_id: "Usuario"
+        external_id: "Identificador"
+        public_key: "Llave pública"
+        sign_count: "Usos"
+        nickname: "Nombre del dispositivo"
+        last_used_at: "Último uso"
+      profile_photo:
+        owner_type: "Tipo de dueño"
+        owner_id: "Dueño"
+        data: "Imagen"
+        content_type: "Tipo de imagen"
+        byte_size: "Tamaño (bytes)"
+      money_account:
+        name: "Nombre"
+        kind: "Tipo"
+        kind/cash: "Caja (efectivo)"
+        kind/bank: "Banco"
+        bank_name: "Banco"
+        bank_key: "Banco"
+        account_number: "Número de cuenta"
+        opening_balance: "Saldo inicial"
+        opening_on: "Fecha del saldo inicial"
+        default_for: "Se sugiere para"
+        observations: "Observaciones"
+        active: "Activa"
+      finance_category:
+        budgets: "Presupuestos"
+        children: "Subcategorías"
+        expenses: "Gastos"
+        name: "Nombre"
+        kind: "Tipo"
+        kind/expense: "Gasto"
+        kind/investment: "Inversión"
+        parent: "Categoría de primer nivel"
+        parent_id: "Categoría de primer nivel"
+        active: "Activa"
+      expense:
+        created_by_id: "Registró"
+        money_account_id: "Cuenta"
+        receipt: "Comprobante"
+        receipt_info: "Comprobante"
+        kind: "Tipo"
+        kind/expense: "Gasto"
+        kind/investment: "Inversión"
+        spent_on: "Fecha"
+        category: "Categoría"
+        finance_category: "Categoría"
+        finance_category_id: "Categoría"
+        money_account: "Cuenta"
+        payee: "Beneficiario"
+        description: "Detalle"
+        amount: "Monto"
+        payment_method: "Forma de pago"
+        receipt_number: "Número de comprobante"
+        receipt_upload: "Foto o PDF del comprobante"
+        observations: "Observaciones"
+        created_by: "Registró"
+      expense_receipt:
+        data: "Archivo"
+        expense_id: "Gasto"
+        filename: "Nombre del archivo"
+        expense: "Gasto"
+        content_type: "Tipo de archivo"
+        byte_size: "Tamaño"
+      other_income:
+        created_by: "Registró"
+        created_by_id: "Registró"
+        money_account_id: "Cuenta"
+        received_on: "Fecha"
+        money_account: "Cuenta"
+        concept: "Concepto"
+        amount: "Monto"
+        payment_method: "Forma de pago"
+        observations: "Observaciones"
+      account_transfer:
+        created_by: "Registró"
+        created_by_id: "Registró"
+        transferred_on: "Fecha"
+        from_account: "De la cuenta"
+        from_account_id: "De la cuenta"
+        to_account: "A la cuenta"
+        to_account_id: "A la cuenta"
+        amount: "Monto"
+        observations: "Observaciones"
+      budget:
+        finance_category_id: "Categoría"
+        category: "Categoría"
+        month: "Mes"
+        amount: "Monto"
+      carrier:
+        name: "Nombre o razón social"
+        rtn: "RTN"
+        phone: "Teléfono"
+        contact_name: "Contacto"
+        observations: "Observaciones"
+        active: "Activo"
+      truck:
+        plate: "Placa"
+        brand_model: "Marca y modelo"
+        color: "Color"
+        capacity_quintals: "Capacidad (QQ)"
+        own: "Del negocio"
+        observations: "Observaciones"
+        active: "Activo"
+      buyer:
+        department_id: "Departamento"
+        municipality_id: "Municipio"
+        sale_payments: "Cobros"
+        sales: "Ventas"
+        shipments: "Salidas"
+        name: "Nombre o razón social"
+        kind: "Tipo"
+        kind/exporter: "Exportador"
+        kind/processor: "Beneficio"
+        kind/other: "Otro comprador"
+        rtn: "RTN"
+        phone: "Teléfono"
+        email: "Correo"
+        contact_name: "Contacto"
+        department: "Departamento"
+        municipality: "Municipio"
+        address_line: "Dirección"
+        latitude: "Latitud"
+        longitude: "Longitud"
+        observations: "Observaciones"
+        active: "Activo"
+      shipment:
+        active_sale_line: "Venta activa"
+        buyer_id: "Comprador"
+        created_by_id: "Registró"
+        sale: "Venta"
+        sale_lines: "Ventas de la salida"
+        voided_by_id: "Anuló"
+        number: "Número"
+        buyer: "Comprador"
+        created_by: "Registró"
+        departed_at: "Fecha y hora de salida"
+        season_year: "Temporada"
+        coffee_state: "Estado del café"
+        remission_number: "Remisión"
+        carrier: "Transportista"
+        carrier_id: "Transportista"
+        truck: "Camión"
+        truck_id: "Camión"
+        driver: "Motorista"
+        driver_id: "Motorista"
+        driver_name: "Motorista (escrito)"
+        observations: "Observaciones"
+        origin_gross_weight: "Peso bruto local (lb)"
+        origin_weight_mode: "Forma de pesar"
+        weighings: "Pesadas"
+        origin_sacks: "Sacos"
+        origin_humidity_percent: "Humedad (%)"
+        origin_damage_percent: "Daño (%)"
+        origin_yield_factor: "Rendimiento"
+        origin_tare: "Tara local"
+        origin_net_weight: "Neto local"
+        received_on: "Fecha de la pesada en destino"
+        weight_note_number: "Nota de peso"
+        destination_gross_weight: "Peso bruto en destino (lb)"
+        destination_sacks: "Sacos en destino"
+        destination_humidity_percent: "Humedad en destino (%)"
+        destination_damage_percent: "Daño en destino (%)"
+        destination_yield_factor: "Rendimiento en destino"
+        destination_tare: "Tara en destino"
+        destination_net_weight: "Neto del comprador"
+        voided_at: "Anulada"
+        voided_by: "Anuló"
+        status/in_transit: "En camino"
+        status/received: "Pesada, sin vender"
+        status/sold: "Vendida"
+        status/voided: "Anulada"
+      sale:
+        buyer_id: "Comprador"
+        created_by_id: "Registró"
+        payments: "Cobros"
+        shipments: "Salidas"
+        voided_by_id: "Anuló"
+        number: "Número"
+        buyer: "Comprador"
+        created_by: "Registró"
+        sold_on: "Fecha de la venta"
+        coffee_state: "Estado del café"
+        price_unit: "Precio por"
+        price_unit/pound: "Por libra"
+        price_unit/quintal: "Por quintal (120 lb)"
+        unit_price: "Precio (L)"
+        buyer_document_number: "Factura o comprobante del comprador"
+        observations: "Observaciones"
+        origin_net_weight: "Neto local"
+        net_weight: "Neto del comprador"
+        total: "Total"
+        payment_status: "Estado de cobro"
+        payment_status/pending: "Pendiente de cobro"
+        payment_status/partial: "Cobro parcial"
+        payment_status/paid: "Cobrada"
+        payment_method: "Forma de cobro"
+        paid_on: "Fecha de cobro"
+        voided_at: "Anulada"
+        voided_by: "Anuló"
+        void_reason: "Motivo de la anulación"
+        lines: "Salidas"
+      shipment_weighing:
+        shipment_id: "Salida"
+        shipment: "Salida"
+        gross_weight: "Peso de la pesada (lb)"
+        sacks: "Sacos de la pesada"
+      shipment/weighings:
+        gross_weight: "Peso de la pesada (lb)"
+        sacks: "Sacos de la pesada"
+      sale_line:
+        sale_id: "Venta"
+        shipment_id: "Salida"
+        sale: "Venta"
+        shipment: "Salida"
+        origin_net_weight: "Neto local"
+        net_weight: "Neto del comprador"
+        amount: "Monto"
+        active: "Activa"
+      sale_payment:
+        created_by_id: "Registró"
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
+        sale_id: "Venta"
+        sale: "Venta"
+        amount: "Monto"
+        paid_on: "Fecha"
+        payment_method: "Forma de pago"
+        payment_method/cash: "Efectivo"
+        payment_method/transfer: "Transferencia"
+        payment_method/check: "Cheque"
+        payment_method/advance: "Con anticipo"
+        observations: "Observaciones"
+        created_by: "Registró"
+      buyer_advance:
+        buyer: "Comprador"
+        buyer_id: "Comprador"
+        received_on: "Fecha"
+        amount: "Monto (L)"
+        payment_method: "Forma de pago"
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
+        document_number: "Documento"
+        observations: "Observaciones"
+        created_by_id: "Registró"
       private_document:
         key: "Documento"
         body: "Texto"
@@ -4273,6 +6524,7 @@ es:
         user_id: "Imprimió"
         body: "Texto impreso"
       user:
+        webauthn_id: "Identificador de huellas"
         name: "Nombre completo"
         email_address: "Correo electrónico"
         password: "Contraseña"
@@ -4340,6 +6592,7 @@ es:
         hauler_commission_percent: "Comisión del carrero (%)"
         hauler_can_price: "Precio de la lata del carrero (L)"
         hauler_cans: "Latas"
+        hauler_price_per_pound: "Precio por libra del carrero (L)"
         hauler_commission: "Comisión"
         zone: "Zona"
         zone_id: "Zona"
@@ -4355,6 +6608,12 @@ es:
         damage_percent: "Daño (%)"
         damage_weight: "Restado por daño (lb)"
         damage_amount: "Restado por daño (L)"
+        damage_types: "Tipo de daño"
+        damage_types/yellow: "Amarillo"
+        damage_types/borer: "Broca"
+        damage_types/green: "Verde"
+        damage_types/pulp: "Pulpa"
+        damage_types/peeled: "Pelado"
         yield_factor: "Rendimiento"
         price_per_pound: "Precio por libra (L)"
         sacks: "Sacos"
@@ -4390,6 +6649,8 @@ es:
         paid_on: "Fecha de pago"
         total: "Total"
       invoice_payment:
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
         invoice: "Factura"
         invoice_id: "Factura"
         created_by_id: "Registró"
@@ -4399,10 +6660,11 @@ es:
       hauler:
         person: "Persona"
         person_id: "Persona"
-        commission_percent: "Comisión (%)"
-        can_price: "Precio de la lata (L)"
+        price_per_pound: "Precio por libra neta (L)"
         active: "Activo"
       hauler_payment:
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
         hauler: "Carrero"
         hauler_id: "Carrero"
         created_by_id: "Registró"
@@ -4427,6 +6689,9 @@ es:
       collaborator:
         person_id: "Persona"
       loan:
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
+        interest_grace: "Días sin interés"
         person: "Persona"
         person_id: "Persona"
         created_by_id: "Registró"
@@ -4447,6 +6712,9 @@ es:
         status/overdue: "Vencido"
         status/paid_off: "Pagado"
       loan_payment:
+        payroll_payment_line_id: "Línea de planilla"
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
         loan: "Préstamo"
         loan_id: "Préstamo"
         created_by_id: "Registró"
@@ -4484,9 +6752,11 @@ es:
         area_value: "Extensión"
         area_unit: "Unidad de la extensión"
       expense_category:
+        expenses: "Gastos"
         name: "Nombre"
         active: "Activa"
       payroll:
+        expenses: "Gastos"
         farm: "Finca"
         farm_id: "Finca"
         name: "Nombre"
@@ -4550,6 +6820,8 @@ es:
         payroll_member_id: "Empleado"
         member: "Empleado"
       payroll_payment:
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
         payroll_id: "Planilla"
         period_starts_on: "Inicio del período"
         period_ends_on: "Fin del período"
@@ -4560,6 +6832,10 @@ es:
         observations: "Observaciones"
         created_by_id: "Registró"
       payroll_payment_line:
+        overtime_hours: "Horas extra"
+        overtime_hour_rate: "Valor de la hora extra"
+        extra_days: "Días extra"
+        overtime_amount: "Monto de extras"
         payroll_payment_id: "Pago de planilla"
         payroll_member_id: "Empleado"
         basis: "Forma de pago"
@@ -4569,6 +6845,10 @@ es:
         loans_amount: "A préstamos"
         net_amount: "Recibe"
       payroll_expense:
+        created_by: "Registró"
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
+        payroll: "Planilla"
         payroll_id: "Planilla"
         category: "Categoría"
         expense_category_id: "Categoría"
@@ -4582,6 +6862,7 @@ es:
         params: "Filtros"
         user_id: "Usuario"
       site_setting:
+        logo_data: "Imagen del logo"
         business_name: "Nombre del negocio"
         location: "Ubicación"
         rtn: "RTN del negocio"
@@ -4589,6 +6870,7 @@ es:
         logo_filename: "Archivo del logo"
         logo_content_type: "Tipo de imagen del logo"
         logo_byte_size: "Tamaño del logo (bytes)"
+        weight_tolerance_percent: "Tolerancia de diferencia de peso (%)"
       purchase/weighings:
         gross_weight: "Peso de la pesada (lb)"
         sacks: "Sacos de la pesada"
@@ -4614,6 +6896,125 @@ es:
         can_destroy: "Borrar"
     errors:
       models:
+        staff_member:
+          attributes:
+            person:
+              not_collaborator: "debe tener el rol de colaborador"
+            person_id:
+              taken: "ya está en la planilla interna"
+            role:
+              inactive: "está desactivado"
+            ends_on:
+              before_start: "no puede ser antes de la fecha de inicio"
+              before_paid_period: "deja fuera un período ya pagado"
+            starts_on:
+              after_paid_period: "deja fuera un período ya pagado"
+        staff_payment:
+          attributes:
+            base:
+              not_next_period: "Ese período no es el que sigue por pagar: los períodos se pagan en orden."
+              advances_over_earnings: "Los anticipos pasan de lo ganado en el período: no se puede pagar así."
+              not_latest: "Solo se quita el último pago del empleado."
+            overtime_hours:
+              without_rate: "no se pueden anotar: el rol no tiene valor de la hora extra"
+            money_account:
+              inactive: "está desactivada"
+        staff_advance:
+          attributes:
+            given_on:
+              outside_employment: "no está dentro de las fechas del empleado"
+              in_paid_period: "cae en un período ya pagado"
+            money_account:
+              inactive: "está desactivada"
+            base:
+              taken_off: "Este anticipo ya se descontó en un pago: quita ese pago primero."
+        staff_attendance:
+          attributes:
+            worked_on:
+              outside_employment: "no está dentro de las fechas del empleado"
+              in_paid_period: "es de un período ya pagado"
+        staff_goal:
+          attributes:
+            period_starts_on:
+              outside_employment: "no está dentro de las fechas del empleado"
+              in_paid_period: "ya se pagó"
+            base:
+              paid: "La meta ya se revisó en un pago: quita ese pago primero."
+        money_account:
+          attributes:
+            default_for:
+              inclusion: "tiene una forma de pago que no existe"
+        finance_category:
+          attributes:
+            parent:
+              not_first_level: "debe ser una categoría de primer nivel"
+              has_children: "no se puede poner: esta categoría tiene subcategorías"
+              other_kind: "es de otro tipo"
+        expense:
+          attributes:
+            category:
+              other_kind: "es de otro tipo (gasto o inversión)"
+              inactive: "está desactivada"
+            money_account:
+              inactive: "está desactivada"
+            receipt_upload:
+              too_big: "pesa más de %{size}"
+              not_a_receipt: "debe ser una foto (JPG, PNG o WebP) o un PDF"
+        other_income:
+          attributes:
+            money_account:
+              inactive: "está desactivada"
+        account_transfer:
+          attributes:
+            to_account:
+              same_account: "debe ser otra cuenta"
+              inactive: "está desactivada"
+            from_account:
+              inactive: "está desactivada"
+        budget:
+          attributes:
+            category:
+              not_first_level: "debe ser de primer nivel"
+        shipment:
+          sold: "La salida ya está en una venta: no se cambian su comprador, estado ni pesos. Anula la venta primero."
+          attributes:
+            weighings:
+              blank: "faltan: agrega al menos una pesada"
+            base:
+              sold: "La salida ya está en una venta: no se cambian su comprador, estado ni pesos. Anula la venta primero."
+            buyer:
+              inactive: "está desactivado"
+            carrier:
+              inactive: "está desactivado"
+            truck:
+              inactive: "está desactivado"
+            received_on:
+              before_departure: "no puede ser antes de la salida"
+        sale:
+          attributes:
+            base:
+              partial_not_less: "El cobro parcial debe ser menor que el total; si cobras todo, elige «De contado»."
+              has_payments: "La venta tiene cobros: quítalos antes de anularla."
+            lines:
+              blank: "faltan: elige al menos una salida"
+              unavailable: "no están todas disponibles (alguna se vendió, se anuló o es de otro comprador): revisa la lista"
+              mixed_states: "son de distintos estados del café: haz una venta por cada estado"
+        buyer_advance:
+          attributes:
+            base:
+              used: "Este anticipo ya se descontó de una venta: quita primero ese cobro con anticipo."
+            money_account:
+              inactive: "está desactivada"
+        sale_payment:
+          attributes:
+            base:
+              sale_voided: "La venta está anulada."
+            amount:
+              over_balance: "es mayor que lo que falta por cobrar (%{balance})"
+              over_advances: "es mayor que el saldo de anticipos del comprador (%{balance})"
+            paid_on:
+              before_sale: "no puede ser antes de la fecha de la venta"
+              before_last_payment: "no puede ser antes del último cobro"
         private_document_print:
           attributes:
             base:
@@ -4624,6 +7025,7 @@ es:
           role_required: "Marca al menos un rol: cliente, colaborador, productor o carrero."
           producer_in_use: "No se puede quitar el rol de productor: ya tiene compras, facturas o fincas."
           hauler_in_use: "No se puede quitar el rol de carrero: ya tiene compras carreadas o pagos. Desactívalo en su ficha de carrero."
+          staff_member: "No se puede quitar el rol de colaborador: está en la planilla interna. Desactívalo allí."
         farm:
           attributes:
             producer:
@@ -4789,6 +7191,7 @@ es:
         person_merge:
           same_person: "Elige a otra persona: no se puede fusionar una persona consigo misma."
           shared_payroll: "Las dos personas están en la planilla %{payrolls}: quita a una de ella antes de fusionarlas."
+          both_staff: "Las dos personas están en la planilla interna: deja a una sola antes de fusionarlas."
           failed: "No se pudo fusionar: %{detail}"
         payroll_timesheet:
           closed: "Este período ya se pagó: no se puede cambiar."
@@ -4823,6 +7226,7 @@ es:
     messages:
       accepted: "debe ser aceptado"
       blank: "no puede estar en blanco"
+      choose_at_least_one: "elige al menos uno"
       confirmation: "no coincide con %{attribute}"
       empty: "no puede estar vacío"
       equal_to: "debe ser igual a %{count}"
@@ -4887,6 +7291,7 @@ es:
       short: "%-d de %b"
       short_day: "%a %-d/%m"
       month_year: "%b %Y"
+      month_short: "%b"
     order: [day, month, year]
 
   time:

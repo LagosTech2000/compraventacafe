@@ -1,0 +1,28 @@
+<%= form_with model: category, url: category.persisted? ? finance_category_path(category) : finance_categories_path, scope: :finance_category,
+      class: form_surface_class("max-w-lg space-y-5"), data: { controller: "form-validation" } do |form| %>
+  <%= hidden_field_tag :picker, "1" if picker_request? %>
+  <%= render "shared/form_errors", record: category %>
+  <div>
+    <%= form.label :name, class: "field-label" %>
+    <%= form.text_field :name, required: true, maxlength: 80, autofocus: true, class: "field-input",
+          data: { missing_message: "#{FinanceCategory.human_attribute_name(:name)} #{t("errors.messages.blank")}" } %>
+  </div>
+  <div>
+    <%= form.label :kind, class: "field-label" %>
+    <%= form.select :kind, enum_options(FinanceCategory, :kind, FinanceCategory::KINDS), {}, required: true, class: "field-input",
+          disabled: category.persisted? && category.expenses.exists? %>
+  </div>
+  <div>
+    <%= form.label :parent_id, class: "field-label" %>
+    <% parents = FinanceCategory.top_level.active.alphabetical.where.not(id: category.id).map { [ "#{it.name} (#{it.human_kind.downcase})", it.id ] } %>
+    <%= form.select :parent_id, parents, { include_blank: t("finance.categories.form.no_parent") }, class: "field-input" %>
+    <p class="mt-1 text-xs text-ink-muted"><%= t("finance.categories.form.parent_help") %></p>
+  </div>
+  <% if category.persisted? %>
+    <label class="flex items-center gap-2 text-sm font-medium"><%= form.check_box :active, class: "size-4 accent-primary" %> <%= FinanceCategory.human_attribute_name(:active) %></label>
+  <% end %>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= cancel_button finance_categories_path %>
+  </div>
+<% end %>

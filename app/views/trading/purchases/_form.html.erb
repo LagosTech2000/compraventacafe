@@ -19,11 +19,13 @@
               action: "purchase-calculator:calculated->hauler-commission#calculated #{unsaved_changes_actions}",
               unsaved_changes_message_value: t("shared.unsaved_changes.leave"),
               hauler_commission_can_pounds_value: Hauler::CAN_POUNDS.to_f,
+              hauler_commission_legacy_label_value: t(".hauler_terms_by_cans"),
               hauler_commission_terms_label_value: t(".hauler_terms"),
               purchase_calculator_sack_weight_value: PurchaseCalculation::SACK_WEIGHT,
               purchase_calculator_tare_per_sack_value: PurchaseCalculation::TARE_PER_SACK,
               purchase_calculator_quintal_weight_value: PurchaseCalculation::QUINTAL_WEIGHT,
-              purchase_calculator_defaults_value: PurchaseDefaults.by_coffee_state.to_json } do |form| %>
+              purchase_calculator_defaults_value: PurchaseDefaults.by_coffee_state.to_json,
+              purchase_calculator_damage_types_message_value: t(".damage_types_missing") } do |form| %>
   <%= render "shared/form_errors", record: purchase %>
   <%# Optimistic locking: saving over someone else's newer change fails. %>
   <%= form.hidden_field :lock_version if purchase.persisted? %>
@@ -109,9 +111,14 @@
       <%= form.label :hauler_id, class: "field-label" %>
       <%= form.select :hauler_id,
             haulers.map { |hauler|
-              kept = hauler.id == purchase.hauler_id_in_database && purchase.hauler_commission_percent
-              [ hauler.full_name, hauler.id, { data: { percent: (kept ? purchase.hauler_commission_percent : hauler.commission_percent).to_s,
-                                                       can_price: (kept ? purchase.hauler_can_price : hauler.can_price).to_s } } ]
+              # The hauler already on the purchase keeps the terms it was calculated with.
+              kept = purchase.persisted? && hauler.id == purchase.hauler_id_in_database
+              data = if kept && purchase.hauler_price_per_pound.nil? && purchase.hauler_can_price
+                       { percent: purchase.hauler_commission_percent.to_s, can_price: purchase.hauler_can_price.to_s }
+                     else
+                       { price_per_pound: (kept && purchase.hauler_price_per_pound || hauler.price_per_pound).to_s }
+                     end
+              [ hauler.full_name, hauler.id, { data: } ]
             },
             { include_blank: t("shared.select.no_hauler") }, class: "field-input",
             data: { hauler_commission_target: "select", option_picker_target: "select", action: "hauler-commission#update" } %>
@@ -190,6 +197,22 @@
             disabled: purchase.cherry?, class: "field-input text-lg",
             data: { purchase_calculator_target: "damage", action: "purchase-calculator#update" } %>
     </div>
+    <%# Damage above 0 asks for its kinds, one or more (Purchase::DAMAGE_TYPES). %>
+    <fieldset class="sm:col-span-2 lg:col-span-4" data-purchase-calculator-target="damageTypes" <%= "hidden" unless purchase.damaged? %>>
+      <legend class="field-label"><%= Purchase.human_attribute_name(:damage_types) %></legend>
+      <p class="mb-2 text-xs text-ink-muted"><%= t(".damage_types_help") %></p>
+      <div class="flex flex-wrap gap-2">
+        <%= hidden_field_tag "purchase[damage_types][]", "", id: nil, disabled: !purchase.damaged? %>
+        <% Purchase::DAMAGE_TYPES.each do |type| %>
+          <label class="chip has-[:checked]:bg-primary has-[:checked]:text-on-primary has-[:checked]:ring-primary">
+            <%= check_box_tag "purchase[damage_types][]", type, purchase.damage_types.include?(type), id: "purchase_damage_types_#{type}",
+                  class: "sr-only", disabled: !purchase.damaged?,
+                  data: { purchase_calculator_target: "damageType", action: "purchase-calculator#update" } %>
+            <%= Purchase.human_attribute_name("damage_types/#{type}") %>
+          </label>
+        <% end %>
+      </div>
+    </fieldset>
     <div data-purchase-calculator-target="cherryField" <%= "hidden" unless purchase.cherry? %>>
       <%= form.label :yield_factor, class: "field-label" %>
       <%= form.number_field :yield_factor, required: true, min: 0.0001, max: 1, step: 0.0001, inputmode: "decimal",
@@ -232,11 +255,7 @@
     <div class="panel p-4" data-hauler-commission-target="box" hidden>
       <p class="text-sm font-semibold"><%= t(".hauler_commission") %></p>
       <p class="text-xs text-ink-muted" data-hauler-commission-target="terms"></p>
-      <dl class="mt-2 grid grid-cols-2 gap-3">
-        <div>
-          <dt class="text-xs text-ink-muted"><%= Purchase.human_attribute_name(:hauler_cans) %></dt>
-          <dd class="text-xl font-bold tabular-nums" data-hauler-commission-target="cans">—</dd>
-        </div>
+      <dl class="mt-2">
         <div>
           <dt class="text-xs text-ink-muted"><%= Purchase.human_attribute_name(:hauler_commission) %></dt>
           <dd class="text-xl font-bold tabular-nums" data-hauler-commission-target="amount">—</dd>

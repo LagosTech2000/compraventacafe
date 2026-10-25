@@ -1,0 +1,31 @@
+<% content_for :title, t(".title", number: @advance.display_number) %>
+<%= render "shared/breadcrumbs", crumbs: buyer_crumbs(@buyer, [ t(".title", number: @advance.display_number) ]) %>
+
+<div class="mb-6 flex flex-wrap items-start justify-between gap-4 print:hidden">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title", number: @advance.display_number) %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= @buyer.name %></p>
+  </div>
+  <% if modal_request? %>
+    <%# Printing needs the full page: it holds the original and the copy. %>
+    <%= page_link_to t(".print"), sales_buyer_buyer_advance_path(@buyer, @advance), class: "btn btn-primary", autofocus: true %>
+  <% else %>
+    <div data-controller="print">
+      <button type="button" class="btn btn-primary" data-action="print#print" autofocus><%= t(".print") %></button>
+    </div>
+  <% end %>
+</div>
+
+<%# Original and copy each on its own page: no cutting. %>
+<div class="space-y-6 print:space-y-0">
+  <%= render "receipt", advance: @advance, label: t(".original") %>
+  <% unless modal_request? %>
+    <div class="border-t border-line pt-6 print:break-before-page print:border-0 print:pt-0">
+      <%= render "receipt", advance: @advance, label: t(".copy") %>
+    </div>
+  <% end %>
+</div>
+
+<% unless modal_request? %>
+  <p class="mt-6 print:hidden"><%= link_to t(".back"), sales_buyer_path(@buyer, tab: "advances"), class: "text-sm link" %></p>
+<% end %>

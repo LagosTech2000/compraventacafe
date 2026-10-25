@@ -21,7 +21,7 @@
   <%= render "shared/form_errors", record: @payment %>
   <%= hidden_field_tag :payroll_id, @payroll.id, id: nil if @payroll %>
 
-  <div class="grid gap-5 sm:grid-cols-3">
+  <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4" data-controller="money-account" data-money-account-defaults-value="<%= MoneyAccount.defaults_by_method.to_json %>">
     <div>
       <%= form.label :paid_on, class: "field-label" %>
       <%= form.date_field :paid_on, required: true, class: "field-input" %>
@@ -35,8 +35,9 @@
       <%= form.label :payment_method, class: "field-label" %>
       <%= form.select :payment_method, enum_options(LoanPayment, :payment_method, LoanPayment::PAYMENT_METHODS),
             { include_blank: t("shared.select.pick_payment_method") }, required: true, class: "field-input",
-            data: { missing_message: "#{LoanPayment.human_attribute_name(:payment_method)} #{t("errors.messages.blank")}" } %>
+            data: { money_account_target: "method", action: "money-account#suggest", missing_message: "#{LoanPayment.human_attribute_name(:payment_method)} #{t("errors.messages.blank")}" } %>
     </div>
+    <%= render "shared/money_account_field", form: %>
   </div>
 
   <div>

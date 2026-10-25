@@ -14,6 +14,9 @@
     <div><dt class="inline font-semibold"><%= t("trading.invoices.show.invoice") %>:</dt> <dd class="inline"><%= invoice.display_number %></dd></div>
     <div><dt class="inline font-semibold"><%= InvoicePayment.human_attribute_name(:paid_on) %>:</dt> <dd class="inline"><%= l(payment.paid_on, format: :long) %></dd></div>
     <div><dt class="inline font-semibold"><%= InvoicePayment.human_attribute_name(:payment_method) %>:</dt> <dd class="inline"><%= payment.human_payment_method %></dd></div>
+    <% if payment.money_account %>
+      <div><dt class="inline font-semibold"><%= MoneyAccount.model_name.human %>:</dt> <dd class="inline"><%= payment.money_account.name %></dd></div>
+    <% end %>
   </dl>
 
   <div class="mt-4 grid gap-4 sm:grid-cols-2 print:mt-2 print:grid-cols-2">

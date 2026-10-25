@@ -1,0 +1,162 @@
+<% content_for :title, AppModule.human_name("finance") %>
+<%= live_updates_from :finance %>
+<%= render "finance/nav" %>
+<h1 class="sr-only"><%= t("finance.nav.home") %></h1>
+
+<% out_now = @month.sum(0.to_d, &:amount_out) %>
+<% out_before = @previous.sum(0.to_d, &:amount_out) %>
+<% in_now = @month.sum(0.to_d, &:amount_in) %>
+<% over_budget = @budget_lines.select(&:over?) %>
+
+<%# What needs attention first. %>
+<% if @accounts.empty? || @without_account.positive? || over_budget.any? || @staff_due.any? %>
+  <ul class="mb-6 space-y-2">
+    <% if @accounts.empty? %>
+      <li class="flash-notice flex flex-wrap items-center justify-between gap-3">
+        <span><%= t(".no_accounts") %></span>
+        <% if policy(MoneyAccount).create? %><%= modal_link_to t(".new_account"), new_finance_money_account_path, class: "btn btn-sm btn-primary" %><% end %>
+      </li>
+    <% end %>
+    <% if @without_account.positive? %>
+      <li class="flash-notice flex flex-wrap items-center justify-between gap-3">
+        <span><%= t(".without_account", count: @without_account) %></span>
+        <%= link_to t(".consolidate"), finance_consolidation_path, class: "btn btn-sm" %>
+      </li>
+    <% end %>
+    <% if @staff_due.any? %>
+      <li class="flash-notice flex flex-wrap items-center justify-between gap-3">
+        <span><%= t(".staff_due", count: @staff_due.size) %></span>
+        <%= link_to t(".see"), finance_staff_members_path, class: "btn btn-sm" %>
+      </li>
+    <% end %>
+    <% over_budget.each do |line| %>
+      <li class="flash-alert flex flex-wrap items-center justify-between gap-3" role="status">
+        <span><%= t(".over_budget", category: line.category.name, spent: format_money(line.spent), budget: format_money(line.budget)) %></span>
+        <%= link_to t(".see"), finance_expenses_path(category_id: line.category.id), class: "btn btn-sm" %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>
+
+<%# Where the money is. %>
+<section aria-labelledby="finance-accounts">
+  <div class="mb-3 flex flex-wrap items-baseline justify-between gap-3">
+    <h2 id="finance-accounts" class="text-lg font-semibold"><%= t(".accounts") %></h2>
+    <div class="flex flex-wrap gap-2">
+      <% if policy(AccountTransfer).create? && @accounts.many? %><%= modal_link_to t(".transfer"), new_finance_account_transfer_path, class: "btn btn-sm" %><% end %>
+      <% if policy(OtherIncome).create? && @accounts.any? %><%= modal_link_to t(".income"), new_finance_other_income_path, class: "btn btn-sm" %><% end %>
+    </div>
+  </div>
+  <dl class="flex flex-wrap gap-3">
+    <div class="stat min-w-0 flex-1 basis-48 ring-2 ring-primary">
+      <dt><%= t(".total_balance") %></dt>
+      <dd data-live-value="finance-total"><%= signed_money(@balance.total) %></dd>
+      <dd class="text-xs font-normal text-ink-muted"><%= t(".as_of", date: l(@today, format: :long)) %></dd>
+    </div>
+    <% @accounts.each do |account| %>
+      <%= link_to finance_money_account_path(account), class: "stat block min-w-0 flex-1 basis-48 transition hover:ring-primary/40" do %>
+        <dt><%= account.name %></dt>
+        <dd data-live-value="account-<%= account.id %>" class="<%= "text-danger" if @balance.for(account).negative? %>"><%= signed_money(@balance.for(account)) %></dd>
+        <p class="text-xs text-ink-muted"><%= [ account.human_kind, account.bank_name ].compact.join(" · ") %></p>
+      <% end %>
+    <% end %>
+  </dl>
+</section>
+
+<%# This month against the same days of the last. %>
+<section class="mt-8" aria-labelledby="finance-month">
+  <h2 id="finance-month" class="mb-3 text-lg font-semibold"><%= t(".month", month: l(@today, format: :month_year)) %></h2>
+  <dl class="flex flex-wrap gap-3">
+    <div class="stat min-w-0 flex-1 basis-48">
+      <dt><%= t(".out") %></dt>
+      <dd><%= format_money(out_now) %></dd>
+      <% if out_before.positive? %>
+        <% change = ((out_now - out_before) * 100 / out_before).round %>
+        <dd class="text-xs font-normal <%= change.positive? ? "text-danger" : "text-success" %>">
+          <%= t(".against_last", change: "#{"+" if change.positive?}#{change} %", amount: format_money(out_before)) %>
+        </dd>
+      <% end %>
+    </div>
+    <div class="stat min-w-0 flex-1 basis-48"><dt><%= t(".in") %></dt><dd class="text-success"><%= format_money(in_now) %></dd></div>
+    <div class="stat min-w-0 flex-1 basis-48"><dt><%= t(".net") %></dt><dd><%= signed_money(in_now - out_now) %></dd></div>
+    <div class="stat min-w-0 flex-1 basis-48">
+      <dt><%= t(".expenses_and_investments") %></dt>
+      <dd><%= format_money(@month.select { it.source.in?(%w[expenses investments]) }.sum(0.to_d, &:amount_out)) %></dd>
+    </div>
+  </dl>
+
+  <div class="mt-4 grid gap-4 lg:grid-cols-2">
+    <section class="panel p-4" aria-labelledby="finance-by-source">
+      <h3 id="finance-by-source" class="font-semibold"><%= t(".by_source") %></h3>
+      <p class="text-xs text-ink-muted"><%= t(".by_source_help") %></p>
+      <%= render "finance/home/bars", rows: @month.select { it.amount_out.positive? }.group_by(&:source)
+                                                .map { |source, list| [ t("reports.types.cash_movements.sources.#{source}"), list.sum(0.to_d, &:amount_out) ] }
+                                                .sort_by { -it.last } %>
+    </section>
+    <section class="panel p-4" aria-labelledby="finance-by-category">
+      <h3 id="finance-by-category" class="font-semibold"><%= t(".by_category") %></h3>
+      <p class="text-xs text-ink-muted"><%= t(".by_category_help") %></p>
+      <%= render "finance/home/bars", rows: @month.select { it.category && it.amount_out.positive? }
+                                                .group_by { it.category.split(" › ").first }
+                                                .map { |category, list| [ category, list.sum(0.to_d, &:amount_out) ] }
+                                                .sort_by { -it.last }.first(10) %>
+    </section>
+  </div>
+</section>
+
+<div class="mt-8 grid gap-4 lg:grid-cols-2">
+  <section class="panel p-4" aria-labelledby="finance-budget">
+    <div class="flex flex-wrap items-baseline justify-between gap-3">
+      <h2 id="finance-budget" class="font-semibold"><%= t(".budget") %></h2>
+      <%= link_to t(".see_budget"), finance_budget_path, class: "btn btn-sm" %>
+    </div>
+    <% if @budget_lines.any? %>
+      <ul class="mt-3 space-y-3">
+        <% @budget_lines.each do |line| %>
+          <li class="text-sm" id="<%= dom_id(line.category, :budget) %>">
+            <div class="flex items-baseline justify-between gap-3">
+              <span class="font-medium"><%= line.category.name %></span>
+              <span class="tabular-nums <%= "font-semibold text-danger" if line.over? %>">
+                <%= format_money(line.spent) %> <span class="text-ink-muted">/ <%= line.budget ? format_money(line.budget) : t(".no_budget") %></span>
+              </span>
+            </div>
+            <% if line.budget.to_d.positive? %>
+              <div class="mt-1 h-2 overflow-hidden rounded-full bg-surface-2" role="meter" aria-valuemin="0" aria-valuemax="100"
+                   aria-valuenow="<%= [ line.percent, 100 ].min %>" aria-label="<%= t(".percent_used", percent: line.percent) %>">
+                <span class="block h-full rounded-full <%= line.over? ? "bg-danger" : line.percent >= 80 ? "bg-warning" : "bg-success" %>"
+                      style="width: <%= [ line.percent, 100 ].min %>%"></span>
+              </div>
+              <p class="mt-0.5 text-xs text-ink-muted"><%= t(".percent_used", percent: line.percent) %></p>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="mt-3 text-sm text-ink-muted"><%= t(".no_budget_yet") %></p>
+    <% end %>
+  </section>
+
+  <section class="panel p-4" aria-labelledby="finance-latest">
+    <div class="flex flex-wrap items-baseline justify-between gap-3">
+      <h2 id="finance-latest" class="font-semibold"><%= t(".latest") %></h2>
+      <%= link_to t(".see_movements"), finance_movements_path, class: "btn btn-sm" %>
+    </div>
+    <% if @latest.any? %>
+      <ul class="mt-3 divide-y divide-line text-sm">
+        <% @latest.each do |movement| %>
+          <li class="flex items-center justify-between gap-3 py-2">
+            <span class="min-w-0">
+              <span class="block truncate font-medium"><%= movement.description %></span>
+              <span class="block text-xs text-ink-muted"><%= l(movement.at) %> · <%= t("reports.types.cash_movements.sources.#{movement.source}") %></span>
+            </span>
+            <span class="shrink-0 font-semibold tabular-nums <%= movement.amount_in.positive? ? "text-success" : "" %>">
+              <%= movement.amount_in.positive? ? "+#{format_money(movement.amount_in)}" : "−#{format_money(movement.amount_out)}" %>
+            </span>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="mt-3 text-sm text-ink-muted"><%= t(".nothing") %></p>
+    <% end %>
+  </section>
+</div>

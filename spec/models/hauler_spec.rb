@@ -1,9 +1,9 @@
 require "rails_helper"
 
-# Carreros (Fernando, 2026-10-16): commission = net pounds ÷ 16.5 (cans) ×
-# can price × percent, paid by the business apart from the producer.
+# Carreros (Fernando, 2026-10-16): a commission paid by the business apart
+# from the producer; since 2026-10-24, net pounds × their price per pound.
 RSpec.describe Hauler do
-  let(:hauler) { create(:hauler, commission_percent: 10, can_price: 50) }
+  let(:hauler) { create(:hauler, price_per_pound: "0.303") }
 
   # Cherry with a yield of 1: the net weight is the gross minus 1 lb per sack.
   def hauled(net, **attributes)
@@ -12,17 +12,15 @@ RSpec.describe Hauler do
     create(:purchase, coffee_state: "cherry", yield_factor: 1, gross_weight: gross, hauler:, **attributes)
   end
 
-  it "earns cans × can price × percent: 1,650 lb are 100 cans × L 50 × 10 % = L 500" do
-    expect(Hauler.commission(net_weight: 1_650, percent: 10, can_price: 50)).to eq([ 100, 500 ])
-    expect(Hauler.commission(net_weight: 1_000, percent: "12.5", can_price: "47.25")).to eq([ BigDecimal("60.61"), BigDecimal("357.95") ])
+  it "earns net pounds × price per pound: 1,650 lb × L 0.303 = L 499.95" do
+    expect(Hauler.commission(net_weight: 1_650, price_per_pound: "0.303")).to eq(BigDecimal("499.95"))
+    expect(Hauler.can_commission(net_weight: 1_650, percent: 10, can_price: 50)).to eq([ 100, 500 ])
   end
 
-  it "requires its percent and can price" do
-    expect(build(:hauler, commission_percent: nil, can_price: nil)).not_to be_valid
-    expect(build(:hauler, commission_percent: 0)).not_to be_valid
-    expect(build(:hauler, commission_percent: 101)).not_to be_valid
-    expect(build(:hauler, can_price: 0)).not_to be_valid
-    expect(build(:hauler, commission_percent: "2.5", can_price: "35.75")).to be_valid
+  it "requires its price per pound" do
+    expect(build(:hauler, price_per_pound: nil)).not_to be_valid
+    expect(build(:hauler, price_per_pound: 0)).not_to be_valid
+    expect(build(:hauler, price_per_pound: "0.2575")).to be_valid
   end
 
   it "is owed the commissions of its active purchases minus its payments" do
@@ -31,34 +29,43 @@ RSpec.describe Hauler do
     hauled(1_650).void!(create(:user))
     create(:hauler_payment, hauler:, amount: 200)
 
-    expect(hauler.commissions_total).to eq(750)
+    # 499.95 + 249.98
+    expect(hauler.commissions_total).to eq(BigDecimal("749.93"))
     expect(hauler.paid_total).to eq(200)
-    expect(hauler.balance).to eq(550)
-    expect(Hauler.with_totals.find(hauler.id)).to have_attributes(commissions_total: 750, paid_total: 200, balance_total: 550)
+    expect(hauler.balance).to eq(BigDecimal("549.93"))
+    expect(Hauler.with_totals.find(hauler.id)).to have_attributes(commissions_total: BigDecimal("749.93"), paid_total: 200, balance_total: BigDecimal("549.93"))
   end
 
   describe "on a purchase" do
-    it "keeps the hauler's percent and can price of its day" do
+    it "keeps the hauler's price per pound of its day" do
       purchase = hauled(1_650)
-      expect(purchase).to have_attributes(hauler_commission_percent: 10, hauler_can_price: 50, hauler_cans: 100, hauler_commission: 500)
+      expect(purchase).to have_attributes(hauler_price_per_pound: BigDecimal("0.303"), hauler_cans: nil, hauler_commission: BigDecimal("499.95"))
 
-      hauler.update!(commission_percent: 20, can_price: 60)
+      hauler.update!(price_per_pound: "0.5")
       purchase.reload.update!(observations: "Sin cambios")
-      expect(purchase.reload.hauler_commission).to eq(500)
+      expect(purchase.reload.hauler_commission).to eq(BigDecimal("499.95"))
 
-      purchase.update!(gross_weight: 832) # 826 lb net: the terms of its day, not the new ones
-      expect(purchase.reload).to have_attributes(net_weight: 826, hauler_commission_percent: 10, hauler_can_price: 50,
-                                                 hauler_cans: BigDecimal("50.06"), hauler_commission: BigDecimal("250.30"))
+      purchase.update!(gross_weight: 832) # 826 lb net: the price of its day, not the new one
+      expect(purchase.reload).to have_attributes(net_weight: 826, hauler_price_per_pound: BigDecimal("0.303"), hauler_commission: BigDecimal("250.28"))
     end
 
-    it "takes the new hauler's terms when the hauler changes, and drops them without one" do
+    it "keeps the cans, can price and percent of a purchase from before the change" do
       purchase = hauled(1_650)
-      other = create(:hauler, commission_percent: 5, can_price: 40)
-      purchase.update!(hauler: other)
-      expect(purchase.reload).to have_attributes(hauler_commission_percent: 5, hauler_can_price: 40, hauler_commission: 200)
+      purchase.update_columns(hauler_price_per_pound: nil, hauler_commission_percent: 10, hauler_can_price: 50, hauler_cans: 100, hauler_commission: 500)
+      purchase.reload.update!(gross_weight: 832)
+      expect(purchase.reload).to have_attributes(hauler_price_per_pound: nil, hauler_cans: BigDecimal("50.06"), hauler_commission: BigDecimal("250.30"))
+    end
+
+    it "takes the new hauler's price when the hauler changes, and drops it without one" do
+      purchase = hauled(1_650)
+      purchase.update_columns(hauler_price_per_pound: nil, hauler_commission_percent: 10, hauler_can_price: 50, hauler_cans: 100)
+      other = create(:hauler, price_per_pound: "0.2")
+      purchase.reload.update!(hauler: other)
+      expect(purchase.reload).to have_attributes(hauler_price_per_pound: BigDecimal("0.2"), hauler_commission_percent: nil, hauler_can_price: nil,
+                                                 hauler_cans: nil, hauler_commission: 330)
 
       purchase.update!(hauler: nil)
-      expect(purchase.reload).to have_attributes(hauler_commission_percent: nil, hauler_can_price: nil, hauler_cans: nil, hauler_commission: nil)
+      expect(purchase.reload).to have_attributes(hauler_price_per_pound: nil, hauler_commission: nil)
     end
 
     it "takes only an active hauler" do
@@ -89,9 +96,9 @@ RSpec.describe Hauler do
 
     it "never pay more than what is owed, nor before the last one, and keep the balance after" do
       first = create(:hauler_payment, hauler:, amount: 300, paid_on: Time.zone.today - 1)
-      expect(first.balance_after).to eq(200)
+      expect(first.balance_after).to eq(BigDecimal("199.95"))
 
-      too_much = build(:hauler_payment, hauler:, amount: 201)
+      too_much = build(:hauler_payment, hauler:, amount: 200)
       expect(too_much).not_to be_valid
       expect(too_much.errors[:amount].sole).to include("es mayor que lo que se le debe al carrero")
 
@@ -99,7 +106,7 @@ RSpec.describe Hauler do
       expect(earlier).not_to be_valid
       expect(earlier.errors[:paid_on]).to include("no puede ser antes del último pago")
 
-      last = create(:hauler_payment, hauler:, amount: 200)
+      last = create(:hauler_payment, hauler:, amount: BigDecimal("199.95"))
       expect(last.balance_after).to eq(0)
       expect([ first.latest?, last.latest? ]).to eq([ false, true ])
     end
@@ -108,13 +115,13 @@ RSpec.describe Hauler do
   describe "as a role of a person, from the form" do
     let(:person) { create(:person, :client) }
 
-    it "is added with its percent and can price, both required" do
+    it "is added with its price per pound, required" do
       person.assign_attributes(hauler_role: "1")
       expect(person).not_to be_valid
 
-      person.assign_attributes(hauler_commission_percent: "8", hauler_can_price: "45")
+      person.assign_attributes(hauler_price_per_pound: "0.25")
       person.save!
-      expect(person.reload.hauler).to have_attributes(commission_percent: 8, can_price: 45, active: true)
+      expect(person.reload.hauler).to have_attributes(price_per_pound: BigDecimal("0.25"), active: true)
     end
 
     it "stays while it has purchases or payments" do

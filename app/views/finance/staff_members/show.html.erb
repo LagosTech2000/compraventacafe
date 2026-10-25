@@ -1,0 +1,198 @@
+<% content_for :title, @member.full_name %>
+<%# Updates itself while open when the data changes (LiveUpdates). %>
+<%= live_updates_from :finance %>
+<%= render "finance/nav" %>
+<%= render "shared/breadcrumbs", crumbs: [ [ t("finance.staff_members.index.title"), finance_staff_members_path ], [ @member.full_name ] ] %>
+<% role = @member.role %>
+<% to_pay = @member.period_to_pay %>
+<% person = @member.person %>
+
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div class="flex min-w-0 items-center gap-4">
+    <%= avatar(person, css: "size-16 text-lg") %>
+    <div class="min-w-0">
+      <h1 class="text-2xl font-bold"><%= @member.full_name %></h1>
+      <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
+        <span class="badge badge-neutral"><%= role.name %></span>
+        <span class="<%= @member.active? ? "badge badge-success" : "badge badge-neutral" %>"><%= t("finance.staff_members.statuses.#{@member.active? ? "active" : "inactive"}") %></span>
+        <span><%= staff_salary(@member) %></span>
+      </p>
+    </div>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <% if to_pay && policy(StaffPayment).create? %>
+      <%= link_to t(".pay", period: format_period(to_pay)), new_finance_staff_member_staff_payment_path(@member), class: "btn btn-primary" %>
+    <% end %>
+    <% if policy(StaffAdvance).create? %>
+      <%= modal_link_to t(".new_advance"), new_finance_staff_member_staff_advance_path(@member), class: "btn" %>
+    <% end %>
+    <% if policy(StaffGoal).create? && @member.goal_periods.any? %>
+      <%= modal_link_to t(".new_goal"), new_finance_staff_member_staff_goal_path(@member), class: "btn" %>
+    <% end %>
+    <% if policy(@member).update? %>
+      <%= modal_link_to t(".edit"), edit_finance_staff_member_path(@member), class: "btn" %>
+    <% end %>
+    <%= help_guide_button HelpGuide.process(:staff_payroll), label: true %>
+  </div>
+</div>
+
+<%# A role without salary yet (the Excel's ones): nothing to pay until it is filled. %>
+<% unless role.priced? %>
+  <p class="flash-alert mt-4 flex flex-wrap items-center justify-between gap-3" role="status">
+    <span><%= t(".no_salary", role: role.name) %></span>
+    <% if policy(role).update? %><%= modal_link_to t(".fill_salary"), edit_finance_staff_role_path(role), class: "btn btn-sm" %><% end %>
+  </p>
+<% end %>
+<% pending = @member.pending_advances.sum(0.to_d, &:amount) %>
+<dl class="mt-6 flex flex-wrap gap-3">
+  <div class="stat min-w-0 flex-1 basis-40">
+    <dt><%= to_pay ? t(".figures.next", period: format_period(to_pay)) : t(".figures.next_none") %></dt>
+    <dd data-live-value><%= to_pay ? format_money(@member.estimate(to_pay).net_total) : "—" %></dd>
+  </div>
+  <div class="stat min-w-0 flex-1 basis-40"><dt><%= t(".figures.advances") %></dt><dd data-live-value><%= format_money(pending) %></dd></div>
+  <div class="stat min-w-0 flex-1 basis-40"><dt><%= t(".figures.paid") %></dt><dd data-live-value><%= format_money(@member.payments.sum(0.to_d, &:net_total)) %></dd></div>
+</dl>
+
+<div class="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+  <aside class="grid gap-4 lg:order-last" aria-label="<%= t(".record") %>">
+    <section class="panel p-4" aria-labelledby="staff-record">
+      <h2 id="staff-record" class="font-semibold"><%= t(".record") %></h2>
+      <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+        <div><dt class="text-xs text-ink-muted"><%= StaffMember.human_attribute_name(:role) %></dt><dd><%= role.name %></dd></div>
+        <div><dt class="text-xs text-ink-muted"><%= StaffRole.human_attribute_name(:pay_frequency) %></dt><dd><%= role.human_pay_frequency || "—" %></dd></div>
+        <div><dt class="text-xs text-ink-muted"><%= StaffRole.human_attribute_name(:salary) %></dt><dd class="tabular-nums"><%= staff_member_salary(@member) %></dd></div>
+        <div><dt class="text-xs text-ink-muted"><%= StaffRole.human_attribute_name(:overtime_hour_rate) %></dt><dd class="tabular-nums"><%= role.overtime_hour_rate ? format_money(role.overtime_hour_rate) : "—" %></dd></div>
+        <div><dt class="text-xs text-ink-muted"><%= StaffMember.human_attribute_name(:starts_on) %></dt><dd><%= l(@member.starts_on) %></dd></div>
+        <div><dt class="text-xs text-ink-muted"><%= StaffMember.human_attribute_name(:ends_on) %></dt><dd><%= @member.ends_on ? l(@member.ends_on) : "—" %></dd></div>
+        <div><dt class="text-xs text-ink-muted"><%= Person.human_attribute_name(:dni) %></dt><dd><%= person.dni.presence || "—" %></dd></div>
+        <div><dt class="text-xs text-ink-muted"><%= Person.human_attribute_name(:phone) %></dt><dd><%= person.phone ? format_phone(person.phone) : "—" %></dd></div>
+      </dl>
+      <% if @member.observations.present? %>
+        <p class="mt-3 text-sm"><span class="text-xs text-ink-muted"><%= StaffMember.human_attribute_name(:observations) %></span><br><%= @member.observations %></p>
+      <% end %>
+    </section>
+  </aside>
+
+  <div class="min-w-0" data-controller="tabs">
+    <%= render "shared/tab_bar", id: "staff", label: t(".tabs_label"), selected: @tab,
+          tabs: { periods: t(".tabs.periods"), payments: [ t(".tabs.payments"), @member.payments.size ],
+                  advances: [ t(".tabs.advances"), @member.advances.size ], goals: [ t(".tabs.goals"), @member.goals.size ] } %>
+
+    <%= tab_panel "staff", :periods, selected: @tab == "periods" do %>
+      <%# The periods started, the newest first, with what each paid or would pay. %>
+      <% periods = @member.periods.reverse %>
+      <% if periods.any? %>
+        <ul class="space-y-3">
+          <% periods.each do |period| %>
+            <% payment = @member.payments.find { it.period_starts_on == period.starts_on } %>
+            <li class="data-card flex flex-wrap items-center justify-between gap-3" id="<%= "period_#{period.to_param}" %>">
+              <div class="min-w-0">
+                <p class="flex flex-wrap items-center gap-2 font-medium"><%= format_period(period) %> <%= staff_period_badge(@member, period) %></p>
+                <p class="text-xs text-ink-muted">
+                  <%= payment ? t(".paid_line", amount: format_money(payment.net_total), date: l(payment.paid_on)) : t(".estimate_line", days: format_days(@member.period_days(period)), amount: format_money(@member.estimate(period).net_total)) %>
+                </p>
+              </div>
+              <% if payment %>
+                <%= link_to t(".receipt"), finance_staff_member_staff_payment_path(@member, payment), class: "btn btn-sm", data: { row_link: true } %>
+              <% elsif period == to_pay && policy(StaffPayment).create? %>
+                <%= link_to t(".pay_short"), new_finance_staff_member_staff_payment_path(@member), class: "btn btn-sm btn-primary" %>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="empty-state"><%= t(".no_periods") %></p>
+      <% end %>
+    <% end %>
+
+    <%= tab_panel "staff", :payments, selected: @tab == "payments" do %>
+      <% if @member.payments.any? %>
+        <div class="overflow-x-auto panel">
+          <table class="data-table" data-controller="table-sort">
+            <thead>
+              <tr>
+                <th><%= t(".columns.number") %></th>
+                <th><%= t(".columns.period") %></th>
+                <th><%= StaffPayment.human_attribute_name(:paid_on) %></th>
+                <th class="text-right"><%= StaffPayment.human_attribute_name(:gross_total) %></th>
+                <th class="text-right"><%= StaffPayment.human_attribute_name(:advances_total) %></th>
+                <th class="text-right"><%= StaffPayment.human_attribute_name(:net_total) %></th>
+                <th class="cell-actions" data-sort="false"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @member.payments.reverse_each do |payment| %>
+                <tr id="<%= dom_id(payment) %>">
+                  <td class="tabular-nums"><%= payment.display_number %></td>
+                  <td class="whitespace-nowrap"><%= format_period(payment.period) %></td>
+                  <td class="whitespace-nowrap"><%= l(payment.paid_on) %></td>
+                  <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(payment.gross_total) %></td>
+                  <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(payment.advances_total) %></td>
+                  <td class="whitespace-nowrap text-right font-semibold tabular-nums"><%= format_money(payment.net_total) %></td>
+                  <td class="cell-actions">
+                    <div class="flex justify-end gap-2">
+                      <%= link_to t(".receipt"), finance_staff_member_staff_payment_path(@member, payment), class: "btn btn-sm", data: { row_link: true } %>
+                      <% if policy(payment).destroy? %>
+                        <%= button_to t(".remove"), finance_staff_member_staff_payment_path(@member, payment), method: :delete, class: "btn btn-sm",
+                              form: { data: { turbo_confirm: t(".confirm_remove_payment") } } %>
+                      <% end %>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <p class="empty-state"><%= t(".no_payments") %></p>
+      <% end %>
+    <% end %>
+
+    <%= tab_panel "staff", :advances, selected: @tab == "advances" do %>
+      <% if @member.advances.any? %>
+        <ul class="space-y-3">
+          <% @member.advances.reverse_each do |advance| %>
+            <li class="data-card flex flex-wrap items-center justify-between gap-3" id="<%= dom_id(advance) %>">
+              <div class="min-w-0">
+                <p class="font-medium tabular-nums"><%= format_money(advance.amount) %>
+                  <span class="badge <%= advance.taken_off? ? "badge-success" : "badge-neutral" %> ml-1"><%= t(".advance_status.#{advance.taken_off? ? "taken_off" : "pending"}") %></span></p>
+                <p class="text-xs text-ink-muted"><%= [ l(advance.given_on), advance.human_payment_method, advance.money_account.name, advance.observations.presence ].compact.join(" · ") %></p>
+              </div>
+              <% if policy(advance).destroy? %>
+                <%= button_to t(".remove"), finance_staff_member_staff_advance_path(@member, advance), method: :delete, class: "btn btn-sm",
+                      form: { data: { turbo_confirm: t(".confirm_remove_advance") } } %>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="empty-state"><%= t(".no_advances") %></p>
+      <% end %>
+    <% end %>
+
+    <%= tab_panel "staff", :goals, selected: @tab == "goals" do %>
+      <% if @member.goals.any? %>
+        <ul class="space-y-3">
+          <% @member.goals.reverse_each do |goal| %>
+            <% status = goal.met.nil? ? "pending" : (goal.met ? "met" : "missed") %>
+            <li class="data-card flex flex-wrap items-center justify-between gap-3" id="<%= dom_id(goal) %>">
+              <div class="min-w-0">
+                <p class="font-medium"><%= goal.description %>
+                  <span class="badge <%= { "met" => "badge-success", "missed" => "badge-danger", "pending" => "badge-neutral" }[status] %> ml-1"><%= t(".goal_status.#{status}") %></span></p>
+                <p class="text-xs text-ink-muted">
+                  <%= t(".goal_line", bonus: format_money(goal.bonus_amount), period: (period = goal.period) ? format_period(period) : l(goal.period_starts_on)) %>
+                </p>
+              </div>
+              <% if policy(goal).destroy? %>
+                <%= button_to t(".remove"), finance_staff_member_staff_goal_path(@member, goal), method: :delete, class: "btn btn-sm",
+                      form: { data: { turbo_confirm: t(".confirm_remove_goal") } } %>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="empty-state"><%= t(".no_goals") %></p>
+      <% end %>
+    <% end %>
+  </div>
+</div>

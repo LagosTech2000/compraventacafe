@@ -1,0 +1,20 @@
+<% unless modal_request? %>
+<nav class="mb-5 print:hidden" aria-label="<%= AppModule.human_name("finance") %>">
+  <div class="subnav" data-controller="scroll-to-current">
+    <%= render "shared/module_title", module_key: "finance" %>
+    <%= link_to t("finance.nav.home"), finance_root_path, class: nav_link_class(finance_root_path, exact: true),
+          aria: { current: (current_page?(finance_root_path) ? "page" : nil) } %>
+    <% { movements: finance_movements_path, incomes: finance_incomes_path, expenses: finance_expenses_path, investments: finance_investments_path,
+         accounts: finance_money_accounts_path, consolidation: finance_consolidation_path, budget: finance_budget_path,
+         staff: finance_staff_members_path }.each do |key, path| %>
+      <%= link_to t("finance.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>
+    <% end %>
+    <span class="mx-1 h-6 w-px shrink-0 self-center bg-primary/20" aria-hidden="true"></span>
+    <%= link_to t("finance.nav.categories"), finance_categories_path, class: nav_link_class(finance_categories_path),
+          aria: { current: (current_page?(finance_categories_path) ? "page" : nil) } %>
+    <% if policy(Expense).create? %>
+      <span class="subnav-action"><%= modal_link_to t("finance.nav.new_expense"), new_finance_expense_path, class: "btn btn-primary btn-sm" %></span>
+    <% end %>
+  </div>
+</nav>
+<% end %>

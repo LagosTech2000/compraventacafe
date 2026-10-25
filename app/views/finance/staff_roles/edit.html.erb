@@ -1,0 +1,9 @@
+<% content_for :title, t(".title") %>
+<%= render "finance/nav" %>
+<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+<div class="mt-6"><%= render "form", role: @role %></div>
+<% if policy(@role).destroy? %>
+  <%# A role nobody has used yet can go; one in use is deactivated. %>
+  <%= button_to t(".remove"), finance_staff_role_path(@role), method: :delete, class: "btn btn-sm mt-4",
+        form: { data: { turbo_confirm: t(".confirm_remove") } } %>
+<% end %>

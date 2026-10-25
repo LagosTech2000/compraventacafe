@@ -29,6 +29,7 @@
       <%= form.number_field :amount, required: true, min: 0.01, max: Payroll::MAX_AMOUNT - 0.01, step: 0.01, inputmode: "decimal",
             placeholder: "0.00", class: "field-input text-lg" %>
     </div>
+    <div data-controller="money-account"><%= render "shared/money_account_field", form: %></div>
   </div>
   <div class="flex flex-wrap gap-3">
     <%= form.submit class: "btn btn-primary" %>

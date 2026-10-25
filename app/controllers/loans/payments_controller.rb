@@ -51,7 +51,7 @@ module Loans
       end
 
       def payment_params
-        params.expect(loan_payment: [ :paid_on, :amount, :payment_method, :observations ])
+        params.expect(loan_payment: [ :paid_on, :amount, :payment_method, :observations, :money_account_id ])
       end
   end
 end

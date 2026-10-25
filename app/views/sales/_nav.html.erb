@@ -1,0 +1,21 @@
+<% unless modal_request? %>
+<%# Daily flow first, in the order it happens; the catalog after a divider;
+    the main action at the end (as trading/_nav). %>
+<nav class="mb-5 print:hidden" aria-label="<%= AppModule.human_name("sales") %>">
+  <div class="subnav" data-controller="scroll-to-current">
+    <%= render "shared/module_title", module_key: "sales" %>
+    <%= link_to t("sales.nav.home"), sales_root_path, class: nav_link_class(sales_root_path, exact: true),
+          aria: { current: (current_page?(sales_root_path) ? "page" : nil) } %>
+    <% { shipments: sales_shipments_path, sales: sales_sales_path, stock: sales_stock_path, daily_close: sales_daily_close_path }.each do |key, path| %>
+      <%= link_to t("sales.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>
+    <% end %>
+    <span class="mx-1 h-6 w-px shrink-0 self-center bg-primary/20" aria-hidden="true"></span>
+    <% { buyers: sales_buyers_path, carriers: sales_carriers_path, trucks: sales_trucks_path }.each do |key, path| %>
+      <%= link_to t("sales.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>
+    <% end %>
+    <% if policy(Shipment).create? %>
+      <span class="subnav-action"><%= link_to t("sales.nav.new_shipment"), new_sales_shipment_path, class: "btn btn-primary btn-sm" %></span>
+    <% end %>
+  </div>
+</nav>
+<% end %>

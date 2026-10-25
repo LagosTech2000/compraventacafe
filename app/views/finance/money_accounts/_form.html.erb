@@ -1,0 +1,69 @@
+<%= form_with model: [ :finance, account ], class: form_surface_class("space-y-6"), data: { controller: "form-validation" } do |form| %>
+  <%= render "shared/form_errors", record: account %>
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div class="sm:col-span-2">
+      <%= form.label :name, class: "field-label" %>
+      <%= form.text_field :name, required: true, maxlength: 80, autofocus: true, class: "field-input", placeholder: t("finance.money_accounts.form.name_placeholder"),
+            data: { missing_message: "#{MoneyAccount.human_attribute_name(:name)} #{t("errors.messages.blank")}" } %>
+    </div>
+    <%# A bank account picks its bank (Honduras' main ones, or «Otro banco»
+        typed by hand); a cash box has none (bank_choice_controller.js). %>
+    <div class="grid gap-5 sm:col-span-2 sm:grid-cols-2" data-controller="bank-choice">
+      <div>
+        <%= form.label :kind, class: "field-label" %>
+        <%= form.select :kind, enum_options(MoneyAccount, :kind, MoneyAccount::KINDS), {}, required: true, class: "field-input",
+              data: { bank_choice_target: "kind", action: "bank-choice#update" } %>
+      </div>
+      <div data-bank-choice-target="bankFields" class="grid gap-5 sm:col-span-2 sm:grid-cols-2">
+        <div>
+          <%= form.label :bank_key, class: "field-label" %>
+          <%= form.select :bank_key, HondurasBank.all.map { |key, name| [ name, key ] } + [ [ t("finance.money_accounts.form.other_bank"), HondurasBank::OTHER ] ],
+                { prompt: t("finance.money_accounts.form.pick_bank") }, class: "field-input",
+                data: { bank_choice_target: "bank", action: "bank-choice#update", required_when_shown: true } %>
+        </div>
+        <div data-bank-choice-target="otherField">
+          <%= form.label :bank_name, t("finance.money_accounts.form.bank_name"), class: "field-label" %>
+          <%= form.text_field :bank_name, maxlength: 80, class: "field-input", placeholder: t("finance.money_accounts.form.bank_name_placeholder"),
+                data: { required_when_shown: true } %>
+        </div>
+      </div>
+    </div>
+    <div>
+      <%= form.label :account_number, class: "field-label" %>
+      <%= form.text_field :account_number, maxlength: 80, class: "field-input" %>
+    </div>
+    <div>
+      <%= form.label :opening_balance, class: "field-label" %>
+      <%= form.number_field :opening_balance, required: true, step: 0.01, inputmode: "decimal", class: "field-input" %>
+    </div>
+    <div>
+      <%= form.label :opening_on, class: "field-label" %>
+      <%= form.date_field :opening_on, required: true, class: "field-input" %>
+      <p class="mt-1 text-xs text-ink-muted"><%= t("finance.money_accounts.form.opening_help") %></p>
+    </div>
+    <fieldset class="sm:col-span-2">
+      <legend class="field-label"><%= MoneyAccount.human_attribute_name(:default_for) %></legend>
+      <%= hidden_field_tag "money_account[default_for][]", "", id: nil %>
+      <div class="flex flex-wrap gap-x-6 gap-y-2">
+        <% Invoice::PAYMENT_METHODS.each do |method| %>
+          <label class="flex min-h-11 items-center gap-2 text-sm font-medium">
+            <%= check_box_tag "money_account[default_for][]", method, account.default_for.include?(method), id: "default_for_#{method}", class: "size-4 accent-primary" %>
+            <%= Invoice.human_attribute_name("payment_method/#{method}") %>
+          </label>
+        <% end %>
+      </div>
+      <p class="mt-1 text-xs text-ink-muted"><%= t("finance.money_accounts.form.default_for_help") %></p>
+    </fieldset>
+    <div class="sm:col-span-2">
+      <%= form.label :observations, class: "field-label" %>
+      <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+    </div>
+    <% if account.persisted? %>
+      <label class="flex items-center gap-2 text-sm font-medium"><%= form.check_box :active, class: "size-4 accent-primary" %> <%= MoneyAccount.human_attribute_name(:active) %></label>
+    <% end %>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= cancel_button finance_money_accounts_path %>
+  </div>
+<% end %>

@@ -1,0 +1,19 @@
+<%# The account money went out of or came into (Control financiero), with
+    the one of the payment method suggested (money_account_controller.js).
+    The surrounding element carries data-controller="money-account" and the
+    method select data-money-account-target="method" with
+    data-action="money-account#suggest". Optional unless required: true.
+      render "shared/money_account_field", form:, field: :money_account_id %>
+<% field = local_assigns.fetch(:field, :money_account_id) %>
+<% required = local_assigns.fetch(:required, false) %>
+<% selected = form.object.public_send(field) %>
+<% accounts = MoneyAccount.active.or(MoneyAccount.where(id: selected)).alphabetical %>
+<div>
+  <%= form.label field, MoneyAccount.model_name.human, class: "field-label" %>
+  <%= form.collection_select field, accounts, :id, :name,
+        { include_blank: required ? t("shared.select.pick_account") : t("shared.select.no_account") },
+        required:, class: "field-input", data: { money_account_target: "account", action: "money-account#pick" } %>
+  <% if accounts.none? %>
+    <p class="mt-1 text-xs text-ink-muted"><%= t("shared.money_account_field.none") %></p>
+  <% end %>
+</div>

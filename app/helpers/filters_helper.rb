@@ -6,6 +6,13 @@ module FiltersHelper
     end
   end
 
+  # An amount in lempiras (filtered as it is typed, like the search).
+  def filter_number_field(form, name, label, value:, placeholder: nil)
+    filter_field(form, name, label) do
+      form.number_field name, value:, min: 0, step: 0.01, inputmode: "decimal", placeholder:, class: "field-input"
+    end
+  end
+
   def filter_date_field(form, name, label, value:)
     filter_field(form, name, label) { form.date_field name, value:, class: "field-input" }
   end
@@ -28,14 +35,18 @@ module FiltersHelper
 
   # Quick periods for a list filtered by from/to dates and season
   # (shared/_filter_status): [[label, values to set, active?], ...].
+  # A filter without a season (the kardex) gets the date periods only.
   def quick_periods(filter, today: Time.zone.today)
-    no_season = filter.season_year.nil?
+    seasons = filter.respond_to?(:season_year)
+    no_season = !seasons || filter.season_year.nil?
     ranges = { today: today..today, yesterday: today.yesterday..today.yesterday,
                this_week: today.beginning_of_week..today, this_month: today.beginning_of_month..today }
     periods = ranges.map do |key, range|
-      [ t("shared.filters.quick.#{key}"), { from: range.begin.iso8601, to: range.end.iso8601, season_year: "" },
+      [ t("shared.filters.quick.#{key}"), { from: range.begin.iso8601, to: range.end.iso8601, **(seasons ? { season_year: "" } : {}) },
         no_season && filter.from == range.begin && filter.to == range.end ]
     end
+    return periods unless seasons
+
     season = Season.current.year
     periods << [ t("shared.filters.quick.this_season"), { from: "", to: "", season_year: season.to_s },
                  filter.season_year == season && filter.from.nil? && filter.to.nil? ]

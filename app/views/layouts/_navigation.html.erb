@@ -1,15 +1,17 @@
 <%# The main navigation at the top. With the navigation on the left (the
     user's setting), it only shows on small screens; layouts/_sidebar
-    takes over from lg. %>
+    takes over from lg. Seven modules fit as pills from xl; between lg and
+    xl they go in «Menú», and the user's name shows from 2xl (the avatar
+    before). %>
 <header class="sticky top-0 z-30 px-3 pt-3 sm:px-6 print:hidden <%= "lg:hidden" if local_assigns[:side_nav] %>">
   <nav class="glass mx-auto max-w-[94rem] px-3 py-2.5 sm:px-4">
     <div class="flex items-center justify-between gap-3">
-      <%= link_to root_path, class: "flex min-w-0 items-center gap-2.5 rounded-full pr-2 font-bold text-ink" do %>
+      <%= link_to root_path, class: "flex min-w-0 shrink-0 items-center gap-2.5 rounded-full pr-2 font-bold text-ink" do %>
         <%= business_logo(:nav) %>
-        <span class="line-clamp-2 max-w-44 text-sm leading-tight"><%= business_name %></span>
+        <span class="line-clamp-2 max-w-44 text-sm leading-tight xl:max-w-32 2xl:max-w-44"><%= business_name %></span>
       <% end %>
 
-      <div class="hidden items-center gap-1 lg:flex">
+      <div class="hidden items-center gap-1 xl:flex">
         <% readable_module_keys.each do |key| %>
           <%= link_to AppModule.human_name(key), module_root_path(key), class: nav_link_class(module_root_path(key)) %>
         <% end %>
@@ -19,11 +21,11 @@
         <%= help_guide_button %>
 
         <div class="hidden items-center gap-3 lg:flex">
-          <%= render "layouts/user_button" %>
+          <%= render "layouts/user_button", name_css: "hidden 2xl:inline" %>
           <%= button_to t(".sign_out"), session_path, method: :delete, class: "btn btn-sm" %>
         </div>
 
-        <details class="relative lg:hidden">
+        <details class="relative xl:hidden">
           <summary class="btn list-none"><%= t(".menu") %></summary>
           <%# Solid (Fernando, 2026-10-13): the page never shows through it. %>
           <div class="absolute right-0 z-10 mt-2 w-72 space-y-1 rounded-[var(--radius-clay)] bg-surface p-3 ring-1 ring-line [box-shadow:var(--shadow-clay-lift)]" data-mobile-menu>
@@ -31,7 +33,7 @@
             <% readable_module_keys.each do |key| %>
               <%= link_to AppModule.human_name(key), module_root_path(key), class: "#{nav_link_class(module_root_path(key))} w-full" %>
             <% end %>
-            <div class="mt-2 border-t border-line pt-3">
+            <div class="mt-2 border-t border-line pt-3 lg:hidden">
               <p class="mb-2 truncate px-3.5 text-xs text-ink-muted"><%= Current.user.name %></p>
               <%= modal_link_to t(".settings"), edit_user_setting_path, class: "nav-pill mb-2 w-full" %>
               <%= button_to t(".sign_out"), session_path, method: :delete, class: "btn w-full" %>

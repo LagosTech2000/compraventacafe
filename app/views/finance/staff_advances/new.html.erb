@@ -1,0 +1,35 @@
+<% content_for :title, t(".title") %>
+<%= render "finance/nav" %>
+<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+<p class="mt-1 text-sm text-ink-muted"><%= @member.full_name %> · <%= t(".help") %></p>
+<%= form_with model: @advance, url: finance_staff_member_staff_advances_path(@member), scope: :staff_advance,
+      class: form_surface_class("mt-6 space-y-6"), data: { controller: "form-validation" } do |form| %>
+  <%= render "shared/form_errors", record: @advance %>
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div>
+      <%= form.label :amount, class: "field-label" %>
+      <%= form.number_field :amount, required: true, min: 0.01, step: 0.01, inputmode: "decimal", autofocus: true, class: "field-input text-lg" %>
+    </div>
+    <div>
+      <%= form.label :given_on, class: "field-label" %>
+      <%= form.date_field :given_on, required: true, min: @member.starts_on, max: @member.ends_on, class: "field-input" %>
+    </div>
+    <div class="grid gap-5 sm:col-span-2 sm:grid-cols-2" data-controller="money-account"
+         data-money-account-defaults-value="<%= MoneyAccount.defaults_by_method.to_json %>">
+      <div>
+        <%= form.label :payment_method, class: "field-label" %>
+        <%= form.select :payment_method, enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS), {}, required: true, class: "field-input",
+              data: { money_account_target: "method", action: "money-account#suggest" } %>
+      </div>
+      <%= render "shared/money_account_field", form:, required: true %>
+    </div>
+    <div class="sm:col-span-2">
+      <%= form.label :observations, class: "field-label" %>
+      <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+    </div>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit t(".submit"), class: "btn btn-primary" %>
+    <%= cancel_button finance_staff_member_path(@member) %>
+  </div>
+<% end %>

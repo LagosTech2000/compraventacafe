@@ -1,0 +1,45 @@
+<%# One scale's figures of a shipment (side: "origin" or "destination"). %>
+<% gross = shipment["#{side}_gross_weight"] %>
+<section class="panel p-4" aria-labelledby="shipment-<%= side %>">
+  <h2 id="shipment-<%= side %>" class="font-semibold"><%= t("sales.shipments.show.#{side}") %></h2>
+  <% if gross.nil? %>
+    <p class="mt-2 text-sm text-ink-muted"><%= t("sales.shipments.show.not_weighed") %></p>
+  <% else %>
+    <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-3">
+      <div><dt class="text-xs text-ink-muted"><%= t("sales.shipments.show.gross") %></dt><dd class="tabular-nums"><%= format_pounds(gross) %></dd></div>
+      <div><dt class="text-xs text-ink-muted"><%= t("sales.shipments.show.sacks") %></dt><dd class="tabular-nums"><%= shipment["#{side}_sacks"] %></dd></div>
+      <div><dt class="text-xs text-ink-muted"><%= t("sales.shipments.form.tare") %></dt><dd class="tabular-nums"><%= format_pounds(shipment["#{side}_tare"]) %></dd></div>
+      <% if shipment.cherry? %>
+        <div><dt class="text-xs text-ink-muted"><%= Purchase.human_attribute_name(:yield_factor) %></dt><dd class="tabular-nums"><%= shipment["#{side}_yield_factor"] %></dd></div>
+      <% else %>
+        <div><dt class="text-xs text-ink-muted"><%= Purchase.human_attribute_name(:humidity_percent) %></dt><dd class="tabular-nums"><%= format_percent(shipment["#{side}_humidity_percent"]) %></dd></div>
+        <div><dt class="text-xs text-ink-muted"><%= Purchase.human_attribute_name(:damage_percent) %></dt><dd class="tabular-nums"><%= format_percent(shipment["#{side}_damage_percent"]) %></dd></div>
+      <% end %>
+      <div><dt class="text-xs text-ink-muted"><%= t("sales.shipments.form.quintals") %></dt>
+        <dd class="tabular-nums"><%= format_pounds(PurchaseCalculation.quintals(shipment["#{side}_net_weight"])) %></dd></div>
+      <div class="col-span-2 border-t border-line pt-2 sm:col-span-3">
+        <dt class="text-xs text-ink-muted"><%= t("sales.shipments.form.net") %></dt>
+        <dd class="text-2xl font-bold tabular-nums"><%= format_pounds(shipment["#{side}_net_weight"]) %> lb</dd>
+      </div>
+    </dl>
+    <% if side == "origin" && shipment.by_weighings? %>
+      <details class="mt-2 text-sm">
+        <summary class="cursor-pointer text-ink-muted"><%= t("sales.shipments.show.weighings", count: shipment.weighings.size) %></summary>
+        <ol class="mt-2 divide-y divide-line">
+          <% shipment.weighings.each_with_index do |weighing, index| %>
+            <li class="flex justify-between gap-3 py-1 tabular-nums">
+              <span><%= t("sales.shipments.show.weighing", number: index + 1) %></span>
+              <span><%= format_pounds(weighing.gross_weight) %> lb · <%= t("sales.shipments.show.weighing_sacks", count: weighing.sacks) %></span>
+            </li>
+          <% end %>
+        </ol>
+      </details>
+    <% end %>
+    <% if side == "destination" %>
+      <p class="mt-2 text-xs text-ink-muted">
+        <%= [ (t("sales.shipments.show.received_on", date: l(shipment.received_on)) if shipment.received_on),
+              (t("sales.shipments.show.weight_note", number: shipment.weight_note_number) if shipment.weight_note_number) ].compact.join(" · ") %>
+      </p>
+    <% end %>
+  <% end %>
+</section>

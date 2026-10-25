@@ -76,7 +76,9 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Reportería | `reports` |
 | Productor / intermediario / finca propia | `Producer` (`kind`: `producer` / `intermediary` / `own_farm`) |
 | Carrero (rol de persona: trae el café con los carros del negocio y gana comisión) / pago a carrero | `Hauler` / `HaulerPayment` (`trading/hauler_payments#show` = recibo) |
-| Lata (16.5 lb netas) / precio de la lata / comisión del carrero | `Hauler::CAN_POUNDS` / `Hauler#can_price` / `Hauler#commission_percent`; en la compra `hauler_cans`, `hauler_commission` |
+| Precio por libra neta del carrero / comisión del carrero | `Hauler#price_per_pound`; en la compra `hauler_price_per_pound`, `hauler_commission` (las de antes del 2026-10-24: `hauler_cans`, `hauler_can_price`, `hauler_commission_percent`, `Hauler::CAN_POUNDS`) |
+| Tipo de daño (amarillo, broca, verde, pulpa, pelado) | `Purchase#damage_types` (`Purchase::DAMAGE_TYPES`: `yellow` / `borer` / `green` / `pulp` / `peeled`) |
+| Préstamo tipo intermediario (10 días sin interés, para cualquiera) | `Loan#interest_grace` (`Loan::GRACE_DAYS`, `Loan#interest_starts_on`) |
 | Tarea por monto fijo / por manzana / por barril / por abono | `PayrollTask#pricing`: `fixed` / `per_manzana` / `per_barrel` / `per_fertilizer` (`quantity`, `unit_price`, `barrel_liters`, `quantity_unit`) |
 | Clave del IHCAFE (Instituto Hondureño del Café) | `Producer#ihcafe_code` |
 | Ficha / resumen del productor | `ProducerProfile` |
@@ -134,6 +136,33 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Variable de un documento / impresión de un documento | `PrivateDocumentVariables` (`<span data-variable="person.full_name">`) / `PrivateDocumentPrint` |
 | Estado civil / nacionalidad | `Person#civil_status` / `Person#nationality` |
 | Número en letras | `NumberWords` (palabras en `es.yml`, `number_words`) |
+| Comercialización | `sales` |
+| Comprador (exportador / beneficio / otro) | `Buyer` (`kind`: `exporter` / `processor` / `other`) |
+| Salida de camión / báscula local / báscula del comprador | `Shipment` / `origin_*` / `destination_*` (`ArrivalsController`, `shipments/:id/arrival`) |
+| Nota de peso / remisión | `Shipment#weight_note_number` / `remission_number` |
+| Transportista / camión / motorista de la salida | `Carrier` / `Truck` (`own`: del negocio) / `Shipment#driver` (un `StaffMember`) o `driver_name` |
+| Pesadas de la salida (báscula local) | `ShipmentWeighing` (`Shipment#origin_weight_mode`: `single` / `weighings`) |
+| En camino / pesada sin vender / vendida | `Shipment#status`: `in_transit` / `received` / `sold` (+ `voided`) |
+| Venta / salida vendida / cobro de venta | `Sale` / `SaleLine` / `SalePayment` (`SaleIssuer`) |
+| Anticipo del comprador / cobro con anticipo | `BuyerAdvance` (`Buyer#advance_balance`) / `SalePayment` con `payment_method: "advance"` |
+| Precio por libra / por quintal (120 lb) | `Sale#price_unit`: `pound` / `quintal` (`Sale::QUINTAL_POUNDS`) |
+| Tolerancia de diferencia de peso | `SiteSetting#weight_tolerance_percent` (`WeightTolerance`) |
+| Inventario / kárdex | `CoffeeStock` / `StockLedger` (`sales/stock#show`), reporte `CoffeeStockReport` |
+| Cierre de comercialización | `SalesDailyClose` |
+| Control financiero | `finance` |
+| Cuenta (caja / banco) / saldo de la cuenta | `MoneyAccount` (`kind`: `cash` / `bank`, `default_for`) / `AccountBalance` |
+| Banco de la cuenta / tarjeta de la cuenta | `MoneyAccount#bank_key` (`HondurasBank`, `db/data/honduras_banks.yml`, `other`) / `finance/money_accounts/_card` (arte en `_card_art`, SVG; `BankCardHelper`), `.bank-card-*` |
+| Gasto / inversión / comprobante | `Expense` (`kind`: `expense` / `investment`) / `ExpenseReceipt` |
+| Categoría financiera (dos niveles) | `FinanceCategory` (`parent`) |
+| Otro ingreso / transferencia entre cuentas | `OtherIncome` / `AccountTransfer` |
+| Presupuesto mensual | `Budget` / `BudgetSheet` |
+| Movimientos de dinero (libro único) | `MoneyMovements` (`MovementFilter`, `finance/movements`) |
+| Consolidación (dar cuenta a lo registrado sin cuenta) | `AccountConsolidation` (`finance/consolidation`, `ConsolidationFilter`) |
+| Cuenta de un pago de cualquier módulo | `money_account_id` (`HasMoneyAccount`) |
+| Ingresos (todo lo que entró) | `finance/incomes` (`IncomeFilter`) |
+| Planilla interna / rol / empleado | `StaffMember` / `StaffRole` (`salary`, `pay_frequency`, `overtime_hour_rate`) |
+| Pago de un período / anticipo / meta con bono | `StaffPayment` (`StaffPaymentIssuer`, `finance/staff_payments#show` = recibo) / `StaffAdvance` / `StaffGoal` (`met`) |
+| Asistencia de la planilla interna / hoja de planilla (quincena, mes, acumulado) | `StaffAttendance` (`day_fraction` 1 / 0.5) / `StaffSheet` (`finance/staff_sheet`, `staff_sheet_controller.js`) |
 
 ## Modelo de permisos
 
@@ -266,6 +295,11 @@ mensaje. Reglas actuales:
 | Correo | Formato de correo | En minúsculas |
 | Contraseña | Mínimo 8 caracteres (máx. 72) al crearla o cambiarla; el login no la valida | Cifrada |
 
+Todo campo de un modelo auditado tiene su nombre en `es.yml`
+(`activerecord.attributes`), también los `*_id`: sale en etiquetas,
+errores y la auditoría; sin él se ve el nombre en inglés («Buyer»).
+`spec/models/attribute_names_spec.rb` lo revisa.
+
 Un campo de confirmación usa `confirmation_attributes`: el navegador avisa si
 no coincide antes de enviar.
 
@@ -289,7 +323,11 @@ español (`shared/_flash`, con `role="alert"` y botón para cerrarla).
 Avisos y alertas salen como **toasts** abajo a la derecha, encima de la
 página (`toast_controller.js`, Fernando, 2026-10-12): entran deslizándose,
 se cierran con la ×, y un aviso se va solo a los 7 segundos (con barra de
-tiempo; se pausa con el puntero o el foco encima). Una alerta de error se
+tiempo; se pausa con el puntero o el foco encima). Viven en `#toasts`, al
+final del `<body>` y siempre presente: una página que vuelve a sí misma
+(morph tras un formulario) lo empareja por id; dibujados dentro de
+`<main>`, el aviso se mezclaba con el encabezado (Fernando, 2026-10-25).
+Una alerta de error se
 queda hasta cerrarla, para no perder su código de referencia. Los toasts
 están **siempre encima de modales y de la guía de ayuda**, y se pueden usar
 ahí: son un popover (capa superior del navegador) que vive dentro del
@@ -469,7 +507,9 @@ los errores).
   plana con **pestañas subrayadas** (la actual en negrita con línea
   gruesa), el nombre del módulo fijo a la izquierda al desplazar en el
   celular (`.subnav-title`) y su acción principal aparte al final
-  (`.subnav-action`).
+  (`.subnav-action`). **Más clara** (Fernando, 2026-10-25: «muy opaca»):
+  la banda es una tarjeta clara con borde y sombra suave sobre el fondo,
+  las pestañas en texto más oscuro y la actual con tinte café suave.
 - **Consultas sin recargar la página** (Fernando, 2026-10-12): filtrar,
   ordenar una columna, agrupar, cambiar de período o de reporte y cargar
   más **nunca recargan la página**: responden dentro de su Turbo Frame, con
@@ -563,6 +603,7 @@ bin/rails db:migrate
 bin/rails db:seed               # requiere ADMIN_NAME, ADMIN_EMAIL y ADMIN_PASSWORD
 bin/rails demo:seed             # datos ficticios para la demo (no en producción)
 bin/rails demo:reports          # un año ficticio de operación (sep 2025 a hoy) para ver los reportes; tarda ~2 min
+bin/prod-data-tolocal           # reemplaza la base local con los datos de producción (y aplica las migraciones locales); la URL vive solo en ~/.config/compraventacafe/production_database_url (chmod 600), nunca en el repo
 bin/rubocop
 bin/brakeman --no-pager
 ```
@@ -645,6 +686,8 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 | Clave | Estado |
 | --- | --- |
 | `administration` | Usuarios y permisos, auditoría, configuración del sitio y documentos privados (solo administradores); respaldo de datos (solo el usuario con id 1); personas, clientes y colaboradores, con su ficha de productor; fincas y zonas (permisos del módulo); fusionar personas (solo administradores) |
+| `sales` | Comercialización: salidas de camiones con báscula local y del comprador, ventas por libra o quintal de 120 lb con cobros por abonos, compradores, inventario por estado del café con kárdex y cierre diario |
+| `finance` | Control financiero: cuentas (caja y bancos) con saldo y estado de cuenta, ingresos, gastos e inversiones con categoría de dos niveles y comprobante, otros ingresos, transferencias, presupuesto mensual, la planilla interna del negocio (roles, anticipos, horas extra, metas y bonos) y el libro único de movimientos de todos los módulos |
 | `trading` | Demo: zonas, productores (con pestañas y QQ por temporada), carreros con su comisión y pagos con recibo, compras con cálculo por estado del café y anulación, facturas imprimibles (original y copia) con estado de pago, cierre diario |
 | `farms` | Fincas, planillas por día, por obra y de corte por lata, con roles y salarios, asistencia o latas por día, pagos por período (semanal, quincenal, mensual) con descuento a préstamos, planilla de pago imprimible y gastos por planilla |
 | `loans` | Préstamos en efectivo, insumos o mixtos a cualquier persona con interés simple, catálogo de insumos, abonos (también con café desde una compra o descontados en planilla) con recibo imprimible, estados de cuenta con historial crediticio y score de pago |
@@ -703,7 +746,10 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
   `config/application.rb`): páginas, turbo streams, JSON y CSV; imágenes
   y el zip del respaldo van tal cual. **YJIT** lo enciende Rails solo
   (`config.yjit`) si el Ruby lo trae; el log de arranque dice si quedó
-  activo (`config/initializers/yjit.rb`): **verificar en Render**.
+  activo (initializer `report_yjit` en `config/application.rb`, después de
+  `enable_yjit`; antes se revisaba muy pronto y siempre decía «not
+  available», Fernando 2026-10-23): **verificar en Render** que diga
+  «YJIT enabled».
 - **Tiempo máximo por consulta** en producción: `statement_timeout` 15 s
   (`DB_STATEMENT_TIMEOUT` lo cambia; `bin/render-build.sh` lo pone en 0
   para migraciones y cargas).
@@ -731,7 +777,9 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
   pedirla y aplica solo lo que cambió (morph, conserva el scroll). Por el
   canal no viaja ningún dato: cada usuario recibe la página con sus
   permisos. Quien hizo el cambio no se recarga dos veces (request id).
-- Avisan: `Purchase`, `Invoice`, `InvoicePayment`, `Producer`, `Hauler`, `HaulerPayment` a `trading`;
+- Avisan: `Purchase` (también a `sales`), `Invoice`, `InvoicePayment`, `Producer`, `Hauler`, `HaulerPayment` a `trading`;
+  salidas, ventas, cobros y compradores a `sales`; cuentas, gastos,
+  ingresos, transferencias, presupuesto y planilla interna a `finance`;
   `Loan` a `loans`; `LoanPayment` a los dos (pago con café). Página nueva
   en vivo = `live_updates_from`; modelo nuevo = `include LiveUpdates`.
 - `live_refresh_controller.js` (en el `<body>`): con una ventana abierta
@@ -951,6 +999,214 @@ es llenar su carpeta, no crearla.
 - El estado de cuenta de un productor lleva «Ver productor» (su página en
   Compra de café), para quien ve ese módulo.
 
+### Comercialización (`sales`, Fernando, 2026-10-23)
+
+Lo que ofrece el contrato: vender el café en inventario a exportadoras,
+beneficios y otros compradores; el inventario sube con las compras y baja
+con las ventas. Reglas que decidió Fernando el 2026-10-23 (respuestas a
+`PREGUNTAS_COMPRAVENTA.md` §5–7, con las boletas de Beneficio Mendoza y
+Café Henola: venta por QQ en Lempiras, documento del comprador,
+contado/crédito, forma de pago) [CONFIRMADO]:
+
+- **Inventario** (`CoffeeStock`): libras netas **por estado del café**. Las
+  compras activas suman su `net_weight`; las salidas no anuladas restan su
+  neto local. Se muestra también en QQ de compra (÷125). A una fecha (fin
+  del día); de lo que salió, «en camino» y «pesado sin vender». El kárdex
+  (`StockLedger`, `sales/stock#show`) lista cada compra y salida con el
+  saldo después de cada una.
+- **Salida de camión** (`Shipment`): comprador, estado del café, remisión,
+  transportista y camión **de sus catálogos** (`Carrier`, `Truck`: dos
+  catálogos sueltos, Fernando, 2026-10-25; Comercialización →
+  Transportistas y Camiones, con su ficha y sus salidas, «Nuevo» desde la
+  salida) y **motorista**: un empleado de la planilla interna o un nombre
+  escrito (`driver`, `driver_name`). Lo que las salidas tenían escrito
+  (transportista, placa) pasó a los catálogos en la migración. Se pesa en la **báscula local** (`origin_*`) y, al
+  llegar, en la **del comprador** (`destination_*`, con nota de peso y
+  fecha; `ArrivalsController`). Cada neto usa **el mismo cálculo de la
+  compra** (`PurchaseCalculation` con sacos contados: bruto − 1 lb × saco,
+  menos humedad y daño; uva × rendimiento), que guarda tara y neto y solo
+  se recalcula si cambia una entrada. `weighing_calculator_controller.js`
+  es la vista previa (y avisa, sin bloquear, si sale más que el
+  inventario). La báscula local se escribe **en una cifra o por pesadas**,
+  como en compras (`ShipmentWeighing`, Fernando, 2026-10-25): por pesadas,
+  el bruto y los sacos son la suma y no se escriben. Etapas (`SalesLifecycle`): salió → pesada en destino →
+  vendida → cobrada. Número correlativo con bloqueo consultivo.
+- **Diferencia entre básculas**: neto del comprador − neto local, en lb y
+  %, en la salida, la venta, las listas y los reportes. Se **resalta** si
+  pasa (más o menos) la **tolerancia** de Configuración del sitio
+  (`weight_tolerance_percent`, **vacía al inicio**: sin ella no se resalta
+  nada; `WeightTolerance`). Anular la venta antes de cobrarla lo decide el
+  usuario.
+- **Venta** (`Sale`, `SaleIssuer`, como «Facturar compras»): **salida
+  primero, venta después**: agrupa salidas **del mismo comprador** ya
+  pesadas en destino y libres (líneas `SaleLine`, con sus pesos y monto;
+  índice único parcial: una salida en una sola venta activa). Se cobra con
+  el **peso del comprador**, **por libra o por quintal de 120 lb**
+  (Fernando, 2026-10-25; antes 100 lb)
+  (`Sale.amount_for`). Guarda netos y total. Documento del comprador
+  (factura o comprobante). Imprimible (nota de venta, original y copia).
+- **Cobro por abonos** (`SalePayment`), como las facturas: pendiente →
+  cobro parcial → cobrada; contado = un abono por el total al crear la
+  venta; cada cobro con recibo (original y copia). Registrar pide editar
+  en `sales`.
+- **Anular**: una venta **solo sin cobros** (con motivo); sus salidas
+  quedan **libres** para otra venta y sus líneas quedan como registro. Una
+  salida se anula aparte, solo si no está en una venta activa: su café
+  vuelve al inventario. Ninguna se borra.
+- **Comprador** (`Buyer`): catálogo propio para empresas (nombre o razón
+  social, tipo, RTN, contacto, teléfono, correo, dirección); se desactiva.
+  No es una `Person`.
+- Pantallas: Resumen (qué sigue, inventario, hoy y temporada), Salidas,
+  Ventas, Inventario, Cierre diario (impreso) y Compradores (con
+  pestañas). En vivo (`live_updates :sales`; las compras también avisan a
+  `sales`). Inicio: QQ en inventario, por cobrar y pendientes (salidas en
+  camino, sin vender, ventas por cobrar). Reportería: `ShipmentsReport`,
+  `SalesReport`, `CoffeeStockReport` y los cobros en «Entradas y salidas»
+  (para quien ve Comercialización).
+- **Anticipos del comprador** (`BuyerAdvance`, Fernando, 2026-10-25)
+  [CONFIRMADO]: el comprador adelanta dinero que se le paga con café, **sin
+  intereses**. Entra a una cuenta al recibirlo (`MoneyMovements`:
+  `buyer_advances`; sale en Ingresos), con su recibo. El saldo
+  (`Buyer#advance_balance`) baja con cada **cobro «con anticipo»**
+  (`SalePayment#payment_method = "advance"`), que se elige cuánto: al
+  vender («Descontar de anticipos», `SaleIssuer`) o después como cobro;
+  no mueve dinero (no lleva cuenta ni sale en el libro) y no pasa del
+  saldo ni de lo que falta. Quitar ese cobro devuelve el monto al saldo;
+  un anticipo ya descontado no se quita. Pestaña «Anticipos» del
+  comprador.
+- **Contratos con exportador** (aplicar libras a contratos en orden):
+  **no se construyen**, siguen abiertos.
+
+### Control financiero (`finance`, Fernando, 2026-10-23)
+
+Lo que ofrece el contrato: registro, clasificación y control de todas las
+salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
+
+- **Cuentas** (`MoneyAccount`): caja o banco, con saldo inicial y su
+  fecha; cada una dice para qué formas de pago se sugiere (`default_for`).
+  Saldo = inicial + entradas − salidas (`AccountBalance`, sumas en SQL de
+  todas las fuentes). Se desactivan; no se borran. Estado de cuenta
+  imprimible con el saldo después de cada movimiento. **La lista son
+  tarjetas** tipo tarjeta de crédito (Fernando, 2026-10-25), con los
+  colores de su banco: Ficohsa azul, Banco Atlántida rojo con blanco,
+  BAC Honduras rojo, Banco de Occidente naranja con blanco; otro banco,
+  uno de cuatro estilos (`OTHER_STYLES`, fijo por cuenta), y la caja,
+  café. Toda la tarjeta abre el detalle, que la repite junto a sus datos.
+  **Rediseñadas a partir de las tarjetas reales de cada banco** (Fernando,
+  2026-10-24), sin sus logos ni marcas de Visa o Mastercard: el arte es
+  un SVG por banco (`_card_art`), con chip, «sin contacto», número en
+  relieve y el nombre del banco armado como en su tarjeta (`wordmark` en
+  `honduras_banks.yml`). **Miden 26rem en la lista y en el detalle**; en
+  angosto se achican enteras (todo adentro en `cqw`). **La caja va
+  primero** (la más usada) y tiene su propio diseño, grabada como un
+  billete: guilloché dorado que sale del medallión con el grano de café,
+  marco dorado, el nombre del negocio como emisor y el saldo grande.
+  El banco se elige de `db/data/honduras_banks.yml` (datos de referencia,
+  como los departamentos) o «Otro banco» y se escribe (`bank_key`
+  `other` + `bank_name`); una caja no lleva banco.
+- **Cuenta en todos los pagos**: abonos a factura (también al facturar),
+  pagos a carreros, préstamos (la parte en efectivo), abonos a préstamos
+  (con café o por planilla no llevan), pagos de planilla, gastos de
+  planilla y cobros de ventas llevan `money_account_id` (opcional,
+  `HasMoneyAccount`); `money_account_controller.js` sugiere la de la forma
+  de pago hasta que el usuario elige otra. Lo viejo queda «sin cuenta» y
+  se muestra aparte. Los recibos dicen la cuenta.
+- **Libro único** (`MoneyMovements`, «Movimientos»): todo lo que entra y
+  sale de todos los módulos, **sin duplicar** (cada cosa se registra donde
+  ocurre). Cada quien ve las fuentes de los módulos que puede ver. Las
+  transferencias solo salen al elegir una cuenta. Cada movimiento lleva
+  **fecha y hora** (su fecha a la hora en que se registró, `Movement#at`)
+  y la lista va de lo más reciente a lo más viejo; los filtros siguen por
+  día (Fernando, 2026-10-25).
+- **Consolidación** (`finance/consolidation`, Fernando, 2026-10-25): los
+  pagos y cobros de los otros módulos registrados sin cuenta, con filtros;
+  se marcan (o «Marcar todos») y se les da una cuenta, o **la de su forma
+  de pago** (los de planilla, sin forma de pago, esperan). **También la
+  categoría** (Fernando, 2026-10-24: «que no se cambie para las entidades
+  que no aplica»): solo en lo que la lleva (`AccountConsolidation::
+  CATEGORIES`: los gastos de planilla, con las categorías de Fincas); al
+  resto no se le toca y el aviso dice cuántos. Filtros: fechas, búsqueda,
+  origen, forma de pago, entrada o salida y monto desde/hasta. Solo cambian
+  cuenta y categoría, auditado como cambio del registro; pide editar en
+  `finance`. «Entradas y salidas de
+  dinero» (Reportería) lee de aquí, con filtro y agrupación por cuenta.
+- **Gastos e inversiones** (`Expense`): categoría **propia, de dos
+  niveles** (`FinanceCategory`; las de Fincas siguen aparte), detalle,
+  beneficiario, fecha, monto, forma de pago, cuenta (obligatoria),
+  número de comprobante y, **opcional, la foto o el PDF del comprobante**
+  (`ExpenseReceipt`, en la base, JPG/PNG/WebP/PDF revisados por contenido,
+  hasta 1 MB). Se editan y borran con permisos, auditados.
+- **Otro ingreso** (`OtherIncome`: aporte del dueño, préstamo del banco…)
+  y **transferencias** (`AccountTransfer`) se registran o se quitan.
+- **Presupuesto** (`Budget`, `BudgetSheet`): por categoría de primer nivel
+  y mes de la temporada, contra los gastos e inversiones de esa categoría
+  y sus subcategorías. Resaltado al pasarse; en el Inicio y en Tareas
+  pendientes.
+- Resumen: saldos, el mes contra los mismos días del anterior, por dónde
+  y en qué categoría salió, el presupuesto del mes y los últimos
+  movimientos. Reportería: `ExpensesReport` (con KPI de presupuesto).
+- **Ingresos** (`finance/incomes`, Fernando, 2026-10-24): todo lo que
+  entró (cobros de ventas, abonos a préstamos en dinero y otros ingresos,
+  de `MoneyMovements`, `IncomeFilter`), con el total y lo de cada origen;
+  «Registrar ingreso» anota un `OtherIncome`. Las transferencias no son
+  ingresos.
+- **Planilla interna** (`finance/staff`, Fernando, 2026-10-24: «planilla
+  interna del negocio») [CONFIRMADO]:
+  - **Roles** (`StaffRole`): **salario mensual**; frecuencia semanal,
+    quincenal o mensual (los períodos de `PayPeriod`, como Fincas); y **valor de la
+    hora extra por rol** (sin él no se anotan horas). Los del Excel del
+    cliente (CEO, Administración, Chofer, Cargador, Bodeguero, Trabajadora
+    DMC, Cargador de bodega) los crea la migración `AddExcelStaffRoles`
+    **sin salario**: un rol puede esperar sin salario ni frecuencia (las dos
+    o ninguna, `StaffRole#priced?`) y nadie de ese rol tiene períodos por
+    pagar hasta llenarlos (Fernando, 2026-10-24).
+  - **Se paga como el Excel del cliente** (Fernando, 2026-10-25; cambia el
+    «monto fijo por período» del 2026-10-24) [CONFIRMADO]: cada período paga
+    **salario mensual ÷ 30 × días trabajados** (`StaffMember#period_days`,
+    `#earned`), marcados día por día, completo o medio (`StaffAttendance`).
+    **Mes de 30 días**: un período trabajado completo cuenta 15 días en
+    quincena (30 mensual, 7 semanal) aunque tenga 16 o 13; si faltó,
+    cuentan los días marcados, sin pasar de esos. El pago guarda el salario
+    mensual y los días (`monthly_salary`, `days_worked`); `salary` es lo
+    devengado. Los días de un período pagado no cambian.
+  - **Hoja de planilla** (`finance/staff_sheet`, `StaffSheet`), el Excel
+    vivo, con tres vistas: **Quincena** (1–15 o 16–fin: se marca la
+    asistencia, `staff_sheet_controller.js` recalcula días, devengado y
+    total = devengado − anticipos; «Pagar a los marcados» paga juntos los
+    períodos ya vencidos de esa quincena, con la misma fecha, forma de pago
+    y cuenta; quien tiene metas por revisar u horas extra se paga desde su
+    estado), **Mes** (los días de cada quincena, devengado, anticipos,
+    total, pagado y lo que falta) y **Acumulado** (lo pagado mes por mes en
+    la temporada —lo entregado más los anticipos descontados— y, del mes
+    actual, lo pagado y lo que falta, estimado como si trabajara los días
+    que quedan). Imprimible con membrete y columna de firma. En el Excel
+    del cliente, Nahum (13,000, 4 días, anticipo L 100) dice L 1,733.33: no
+    le restaron el anticipo; aquí siempre se resta.
+  - **Empleados** (`StaffMember`): una persona con rol Colaborador, una
+    vez, en un rol, desde una fecha (fin opcional); se desactivan. Puede
+    tener **salario propio** (`salary_override`, Fernando, 2026-10-24: dos
+    choferes del mismo rol con pago distinto), que manda sobre el del rol;
+    la frecuencia y la hora extra siguen siendo las del rol. Sus
+    períodos siguen la frecuencia del rol; los pagados se quedan.
+  - **Anticipos** (`StaffAdvance`): salen de la cuenta el día que se dan y
+    se restan **completos del pago del período** que tiene esa fecha.
+  - **Metas** (`StaffGoal`): texto y bono en lempiras por período; al
+    pagar se marca si la cumplió (el bono se suma). Además, un **bono
+    libre** con su motivo al pagar.
+  - **Pago** (`StaffPayment`, `StaffPaymentIssuer`, todo o nada): salario
+    + horas × valor de la hora + bonos − anticipos; guarda cada parte y su
+    recibo (original y copia). Sale de la cuenta el neto
+    (`MoneyMovements`: `staff_payments`, `staff_advances`; `AccountBalance`).
+    El Resumen avisa los períodos que llegaron a su día de pago.
+  - Decisiones de implementación, **pendientes de confirmar**: los
+    períodos se pagan en orden y solo se quita el último (libera sus
+    anticipos y metas); si los anticipos pasan de lo ganado no se paga; un
+    anticipo o una meta no van en un período ya pagado; la cuenta es
+    obligatoria; las vistas Mes y Acumulado cuentan por quincenas aunque
+    un empleado se pague semanal o mensual.
+- **La ganancia no se calcula**: cómo la calcula el dueño sigue abierto
+  (pregunta 34).
+
 ### Compra de café (`trading`)
 
 En la interfaz el módulo se llama **«Compra de café»**: las ventas irán en
@@ -967,8 +1223,16 @@ textos; la clave y el código siguen siendo `trading`.
   - **Restado por daño** (pergamino): `damage_weight` = (bruto − tara) ×
     (1 − humedad%) × daño%, y `damage_amount` = esas libras × precio por
     libra. Se guardan en la compra y se muestran en el formulario, el
-    detalle, «Facturar compras» y la factura (con totales) (Fernando,
-    2026-10-12). En uva quedan vacíos.
+    detalle y «Facturar compras» (Fernando, 2026-10-12). En uva quedan
+    vacíos. **La factura solo lleva las libras**, no los lempiras
+    (Fernando, 2026-10-24: «quitar restado en lempiras por daño en las
+    facturas»).
+  - **Tipo de daño** (Fernando, 2026-10-24) [CONFIRMADO]: con daño mayor
+    a 0, «Nueva compra» pide **al menos uno** de amarillo, broca, verde,
+    pulpa o pelado (`Purchase#damage_types`, casillas que salen al
+    escribir el daño; `purchase_calculator_controller.js` avisa). Sale en
+    el detalle y en la factura. Las compras de antes sin tipo se pueden
+    anular; al cambiarles el daño lo piden.
 - **Forma de pesar** (`Purchase#weight_mode`) [CONFIRMADO, Fernando,
   2026-10-10]: `single` (peso bruto directo; sacos = bruto ÷ 165 y tara como
   arriba) o `weighings` (por pesadas, `PurchaseWeighing`: peso + sacos
@@ -1096,14 +1360,19 @@ textos; la clave y el código siguen siendo `trading`.
   todo formulario de persona; agregarlo o quitarlo pide crear en
   `trading`), aparte del tipo de productor «Intermediario»
   (`intermediary`; antes se llamaba «Carrero (intermediario)», Fernando
-  2026-10-16). **Comisión obligatoria al crearlo**: % y precio de
-  la lata, editables (`trading/haulers`). La compra puede llevar su carrero
-  (**opcional**, `Purchase#hauler`) y guarda la comisión y el precio de la
-  lata **de ese día** (cambiar el carrero solo cuenta para compras nuevas;
-  otro carrero en la compra toma los del nuevo). **Comisión = (libras
-  netas ÷ 16.5) × precio de la lata × %** (`Hauler.commission`,
-  `Hauler::CAN_POUNDS`), redondeada al centavo; `hauler_commission_
-  controller.js` la muestra como vista previa en «Nueva compra». **La paga
+  2026-10-16). **Precio por libra neta obligatorio al crearlo**, editable
+  (`trading/haulers`; Fernando, 2026-10-24: «quitar comisión de los
+  carreros y poner precio por libra neta nada más»). La compra puede
+  llevar su carrero (**opcional**, `Purchase#hauler`) y guarda el precio
+  **de ese día** (`hauler_price_per_pound`; cambiar el precio solo cuenta
+  para compras nuevas; otro carrero en la compra toma el del nuevo).
+  **Comisión = libras netas × precio por libra** (`Hauler.commission`),
+  redondeada al centavo; `hauler_commission_controller.js` la muestra como
+  vista previa en «Nueva compra». Las compras de antes del cambio
+  **conservan su comisión** y su cálculo por latas (libras netas ÷ 16.5 ×
+  precio de la lata × %, `Hauler.can_commission`) [CONFIRMADO: solo
+  compras nuevas]; cada carrero empezó con el precio equivalente (lata ×
+  % ÷ 16.5). **La paga
   el negocio, aparte**: no cambia la factura ni lo que se le paga al
   productor. Se le paga **por saldo acumulado** (comisiones de sus compras
   activas − pagos): cada pago (`HaulerPayment`, pide editar en `trading`)
@@ -1203,6 +1472,12 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
   buscador, lo que la persona tiene vacío, con «Completar datos» en un
   modal (`shared/_person_gaps`, `record_gaps_controller.js`,
   `person:updated`); la ficha del préstamo se recarga. Solo avisa.
+- **Préstamo tipo intermediario** (Fernando, 2026-10-24) [CONFIRMADO]: la
+  casilla «Préstamo tipo intermediario: los primeros 10 días no generan
+  interés» (`Loan#interest_grace`) se le puede dar **a cualquier persona**,
+  no solo a los productores intermediarios (Fernando, el mismo día). Los
+  días 1–10 nunca cobran; desde el día 11 corre normal (`LoanBalance`
+  cuenta desde `Loan#interest_starts_on`).
 - **Plazo en días** (Fernando, 2026-10-12): el formulario tiene «Plazo
   (días)» entre la fecha del préstamo y la fecha límite. Escribir los días
   llena la fecha límite y elegir la fecha muestra los días
@@ -1469,8 +1744,10 @@ sistema ya guarda**; no agregan reglas de negocio.
 | Horas y días extra: confirmar días extra de medio en medio y horas con cualquier decimal | Ajustes a las extras de planilla | Fernando / Cliente |
 | Planillas: séptimo día, décimo, IHSS u otras deducciones o bonos | Cálculo legal de planillas | Cliente |
 | Si la factura siempre agrupa hasta 4 compras | Hoy no hay límite | Cliente |
-| 160 lb/saco en salidas vs. 165 en compras | Salidas de camión | Cliente |
-| Contratos: moneda, cobro, anticipos del exportador | Ventas / contratos | Cliente |
+| Control financiero: confirmar decisiones de implementación (la cuenta es opcional en los pagos de los otros módulos y obligatoria en gastos e ingresos; el presupuesto solo cuenta los gastos e inversiones de Control financiero, no los gastos de planilla; otros ingresos y transferencias no se editan, se quitan y se registran de nuevo) | Ajustes a Control financiero | Fernando / Cliente |
+| Cómo calcula el dueño la ganancia | Reporte de ganancias | Cliente |
+| Comercialización: confirmar decisiones de implementación (una salida lleva un solo estado del café y una venta también; salir con más de lo que hay en inventario avisa y no bloquea; la tolerancia resalta la diferencia en ambos sentidos; cobros en orden de fecha, sin pasar del saldo y quitando solo el último; la venta no se edita, se anula y se rehace) | Ajustes a Comercialización | Fernando / Cliente |
+| Contratos: moneda, cobro, aplicar libras a contratos | Ventas / contratos | Cliente |
 | Reporte exacto que piden el contador y el SAR | Reportería | Cliente |
 | `pg_dump` en Render (versión ≥ 18) | Que el respaldo incluya `base.dump` en producción | Fernando + Render |
 | Numeración inicial de facturas (el Excel va por ~2,800) | Hoy empieza en 0001 | Cliente |

@@ -1,0 +1,47 @@
+<%# A buyer: a company (exporter, processor or other), its RTN, contact and
+    address. Opened from a shipment's form (picker=1), saving adds it there. %>
+<%= form_with model: [ :sales, buyer ], class: form_surface_class("space-y-6"), data: { controller: "form-validation" } do |form| %>
+  <%= hidden_field_tag :picker, "1" if picker_request? %>
+  <%= render "shared/form_errors", record: buyer %>
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div class="sm:col-span-2">
+      <%= form.label :name, class: "field-label" %>
+      <%= form.text_field :name, autofocus: true, required: true, maxlength: 120, class: "field-input",
+            data: { missing_message: "#{Buyer.human_attribute_name(:name)} #{t("errors.messages.blank")}" } %>
+    </div>
+    <div>
+      <%= form.label :kind, class: "field-label" %>
+      <%= form.select :kind, enum_options(Buyer, :kind, Buyer::KINDS), {}, required: true, class: "field-input" %>
+    </div>
+    <div>
+      <%= form.label :rtn, class: "field-label" %>
+      <%= form.text_field :rtn, class: "field-input", **field_format_attributes(Buyer, :rtn, :rtn) %>
+    </div>
+    <div>
+      <%= form.label :contact_name, class: "field-label" %>
+      <%= form.text_field :contact_name, maxlength: 120, class: "field-input" %>
+    </div>
+    <div>
+      <%= form.label :phone, class: "field-label" %>
+      <%= form.telephone_field :phone, value: format_phone(buyer.phone), class: "field-input", **field_format_attributes(Buyer, :phone, :phone) %>
+    </div>
+    <div>
+      <%= form.label :email, class: "field-label" %>
+      <%= form.email_field :email, class: "field-input", **field_format_attributes(Buyer, :email, :email) %>
+    </div>
+    <%= render "shared/address_fields", form: form %>
+    <div class="sm:col-span-2">
+      <%= form.label :observations, class: "field-label" %>
+      <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+    </div>
+    <% if buyer.persisted? %>
+      <label class="flex items-center gap-2 text-sm font-medium">
+        <%= form.check_box :active, class: "size-4 accent-primary" %> <%= Buyer.human_attribute_name(:active) %>
+      </label>
+    <% end %>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= cancel_button sales_buyers_path %>
+  </div>
+<% end %>

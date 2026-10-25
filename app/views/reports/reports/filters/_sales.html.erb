@@ -1,0 +1,5 @@
+<%= filter_text_field form, :q, t("shared.filters.search"), value: filter.q, placeholder: t("sales.sales.index.search_placeholder") %>
+<%= filter_select form, :buyer_id, t("reports.filters.buyer"), Buyer.alphabetical.pluck(:name, :id), selected: filter.buyer_id %>
+<%= filter_select form, :coffee_state, t("reports.groups.coffee_state"), enum_options(Purchase, :coffee_state, Purchase::COFFEE_STATES), selected: filter.coffee_state %>
+<%= filter_select form, :payment_status, t("reports.filters.collection_status"),
+      Invoice::FILTER_STATUSES.map { [ t("sales.sales.statuses.#{it}"), it ] }, selected: filter.payment_status %>

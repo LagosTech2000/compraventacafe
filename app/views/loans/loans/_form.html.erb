@@ -45,6 +45,10 @@
             class: "field-input text-lg", autofocus: loan.person.present?,
             data: { loan_composition_target: "cash", action: "loan-composition#update" } %>
     </div>
+    <div class="max-w-xs" data-controller="money-account">
+      <%= render "shared/money_account_field", form: %>
+      <p class="mt-1 text-xs text-ink-muted"><%= t("loans.loans.form.account_help") %></p>
+    </div>
 
     <div>
       <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
@@ -98,6 +102,11 @@
       <%= form.label :monthly_interest_rate, class: "field-label" %>
       <%= form.number_field :monthly_interest_rate, required: true, placeholder: "0.00", min: 0, max: 99.99, step: 0.01, inputmode: "decimal", class: "field-input text-lg" %>
       <p class="mt-1 text-xs text-ink-muted"><%= t(".rate_help") %></p>
+      <%# The intermediary type, for anyone: its first 10 days bring no interest. %>
+      <label class="mt-3 flex items-start gap-2 text-sm">
+        <%= form.check_box :interest_grace, class: "mt-0.5 size-4 accent-primary" %>
+        <span><%= t(".interest_grace", days: Loan::GRACE_DAYS) %></span>
+      </label>
     </div>
     <div>
       <%= form.label :disbursed_on, class: "field-label" %>

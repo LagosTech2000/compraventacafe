@@ -18,7 +18,7 @@
       <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
         <span class="badge badge-neutral"><%= Hauler.model_name.human %></span>
         <span class="<%= @hauler.active? ? "badge badge-success" : "badge badge-neutral" %>"><%= t(".#{@hauler.active? ? "active" : "inactive"}") %></span>
-        <span><%= t("trading.haulers.index.terms", percent: format_percent(@hauler.commission_percent), price: format_money(@hauler.can_price)) %></span>
+        <span><%= t("trading.haulers.terms_per_pound", price: format_price_per_pound(@hauler.price_per_pound)) %></span>
       </p>
     </div>
   </div>
@@ -50,13 +50,12 @@
     <section class="panel p-4" aria-labelledby="hauler-record">
       <h2 id="hauler-record" class="font-semibold"><%= t(".record") %></h2>
       <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-        <div><dt class="text-xs text-ink-muted"><%= Hauler.human_attribute_name(:commission_percent) %></dt><dd class="tabular-nums"><%= format_percent(@hauler.commission_percent) %></dd></div>
-        <div><dt class="text-xs text-ink-muted"><%= Hauler.human_attribute_name(:can_price) %></dt><dd class="tabular-nums"><%= format_money(@hauler.can_price) %></dd></div>
+        <div class="col-span-2"><dt class="text-xs text-ink-muted"><%= Hauler.human_attribute_name(:price_per_pound) %></dt><dd class="tabular-nums"><%= format_price_per_pound(@hauler.price_per_pound) %></dd></div>
         <div><dt class="text-xs text-ink-muted"><%= Person.human_attribute_name(:dni) %></dt><dd><%= person.dni.presence || "—" %></dd></div>
         <div><dt class="text-xs text-ink-muted"><%= Person.human_attribute_name(:phone) %></dt><dd><%= person.phone ? format_phone(person.phone) : "—" %></dd></div>
         <div class="col-span-2"><dt class="text-xs text-ink-muted"><%= Person.human_attribute_name(:zone) %></dt><dd><%= person.zone&.name || "—" %></dd></div>
       </dl>
-      <p class="mt-3 text-xs text-ink-muted"><%= t(".formula", pounds: number_with_precision(Hauler::CAN_POUNDS, precision: 1)) %></p>
+      <p class="mt-3 text-xs text-ink-muted"><%= t(".formula") %></p>
       <%# Where the carrero lives, when it is on the map. %>
       <% if person.located? %><div class="mt-3"><%= render "shared/location", record: person %></div><% end %>
     </section>
@@ -88,8 +87,7 @@
                 </div>
                 <%= detail_button trading_purchase_path(purchase) %>
               </div>
-              <p class="mt-2 text-sm"><%= t(".commission_line", cans: format_cans(purchase.hauler_cans), price: format_money(purchase.hauler_can_price),
-                                            percent: format_percent(purchase.hauler_commission_percent)) %>
+              <p class="mt-2 text-sm"><%= hauler_terms(purchase) %> =
                 <strong class="tabular-nums"><%= format_money(purchase.hauler_commission) %></strong></p>
             </li>
           <% end %>
@@ -101,9 +99,7 @@
                 <%= sort_th Purchase.human_attribute_name(:purchased_at), :purchased_at, sorting %>
                 <%= sort_th Purchase.human_attribute_name(:producer), :producer, sorting %>
                 <%= sort_th t(".net_weight"), :net_weight, sorting, class: "text-right" %>
-                <%= sort_th t(".cans"), :cans, sorting, class: "text-right" %>
-                <%= sort_th Hauler.human_attribute_name(:commission_percent), :commission_percent, sorting, class: "hidden text-right @5xl:table-cell" %>
-                <%= sort_th Hauler.human_attribute_name(:can_price), :can_price, sorting, class: "hidden text-right @5xl:table-cell" %>
+                <%= sort_th Hauler.human_attribute_name(:price_per_pound), :price_per_pound, sorting, class: "text-right" %>
                 <%= sort_th t(".commission"), :commission, sorting, class: "text-right" %>
                 <th class="cell-actions"><span class="sr-only"><%= t("trading.purchases.table.actions") %></span></th>
               </tr>
@@ -114,9 +110,8 @@
                   <td class="whitespace-nowrap"><%= l(purchase.purchased_at, format: :default) %></td>
                   <td><%= purchase.producer.full_name %></td>
                   <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(purchase.net_weight) %></td>
-                  <td class="whitespace-nowrap text-right tabular-nums"><%= format_cans(purchase.hauler_cans) %></td>
-                  <td class="hidden whitespace-nowrap text-right tabular-nums @5xl:table-cell"><%= format_percent(purchase.hauler_commission_percent) %></td>
-                  <td class="hidden whitespace-nowrap text-right tabular-nums @5xl:table-cell"><%= format_money(purchase.hauler_can_price) %></td>
+                  <%# Before 2026-10-24 the commission went by cans: those purchases say how. %>
+                  <td class="text-right tabular-nums"><%= purchase.hauler_price_per_pound ? format_price_per_pound(purchase.hauler_price_per_pound) : hauler_terms(purchase) %></td>
                   <td class="whitespace-nowrap text-right font-semibold tabular-nums"><%= format_money(purchase.hauler_commission) %></td>
                   <td class="cell-actions"><%= detail_button trading_purchase_path(purchase) %></td>
                 </tr>

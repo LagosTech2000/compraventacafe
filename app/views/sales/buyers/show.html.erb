@@ -1,0 +1,217 @@
+<% content_for :title, @buyer.name %>
+<%= live_updates_from :sales %>
+<%= render "sales/nav" %>
+<%= render "shared/breadcrumbs", crumbs: buyer_crumbs(@buyer) %>
+<%# Right after an advance: its receipt opens in the modal, ready to print. %>
+<% if params[:receipt].to_s.match?(/\A\d+\z/) %>
+  <% content_for :modal_src, sales_buyer_buyer_advance_path(@buyer, params[:receipt]) %>
+<% end %>
+
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= @buyer.name %></h1>
+    <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
+      <span class="badge badge-neutral"><%= @buyer.human_kind %></span>
+      <span class="<%= @buyer.active? ? "badge badge-success" : "badge badge-neutral" %>"><%= t("sales.buyers.index.statuses.#{@buyer.active? ? "active" : "inactive"}") %></span>
+    </p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <% if @buyer.active? && policy(Shipment).create? %>
+      <%= modal_link_to t(".new_shipment"), new_sales_shipment_path(buyer_id: @buyer.id), class: "btn btn-primary" %>
+    <% end %>
+    <% if policy(Sale).create? && @buyer.shipments.unsold.exists? %>
+      <%= link_to t(".new_sale"), new_sales_sale_path(buyer_id: @buyer.id), class: "btn" %>
+    <% end %>
+    <%= help_guide_button HelpGuide.process(:buyer_advances), label: true %>
+    <% if policy(BuyerAdvance).create? %>
+      <%= modal_link_to t(".new_advance"), new_sales_buyer_buyer_advance_path(@buyer), class: "btn" %>
+    <% end %>
+    <% if policy(@buyer).update? %>
+      <%= modal_link_to t(".edit"), edit_sales_buyer_path(@buyer), class: "btn" %>
+    <% end %>
+    <% if modal_request? %>
+      <%= page_link_to t(".full_page"), sales_buyer_path(@buyer, tab: @tab), class: "btn" %>
+    <% end %>
+  </div>
+</div>
+
+<dl class="mt-6 flex flex-wrap gap-3">
+  <% { shipped: "#{format_pounds(@shipped.sum(:origin_net_weight))} lb", in_transit: @shipped.in_transit.count,
+       sold: format_money(@summary.total), collected: format_money(@summary.collected), balance_due: format_money(@summary.balance_due),
+       advance_balance: format_money(@buyer.advance_balance) }.each do |key, value| %>
+    <div class="stat min-w-40 flex-1">
+      <dt><%= t(".figures.#{key}") %></dt>
+      <dd data-live-value><%= value %></dd>
+    </div>
+  <% end %>
+</dl>
+
+<div class="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+  <aside class="grid gap-4 lg:order-last" aria-label="<%= t(".record") %>">
+    <section class="panel p-4" aria-labelledby="buyer-record">
+      <h2 id="buyer-record" class="font-semibold"><%= t(".record") %></h2>
+      <dl class="mt-3 grid grid-cols-1 gap-y-3 text-sm">
+        <% [ [ Buyer.human_attribute_name(:rtn), @buyer.rtn ], [ Buyer.human_attribute_name(:contact_name), @buyer.contact_name ],
+             [ Buyer.human_attribute_name(:phone), (link_to(format_phone(@buyer.phone), "tel:#{@buyer.phone}", class: "link") if @buyer.phone) ],
+             [ Buyer.human_attribute_name(:email), (mail_to(@buyer.email, class: "link") if @buyer.email) ],
+             [ t("addresses.title"), format_address(@buyer).presence ] ].each do |label, value| %>
+          <div><dt class="text-xs text-ink-muted"><%= label %></dt><dd><%= value.presence || "—" %></dd></div>
+        <% end %>
+      </dl>
+      <% if @buyer.observations %><p class="mt-3 text-sm"><%= @buyer.observations %></p><% end %>
+      <% if @buyer.located? %><div class="mt-3"><%= render "shared/location", record: @buyer %></div><% end %>
+    </section>
+  </aside>
+
+  <div class="min-w-0">
+    <nav class="flex flex-wrap gap-1 border-b border-line pb-2 print:hidden" aria-label="<%= t(".tabs.label") %>">
+      <% Sales::BuyersController::TABS.each do |tab| %>
+        <%= link_to t(".tabs.#{tab}"), sales_buyer_path(@buyer, tab:),
+              class: tab == @tab ? "nav-pill nav-pill-active" : "nav-pill", aria: { current: (tab == @tab ? "page" : nil) } %>
+      <% end %>
+    </nav>
+
+    <div class="mt-4">
+    <% case @tab %>
+    <% when "sales" %>
+      <%= render layout: "shared/filters", locals: { filter: @filter, url: sales_buyer_path(@buyer, tab: "sales"), frame: "buyer-sales-list" } do |form| %>
+        <%= hidden_field_tag :tab, "sales", id: nil %>
+        <%= filter_select form, :season_year, Purchase.human_attribute_name(:season_year), season_options(@buyer.shipments), selected: @filter.season_year,
+              all: t("shared.filters.all_seasons") %>
+        <%= filter_select form, :payment_status, Sale.human_attribute_name(:payment_status),
+              Sale::FILTER_STATUSES.map { [ t("sales.sales.statuses.#{it}"), it ] }, selected: @filter.payment_status, all: t("sales.sales.index.all_active") %>
+      <% end %>
+      <%= list_frame "buyer-sales-list" do %>
+        <% if @sales.any? %>
+          <div class="mt-4">
+            <%= render "sales/sales/table", sales: @sales, show_buyer: false,
+                  sorting: { filter: @filter, frame: "buyer-sales-list", extra_params: { tab: "sales" } } %>
+          </div>
+          <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "sales" }, frame: "buyer-sales-list" %>
+        <% else %>
+          <p class="empty-state mt-4"><%= t(".no_sales") %></p>
+        <% end %>
+      <% end %>
+    <% when "shipments" %>
+      <%= render layout: "shared/filters", locals: { filter: @filter, url: sales_buyer_path(@buyer, tab: "shipments"), frame: "buyer-shipments-list" } do |form| %>
+        <%= hidden_field_tag :tab, "shipments", id: nil %>
+        <%= filter_select form, :season_year, Purchase.human_attribute_name(:season_year), season_options(@buyer.shipments), selected: @filter.season_year,
+              all: t("shared.filters.all_seasons") %>
+        <%= filter_select form, :status, t("sales.shipments.table.status"),
+              ShipmentFilter::STATUSES.map { [ Shipment.human_attribute_name("status/#{it}"), it ] }, selected: @filter.status,
+              all: t("sales.shipments.index.all_active") %>
+      <% end %>
+      <%= list_frame "buyer-shipments-list" do %>
+        <% if @shipments.any? %>
+          <div class="mt-4">
+            <%= render "sales/shipments/table", shipments: @shipments, show_buyer: false,
+                  sorting: { filter: @filter, frame: "buyer-shipments-list", extra_params: { tab: "shipments" } } %>
+          </div>
+          <%= render "shared/pagination", filter: @filter, next_page: @next_page, extra_params: { tab: "shipments" }, frame: "buyer-shipments-list" %>
+        <% else %>
+          <p class="empty-state mt-4"><%= t(".no_shipments") %></p>
+        <% end %>
+      <% end %>
+    <% when "advances" %>
+      <%# What the buyer advanced (money in) and what was taken off its sales «con anticipo». %>
+      <p class="mb-3 text-sm text-ink-muted"><%= t(".advances_help") %></p>
+      <% if @advances.any? %>
+        <div class="overflow-x-auto panel">
+          <table class="data-table data-table-compact" data-controller="table-sort">
+            <thead>
+              <tr>
+                <th><%= t("sales.buyers.show.advance_number") %></th>
+                <th><%= BuyerAdvance.human_attribute_name(:received_on) %></th>
+                <th><%= BuyerAdvance.human_attribute_name(:document_number) %></th>
+                <th><%= MoneyAccount.model_name.human %></th>
+                <th class="text-right"><%= BuyerAdvance.human_attribute_name(:amount) %></th>
+                <th class="cell-actions" data-sort="false"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @advances.each do |advance| %>
+                <tr id="<%= dom_id(advance) %>">
+                  <td class="tabular-nums"><%= advance.display_number %></td>
+                  <td class="whitespace-nowrap"><%= l(advance.received_on) %></td>
+                  <td><%= advance.document_number || "—" %></td>
+                  <td><%= advance.money_account.name %></td>
+                  <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(advance.amount) %></td>
+                  <td class="cell-actions">
+                    <div class="flex justify-end gap-2">
+                      <%= modal_link_to t("sales.sales.payments.receipt"), sales_buyer_buyer_advance_path(@buyer, advance), class: "btn btn-sm", data: { row_link: true } %>
+                      <% if policy(advance).destroy? %>
+                        <%= button_to t(".remove_advance"), sales_buyer_buyer_advance_path(@buyer, advance), method: :delete, class: "btn btn-sm",
+                              form: { data: { turbo_confirm: t(".confirm_remove_advance") } } %>
+                      <% end %>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <p class="empty-state"><%= t(".no_advances") %></p>
+      <% end %>
+      <% if @taken.any? %>
+        <h3 class="mt-6 mb-2 font-semibold"><%= t(".taken_title") %></h3>
+        <div class="overflow-x-auto panel">
+          <table class="data-table data-table-compact" data-controller="table-sort">
+            <thead>
+              <tr>
+                <th><%= SalePayment.human_attribute_name(:paid_on) %></th>
+                <th><%= t("sales.sale_payments.receipt.sale") %></th>
+                <th class="text-right"><%= SalePayment.human_attribute_name(:amount) %></th>
+                <th class="cell-actions" data-sort="false"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @taken.each do |payment| %>
+                <tr id="<%= dom_id(payment, :taken) %>">
+                  <td class="whitespace-nowrap"><%= l(payment.paid_on) %></td>
+                  <td class="tabular-nums"><%= payment.sale.display_number %><%= " · #{t("sales.sales.voided")}" if payment.sale.voided? %></td>
+                  <td class="whitespace-nowrap text-right tabular-nums">−<%= format_money(payment.amount) %></td>
+                  <td class="cell-actions"><%= link_to t("finance.movements.open"), sales_sale_path(payment.sale), class: "btn btn-sm", data: { row_link: true } %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% end %>
+    <% when "payments" %>
+      <% if @payments.any? %>
+        <div class="overflow-x-auto panel">
+          <table class="data-table data-table-compact" data-controller="table-sort">
+            <thead>
+              <tr>
+                <th><%= t("sales.sales.payments.number") %></th>
+                <th><%= SalePayment.human_attribute_name(:paid_on) %></th>
+                <th><%= t("sales.sale_payments.receipt.sale") %></th>
+                <th><%= SalePayment.human_attribute_name(:payment_method) %></th>
+                <th class="text-right"><%= SalePayment.human_attribute_name(:amount) %></th>
+                <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @payments.each do |payment| %>
+                <tr id="<%= dom_id(payment, :buyer) %>">
+                  <td class="tabular-nums"><%= payment.display_number %></td>
+                  <td class="whitespace-nowrap"><%= l(payment.paid_on) %></td>
+                  <td class="tabular-nums"><%= payment.sale.display_number %></td>
+                  <td><%= payment.human_payment_method %></td>
+                  <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(payment.amount) %></td>
+                  <td class="cell-actions">
+                    <%= modal_link_to t("sales.sales.payments.receipt"), sales_sale_payment_path(payment.sale, payment), class: "btn btn-sm", data: { row_link: true } %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <p class="empty-state"><%= t(".no_payments") %></p>
+      <% end %>
+    <% end %>
+    </div>
+  </div>
+</div>

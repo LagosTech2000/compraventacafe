@@ -18,6 +18,18 @@ module ModuleBreadcrumbsHelper
     [ [ t("trading.nav.haulers"), trading_haulers_path ], [ hauler.full_name, trading_hauler_path(hauler) ], *rest ]
   end
 
+  # Comercialización: a shipment or a sale always shows its buyer.
+  def buyer_crumbs(buyer, *rest)
+    [ [ t("sales.nav.buyers"), sales_buyers_path ], [ buyer.name, sales_buyer_path(buyer) ], *rest ]
+  end
+
+  def shipment_label(shipment) = t("sales.shipments.show.title", number: shipment.display_number)
+  def sale_label(sale) = t("sales.sales.show.title", number: sale.display_number)
+
+  def sale_crumbs(sale, *rest)
+    buyer_crumbs(sale.buyer, [ sale_label(sale), sales_sale_path(sale) ], *rest)
+  end
+
   def credit_account_crumbs(person, *rest)
     [ [ t("loans.nav.credit_accounts"), loans_credit_accounts_path ], [ person.full_name, loans_credit_account_path(person) ], *rest ]
   end

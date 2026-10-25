@@ -9,12 +9,13 @@ class InvoiceIssuer
 
   PAYMENT_CHOICES = Invoice::PAYMENT_STATUSES
 
-  def initialize(producer:, purchase_ids:, user:, payment_status:, payment_method: nil, paid_on: nil, amount: nil)
+  def initialize(producer:, purchase_ids:, user:, payment_status:, payment_method: nil, paid_on: nil, amount: nil, money_account_id: nil)
     @producer = producer
     @purchase_ids = Array(purchase_ids).compact_blank
     @user = user
     @payment_status = payment_status.presence_in(PAYMENT_CHOICES) || "pending"
-    @payment = { payment_method: payment_method.presence, paid_on: paid_on.presence || Time.zone.today, amount: amount.presence }
+    @payment = { payment_method: payment_method.presence, paid_on: paid_on.presence || Time.zone.today, amount: amount.presence,
+                 money_account_id: money_account_id.presence }
   end
 
   def call
@@ -52,7 +53,8 @@ class InvoiceIssuer
         return false
       end
 
-      payment = invoice.payments.create(amount:, paid_on: @payment[:paid_on], payment_method: @payment[:payment_method], created_by: @user)
+      payment = invoice.payments.create(amount:, paid_on: @payment[:paid_on], payment_method: @payment[:payment_method],
+                                        money_account_id: @payment[:money_account_id], created_by: @user)
       payment.errors.each { |error| invoice.errors.add(:base, error.full_message) }
       payment.persisted?
     end

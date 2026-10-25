@@ -44,11 +44,14 @@
         <%# Signed-in pages have the "?" in the navigation. %>
         <div class="flex justify-end print:hidden"><%= help_guide_button %></div>
       <% end %>
-      <%= render "shared/flash" %>
-
       <%= yield %>
     </main>
     </div>
+
+    <%# Toasts live in their own place, always there with its id: a page that
+        comes back to itself (morphed) pairs it by id instead of mixing its
+        new notice into the page's first nodes. %>
+    <div id="toasts"><%= render "shared/flash" %></div>
 
     <%# Reusable modals: links with data-turbo-frame="modal" open here (ModalSupport).
         The later ones stack on top, for links opened from inside a modal. %>

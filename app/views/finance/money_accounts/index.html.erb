@@ -1,0 +1,48 @@
+<% content_for :title, t(".title") %>
+<%= live_updates_from :finance %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= render "finance/nav" %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <%= help_guide_button HelpGuide.process(:finance_money), label: true %>
+    <% if policy(AccountTransfer).create? %><%= modal_link_to t("finance.home.index.transfer"), new_finance_account_transfer_path, class: "btn" %><% end %>
+    <% if policy(MoneyAccount).create? %><%= modal_link_to t(".new"), new_finance_money_account_path, class: "btn btn-primary" %><% end %>
+  </div>
+</div>
+
+<% statuses = MoneyAccountFilter::STATUSES.map { [ t("finance.money_accounts.index.statuses.#{it}"), it ] } %>
+<% kinds = enum_options(MoneyAccount, :kind, MoneyAccount::KINDS) %>
+<div data-controller="live-filter">
+  <%= render layout: "shared/filters", locals: { filter: @filter, url: finance_money_accounts_path, frame: "accounts-list", live: true } do |form| %>
+    <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("finance.money_accounts.index.search_placeholder") %>
+    <%= filter_select form, :kind, MoneyAccount.human_attribute_name(:kind), kinds, selected: @filter.kind %>
+    <%= filter_select form, :status, t("finance.money_accounts.index.status"), statuses, selected: @filter.status %>
+  <% end %>
+  <%= list_frame "accounts-list" do %>
+    <%= live_list_status @filter, status: statuses, kind: kinds %>
+    <% if @accounts.any? %>
+      <%# Cards, each in its bank's colors; the whole card opens the account. %>
+      <%# Every card 26rem wide, as in the account's detail; one per row when narrower. %>
+      <ul class="mt-6 grid grid-cols-[repeat(auto-fill,minmax(min(100%,26rem),26rem))] gap-5" role="list">
+        <% @accounts.each do |account| %>
+          <li class="data-card data-card-bare" id="<%= dom_id(account) %>"><%= render "finance/money_accounts/card", account:, balance: @balance.for(account) %></li>
+        <% end %>
+      </ul>
+      <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "accounts-list" %>
+    <% else %>
+      <p class="empty-state mt-6"><%= t(".empty") %></p>
+    <% end %>
+    <% unassigned = @balance.unassigned %>
+    <% if unassigned.in.positive? || unassigned.out.positive? %>
+      <p class="mt-4 text-sm text-ink-muted">
+        <%= t(".unassigned", in: format_money(unassigned.in), out: format_money(unassigned.out)) %>
+        <%= link_to t(".see_unassigned"), finance_consolidation_path, class: "link", data: { turbo_frame: "_top" } %>
+      </p>
+    <% end %>
+  <% end %>
+</div>

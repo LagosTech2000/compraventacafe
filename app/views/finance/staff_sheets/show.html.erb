@@ -1,0 +1,62 @@
+<% content_for :title, t(".title") %>
+<%# Updates itself while open when the data changes (LiveUpdates). %>
+<%= live_updates_from :finance %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= render "finance/nav" %>
+<%= render "shared/breadcrumbs", crumbs: [ [ t("finance.staff_members.index.title"), finance_staff_members_path ], [ t(".title") ] ] %>
+<% sheet = @sheet %>
+<% month_param = sheet.month.strftime("%Y-%m") %>
+
+<div class="flex flex-wrap items-start justify-between gap-4 print:hidden">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <div data-controller="print"><button type="button" class="btn" data-action="print#print"><%= t(".print") %></button></div>
+    <%= link_to t(".employees"), finance_staff_members_path, class: "btn" %>
+    <%= help_guide_button HelpGuide.process(:staff_payroll), label: true %>
+  </div>
+</div>
+
+<div class="hidden print:block">
+  <%= render "shared/print_letterhead", title: t(".title"), subtitle: (sheet.view == "history" ? sheet.season.label : t(".subtitle.#{sheet.view}", fortnight: t(".halves.#{sheet.half}"), month: l(sheet.month, format: :month_year))) %>
+</div>
+
+<%# The three views and where they stand (fortnight or month, or season). %>
+<div class="mt-6 flex flex-wrap items-center gap-3 print:hidden">
+  <nav class="flex flex-wrap gap-1" aria-label="<%= t(".views_label") %>">
+    <% StaffSheet::VIEWS.each do |view| %>
+      <%= link_to t(".views.#{view}"), finance_staff_sheet_path(view:, month: month_param, half: sheet.half, season_year: sheet.season.year),
+            class: view == sheet.view ? "nav-pill nav-pill-active" : "nav-pill", aria: { current: (view == sheet.view ? "page" : nil) } %>
+    <% end %>
+  </nav>
+  <div class="panel ml-auto flex flex-wrap items-center gap-2 p-2">
+    <% if sheet.view == "history" %>
+      <%= form_with url: finance_staff_sheet_path, method: :get, data: { controller: "auto-submit", turbo_frame: "_top" } do |form| %>
+        <%= hidden_field_tag :view, "history" %>
+        <%= form.select :season_year, options_for_select((Season.current.year - 3..Season.current.year).to_a.reverse.map { [ Season.new(it).label, it ] }, sheet.season.year),
+              {}, aria: { label: t(".season") }, class: "field-input font-semibold", data: { action: "auto-submit#submit" } %>
+      <% end %>
+    <% else %>
+      <% month, half = sheet.previous %>
+      <%= link_to "‹", finance_staff_sheet_path(view: sheet.view, month: month.strftime("%Y-%m"), half:), class: "btn btn-sm", aria: { label: t(".previous") } %>
+      <%= form_with url: finance_staff_sheet_path, method: :get, class: "flex flex-wrap items-center gap-2", data: { controller: "auto-submit", turbo_frame: "_top" } do |form| %>
+        <%= hidden_field_tag :view, sheet.view %>
+        <% if sheet.view == "fortnight" %>
+          <%= form.select :half, options_for_select([ 1, 2 ].map { [ t(".halves.#{it}"), it ] }, sheet.half), {},
+                aria: { label: t(".fortnight") }, class: "field-input", data: { action: "auto-submit#submit" } %>
+        <% end %>
+        <%= form.month_field :month, value: month_param, aria: { label: t(".month") }, class: "field-input font-semibold", data: { action: "auto-submit#submit" } %>
+      <% end %>
+      <% month, half = sheet.following %>
+      <%= link_to "›", finance_staff_sheet_path(view: sheet.view, month: month.strftime("%Y-%m"), half:), class: "btn btn-sm", aria: { label: t(".next") } %>
+    <% end %>
+  </div>
+</div>
+
+<% if sheet.members.empty? %>
+  <p class="empty-state mt-6"><%= t(".empty") %></p>
+<% else %>
+  <%= render "finance/staff_sheets/#{sheet.view}", sheet: %>
+<% end %>

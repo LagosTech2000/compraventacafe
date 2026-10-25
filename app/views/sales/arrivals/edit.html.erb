@@ -1,0 +1,56 @@
+<% content_for :title, t(".title", number: @shipment.display_number) %>
+<%= render "sales/nav" %>
+
+<h1 class="text-2xl font-bold"><%= t(".title", number: @shipment.display_number) %></h1>
+<p class="mt-1 text-sm text-ink-muted">
+  <%= t(".subtitle", buyer: @shipment.buyer.name, state: @shipment.human_coffee_state, net: format_pounds(@shipment.origin_net_weight)) %>
+</p>
+
+<%= form_with model: @shipment, url: sales_shipment_arrival_path(@shipment), method: :patch,
+      class: form_surface_class("@container mt-6 max-w-none"),
+      data: { controller: "form-validation weighing-calculator",
+              weighing_calculator_tare_per_sack_value: PurchaseCalculation::TARE_PER_SACK,
+              weighing_calculator_quintal_weight_value: PurchaseCalculation::QUINTAL_WEIGHT,
+              weighing_calculator_coffee_state_value: @shipment.coffee_state,
+              weighing_calculator_origin_net_value: @shipment.origin_net_weight.to_f,
+              weighing_calculator_tolerance_value: WeightTolerance.percent.to_f } do |form| %>
+  <%= render "shared/form_errors", record: @shipment %>
+  <%= form.hidden_field :lock_version %>
+  <div class="grid items-start gap-6 @5xl:grid-cols-[minmax(0,1fr)_20rem]">
+    <div class="min-w-0 space-y-6">
+      <section class="grid gap-5 sm:grid-cols-2">
+        <div>
+          <%= form.label :received_on, class: "field-label" %>
+          <%= form.date_field :received_on, required: true, min: @shipment.departed_at.to_date, class: "field-input" %>
+        </div>
+        <div>
+          <%= form.label :weight_note_number, class: "field-label" %>
+          <%= form.text_field :weight_note_number, maxlength: 60, class: "field-input" %>
+        </div>
+      </section>
+      <section class="space-y-3" aria-labelledby="arrival-weighing">
+        <div>
+          <h2 id="arrival-weighing" class="font-semibold"><%= t(".weighing") %></h2>
+          <p class="text-sm text-ink-muted"><%= t(".weighing_help") %></p>
+        </div>
+        <%= render "sales/shipments/weighing_fields", form:, shipment: @shipment, side: "destination" %>
+      </section>
+    </div>
+
+    <aside class="space-y-4 @5xl:sticky @5xl:top-24">
+      <%= render "sales/shipments/calculation", title: t(".calculation") %>
+      <div class="panel p-4 data-[over-tolerance=true]:ring-2 data-[over-tolerance=true]:ring-danger" data-weighing-calculator-target="differenceBox">
+        <p class="text-sm font-semibold"><%= t(".difference") %></p>
+        <p class="mt-1 text-xl font-bold tabular-nums" data-weighing-calculator-target="difference">—</p>
+        <p class="mt-1 text-xs text-ink-muted"><%= t(".origin_net", net: format_pounds(@shipment.origin_net_weight)) %></p>
+        <p class="mt-1 text-xs text-ink-muted">
+          <%= WeightTolerance.percent ? t("sales.shipments.show.tolerance", tolerance: format_percent(WeightTolerance.percent)) : t("sales.shipments.show.no_tolerance") %>
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <%= form.submit t(".submit"), class: "btn btn-primary" %>
+        <%= cancel_button sales_shipment_path(@shipment) %>
+      </div>
+    </aside>
+  </div>
+<% end %>

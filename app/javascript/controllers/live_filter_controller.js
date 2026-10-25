@@ -57,6 +57,6 @@ export default class extends Controller {
   }
 
   typing(field) {
-    return field.type === "search" || field.type === "text"
+    return field.type === "search" || field.type === "text" || field.type === "number"
   }
 }

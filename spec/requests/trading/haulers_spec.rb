@@ -12,22 +12,22 @@ RSpec.describe "Trading haulers" do
 
   before { sign_in user }
 
-  it "registers a carrero with its person, percent and can price, both required" do
-    post trading_haulers_path, params: { hauler: { commission_percent: "", can_price: "",
+  it "registers a carrero with its person and price per pound, required" do
+    post trading_haulers_path, params: { hauler: { price_per_pound: "",
                                                    person_attributes: { first_names: "Rubén", last_names: "Ordóñez" } } }
     expect(response).to have_http_status(:unprocessable_content)
     expect(Hauler.count).to eq(0)
 
-    post trading_haulers_path, params: { hauler: { commission_percent: "10", can_price: "50",
+    post trading_haulers_path, params: { hauler: { price_per_pound: "0.30",
                                                    person_attributes: { first_names: "Rubén", last_names: "Ordóñez", phone: "9999-0000" } } }
     hauler = Hauler.sole
     expect(response).to redirect_to(trading_hauler_path(hauler))
-    expect(hauler).to have_attributes(commission_percent: 10, can_price: 50, active: true)
+    expect(hauler).to have_attributes(price_per_pound: BigDecimal("0.3"), active: true)
     expect(hauler.person).to have_attributes(full_name: "Rubén Ordóñez", phone: "99990000")
     expect(AuditEvent.where(auditable: hauler, action: "create")).to exist
 
-    patch trading_hauler_path(hauler), params: { hauler: { commission_percent: "12", can_price: "55", active: "0" } }
-    expect(hauler.reload).to have_attributes(commission_percent: 12, can_price: 55, active: false)
+    patch trading_hauler_path(hauler), params: { hauler: { price_per_pound: "0.3525", active: "0" } }
+    expect(hauler.reload).to have_attributes(price_per_pound: BigDecimal("0.3525"), active: false)
   end
 
   it "lists them with what they are owed, and shows their purchases, payments and terms" do
@@ -37,29 +37,34 @@ RSpec.describe "Trading haulers" do
 
     get trading_haulers_path
     row = page.at_css("#hauler_#{hauler.id}")
-    expect(row.text.squish).to include("Rubén Ordóñez", "10 %", "L 50.00", format("L %.2f", purchase.hauler_commission - 1))
+    expect(row.text.squish).to include("Rubén Ordóñez", "L 0.30", format("L %.2f", purchase.hauler_commission - 1))
 
     get trading_hauler_path(hauler)
     expect(response.body).to include("Compras que carreó", "Recibo #{payment.display_number}")
     expect(page.at_css("a[href='#{new_trading_hauler_payment_path(hauler)}']")).to be_present
-    expect(page.at_css("#hauler_row_purchase_#{purchase.id}").text.squish).to include(purchase.producer.full_name, "10 %", "L 50.00")
+    expect(page.at_css("#hauler_row_purchase_#{purchase.id}").text.squish).to include(purchase.producer.full_name, "L 0.30")
   end
 
   it "names the carrero on a purchase and shows the commission there" do
-    hauler = create(:hauler, commission_percent: 10, can_price: 50)
+    hauler = create(:hauler, price_per_pound: "0.3")
     producer = create(:producer)
     post trading_purchases_path, params: { purchase: { producer_id: producer.id, hauler_id: hauler.id, purchased_at: Time.current,
                                                        coffee_state: "cherry", weight_mode: "single", gross_weight: "1661",
                                                        yield_factor: "1", price_per_pound: "10" } }
     purchase = Purchase.last
-    expect(purchase).to have_attributes(hauler:, net_weight: 1_650, hauler_cans: 100, hauler_commission: 500, total: 16_500)
+    expect(purchase).to have_attributes(hauler:, net_weight: 1_650, hauler_price_per_pound: BigDecimal("0.3"), hauler_commission: 495, total: 16_500)
 
     get trading_purchase_path(purchase)
-    expect(response.body).to include("Carreada por #{hauler.full_name}", "100.00 latas × L 50.00 × 10 % =", "L 500.00")
+    expect(response.body).to include("Carreada por #{hauler.full_name}", "Comisión: L 0.30 por libra neta =", "L 495.00")
+
+    # One from before the change keeps saying how it was calculated.
+    purchase.update_columns(hauler_price_per_pound: nil, hauler_commission_percent: 10, hauler_can_price: 50, hauler_cans: 100, hauler_commission: 500)
+    get trading_purchase_path(purchase)
+    expect(response.body).to include("100.00 latas × L 50.00 × 10 % =", "L 500.00")
 
     get new_trading_purchase_path
     option = page.at_css("select#purchase_hauler_id option[value='#{hauler.id}']")
-    expect(option.to_h).to include("data-percent" => "10.0", "data-can-price" => "50.0")
+    expect(option.to_h).to include("data-price-per-pound" => "0.3")
   end
 
   it "pays what is owed with a receipt, original and copy, and removes only the last payment" do
@@ -113,8 +118,8 @@ RSpec.describe "Trading haulers" do
     sign_in admin
     person = create(:person, :client)
     patch administration_person_path(person), params: { person: { client_role: "1", hauler_role: "1",
-                                                                  hauler_commission_percent: "7.5", hauler_can_price: "48" } }
-    expect(person.reload.hauler).to have_attributes(commission_percent: BigDecimal("7.5"), can_price: 48)
+                                                                  hauler_price_per_pound: "0.22" } }
+    expect(person.reload.hauler).to have_attributes(price_per_pound: BigDecimal("0.22"))
 
     get administration_person_path(person)
     expect(response.body).to include("Carrero")

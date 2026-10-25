@@ -1,0 +1,70 @@
+<%# An expense or an investment (expense.kind): its category, who was paid,
+    the account and method, the receipt number and, optionally, the photo
+    or PDF of the receipt. %>
+<% kind = expense.kind %>
+<%= form_with model: expense, url: expense.persisted? ? expense_path(expense) : expenses_path, scope: :expense,
+      class: form_surface_class("space-y-6"), multipart: true,
+      data: { controller: "form-validation unsaved-changes", action: unsaved_changes_actions,
+              unsaved_changes_message_value: t("shared.unsaved_changes.leave") } do |form| %>
+  <%= render "shared/form_errors", record: expense %>
+  <%= form.hidden_field :lock_version if expense.persisted? %>
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div class="sm:col-span-2">
+      <%= form.label :description, class: "field-label" %>
+      <%= form.text_field :description, required: true, maxlength: 200, autofocus: true, class: "field-input",
+            placeholder: t("finance.expenses.form.description_placeholder.#{kind}"),
+            data: { missing_message: "#{Expense.human_attribute_name(:description)} #{t("errors.messages.blank")}" } %>
+    </div>
+    <div data-controller="option-picker" data-action="finance_category:created@window->option-picker#add">
+      <%= form.label :finance_category_id, Expense.human_attribute_name(:category), class: "field-label" %>
+      <%= form.select :finance_category_id, FinanceCategory.options_for(kind, including: expense.finance_category_id),
+            { prompt: t("shared.select.pick_category") }, required: true, class: "field-input", data: { option_picker_target: "select" } %>
+      <% if policy(FinanceCategory).create? %>
+        <%= modal_link_to t("finance.expenses.form.new_category"), new_finance_category_path(kind:, picker: 1), class: "btn btn-sm mt-2" %>
+      <% end %>
+    </div>
+    <div>
+      <%= form.label :payee, class: "field-label" %>
+      <%= form.text_field :payee, maxlength: 120, class: "field-input", placeholder: t("finance.expenses.form.payee_placeholder") %>
+    </div>
+    <div>
+      <%= form.label :spent_on, class: "field-label" %>
+      <%= form.date_field :spent_on, required: true, class: "field-input" %>
+    </div>
+    <div>
+      <%= form.label :amount, class: "field-label" %>
+      <%= form.number_field :amount, required: true, min: 0.01, max: Expense::MAX_AMOUNT - 0.01, step: 0.01, inputmode: "decimal", class: "field-input text-lg" %>
+    </div>
+    <div class="grid gap-5 sm:col-span-2 sm:grid-cols-2" data-controller="money-account"
+         data-money-account-defaults-value="<%= MoneyAccount.defaults_by_method.to_json %>">
+      <div>
+        <%= form.label :payment_method, class: "field-label" %>
+        <%= form.select :payment_method, enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS), {}, required: true, class: "field-input",
+              data: { money_account_target: "method", action: "money-account#suggest" } %>
+      </div>
+      <%= render "shared/money_account_field", form:, required: true %>
+    </div>
+    <div>
+      <%= form.label :receipt_number, class: "field-label" %>
+      <%= form.text_field :receipt_number, maxlength: 120, class: "field-input" %>
+    </div>
+    <div>
+      <%= form.label :receipt_upload, class: "field-label" %>
+      <%= form.file_field :receipt_upload, accept: ExpenseReceipt::SIGNATURES.keys.join(","), class: "field-input py-2" %>
+      <p class="mt-1 text-xs text-ink-muted"><%= t("finance.expenses.form.receipt_help", size: number_to_human_size(ExpenseReceipt::MAX_SIZE)) %></p>
+      <% if expense.receipt_info %>
+        <label class="mt-2 flex items-center gap-2 text-sm">
+          <%= form.check_box :remove_receipt, class: "size-4 accent-primary" %> <%= t("finance.expenses.form.remove_receipt") %>
+        </label>
+      <% end %>
+    </div>
+    <div class="sm:col-span-2">
+      <%= form.label :observations, class: "field-label" %>
+      <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+    </div>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit expense.persisted? ? t("helpers.submit.update") : t("finance.expenses.form.submit.#{kind}"), class: "btn btn-primary" %>
+    <%= cancel_button expenses_path %>
+  </div>
+<% end %>

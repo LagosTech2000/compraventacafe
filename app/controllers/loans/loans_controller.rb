@@ -15,7 +15,8 @@ module Loans
     end
 
     def new
-      @loan = authorize Loan.new(disbursed_on: Time.zone.today, person: Person.find_by(id: params[:person_id]))
+      @loan = authorize Loan.new(disbursed_on: Time.zone.today, person: Person.find_by(id: params[:person_id]),
+                                 money_account: MoneyAccount.default_for("cash"))
     end
 
     def create
@@ -50,7 +51,7 @@ module Loans
       end
 
       def loan_params
-        params.expect(loan: [ :person_id, :cash_amount, :monthly_interest_rate, :disbursed_on, :due_on, :observations, :lock_version,
+        params.expect(loan: [ :person_id, :cash_amount, :money_account_id, :monthly_interest_rate, :interest_grace, :disbursed_on, :due_on, :observations, :lock_version,
                               supply_items_attributes: [ [ :id, :supply_id, :quantity, :unit_price, :_destroy ] ] ])
       end
   end

@@ -1,0 +1,8 @@
+<%= filter_text_field form, :q, t("shared.filters.search"), value: filter.q, placeholder: t("reports.filters.shipment_placeholder") %>
+<%= filter_select form, :buyer_id, t("reports.filters.buyer"), Buyer.alphabetical.pluck(:name, :id), selected: filter.buyer_id %>
+<%= filter_select form, :coffee_state, t("reports.groups.coffee_state"), enum_options(Purchase, :coffee_state, Purchase::COFFEE_STATES), selected: filter.coffee_state %>
+<%= filter_select form, :status, t("reports.groups.status"),
+      ShipmentsReport::STATUSES.map { [ Shipment.human_attribute_name("status/#{it}"), it ] }, selected: filter.status %>
+<% if WeightTolerance.percent %>
+  <%= filter_check_box form, :over_tolerance, t("reports.filters.over_tolerance", tolerance: format_percent(WeightTolerance.percent)), checked: filter.over_tolerance.present? %>
+<% end %>

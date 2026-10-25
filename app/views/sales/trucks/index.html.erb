@@ -1,0 +1,80 @@
+<% content_for :title, t(".title") %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= live_updates_from :sales %>
+<%= render "sales/nav" %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <% if policy(Truck).create? %>
+    <%= modal_link_to t(".new"), new_sales_truck_path, class: "btn btn-primary" %>
+  <% end %>
+</div>
+
+<% statuses = TruckFilter::STATUSES.map { [ t("sales.buyers.index.statuses.#{it}"), it ] } %>
+<% owners = TruckFilter::OWNERS.map { [ t("sales.trucks.owners.#{it}"), it ] } %>
+<div data-controller="live-filter">
+<%= render layout: "shared/filters", locals: { filter: @filter, url: sales_trucks_path, frame: "trucks-list", live: true } do |form| %>
+  <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("sales.trucks.index.search_placeholder") %>
+  <%= filter_select form, :owner, t("sales.trucks.index.owner"), owners, selected: @filter.owner %>
+  <%= filter_select form, :status, t("sales.buyers.index.status"), statuses, selected: @filter.status %>
+<% end %>
+
+<%= list_frame "trucks-list" do %>
+<%= live_list_status @filter, status: statuses, owner: owners %>
+<% sorting = { filter: @filter, frame: "trucks-list" } %>
+<% if @trucks.any? %>
+  <div class="mt-6 @container">
+    <ul class="space-y-3 @3xl:hidden">
+      <% @trucks.each do |truck| %>
+        <li class="data-card" id="<%= dom_id(truck, :card) %>">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="font-medium"><%= truck.plate %> <% if truck.own %><span class="badge badge-neutral ml-1"><%= t("sales.trucks.owners.own") %></span><% end %></p>
+              <p class="text-xs text-ink-muted"><%= [ truck.brand_model, truck.color, (t(".capacity", quintals: format_pounds(truck.capacity_quintals)) if truck.capacity_quintals) ].compact.join(" · ") %></p>
+            </div>
+            <%= detail_button sales_truck_path(truck) %>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+    <div class="hidden overflow-x-auto panel @3xl:block">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <%= sort_th Truck.human_attribute_name(:plate), :plate, sorting %>
+            <%= sort_th Truck.human_attribute_name(:brand_model), :brand_model, sorting %>
+            <%= sort_th Truck.human_attribute_name(:color), :color, sorting, class: "hidden @5xl:table-cell" %>
+            <%= sort_th Truck.human_attribute_name(:capacity_quintals), :capacity_quintals, sorting, class: "text-right" %>
+            <%= sort_th Truck.human_attribute_name(:own), :own, sorting %>
+            <%= sort_th t(".shipments"), :shipments, sorting, class: "text-right" %>
+            <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @trucks.each do |truck| %>
+            <tr id="<%= dom_id(truck) %>">
+              <td class="font-medium whitespace-nowrap">
+                <%= truck.plate %>
+                <% unless truck.active? %><span class="badge badge-neutral ml-1"><%= t("sales.buyers.index.statuses.inactive") %></span><% end %>
+              </td>
+              <td><%= truck.brand_model || "—" %></td>
+              <td class="hidden @5xl:table-cell"><%= truck.color || "—" %></td>
+              <td class="text-right tabular-nums"><%= truck.capacity_quintals ? format_pounds(truck.capacity_quintals) : "—" %></td>
+              <td><%= t("sales.trucks.owners.#{truck.own ? "own" : "others"}") %></td>
+              <td class="text-right tabular-nums"><%= truck.shipments_count %></td>
+              <td class="cell-actions"><%= detail_button sales_truck_path(truck) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "trucks-list" %>
+<% else %>
+  <p class="empty-state mt-6"><%= t(".empty") %></p>
+<% end %>
+<% end %>
+</div>

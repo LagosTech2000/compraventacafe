@@ -1,0 +1,90 @@
+<% content_for :title, t(".title") %>
+<%# Updates itself while open when the data changes (LiveUpdates). %>
+<%= live_updates_from :finance %>
+<%= render "finance/nav" %>
+<%= render "shared/breadcrumbs", crumbs: [ [ t("finance.staff_members.index.title"), finance_staff_members_path ], [ t(".title") ] ] %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <% if policy(StaffRole).create? %>
+      <%= modal_link_to t(".new"), new_finance_staff_role_path, class: "btn btn-primary" %>
+    <% end %>
+    <%= help_guide_button HelpGuide.process(:staff_payroll), label: true %>
+  </div>
+</div>
+
+<% statuses = StaffRoleFilter::STATUSES.map { [ t("finance.staff_members.statuses.#{it}"), it ] } %>
+<div class="mt-6" data-controller="live-filter">
+  <%= render layout: "shared/filters", locals: { filter: @filter, url: finance_staff_roles_path, frame: "staff-roles-list", live: true } do |form| %>
+    <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("finance.staff_roles.index.search_placeholder") %>
+    <%= filter_select form, :status, t("finance.staff_members.index.status"), statuses, selected: @filter.status %>
+  <% end %>
+
+  <%= list_frame "staff-roles-list" do %>
+    <%= live_list_status @filter, status: statuses %>
+    <% if @roles.any? %>
+      <% sorting = { filter: @filter, frame: "staff-roles-list" } %>
+      <div class="mt-4 @container">
+        <ul class="space-y-3 @3xl:hidden">
+          <% @roles.each do |role| %>
+            <li class="data-card" id="<%= dom_id(role, :card) %>">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="font-medium"><%= role.name %></p>
+                  <p class="text-xs text-ink-muted"><%= staff_salary(role) %> · <%= t(".members", count: role.members_count) %></p>
+                </div>
+                <% if policy(role).update? %>
+                  <%= modal_link_to t(".edit"), edit_finance_staff_role_path(role), class: "btn btn-sm shrink-0", data: { row_link: true } %>
+                <% end %>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+        <div class="hidden overflow-x-auto panel @3xl:block">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <%= sort_th StaffRole.human_attribute_name(:name), :name, sorting %>
+                <%= sort_th StaffRole.human_attribute_name(:salary), :salary, sorting, class: "text-right" %>
+                <%= sort_th StaffRole.human_attribute_name(:pay_frequency), :pay_frequency, sorting %>
+                <%= sort_th StaffRole.human_attribute_name(:overtime_hour_rate), :overtime_hour_rate, sorting, class: "text-right" %>
+                <%= sort_th t(".members_column"), :members, sorting, class: "text-right" %>
+                <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @roles.each do |role| %>
+                <tr id="<%= dom_id(role) %>">
+                  <td class="font-medium">
+                    <%= role.name %>
+                    <% unless role.active? %><span class="badge badge-neutral ml-1"><%= t("finance.staff_members.statuses.inactive") %></span><% end %>
+                  </td>
+                  <td class="whitespace-nowrap text-right tabular-nums">
+                    <%= role.salary ? format_money(role.salary) : tag.span(t("finance.staff_roles.no_salary"), class: "badge badge-warning") %>
+                  </td>
+                  <td><%= role.human_pay_frequency || "—" %></td>
+                  <td class="whitespace-nowrap text-right tabular-nums"><%= role.overtime_hour_rate ? format_money(role.overtime_hour_rate) : "—" %></td>
+                  <td class="text-right tabular-nums"><%= role.members_count %></td>
+                  <td class="cell-actions">
+                    <div class="flex justify-end gap-2">
+                      <% if policy(role).update? %>
+                        <%= modal_link_to t(".edit"), edit_finance_staff_role_path(role), class: "btn btn-sm", data: { row_link: true } %>
+                      <% end %>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "staff-roles-list" %>
+    <% else %>
+      <p class="empty-state mt-4"><%= t(".empty") %></p>
+    <% end %>
+  <% end %>
+</div>

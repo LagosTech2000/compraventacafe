@@ -5,9 +5,7 @@ class HaulerPurchaseFilter < ListFilter
   sorts purchased_at: "purchases.purchased_at",
         producer: { sql: text("people.first_names", "people.last_names"), joins: { producer: :person } },
         net_weight: "purchases.net_weight",
-        cans: "purchases.hauler_cans",
-        commission_percent: "purchases.hauler_commission_percent",
-        can_price: "purchases.hauler_can_price",
+        price_per_pound: "purchases.hauler_price_per_pound",
         commission: "purchases.hauler_commission"
 
   def apply(scope)

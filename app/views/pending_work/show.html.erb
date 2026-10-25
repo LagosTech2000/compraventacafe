@@ -8,11 +8,18 @@
   <% groups << :uninvoiced if dashboard.uninvoiced_by_producer.any? %>
   <% groups << :unpaid_invoices if dashboard.unpaid_invoices.any? %>
 <% end %>
+<% if dashboard.can?("sales") %>
+  <% groups << :shipments_in_transit if dashboard.shipments_in_transit.any? %>
+  <% groups << :unsold_shipments if dashboard.unsold_shipments.any? %>
+  <% groups << :unpaid_sales if dashboard.unpaid_sales.any? %>
+<% end %>
 <% groups << :overdue_loans if dashboard.can?("loans") && dashboard.overdue_loans.any? %>
 <% if dashboard.can?("farms") %>
   <% groups << :periods_to_pay if dashboard.periods_to_pay.any? %>
   <% groups << :members_without_wage if dashboard.members_without_wage.any? %>
 <% end %>
+
+<% groups << :over_budget if dashboard.can?("finance") && dashboard.over_budget.any? %>
 
 <h1 class="text-xl font-bold"><%= t(".title") %></h1>
 <p class="mt-1 text-sm text-ink-muted"><%= t(".summary") %></p>
@@ -87,6 +94,74 @@
     </section>
   <% end %>
 
+  <% if groups.include?(:shipments_in_transit) %>
+    <section id="pending-shipments_in_transit" role="tabpanel" aria-labelledby="pending-tab-shipments_in_transit" data-tabs-target="panel" <%= "hidden" unless groups.first == :shipments_in_transit %>>
+      <p class="text-xs text-ink-muted"><%= t(".groups.shipments_in_transit.help") %></p>
+      <ul class="mt-2 divide-y divide-line">
+        <% dashboard.shipments_in_transit.each do |shipment| %>
+          <li class="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm" id="<%= dom_id(shipment, :pending) %>">
+            <span class="min-w-0">
+              <span class="block font-medium"><%= t(".groups.shipments_in_transit.name", number: shipment.display_number, buyer: shipment.buyer.name) %></span>
+              <span class="block text-xs text-ink-muted"><%= t(".groups.shipments_in_transit.days", count: (today - shipment.departed_at.to_date).to_i) %></span>
+            </span>
+            <span class="flex items-center gap-2">
+              <span class="font-semibold tabular-nums"><%= format_pounds(shipment.origin_net_weight) %> lb</span>
+              <%= modal_link_to t("shared.detail"), sales_shipment_path(shipment), class: "btn btn-sm" %>
+              <% if policy(shipment).receive? %>
+                <%= modal_link_to t(".groups.shipments_in_transit.action"), edit_sales_shipment_arrival_path(shipment), class: "btn btn-sm btn-primary" %>
+              <% end %>
+            </span>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
+  <% if groups.include?(:unsold_shipments) %>
+    <section id="pending-unsold_shipments" role="tabpanel" aria-labelledby="pending-tab-unsold_shipments" data-tabs-target="panel" <%= "hidden" unless groups.first == :unsold_shipments %>>
+      <p class="text-xs text-ink-muted"><%= t(".groups.unsold_shipments.help") %></p>
+      <ul class="mt-2 divide-y divide-line">
+        <% dashboard.unsold_shipments.group_by(&:buyer).each do |buyer, shipments| %>
+          <li class="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm" id="<%= dom_id(buyer, :pending) %>">
+            <span class="min-w-0">
+              <span class="block font-medium"><%= buyer.name %></span>
+              <span class="block text-xs text-ink-muted"><%= t(".groups.unsold_shipments.detail", count: shipments.size) %></span>
+            </span>
+            <span class="flex items-center gap-3">
+              <span class="font-semibold tabular-nums"><%= format_pounds(shipments.sum(&:destination_net_weight)) %> lb</span>
+              <% if policy(Sale).create? %>
+                <%= page_link_to t(".groups.unsold_shipments.action"), new_sales_sale_path(buyer_id: buyer.id), class: "btn btn-sm btn-primary" %>
+              <% end %>
+            </span>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
+  <% if groups.include?(:unpaid_sales) %>
+    <section id="pending-unpaid_sales" role="tabpanel" aria-labelledby="pending-tab-unpaid_sales" data-tabs-target="panel" <%= "hidden" unless groups.first == :unpaid_sales %>>
+      <p class="text-xs text-ink-muted"><%= t(".groups.unpaid_sales.help") %></p>
+      <ul class="mt-2 divide-y divide-line">
+        <% dashboard.unpaid_sales.sort_by(&:sold_on).each do |sale| %>
+          <li class="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm" id="<%= dom_id(sale, :pending) %>">
+            <span class="min-w-0">
+              <span class="block font-medium"><%= t(".groups.unpaid_sales.name", number: sale.display_number, buyer: sale.buyer.name) %></span>
+              <span class="block text-xs text-ink-muted"><%= sale.human_payment_status %> · <%= t(".groups.unpaid_sales.days", count: (today - sale.sold_on).to_i) %></span>
+            </span>
+            <span class="flex items-center gap-2">
+              <span class="font-semibold tabular-nums"><%= format_money(sale.balance_due) %></span>
+              <%= modal_link_to t("shared.detail"), sales_sale_path(sale), class: "btn btn-sm" %>
+              <% if policy(SalePayment.new(sale:)).create? %>
+                <%= modal_link_to t(".groups.unpaid_sales.action"), new_sales_sale_payment_path(sale), class: "btn btn-sm btn-primary" %>
+              <% end %>
+            </span>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
   <% if groups.include?(:overdue_loans) %>
     <section id="pending-overdue_loans" role="tabpanel" aria-labelledby="pending-tab-overdue_loans" data-tabs-target="panel" <%= "hidden" unless groups.first == :overdue_loans %>>
       <p class="text-xs text-ink-muted"><%= t(".groups.overdue_loans.help") %></p>
@@ -147,6 +222,22 @@
             <% if policy(member).update? %>
               <%= modal_link_to t(".groups.members_without_wage.action"), edit_farms_payroll_member_path(member.payroll, member), class: "btn btn-sm btn-primary" %>
             <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+  <% if groups.include?(:over_budget) %>
+    <section id="pending-over_budget" role="tabpanel" aria-labelledby="pending-tab-over_budget" data-tabs-target="panel" <%= "hidden" unless groups.first == :over_budget %>>
+      <p class="text-xs text-ink-muted"><%= t(".groups.over_budget.help") %></p>
+      <ul class="mt-2 divide-y divide-line">
+        <% dashboard.over_budget.each do |line| %>
+          <li class="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm" id="<%= dom_id(line.category, :pending) %>">
+            <span class="min-w-0">
+              <span class="block font-medium"><%= line.category.name %></span>
+              <span class="block text-xs text-ink-muted"><%= t(".groups.over_budget.detail", spent: format_money(line.spent), budget: format_money(line.budget)) %></span>
+            </span>
+            <%= page_link_to t(".groups.over_budget.action"), finance_budget_path, class: "btn btn-sm btn-primary" %>
           </li>
         <% end %>
       </ul>

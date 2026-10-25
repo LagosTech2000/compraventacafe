@@ -1,0 +1,5 @@
+<% content_for :title, t(".title", plate: @truck.plate) %>
+<%= render "sales/nav" %>
+
+<h1 class="mb-6 text-2xl font-bold"><%= t(".title", plate: @truck.plate) %></h1>
+<%= render "form", truck: @truck %>

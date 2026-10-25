@@ -42,6 +42,45 @@ RSpec.describe "Printable documents" do
     end
   end
 
+  it "puts it on sales (original and copy), their payment receipts and the sales daily close" do
+    sale = create(:sale, payment_status: "partial", amount: 1_000, user:)
+    get sales_sale_path(sale)
+    expect_letterhead("Nota de venta #{sale.display_number}", count: 2)
+    expect_copy_on_its_own_page
+
+    payment = create(:sale_payment, sale:, amount: 1)
+    get sales_sale_payment_path(sale, payment)
+    expect_letterhead("Recibo de cobro", count: 2)
+    expect_copy_on_its_own_page
+
+    advance = create(:buyer_advance, buyer: sale.buyer)
+    get sales_buyer_buyer_advance_path(sale.buyer, advance)
+    expect_letterhead("Recibo de anticipo", count: 2)
+    expect_copy_on_its_own_page
+
+    get sales_daily_close_path
+    expect_letterhead("Cierre de comercialización")
+  end
+
+  it "puts it on the Planilla interna's receipts, original and copy" do
+    member = create(:staff_member, starts_on: Time.zone.today - 40)
+    issuer = StaffPaymentIssuer.new(member:, period: member.period_to_pay, user:, payment_method: "cash",
+                                    money_account_id: create(:money_account).id)
+    issuer.call
+    get finance_staff_member_staff_payment_path(member, issuer.payment)
+    expect_letterhead("Recibo de pago de planilla", count: 2)
+    expect_copy_on_its_own_page
+
+    get finance_staff_sheet_path
+    expect_letterhead("Hoja de planilla")
+  end
+
+  it "puts it on an account's statement" do
+    account = create(:money_account, name: "Caja de la bodega")
+    get finance_money_account_path(account)
+    expect_letterhead("Estado de cuenta")
+  end
+
   it "puts it on invoices (original and copy) and their payment receipts" do
     invoice = InvoiceIssuer.new(producer:, user:, purchase_ids: [ create(:purchase, producer:).id ], payment_status: "partial",
                                 payment_method: "cash", amount: "1000").call.invoice

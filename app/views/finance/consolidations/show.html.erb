@@ -1,0 +1,120 @@
+<% content_for :title, t(".title") %>
+<%= live_updates_from :finance %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= render "finance/nav" %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <%= help_guide_button HelpGuide.process(:finance_money), label: true %>
+</div>
+
+<% sources = @filter.sources.map { [ t("reports.types.cash_movements.sources.#{it}"), it ] } %>
+<% editable = policy([ :finance, :consolidation ]).update? %>
+<% accounts = MoneyAccount.active.alphabetical %>
+<% categories = ExpenseCategory.active.order(:name) %>
+<% methods = enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS) %>
+<% directions = MovementFilter::DIRECTIONS.map { [ t("reports.types.cash_movements.directions.#{it}"), it ] } %>
+<%# The bar that gives the account stays outside the list (its marks join it
+    with form=), so it stays put while the list filters and loads more. %>
+<div data-controller="live-filter check-all" data-check-all-label-value="<%= t(".marked", count: "%{count}") %>"
+     data-check-all-none-value="<%= t(".marked", count: 0) %>"
+     data-action="turbo:frame-load->check-all#update">
+  <%= render layout: "shared/filters", locals: { filter: @filter, url: finance_consolidation_path, frame: "consolidation-list", live: true } do |form| %>
+    <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("finance.consolidations.show.search_placeholder") %>
+    <%= filter_date_field form, :from, t("shared.filters.from"), value: @filter.from %>
+    <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
+    <%= filter_select form, :source, t("finance.movements.columns.source"), sources, selected: @filter.source %>
+    <%= filter_select form, :payment_method, t("finance.consolidations.show.payment_method"), methods, selected: @filter.payment_method %>
+    <%= filter_select form, :direction, t("reports.filters.direction"), directions, selected: @filter.direction %>
+    <%= filter_number_field form, :amount_min, t("finance.consolidations.show.amount_min"), value: @filter.amount_min, placeholder: "0.00" %>
+    <%= filter_number_field form, :amount_max, t("finance.consolidations.show.amount_max"), value: @filter.amount_max, placeholder: "0.00" %>
+  <% end %>
+
+  <% if editable %>
+    <%= form_with url: finance_consolidation_path, method: :patch, id: "consolidation-form",
+          class: "panel sticky top-24 z-10 mt-4 flex flex-wrap items-end gap-3 p-4" do |form| %>
+      <p class="w-full text-sm font-semibold" data-check-all-target="count"><%= t(".marked", count: 0) %></p>
+      <div class="min-w-56">
+        <%= label_tag :account_id, t(".account"), class: "field-label" %>
+        <%= select_tag :account_id, options_from_collection_for_select(accounts, :id, :name), include_blank: t("finance.consolidations.show.keep_account"), class: "field-input" %>
+      </div>
+      <%# Only the records that have a category take it (the payroll expenses). %>
+      <div class="min-w-56">
+        <%= label_tag :category_id, t(".category"), class: "field-label" %>
+        <%= select_tag :category_id, options_from_collection_for_select(categories, :id, :name), include_blank: t("finance.consolidations.show.keep_category"), class: "field-input" %>
+      </div>
+      <%= form.button t(".assign"), class: "btn btn-primary", data: { check_all_target: "submit", turbo_confirm: t(".confirm") } %>
+      <%= form.button t(".by_method"), name: "by_method", value: "1", class: "btn", data: { check_all_target: "submit" } %>
+      <p class="w-full text-xs text-ink-muted"><%= t(".by_method_help") %> <%= t(".category_help") %></p>
+    <% end %>
+  <% end %>
+
+  <%= list_frame "consolidation-list" do %>
+    <%= render "shared/filter_status", filter: @filter, count: t(".count", count: @filter.total_count), periods: quick_periods(@filter),
+          chips: filter_chips(@filter, q: ->(text) { t("shared.filters.chips.q", text:) },
+                                       source: ->(value) { t("reports.types.cash_movements.sources.#{value}") },
+                                       payment_method: ->(value) { methods.find { it.last == value }&.first },
+                                       direction: ->(value) { t("reports.types.cash_movements.directions.#{value}") },
+                                       amount_min: ->(value) { t("finance.consolidations.show.chips.amount_min", amount: value) },
+                                       amount_max: ->(value) { t("finance.consolidations.show.chips.amount_max", amount: value) }) %>
+    <dl class="mt-4 flex flex-wrap gap-3">
+      <div class="stat min-w-0 flex-1 basis-40"><dt><%= t("finance.movements.index.in") %></dt><dd class="text-success"><%= format_money(@filter.movements.sum(0.to_d, &:amount_in)) %></dd></div>
+      <div class="stat min-w-0 flex-1 basis-40"><dt><%= t("finance.movements.index.out") %></dt><dd><%= format_money(@filter.movements.sum(0.to_d, &:amount_out)) %></dd></div>
+    </dl>
+
+    <% if @movements.any? %>
+      <div class="mt-6">
+        <% sorting = { filter: @filter, frame: "consolidation-list" } %>
+        <div class="overflow-x-auto panel">
+          <table class="data-table data-table-compact">
+            <thead>
+              <tr>
+                <% if editable %>
+                  <th class="cell-select w-10"><%= check_box_tag :all, "1", false, id: "consolidation_all", class: "size-4 accent-primary",
+                                         aria: { label: t(".mark_all") }, data: { check_all_target: "all", action: "check-all#toggleAll" } %></th>
+                <% end %>
+                <%= sort_th t("finance.movements.columns.date"), :date, sorting %>
+                <%= sort_th t("finance.movements.columns.source"), :source, sorting %>
+                <%= sort_th t("finance.movements.columns.description"), :description, sorting %>
+                <%= sort_th t("finance.movements.columns.person"), :person, sorting %>
+                <%= sort_th t(".payment_method"), :payment_method, sorting %>
+                <%= sort_th t(".category"), :category, sorting %>
+                <%= sort_th t("finance.movements.columns.amount_in"), :amount_in, sorting, class: "text-right" %>
+                <%= sort_th t("finance.movements.columns.amount_out"), :amount_out, sorting, class: "text-right" %>
+                <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @movements.each do |movement| %>
+                <tr id="<%= "consolidation_#{movement.key}" %>">
+                  <% if editable %>
+                    <td><%= check_box_tag "items[]", "#{movement.source}:#{movement.id}", false, id: "item_#{movement.key}", form: "consolidation-form",
+                              class: "size-4 accent-primary", aria: { label: movement.description },
+                              data: { check_all_target: "item", action: "check-all#update" } %></td>
+                  <% end %>
+                  <td class="whitespace-nowrap"><%= l(movement.at) %></td>
+                  <td><span class="badge <%= movement.amount_in.positive? ? "badge-success" : "badge-neutral" %>"><%= t("reports.types.cash_movements.sources.#{movement.source}") %></span></td>
+                  <td><label for="<%= "item_#{movement.key}" %>"><%= movement.description %></label></td>
+                  <td><%= movement.person || "—" %></td>
+                  <td><%= movement.payment_method || "—" %></td>
+                  <td><%= movement.category || tag.span(t(".no_category"), class: "text-ink-muted") %></td>
+                  <td class="whitespace-nowrap text-right tabular-nums text-success"><%= format_money(movement.amount_in) if movement.amount_in.positive? %></td>
+                  <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(movement.amount_out) if movement.amount_out.positive? %></td>
+                  <td class="cell-actions">
+                    <% if (path = movement_path(movement)) %><%= link_to t("finance.movements.open"), path, class: "btn btn-sm", data: { turbo_frame: "_top" } %><% end %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "consolidation-list" %>
+    <% else %>
+      <p class="empty-state mt-6"><%= t(".empty") %></p>
+    <% end %>
+  <% end %>
+</div>

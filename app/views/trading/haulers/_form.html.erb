@@ -1,14 +1,14 @@
-<%# A carrero: commission percent and can price (both required), and the
-    person, written here when new. %>
+<%# A carrero: price per net pound (required), and the person, written here
+    when new. %>
 <%= form_with model: [ :trading, hauler ], class: form_surface_class("space-y-6"), data: { controller: "form-validation" } do |form| %>
   <%= hidden_field_tag :picker, "1" if picker_request? %>
   <%= render "shared/form_errors", record: hauler %>
 
   <section>
     <h2 class="mb-1 text-lg font-semibold"><%= t(".commission") %></h2>
-    <p class="mb-3 text-sm text-ink-muted"><%= t(".commission_help", pounds: number_with_precision(Hauler::CAN_POUNDS, precision: 1)) %></p>
+    <p class="mb-3 text-sm text-ink-muted"><%= t(".commission_help") %></p>
     <div class="grid gap-5 sm:grid-cols-2">
-      <%= render "trading/haulers/terms_fields", form:, percent: :commission_percent, price: :can_price, model: Hauler %>
+      <%= render "trading/haulers/terms_fields", form:, price: :price_per_pound %>
     </div>
     <% if hauler.persisted? %>
       <p class="mt-2 text-xs text-ink-muted"><%= t(".changes_help") %></p>

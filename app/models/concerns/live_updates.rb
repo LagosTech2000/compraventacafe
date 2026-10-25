@@ -12,7 +12,7 @@
 module LiveUpdates
   extend ActiveSupport::Concern
 
-  STREAMS = %i[trading loans].freeze
+  STREAMS = %i[trading sales loans finance].freeze
 
   class_methods do
     def live_updates(*streams)

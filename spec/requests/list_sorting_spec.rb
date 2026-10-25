@@ -9,6 +9,7 @@ RSpec.describe "Sorting every list" do
   let(:daily) { create(:payroll, starts_on: Time.zone.today - 10) }
   let(:task_payroll) { create(:payroll, kind: "task", starts_on: Time.zone.today - 10) }
   let(:hauler) { create(:hauler) }
+  let(:buyer) { create(:buyer) }
 
   def page = Nokogiri::HTML(response.body)
 
@@ -23,6 +24,12 @@ RSpec.describe "Sorting every list" do
     create(:payroll_member, payroll: daily)
     create(:payroll_expense, payroll: daily)
     PayrollTask.create!(payroll: task_payroll, name: "Chapia", amount: 1_000)
+    create(:sale, buyer:)
+    create(:shipment, buyer:)
+    create(:expense)
+    create(:other_income)
+    create(:staff_member)
+    create(:shipment, buyer:, carrier: create(:carrier), truck: create(:truck))
     sign_in admin
   end
 
@@ -47,12 +54,27 @@ RSpec.describe "Sorting every list" do
     PayrollMemberFilter => -> { farms_payroll_path(daily, tab: "members") },
     PayrollLoanFilter => -> { farms_payroll_path(daily, tab: "loans") },
     PayrollTaskFilter => -> { farms_payroll_path(task_payroll, tab: "tasks") },
-    PayrollExpenseFilter => -> { farms_payroll_path(daily, tab: "expenses") }
+    PayrollExpenseFilter => -> { farms_payroll_path(daily, tab: "expenses") },
+    ShipmentFilter => -> { sales_shipments_path },
+    SaleFilter => -> { sales_sales_path },
+    BuyerFilter => -> { sales_buyers_path },
+    BuyerSaleFilter => -> { sales_buyer_path(buyer, tab: "sales") },
+    BuyerShipmentFilter => -> { sales_buyer_path(buyer, tab: "shipments") },
+    StockLedgerFilter => -> { sales_stock_path },
+    MovementFilter => -> { finance_movements_path(from: "", to: "") },
+    IncomeFilter => -> { finance_incomes_path(from: "", to: "") },
+    StaffMemberFilter => -> { finance_staff_members_path },
+    CarrierFilter => -> { sales_carriers_path },
+    TruckFilter => -> { sales_trucks_path },
+    StaffRoleFilter => -> { finance_staff_roles_path },
+    ExpenseFilter => -> { finance_expenses_path(from: "", to: "") },
+    FinanceCategoryFilter => -> { finance_categories_path },
+    ConsolidationFilter => -> { finance_consolidation_path }
   }.freeze
 
   it "covers every list filter" do
     names = Dir[Rails.root.join("app/models/*_filter.rb")].map { File.basename(it, ".rb").camelize } -
-            %w[ListFilter ExpenseCategoryFilter] # expense categories: cards only, no table
+            %w[ListFilter ExpenseCategoryFilter MoneyAccountFilter] # cards only, no table
     expect(LISTS.keys.map(&:name)).to match_array(names)
   end
 
@@ -63,7 +85,7 @@ RSpec.describe "Sorting every list" do
       expect(response).to have_http_status(:ok)
 
       table = page.css("table.data-table").find { |candidate| candidate.at_css("th a.sort-link") }
-      headers = table.css("thead th").reject { it["class"].to_s.include?("cell-actions") }
+      headers = table.css("thead th").reject { it["class"].to_s.match?(/cell-actions|cell-select/) }
       expect(headers).to all(satisfy { it.at_css("a.sort-link") }), "headers without sort: #{headers.reject { it.at_css("a.sort-link") }.map(&:text)}"
 
       filter_class.sortings.each_key do |key|

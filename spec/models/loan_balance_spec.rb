@@ -36,4 +36,25 @@ RSpec.describe LoanBalance do
     loan.update!(monthly_interest_rate: 0)
     expect(described_class.new(loan, as_of: start + 90).total_owed).to eq(10_000)
   end
+
+  describe "a loan of the intermediary type: its first 10 days without interest" do
+    let(:loan) { create(:loan, interest_grace: true, cash_amount: 10_000, monthly_interest_rate: 3, disbursed_on: start, due_on: start + 120) }
+
+    it "charges nothing up to day 10 and from day 11 as usual" do
+      expect(described_class.new(loan, as_of: start + 10).interest_owed).to eq(0)
+      expect(described_class.new(loan, as_of: start + 11).interest_owed).to eq(10) # 1 day
+      expect(described_class.new(loan, as_of: start + 45).interest_owed).to eq(350) # 35 days
+      expect(loan.interest_starts_on).to eq(start + 10)
+    end
+
+    it "lets a payment within the 10 days go all to the principal" do
+      payment = create(:loan_payment, loan:, paid_on: start + 5, amount: 4_000)
+      expect([ payment.interest_amount, payment.principal_amount ]).to eq([ 0, 4_000 ])
+      expect(described_class.new(loan, as_of: start + 40).interest_owed).to eq(180) # 6,000 × 3 % × 30/30
+    end
+
+    it "is for anyone, not only intermediaries" do
+      expect(create(:loan, person: create(:person, :client), interest_grace: true)).to be_persisted
+    end
+  end
 end

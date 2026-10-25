@@ -10,10 +10,25 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_25_220000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
+
+  create_table "account_transfers", force: :cascade do |t|
+    t.date "transferred_on", null: false
+    t.bigint "from_account_id", null: false
+    t.bigint "to_account_id", null: false
+    t.decimal "amount", precision: 14, scale: 2, null: false
+    t.text "observations"
+    t.bigint "created_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_account_transfers_on_created_by_id"
+    t.index ["from_account_id"], name: "index_account_transfers_on_from_account_id"
+    t.index ["to_account_id"], name: "index_account_transfers_on_to_account_id"
+    t.index ["transferred_on"], name: "index_account_transfers_on_transferred_on"
+  end
 
   create_table "audit_events", force: :cascade do |t|
     t.bigint "user_id"
@@ -31,6 +46,65 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
     t.index ["auditable_type", "auditable_id"], name: "index_audit_events_on_auditable_type_and_auditable_id"
     t.index ["created_at"], name: "index_audit_events_on_created_at"
     t.index ["user_id"], name: "index_audit_events_on_user_id"
+  end
+
+  create_table "budgets", force: :cascade do |t|
+    t.bigint "finance_category_id", null: false
+    t.date "month", null: false
+    t.decimal "amount", precision: 14, scale: 2, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["finance_category_id", "month"], name: "index_budgets_on_finance_category_id_and_month", unique: true
+  end
+
+  create_table "buyer_advances", force: :cascade do |t|
+    t.bigint "buyer_id", null: false
+    t.date "received_on", null: false
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.string "payment_method", null: false
+    t.bigint "money_account_id", null: false
+    t.string "document_number"
+    t.text "observations"
+    t.bigint "created_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["buyer_id"], name: "index_buyer_advances_on_buyer_id"
+    t.index ["created_by_id"], name: "index_buyer_advances_on_created_by_id"
+    t.index ["money_account_id"], name: "index_buyer_advances_on_money_account_id"
+  end
+
+  create_table "buyers", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "kind", null: false
+    t.string "rtn"
+    t.string "phone"
+    t.string "email"
+    t.string "contact_name"
+    t.bigint "department_id"
+    t.bigint "municipality_id"
+    t.text "address_line"
+    t.decimal "latitude", precision: 9, scale: 6
+    t.decimal "longitude", precision: 9, scale: 6
+    t.text "observations"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((name)::text)", name: "index_buyers_on_lower_name", unique: true
+    t.index ["department_id"], name: "index_buyers_on_department_id"
+    t.index ["municipality_id"], name: "index_buyers_on_municipality_id"
+    t.index ["rtn"], name: "index_buyers_on_rtn", unique: true, where: "(rtn IS NOT NULL)"
+  end
+
+  create_table "carriers", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "rtn"
+    t.string "phone"
+    t.string "contact_name"
+    t.text "observations"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((name)::text)", name: "index_carriers_on_lower_name", unique: true
   end
 
   create_table "clients", force: :cascade do |t|
@@ -63,6 +137,39 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
     t.index "lower((name)::text)", name: "index_expense_categories_on_lower_name", unique: true
   end
 
+  create_table "expense_receipts", force: :cascade do |t|
+    t.bigint "expense_id", null: false
+    t.binary "data", null: false
+    t.string "content_type", null: false
+    t.string "filename"
+    t.integer "byte_size", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["expense_id"], name: "index_expense_receipts_on_expense_id", unique: true
+  end
+
+  create_table "expenses", force: :cascade do |t|
+    t.string "kind", null: false
+    t.date "spent_on", null: false
+    t.bigint "finance_category_id", null: false
+    t.bigint "money_account_id", null: false
+    t.string "payee"
+    t.string "description", null: false
+    t.decimal "amount", precision: 14, scale: 2, null: false
+    t.string "payment_method", null: false
+    t.string "receipt_number"
+    t.text "observations"
+    t.bigint "created_by_id", null: false
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_expenses_on_created_by_id"
+    t.index ["finance_category_id"], name: "index_expenses_on_finance_category_id"
+    t.index ["kind"], name: "index_expenses_on_kind"
+    t.index ["money_account_id"], name: "index_expenses_on_money_account_id"
+    t.index ["spent_on"], name: "index_expenses_on_spent_on"
+  end
+
   create_table "farms", force: :cascade do |t|
     t.string "name", null: false
     t.bigint "department_id"
@@ -82,6 +189,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
     t.index ["department_id"], name: "index_farms_on_department_id"
     t.index ["municipality_id"], name: "index_farms_on_municipality_id"
     t.index ["producer_id"], name: "index_farms_on_producer_id"
+  end
+
+  create_table "finance_categories", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "kind", null: false
+    t.bigint "parent_id"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "kind, COALESCE(parent_id, (0)::bigint), lower((name)::text)", name: "index_finance_categories_on_name_in_parent", unique: true
+    t.index ["parent_id"], name: "index_finance_categories_on_parent_id"
   end
 
   create_table "harvest_entries", force: :cascade do |t|
@@ -105,17 +223,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
     t.text "observations"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "money_account_id"
     t.index ["created_by_id"], name: "index_hauler_payments_on_created_by_id"
     t.index ["hauler_id"], name: "index_hauler_payments_on_hauler_id"
+    t.index ["money_account_id"], name: "index_hauler_payments_on_money_account_id"
   end
 
   create_table "haulers", force: :cascade do |t|
     t.bigint "person_id", null: false
-    t.decimal "commission_percent", precision: 5, scale: 2, null: false
-    t.decimal "can_price", precision: 12, scale: 2, null: false
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "price_per_pound", precision: 12, scale: 4, null: false
     t.index ["person_id"], name: "index_haulers_on_person_id", unique: true
   end
 
@@ -127,9 +246,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
     t.string "payment_method", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "money_account_id"
     t.index ["created_by_id"], name: "index_invoice_payments_on_created_by_id"
     t.index ["invoice_id", "paid_on"], name: "index_invoice_payments_on_invoice_id_and_paid_on"
     t.index ["invoice_id"], name: "index_invoice_payments_on_invoice_id"
+    t.index ["money_account_id"], name: "index_invoice_payments_on_money_account_id"
   end
 
   create_table "invoices", force: :cascade do |t|
@@ -163,8 +284,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
     t.datetime "updated_at", null: false
     t.bigint "purchase_id"
     t.bigint "payroll_payment_line_id"
+    t.bigint "money_account_id"
     t.index ["created_by_id"], name: "index_loan_payments_on_created_by_id"
     t.index ["loan_id"], name: "index_loan_payments_on_loan_id"
+    t.index ["money_account_id"], name: "index_loan_payments_on_money_account_id"
     t.index ["paid_on"], name: "index_loan_payments_on_paid_on"
     t.index ["payroll_payment_line_id"], name: "index_loan_payments_on_payroll_payment_line_id"
     t.index ["purchase_id"], name: "index_loan_payments_on_purchase_id"
@@ -195,10 +318,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
     t.datetime "updated_at", null: false
     t.decimal "cash_amount", precision: 14, scale: 2, default: "0.0", null: false
     t.integer "lock_version", default: 0, null: false
+    t.bigint "money_account_id"
+    t.boolean "interest_grace", default: false, null: false
     t.index ["created_by_id"], name: "index_loans_on_created_by_id"
     t.index ["disbursed_on"], name: "index_loans_on_disbursed_on"
     t.index ["due_on"], name: "index_loans_on_due_on"
+    t.index ["money_account_id"], name: "index_loans_on_money_account_id"
     t.index ["person_id"], name: "index_loans_on_person_id"
+  end
+
+  create_table "money_accounts", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "kind", null: false
+    t.string "bank_name"
+    t.string "account_number"
+    t.decimal "opening_balance", precision: 14, scale: 2, default: "0.0", null: false
+    t.date "opening_on", null: false
+    t.string "default_for", default: [], null: false, array: true
+    t.text "observations"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "bank_key"
+    t.index "lower((name)::text)", name: "index_money_accounts_on_lower_name", unique: true
   end
 
   create_table "municipalities", force: :cascade do |t|
@@ -209,6 +351,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
     t.datetime "updated_at", null: false
     t.index ["code"], name: "index_municipalities_on_code", unique: true
     t.index ["department_id"], name: "index_municipalities_on_department_id"
+  end
+
+  create_table "other_incomes", force: :cascade do |t|
+    t.date "received_on", null: false
+    t.bigint "money_account_id", null: false
+    t.string "concept", null: false
+    t.decimal "amount", precision: 14, scale: 2, null: false
+    t.string "payment_method", null: false
+    t.text "observations"
+    t.bigint "created_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_other_incomes_on_created_by_id"
+    t.index ["money_account_id"], name: "index_other_incomes_on_money_account_id"
+    t.index ["received_on"], name: "index_other_incomes_on_received_on"
   end
 
   create_table "page_visits", force: :cascade do |t|
@@ -239,8 +396,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
     t.decimal "amount", precision: 14, scale: 2, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "money_account_id"
     t.index ["created_by_id"], name: "index_payroll_expenses_on_created_by_id"
     t.index ["expense_category_id"], name: "index_payroll_expenses_on_expense_category_id"
+    t.index ["money_account_id"], name: "index_payroll_expenses_on_money_account_id"
     t.index ["payroll_id"], name: "index_payroll_expenses_on_payroll_id"
     t.index ["spent_on"], name: "index_payroll_expenses_on_spent_on"
   end
@@ -301,7 +460,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
     t.text "observations"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "money_account_id"
     t.index ["created_by_id"], name: "index_payroll_payments_on_created_by_id"
+    t.index ["money_account_id"], name: "index_payroll_payments_on_money_account_id"
     t.index ["paid_on"], name: "index_payroll_payments_on_paid_on"
     t.index ["payroll_id", "period_starts_on"], name: "index_payroll_payments_on_payroll_id_and_period_starts_on", unique: true
     t.index ["payroll_id"], name: "index_payroll_payments_on_payroll_id"
@@ -485,6 +646,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
     t.decimal "hauler_can_price", precision: 12, scale: 2
     t.decimal "hauler_cans", precision: 12, scale: 2
     t.decimal "hauler_commission", precision: 12, scale: 2
+    t.string "damage_types", default: [], null: false, array: true
+    t.decimal "hauler_price_per_pound", precision: 12, scale: 4
     t.index ["created_by_id"], name: "index_purchases_on_created_by_id"
     t.index ["farm_id"], name: "index_purchases_on_farm_id"
     t.index ["hauler_id"], name: "index_purchases_on_hauler_id"
@@ -495,6 +658,66 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
     t.index ["voided_at"], name: "index_purchases_on_voided_at"
     t.index ["voided_by_id"], name: "index_purchases_on_voided_by_id"
     t.index ["zone_id"], name: "index_purchases_on_zone_id"
+  end
+
+  create_table "sale_lines", force: :cascade do |t|
+    t.bigint "sale_id", null: false
+    t.bigint "shipment_id", null: false
+    t.decimal "origin_net_weight", precision: 12, scale: 2, null: false
+    t.decimal "net_weight", precision: 12, scale: 2, null: false
+    t.decimal "amount", precision: 14, scale: 2, null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["sale_id"], name: "index_sale_lines_on_sale_id"
+    t.index ["shipment_id"], name: "index_sale_lines_on_active_shipment", unique: true, where: "active"
+    t.index ["shipment_id"], name: "index_sale_lines_on_shipment_id"
+  end
+
+  create_table "sale_payments", force: :cascade do |t|
+    t.bigint "sale_id", null: false
+    t.bigint "created_by_id", null: false
+    t.decimal "amount", precision: 14, scale: 2, null: false
+    t.date "paid_on", null: false
+    t.string "payment_method", null: false
+    t.text "observations"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "money_account_id"
+    t.index ["created_by_id"], name: "index_sale_payments_on_created_by_id"
+    t.index ["money_account_id"], name: "index_sale_payments_on_money_account_id"
+    t.index ["paid_on"], name: "index_sale_payments_on_paid_on"
+    t.index ["sale_id"], name: "index_sale_payments_on_sale_id"
+  end
+
+  create_table "sales", force: :cascade do |t|
+    t.integer "number", null: false
+    t.bigint "buyer_id", null: false
+    t.bigint "created_by_id", null: false
+    t.date "sold_on", null: false
+    t.string "coffee_state", null: false
+    t.string "price_unit", null: false
+    t.decimal "unit_price", precision: 12, scale: 2, null: false
+    t.string "buyer_document_number"
+    t.text "observations"
+    t.decimal "origin_net_weight", precision: 14, scale: 2, null: false
+    t.decimal "net_weight", precision: 14, scale: 2, null: false
+    t.decimal "total", precision: 14, scale: 2, null: false
+    t.string "payment_status", null: false
+    t.string "payment_method"
+    t.date "paid_on"
+    t.datetime "voided_at"
+    t.bigint "voided_by_id"
+    t.string "void_reason"
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["buyer_id"], name: "index_sales_on_buyer_id"
+    t.index ["created_by_id"], name: "index_sales_on_created_by_id"
+    t.index ["number"], name: "index_sales_on_number", unique: true
+    t.index ["payment_status"], name: "index_sales_on_payment_status"
+    t.index ["sold_on"], name: "index_sales_on_sold_on"
+    t.index ["voided_by_id"], name: "index_sales_on_voided_by_id"
   end
 
   create_table "saved_reports", force: :cascade do |t|
@@ -521,6 +744,61 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "shipment_weighings", force: :cascade do |t|
+    t.bigint "shipment_id", null: false
+    t.decimal "gross_weight", precision: 12, scale: 2, null: false
+    t.integer "sacks", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["shipment_id"], name: "index_shipment_weighings_on_shipment_id"
+  end
+
+  create_table "shipments", force: :cascade do |t|
+    t.integer "number", null: false
+    t.bigint "buyer_id", null: false
+    t.bigint "created_by_id", null: false
+    t.datetime "departed_at", null: false
+    t.integer "season_year", null: false
+    t.string "coffee_state", null: false
+    t.string "remission_number"
+    t.text "observations"
+    t.decimal "origin_gross_weight", precision: 12, scale: 2, null: false
+    t.integer "origin_sacks", null: false
+    t.decimal "origin_humidity_percent", precision: 5, scale: 2
+    t.decimal "origin_damage_percent", precision: 5, scale: 2
+    t.decimal "origin_yield_factor", precision: 6, scale: 4
+    t.decimal "origin_tare", precision: 12, scale: 2, null: false
+    t.decimal "origin_net_weight", precision: 12, scale: 2, null: false
+    t.date "received_on"
+    t.string "weight_note_number"
+    t.decimal "destination_gross_weight", precision: 12, scale: 2
+    t.integer "destination_sacks"
+    t.decimal "destination_humidity_percent", precision: 5, scale: 2
+    t.decimal "destination_damage_percent", precision: 5, scale: 2
+    t.decimal "destination_yield_factor", precision: 6, scale: 4
+    t.decimal "destination_tare", precision: 12, scale: 2
+    t.decimal "destination_net_weight", precision: 12, scale: 2
+    t.datetime "voided_at"
+    t.bigint "voided_by_id"
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "origin_weight_mode", default: "single", null: false
+    t.bigint "carrier_id"
+    t.bigint "truck_id"
+    t.bigint "driver_id"
+    t.string "driver_name"
+    t.index ["buyer_id"], name: "index_shipments_on_buyer_id"
+    t.index ["carrier_id"], name: "index_shipments_on_carrier_id"
+    t.index ["created_by_id"], name: "index_shipments_on_created_by_id"
+    t.index ["departed_at"], name: "index_shipments_on_departed_at"
+    t.index ["driver_id"], name: "index_shipments_on_driver_id"
+    t.index ["number"], name: "index_shipments_on_number", unique: true
+    t.index ["season_year"], name: "index_shipments_on_season_year"
+    t.index ["truck_id"], name: "index_shipments_on_truck_id"
+    t.index ["voided_by_id"], name: "index_shipments_on_voided_by_id"
+  end
+
   create_table "site_settings", force: :cascade do |t|
     t.string "business_name", null: false
     t.string "location"
@@ -531,6 +809,104 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "rtn"
+    t.decimal "weight_tolerance_percent", precision: 5, scale: 2
+  end
+
+  create_table "staff_advances", force: :cascade do |t|
+    t.bigint "staff_member_id", null: false
+    t.date "given_on", null: false
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.string "payment_method", null: false
+    t.bigint "money_account_id", null: false
+    t.text "observations"
+    t.bigint "staff_payment_id"
+    t.bigint "created_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_staff_advances_on_created_by_id"
+    t.index ["money_account_id"], name: "index_staff_advances_on_money_account_id"
+    t.index ["staff_member_id"], name: "index_staff_advances_on_staff_member_id"
+    t.index ["staff_payment_id"], name: "index_staff_advances_on_staff_payment_id"
+  end
+
+  create_table "staff_attendances", force: :cascade do |t|
+    t.bigint "staff_member_id", null: false
+    t.date "worked_on", null: false
+    t.decimal "day_fraction", precision: 3, scale: 1, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["staff_member_id", "worked_on"], name: "index_staff_attendances_on_staff_member_id_and_worked_on", unique: true
+  end
+
+  create_table "staff_goals", force: :cascade do |t|
+    t.bigint "staff_member_id", null: false
+    t.date "period_starts_on", null: false
+    t.string "description", null: false
+    t.decimal "bonus_amount", precision: 12, scale: 2, null: false
+    t.boolean "met"
+    t.bigint "staff_payment_id"
+    t.bigint "created_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_staff_goals_on_created_by_id"
+    t.index ["staff_member_id"], name: "index_staff_goals_on_staff_member_id"
+    t.index ["staff_payment_id"], name: "index_staff_goals_on_staff_payment_id"
+  end
+
+  create_table "staff_members", force: :cascade do |t|
+    t.bigint "person_id", null: false
+    t.bigint "staff_role_id", null: false
+    t.date "starts_on", null: false
+    t.date "ends_on"
+    t.boolean "active", default: true, null: false
+    t.text "observations"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.decimal "salary_override", precision: 12, scale: 2
+    t.index ["person_id"], name: "index_staff_members_on_person_id", unique: true
+    t.index ["staff_role_id"], name: "index_staff_members_on_staff_role_id"
+  end
+
+  create_table "staff_payments", force: :cascade do |t|
+    t.bigint "staff_member_id", null: false
+    t.bigint "staff_role_id", null: false
+    t.date "period_starts_on", null: false
+    t.date "period_ends_on", null: false
+    t.decimal "salary", precision: 12, scale: 2, null: false
+    t.decimal "overtime_hours", precision: 8, scale: 2, default: "0.0", null: false
+    t.decimal "overtime_hour_rate", precision: 10, scale: 2
+    t.decimal "overtime_amount", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "goals_bonus", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "extra_bonus", precision: 12, scale: 2, default: "0.0", null: false
+    t.string "extra_bonus_reason"
+    t.decimal "gross_total", precision: 12, scale: 2, null: false
+    t.decimal "advances_total", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "net_total", precision: 12, scale: 2, null: false
+    t.date "paid_on", null: false
+    t.string "payment_method", null: false
+    t.bigint "money_account_id", null: false
+    t.text "observations"
+    t.bigint "created_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.decimal "monthly_salary", precision: 12, scale: 2
+    t.decimal "days_worked", precision: 5, scale: 1
+    t.index ["created_by_id"], name: "index_staff_payments_on_created_by_id"
+    t.index ["money_account_id"], name: "index_staff_payments_on_money_account_id"
+    t.index ["staff_member_id", "period_starts_on"], name: "index_staff_payments_on_staff_member_id_and_period_starts_on", unique: true
+    t.index ["staff_member_id"], name: "index_staff_payments_on_staff_member_id"
+    t.index ["staff_role_id"], name: "index_staff_payments_on_staff_role_id"
+  end
+
+  create_table "staff_roles", force: :cascade do |t|
+    t.string "name", null: false
+    t.decimal "salary", precision: 12, scale: 2
+    t.string "pay_frequency"
+    t.decimal "overtime_hour_rate", precision: 10, scale: 2
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((name)::text)", name: "index_staff_roles_on_lower_name", unique: true
   end
 
   create_table "supplies", force: :cascade do |t|
@@ -541,6 +917,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index "lower((name)::text)", name: "index_supplies_on_lower_name", unique: true
+  end
+
+  create_table "trucks", force: :cascade do |t|
+    t.string "plate", null: false
+    t.string "brand_model"
+    t.string "color"
+    t.decimal "capacity_quintals", precision: 8, scale: 2
+    t.boolean "own", default: false, null: false
+    t.text "observations"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["plate"], name: "index_trucks_on_plate", unique: true
   end
 
   create_table "users", force: :cascade do |t|
@@ -578,32 +967,53 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
     t.index "lower((name)::text)", name: "index_zones_on_lower_name", unique: true
   end
 
+  add_foreign_key "account_transfers", "money_accounts", column: "from_account_id"
+  add_foreign_key "account_transfers", "money_accounts", column: "to_account_id"
+  add_foreign_key "account_transfers", "users", column: "created_by_id"
   add_foreign_key "audit_events", "users", on_delete: :nullify
+  add_foreign_key "budgets", "finance_categories"
+  add_foreign_key "buyer_advances", "buyers"
+  add_foreign_key "buyer_advances", "money_accounts"
+  add_foreign_key "buyer_advances", "users", column: "created_by_id"
+  add_foreign_key "buyers", "departments"
+  add_foreign_key "buyers", "municipalities"
   add_foreign_key "clients", "people"
   add_foreign_key "collaborators", "people"
+  add_foreign_key "expense_receipts", "expenses"
+  add_foreign_key "expenses", "finance_categories"
+  add_foreign_key "expenses", "money_accounts"
+  add_foreign_key "expenses", "users", column: "created_by_id"
   add_foreign_key "farms", "departments"
   add_foreign_key "farms", "municipalities"
   add_foreign_key "farms", "producers"
+  add_foreign_key "finance_categories", "finance_categories", column: "parent_id"
   add_foreign_key "harvest_entries", "payroll_members"
   add_foreign_key "hauler_payments", "haulers"
+  add_foreign_key "hauler_payments", "money_accounts"
   add_foreign_key "hauler_payments", "users", column: "created_by_id"
   add_foreign_key "haulers", "people"
   add_foreign_key "invoice_payments", "invoices"
+  add_foreign_key "invoice_payments", "money_accounts"
   add_foreign_key "invoice_payments", "users", column: "created_by_id"
   add_foreign_key "invoices", "producers"
   add_foreign_key "invoices", "users", column: "created_by_id"
   add_foreign_key "loan_payments", "loans"
+  add_foreign_key "loan_payments", "money_accounts"
   add_foreign_key "loan_payments", "payroll_payment_lines"
   add_foreign_key "loan_payments", "purchases"
   add_foreign_key "loan_payments", "users", column: "created_by_id"
   add_foreign_key "loan_supplies", "loans"
   add_foreign_key "loan_supplies", "supplies"
+  add_foreign_key "loans", "money_accounts"
   add_foreign_key "loans", "people"
   add_foreign_key "loans", "users", column: "created_by_id"
   add_foreign_key "municipalities", "departments"
+  add_foreign_key "other_incomes", "money_accounts"
+  add_foreign_key "other_incomes", "users", column: "created_by_id"
   add_foreign_key "page_visits", "users", on_delete: :cascade
   add_foreign_key "payroll_attendances", "payroll_members"
   add_foreign_key "payroll_expenses", "expense_categories"
+  add_foreign_key "payroll_expenses", "money_accounts"
   add_foreign_key "payroll_expenses", "payrolls"
   add_foreign_key "payroll_expenses", "users", column: "created_by_id"
   add_foreign_key "payroll_members", "payroll_roles"
@@ -612,6 +1022,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
   add_foreign_key "payroll_overtimes", "payroll_members"
   add_foreign_key "payroll_payment_lines", "payroll_members"
   add_foreign_key "payroll_payment_lines", "payroll_payments"
+  add_foreign_key "payroll_payments", "money_accounts"
   add_foreign_key "payroll_payments", "payrolls"
   add_foreign_key "payroll_payments", "users", column: "created_by_id"
   add_foreign_key "payroll_roles", "payrolls"
@@ -638,7 +1049,36 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_120000) do
   add_foreign_key "purchases", "users", column: "created_by_id"
   add_foreign_key "purchases", "users", column: "voided_by_id"
   add_foreign_key "purchases", "zones"
+  add_foreign_key "sale_lines", "sales"
+  add_foreign_key "sale_lines", "shipments"
+  add_foreign_key "sale_payments", "money_accounts"
+  add_foreign_key "sale_payments", "sales"
+  add_foreign_key "sale_payments", "users", column: "created_by_id"
+  add_foreign_key "sales", "buyers"
+  add_foreign_key "sales", "users", column: "created_by_id"
+  add_foreign_key "sales", "users", column: "voided_by_id"
   add_foreign_key "saved_reports", "users"
   add_foreign_key "sessions", "users"
+  add_foreign_key "shipment_weighings", "shipments"
+  add_foreign_key "shipments", "buyers"
+  add_foreign_key "shipments", "carriers"
+  add_foreign_key "shipments", "staff_members", column: "driver_id"
+  add_foreign_key "shipments", "trucks"
+  add_foreign_key "shipments", "users", column: "created_by_id"
+  add_foreign_key "shipments", "users", column: "voided_by_id"
+  add_foreign_key "staff_advances", "money_accounts"
+  add_foreign_key "staff_advances", "staff_members"
+  add_foreign_key "staff_advances", "staff_payments"
+  add_foreign_key "staff_advances", "users", column: "created_by_id"
+  add_foreign_key "staff_attendances", "staff_members"
+  add_foreign_key "staff_goals", "staff_members"
+  add_foreign_key "staff_goals", "staff_payments"
+  add_foreign_key "staff_goals", "users", column: "created_by_id"
+  add_foreign_key "staff_members", "people"
+  add_foreign_key "staff_members", "staff_roles"
+  add_foreign_key "staff_payments", "money_accounts"
+  add_foreign_key "staff_payments", "staff_members"
+  add_foreign_key "staff_payments", "staff_roles"
+  add_foreign_key "staff_payments", "users", column: "created_by_id"
   add_foreign_key "webauthn_credentials", "users"
 end

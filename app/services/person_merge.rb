@@ -111,6 +111,7 @@ class PersonMerge
     if (payrolls = shared_payrolls.pluck(:name)).any?
       errors.add(:base, :shared_payroll, payrolls: payrolls.to_sentence)
     end
+    errors.add(:base, :both_staff) if StaffMember.where(person_id: primary.id).exists? && StaffMember.where(person_id: secondary.id).exists?
     errors.empty?
   end
 
@@ -126,6 +127,7 @@ class PersonMerge
       Person::ROLES.excluding(:producer, :hauler).each { |role| merge_role(role) }
       @moved[:loans] = Loan.where(person_id: secondary.id).update_all(person_id: primary.id)
       @moved[:payrolls] = PayrollMember.where(person_id: secondary.id).update_all(person_id: primary.id)
+      @moved[:staff] = StaffMember.where(person_id: secondary.id).update_all(person_id: primary.id)
       @moved[:document_prints] = PrivateDocumentPrint.where(person_id: secondary.id).update_all(person_id: primary.id)
       merge_photo
       merge_details

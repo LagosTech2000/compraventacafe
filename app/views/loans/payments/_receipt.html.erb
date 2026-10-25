@@ -11,6 +11,9 @@
     <div><dt class="inline font-semibold"><%= t("loans.payments.receipt.loan") %>:</dt> <dd class="inline"><%= payment.loan_id %></dd></div>
     <div><dt class="inline font-semibold"><%= LoanPayment.human_attribute_name(:paid_on) %>:</dt> <dd class="inline"><%= l(payment.paid_on, format: :long) %></dd></div>
     <div><dt class="inline font-semibold"><%= LoanPayment.human_attribute_name(:payment_method) %>:</dt> <dd class="inline"><%= payment_method_label(payment) %></dd></div>
+    <% if payment.money_account %>
+      <div><dt class="inline font-semibold"><%= MoneyAccount.model_name.human %>:</dt> <dd class="inline"><%= payment.money_account.name %></dd></div>
+    <% end %>
   </dl>
 
   <div class="mt-4 grid gap-4 sm:grid-cols-2 print:mt-2 print:grid-cols-2">

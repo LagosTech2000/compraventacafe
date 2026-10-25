@@ -1,0 +1,151 @@
+<% content_for :title, t(".title") %>
+<%= render "finance/nav" %>
+<%= render "shared/breadcrumbs", crumbs: [ [ t("finance.staff_members.index.title"), finance_staff_members_path ],
+                                           [ @member.full_name, finance_staff_member_path(@member) ], [ t(".title") ] ] %>
+<% estimate = @issuer.estimate %>
+<% role = @member.role %>
+<% payment = @issuer.payment %>
+<%# What was sent, kept when the form comes back with an error. %>
+<% sent = params.fetch(:staff_payment, {}) %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= @member.full_name %> · <%= role.name %> · <%= format_period(@period) %></p>
+  </div>
+  <%= help_guide_button HelpGuide.process(:staff_payroll), label: true %>
+</div>
+
+<%# The totals follow what is typed (staff_payment_controller.js); the server calculates them again. %>
+<%= form_with url: finance_staff_member_staff_payments_path(@member), scope: :staff_payment, class: "@container mt-6",
+      data: { controller: "form-validation staff-payment unsaved-changes", action: unsaved_changes_actions,
+              unsaved_changes_message_value: t("shared.unsaved_changes.leave"),
+              staff_payment_rate_value: role.overtime_hour_rate.to_f, staff_payment_advances_value: estimate.advances_total.to_f } do |form| %>
+  <%= render "shared/form_errors", record: payment if payment %>
+  <div class="grid grid-cols-1 items-start gap-6 @5xl:grid-cols-[minmax(0,1fr)_22rem]">
+    <div class="min-w-0 space-y-6">
+      <section class="panel p-4" aria-labelledby="pay-earned">
+        <h2 id="pay-earned" class="font-semibold"><%= t(".earned") %></h2>
+        <div class="mt-3 grid gap-5 sm:grid-cols-2">
+          <%# The days come from the attendance (the payroll sheet): salary ÷ 30 × days. %>
+          <div>
+            <p class="field-label"><%= StaffPayment.human_attribute_name(:salary) %></p>
+            <p class="text-2xl font-bold tabular-nums" data-staff-payment-target="salary" data-amount="<%= estimate.salary %>"><%= format_money(estimate.salary) %></p>
+            <p class="mt-1 text-xs text-ink-muted">
+              <%= t(".days_formula", salary: format_money(estimate.monthly_salary), days: format_days(estimate.days)) %>
+              <%= t(@member.own_salary? ? ".own_salary_help" : ".salary_help") %>
+            </p>
+            <%= link_to t(".see_attendance"), finance_staff_sheet_path(month: @period.starts_on.strftime("%Y-%m"), half: (@period.starts_on.day > 15 ? 2 : 1)),
+                  class: "mt-1 inline-block text-xs link" %>
+          </div>
+          <div>
+            <%= form.label :overtime_hours, StaffPayment.human_attribute_name(:overtime_hours), class: "field-label" %>
+            <%= form.number_field :overtime_hours, value: (estimate.overtime_hours.to_s("F") if estimate.overtime_hours.positive?), min: 0, max: 999.99, step: 0.01,
+                  inputmode: "decimal", disabled: role.overtime_hour_rate.nil?, class: "field-input", placeholder: "0",
+                  data: { staff_payment_target: "hours", action: "staff-payment#update" } %>
+            <p class="mt-1 text-xs text-ink-muted">
+              <%= role.overtime_hour_rate ? t(".overtime_help", rate: format_money(role.overtime_hour_rate)) : t(".no_overtime_rate") %>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel p-4" aria-labelledby="pay-goals">
+        <h2 id="pay-goals" class="font-semibold"><%= t(".goals") %></h2>
+        <% if estimate.goals.any? %>
+          <p class="mt-1 text-xs text-ink-muted"><%= t(".goals_help") %></p>
+          <ul class="mt-3 space-y-2">
+            <% estimate.goals.each do |goal| %>
+              <li>
+                <label class="data-card flex cursor-pointer items-center justify-between gap-3 has-[:checked]:ring-2 has-[:checked]:ring-primary">
+                  <span class="flex items-center gap-3">
+                    <%= check_box_tag "staff_payment[met_goal_ids][]", goal.id, Array(sent[:met_goal_ids]).include?(goal.id.to_s), id: "met_goal_#{goal.id}", class: "size-4 accent-primary",
+                          data: { staff_payment_target: "goal", bonus: goal.bonus_amount.to_f, action: "staff-payment#update" } %>
+                    <span><%= goal.description %></span>
+                  </span>
+                  <span class="font-semibold tabular-nums"><%= format_money(goal.bonus_amount) %></span>
+                </label>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="mt-1 text-sm text-ink-muted"><%= t(".no_goals") %></p>
+        <% end %>
+        <div class="mt-4 grid gap-5 sm:grid-cols-2">
+          <div>
+            <%= form.label :extra_bonus, StaffPayment.human_attribute_name(:extra_bonus), class: "field-label" %>
+            <%= form.number_field :extra_bonus, value: sent[:extra_bonus], min: 0, step: 0.01, inputmode: "decimal", class: "field-input", placeholder: "0.00",
+                  data: { staff_payment_target: "extraBonus", action: "staff-payment#update" } %>
+          </div>
+          <div>
+            <%= form.label :extra_bonus_reason, StaffPayment.human_attribute_name(:extra_bonus_reason), class: "field-label" %>
+            <%= form.text_field :extra_bonus_reason, value: sent[:extra_bonus_reason], maxlength: 200, class: "field-input", placeholder: t(".extra_bonus_placeholder"),
+                  data: { staff_payment_target: "extraReason" } %>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel p-4" aria-labelledby="pay-advances">
+        <h2 id="pay-advances" class="font-semibold"><%= t(".advances") %></h2>
+        <% if estimate.advances.any? %>
+          <p class="mt-1 text-xs text-ink-muted"><%= t(".advances_help") %></p>
+          <ul class="mt-3 divide-y divide-line text-sm">
+            <% estimate.advances.each do |advance| %>
+              <li class="flex justify-between gap-3 py-1.5">
+                <span><%= l(advance.given_on) %> · <%= advance.human_payment_method %><%= " · #{advance.observations}" if advance.observations.present? %></span>
+                <span class="tabular-nums">−<%= format_money(advance.amount) %></span>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="mt-1 text-sm text-ink-muted"><%= t(".no_advances") %></p>
+        <% end %>
+      </section>
+
+      <div>
+        <%= form.label :observations, StaffPayment.human_attribute_name(:observations), class: "field-label" %>
+        <%= form.text_area :observations, value: sent[:observations], rows: 2, maxlength: 500, class: "field-input" %>
+      </div>
+    </div>
+
+    <%# Beside the fields on wide screens: what is paid and how. %>
+    <aside class="space-y-4 @5xl:sticky @5xl:top-24">
+      <div class="clay p-4">
+        <dl class="space-y-1.5 text-sm">
+          <% { salary: estimate.salary, overtime: estimate.overtime_amount, bonuses: estimate.goals_bonus + estimate.extra_bonus }.each do |key, value| %>
+            <div class="flex justify-between gap-3"><dt><%= t(".totals.#{key}") %></dt><dd class="tabular-nums" data-staff-payment-target="<%= key == :salary ? "salaryTotal" : key %>"><%= format_money(value) %></dd></div>
+          <% end %>
+          <div class="flex justify-between gap-3 border-t border-line pt-1.5 font-semibold"><dt><%= t(".totals.gross") %></dt><dd class="tabular-nums" data-staff-payment-target="gross"><%= format_money(estimate.gross_total) %></dd></div>
+          <div class="flex justify-between gap-3"><dt><%= t(".totals.advances") %></dt><dd class="tabular-nums">−<%= format_money(estimate.advances_total) %></dd></div>
+        </dl>
+        <p class="mt-3 border-t border-line pt-3 text-xs text-ink-muted"><%= t(".totals.net") %></p>
+        <p class="text-3xl font-bold tabular-nums" data-staff-payment-target="net"><%= format_money(estimate.net_total) %></p>
+        <p class="mt-1 text-xs text-danger" data-staff-payment-target="negative" hidden><%= t(".negative") %></p>
+      </div>
+      <div class="panel space-y-4 p-4" data-controller="money-account" data-money-account-defaults-value="<%= MoneyAccount.defaults_by_method.to_json %>">
+        <div>
+          <%= form.label :paid_on, StaffPayment.human_attribute_name(:paid_on), class: "field-label" %>
+          <%= form.date_field :paid_on, value: (sent[:paid_on].presence || Time.zone.today), required: true, class: "field-input" %>
+        </div>
+        <div>
+          <%= form.label :payment_method, StaffPayment.human_attribute_name(:payment_method), class: "field-label" %>
+          <%= form.select :payment_method, enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS),
+                { selected: sent[:payment_method] || "cash" }, required: true, class: "field-input",
+                data: { money_account_target: "method", action: "money-account#suggest" } %>
+        </div>
+        <% accounts = MoneyAccount.active.alphabetical %>
+        <div>
+          <%= form.label :money_account_id, MoneyAccount.model_name.human, class: "field-label" %>
+          <%= form.select :money_account_id, accounts.map { [ it.name, it.id ] },
+                { include_blank: t("shared.select.pick_account"), selected: sent[:money_account_id] || MoneyAccount.default_for("cash")&.id },
+                required: true, class: "field-input", data: { money_account_target: "account", action: "money-account#pick" } %>
+          <% if accounts.none? %><p class="mt-1 text-xs text-ink-muted"><%= t("shared.money_account_field.none") %></p><% end %>
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <%= form.submit t(".submit"), class: "btn btn-primary" %>
+          <%= cancel_button finance_staff_member_path(@member) %>
+        </div>
+      </div>
+    </aside>
+  </div>
+<% end %>

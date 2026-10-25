@@ -43,8 +43,8 @@
     </div>
   <% end %>
   <% if can_manage_hauler && (person.hauler.nil? || person.hauler.new_record?) %>
-    <div class="mt-3 grid max-w-xl gap-4 sm:grid-cols-2" data-person-roles-target="haulerTerms" <%= "hidden" unless person.role?(:hauler) %>>
-      <%= render "trading/haulers/terms_fields", form:, percent: :hauler_commission_percent, price: :hauler_can_price, model: Hauler %>
+    <div class="mt-3 grid max-w-xs gap-4" data-person-roles-target="haulerTerms" <%= "hidden" unless person.role?(:hauler) %>>
+      <%= render "trading/haulers/terms_fields", form:, price: :hauler_price_per_pound %>
     </div>
   <% end %>
   <% if !own_form && !(can_manage_producer && can_manage_hauler) %>

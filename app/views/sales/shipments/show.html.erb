@@ -1,0 +1,78 @@
+<% content_for :title, t(".title", number: @shipment.display_number) %>
+<%= live_updates_from :sales %>
+<%= render "sales/nav" %>
+<%= render "shared/breadcrumbs", crumbs: buyer_crumbs(@shipment.buyer, [ shipment_label(@shipment) ]) %>
+
+<div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title", number: @shipment.display_number) %></h1>
+    <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
+      <%= render "sales/shipments/status", shipment: @shipment %>
+      <span><%= @shipment.buyer.name %> · <%= @shipment.human_coffee_state %> · <%= l(@shipment.departed_at) %></span>
+    </p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <% if policy(@shipment).update? %>
+      <%= modal_link_to t(".edit"), edit_sales_shipment_path(@shipment), class: "btn" %>
+    <% end %>
+    <% if policy(@shipment).void? %>
+      <%= button_to t(".void"), void_sales_shipment_path(@shipment), method: :patch, class: "btn",
+            form: { data: { turbo_confirm: t(".confirm_void") } } %>
+    <% end %>
+    <% if modal_request? %>
+      <%= page_link_to t(".full_page"), sales_shipment_path(@shipment), class: "btn" %>
+    <% end %>
+  </div>
+</div>
+
+<% unless @shipment.voided? %>
+  <div class="mb-6">
+    <%= render layout: "shared/lifecycle", locals: { lifecycle: SalesLifecycle.for_shipment(@shipment), scope: "sales.lifecycle", guide: :sales_flow } do %>
+      <% if !@shipment.received? && policy(@shipment).receive? %>
+        <%= modal_link_to t("sales.shipments.show.receive"), edit_sales_shipment_arrival_path(@shipment), class: "btn btn-primary" %>
+      <% elsif @shipment.received? && !@shipment.sold? && policy(Sale).create? %>
+        <%= page_link_to t("sales.shipments.show.sell"), new_sales_sale_path(buyer_id: @shipment.buyer_id), class: "btn btn-primary" %>
+      <% elsif @shipment.sold? %>
+        <%= page_link_to t("sales.shipments.show.see_sale"), sales_sale_path(@shipment.sale), class: "btn btn-primary" %>
+      <% end %>
+    <% end %>
+  </div>
+<% else %>
+  <p class="flash-alert mb-6" role="status">
+    <%= t(".voided", date: l(@shipment.voided_at), name: @shipment.voided_by&.name) %>
+  </p>
+<% end %>
+
+<div class="grid gap-4 lg:grid-cols-2">
+  <%= render "sales/shipments/weighing", shipment: @shipment, side: "origin" %>
+  <%= render "sales/shipments/weighing", shipment: @shipment, side: "destination" %>
+</div>
+
+<% if @shipment.received? %>
+  <section class="mt-4 panel flex flex-wrap items-center justify-between gap-3 p-4 <%= "ring-2 ring-danger" if @shipment.over_tolerance? %>"
+           aria-labelledby="shipment-difference">
+    <div>
+      <h2 id="shipment-difference" class="font-semibold"><%= t(".difference") %></h2>
+      <p class="text-xs text-ink-muted">
+        <%= WeightTolerance.percent ? t(".tolerance", tolerance: format_percent(WeightTolerance.percent)) : t(".no_tolerance") %>
+      </p>
+    </div>
+    <p class="text-2xl"><%= weight_difference(@shipment) %></p>
+  </section>
+<% end %>
+
+<section class="mt-4 panel p-4" aria-labelledby="shipment-details">
+  <h2 id="shipment-details" class="font-semibold"><%= t(".details") %></h2>
+  <dl class="mt-3 grid grid-cols-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
+    <% { remission_number: @shipment.remission_number,
+         carrier: (@shipment.carrier && (policy(@shipment.carrier).show? ? link_to(@shipment.carrier.name, sales_carrier_path(@shipment.carrier), class: "link") : @shipment.carrier.name)),
+         truck: (@shipment.truck && (policy(@shipment.truck).show? ? link_to(@shipment.truck.label, sales_truck_path(@shipment.truck), class: "link") : @shipment.truck.label)),
+         driver: @shipment.driver_label,
+         season_year: format_season(@shipment.season), created_by: @shipment.created_by.name }.each do |key, value| %>
+      <div><dt class="text-xs text-ink-muted"><%= Shipment.human_attribute_name(key) %></dt><dd><%= value.presence || "—" %></dd></div>
+    <% end %>
+  </dl>
+  <% if @shipment.observations %>
+    <p class="mt-3 text-sm"><span class="font-semibold"><%= Shipment.human_attribute_name(:observations) %>:</span> <%= @shipment.observations %></p>
+  <% end %>
+</section>

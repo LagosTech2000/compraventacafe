@@ -1,0 +1,8 @@
+<% content_for :title, t(".title") %>
+<%= render "sales/nav" %>
+
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+  <%= help_guide_button HelpGuide.process(:sales_flow), label: true %>
+</div>
+<%= render "form", shipment: @shipment, stock: @stock %>

@@ -65,7 +65,7 @@ module Administration
         params.expect(person: [ :first_names, :last_names, :dni, :rtn, :phone, :email, :civil_status, :nationality, :zone_id, :department_id, :municipality_id,
                                 :address_line, :latitude, :longitude, :photo_upload, :remove_photo,
                                 :client_role, :collaborator_role, :producer_role, :producer_kind,
-                                :hauler_role, :hauler_commission_percent, :hauler_can_price ])
+                                :hauler_role, :hauler_price_per_pound ])
       end
 
       # A producer is a Compra de café record: adding or removing the role

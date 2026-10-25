@@ -1,0 +1,189 @@
+<% content_for :title, t(".title") %>
+<%= render "sales/nav" %>
+
+<div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+  <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+  <%= help_guide_button HelpGuide.process(:sales_flow), label: true %>
+</div>
+<div class="mb-6">
+  <%= render layout: "shared/lifecycle", locals: { lifecycle: SalesLifecycle.new("received"), scope: "sales.lifecycle", guide: :sales_flow } do %><% end %>
+</div>
+
+<% if @buyer.nil? %>
+  <h2 class="mb-3 text-lg font-semibold"><%= t(".choose_buyer") %></h2>
+  <% if @buyers_to_sell.any? %>
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <% @buyers_to_sell.each do |buyer| %>
+        <%= link_to new_sales_sale_path(buyer_id: buyer.id), class: "clay block p-4" do %>
+          <span class="block font-medium text-primary"><%= buyer.name %></span>
+          <span class="block text-sm text-ink-muted">
+            <%= t(".ready", count: buyer.shipments_count, pounds: format_pounds(buyer.net_total)) %>
+          </span>
+        <% end %>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="empty-state"><%= t(".nothing_to_sell") %></p>
+  <% end %>
+<% else %>
+  <% chosen = Array(params.dig(:sale, :shipment_ids)).map(&:to_i) %>
+  <%= form_with model: @sale, url: sales_sales_path, class: form_surface_class("@container max-w-none"),
+        data: { controller: "form-validation unsaved-changes sale-builder", action: unsaved_changes_actions,
+                unsaved_changes_message_value: t("shared.unsaved_changes.leave"),
+                sale_builder_quintal_pounds_value: Sale::QUINTAL_POUNDS,
+                sale_builder_tolerance_value: WeightTolerance.percent.to_f,
+                sale_builder_count_one_value: t(".count.one"), sale_builder_count_other_value: t(".count.other") } do |form| %>
+    <%= hidden_field_tag :buyer_id, @buyer.id %>
+    <%= render "shared/form_errors", record: @sale %>
+
+    <div class="grid items-start gap-6 @5xl:grid-cols-[minmax(0,1fr)_22rem]">
+      <section class="min-w-0 space-y-5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h2 class="text-lg font-semibold"><%= t(".pick_shipments", buyer: @buyer.name) %></h2>
+          <% if @shipments.many? %>
+            <span class="flex gap-2">
+              <button type="button" class="btn btn-sm" data-action="sale-builder#all"><%= t(".all") %></button>
+              <button type="button" class="btn btn-sm" data-action="sale-builder#none"><%= t(".none") %></button>
+            </span>
+          <% end %>
+        </div>
+        <% if @shipments.any? %>
+          <%# Each shipment a card that lights up when chosen. %>
+          <div class="grid gap-3 @xl:grid-cols-2">
+            <% @shipments.each do |shipment| %>
+              <label class="flex cursor-pointer gap-3 rounded-xl bg-surface p-3 text-sm ring-1 ring-line transition hover:ring-primary/40 has-checked:bg-primary-soft has-checked:ring-primary"
+                     id="<%= dom_id(shipment, :choice) %>">
+                <%= check_box_tag "sale[shipment_ids][]", shipment.id, chosen.empty? || chosen.include?(shipment.id), id: dom_id(shipment, :select),
+                      class: "mt-1 size-4 shrink-0 accent-primary",
+                      data: { sale_builder_target: "shipment", action: "sale-builder#update", net: shipment.destination_net_weight.to_f,
+                              origin_net: shipment.origin_net_weight.to_f, coffee_state: shipment.coffee_state } %>
+                <span class="min-w-0 flex-1">
+                  <span class="flex flex-wrap items-baseline justify-between gap-2">
+                    <span class="font-semibold"><%= t("sales.shipments.show.title", number: shipment.display_number) %></span>
+                    <span class="text-xs text-ink-muted"><%= shipment.human_coffee_state %></span>
+                  </span>
+                  <span class="block text-xs text-ink-muted">
+                    <%= [ l(shipment.departed_at, format: :short), (t(".received", date: l(shipment.received_on)) if shipment.received_on), shipment.weight_note_number ].compact.join(" · ") %>
+                  </span>
+                  <span class="mt-2 grid grid-cols-2 gap-x-3 gap-y-1">
+                    <span><span class="block text-xs text-ink-muted"><%= t("sales.shipments.table.origin_net") %></span><span class="tabular-nums"><%= format_pounds(shipment.origin_net_weight) %></span></span>
+                    <span><span class="block text-xs text-ink-muted"><%= t("sales.shipments.table.destination_net") %></span><span class="font-semibold tabular-nums"><%= format_pounds(shipment.destination_net_weight) %></span></span>
+                    <span class="col-span-2"><span class="text-xs text-ink-muted"><%= t("sales.shipments.table.difference") %>:</span> <%= weight_difference(shipment) %></span>
+                  </span>
+                </span>
+              </label>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="empty-state"><%= t(".no_shipments") %></p>
+        <% end %>
+
+        <section class="grid gap-5 sm:grid-cols-2" aria-label="<%= t(".document") %>">
+          <div>
+            <%= form.label :buyer_document_number, class: "field-label" %>
+            <%= form.text_field :buyer_document_number, maxlength: 60, class: "field-input" %>
+            <p class="mt-1 text-xs text-ink-muted"><%= t(".document_help") %></p>
+          </div>
+          <div>
+            <%= form.label :observations, class: "field-label" %>
+            <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+          </div>
+        </section>
+      </section>
+
+      <aside class="space-y-5 @5xl:sticky @5xl:top-24">
+        <fieldset class="space-y-4">
+          <legend class="mb-3 text-lg font-semibold"><%= t(".price") %></legend>
+          <div>
+            <%= form.label :sold_on, class: "field-label" %>
+            <%= form.date_field :sold_on, required: true, class: "field-input" %>
+          </div>
+          <div>
+            <span class="field-label"><%= Sale.human_attribute_name(:price_unit) %></span>
+            <div class="flex flex-wrap gap-x-5 gap-y-2">
+              <% Sale::PRICE_UNITS.reverse_each do |unit| %>
+                <label class="flex min-h-11 cursor-pointer items-center gap-2 text-sm font-medium">
+                  <%= form.radio_button :price_unit, unit, class: "size-4 accent-primary",
+                        data: { sale_builder_target: "unit", action: "sale-builder#update" } %>
+                  <%= Sale.human_attribute_name("price_unit/#{unit}") %>
+                </label>
+              <% end %>
+            </div>
+          </div>
+          <div>
+            <%= form.label :unit_price, class: "field-label" %>
+            <%= form.number_field :unit_price, required: true, min: 0.01, max: 9_999_999.99, step: 0.01, inputmode: "decimal",
+                  class: "field-input text-lg", data: { sale_builder_target: "price", action: "sale-builder#update" } %>
+          </div>
+        </fieldset>
+
+        <div class="clay p-4">
+          <p class="text-sm font-semibold" data-sale-builder-target="count"></p>
+          <dl class="mt-2 grid grid-cols-2 gap-3">
+            <div><dt class="text-xs text-ink-muted"><%= t(".net") %></dt><dd class="text-xl font-bold tabular-nums" data-sale-builder-target="net">—</dd></div>
+            <div><dt class="text-xs text-ink-muted"><%= t(".quintals") %></dt><dd class="text-xl font-bold tabular-nums" data-sale-builder-target="quintals">—</dd></div>
+            <div class="col-span-2 rounded-lg p-1 data-[over-tolerance=true]:ring-2 data-[over-tolerance=true]:ring-danger" data-sale-builder-target="differenceBox">
+              <dt class="text-xs text-ink-muted"><%= t(".difference") %></dt>
+              <dd class="font-semibold tabular-nums" data-sale-builder-target="difference">—</dd>
+            </div>
+            <div class="col-span-2 border-t border-line pt-3">
+              <dt class="text-xs text-ink-muted"><%= Sale.human_attribute_name(:total) %></dt>
+              <dd class="text-3xl font-bold tabular-nums" data-sale-builder-target="total">—</dd>
+            </div>
+          </dl>
+          <p class="flash-alert mt-3" role="status" hidden data-sale-builder-target="mixed"><%= t(".mixed_states") %></p>
+        </div>
+
+        <%# Taken off the buyer's advances first (a collection «con anticipo»), if it has any. %>
+        <% advance_balance = @buyer.advance_balance %>
+        <% if advance_balance.positive? %>
+          <div class="panel p-4">
+            <%= label_tag "sale_advance_amount", t(".advance_amount"), class: "field-label" %>
+            <%= number_field_tag "sale[advance_amount]", params.dig(:sale, :advance_amount), id: "sale_advance_amount", min: 0, max: advance_balance,
+                  step: 0.01, inputmode: "decimal", class: "field-input", placeholder: "0.00" %>
+            <p class="mt-1 text-xs text-ink-muted"><%= t(".advance_help", balance: format_money(advance_balance)) %></p>
+          </div>
+        <% end %>
+
+        <%# Collected now in full (contado), in part, or later (crédito). %>
+        <fieldset class="space-y-4" data-controller="invoice-payment-choice money-account" data-money-account-defaults-value="<%= MoneyAccount.defaults_by_method.to_json %>">
+          <legend class="mb-3 text-lg font-semibold"><%= t(".payment") %></legend>
+          <div>
+            <%= label_tag "sale_payment_status", Sale.human_attribute_name(:payment_status), class: "field-label" %>
+            <%= select_tag "sale[payment_status]",
+                  options_for_select(SaleIssuer::PAYMENT_CHOICES.map { [ t("sales.sales.new.choices.#{it}"), it ] }, params.dig(:sale, :payment_status) || "pending"),
+                  id: "sale_payment_status", required: true, class: "field-input",
+                  data: { invoice_payment_choice_target: "status", action: "invoice-payment-choice#update" } %>
+          </div>
+          <div data-invoice-payment-choice-target="partialField">
+            <%= label_tag "sale_amount", t(".amount"), class: "field-label" %>
+            <%= number_field_tag "sale[amount]", params.dig(:sale, :amount), id: "sale_amount", min: 0.01, step: 0.01, inputmode: "decimal",
+                  class: "field-input", data: { missing_message: "#{t(".amount")} #{t("errors.messages.blank")}" } %>
+          </div>
+          <div data-invoice-payment-choice-target="paidField">
+            <%= label_tag "sale_payment_method", SalePayment.human_attribute_name(:payment_method), class: "field-label" %>
+            <%= select_tag "sale[payment_method]", options_for_select(enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS), params.dig(:sale, :payment_method)),
+                  id: "sale_payment_method", include_blank: t("shared.select.pick_payment_method"), class: "field-input",
+                  data: { money_account_target: "method", action: "money-account#suggest",
+                          missing_message: "#{SalePayment.human_attribute_name(:payment_method)} #{t("errors.messages.blank")}" } %>
+          </div>
+          <div data-invoice-payment-choice-target="optionalPaidField">
+            <%= label_tag "sale_money_account_id", MoneyAccount.model_name.human, class: "field-label" %>
+            <%= select_tag "sale[money_account_id]", options_from_collection_for_select(MoneyAccount.active.alphabetical, :id, :name, params.dig(:sale, :money_account_id)),
+                  id: "sale_money_account_id", include_blank: t("shared.select.no_account"), class: "field-input",
+                  data: { money_account_target: "account", action: "money-account#pick" } %>
+          </div>
+          <div data-invoice-payment-choice-target="paidField">
+            <%= label_tag "sale_paid_on", SalePayment.human_attribute_name(:paid_on), class: "field-label" %>
+            <%= date_field_tag "sale[paid_on]", params.dig(:sale, :paid_on) || Time.zone.today, id: "sale_paid_on", class: "field-input" %>
+          </div>
+        </fieldset>
+
+        <div class="flex flex-wrap gap-3">
+          <%= form.submit t(".submit"), class: "btn btn-primary" %>
+          <%= cancel_button new_sales_sale_path %>
+        </div>
+      </aside>
+    </div>
+  <% end %>
+<% end %>

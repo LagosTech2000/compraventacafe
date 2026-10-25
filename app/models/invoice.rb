@@ -62,7 +62,6 @@ class Invoice < ApplicationRecord
   def quintals = PurchaseCalculation.quintals(net_weight)
   # What damage took off the parchment purchases (cherry has none).
   def damage_weight = purchases.sum { |purchase| purchase.damage_weight || 0 }
-  def damage_amount = purchases.sum { |purchase| purchase.damage_amount || 0 }
   def total = purchases.sum(&:total)
   # Loan payments made with these purchases are taken off what is paid.
   def loan_payments_total = purchases.sum(&:loan_payments_total)

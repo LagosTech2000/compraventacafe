@@ -16,11 +16,11 @@
 class PayrollPaymentIssuer
   include ActiveModel::Model
 
-  attr_reader :payroll, :period, :paid_on, :loan_amounts, :observations, :payment
+  attr_reader :payroll, :period, :paid_on, :loan_amounts, :observations, :payment, :money_account_id
 
   def self.model_name = ActiveModel::Name.new(self, nil, "PayrollPaymentIssuer")
 
-  def initialize(payroll:, period:, user:, paid_on: nil, loan_amounts: {}, observations: nil, with_loans: false)
+  def initialize(payroll:, period:, user:, paid_on: nil, loan_amounts: {}, observations: nil, with_loans: false, money_account_id: nil)
     @payroll = payroll
     @period = period
     @user = user
@@ -28,6 +28,8 @@ class PayrollPaymentIssuer
     @loan_amounts = loan_amounts.to_h.transform_keys(&:to_i).transform_values { |value| parse_amount(value) }
     @observations = observations.to_s.strip.presence
     @with_loans = with_loans
+    # The account the money was handed out from (Control financiero).
+    @money_account_id = money_account_id.presence || MoneyAccount.default_for("cash")&.id
   end
 
   def calculation
@@ -90,7 +92,7 @@ class PayrollPaymentIssuer
 
     def create_payment
       @payment = payroll.payments.create!(period_starts_on: period.starts_on, period_ends_on: period.ends_on, paid_on:,
-                                          observations:, created_by: @user, gross_total: 0, loans_total: 0, net_total: 0)
+                                          observations:, money_account_id:, created_by: @user, gross_total: 0, loans_total: 0, net_total: 0)
       person_lines.each { |group| create_person_lines(group) }
       return false if errors.any?
 

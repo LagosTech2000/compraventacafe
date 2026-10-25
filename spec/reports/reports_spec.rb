@@ -213,6 +213,50 @@ RSpec.describe "Reports (data)" do
     expect(by_source).to include("invoices" => BigDecimal("4120.9"), "loans" => 3_000, "payroll_expenses" => 200)
   end
 
+  it "compares the local scale with the buyer's on the shipments, and leaves voided ones out" do
+    create(:shipment, :received)                         # 487.06 → 482.16
+    create(:shipment)                                    # 487.06, in transit
+    create(:shipment, voided_at: Time.current)
+
+    report = run(ShipmentsReport, period: "today")
+    expect(report.total_count).to eq(2)
+    expect(kpi(report, :origin_net).value).to eq(BigDecimal("974.12"))
+    expect(kpi(report, :difference).value).to eq(BigDecimal("-4.90"))
+    expect(kpi(report, :difference_percent).value.round(2)).to eq(BigDecimal("-1.01"))
+    expect(kpi(report, :in_transit).value).to eq(1)
+    expect(run(ShipmentsReport, period: "today", status: "in_transit").total_count).to eq(1)
+  end
+
+  it "sums sales, what was collected and what is owed, by the quintal of 120 lb" do
+    sale = create(:sale)                                 # 482.16 lb ÷ 120 × L 6,000 = 24,108.00
+    create(:sale_payment, sale:, amount: 10_000)
+
+    report = run(SalesReport, period: "today")
+    expect(kpi(report, :total).value).to eq(BigDecimal("24108"))
+    expect(kpi(report, :paid).value).to eq(10_000)
+    expect(kpi(report, :pending).value).to eq(BigDecimal("14108"))
+    expect(kpi(report, :quintals).value.round(2)).to eq(BigDecimal("4.02"))
+  end
+
+  it "lists the stock's moves with the stock before and after" do
+    create(:purchase, gross_weight: 2_000, purchased_at: 2.days.ago)  # 973.63
+    create(:purchase, gross_weight: 1_000)                           # 486.57
+    create(:shipment)                                                # −487.06
+
+    report = run(CoffeeStockReport, period: "today")
+    expect(report.total_count).to eq(2)
+    expect(kpi(report, :opening).value).to eq(BigDecimal("973.63"))
+    expect(kpi(report, :closing).value).to eq(BigDecimal("973.14"))
+    expect(kpi(report, :net).value).to eq(BigDecimal("-0.49"))
+  end
+
+  it "counts what buyers paid as money in" do
+    sale = create(:sale)
+    create(:sale_payment, sale:, amount: 2_500, payment_method: "transfer")
+    report = run(CashMovementsReport, period: "today", source: "sale_payments")
+    expect(kpi(report, :amount_in).value).to eq(2_500)
+  end
+
   it "joins what each person has with the business" do
     producer = create(:producer)
     create(:purchase, producer:)

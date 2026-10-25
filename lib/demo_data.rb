@@ -9,7 +9,15 @@ class DemoData
   AREA = { latitude: 14.0..14.25, longitude: -87.0..-86.7 }.freeze
   WORKERS = [ %w[Ramón Demo\ Seis], %w[Teresa Demo\ Siete], %w[Hugo Demo\ Ocho], %w[Irma Demo\ Nueve], %w[Félix Demo\ Diez] ].freeze
   # Carreros: [first names, last names, commission percent, can price].
-  HAULERS = [ [ "Rubén", "Demo Once", 10, 50 ], [ "Gloria", "Demo Doce", 8, 55 ] ].freeze
+  HAULERS = [ [ "Rubén", "Demo Once", 0.30 ], [ "Gloria", "Demo Doce", 0.27 ] ].freeze
+  # Comercialización: [name, kind]. Fictitious, like everything here.
+  BUYERS = [ [ "Exportadora Demo del Norte", "exporter" ], [ "Beneficio Demo El Paraíso", "processor" ] ].freeze
+  # Control financiero: [category, [subcategories]] and some expenses [subcategory, description, payee, amount, days ago].
+  CATEGORIES = { "Transporte (demo)" => [ "Combustible", "Fletes" ], "Mantenimiento (demo)" => [ "Vehículos", "Bodega" ],
+                 "Servicios (demo)" => [ "Energía", "Teléfono e internet" ] }.freeze
+  EXPENSES = [ [ "Combustible", "Diésel del camión", "Gasolinera Demo", 2_400, 6 ], [ "Fletes", "Flete a El Paraíso", "Transporte Demo", 1_800, 4 ],
+               [ "Vehículos", "Cambio de aceite", "Taller Demo", 950, 3 ], [ "Energía", "Factura de la luz", "Empresa de energía demo", 1_250, 2 ],
+               [ "Bodega", "Sacos nuevos", "Agroservicio Demo", 3_100, 1 ], [ "Combustible", "Gasolina de la moto", "Gasolinera Demo", 600, 0 ] ].freeze
 
   def initialize(user)
     @user = user
@@ -18,14 +26,18 @@ class DemoData
 
   def load
     ActiveRecord::Base.transaction do
+      @box, @bank = money_accounts
       zones = ZONES.map { |name| Zone.find_or_create_by!(name:) }
       producers = FIRST_NAMES.each_with_index.map { |first, i| producer(first, LAST_NAMES[i % LAST_NAMES.size], zones[i % zones.size], i) }
       @haulers = haulers
       purchases = (0..6).flat_map { |days_ago| day_of_purchases(producers, Time.zone.today - days_ago) }
       pay_haulers
       invoice_older_purchases(purchases)
+      coffee_sales
       loans(producers.map(&:person))
       farms
+      finance
+      staff_payroll
     end
   end
 
@@ -42,9 +54,9 @@ class DemoData
     end
 
     def haulers
-      HAULERS.map do |first_names, last_names, commission_percent, can_price|
+      HAULERS.map do |first_names, last_names, price_per_pound|
         person = Person.find_or_create_by!(first_names:, last_names:)
-        Hauler.find_or_create_by!(person:) { |hauler| hauler.assign_attributes(commission_percent:, can_price:) }
+        Hauler.find_or_create_by!(person:) { |hauler| hauler.price_per_pound = price_per_pound }
       end
     end
 
@@ -70,6 +82,8 @@ class DemoData
         coffee_state = %w[wet_parchment wet_parchment wet_parchment dry_parchment cherry].sample(random: @random)
         inputs = PurchaseDefaults.inputs_for(coffee_state)
         inputs[:damage_percent] = [ 0, 2, 2.2, 2.5 ].sample(random: @random) if inputs.key?(:damage_percent)
+        # Damage names its kind; picked from the percent, so the random sequence stays the same.
+        inputs[:damage_types] = [ Purchase::DAMAGE_TYPES[(inputs[:damage_percent] * 10).to_i % Purchase::DAMAGE_TYPES.size] ] if inputs[:damage_percent].to_d.positive?
         Purchase.create!(
           producer:, zone: producer.zone, purchased_at: moment_of(date), created_by: @user, coffee_state:, **inputs,
           # About one in three hauled by a carrero.
@@ -169,6 +183,104 @@ class DemoData
 
     def pay(loan, paid_on, amount)
       loan.payments.create!(paid_on:, amount:, payment_method: "cash", created_by: @user)
+    end
+
+    def money_accounts
+      box = MoneyAccount.find_or_create_by!(name: "Caja de la bodega (demo)") do |account|
+        account.assign_attributes(kind: "cash", opening_balance: 150_000, opening_on: Time.zone.today - 30, default_for: %w[cash])
+      end
+      bank = MoneyAccount.find_or_create_by!(name: "Cuenta de cheques (demo)") do |account|
+        account.assign_attributes(kind: "bank", bank_key: "ficohsa", account_number: "2100 4455 1234", opening_balance: 400_000,
+                                  opening_on: Time.zone.today - 30, default_for: %w[transfer check])
+      end
+      # One more of each bank, so the cards show every look.
+      [ [ "Ahorro (demo)", "atlantida", "3300 1122 5678" ], [ "Planillas (demo)", "bac", "7300 9988 4321" ],
+        [ "Cosecha (demo)", "occidente", "1100 2233 8765" ], [ "Reserva (demo)", "other", "0099 0011 2468" ] ].each do |name, bank_key, number|
+        MoneyAccount.find_or_create_by!(name:) do |account|
+          account.assign_attributes(kind: "bank", bank_key:, bank_name: ("Banco Demo" if bank_key == "other"), account_number: number,
+                                    opening_balance: 25_000, opening_on: Time.zone.today - 30)
+        end
+      end
+      [ box, bank ]
+    end
+
+    # The week's expenses with their categories, an investment, this month's
+    # budget, an owner's contribution and cash taken to the bank. The demo's
+    # payments go to the account of their method.
+    def finance
+      subcategories = CATEGORIES.flat_map do |name, children|
+        parent = FinanceCategory.find_or_create_by!(name:, kind: "expense", parent: nil)
+        Budget.find_or_create_by!(category: parent, month: Time.zone.today.beginning_of_month) { |budget| budget.amount = 5_000 }
+        children.map { |child| FinanceCategory.find_or_create_by!(name: child, kind: "expense", parent:) }
+      end.index_by(&:name)
+      EXPENSES.each do |category, description, payee, amount, days_ago|
+        Expense.create!(kind: "expense", category: subcategories.fetch(category), description:, payee:, amount:, created_by: @user,
+                        spent_on: Time.zone.today - days_ago, payment_method: "cash", money_account: @box)
+      end
+      equipment = FinanceCategory.find_or_create_by!(name: "Equipo (demo)", kind: "investment", parent: nil)
+      Expense.create!(kind: "investment", category: equipment, description: "Báscula de plataforma", payee: "Básculas Demo", amount: 28_000,
+                      spent_on: Time.zone.today - 5, payment_method: "transfer", money_account: @bank, created_by: @user)
+      OtherIncome.create!(money_account: @bank, concept: "Aporte del dueño", amount: 50_000, received_on: Time.zone.today - 7,
+                          payment_method: "transfer", created_by: @user)
+      AccountTransfer.create!(from_account: @box, to_account: @bank, amount: 20_000, transferred_on: Time.zone.today - 1, created_by: @user)
+      [ InvoicePayment, HaulerPayment, LoanPayment, SalePayment ].each do |model|
+        model.where(money_account_id: nil, payment_method: "cash").update_all(money_account_id: @box.id)
+        model.where(money_account_id: nil, payment_method: %w[transfer check]).update_all(money_account_id: @bank.id)
+      end
+      Loan.where(money_account_id: nil).where("cash_amount > 0").update_all(money_account_id: @box.id)
+      PayrollPayment.where(money_account_id: nil).update_all(money_account_id: @box.id)
+      PayrollExpense.where(money_account_id: nil).update_all(money_account_id: @box.id)
+    end
+
+    # The business's own payroll: two roles, two employees since last month,
+    # an advance and a goal in the current period, and the periods already
+    # due paid (the oldest ones) except the last one.
+    def staff_payroll
+      clerk = StaffRole.find_or_create_by!(name: "Secretaria (demo)") { |role| role.assign_attributes(salary: 7_500, pay_frequency: "biweekly", overtime_hour_rate: 60) }
+      keeper = StaffRole.find_or_create_by!(name: "Bodeguero (demo)") { |role| role.assign_attributes(salary: 9_000, pay_frequency: "weekly", overtime_hour_rate: 45) }
+      [ [ "Karla", "Demo Trece", clerk ], [ "Óscar", "Demo Catorce", keeper ] ].map do |first_names, last_names, role|
+        person = Person.find_or_create_by!(first_names:, last_names:)
+        person.update!(collaborator_role: "1") unless person.collaborator?
+        member = StaffMember.find_or_create_by!(person:) { |new_member| new_member.assign_attributes(role:, starts_on: Time.zone.today.prev_month.beginning_of_month) }
+        # Every day worked up to today, but one off in the first week.
+        (member.starts_on..Time.zone.today).each do |date|
+          member.attendances.create!(worked_on: date, day_fraction: 1) unless date == member.starts_on + 2
+        end
+        member.due_periods[0...-1].each do |period|
+          StaffPaymentIssuer.new(member: member.reload, period:, user: @user, paid_on: period.ends_on, payment_method: "cash", money_account_id: @box.id).call
+        end
+        current = member.reload.period_to_pay
+        next unless current
+
+        StaffAdvance.create!(member:, given_on: current.starts_on, amount: (role.salary / 10).round, payment_method: "cash", money_account: @box, created_by: @user)
+        StaffGoal.create!(member:, period_starts_on: current.starts_on, description: "Inventario de sacos al día", bonus_amount: 250, created_by: @user)
+      end
+    end
+
+    # Trucks of the week's wet parchment: one sold and collected, one sold
+    # in part, one weighed at the buyer's and waiting for its sale, and one
+    # still on its way.
+    def coffee_sales
+      buyers = BUYERS.map { |name, kind| Buyer.find_or_create_by!(name:) { |buyer| buyer.kind = kind } }
+      carrier = Carrier.find_or_create_by!(name: "Transporte Demo") { |new_carrier| new_carrier.contact_name = "Mario Demo" }
+      truck = Truck.find_or_create_by!(plate: "HDM 0001") { |new_truck| new_truck.assign_attributes(brand_model: "Isuzu NPR (demo)", capacity_quintals: 80) }
+      [ [ 5, 900, 6, 0, :paid ], [ 3, 800, 5, 1, :partial ], [ 2, 700, 5, -1.5, nil ], [ 0, 600, 4, nil, nil ] ].each_with_index do |(days_ago, gross, sacks, loss, sale), i|
+        buyer = buyers[i % buyers.size]
+        departed_at = moment_of(Time.zone.today - days_ago)
+        shipment = Shipment.create!(buyer:, created_by: @user, departed_at:, coffee_state: "wet_parchment", remission_number: (330 + i).to_s,
+                                    carrier:, truck:, driver_name: "Mario Demo", origin_gross_weight: gross, origin_sacks: sacks,
+                                    origin_humidity_percent: 51, origin_damage_percent: 0)
+        next if loss.nil?
+
+        shipment.update!(received_on: departed_at.to_date, weight_note_number: "NP-DEMO-#{i + 1}", destination_gross_weight: gross - (gross * loss.abs / 100),
+                         destination_sacks: sacks, destination_humidity_percent: 51, destination_damage_percent: [ loss, 0 ].max)
+        next unless sale
+
+        result = SaleIssuer.new(buyer:, user: @user, shipment_ids: [ shipment.id ], payment_status: sale.to_s, payment_method: "transfer",
+                                paid_on: departed_at.to_date, amount: (1_000 if sale == :partial),
+                                sale: { sold_on: departed_at.to_date, price_unit: "quintal", unit_price: 6_000, buyer_document_number: "Comprobante demo #{i + 1}" }).call
+        raise ActiveRecord::RecordInvalid, result.sale unless result.success?
+      end
     end
 
     # Leaves today's purchases uninvoiced; older ones get invoices: some
