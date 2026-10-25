@@ -505,7 +505,9 @@ los errores).
   plana con **pestañas subrayadas** (la actual en negrita con línea
   gruesa), el nombre del módulo fijo a la izquierda al desplazar en el
   celular (`.subnav-title`) y su acción principal aparte al final
-  (`.subnav-action`).
+  (`.subnav-action`). **Más clara** (Fernando, 2026-10-25: «muy opaca»):
+  la banda es una tarjeta clara con borde y sombra suave sobre el fondo,
+  las pestañas en texto más oscuro y la actual con tinte café suave.
 - **Consultas sin recargar la página** (Fernando, 2026-10-12): filtrar,
   ordenar una columna, agrupar, cambiar de período o de reporte y cargar
   más **nunca recargan la página**: responden dentro de su Turbo Frame, con

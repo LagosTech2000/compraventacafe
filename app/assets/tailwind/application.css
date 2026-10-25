@@ -127,26 +127,28 @@
   }
 
   /* A module's own menu (its _nav) is a second tier, unlike the floating
-     pills of the main menu: a flat band with the module's name and tabs
+     pills of the main menu: a light band with the module's name and tabs
      underlined, the current one in bold with a thick line; the module's
-     main action sits apart at the end. */
+     main action sits apart at the end. Clearer since 2026-10-25 (Fernando:
+     «muy opaca»): the band is a light card that stands out from the page,
+     the tabs read darker, and the current one has a soft tint. */
   .subnav {
-    @apply flex items-stretch gap-1 overflow-x-auto rounded-t-2xl bg-primary-soft pr-2;
-    box-shadow: inset 0 -1px 0 var(--color-line);
+    @apply flex items-stretch gap-0.5 overflow-x-auto rounded-2xl bg-surface pr-2 ring-1 ring-line;
+    box-shadow: 0 1px 2px rgb(29 21 18 / 0.05), 0 10px 24px -18px rgb(29 21 18 / 0.35);
   }
 
   .subnav .nav-pill {
-    @apply h-12 shrink-0 rounded-none border-y-2 border-transparent px-3 text-ink-muted hover:border-b-primary/30 hover:bg-transparent hover:text-ink;
+    @apply h-12 shrink-0 rounded-none border-y-[3px] border-transparent px-3.5 text-ink/75 hover:bg-primary-soft/60 hover:text-ink;
   }
 
   .subnav .nav-pill-active {
-    @apply border-b-primary bg-transparent font-semibold text-primary hover:border-b-primary hover:bg-transparent hover:text-primary;
+    @apply border-b-primary bg-primary-soft font-semibold text-primary hover:border-b-primary hover:bg-primary-soft hover:text-primary;
     box-shadow: none;
   }
 
   /* The module's name stays in view while the tabs scroll (phones). */
   .subnav-title {
-    @apply sticky left-0 z-10 bg-primary-soft pl-2;
+    @apply sticky left-0 z-10 rounded-l-2xl bg-surface pl-2;
   }
 
   .subnav-action {
