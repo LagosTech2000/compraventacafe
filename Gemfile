@@ -63,7 +63,7 @@ group :test do
   gem "pundit-matchers", "~> 4.0"
   # System specs: the screens run in a headless Chrome, JavaScript included.
   gem "capybara", "~> 3.40"
-  gem "cuprite", "~> 0.18"
+  gem "cuprite", "~> 0.19"
 end
 
 group :development do
