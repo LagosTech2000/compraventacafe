@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Replaces the local development database with a copy of production's data
+# (Fernando, 2026-10-24: «prod-data-tolocal»).
+#
+# Production's address is a secret: it never goes in the repository. It is
+# read from $PROD_DATABASE_URL or, without it, from
+# ~/.config/compraventacafe/production_database_url (owner-only file).
+#
+# Production is only read (pg_dump). Before replacing the local database,
+# a copy of it is left in tmp/local-before-prod.dump, in case it is needed
+# back:  pg_restore --clean --no-owner -d compraventacafe_development tmp/local-before-prod.dump
+# After restoring, the local migrations not yet in production are applied.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+URL_FILE="${HOME}/.config/compraventacafe/production_database_url"
+PROD_URL="${PROD_DATABASE_URL:-}"
+if [[ -z "$PROD_URL" && -f "$URL_FILE" ]]; then
+  PROD_URL="$(tr -d '[:space:]' < "$URL_FILE")"
+fi
+if [[ -z "$PROD_URL" ]]; then
+  echo "Falta la dirección de producción: ponla en $URL_FILE (chmod 600) o en PROD_DATABASE_URL." >&2
+  exit 1
+fi
+[[ "$PROD_URL" == *"sslmode="* ]] || PROD_URL="${PROD_URL}$([[ "$PROD_URL" == *"?"* ]] && echo "&" || echo "?")sslmode=require"
+
+LOCAL_DB="compraventacafe_development"
+mkdir -p tmp
+DUMP="$(mktemp tmp/prod-XXXXXX.dump)"
+trap 'rm -f "$DUMP"' EXIT
+
+echo "1/4 Copiando la base de producción (solo lectura)…"
+# Sessions and visited pages stay out: they are of production's browsers.
+pg_dump --format=custom --no-owner --no-acl \
+  --exclude-table-data=sessions --exclude-table-data=page_visits \
+  --dbname="$PROD_URL" --file="$DUMP"
+
+echo "2/4 Guardando la base local actual en tmp/local-before-prod.dump…"
+if psql -lqt | cut -d '|' -f 1 | grep -qw "$LOCAL_DB"; then
+  pg_dump --format=custom --no-owner --no-acl --dbname="$LOCAL_DB" --file=tmp/local-before-prod.dump
+fi
+
+echo "3/4 Reemplazando $LOCAL_DB con la copia de producción…"
+dropdb --if-exists --force "$LOCAL_DB"
+createdb "$LOCAL_DB"
+pg_restore --no-owner --no-acl --exit-on-error --dbname="$LOCAL_DB" "$DUMP"
+
+echo "4/4 Marcando la base como de desarrollo y aplicando las migraciones locales…"
+bin/rails db:environment:set RAILS_ENV=development >/dev/null
+bin/rails db:migrate
+
+bin/rails runner '
+  counts = { "Usuarios" => User, "Personas" => Person, "Compras" => Purchase, "Facturas" => Invoice,
+             "Préstamos" => Loan, "Planillas" => Payroll, "Cuentas" => MoneyAccount }
+  puts "Listo. " + counts.map { |label, model| "#{label}: #{model.count}" }.join(" · ")
+'

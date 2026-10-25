@@ -598,6 +598,7 @@ bin/rails db:migrate
 bin/rails db:seed               # requiere ADMIN_NAME, ADMIN_EMAIL y ADMIN_PASSWORD
 bin/rails demo:seed             # datos ficticios para la demo (no en producción)
 bin/rails demo:reports          # un año ficticio de operación (sep 2025 a hoy) para ver los reportes; tarda ~2 min
+bin/prod-data-tolocal           # reemplaza la base local con los datos de producción (y aplica las migraciones locales); la URL vive solo en ~/.config/compraventacafe/production_database_url (chmod 600), nunca en el repo
 bin/rubocop
 bin/brakeman --no-pager
 ```
