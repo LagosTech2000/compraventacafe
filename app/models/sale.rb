@@ -1,6 +1,6 @@
 # A sale of coffee to a buyer (Fernando, 2026-10-23): shipments of that
 # buyer already weighed at destination (SaleLine), charged on the buyer's
-# net weight, by the pound or by the quintal of 100 lb. Made with
+# net weight, by the pound or by the quintal of 120 lb. Made with
 # SaleIssuer; weights and total are kept as they were then.
 #
 # Collected in payments (SalePayment), like the invoices: pending, partial,
@@ -13,8 +13,8 @@ class Sale < ApplicationRecord
 
   NUMBERING_LOCK_KEY = 7_301_003
   PRICE_UNITS = %w[pound quintal].freeze
-  # A sale's quintal (Fernando, 2026-10-23), as in the client's contracts.
-  QUINTAL_POUNDS = 100
+  # A sale's quintal: 120 lb (Fernando, 2026-10-25; it was 100 lb).
+  QUINTAL_POUNDS = 120
   PAYMENT_STATUSES = Invoice::PAYMENT_STATUSES
   UNPAID_STATUSES = Invoice::UNPAID_STATUSES
   FILTER_STATUSES = [ "unpaid", *PAYMENT_STATUSES, "voided" ].freeze
@@ -60,7 +60,7 @@ class Sale < ApplicationRecord
   end
 
   # The amount of a net weight at a price: by the pound, or by the quintal
-  # of 100 lb.
+  # of 120 lb.
   def self.amount_for(net_weight, unit_price:, price_unit:)
     pounds = BigDecimal(net_weight.to_s)
     price = BigDecimal(unit_price.to_s)
@@ -75,7 +75,7 @@ class Sale < ApplicationRecord
   def partial? = payment_status == "partial"
   def pending? = payment_status == "pending"
 
-  # Quintals of the sale (100 lb).
+  # Quintals of the sale (120 lb).
   def quintals = (net_weight / QUINTAL_POUNDS).round(2)
   # The buyer's net − the local net, over its shipments.
   def net_difference = net_weight - origin_net_weight

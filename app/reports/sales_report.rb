@@ -1,4 +1,4 @@
-# Coffee sold (Comercialización): the buyer's net, quintals of 100 lb, the
+# Coffee sold (Comercialización): the buyer's net, quintals of 120 lb, the
 # money, what was collected and what is owed, and how long buyers take to
 # pay. Voided sales are left out.
 class SalesReport < Report

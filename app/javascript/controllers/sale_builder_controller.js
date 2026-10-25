@@ -5,8 +5,8 @@ import { Controller } from "@hotwired/stimulus"
 //
 //   net        = Σ buyer's net of the chosen shipments
 //   difference = net − Σ local net (lb and %)
-//   QQ         = net ÷ 100 (a sale's quintal)
-//   total      = net ÷ 100 × price (by the quintal) or net × price (by the pound)
+//   QQ         = net ÷ quintal pounds (Sale::QUINTAL_POUNDS, 120 lb)
+//   total      = net ÷ quintal pounds × price (by the quintal) or net × price (by the pound)
 //
 // A sale has one coffee state: choosing shipments of two says so.
 export default class extends Controller {

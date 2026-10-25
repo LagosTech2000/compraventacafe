@@ -227,15 +227,15 @@ RSpec.describe "Reports (data)" do
     expect(run(ShipmentsReport, period: "today", status: "in_transit").total_count).to eq(1)
   end
 
-  it "sums sales, what was collected and what is owed, by the quintal of 100 lb" do
-    sale = create(:sale)                                 # 482.16 lb × L 6,000 / QQ = 28,929.60
+  it "sums sales, what was collected and what is owed, by the quintal of 120 lb" do
+    sale = create(:sale)                                 # 482.16 lb ÷ 120 × L 6,000 = 24,108.00
     create(:sale_payment, sale:, amount: 10_000)
 
     report = run(SalesReport, period: "today")
-    expect(kpi(report, :total).value).to eq(BigDecimal("28929.60"))
+    expect(kpi(report, :total).value).to eq(BigDecimal("24108"))
     expect(kpi(report, :paid).value).to eq(10_000)
-    expect(kpi(report, :pending).value).to eq(BigDecimal("18929.60"))
-    expect(kpi(report, :quintals).value.round(2)).to eq(BigDecimal("4.82"))
+    expect(kpi(report, :pending).value).to eq(BigDecimal("14108"))
+    expect(kpi(report, :quintals).value.round(2)).to eq(BigDecimal("4.02"))
   end
 
   it "lists the stock's moves with the stock before and after" do

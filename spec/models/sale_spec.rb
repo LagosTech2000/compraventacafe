@@ -4,8 +4,8 @@ RSpec.describe Sale do
   let(:buyer) { create(:buyer) }
   let(:user) { create(:user) }
 
-  it "charges the buyer's net by the quintal of 100 lb or by the pound" do
-    expect(described_class.amount_for(BigDecimal("1245"), unit_price: 6_000, price_unit: "quintal")).to eq(BigDecimal("74700"))
+  it "charges the buyer's net by the quintal of 120 lb or by the pound" do
+    expect(described_class.amount_for(BigDecimal("1245"), unit_price: 6_000, price_unit: "quintal")).to eq(BigDecimal("62250"))
     expect(described_class.amount_for(BigDecimal("100.5"), unit_price: 63, price_unit: "pound")).to eq(BigDecimal("6331.50"))
   end
 
@@ -14,7 +14,7 @@ RSpec.describe Sale do
     sale = SaleIssuer.new(buyer:, user:, shipment_ids: shipments.map(&:id), sale: { price_unit: "pound", unit_price: 60 }).call.sale
     expect(sale).to have_attributes(number: 1, net_weight: BigDecimal("964.32"), origin_net_weight: BigDecimal("974.12"),
                                     total: BigDecimal("57859.20"), payment_status: "pending")
-    expect(sale.quintals).to eq(BigDecimal("9.64"))
+    expect(sale.quintals).to eq(BigDecimal("8.04"))
     expect(sale.lines.map(&:amount)).to all(eq(BigDecimal("28929.60")))
   end
 

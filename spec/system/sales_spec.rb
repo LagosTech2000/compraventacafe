@@ -104,9 +104,9 @@ RSpec.describe "Sales screens", type: :system do
 
     uncheck dom_id(Shipment.find_by(coffee_state: "dry_parchment"), :select)
     expect(page).to have_css("[data-sale-builder-target='mixed']", visible: false)
-    # 964.32 lb ÷ 100 × L 6,000
-    expect(page).to have_css("[data-sale-builder-target='total']", text: "L 57,859.20")
-    expect(page).to have_css("[data-sale-builder-target='quintals']", text: "9.64")
+    # 964.32 lb ÷ 120 × L 6,000
+    expect(page).to have_css("[data-sale-builder-target='total']", text: "L 48,216.00")
+    expect(page).to have_css("[data-sale-builder-target='quintals']", text: "8.04")
 
     choose "Por libra"
     fill_in "sale_unit_price", with: "60"

@@ -330,7 +330,7 @@ class ReportDemoData
     end
 
     # Weighed at the buyer's (a little less, some with damage) and sold the
-    # same day: by the quintal of 100 lb to processors, by the pound to the rest.
+    # same day: by the quintal (Sale::QUINTAL_POUNDS) to processors, by the pound to the rest.
     def receive_and_sell(date)
       arrived, @in_transit = @in_transit.partition { |_, on| on <= date }
       arrived.each do |shipment, on|
@@ -343,7 +343,7 @@ class ReportDemoData
         by_pound = shipment.buyer.kind != "processor"
         price = price(shipment.coffee_state, date) + @random.rand(4..9)
         result = SaleIssuer.new(buyer: shipment.buyer, user: pick(@clerks), shipment_ids: [ shipment.id ],
-                                sale: { sold_on: on, price_unit: by_pound ? "pound" : "quintal", unit_price: by_pound ? price : price * 100,
+                                sale: { sold_on: on, price_unit: by_pound ? "pound" : "quintal", unit_price: by_pound ? price : price * Sale::QUINTAL_POUNDS,
                                         buyer_document_number: "Doc-#{shipment.number}" }).call
         next unless result.success?
 

@@ -12,7 +12,7 @@ RSpec.describe "Sales flow" do
 
   before { sign_in user }
 
-  it "ships, weighs at destination, sells by the quintal of 100 lb, collects and prints" do
+  it "ships, weighs at destination, sells by the quintal of 120 lb, collects and prints" do
     create(:purchase, gross_weight: 2_000, humidity_percent: 51) # in stock: (2,000 − 13) × 0.49 = 973.63 lb
 
     post sales_shipments_path, params: { shipment: {
@@ -50,8 +50,8 @@ RSpec.describe "Sales flow" do
     } }
     sale = Sale.last
     expect(response).to redirect_to(sales_sale_path(sale))
-    # 472.49 lb ÷ 100 × L 6,000
-    expect(sale).to have_attributes(total: BigDecimal("28349.40"), payment_status: "partial", coffee_state: "wet_parchment")
+    # 472.49 lb ÷ 120 × L 6,000
+    expect(sale).to have_attributes(total: BigDecimal("23624.50"), payment_status: "partial", coffee_state: "wet_parchment")
     expect(shipment.reload.status).to eq("sold")
 
     get sales_sale_path(sale)

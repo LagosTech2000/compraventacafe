@@ -145,7 +145,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | En camino / pesada sin vender / vendida | `Shipment#status`: `in_transit` / `received` / `sold` (+ `voided`) |
 | Venta / salida vendida / cobro de venta | `Sale` / `SaleLine` / `SalePayment` (`SaleIssuer`) |
 | Anticipo del comprador / cobro con anticipo | `BuyerAdvance` (`Buyer#advance_balance`) / `SalePayment` con `payment_method: "advance"` |
-| Precio por libra / por quintal (100 lb) | `Sale#price_unit`: `pound` / `quintal` (`Sale::QUINTAL_POUNDS`) |
+| Precio por libra / por quintal (120 lb) | `Sale#price_unit`: `pound` / `quintal` (`Sale::QUINTAL_POUNDS`) |
 | Tolerancia de diferencia de peso | `SiteSetting#weight_tolerance_percent` (`WeightTolerance`) |
 | Inventario / kárdex | `CoffeeStock` / `StockLedger` (`sales/stock#show`), reporte `CoffeeStockReport` |
 | Cierre de comercialización | `SalesDailyClose` |
@@ -686,7 +686,7 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 | Clave | Estado |
 | --- | --- |
 | `administration` | Usuarios y permisos, auditoría, configuración del sitio y documentos privados (solo administradores); respaldo de datos (solo el usuario con id 1); personas, clientes y colaboradores, con su ficha de productor; fincas y zonas (permisos del módulo); fusionar personas (solo administradores) |
-| `sales` | Comercialización: salidas de camiones con báscula local y del comprador, ventas por libra o quintal de 100 lb con cobros por abonos, compradores, inventario por estado del café con kárdex y cierre diario |
+| `sales` | Comercialización: salidas de camiones con báscula local y del comprador, ventas por libra o quintal de 120 lb con cobros por abonos, compradores, inventario por estado del café con kárdex y cierre diario |
 | `finance` | Control financiero: cuentas (caja y bancos) con saldo y estado de cuenta, ingresos, gastos e inversiones con categoría de dos niveles y comprobante, otros ingresos, transferencias, presupuesto mensual, la planilla interna del negocio (roles, anticipos, horas extra, metas y bonos) y el libro único de movimientos de todos los módulos |
 | `trading` | Demo: zonas, productores (con pestañas y QQ por temporada), carreros con su comisión y pagos con recibo, compras con cálculo por estado del café y anulación, facturas imprimibles (original y copia) con estado de pago, cierre diario |
 | `farms` | Fincas, planillas por día, por obra y de corte por lata, con roles y salarios, asistencia o latas por día, pagos por período (semanal, quincenal, mensual) con descuento a préstamos, planilla de pago imprimible y gastos por planilla |
@@ -1038,7 +1038,8 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   primero, venta después**: agrupa salidas **del mismo comprador** ya
   pesadas en destino y libres (líneas `SaleLine`, con sus pesos y monto;
   índice único parcial: una salida en una sola venta activa). Se cobra con
-  el **peso del comprador**, **por libra o por quintal de 100 lb**
+  el **peso del comprador**, **por libra o por quintal de 120 lb**
+  (Fernando, 2026-10-25; antes 100 lb)
   (`Sale.amount_for`). Guarda netos y total. Documento del comprador
   (factura o comprobante). Imprimible (nota de venta, original y copia).
 - **Cobro por abonos** (`SalePayment`), como las facturas: pendiente →

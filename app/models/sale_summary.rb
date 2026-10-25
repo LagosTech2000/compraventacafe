@@ -1,5 +1,5 @@
 # Totals of a set of sales (a day, a season, a filtered list), in SQL:
-# how many, the buyer's net, QQ of 100 lb, money, and where the money
+# how many, the buyer's net, QQ of 120 lb, money, and where the money
 # stands (collected, collected in part, pending). Voided sales are left out.
 class SaleSummary
   STATES = Sale::PAYMENT_STATUSES.reverse.freeze # paid, partial, pending
