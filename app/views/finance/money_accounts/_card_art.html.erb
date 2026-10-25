@@ -1,0 +1,139 @@
+<%# The drawing behind an account card, by its look (MoneyAccount#card_style),
+    inspired by each bank's cards (Fernando, 2026-10-24) without their logos.
+    Decorative: hidden from screen readers. `uid` keeps the gradient ids of
+    each card apart. The viewBox has the card's proportions (1.586 : 1). %>
+<% id = ->(name) { "#{uid}-#{name}" } %>
+<svg class="bank-card-art" viewBox="0 0 1000 630" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="<%= id.(:gloss) %>" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.16"/>
+      <stop offset="0.45" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <% case style %>
+  <% when "bac" %>
+    <%# BAC: flat red with big folded planes, lighter and darker. %>
+    <defs>
+      <linearGradient id="<%= id.(:bg) %>" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#f2132f"/><stop offset="0.55" stop-color="#da001c"/><stop offset="1" stop-color="#b10018"/>
+      </linearGradient>
+    </defs>
+    <rect width="1000" height="630" fill="url(#<%= id.(:bg) %>)"/>
+    <polygon points="-60,130 300,250 470,30 110,-40" fill="#8f0016" opacity="0.22"/>
+    <polygon points="300,250 560,385 650,115 470,30" fill="#ff2f4a" opacity="0.3"/>
+    <polygon points="-40,640 300,250 560,385 420,640" fill="#a1001a" opacity="0.34"/>
+    <polygon points="560,385 650,115 780,335" fill="#fff" opacity="0.08"/>
+    <polygon points="420,640 560,385 780,335 700,640" fill="#c2001b" opacity="0.4"/>
+    <polygon points="650,115 1010,-20 1010,250 780,335" fill="#ff1a38" opacity="0.14"/>
+  <% when "atlantida" %>
+    <%# Banco Atlántida: red, a dark sweep and a white arc. %>
+    <defs>
+      <linearGradient id="<%= id.(:bg) %>" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#ea2b20"/><stop offset="0.6" stop-color="#c8161c"/><stop offset="1" stop-color="#9c0b15"/>
+      </linearGradient>
+    </defs>
+    <rect width="1000" height="630" fill="url(#<%= id.(:bg) %>)"/>
+    <path d="M-60 560 C 240 380 560 720 1060 240 L1060 700 L-60 700Z" fill="#7d0811" opacity="0.32"/>
+    <circle cx="1010" cy="600" r="500" fill="#fff" opacity="0.06"/>
+    <circle cx="1010" cy="600" r="395" fill="none" stroke="#fff" stroke-width="30" opacity="0.92"/>
+    <circle cx="1010" cy="600" r="345" fill="none" stroke="#fff" stroke-width="10" opacity="0.4"/>
+    <circle cx="-40" cy="-60" r="300" fill="#ff5b4d" opacity="0.18"/>
+  <% when "ficohsa" %>
+    <%# Ficohsa: deep blue, a mosaic that fades in and a cyan sweep. %>
+    <defs>
+      <linearGradient id="<%= id.(:bg) %>" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#0f2780"/><stop offset="0.55" stop-color="#1c3aa8"/><stop offset="1" stop-color="#2b5ad2"/>
+      </linearGradient>
+      <pattern id="<%= id.(:tiles) %>" width="34" height="34" patternUnits="userSpaceOnUse">
+        <rect x="3" y="3" width="26" height="26" rx="3" fill="#fff" opacity="0.07"/>
+      </pattern>
+      <linearGradient id="<%= id.(:fade) %>" x1="0" y1="0" x2="1" y2="0.4">
+        <stop offset="0.25" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity="1"/>
+      </linearGradient>
+      <mask id="<%= id.(:mask) %>"><rect width="1000" height="630" fill="url(#<%= id.(:fade) %>)"/></mask>
+    </defs>
+    <rect width="1000" height="630" fill="url(#<%= id.(:bg) %>)"/>
+    <rect width="1000" height="630" fill="url(#<%= id.(:tiles) %>)" mask="url(#<%= id.(:mask) %>)"/>
+    <polygon points="380,-10 560,-10 260,640 80,640" fill="#fff" opacity="0.05"/>
+    <path d="M520 700 C 660 430 840 360 1060 300" fill="none" stroke="#3cc8f5" stroke-width="56" opacity="0.18"/>
+    <path d="M520 700 C 660 430 840 360 1060 300" fill="none" stroke="#3cc8f5" stroke-width="14" opacity="0.95"/>
+  <% when "occidente" %>
+    <%# Banco de Occidente: pearl white, a big orange leaf and an orange edge. %>
+    <defs>
+      <linearGradient id="<%= id.(:bg) %>" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#fffdf9"/><stop offset="1" stop-color="#f5eadb"/>
+      </linearGradient>
+      <clipPath id="<%= id.(:leaf_shape) %>"><path d="M0 -330 C 190 -200 190 200 0 330 C -190 200 -190 -200 0 -330Z"/></clipPath>
+      <linearGradient id="<%= id.(:leaf) %>" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#f7a24a"/><stop offset="1" stop-color="#e5631a"/>
+      </linearGradient>
+    </defs>
+    <rect width="1000" height="630" fill="url(#<%= id.(:bg) %>)"/>
+    <g transform="translate(790 350) rotate(-32)" opacity="0.24" clip-path="url(#<%= id.(:leaf_shape) %>)">
+      <path d="M0 -330 C 190 -200 190 200 0 330 C -190 200 -190 -200 0 -330Z" fill="url(#<%= id.(:leaf) %>)"/>
+      <path d="M0 -300 L0 320" stroke="#c94f12" stroke-width="7"/>
+      <% [ -210, -120, -30, 60, 150 ].each do |y| %>
+        <path d="M0 <%= y %> L130 <%= y - 90 %> M0 <%= y %> L-130 <%= y - 90 %>" stroke="#c94f12" stroke-width="5" stroke-linecap="round"/>
+      <% end %>
+    </g>
+    <g transform="translate(965 95) rotate(38) scale(0.38)" opacity="0.16">
+      <path d="M0 -330 C 190 -200 190 200 0 330 C -190 200 -190 -200 0 -330Z" fill="url(#<%= id.(:leaf) %>)"/>
+    </g>
+    <path d="M0 596 C 300 570 620 640 1000 576 L1000 630 L0 630Z" fill="#ef7420"/>
+    <path d="M0 584 C 300 556 620 626 1000 562" fill="none" stroke="#ef7420" stroke-width="4" opacity="0.45"/>
+  <% when "cash" %>
+    <%# The cash box: espresso to roasted copper, engraved like a banknote
+        (guilloché rosettes and waves in gold), with a gold frame. %>
+    <defs>
+      <radialGradient id="<%= id.(:bg) %>" cx="0.86" cy="0.12" r="1.05">
+        <stop offset="0" stop-color="#b8743a"/><stop offset="0.38" stop-color="#6d3e22"/><stop offset="0.75" stop-color="#3a2013"/><stop offset="1" stop-color="#22120a"/>
+      </radialGradient>
+      <radialGradient id="<%= id.(:glow) %>">
+        <stop offset="0" stop-color="#f0b46a" stop-opacity="0.32"/><stop offset="1" stop-color="#f0b46a" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="<%= id.(:floor) %>" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#1a0d06" stop-opacity="0"/><stop offset="1" stop-color="#1a0d06" stop-opacity="0.45"/>
+      </linearGradient>
+      <linearGradient id="<%= id.(:gold) %>" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#f8e3b2"/><stop offset="0.5" stop-color="#d6a85c"/><stop offset="1" stop-color="#f3d49b"/>
+      </linearGradient>
+    </defs>
+    <rect width="1000" height="630" fill="url(#<%= id.(:bg) %>)"/>
+    <g fill="none" stroke="#f3d49b" stroke-width="1.2">
+      <% bank_card_waves(count: 11, top: 330, gap: 15).each do |wave| %>
+        <path d="<%= wave %>" opacity="0.07"/>
+      <% end %>
+    </g>
+    <%# Centered on the medallion (top right): the engraving radiates from the bean. %>
+    <circle cx="863" cy="131" r="330" fill="url(#<%= id.(:glow) %>)"/>
+    <g transform="translate(863 131) scale(1.75)" fill="none" stroke="url(#<%= id.(:gold) %>)" stroke-width="0.7">
+      <path d="<%= bank_card_rosette(big: 120, small: 45, pen: 95) %>" opacity="0.3"/>
+      <path d="<%= bank_card_rosette(big: 120, small: 45, pen: 70) %>" opacity="0.22"/>
+      <path d="<%= bank_card_rosette(big: 96, small: 36, pen: 40) %>" opacity="0.18"/>
+    </g>
+    <g transform="translate(70 610) scale(0.9)" fill="none" stroke="#f3d49b" stroke-width="1">
+      <path d="<%= bank_card_rosette(big: 100, small: 35, pen: 80) %>" opacity="0.08"/>
+    </g>
+    <%# A darker floor under the balance. %>
+    <rect y="380" width="1000" height="250" fill="url(#<%= id.(:floor) %>)"/>
+    <rect x="16" y="16" width="968" height="598" rx="30" fill="none" stroke="url(#<%= id.(:gold) %>)" stroke-width="2.5" opacity="0.45"/>
+    <rect x="28" y="28" width="944" height="574" rx="22" fill="none" stroke="#f3d49b" stroke-width="1" opacity="0.18"/>
+  <% else %>
+    <%# Another bank: one of four looks, soft circles and fine lines. %>
+    <% stops = { "graphite" => %w[#1b1f27 #2f3542 #4a5263], "emerald" => %w[#053f31 #0b6b55 #12a383],
+                 "violet" => %w[#2e0a5c #5b21b6 #8b5cf6], "teal" => %w[#062f3d #0b6e86 #18b4cf] }.fetch(style, %w[#1b1f27 #2f3542 #4a5263]) %>
+    <defs>
+      <linearGradient id="<%= id.(:bg) %>" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="<%= stops[0] %>"/><stop offset="0.55" stop-color="<%= stops[1] %>"/><stop offset="1" stop-color="<%= stops[2] %>"/>
+      </linearGradient>
+      <pattern id="<%= id.(:lines) %>" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+        <line x1="0" y1="0" x2="0" y2="22" stroke="#fff" stroke-width="1" opacity="0.07"/>
+      </pattern>
+    </defs>
+    <rect width="1000" height="630" fill="url(#<%= id.(:bg) %>)"/>
+    <rect width="1000" height="630" fill="url(#<%= id.(:lines) %>)"/>
+    <circle cx="930" cy="40" r="300" fill="#fff" opacity="0.08"/>
+    <circle cx="80" cy="640" r="260" fill="#fff" opacity="0.06"/>
+  <% end %>
+  <rect width="1000" height="630" fill="url(#<%= id.(:gloss) %>)"/>
+</svg>

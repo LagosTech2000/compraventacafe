@@ -47,6 +47,17 @@ RSpec.describe "Control financiero" do
       expect(build(:money_account, kind: "bank", bank_key: "other", bank_name: "")).not_to be_valid
       expect(build(:money_account, kind: "bank", bank_key: nil)).not_to be_valid
       expect(HondurasBank.all.values).to eq([ "Ficohsa", "Banco Atlántida", "BAC Honduras", "Banco de Occidente" ])
+      expect(HondurasBank.wordmark("occidente")).to eq("above" => "Banco de", "main" => "Occidente")
+      expect(ApplicationController.helpers.bank_card_wordmark(other)).to eq(main: "Banpaís")
+    end
+  end
+
+  describe BankCardHelper do
+    it "draws the cash box's engraving once per shape, closed" do
+      rosette = BankCardHelper.rosette(big: 120, small: 45, pen: 95)
+      expect(rosette).to start_with("M").and end_with("Z")
+      expect(BankCardHelper.rosette(big: 120, small: 45, pen: 95)).to equal(rosette)
+      expect(BankCardHelper.waves(count: 3, top: 300, gap: 10).size).to eq(3)
     end
   end
 

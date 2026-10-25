@@ -27,7 +27,8 @@
     <%= live_list_status @filter, status: statuses, kind: kinds %>
     <% if @accounts.any? %>
       <%# Cards, each in its bank's colors; the whole card opens the account. %>
-      <ul class="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3" role="list">
+      <%# Every card 26rem wide, as in the account's detail; one per row when narrower. %>
+      <ul class="mt-6 grid grid-cols-[repeat(auto-fill,minmax(min(100%,26rem),26rem))] gap-5" role="list">
         <% @accounts.each do |account| %>
           <li class="data-card data-card-bare" id="<%= dom_id(account) %>"><%= render "finance/money_accounts/card", account:, balance: @balance.for(account) %></li>
         <% end %>

@@ -1,35 +1,99 @@
-<%# A money account as a card, in its bank's colors (MoneyAccount#card_style).
+<%# A money account as a card, in its bank's colors (MoneyAccount#card_style),
+    the same size in the list and in the detail (26rem; narrower screens
+    shrink it whole, everything inside sized to the card). The cash box has
+    its own look, engraved like a banknote: it is the most used account.
     link: true makes the whole card open the account's detail. %>
 <% link = local_assigns.fetch(:link, true) %>
-<% classes = "bank-card bank-card-#{account.card_style} #{"bank-card-inactive" unless account.active?}" %>
+<% style = account.card_style %>
+<% uid = "#{link ? "card" : "detail"}-#{account.id}" %>
+<% classes = "bank-card bank-card-#{style} #{"bank-card-inactive" unless account.active?}" %>
+<% inactive_badge = capture do %>
+  <% unless account.active? %><span class="bank-card-badge"><%= t("finance.money_accounts.index.statuses.inactive") %></span><% end %>
+<% end %>
+<% balance_block = capture do %>
+  <span class="min-w-0">
+    <span class="bank-card-caption"><%= t("finance.money_accounts.card.balance") %></span>
+    <span class="bank-card-balance <%= "bank-card-balance-negative" if balance.negative? %>" data-live-value="account-<%= account.id %>"><%= signed_money(balance) %></span>
+  </span>
+<% end %>
 <% content = capture do %>
-  <span class="bank-card-pattern" aria-hidden="true"></span>
-  <span class="flex items-start justify-between gap-3">
-    <span class="min-w-0">
-      <span class="block truncate text-sm font-semibold tracking-wide uppercase opacity-90"><%= account.cash? ? account.human_kind : account.bank_name %></span>
-      <span class="mt-0.5 block truncate text-lg leading-tight font-bold"><%= account.name %></span>
+  <%= render "finance/money_accounts/card_art", style:, uid: %>
+  <% if account.cash? %>
+    <span class="bank-card-body">
+      <span class="flex items-start justify-between gap-[3cqw]">
+        <span class="min-w-0">
+          <span class="bank-card-eyebrow"><%= t("finance.money_accounts.card.cash_label") %></span>
+          <span class="bank-card-title"><%= account.name %></span>
+          <%= inactive_badge %>
+        </span>
+        <%# A coffee bean in a gold medallion: the business's mark. %>
+        <svg class="bank-card-medallion" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+          <defs>
+            <linearGradient id="<%= uid %>-ring" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#fbe9bf"/><stop offset="0.45" stop-color="#c99446"/><stop offset="1" stop-color="#f5d79c"/>
+            </linearGradient>
+            <radialGradient id="<%= uid %>-core" cx="0.35" cy="0.3" r="0.8">
+              <stop offset="0" stop-color="#7a4a2b"/><stop offset="1" stop-color="#2c170d"/>
+            </radialGradient>
+          </defs>
+          <circle cx="50" cy="50" r="48" fill="url(#<%= uid %>-ring)"/>
+          <circle cx="50" cy="50" r="41" fill="url(#<%= uid %>-core)"/>
+          <circle cx="50" cy="50" r="37" fill="none" stroke="#f3d49b" stroke-width="0.8" stroke-dasharray="1.6 2.2" opacity="0.7"/>
+          <g transform="translate(50 50) rotate(35)">
+            <ellipse rx="17" ry="24" fill="#f6e7cf"/>
+            <path d="M0 -21 C -8 -9 8 9 0 21" fill="none" stroke="#5b331d" stroke-width="4" stroke-linecap="round"/>
+          </g>
+        </svg>
+      </span>
+      <span class="bank-card-issuer">
+        <svg class="bank-card-bills" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <rect x="2.5" y="6.5" width="19" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M5.5 9.5v5M18.5 9.5v5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <span class="truncate"><%= business_name %></span>
+        <span class="bank-card-rule" aria-hidden="true"></span>
+      </span>
+      <span class="flex items-end justify-between gap-[3cqw]">
+        <%= balance_block %>
+        <span class="bank-card-currency"><%= t("finance.money_accounts.card.currency") %></span>
+      </span>
     </span>
-    <span class="shrink-0 rounded-full bg-black/25 px-2.5 py-0.5 text-xs font-semibold backdrop-blur-sm">
-      <%= account.active? ? account.human_kind : t("finance.money_accounts.index.statuses.inactive") %>
-    </span>
-  </span>
-  <span class="flex items-center gap-3">
-    <% if account.cash? %>
-      <span class="grid size-9 place-items-center rounded-lg bg-white/20" aria-hidden="true"><%= icon(:finance, css: "size-5") %></span>
-    <% else %>
-      <span class="bank-card-chip" aria-hidden="true"></span>
-    <% end %>
-    <% if account.masked_number %>
+  <% else %>
+    <% wordmark = bank_card_wordmark(account) %>
+    <span class="bank-card-body">
+      <span class="flex items-start justify-between gap-[3cqw]">
+        <span class="min-w-0">
+          <span class="bank-card-label"><%= account.name %></span>
+          <%= inactive_badge %>
+        </span>
+        <span class="bank-card-wordmark">
+          <% if wordmark[:above] %><span class="bank-card-wordmark-small"><%= wordmark[:above] %></span><% end %>
+          <span class="bank-card-wordmark-main"><%= wordmark[:main] %></span>
+          <% if wordmark[:below] %><span class="bank-card-wordmark-small"><%= wordmark[:below] %></span><% end %>
+        </span>
+      </span>
+      <span class="flex items-center gap-[3cqw]">
+        <svg class="bank-card-chip" viewBox="0 0 50 38" aria-hidden="true" focusable="false">
+          <defs>
+            <linearGradient id="<%= uid %>-chip" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#f6e2a0"/><stop offset="0.45" stop-color="#c9a14a"/><stop offset="0.6" stop-color="#f0d47e"/><stop offset="1" stop-color="#b38a37"/>
+            </linearGradient>
+          </defs>
+          <rect x="0.5" y="0.5" width="49" height="37" rx="6.5" fill="url(#<%= uid %>-chip)" stroke="#8a6a26" stroke-opacity="0.45"/>
+          <path d="M1 13h15M1 25h15M34 13h15M34 25h15M16 1v36M34 1v36M16 19h18" fill="none" stroke="#6b4f1a" stroke-opacity="0.45" stroke-width="1.2"/>
+        </svg>
+        <svg class="bank-card-contactless" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M6 8.5a5 5 0 0 1 0 7M9.5 6a9 9 0 0 1 0 12M13 3.5a13 13 0 0 1 0 17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </span>
       <span class="bank-card-number"><%= account.masked_number %></span>
-    <% elsif account.cash? %>
-      <span class="text-sm font-semibold opacity-90"><%= t("finance.money_accounts.card.cash") %></span>
-    <% end %>
-  </span>
-  <span>
-    <span class="block text-[0.7rem] font-semibold tracking-wider uppercase opacity-80"><%= t("finance.money_accounts.card.balance") %></span>
-    <span class="block text-2xl font-bold whitespace-nowrap tabular-nums <%= "underline decoration-2 decoration-white/70" if balance.negative? %>"
-          data-live-value="account-<%= account.id %>"><%= signed_money(balance) %></span>
-  </span>
+      <span class="flex items-end justify-between gap-[3cqw]">
+        <%= balance_block %>
+        <span class="bank-card-kind"><%= account.human_kind %></span>
+      </span>
+    </span>
+  <% end %>
 <% end %>
 <% if link %>
   <%= link_to content, finance_money_account_path(account), class: classes, id: dom_id(account, :card), data: { turbo_frame: "_top" },

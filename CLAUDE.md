@@ -149,7 +149,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Cierre de comercialización | `SalesDailyClose` |
 | Control financiero | `finance` |
 | Cuenta (caja / banco) / saldo de la cuenta | `MoneyAccount` (`kind`: `cash` / `bank`, `default_for`) / `AccountBalance` |
-| Banco de la cuenta / tarjeta de la cuenta | `MoneyAccount#bank_key` (`HondurasBank`, `db/data/honduras_banks.yml`, `other`) / `finance/money_accounts/_card`, `.bank-card-*` |
+| Banco de la cuenta / tarjeta de la cuenta | `MoneyAccount#bank_key` (`HondurasBank`, `db/data/honduras_banks.yml`, `other`) / `finance/money_accounts/_card` (arte en `_card_art`, SVG; `BankCardHelper`), `.bank-card-*` |
 | Gasto / inversión / comprobante | `Expense` (`kind`: `expense` / `investment`) / `ExpenseReceipt` |
 | Categoría financiera (dos niveles) | `FinanceCategory` (`parent`) |
 | Otro ingreso / transferencia entre cuentas | `OtherIncome` / `AccountTransfer` |
@@ -1066,6 +1066,15 @@ salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
   BAC Honduras rojo, Banco de Occidente naranja con blanco; otro banco,
   uno de cuatro estilos (`OTHER_STYLES`, fijo por cuenta), y la caja,
   café. Toda la tarjeta abre el detalle, que la repite junto a sus datos.
+  **Rediseñadas a partir de las tarjetas reales de cada banco** (Fernando,
+  2026-10-24), sin sus logos ni marcas de Visa o Mastercard: el arte es
+  un SVG por banco (`_card_art`), con chip, «sin contacto», número en
+  relieve y el nombre del banco armado como en su tarjeta (`wordmark` en
+  `honduras_banks.yml`). **Miden 26rem en la lista y en el detalle**; en
+  angosto se achican enteras (todo adentro en `cqw`). **La caja va
+  primero** (la más usada) y tiene su propio diseño, grabada como un
+  billete: guilloché dorado que sale del medallión con el grano de café,
+  marco dorado, el nombre del negocio como emisor y el saldo grande.
   El banco se elige de `db/data/honduras_banks.yml` (datos de referencia,
   como los departamentos) o «Otro banco» y se escribe (`bank_key`
   `other` + `bank_name`); una caja no lleva banco.

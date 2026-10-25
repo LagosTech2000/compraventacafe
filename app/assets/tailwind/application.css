@@ -1045,124 +1045,265 @@ tr.live-new > td {
 }
 
 /* Money accounts as cards (Control financiero → Cuentas, Fernando,
-   2026-10-25): the cash box and each bank with its own colors and look;
-   other banks take one of four styles (MoneyAccount#card_style). The
-   pattern layer is decorative; the text carries the meaning. */
+   2026-10-25; redrawn 2026-10-24 after each bank's real cards): the art of
+   each look is an SVG (finance/money_accounts/_card_art), the text sits on
+   top. The card is 26rem wide in the list and in the detail; narrower
+   screens shrink it whole, because everything inside is sized in cqw (the
+   card is its own container). The drawing is decorative; the text carries
+   the meaning. */
 .bank-card {
+  --card-ink: #fff;
+  --card-soft: rgb(255 255 255 / 0.82);
+  --card-shadow: 0 1px 2px rgb(0 0 0 / 0.28);
   position: relative;
   isolation: isolate;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 0.75rem;
+  display: block;
+  width: 100%;
+  max-width: 26rem;
   aspect-ratio: 1.586 / 1;
-  min-height: 11rem;
+  container-type: inline-size;
   overflow: hidden;
-  border-radius: 1.25rem;
-  padding: 1.25rem 1.375rem;
-  color: #fff;
-  text-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
-  box-shadow: 0 2px 4px rgb(29 21 18 / 0.08), 0 18px 36px -18px rgb(29 21 18 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.25);
-  transition: transform 150ms ease, box-shadow 150ms ease;
+  border-radius: 1.15rem;
+  color: var(--card-ink);
+  background: #2b2f38;
+  text-shadow: var(--card-shadow);
+  box-shadow:
+    0 1px 2px rgb(29 21 18 / 0.1),
+    0 22px 40px -22px rgb(29 21 18 / 0.65),
+    inset 0 0 0 1px rgb(255 255 255 / 0.12);
+  transition: transform 180ms ease, box-shadow 180ms ease;
 }
-.bank-card:hover,
-.bank-card:focus-visible {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 8px rgb(29 21 18 / 0.1), 0 26px 44px -18px rgb(29 21 18 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.25);
+/* A light that crosses the card when it is pointed at. */
+.bank-card::after {
+  content: "";
+  position: absolute;
+  inset: -30% -60%;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 42%, rgb(255 255 255 / 0.2) 50%, transparent 58%);
+  transform: translateX(-55%);
+  transition: transform 800ms ease;
 }
-.bank-card:focus-visible {
+a.bank-card:hover,
+a.bank-card:focus-visible {
+  transform: translateY(-4px);
+  box-shadow:
+    0 4px 10px rgb(29 21 18 / 0.12),
+    0 30px 48px -22px rgb(29 21 18 / 0.7),
+    inset 0 0 0 1px rgb(255 255 255 / 0.16);
+}
+a.bank-card:hover::after,
+a.bank-card:focus-visible::after { transform: translateX(55%); }
+a.bank-card:focus-visible {
   outline: 3px solid var(--color-accent);
   outline-offset: 3px;
 }
-.bank-card-pattern {
+@media (prefers-reduced-motion: reduce) {
+  .bank-card, .bank-card::after { transition: none; }
+}
+.bank-card-art {
   position: absolute;
   inset: 0;
   z-index: -1;
-  pointer-events: none;
+  width: 100%;
+  height: 100%;
+}
+.bank-card-body {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 5.6cqw 6.2cqw 5.4cqw;
+}
+.bank-card-label {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 3.1cqw;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--card-soft);
+}
+.bank-card-wordmark {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+  text-align: right;
+  line-height: 1;
+}
+.bank-card-wordmark-main {
+  font-size: 6.6cqw;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.bank-card-wordmark-small {
+  margin: 0.4cqw 0;
+  font-size: 2.5cqw;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--card-soft);
 }
 .bank-card-chip {
-  width: 2.6rem;
-  height: 1.9rem;
-  border-radius: 0.4rem;
-  background: linear-gradient(135deg, #f4dc8f 0%, #c9a24a 45%, #f1d67d 60%, #b8913c 100%);
-  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.18);
+  width: 11.5cqw;
+  height: auto;
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.25));
+}
+.bank-card-contactless {
+  width: 5.4cqw;
+  height: auto;
+  color: var(--card-soft);
 }
 .bank-card-number {
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.18em;
-  font-size: 1.05rem;
+  display: block;
+  min-height: 1.2em;
+  font-size: 4.9cqw;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.16em;
+  /* Embossed, like the numbers on a real card. */
+  text-shadow: 0 1px 0 rgb(0 0 0 / 0.35), 0 -1px 0 rgb(255 255 255 / 0.22);
+}
+.bank-card-caption {
+  display: block;
+  font-size: 2.5cqw;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--card-soft);
+}
+.bank-card-balance {
+  display: block;
+  margin-top: 0.6cqw;
+  font-size: 7.4cqw;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.bank-card-balance-negative {
+  text-decoration: underline;
+  text-decoration-thickness: 0.5cqw;
+  text-underline-offset: 1cqw;
+}
+.bank-card-kind {
+  flex-shrink: 0;
+  font-size: 2.6cqw;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--card-soft);
+}
+.bank-card-badge {
+  display: inline-block;
+  margin-top: 1.2cqw;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.32);
+  padding: 0.5cqw 2.2cqw;
+  font-size: 2.5cqw;
+  font-weight: 700;
+  text-shadow: none;
+  color: #fff;
 }
 .bank-card-inactive {
   filter: grayscale(0.85);
   opacity: 0.75;
 }
 
-/* Ficohsa: deep blue with soft waves. */
-.bank-card-ficohsa { background: linear-gradient(135deg, #0a2f7a 0%, #0f4fb3 55%, #1d6fe0 100%); }
-.bank-card-ficohsa .bank-card-pattern {
-  background:
-    radial-gradient(120% 60% at 100% 110%, rgb(255 255 255 / 0.18) 0 40%, transparent 41%),
-    radial-gradient(90% 50% at 110% 90%, rgb(255 255 255 / 0.12) 0 45%, transparent 46%),
-    radial-gradient(60% 40% at -10% -10%, rgb(255 255 255 / 0.1) 0 50%, transparent 51%);
+/* BAC: the heaviest name, like its own. */
+.bank-card-bac .bank-card-wordmark-main { font-size: 8.4cqw; font-weight: 900; letter-spacing: -0.04em; }
+/* Banco Atlántida: its name with a little more air. */
+.bank-card-atlantida .bank-card-wordmark-main { font-size: 6.2cqw; letter-spacing: 0; }
+/* Ficohsa: its name in light blue's company. */
+.bank-card-ficohsa .bank-card-wordmark-main { font-size: 7cqw; letter-spacing: -0.03em; }
+/* Banco de Occidente: a light card, dark text and its orange. */
+.bank-card-occidente {
+  --card-ink: #2e2117;
+  --card-soft: #8b5a2b;
+  --card-shadow: none;
+  box-shadow:
+    0 1px 2px rgb(29 21 18 / 0.1),
+    0 22px 40px -22px rgb(29 21 18 / 0.5),
+    inset 0 0 0 1px rgb(46 33 23 / 0.1);
 }
+.bank-card-occidente .bank-card-wordmark-main { color: #e2601a; }
+.bank-card-occidente .bank-card-number { text-shadow: 0 1px 0 rgb(255 255 255 / 0.9), 0 -1px 0 rgb(0 0 0 / 0.12); }
+.bank-card-occidente .bank-card-badge { background: rgb(46 33 23 / 0.75); }
 
-/* Banco Atlántida: red with a white band. */
-.bank-card-atlantida { background: linear-gradient(160deg, #e1251b 0%, #b8141c 100%); }
-.bank-card-atlantida .bank-card-pattern {
-  background:
-    linear-gradient(115deg, transparent 0 58%, rgb(255 255 255 / 0.95) 58% 66%, transparent 66% 70%, rgb(255 255 255 / 0.5) 70% 72%, transparent 72%);
+/* The cash box: espresso and gold. Its name stands out, the business's
+   name runs like the issuer of a note, and the balance is the largest. */
+.bank-card-cash {
+  --card-soft: #f3d49b;
+  box-shadow:
+    0 1px 2px rgb(29 21 18 / 0.14),
+    0 26px 44px -22px rgb(42 22 12 / 0.85),
+    inset 0 0 0 1px rgb(243 212 155 / 0.25);
 }
-
-/* BAC Honduras: red with rings. */
-.bank-card-bac { background: radial-gradient(140% 120% at 0% 0%, #ff3b30 0%, #d0021b 45%, #8e0012 100%); }
-.bank-card-bac .bank-card-pattern {
-  background:
-    radial-gradient(circle at 92% 18%, transparent 0 22%, rgb(255 255 255 / 0.16) 22% 24%, transparent 24% 34%, rgb(255 255 255 / 0.12) 34% 36%,
-                    transparent 36% 46%, rgb(255 255 255 / 0.08) 46% 48%, transparent 48%);
+.bank-card-eyebrow {
+  display: block;
+  font-size: 2.6cqw;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, #fbe9bf, #d6a85c 55%, #f3d49b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
 }
-
-/* Banco de Occidente: orange with white stripes down its right side. */
-.bank-card-occidente { background: linear-gradient(150deg, #ff8a1f 0%, #f26b1d 50%, #d9530b 100%); }
-.bank-card-occidente .bank-card-pattern {
-  background:
-    linear-gradient(90deg, transparent 0 80%, rgb(255 255 255 / 0.92) 80% 85%, transparent 85% 88%, rgb(255 255 255 / 0.55) 88% 90%, transparent 90%);
+.bank-card-title {
+  display: block;
+  margin-top: 1cqw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 5.6cqw;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
 }
-
-/* Other banks: four looks. */
-.bank-card-graphite { background: linear-gradient(135deg, #1f2430 0%, #3a4252 100%); }
-.bank-card-graphite .bank-card-pattern {
-  background-image: radial-gradient(rgb(255 255 255 / 0.12) 1px, transparent 1.5px);
-  background-size: 14px 14px;
+.bank-card-medallion {
+  flex-shrink: 0;
+  width: 15cqw;
+  height: auto;
+  filter: drop-shadow(0 1.2cqw 1.6cqw rgb(0 0 0 / 0.45));
 }
-.bank-card-emerald { background: linear-gradient(135deg, #064e3b 0%, #0f766e 60%, #14b8a6 100%); }
-.bank-card-emerald .bank-card-pattern {
-  background: repeating-linear-gradient(45deg, rgb(255 255 255 / 0.07) 0 10px, transparent 10px 22px);
+.bank-card-issuer {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 1.8cqw;
+  font-size: 2.5cqw;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--card-soft);
 }
-.bank-card-violet { background: linear-gradient(135deg, #3b0764 0%, #6d28d9 60%, #a855f7 100%); }
-.bank-card-violet .bank-card-pattern {
-  background:
-    radial-gradient(circle at 15% 120%, rgb(255 255 255 / 0.16) 0 30%, transparent 31%),
-    radial-gradient(circle at 105% -10%, rgb(255 255 255 / 0.12) 0 35%, transparent 36%);
+.bank-card-bills { flex-shrink: 0; width: 4.6cqw; height: auto; }
+.bank-card-rule {
+  flex: 1 1 4cqw;
+  min-width: 4cqw;
+  height: 1px;
+  background: linear-gradient(90deg, rgb(243 212 155 / 0.7), rgb(243 212 155 / 0));
 }
-.bank-card-teal { background: linear-gradient(135deg, #083344 0%, #0e7490 55%, #22d3ee 100%); }
-.bank-card-teal .bank-card-pattern {
-  background-image: linear-gradient(rgb(255 255 255 / 0.07) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / 0.07) 1px, transparent 1px);
-  background-size: 18px 18px;
-}
-
-/* The cash box: the business's coffee brown. */
-.bank-card-cash { background: linear-gradient(135deg, #3f2416 0%, #6f4128 55%, #a8672f 100%); }
-.bank-card-cash .bank-card-pattern {
-  background:
-    radial-gradient(ellipse 18% 26% at 85% 30%, rgb(255 255 255 / 0.1) 0 60%, transparent 61%),
-    radial-gradient(ellipse 14% 20% at 72% 70%, rgb(255 255 255 / 0.08) 0 60%, transparent 61%),
-    radial-gradient(ellipse 10% 15% at 95% 80%, rgb(255 255 255 / 0.07) 0 60%, transparent 61%);
+.bank-card-cash .bank-card-balance { font-size: 8.4cqw; }
+.bank-card-currency {
+  flex-shrink: 0;
+  font-size: 2.5cqw;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--card-soft);
 }
 
 @media print {
   .bank-card { color: #000; text-shadow: none; box-shadow: none; border: 1px solid #000; background: #fff !important; }
-  .bank-card-pattern { display: none; }
+  .bank-card-art, .bank-card::after { display: none; }
 }
 
 /* A list item that is a .data-card only for the lists' machinery (loading

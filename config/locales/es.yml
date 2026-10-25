@@ -1840,6 +1840,8 @@ es:
       card:
         balance: "Saldo de hoy"
         cash: "Dinero en efectivo"
+        cash_label: "Caja · Efectivo"
+        currency: "Lempiras"
         open: "Abrir %{name}, saldo %{balance}"
       new:
         title: "Nueva cuenta"

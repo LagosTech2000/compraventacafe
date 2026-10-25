@@ -45,9 +45,16 @@ RSpec.describe "Finance screens", type: :system do
     visit finance_money_accounts_path
     expect(page).to have_css(".bank-card-ficohsa", text: "•••• 1234")
     expect(page).to have_css(".bank-card-cash", text: "Caja de la bodega")
+    # The cash box first (the most used), and every card as wide as the detail's.
+    expect(all(".bank-card").first[:class]).to include("bank-card-cash")
+    width = ->(selector) { page.evaluate_script("document.querySelector('#{selector}').getBoundingClientRect().width") }
+    page.driver.resize(1440, 1000)
+    list_width = width.(".bank-card-ficohsa")
     find(".bank-card-ficohsa").click
     expect(page).to have_css("h1", text: "Cheques")
     expect(page).to have_text("Datos de la cuenta")
+    expect(width.(".bank-card-ficohsa")).to eq(list_width)
+    expect(list_width).to eq(416) # 26rem
 
     visit new_finance_money_account_path
     expect(page).to have_no_field("money_account_bank_key")
