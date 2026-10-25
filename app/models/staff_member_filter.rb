@@ -17,6 +17,6 @@ class StaffMemberFilter < ListFilter
     scope = scope.where(person_id: Person.search(q).select(:id)) if q
     scope = scope.where(staff_role_id: role) if role
     scope = scope.where(active: status == "active") if status
-    scope.includes({ person: :photo_info }, :role, :payments, :advances).newest_first
+    scope.includes({ person: :photo_info }, :role, :payments, :advances, :attendances).newest_first
   end
 end

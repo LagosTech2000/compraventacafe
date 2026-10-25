@@ -357,6 +357,17 @@
     @apply py-2;
   }
 
+  /* The payroll sheet of the Planilla interna: fifteen days and the totals
+     in one screen, so its day buttons are smaller and its cells tighter. */
+  .staff-sheet .day-toggle {
+    @apply size-8 rounded-lg text-sm;
+  }
+
+  .staff-sheet tbody td,
+  .staff-sheet tfoot td {
+    @apply px-1;
+  }
+
   /* Save bar of a form edited in place: stays at the bottom while scrolling. */
   .save-bar {
     @apply sticky bottom-4 z-20 mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-surface/95 p-3 pl-4 ring-1 ring-line backdrop-blur print:hidden;

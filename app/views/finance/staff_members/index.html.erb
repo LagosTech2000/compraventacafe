@@ -11,8 +11,9 @@
   </div>
   <div class="flex flex-wrap gap-2">
     <% if policy(StaffMember).create? %>
-      <%= modal_link_to t(".new"), new_finance_staff_member_path, class: "btn btn-primary" %>
+      <%= modal_link_to t(".new"), new_finance_staff_member_path, class: "btn" %>
     <% end %>
+    <%= link_to t(".sheet"), finance_staff_sheet_path, class: "btn btn-primary" %>
     <%= link_to t(".roles"), finance_staff_roles_path, class: "btn" %>
     <%= help_guide_button HelpGuide.process(:staff_payroll), label: true %>
   </div>

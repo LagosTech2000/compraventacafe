@@ -65,6 +65,9 @@ RSpec.describe "Printable documents" do
     get finance_staff_member_staff_payment_path(member, issuer.payment)
     expect_letterhead("Recibo de pago de planilla", count: 2)
     expect_copy_on_its_own_page
+
+    get finance_staff_sheet_path
+    expect_letterhead("Hoja de planilla")
   end
 
   it "puts it on an account's statement" do

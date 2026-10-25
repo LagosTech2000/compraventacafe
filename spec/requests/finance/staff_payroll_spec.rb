@@ -36,22 +36,33 @@ RSpec.describe "Finance staff payroll" do
     get finance_staff_member_path(member)
     expect(response.body).to include("Inventario al día", "Por descontar", "Pagar 1 de oct – 15 de oct")
 
+    # Attendance in the payroll sheet: 12 days of the first fortnight (3 to 14).
+    get finance_staff_sheet_path(month: "2026-10", half: 1)
+    expect(response).to have_http_status(:ok)
+    expect(page.at_css("#sheet_staff_member_#{member.id}").text.squish).to include("Marta Cruz", "Por pagar")
+    patch finance_staff_sheet_path(month: "2026-10", half: 1), params: { work: { member.id.to_s => (1..15).to_h { |day| [ Date.new(2026, 10, day).iso8601, (3..14).cover?(day) ? "1" : "" ] } } }
+    expect(flash[:notice]).to eq("Asistencia guardada.")
+    expect(member.attendances.count).to eq(12)
+    expect(AuditEvent.where(auditable_type: "StaffAttendance", action: "create").count).to eq(12)
+
     get new_finance_staff_member_staff_payment_path(member)
     expect(response).to have_http_status(:ok)
-    expect(page.at_css("[data-staff-payment-target='net']").text).to eq("L 5,000.00")
+    # 6,000 a month ÷ 30 × 12 days = 2,400 − 1,000 of advance
+    expect(page.at_css("[data-staff-payment-target='net']").text).to eq("L 1,400.00")
+    expect(response.body).to include("L 6,000.00 al mes ÷ 30 × 12 días")
 
     post finance_staff_member_staff_payments_path(member), params: { staff_payment: {
-      salary: "6000", overtime_hours: "2", met_goal_ids: [ goal.id.to_s ], extra_bonus: "", paid_on: "2026-10-20",
+      overtime_hours: "2", met_goal_ids: [ goal.id.to_s ], extra_bonus: "", paid_on: "2026-10-20",
       payment_method: "cash", money_account_id: account.id
     } }
     payment = StaffPayment.sole
     expect(response).to redirect_to(finance_staff_member_staff_payment_path(member, payment))
-    expect(payment).to have_attributes(gross_total: 6_400, advances_total: 1_000, net_total: 5_400)
+    expect(payment).to have_attributes(days_worked: 12, salary: 2_400, gross_total: 2_800, advances_total: 1_000, net_total: 1_800)
 
     get finance_staff_member_staff_payment_path(member, payment)
     receipt = page.css("article")
     expect(receipt.size).to eq(2)
-    expect(receipt.first.text.squish).to include("Marta Cruz", "Horas extra: 2 × L 50.00", "Bono por meta: Inventario al día", "Anticipo del 10/10/2026", "Se le entregaL 5,400.00")
+    expect(receipt.first.text.squish).to include("Marta Cruz", "Horas extra: 2 × L 50.00", "Bono por meta: Inventario al día", "Anticipo del 10/10/2026", "× 12 días", "Se le entregaL 1,800.00")
     expect(AuditEvent.where(auditable: payment, action: "create")).to exist
 
     get finance_movements_path
@@ -71,7 +82,7 @@ RSpec.describe "Finance staff payroll" do
     sign_in reader
     get finance_staff_member_path(member)
     expect(response).to have_http_status(:ok)
-    post finance_staff_member_staff_payments_path(member), params: { staff_payment: { salary: "1" } }
+    post finance_staff_member_staff_payments_path(member), params: { staff_payment: { overtime_hours: "1" } }
     expect(response).to redirect_to(root_path)
   end
 
@@ -103,13 +114,13 @@ RSpec.describe "Finance staff payroll" do
 
     member = create(:staff_member, role:)
     get edit_finance_staff_member_path(member)
-    expect(response.body).to include("Salario propio (L)")
+    expect(response.body).to include("Salario mensual propio (L)")
     patch finance_staff_member_path(member), params: { staff_member: { salary_override: "8000" } }
     expect(member.reload.salary).to eq(8_000)
     get finance_staff_members_path
     expect(page.at_css("#staff_member_#{member.id}").text.squish).to include("L 8,000.00 propio")
     get new_finance_staff_member_staff_payment_path(member)
-    expect(response.body).to include("Su salario propio")
+    expect(response.body).to include("(su salario propio)")
 
     patch finance_staff_member_path(member), params: { staff_member: { active: "0", ends_on: "2026-10-31", salary_override: "" } }
     expect(member.reload).to have_attributes(active: false, ends_on: Date.new(2026, 10, 31), salary_override: nil)

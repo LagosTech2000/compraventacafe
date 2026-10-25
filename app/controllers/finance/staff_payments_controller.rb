@@ -46,11 +46,11 @@ module Finance
 
     private
       def set_member
-        @member = StaffMember.includes(:role, :person, :payments, :goals, advances: :money_account).find(params[:staff_member_id])
+        @member = StaffMember.includes(:role, :person, :payments, :goals, :attendances, advances: :money_account).find(params[:staff_member_id])
       end
 
       def issuer_params
-        values = params.expect(staff_payment: [ :salary, :overtime_hours, :extra_bonus, :extra_bonus_reason, :paid_on,
+        values = params.expect(staff_payment: [ :overtime_hours, :extra_bonus, :extra_bonus_reason, :paid_on,
                                                 :payment_method, :money_account_id, :observations, met_goal_ids: [] ])
         values.to_h.symbolize_keys.merge(paid_on: date(values[:paid_on]))
       end

@@ -13,7 +13,14 @@ RSpec.describe "Planilla interna" do
 
   around { |example| travel_to(Date.new(2026, 10, 20)) { example.run } }
 
+  # Every day of the period worked (the salary is monthly and paid by days).
+  def attend(someone, period)
+    period.dates.each { |date| someone.attendances.find_or_create_by!(worked_on: date) { it.day_fraction = 1 } }
+    someone.reload
+  end
+
   def pay(period = member.reload.period_to_pay, **options)
+    attend(member, period) if period && member.paid_period?(period) == false && period.ends_on <= Time.zone.today
     issuer = StaffPaymentIssuer.new(member: member.reload, period:, user:, payment_method: "cash", money_account_id: account.id,
                                     paid_on: Time.zone.today, **options)
     [ issuer.call, issuer ]
@@ -37,15 +44,15 @@ RSpec.describe "Planilla interna" do
     ok, issuer = pay(overtime_hours: "4", met_goal_ids: [ met.id.to_s ], extra_bonus: "150", extra_bonus_reason: "Buen trabajo")
     expect(ok).to be(true)
     payment = issuer.payment
-    # 6,000 + 4 × 50 + 300 + 150 = 6,650; − 1,000 = 5,650
-    expect(payment).to have_attributes(salary: 6_000, overtime_amount: 200, goals_bonus: 300, extra_bonus: 150,
-                                       gross_total: 6_650, advances_total: 1_000, net_total: 5_650)
+    # 6,000 a month ÷ 30 × 15 days = 3,000 + 4 × 50 + 300 + 150 = 3,650; − 1,000 = 2,650
+    expect(payment).to have_attributes(days_worked: 15, salary: 3_000, overtime_amount: 200, goals_bonus: 300, extra_bonus: 150,
+                                       gross_total: 3_650, advances_total: 1_000, net_total: 2_650)
     expect([ met.reload.met, missed.reload.met ]).to eq([ true, false ])
     expect(advance.reload.payment).to eq(payment)
     expect(later_advance.reload.payment).to be_nil
 
     # The account lost the advances when given and the net when paid.
-    expect(AccountBalance.new.for(account)).to eq(50_000 - 1_000 - 400 - 5_650)
+    expect(AccountBalance.new.for(account)).to eq(50_000 - 1_000 - 400 - 2_650)
     sources = MoneyMovements.new.all.map(&:source)
     expect(sources.tally).to include("staff_payments" => 1, "staff_advances" => 2)
   end
@@ -83,7 +90,7 @@ RSpec.describe "Planilla interna" do
     first = pay.last.payment
     role.update!(salary: 7_000)
     second = pay.last.payment
-    expect([ first.reload.salary, second.salary ]).to eq([ 6_000, 7_000 ])
+    expect([ first.reload.salary, second.salary ]).to eq([ 3_000, 3_500 ]) # 15 days of 6,000, then of 7,000 a month
     expect(first.destroy).to be(false)
     expect(second.destroy).to be_truthy
   end
@@ -108,10 +115,11 @@ RSpec.describe "Planilla interna" do
     expect([ driver.salary, other.salary ]).to eq([ 7_000, 6_000 ])
     expect(driver.period_to_pay).to eq(other.period_to_pay)
 
+    attend(driver, driver.period_to_pay)
     issuer = StaffPaymentIssuer.new(member: driver, period: driver.period_to_pay, user:, overtime_hours: "2", payment_method: "cash",
                                     money_account_id: account.id)
     expect(issuer.call).to be(true)
-    expect(issuer.payment).to have_attributes(salary: 7_000, overtime_amount: 100, net_total: 7_100)
+    expect(issuer.payment).to have_attributes(salary: 3_500, overtime_amount: 100, net_total: 3_600)
     expect(build(:staff_member, salary_override: 0)).not_to be_valid
   end
 

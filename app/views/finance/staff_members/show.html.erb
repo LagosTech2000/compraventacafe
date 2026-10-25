@@ -89,7 +89,7 @@
               <div class="min-w-0">
                 <p class="flex flex-wrap items-center gap-2 font-medium"><%= format_period(period) %> <%= staff_period_badge(@member, period) %></p>
                 <p class="text-xs text-ink-muted">
-                  <%= payment ? t(".paid_line", amount: format_money(payment.net_total), date: l(payment.paid_on)) : t(".estimate_line", amount: format_money(@member.estimate(period).net_total)) %>
+                  <%= payment ? t(".paid_line", amount: format_money(payment.net_total), date: l(payment.paid_on)) : t(".estimate_line", days: format_days(@member.period_days(period)), amount: format_money(@member.estimate(period).net_total)) %>
                 </p>
               </div>
               <% if payment %>

@@ -8,7 +8,7 @@ class StaffOverview
 
   def members
     # In the list's order, so its preloads are the same queries (cached).
-    @members ||= StaffMember.active.includes({ person: :photo_info }, :role, :payments, :advances, :goals).newest_first.to_a
+    @members ||= StaffMember.active.includes({ person: :photo_info }, :role, :payments, :advances, :attendances, :goals).newest_first.to_a
   end
 
   def count = members.size

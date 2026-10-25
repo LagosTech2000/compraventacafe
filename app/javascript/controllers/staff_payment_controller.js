@@ -3,7 +3,7 @@ import { Controller } from "@hotwired/stimulus"
 // Paying a period of the Planilla interna: the totals as a preview while
 // typing (StaffPaymentIssuer calculates them again on save).
 //
-//   gross = salary + overtime hours × the role's hour rate
+//   gross = salary (monthly ÷ 30 × days, fixed here) + overtime hours × the role's hour rate
 //           + the bonuses of the goals marked met + the free bonus
 //   net   = gross − the advances of the period
 //
@@ -19,7 +19,7 @@ export default class extends Controller {
   }
 
   update() {
-    const salary = this.number(this.salaryTarget.value)
+    const salary = this.number(this.salaryTarget.dataset.amount)
     const overtime = this.round(this.number(this.hasHoursTarget ? this.hoursTarget.value : "") * this.rateValue)
     const goals = this.goalTargets.filter((box) => box.checked).reduce((sum, box) => sum + parseFloat(box.dataset.bonus), 0)
     const extra = this.number(this.extraBonusTarget.value)

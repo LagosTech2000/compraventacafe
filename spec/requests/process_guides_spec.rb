@@ -44,7 +44,8 @@ RSpec.describe "Process guides" do
 
   it "explains the Planilla interna where it is run" do
     member = create(:staff_member)
-    [ finance_staff_members_path, finance_staff_roles_path, finance_staff_member_path(member), new_finance_staff_member_staff_payment_path(member) ].each do |path|
+    [ finance_staff_members_path, finance_staff_roles_path, finance_staff_sheet_path, finance_staff_member_path(member),
+      new_finance_staff_member_staff_payment_path(member) ].each do |path|
       get path
       expect(guides).to include("Ayuda: Planilla interna del negocio"), path
     end

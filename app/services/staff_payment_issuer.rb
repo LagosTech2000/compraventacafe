@@ -1,8 +1,9 @@
 # Pays one period of an employee of the Planilla interna (Fernando,
-# 2026-10-24), all or nothing:
+# 2026-10-24; by days worked, like the client's Excel, 2026-10-25), all or
+# nothing:
 #
-#   salary      the employee's own or the role's, in full (it can be
-#               changed when paying)
+#   salary      the monthly salary (own or the role's) ÷ 30 × the days the
+#               period counts (StaffMember#period_days)
 #   overtime    hours × the role's overtime hour rate
 #   goals       the bonus of each goal of the period marked met
 #   free bonus  an amount with its reason
@@ -11,7 +12,7 @@
 # Periods go in order: only the oldest one not paid. The employee is locked
 # meanwhile, so two payments at once cannot pay the same period.
 class StaffPaymentIssuer
-  Estimate = Data.define(:salary, :overtime_hours, :overtime_hour_rate, :overtime_amount, :goals, :goals_bonus,
+  Estimate = Data.define(:monthly_salary, :days, :salary, :overtime_hours, :overtime_hour_rate, :overtime_amount, :goals, :goals_bonus,
                          :extra_bonus, :advances, :advances_total) do
     def gross_total = salary + overtime_amount + goals_bonus + extra_bonus
     def net_total = gross_total - advances_total
@@ -20,12 +21,11 @@ class StaffPaymentIssuer
   attr_reader :member, :period, :payment
 
   # met_goal_ids: the goals of the period marked met.
-  def initialize(member:, period:, user: nil, salary: nil, overtime_hours: nil, met_goal_ids: [], extra_bonus: nil,
+  def initialize(member:, period:, user: nil, overtime_hours: nil, met_goal_ids: [], extra_bonus: nil,
                  extra_bonus_reason: nil, paid_on: Time.zone.today, payment_method: nil, money_account_id: nil, observations: nil)
     @member = member
     @period = period
     @user = user
-    @salary = salary
     @overtime_hours = overtime_hours
     @met_goal_ids = Array(met_goal_ids).compact_blank.map(&:to_i)
     @extra_bonus = extra_bonus
@@ -43,11 +43,11 @@ class StaffPaymentIssuer
   # the preview of a period before paying it counts none).
   def estimate
     role = member.role
-    salary = number(@salary, member.salary)
+    days = member.period_days(period)
     hours = number(@overtime_hours, 0)
     rate = role.overtime_hour_rate
     met = goals.select { @met_goal_ids.include?(it.id) }
-    Estimate.new(salary:, overtime_hours: hours, overtime_hour_rate: rate, overtime_amount: (rate ? (hours * rate).round(2) : 0.to_d),
+    Estimate.new(monthly_salary: member.salary, days:, salary: member.earned(days), overtime_hours: hours, overtime_hour_rate: rate, overtime_amount: (rate ? (hours * rate).round(2) : 0.to_d),
                  goals:, goals_bonus: met.sum(0.to_d, &:bonus_amount), extra_bonus: number(@extra_bonus, 0),
                  advances:, advances_total: advances.sum(0.to_d, &:amount))
   end
@@ -63,6 +63,7 @@ class StaffPaymentIssuer
 
       result = estimate
       @payment = member.payments.build(role: member.role, period_starts_on: period.starts_on, period_ends_on: period.ends_on,
+                                       monthly_salary: result.monthly_salary, days_worked: result.days,
                                        salary: result.salary, overtime_hours: result.overtime_hours,
                                        overtime_hour_rate: (result.overtime_hour_rate if result.overtime_hours.positive?),
                                        overtime_amount: result.overtime_amount, goals_bonus: result.goals_bonus,

@@ -1,0 +1,166 @@
+<%# The fortnight, like the Excel: each employee's days (a button per day that
+    cycles — → 1 → ½), days, earned (monthly salary ÷ 30 × days), advances
+    and total, and their period's state. The totals follow what is marked
+    (staff_sheet_controller.js); the server calculates them again. Days of a
+    paid period or outside the employee's dates stay fixed. Attendance is
+    saved with the bar at the bottom; paying the marked ones is a form of
+    its own above the grid. %>
+<% scope = "farms.timesheets.show" %>
+<% labels = { "" => t("#{scope}.fractions.none"), "1" => t("#{scope}.fractions.1"), "0.5" => t("#{scope}.fractions.0_5") } %>
+<% dates = sheet.fortnight.to_a %>
+<% today = sheet.today %>
+<% editable = policy([ :finance, :staff_sheet ]).update? %>
+<% can_pay = policy([ :finance, :staff_sheet ]).pay? && sheet.payable_rows.any? %>
+<% totals = sheet.totals %>
+<% min_width = 11 + (dates.size * 2.5) + 3.5 + (3 * 6.5) + 7 + 6 + 2.5 %>
+
+<% if can_pay %>
+  <%# Paying together: the marked ones (checked in the grid, form=) with the same date, method and account. %>
+  <%= form_with url: pay_finance_staff_sheet_path(view: "fortnight", month: sheet.month.strftime("%Y-%m"), half: sheet.half), id: "staff-pay-form",
+        class: "panel mt-4 flex flex-wrap items-end gap-3 p-4 print:hidden",
+        data: { controller: "money-account", money_account_defaults_value: MoneyAccount.defaults_by_method.to_json } do |form| %>
+    <p class="w-full text-sm"><%= t(".pay_help", count: sheet.payable_rows.size) %></p>
+    <div>
+      <%= label_tag :paid_on, StaffPayment.human_attribute_name(:paid_on), class: "field-label" %>
+      <%= date_field_tag :paid_on, today, required: true, class: "field-input" %>
+    </div>
+    <div>
+      <%= label_tag :payment_method, StaffPayment.human_attribute_name(:payment_method), class: "field-label" %>
+      <%= select_tag :payment_method, options_for_select(enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS), "cash"), class: "field-input",
+            data: { money_account_target: "method", action: "money-account#suggest" } %>
+    </div>
+    <div>
+      <%= label_tag :money_account_id, MoneyAccount.model_name.human, class: "field-label" %>
+      <%= select_tag :money_account_id, options_from_collection_for_select(MoneyAccount.active.alphabetical, :id, :name, MoneyAccount.default_for("cash")&.id),
+            include_blank: t("shared.select.pick_account"), required: true, class: "field-input",
+            data: { money_account_target: "account", action: "money-account#pick" } %>
+    </div>
+    <%= form.button t(".pay"), class: "btn btn-primary", data: { turbo_confirm: t(".confirm_pay") } %>
+  <% end %>
+<% end %>
+
+<%# Room at the bottom so the save bar never hides the totals. %>
+<%= form_with url: finance_staff_sheet_path(view: "fortnight", month: sheet.month.strftime("%Y-%m"), half: sheet.half), method: :patch, class: "mt-4 pb-20 print:pb-0",
+      data: { controller: "staff-sheet unsaved-changes",
+              action: "staff-sheet:changed->unsaved-changes#changed submit->unsaved-changes#saving",
+              staff_sheet_labels_value: labels.to_json, staff_sheet_nominal_value: StaffSheet::FORTNIGHT_DAYS, staff_sheet_dates_value: dates.size,
+              unsaved_changes_message_value: t("farms.timesheets.show.leave_unsaved"),
+              unsaved_changes_dirty_text_value: t("farms.timesheets.show.unsaved") } do |form| %>
+  <div class="panel overflow-x-auto print:overflow-visible">
+    <table class="data-table data-table-compact timesheet-grid staff-sheet table-fixed print:min-w-0" style="min-width: <%= min_width %>rem">
+      <colgroup>
+        <col class="w-44">
+        <% dates.each do %><col class="w-10"><% end %>
+        <col class="w-14">
+        <col class="w-[6.5rem]">
+        <col class="w-[6.5rem]">
+        <col class="w-28">
+        <col class="w-24">
+        <col class="w-10 print:hidden">
+      </colgroup>
+      <thead>
+        <tr>
+          <th class="sticky left-0 z-10 bg-surface-2"><%= t(".employee") %></th>
+          <% dates.each do |date| %>
+            <th class="text-center align-top <%= "text-primary" if date == today %>">
+              <span class="block"><%= date.day %></span>
+              <% if editable %>
+                <button type="button" class="link text-[0.65rem] normal-case print:hidden" data-action="staff-sheet#fillColumn" data-date="<%= date.iso8601 %>"
+                        aria-label="<%= t("#{scope}.fill_day_label", date: l(date, format: :long)) %>"><%= t("#{scope}.fill_day") %></button>
+              <% end %>
+            </th>
+          <% end %>
+          <th class="text-right align-top"><%= t(".days") %></th>
+          <th class="text-right align-top"><%= t(".earned") %></th>
+          <th class="text-right align-top"><%= t(".advances") %></th>
+          <th class="text-right align-top"><%= t(".total") %></th>
+          <th class="text-right align-top"><%= t(".signature_or_state") %></th>
+          <th class="align-top print:hidden">
+            <% if can_pay %>
+              <%= check_box_tag :all, "1", true, id: "staff_pay_all", class: "size-4 accent-primary", aria: { label: t(".mark_all") },
+                    data: { action: "staff-sheet#toggleAll" } %>
+            <% end %>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <% sheet.rows.each do |row| %>
+          <% member = row.member %>
+          <tr id="<%= dom_id(member, :sheet) %>" data-staff-sheet-target="row" data-salary="<%= member.salary.to_d %>" data-advances="<%= row.advances %>">
+            <th scope="row" class="sticky left-0 z-10 bg-surface text-left text-sm font-medium tracking-normal text-ink normal-case">
+              <span class="block truncate" title="<%= member.full_name %>"><%= member.full_name %></span>
+              <span class="block text-xs font-normal text-ink-muted"><%= member.role.name %> · <%= member.salary ? format_money(member.salary) : t("finance.staff_roles.no_salary") %></span>
+              <% if editable %>
+                <button type="button" class="link text-xs font-normal print:hidden" data-action="staff-sheet#fillRow"
+                        aria-label="<%= t("#{scope}.fill_row_label", person: member.full_name) %>"><%= t(".fill_row") %></button>
+              <% end %>
+            </th>
+            <% dates.each do |date| %>
+              <% employed = member.employed_on?(date) %>
+              <% period = employed && member.period_on(date) %>
+              <% open = editable && employed && !(period && member.paid_period?(period)) %>
+              <% value = member.day_on(date) %>
+              <% day_value = value.zero? ? "" : (value == 1 ? "1" : "0.5") %>
+              <td class="text-center align-middle <%= "bg-surface-2" unless employed %>">
+                <% if employed %>
+                  <%= hidden_field_tag "work[#{member.id}][#{date.iso8601}]", day_value, id: nil, disabled: !open,
+                        data: { date: date.iso8601, employed: true } %>
+                  <button type="button" class="day-toggle" data-state="<%= day_value %>" <%= "disabled" unless open %>
+                          data-action="staff-sheet#cycle" aria-label="<%= t("#{scope}.cell_label", person: member.full_name, date: l(date, format: :long)) %>"
+                          title="<%= t("#{scope}.cycle_hint") %>"><%= labels[day_value] %></button>
+                <% end %>
+              </td>
+            <% end %>
+            <td class="text-right font-semibold tabular-nums" data-staff-sheet-target="days"><%= format_days(row.days) %></td>
+            <td class="text-right tabular-nums" data-staff-sheet-target="earned"><%= format_money(row.earned) %></td>
+            <td class="text-right tabular-nums"><%= row.advances.positive? ? "−#{format_money(row.advances)}" : "—" %></td>
+            <td class="text-right font-semibold tabular-nums" data-staff-sheet-target="total"><%= signed_money(row.total) %></td>
+            <td class="text-right">
+              <span class="print:hidden">
+                <% case row.status %>
+                <% when "paid" %>
+                  <% payment = member.payments.find { it.period_starts_on == row.period.starts_on } %>
+                  <%= link_to t(".status.paid"), finance_staff_member_staff_payment_path(member, payment), class: "badge badge-success" %>
+                <% when "due" %>
+                  <%= link_to t(".status.due"), new_finance_staff_member_staff_payment_path(member), class: "badge badge-danger" %>
+                <% when "running" %>
+                  <span class="badge badge-neutral"><%= t(".status.running") %></span>
+                <% when "no_salary" %>
+                  <span class="badge badge-warning"><%= t("finance.staff_roles.no_salary") %></span>
+                <% else %>
+                  <span class="text-xs text-ink-muted"><%= t(".status.other_period") %></span>
+                <% end %>
+              </span>
+              <span class="hidden print:inline-block print:w-24 print:border-b print:border-ink">&nbsp;</span>
+            </td>
+            <td class="print:hidden">
+              <% if can_pay && row.payable %>
+                <%= check_box_tag "member_ids[]", member.id, true, id: "pay_member_#{member.id}", form: "staff-pay-form", class: "size-4 accent-primary",
+                      aria: { label: t(".pay_member", name: member.full_name) }, data: { staff_sheet_target: "payBox" } %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+      <tfoot>
+        <tr class="font-bold">
+          <th class="sticky left-0 z-10 bg-surface-2 text-left"><%= t(".totals") %></th>
+          <% dates.each do %><td></td><% end %>
+          <td class="text-right tabular-nums" data-staff-sheet-target="daysTotal"><%= format_days(totals[:days]) %></td>
+          <td class="text-right tabular-nums" data-staff-sheet-target="earnedTotal"><%= format_money(totals[:earned]) %></td>
+          <td class="text-right tabular-nums"><%= totals[:advances].positive? ? "−#{format_money(totals[:advances])}" : "—" %></td>
+          <td class="text-right tabular-nums" data-staff-sheet-target="grandTotal"><%= signed_money(totals[:total]) %></td>
+          <td></td>
+          <td class="print:hidden"></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  <p class="mt-2 text-xs text-ink-muted print:hidden"><%= t(".rule") %></p>
+  <% if editable %>
+    <div class="save-bar">
+      <p class="text-sm" data-unsaved-changes-target="status" aria-live="polite"><%= t("farms.timesheets.show.saved") %></p>
+      <%= form.submit t(".save"), class: "btn btn-primary" %>
+    </div>
+  <% end %>
+<% end %>

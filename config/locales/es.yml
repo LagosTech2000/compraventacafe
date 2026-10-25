@@ -1564,6 +1564,7 @@ es:
         help: "Los empleados del negocio: cada uno en un rol con su salario por período. Al pagar un período se suman horas extra y bonos, y se restan sus anticipos."
         new: "Nuevo empleado"
         roles: "Roles"
+        sheet: "Hoja de planilla"
         search_placeholder: "Nombre, DNI o RTN"
         status: "Estado"
         name: "Nombre"
@@ -1598,7 +1599,7 @@ es:
           advances: "Anticipos sin descontar"
           paid: "Pagado en total"
         paid_line: "Pagado: %{amount} el %{date}"
-        estimate_line: "A pagar hoy: %{amount} (sin bonos)"
+        estimate_line: "%{days} días trabajados · a pagar hoy: %{amount} (sin bonos)"
         receipt: "Recibo"
         remove: "Quitar"
         no_periods: "Todavía no empieza su primer período."
@@ -1627,7 +1628,7 @@ es:
         pick_role: "Selecciona un rol"
         role_help: "El rol dice su salario, cada cuánto se le paga y el valor de su hora extra."
         salary_override_placeholder: "El del rol"
-        salary_override_help: "Opcional: si gana distinto que su rol (por ejemplo, un chofer 7,000 y otro 8,000). Manda sobre el salario del rol; la frecuencia y la hora extra siguen siendo las del rol."
+        salary_override_help: "Opcional, mensual: si gana distinto que su rol (por ejemplo, un chofer 7,000 y otro 15,000). Manda sobre el salario del rol; la frecuencia y la hora extra siguen siendo las del rol."
         new_role: "Nuevo rol"
         ends_on_help: "Opcional: el último día que trabajó."
         active: "Activo (sale en la planilla)"
@@ -1641,8 +1642,83 @@ es:
         success: "Empleado actualizado."
       destroy:
         success: "Empleado quitado de la planilla."
+    staff_sheets:
+      show:
+        title: "Hoja de planilla"
+        help: "Como el Excel: la asistencia de cada empleado, sus días, lo devengado (salario mensual ÷ 30 × días), los anticipos y el total; por quincena, por mes o acumulado."
+        print: "Imprimir"
+        employees: "Empleados"
+        views_label: "Vistas de la hoja"
+        views:
+          fortnight: "Quincena"
+          month: "Mes"
+          history: "Acumulado"
+        halves:
+          "1": "1ª quincena (1–15)"
+          "2": "2ª quincena (16–fin)"
+        subtitle:
+          fortnight: "%{fortnight} de %{month}"
+          month: "Mes de %{month}"
+        fortnight: "Quincena"
+        month: "Mes"
+        season: "Temporada"
+        previous: "Anterior"
+        next: "Siguiente"
+        empty: "No hay empleados trabajando en estas fechas."
+      fortnight:
+        employee: "Empleado"
+        fill_row: "Toda la quincena"
+        days: "Días"
+        earned: "Devengado"
+        advances: "Anticipos"
+        total: "Total"
+        signature_or_state: "Estado / firma"
+        totals: "Totales"
+        mark_all: "Marcar a todos para pagar"
+        pay_member: "Pagar a %{name}"
+        pay_help:
+          one: "1 empleado tiene su quincena por pagar. Márcalo en la última columna y págale aquí, o ábrelo para pagarle con horas extra o bonos."
+          other: "%{count} empleados tienen su quincena por pagar. Marca a quienes vas a pagar (última columna) y págales juntos con la misma fecha, forma de pago y cuenta; para horas extra o bonos, paga a cada uno desde su estado."
+        pay: "Pagar a los marcados"
+        confirm_pay: "¿Pagar la quincena a los empleados marcados? Sale de la cuenta elegida."
+        save: "Guardar asistencia"
+        rule: "Días: una quincena trabajada completa cuenta 15, aunque tenga 16 o 13 días; si faltó, cuentan los días marcados (medio día = ½), sin pasar de 15. Devengado = salario mensual ÷ 30 × días. Total = devengado − anticipos (sin horas extra ni bonos, que se ponen al pagar)."
+        status:
+          paid: "Pagado"
+          due: "Por pagar"
+          running: "En curso"
+          other_period: "Otro período"
+      month:
+        employee: "Empleado"
+        open_fortnight: "Abrir la quincena"
+        first_days: "Días 1ª"
+        second_days: "Días 2ª"
+        days: "Días"
+        earned: "Devengado"
+        advances: "Anticipos"
+        total: "Total del mes"
+        paid: "Pagado"
+        pending: "Falta"
+        totals: "Totales"
+        help: "La asistencia se marca en cada quincena (toca un día del encabezado). «Pagado» es lo que ganaron los períodos ya pagados de este mes (lo entregado más los anticipos descontados), sin horas extra ni bonos aparte."
+      history:
+        employee: "Empleado"
+        paid_now: "Pagado %{month}"
+        pending_now: "Por pagar (estimado)"
+        month_total: "Total del mes"
+        season_total: "Pagado en la temporada"
+        totals: "Totales"
+        help: "Cada mes: lo que ganaron sus períodos ya pagados (lo entregado más los anticipos descontados). Mes actual: lo pagado más los anticipos ya entregados, y lo que falta pagar como si trabajara los días que quedan."
+      update:
+        success: "Asistencia guardada."
+      pay:
+        success:
+          zero: "No se pagó a nadie."
+          one: "Se pagó la quincena a 1 empleado."
+          other: "Se pagó la quincena a %{count} empleados."
+        failed: "No se pudo pagar: %{list}"
     staff_roles:
-      salary_per: "%{amount} %{frequency}"
+      salary_per: "%{amount} al mes · pago %{frequency}"
       no_salary: "Sin salario"
       index:
         title: "Roles de la planilla"
@@ -1657,7 +1733,7 @@ es:
         empty: "No hay roles con esos filtros."
       form:
         name_placeholder: "Por ejemplo: Contador, Bodeguero, Chofer"
-        salary_help: "Se paga completo en cada período."
+        salary_help: "Mensual. Cada período paga salario ÷ 30 × los días trabajados (una quincena completa cuenta 15)."
         salary_later_help: "Se puede dejar vacío por ahora (junto con la frecuencia): nadie de este rol se paga hasta llenarlo."
         no_frequency: "Sin frecuencia asignada"
         frequency_help: "Semanal (cierra el sábado), quincenal (1–15 y 16–fin de mes) o mensual."
@@ -1701,8 +1777,10 @@ es:
         nothing_to_pay: "No hay período por pagar: todavía no empieza o ya se pagó."
         no_salary: "El rol %{role} todavía no tiene salario: ponlo en «Editar rol» para poder pagar."
         earned: "Lo ganado"
-        salary_help: "El del rol: %{salary}. Se puede cambiar para este pago."
-        own_salary_help: "Su salario propio: %{salary}. Se puede cambiar para este pago."
+        salary_help: "(salario del rol)"
+        own_salary_help: "(su salario propio)"
+        days_formula: "%{salary} al mes ÷ 30 × %{days} días"
+        see_attendance: "Ver o cambiar la asistencia"
         overtime_help: "Cada hora a %{rate}."
         no_overtime_rate: "El rol no tiene valor de la hora extra: defínelo en el rol para anotar horas."
         goals: "Metas y bonos"
@@ -3863,7 +3941,8 @@ es:
           - "En «Roles» crea cada rol con su salario por período, su frecuencia (semanal, quincenal o mensual) y el valor de su hora extra."
           - "Con «Nuevo empleado» agrega a un colaborador en un rol, desde su fecha de inicio."
           - "Durante el período, «Dar anticipo» le entrega dinero y «Poner meta» le pone una meta con su bono."
-          - "Cuando llega el día de pago, «Pagar»: salario + horas extra + bonos de las metas cumplidas + bono adicional − anticipos del período."
+          - "Marca la asistencia en la «Hoja de planilla» (por quincena, como el Excel): cada período paga salario mensual ÷ 30 × días trabajados (una quincena completa cuenta 15)."
+          - "Cuando llega el día de pago, «Pagar» (uno por uno o a todos desde la hoja): devengado + horas extra + bonos de las metas cumplidas + bono adicional − anticipos del período."
           - "Al pagar se abre el recibo para imprimir (original y copia). El pago sale de la cuenta elegida y aparece en Movimientos."
         tips:
           - "Los períodos se pagan en orden; solo se quita el último pago."
@@ -4747,6 +4826,20 @@ es:
               - "Toca el botón de guardar."
             tips:
               - "Cambiar el rol cuenta para los períodos que faltan por pagar."
+        staff_sheets:
+          show:
+            title: "Hoja de planilla"
+            summary: "El Excel de la planilla, pero vivo: por quincena se marca la asistencia y se paga; por mes y acumulado se ve lo pagado y lo que falta."
+            steps:
+              - "En «Quincena», elige la quincena y el mes; toca cada día para pasar de — a 1 y a ½. «Todos» llena un día y «Toda la quincena» a una persona."
+              - "Los días, lo devengado y el total se calculan al marcar. Toca «Guardar asistencia»."
+              - "Cuando llega el día de pago, marca a quienes vas a pagar, elige fecha, forma de pago y cuenta, y toca «Pagar a los marcados»."
+              - "«Mes» muestra el mes entero con los días de cada quincena, lo pagado y lo que falta; «Acumulado», lo pagado mes por mes en la temporada y lo que se le va a pagar este mes."
+            tips:
+              - "Una quincena completa cuenta 15 días aunque tenga 16 o 13; si faltó, cuentan los días marcados, sin pasar de 15."
+              - "Devengado = salario mensual ÷ 30 × días. Total = devengado − anticipos."
+              - "Quien tiene metas por revisar u horas extra se paga desde su estado («Por pagar»), uno por uno."
+              - "Los días de un período ya pagado no se cambian."
         staff_roles:
           index:
             title: "Roles de la planilla interna"
@@ -5447,6 +5540,7 @@ es:
         staff_payment: "el pago de la planilla interna"
         staff_advance: "el anticipo"
         staff_goal: "la meta"
+        staff_attendance: "la asistencia"
         loan: "el préstamo"
         loan_payment: "el abono"
         supply: "el insumo"
@@ -5826,6 +5920,9 @@ es:
       staff_goal:
         one: "Meta"
         other: "Metas"
+      staff_attendance:
+        one: "Día de asistencia"
+        other: "Días de asistencia"
       user:
         one: "Usuario"
         other: "Usuarios"
@@ -5919,7 +6016,7 @@ es:
     attributes:
       staff_role:
         name: "Nombre del rol"
-        salary: "Salario por período (L)"
+        salary: "Salario mensual (L)"
         pay_frequency: "Frecuencia de pago"
         pay_frequency/weekly: "Semanal"
         pay_frequency/biweekly: "Quincenal"
@@ -5931,7 +6028,7 @@ es:
         person_id: "Empleado"
         role: "Rol"
         staff_role_id: "Rol"
-        salary_override: "Salario propio (L)"
+        salary_override: "Salario mensual propio (L)"
         starts_on: "Fecha de inicio"
         ends_on: "Fecha de salida"
         active: "Activo"
@@ -5943,7 +6040,9 @@ es:
         staff_role_id: "Rol"
         period_starts_on: "Inicio del período"
         period_ends_on: "Fin del período"
-        salary: "Salario (L)"
+        salary: "Salario devengado (L)"
+        monthly_salary: "Salario mensual (L)"
+        days_worked: "Días trabajados"
         overtime_hours: "Horas extra"
         overtime_hour_rate: "Valor de la hora extra (L)"
         overtime_amount: "Horas extra (L)"
@@ -5971,6 +6070,11 @@ es:
         payment: "Pago donde se descontó"
         staff_payment_id: "Pago donde se descontó"
         created_by_id: "Registró"
+      staff_attendance:
+        member: "Empleado"
+        staff_member_id: "Empleado"
+        worked_on: "Día"
+        day_fraction: "Día trabajado"
       staff_goal:
         member: "Empleado"
         staff_member_id: "Empleado"
@@ -6612,6 +6716,11 @@ es:
               inactive: "está desactivada"
             base:
               taken_off: "Este anticipo ya se descontó en un pago: quita ese pago primero."
+        staff_attendance:
+          attributes:
+            worked_on:
+              outside_employment: "no está dentro de las fechas del empleado"
+              in_paid_period: "es de un período ya pagado"
         staff_goal:
           attributes:
             period_starts_on:

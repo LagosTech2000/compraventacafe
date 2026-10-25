@@ -1,0 +1,60 @@
+<%# What each employee was paid, month by month of the season (what its
+    periods earned: the net handed out plus the advances taken off), and in
+    the current month what is already paid and what is still to pay,
+    estimated as if the days left are worked (minus the advances given). %>
+<% months = sheet.past_months %>
+<% current = sheet.current_month_in_season? %>
+<% totals = sheet.history_totals %>
+<div class="panel mt-4 overflow-x-auto print:overflow-visible">
+  <table class="data-table data-table-compact" data-controller="table-sort">
+    <thead>
+      <tr>
+        <th><%= t(".employee") %></th>
+        <% months.each do |month| %>
+          <th class="text-right"><%= l(month, format: :month_year) %></th>
+        <% end %>
+        <% if current %>
+          <th class="text-right"><%= t(".paid_now", month: l(sheet.today, format: :month_year)) %></th>
+          <th class="text-right"><%= t(".pending_now") %></th>
+          <th class="text-right"><%= t(".month_total") %></th>
+        <% end %>
+        <th class="text-right"><%= t(".season_total") %></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% sheet.history_rows.each do |row| %>
+        <tr id="<%= dom_id(row.member, :history) %>">
+          <td class="font-medium">
+            <%= link_to row.member.full_name, finance_staff_member_path(row.member), class: "hover:underline" %>
+            <span class="block text-xs font-normal text-ink-muted"><%= row.member.role.name %></span>
+          </td>
+          <% months.each do |month| %>
+            <% amount = row.by_month.fetch(month, 0) %>
+            <td class="text-right tabular-nums" data-sort-value="<%= amount %>"><%= amount.positive? ? format_money(amount) : "—" %></td>
+          <% end %>
+          <% if current %>
+            <td class="text-right tabular-nums text-success" data-sort-value="<%= row.paid_now %>"><%= format_money(row.paid_now) %></td>
+            <td class="text-right tabular-nums" data-sort-value="<%= row.pending_now %>"><%= format_money(row.pending_now) %></td>
+            <td class="text-right font-semibold tabular-nums" data-sort-value="<%= row.month_total %>"><%= format_money(row.month_total) %></td>
+          <% end %>
+          <td class="text-right font-semibold tabular-nums" data-sort-value="<%= row.season_total %>"><%= format_money(row.season_total) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+    <tfoot>
+      <tr class="font-bold">
+        <td><%= t(".totals") %></td>
+        <% months.each do |month| %>
+          <td class="text-right tabular-nums"><%= format_money(totals[:months][month]) %></td>
+        <% end %>
+        <% if current %>
+          <td class="text-right tabular-nums"><%= format_money(totals[:paid_now]) %></td>
+          <td class="text-right tabular-nums"><%= format_money(totals[:pending_now]) %></td>
+          <td class="text-right tabular-nums"><%= format_money(totals[:paid_now] + totals[:pending_now]) %></td>
+        <% end %>
+        <td class="text-right tabular-nums"><%= format_money(totals[:season]) %></td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+<p class="mt-2 text-xs text-ink-muted print:hidden"><%= t(".help") %></p>

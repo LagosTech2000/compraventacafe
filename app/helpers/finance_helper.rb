@@ -40,6 +40,9 @@ module FinanceHelper
     t("finance.staff_roles.salary_per", amount: format_money(role_or_member.salary), frequency: role.human_pay_frequency.downcase)
   end
 
+  # "15", "12.5": days worked.
+  def format_days(days) = number_with_precision(days, precision: 1, strip_insignificant_zeros: true)
+
   # The salary in an employee's row: theirs (marked «propio») or the role's.
   def staff_member_salary(member)
     return tag.span(t("finance.staff_roles.no_salary"), class: "badge badge-warning") unless member.salary

@@ -237,18 +237,22 @@ class DemoData
     # due paid (the oldest ones) except the last one.
     def staff_payroll
       clerk = StaffRole.find_or_create_by!(name: "Secretaria (demo)") { |role| role.assign_attributes(salary: 7_500, pay_frequency: "biweekly", overtime_hour_rate: 60) }
-      keeper = StaffRole.find_or_create_by!(name: "Bodeguero (demo)") { |role| role.assign_attributes(salary: 2_000, pay_frequency: "weekly", overtime_hour_rate: 45) }
+      keeper = StaffRole.find_or_create_by!(name: "Bodeguero (demo)") { |role| role.assign_attributes(salary: 9_000, pay_frequency: "weekly", overtime_hour_rate: 45) }
       [ [ "Karla", "Demo Trece", clerk ], [ "Óscar", "Demo Catorce", keeper ] ].map do |first_names, last_names, role|
         person = Person.find_or_create_by!(first_names:, last_names:)
         person.update!(collaborator_role: "1") unless person.collaborator?
         member = StaffMember.find_or_create_by!(person:) { |new_member| new_member.assign_attributes(role:, starts_on: Time.zone.today.prev_month.beginning_of_month) }
+        # Every day worked up to today, but one off in the first week.
+        (member.starts_on..Time.zone.today).each do |date|
+          member.attendances.create!(worked_on: date, day_fraction: 1) unless date == member.starts_on + 2
+        end
         member.due_periods[0...-1].each do |period|
           StaffPaymentIssuer.new(member: member.reload, period:, user: @user, paid_on: period.ends_on, payment_method: "cash", money_account_id: @box.id).call
         end
         current = member.reload.period_to_pay
         next unless current
 
-        StaffAdvance.create!(member:, given_on: current.starts_on, amount: (role.salary / 4).round, payment_method: "cash", money_account: @box, created_by: @user)
+        StaffAdvance.create!(member:, given_on: current.starts_on, amount: (role.salary / 10).round, payment_method: "cash", money_account: @box, created_by: @user)
         StaffGoal.create!(member:, period_starts_on: current.starts_on, description: "Inventario de sacos al día", bonus_amount: 250, created_by: @user)
       end
     end

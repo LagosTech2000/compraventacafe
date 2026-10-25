@@ -49,7 +49,7 @@ module Finance
 
     private
       def set_member
-        @member = authorize StaffMember.includes(:role, { person: :photo_info }, payments: %i[money_account role], advances: :money_account, goals: []).find(params[:id])
+        @member = authorize StaffMember.includes(:role, { person: :photo_info }, payments: %i[money_account role], advances: :money_account, goals: [], attendances: []).find(params[:id])
       end
 
       def member_params

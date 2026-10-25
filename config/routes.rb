@@ -109,6 +109,10 @@ Rails.application.routes.draw do
     # The business's own payroll (Planilla interna): roles and employees,
     # each with their payments by period, advances and goals.
     resources :staff_roles, path: "staff/roles", only: %i[ index new create edit update destroy ]
+    # The payroll sheet: fortnight (with its attendance), month and history.
+    resource :staff_sheet, path: "staff/sheet", only: %i[ show update ] do
+      post :pay
+    end
     resources :staff_members, path: "staff" do
       resources :staff_payments, path: "payments", only: %i[ new create show destroy ]
       resources :staff_advances, path: "advances", only: %i[ new create destroy ]

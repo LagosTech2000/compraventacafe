@@ -1,0 +1,76 @@
+<%# The whole month, like the Excel's «total del mes»: first what matters
+    (the days of each fortnight, the month's earned, advances, total, what
+    was paid for its periods and what is left), then the days marked (read
+    only: they are marked in each fortnight; a day opens its fortnight). %>
+<% dates = sheet.dates.to_a %>
+<% totals = sheet.totals %>
+<% marks = { "1" => "X", "0.5" => "½" } %>
+<div class="panel mt-4 overflow-x-auto print:overflow-visible">
+  <table class="data-table data-table-compact timesheet-grid table-fixed print:min-w-0" style="min-width: <%= 12 + (3 * 4) + (5 * 7) + (dates.size * 1.75) %>rem">
+    <colgroup>
+      <col class="w-48">
+      <% 3.times do %><col class="w-16"><% end %>
+      <% 5.times do %><col class="w-28"><% end %>
+      <% dates.each do %><col class="w-7"><% end %>
+    </colgroup>
+    <thead>
+      <tr>
+        <th class="sticky left-0 z-10 bg-surface-2"><%= t(".employee") %></th>
+        <th class="text-right"><%= t(".first_days") %></th>
+        <th class="text-right"><%= t(".second_days") %></th>
+        <th class="text-right"><%= t(".days") %></th>
+        <th class="text-right"><%= t(".earned") %></th>
+        <th class="text-right"><%= t(".advances") %></th>
+        <th class="text-right"><%= t(".total") %></th>
+        <th class="text-right"><%= t(".paid") %></th>
+        <th class="text-right"><%= t(".pending") %></th>
+        <% dates.each do |date| %>
+          <th class="px-0 text-center <%= "text-primary" if date == sheet.today %>">
+            <%= link_to date.day, finance_staff_sheet_path(view: "fortnight", month: sheet.month.strftime("%Y-%m"), half: date.day > StaffSheet::FORTNIGHT_DAYS ? 2 : 1),
+                  class: "hover:underline", title: t(".open_fortnight") %>
+          </th>
+        <% end %>
+      </tr>
+    </thead>
+    <tbody>
+      <% sheet.rows.each do |row| %>
+        <% member = row.member %>
+        <tr id="<%= dom_id(member, :month) %>">
+          <th scope="row" class="sticky left-0 z-10 bg-surface text-left text-sm font-medium tracking-normal text-ink normal-case">
+            <%= link_to member.full_name, finance_staff_member_path(member), class: "block truncate hover:underline", title: member.full_name %>
+            <span class="block text-xs font-normal text-ink-muted"><%= member.role.name %> · <%= member.salary ? format_money(member.salary) : t("finance.staff_roles.no_salary") %></span>
+          </th>
+          <% row.fortnights.each do |days| %>
+            <td class="text-right tabular-nums"><%= format_days(days) %></td>
+          <% end %>
+          <td class="text-right font-semibold tabular-nums"><%= format_days(row.days) %></td>
+          <td class="text-right tabular-nums"><%= format_money(row.earned) %></td>
+          <td class="text-right tabular-nums"><%= row.advances.positive? ? "−#{format_money(row.advances)}" : "—" %></td>
+          <td class="text-right font-semibold tabular-nums"><%= signed_money(row.total) %></td>
+          <td class="text-right tabular-nums text-success"><%= format_money(row.paid) %></td>
+          <td class="text-right tabular-nums"><%= row.pending.positive? ? format_money(row.pending) : "—" %></td>
+          <% dates.each do |date| %>
+            <% value = member.day_on(date) %>
+            <td class="px-0 text-center text-xs font-semibold <%= member.employed_on?(date) ? "" : "bg-surface-2" %> <%= "text-primary" if value == 1 %>">
+              <%= value.zero? ? "" : marks[value == 1 ? "1" : "0.5"] %>
+            </td>
+          <% end %>
+        </tr>
+      <% end %>
+    </tbody>
+    <tfoot>
+      <tr class="font-bold">
+        <th class="sticky left-0 z-10 bg-surface-2 text-left"><%= t(".totals") %></th>
+        <td></td><td></td>
+        <td class="text-right tabular-nums"><%= format_days(totals[:days]) %></td>
+        <td class="text-right tabular-nums"><%= format_money(totals[:earned]) %></td>
+        <td class="text-right tabular-nums"><%= totals[:advances].positive? ? "−#{format_money(totals[:advances])}" : "—" %></td>
+        <td class="text-right tabular-nums"><%= signed_money(totals[:total]) %></td>
+        <td class="text-right tabular-nums"><%= format_money(totals[:paid]) %></td>
+        <td class="text-right tabular-nums"><%= format_money(totals[:pending]) %></td>
+        <% dates.each do %><td></td><% end %>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+<p class="mt-2 text-xs text-ink-muted print:hidden"><%= t(".help") %></p>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_25_190000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_25_200000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -796,6 +796,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_190000) do
     t.index ["staff_payment_id"], name: "index_staff_advances_on_staff_payment_id"
   end
 
+  create_table "staff_attendances", force: :cascade do |t|
+    t.bigint "staff_member_id", null: false
+    t.date "worked_on", null: false
+    t.decimal "day_fraction", precision: 3, scale: 1, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["staff_member_id", "worked_on"], name: "index_staff_attendances_on_staff_member_id_and_worked_on", unique: true
+  end
+
   create_table "staff_goals", force: :cascade do |t|
     t.bigint "staff_member_id", null: false
     t.date "period_starts_on", null: false
@@ -847,6 +856,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_190000) do
     t.bigint "created_by_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "monthly_salary", precision: 12, scale: 2
+    t.decimal "days_worked", precision: 5, scale: 1
     t.index ["created_by_id"], name: "index_staff_payments_on_created_by_id"
     t.index ["money_account_id"], name: "index_staff_payments_on_money_account_id"
     t.index ["staff_member_id", "period_starts_on"], name: "index_staff_payments_on_staff_member_id_and_period_starts_on", unique: true
@@ -1007,6 +1018,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_190000) do
   add_foreign_key "staff_advances", "staff_members"
   add_foreign_key "staff_advances", "staff_payments"
   add_foreign_key "staff_advances", "users", column: "created_by_id"
+  add_foreign_key "staff_attendances", "staff_members"
   add_foreign_key "staff_goals", "staff_members"
   add_foreign_key "staff_goals", "staff_payments"
   add_foreign_key "staff_goals", "users", column: "created_by_id"

@@ -20,7 +20,15 @@
 
   <table class="data-table mt-4 text-sm print:mt-2">
     <tbody>
-      <tr><td><%= StaffPayment.human_attribute_name(:salary) %></td><td class="text-right tabular-nums"><%= format_money(payment.salary) %></td></tr>
+      <tr>
+        <td>
+          <%= StaffPayment.human_attribute_name(:salary) %>
+          <% if payment.days_worked %>
+            <span class="block text-xs text-ink-muted"><%= t("finance.staff_payments.new.days_formula", salary: format_money(payment.monthly_salary), days: format_days(payment.days_worked)) %></span>
+          <% end %>
+        </td>
+        <td class="text-right tabular-nums"><%= format_money(payment.salary) %></td>
+      </tr>
       <% if payment.overtime_hours.positive? %>
         <tr>
           <td><%= t("finance.staff_payments.receipt.overtime", hours: number_with_precision(payment.overtime_hours, precision: 2, strip_insignificant_zeros: true),

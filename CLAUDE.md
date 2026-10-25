@@ -160,6 +160,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Ingresos (todo lo que entró) | `finance/incomes` (`IncomeFilter`) |
 | Planilla interna / rol / empleado | `StaffMember` / `StaffRole` (`salary`, `pay_frequency`, `overtime_hour_rate`) |
 | Pago de un período / anticipo / meta con bono | `StaffPayment` (`StaffPaymentIssuer`, `finance/staff_payments#show` = recibo) / `StaffAdvance` / `StaffGoal` (`met`) |
+| Asistencia de la planilla interna / hoja de planilla (quincena, mes, acumulado) | `StaffAttendance` (`day_fraction` 1 / 0.5) / `StaffSheet` (`finance/staff_sheet`, `staff_sheet_controller.js`) |
 
 ## Modelo de permisos
 
@@ -1127,15 +1128,36 @@ salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
   ingresos.
 - **Planilla interna** (`finance/staff`, Fernando, 2026-10-24: «planilla
   interna del negocio») [CONFIRMADO]:
-  - **Roles** (`StaffRole`): salario **fijo por período**, que se paga
-    completo cada período (sin asistencia); frecuencia semanal, quincenal o
-    mensual (los períodos de `PayPeriod`, como Fincas); y **valor de la
+  - **Roles** (`StaffRole`): **salario mensual**; frecuencia semanal,
+    quincenal o mensual (los períodos de `PayPeriod`, como Fincas); y **valor de la
     hora extra por rol** (sin él no se anotan horas). Los del Excel del
     cliente (CEO, Administración, Chofer, Cargador, Bodeguero, Trabajadora
     DMC, Cargador de bodega) los crea la migración `AddExcelStaffRoles`
     **sin salario**: un rol puede esperar sin salario ni frecuencia (las dos
     o ninguna, `StaffRole#priced?`) y nadie de ese rol tiene períodos por
     pagar hasta llenarlos (Fernando, 2026-10-24).
+  - **Se paga como el Excel del cliente** (Fernando, 2026-10-25; cambia el
+    «monto fijo por período» del 2026-10-24) [CONFIRMADO]: cada período paga
+    **salario mensual ÷ 30 × días trabajados** (`StaffMember#period_days`,
+    `#earned`), marcados día por día, completo o medio (`StaffAttendance`).
+    **Mes de 30 días**: un período trabajado completo cuenta 15 días en
+    quincena (30 mensual, 7 semanal) aunque tenga 16 o 13; si faltó,
+    cuentan los días marcados, sin pasar de esos. El pago guarda el salario
+    mensual y los días (`monthly_salary`, `days_worked`); `salary` es lo
+    devengado. Los días de un período pagado no cambian.
+  - **Hoja de planilla** (`finance/staff_sheet`, `StaffSheet`), el Excel
+    vivo, con tres vistas: **Quincena** (1–15 o 16–fin: se marca la
+    asistencia, `staff_sheet_controller.js` recalcula días, devengado y
+    total = devengado − anticipos; «Pagar a los marcados» paga juntos los
+    períodos ya vencidos de esa quincena, con la misma fecha, forma de pago
+    y cuenta; quien tiene metas por revisar u horas extra se paga desde su
+    estado), **Mes** (los días de cada quincena, devengado, anticipos,
+    total, pagado y lo que falta) y **Acumulado** (lo pagado mes por mes en
+    la temporada —lo entregado más los anticipos descontados— y, del mes
+    actual, lo pagado y lo que falta, estimado como si trabajara los días
+    que quedan). Imprimible con membrete y columna de firma. En el Excel
+    del cliente, Nahum (13,000, 4 días, anticipo L 100) dice L 1,733.33: no
+    le restaron el anticipo; aquí siempre se resta.
   - **Empleados** (`StaffMember`): una persona con rol Colaborador, una
     vez, en un rol, desde una fecha (fin opcional); se desactivan. Puede
     tener **salario propio** (`salary_override`, Fernando, 2026-10-24: dos
@@ -1154,10 +1176,10 @@ salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
     El Resumen avisa los períodos que llegaron a su día de pago.
   - Decisiones de implementación, **pendientes de confirmar**: los
     períodos se pagan en orden y solo se quita el último (libera sus
-    anticipos y metas); el salario se puede cambiar al pagar (p. ej. un
-    primer período incompleto: no se prorratea solo); si los anticipos
-    pasan de lo ganado no se paga; un anticipo o una meta no van en un
-    período ya pagado; la cuenta es obligatoria.
+    anticipos y metas); si los anticipos pasan de lo ganado no se paga; un
+    anticipo o una meta no van en un período ya pagado; la cuenta es
+    obligatoria; las vistas Mes y Acumulado cuentan por quincenas aunque
+    un empleado se pague semanal o mensual.
 - **La ganancia no se calcula**: cómo la calcula el dueño sigue abierto
   (pregunta 34).
 
