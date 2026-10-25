@@ -5,7 +5,7 @@
     <%= link_to t("finance.nav.home"), finance_root_path, class: nav_link_class(finance_root_path, exact: true),
           aria: { current: (current_page?(finance_root_path) ? "page" : nil) } %>
     <% { movements: finance_movements_path, expenses: finance_expenses_path, investments: finance_investments_path,
-         accounts: finance_money_accounts_path, budget: finance_budget_path }.each do |key, path| %>
+         accounts: finance_money_accounts_path, consolidation: finance_consolidation_path, budget: finance_budget_path }.each do |key, path| %>
       <%= link_to t("finance.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>
     <% end %>
     <span class="mx-1 h-6 w-px shrink-0 self-center bg-primary/20" aria-hidden="true"></span>

@@ -22,6 +22,19 @@
         <dd class="text-2xl font-bold tabular-nums"><%= format_pounds(shipment["#{side}_net_weight"]) %> lb</dd>
       </div>
     </dl>
+    <% if side == "origin" && shipment.by_weighings? %>
+      <details class="mt-2 text-sm">
+        <summary class="cursor-pointer text-ink-muted"><%= t("sales.shipments.show.weighings", count: shipment.weighings.size) %></summary>
+        <ol class="mt-2 divide-y divide-line">
+          <% shipment.weighings.each_with_index do |weighing, index| %>
+            <li class="flex justify-between gap-3 py-1 tabular-nums">
+              <span><%= t("sales.shipments.show.weighing", number: index + 1) %></span>
+              <span><%= format_pounds(weighing.gross_weight) %> lb · <%= t("sales.shipments.show.weighing_sacks", count: weighing.sacks) %></span>
+            </li>
+          <% end %>
+        </ol>
+      </details>
+    <% end %>
     <% if side == "destination" %>
       <p class="mt-2 text-xs text-ink-muted">
         <%= [ (t("sales.shipments.show.received_on", date: l(shipment.received_on)) if shipment.received_on),

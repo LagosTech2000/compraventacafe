@@ -56,6 +56,40 @@
           <h2 id="shipment-origin" class="font-semibold"><%= t(".origin") %></h2>
           <p class="text-sm text-ink-muted"><%= t(".origin_help") %></p>
         </div>
+        <%# In one figure, or by weighings (as in the purchases): then the
+            gross weight and the sacks are their sums. %>
+        <fieldset>
+          <legend class="field-label"><%= Shipment.human_attribute_name(:origin_weight_mode) %></legend>
+          <div class="flex flex-wrap gap-x-6 gap-y-2">
+            <% Shipment::WEIGHT_MODES.each do |mode| %>
+              <label class="flex min-h-11 cursor-pointer items-center gap-2 text-sm font-medium">
+                <%= form.radio_button :origin_weight_mode, mode, class: "size-4 accent-primary",
+                      data: { weighing_calculator_target: "weightMode", action: "weighing-calculator#changeWeightMode" } %>
+                <%= Purchase.human_attribute_name("weight_mode/#{mode}") %>
+              </label>
+            <% end %>
+          </div>
+        </fieldset>
+        <section aria-labelledby="shipment-weighings" class="space-y-3" data-weighing-calculator-target="weighingsSection"
+                 <%= "hidden" unless shipment.by_weighings? %>>
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 id="shipment-weighings" class="font-semibold"><%= Shipment.human_attribute_name(:weighings) %></h3>
+              <p class="text-sm text-ink-muted"><%= t(".weighings_help") %></p>
+            </div>
+            <button type="button" class="btn btn-sm btn-primary" data-action="weighing-calculator#addWeighing"><%= t("trading.purchases.form.add_weighing") %></button>
+          </div>
+          <div class="space-y-3" data-weighing-calculator-target="weighings">
+            <%= form.fields_for :weighings do |weighing_form| %>
+              <%= render "sales/shipments/weighing_row", form: weighing_form, enabled: shipment.by_weighings? %>
+            <% end %>
+          </div>
+          <template data-weighing-calculator-target="weighingTemplate">
+            <%= form.fields_for :weighings, ShipmentWeighing.new, child_index: "NEW_RECORD" do |weighing_form| %>
+              <%= render "sales/shipments/weighing_row", form: weighing_form, enabled: true %>
+            <% end %>
+          </template>
+        </section>
         <%= render "sales/shipments/weighing_fields", form:, shipment:, side: "origin" %>
       </section>
 

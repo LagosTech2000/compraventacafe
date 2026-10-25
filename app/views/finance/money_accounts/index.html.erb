@@ -82,7 +82,7 @@
     <% if unassigned.in.positive? || unassigned.out.positive? %>
       <p class="mt-4 text-sm text-ink-muted">
         <%= t(".unassigned", in: format_money(unassigned.in), out: format_money(unassigned.out)) %>
-        <%= link_to t(".see_unassigned"), finance_movements_path(account: MovementFilter::NONE, from: "", to: ""), class: "link", data: { turbo_frame: "_top" } %>
+        <%= link_to t(".see_unassigned"), finance_consolidation_path, class: "link", data: { turbo_frame: "_top" } %>
       </p>
     <% end %>
   <% end %>

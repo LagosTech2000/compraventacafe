@@ -10,7 +10,9 @@
 #        business's totals leave them out: the money stays home)
 #
 # Loan payments with coffee or from a payroll move no money: not here.
-# Each movement says its account (nil when it was registered without one).
+# Each movement says its account (nil when it was registered without one)
+# and its moment: its date at the hour it was registered (Fernando,
+# 2026-10-25: «fechas con hora»), newest last.
 class MoneyMovements
   SOURCES = %w[invoices hauler_payments loans loan_payments payroll_payments payroll_expenses
                sale_payments expenses investments other_incomes transfers].freeze
@@ -23,7 +25,7 @@ class MoneyMovements
   NAME = "people.first_names || ' ' || people.last_names".freeze
 
   Movement = Data.define(:id, :date, :source, :description, :person, :payment_method, :amount_in, :amount_out,
-                         :route, :account_id, :category, :account_name) do
+                         :route, :account_id, :category, :account_name, :at) do
     def net = amount_in - amount_out
     def direction = amount_in.positive? ? "in" : "out"
     def transfer? = source == "transfers"
@@ -50,15 +52,22 @@ class MoneyMovements
       names = MoneyAccount.pluck(:id, :name).to_h
       @sources.flat_map { |source| send(source) }
               .map { |movement| movement.account_id ? movement.with(account_name: names[movement.account_id]) : movement }
-              .sort_by { |movement| [ movement.date, movement.source, movement.id ] }
+              .sort_by { |movement| [ movement.at, movement.source, movement.id ] }
     end
   end
 
   private
     def method_label(model, method) = method && model.human_attribute_name("payment_method/#{method}")
 
-    def movement(**attributes)
-      Movement.new(person: nil, payment_method: nil, amount_in: 0.to_d, amount_out: 0.to_d, route: nil, category: nil, account_name: nil, **attributes)
+    def movement(created_at:, **attributes)
+      Movement.new(person: nil, payment_method: nil, amount_in: 0.to_d, amount_out: 0.to_d, route: nil, category: nil, account_name: nil,
+                   at: moment(attributes.fetch(:date), created_at), **attributes)
+    end
+
+    # The movement's date at the hour it was registered, in Tegucigalpa time.
+    def moment(date, created_at)
+      time = created_at.in_time_zone
+      date.in_time_zone.change(hour: time.hour, min: time.min, sec: time.sec)
     end
 
     # A relation narrowed to the dates and the account.
@@ -74,9 +83,9 @@ class MoneyMovements
     def invoices
       narrowed(InvoicePayment.joins(invoice: { producer: :person }), "invoice_payments.paid_on", "invoice_payments.money_account_id")
         .pluck("invoice_payments.id", "invoice_payments.paid_on", "invoices.number", "invoice_payments.payment_method", Arel.sql(NAME),
-               "invoice_payments.amount", "invoices.id", "invoice_payments.money_account_id")
-        .map do |id, date, number, method, name, amount, invoice_id, account_id|
-          movement(id:, date:, source: "invoices", description: I18n.t("money_movements.invoice", number: format("%04d", number)),
+               "invoice_payments.amount", "invoices.id", "invoice_payments.money_account_id", "invoice_payments.created_at")
+        .map do |id, date, number, method, name, amount, invoice_id, account_id, created_at|
+          movement(id:, date:, created_at:, source: "invoices", description: I18n.t("money_movements.invoice", number: format("%04d", number)),
                    person: name, payment_method: method_label(Invoice, method), amount_out: amount, account_id:,
                    route: [ :trading_invoice_path, invoice_id ])
         end
@@ -85,9 +94,9 @@ class MoneyMovements
     def hauler_payments
       narrowed(HaulerPayment.joins(hauler: :person), "hauler_payments.paid_on", "hauler_payments.money_account_id")
         .pluck("hauler_payments.id", "hauler_payments.paid_on", "hauler_payments.payment_method", Arel.sql(NAME),
-               "hauler_payments.amount", "hauler_payments.hauler_id", "hauler_payments.money_account_id")
-        .map do |id, date, method, name, amount, hauler_id, account_id|
-          movement(id:, date:, source: "hauler_payments", description: I18n.t("money_movements.hauler_payment", number: format("%04d", id)),
+               "hauler_payments.amount", "hauler_payments.hauler_id", "hauler_payments.money_account_id", "hauler_payments.created_at")
+        .map do |id, date, method, name, amount, hauler_id, account_id, created_at|
+          movement(id:, date:, created_at:, source: "hauler_payments", description: I18n.t("money_movements.hauler_payment", number: format("%04d", id)),
                    person: name, payment_method: method_label(Invoice, method), amount_out: amount, account_id:,
                    route: [ :trading_hauler_payment_path, hauler_id, id ])
         end
@@ -95,9 +104,9 @@ class MoneyMovements
 
     def loans
       narrowed(Loan.where("loans.cash_amount > 0").joins(:person), "loans.disbursed_on", "loans.money_account_id")
-        .pluck("loans.id", "loans.disbursed_on", "loans.cash_amount", Arel.sql(NAME), "loans.money_account_id")
-        .map do |id, date, amount, name, account_id|
-          movement(id:, date:, source: "loans", description: I18n.t("money_movements.loan", number: id), person: name,
+        .pluck("loans.id", "loans.disbursed_on", "loans.cash_amount", Arel.sql(NAME), "loans.money_account_id", "loans.created_at")
+        .map do |id, date, amount, name, account_id, created_at|
+          movement(id:, date:, created_at:, source: "loans", description: I18n.t("money_movements.loan", number: id), person: name,
                    amount_out: amount, account_id:, route: [ :loans_loan_path, id ])
         end
     end
@@ -106,9 +115,9 @@ class MoneyMovements
       narrowed(LoanPayment.where(payment_method: LoanPayment::PAYMENT_METHODS).joins(loan: :person), "loan_payments.paid_on",
                "loan_payments.money_account_id")
         .pluck("loan_payments.id", "loan_payments.loan_id", "loan_payments.paid_on", "loan_payments.amount", "loan_payments.payment_method",
-               Arel.sql(NAME), "loan_payments.money_account_id")
-        .map do |id, loan_id, date, amount, method, name, account_id|
-          movement(id:, date:, source: "loan_payments", description: I18n.t("money_movements.loan_payment", number: format("%04d", id), loan: loan_id),
+               Arel.sql(NAME), "loan_payments.money_account_id", "loan_payments.created_at")
+        .map do |id, loan_id, date, amount, method, name, account_id, created_at|
+          movement(id:, date:, created_at:, source: "loan_payments", description: I18n.t("money_movements.loan_payment", number: format("%04d", id), loan: loan_id),
                    person: name, payment_method: method_label(LoanPayment, method), amount_in: amount, account_id:,
                    route: [ :loans_loan_payment_path, loan_id, id ])
         end
@@ -117,10 +126,10 @@ class MoneyMovements
     def payroll_payments
       narrowed(PayrollPayment.joins(payroll: :farm), "payroll_payments.paid_on", "payroll_payments.money_account_id")
         .pluck("payroll_payments.id", "payroll_payments.payroll_id", "payroll_payments.paid_on", "payroll_payments.net_total", "payrolls.name",
-               "farms.name", "payroll_payments.period_starts_on", "payroll_payments.period_ends_on", "payroll_payments.money_account_id")
-        .map do |id, payroll_id, date, amount, payroll, farm, from, to, account_id|
+               "farms.name", "payroll_payments.period_starts_on", "payroll_payments.period_ends_on", "payroll_payments.money_account_id", "payroll_payments.created_at")
+        .map do |id, payroll_id, date, amount, payroll, farm, from, to, account_id, created_at|
           period = I18n.t("farms.period", from: I18n.l(from, format: :short), to: I18n.l(to, format: :short))
-          movement(id:, date:, source: "payroll_payments", description: I18n.t("money_movements.payroll_payment", payroll:, farm:, period:),
+          movement(id:, date:, created_at:, source: "payroll_payments", description: I18n.t("money_movements.payroll_payment", payroll:, farm:, period:),
                    amount_out: amount, account_id:, route: [ :farms_payroll_payment_path, payroll_id, id ])
         end
     end
@@ -128,9 +137,9 @@ class MoneyMovements
     def payroll_expenses
       narrowed(PayrollExpense.joins(:category, payroll: :farm), "payroll_expenses.spent_on", "payroll_expenses.money_account_id")
         .pluck("payroll_expenses.id", "payroll_expenses.spent_on", "payroll_expenses.amount", "payroll_expenses.description",
-               "expense_categories.name", "farms.name", "payroll_expenses.payroll_id", "payroll_expenses.money_account_id")
-        .map do |id, date, amount, description, category, farm, payroll_id, account_id|
-          movement(id:, date:, source: "payroll_expenses", description: I18n.t("money_movements.payroll_expense", description:, farm:),
+               "expense_categories.name", "farms.name", "payroll_expenses.payroll_id", "payroll_expenses.money_account_id", "payroll_expenses.created_at")
+        .map do |id, date, amount, description, category, farm, payroll_id, account_id, created_at|
+          movement(id:, date:, created_at:, source: "payroll_expenses", description: I18n.t("money_movements.payroll_expense", description:, farm:),
                    category:, amount_out: amount, account_id:, route: [ :farms_payroll_path, payroll_id, { tab: "expenses" } ])
         end
     end
@@ -138,9 +147,9 @@ class MoneyMovements
     def sale_payments
       narrowed(SalePayment.joins(sale: :buyer).merge(Sale.active), "sale_payments.paid_on", "sale_payments.money_account_id")
         .pluck("sale_payments.id", "sale_payments.paid_on", "sales.number", "sale_payments.payment_method", "buyers.name",
-               "sale_payments.amount", "sales.id", "sale_payments.money_account_id")
-        .map do |id, date, number, method, name, amount, sale_id, account_id|
-          movement(id:, date:, source: "sale_payments", description: I18n.t("money_movements.sale_payment", number: format("%04d", number)),
+               "sale_payments.amount", "sales.id", "sale_payments.money_account_id", "sale_payments.created_at")
+        .map do |id, date, number, method, name, amount, sale_id, account_id, created_at|
+          movement(id:, date:, created_at:, source: "sale_payments", description: I18n.t("money_movements.sale_payment", number: format("%04d", number)),
                    person: name, payment_method: method_label(Invoice, method), amount_in: amount, account_id:,
                    route: [ :sales_sale_payment_path, sale_id, id ])
         end
@@ -152,9 +161,9 @@ class MoneyMovements
     def spending(kind)
       narrowed(Expense.where(kind:).joins(:category).left_joins(category: :parent), "expenses.spent_on", "expenses.money_account_id")
         .pluck("expenses.id", "expenses.spent_on", "expenses.description", "expenses.payee", "expenses.payment_method", "expenses.amount",
-               Arel.sql("CONCAT_WS(' › ', parents_finance_categories.name, finance_categories.name)"), "expenses.money_account_id")
-        .map do |id, date, description, payee, method, amount, category, account_id|
-          movement(id:, date:, source: kind == "expense" ? "expenses" : "investments", description:, person: payee,
+               Arel.sql("CONCAT_WS(' › ', parents_finance_categories.name, finance_categories.name)"), "expenses.money_account_id", "expenses.created_at")
+        .map do |id, date, description, payee, method, amount, category, account_id, created_at|
+          movement(id:, date:, created_at:, source: kind == "expense" ? "expenses" : "investments", description:, person: payee,
                    payment_method: method_label(Invoice, method), amount_out: amount, account_id:, category:,
                    route: [ kind == "expense" ? :finance_expense_path : :finance_investment_path, id ])
         end
@@ -162,9 +171,9 @@ class MoneyMovements
 
     def other_incomes
       narrowed(OtherIncome.all, "other_incomes.received_on", "other_incomes.money_account_id")
-        .pluck(:id, :received_on, :concept, :payment_method, :amount, :money_account_id)
-        .map do |id, date, concept, method, amount, account_id|
-          movement(id:, date:, source: "other_incomes", description: concept, payment_method: method_label(Invoice, method),
+        .pluck(:id, :received_on, :concept, :payment_method, :amount, :money_account_id, :created_at)
+        .map do |id, date, concept, method, amount, account_id, created_at|
+          movement(id:, date:, created_at:, source: "other_incomes", description: concept, payment_method: method_label(Invoice, method),
                    amount_in: amount, account_id:, route: [ :finance_money_account_path, account_id ])
         end
     end
@@ -178,12 +187,12 @@ class MoneyMovements
       return [] if @account == :none
 
       relation.pluck("account_transfers.id", "account_transfers.transferred_on", "account_transfers.amount", "account_transfers.from_account_id",
-                     "account_transfers.to_account_id", "origin.name", "destination.name")
-              .flat_map do |id, date, amount, from_id, to_id, from_name, to_name|
+                     "account_transfers.to_account_id", "origin.name", "destination.name", "account_transfers.created_at")
+              .flat_map do |id, date, amount, from_id, to_id, from_name, to_name, created_at|
                 description = I18n.t("money_movements.transfer", from: from_name, to: to_name)
-                [ (movement(id:, date:, source: "transfers", description:, amount_out: amount, account_id: from_id,
+                [ (movement(id:, date:, created_at:, source: "transfers", description:, amount_out: amount, account_id: from_id,
                             route: [ :finance_money_account_path, from_id ]) if @account.nil? || @account == from_id),
-                  (movement(id:, date:, source: "transfers", description:, amount_in: amount, account_id: to_id,
+                  (movement(id:, date:, created_at:, source: "transfers", description:, amount_in: amount, account_id: to_id,
                             route: [ :finance_money_account_path, to_id ]) if @account.nil? || @account == to_id) ].compact
               end
     end

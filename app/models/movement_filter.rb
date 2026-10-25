@@ -1,6 +1,7 @@
 # The single ledger of Control financiero (Finanzas → Movimientos): every
 # movement of money of every module (MoneyMovements) between two dates,
-# this month by default. With an account, only its movements, transfers
+# this month by default, newest first by date and time (the filters stay
+# by day). With an account, only its movements, transfers
 # included, and the balance after each one; without one, transfers are
 # left out (the money stays in the business).
 class MovementFilter < ListFilter
@@ -14,7 +15,8 @@ class MovementFilter < ListFilter
   field :source, :choice, in: MoneyMovements::SOURCES
   field :direction, :choice, in: DIRECTIONS
 
-  sorts date: { ruby: ->(row) { row.movement.date } },
+  # The date with its time (MoneyMovements::Movement#at).
+  sorts date: { ruby: ->(row) { row.movement.at } },
         source: { ruby: ->(row) { I18n.t("reports.types.cash_movements.sources.#{row.movement.source}") } },
         description: { ruby: ->(row) { row.movement.description } },
         person: { ruby: ->(row) { row.movement.person } },

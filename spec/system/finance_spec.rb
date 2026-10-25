@@ -28,6 +28,18 @@ RSpec.describe "Finance screens", type: :system do
     expect(Expense.last).to have_attributes(money_account: box, payment_method: "check")
   end
 
+  it "marks movements without an account and gives them one" do
+    loans = create_list(:loan, 2, cash_amount: 500)
+    visit finance_consolidation_path
+    expect(page).to have_button("Asignar a los marcados", disabled: true)
+    check "Marcar todos"
+    expect(page).to have_text("2 marcados")
+    select "Banco Atlántida", from: "account_id"
+    accept_confirm { click_button "Asignar a los marcados" }
+    expect(page).to have_text("Se asignó la cuenta a 2 movimientos.")
+    expect(loans.map { it.reload.money_account }).to all(eq(bank))
+  end
+
   it "suggests the account when paying an invoice" do
     invoice = create(:invoice)
     visit trading_invoice_path(invoice)

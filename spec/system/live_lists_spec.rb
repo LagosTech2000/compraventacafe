@@ -39,7 +39,7 @@ RSpec.describe "Live lists", type: :system do
     "/farms/farms" => "farms-list", "/farms/expense_categories" => "expense-categories-list",
     "/sales/shipments" => "shipments-list", "/sales/sales" => "sales-list", "/sales/buyers" => "buyers-list",
     "/finance/movements" => "movements-list", "/finance/expenses" => "expenses-list", "/finance/money_accounts" => "accounts-list",
-    "/finance/categories" => "categories-list"
+    "/finance/categories" => "categories-list", "/finance/consolidation" => "consolidation-list"
   }.each do |path, frame|
     it "filters #{path} as the user types, in its frame" do
       visit path

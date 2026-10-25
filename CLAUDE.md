@@ -138,6 +138,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Comprador (exportador / beneficio / otro) | `Buyer` (`kind`: `exporter` / `processor` / `other`) |
 | Salida de camión / báscula local / báscula del comprador | `Shipment` / `origin_*` / `destination_*` (`ArrivalsController`, `shipments/:id/arrival`) |
 | Nota de peso / remisión | `Shipment#weight_note_number` / `remission_number` |
+| Pesadas de la salida (báscula local) | `ShipmentWeighing` (`Shipment#origin_weight_mode`: `single` / `weighings`) |
 | En camino / pesada sin vender / vendida | `Shipment#status`: `in_transit` / `received` / `sold` (+ `voided`) |
 | Venta / salida vendida / cobro de venta | `Sale` / `SaleLine` / `SalePayment` (`SaleIssuer`) |
 | Precio por libra / por quintal (100 lb) | `Sale#price_unit`: `pound` / `quintal` (`Sale::QUINTAL_POUNDS`) |
@@ -151,6 +152,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Otro ingreso / transferencia entre cuentas | `OtherIncome` / `AccountTransfer` |
 | Presupuesto mensual | `Budget` / `BudgetSheet` |
 | Movimientos de dinero (libro único) | `MoneyMovements` (`MovementFilter`, `finance/movements`) |
+| Consolidación (dar cuenta a lo registrado sin cuenta) | `AccountConsolidation` (`finance/consolidation`, `ConsolidationFilter`) |
 | Cuenta de un pago de cualquier módulo | `money_account_id` (`HasMoneyAccount`) |
 
 ## Modelo de permisos
@@ -284,6 +286,11 @@ mensaje. Reglas actuales:
 | Correo | Formato de correo | En minúsculas |
 | Contraseña | Mínimo 8 caracteres (máx. 72) al crearla o cambiarla; el login no la valida | Cifrada |
 
+Todo campo de un modelo auditado tiene su nombre en `es.yml`
+(`activerecord.attributes`), también los `*_id`: sale en etiquetas,
+errores y la auditoría; sin él se ve el nombre en inglés («Buyer»).
+`spec/models/attribute_names_spec.rb` lo revisa.
+
 Un campo de confirmación usa `confirmation_attributes`: el navegador avisa si
 no coincide antes de enviar.
 
@@ -307,7 +314,11 @@ español (`shared/_flash`, con `role="alert"` y botón para cerrarla).
 Avisos y alertas salen como **toasts** abajo a la derecha, encima de la
 página (`toast_controller.js`, Fernando, 2026-10-12): entran deslizándose,
 se cierran con la ×, y un aviso se va solo a los 7 segundos (con barra de
-tiempo; se pausa con el puntero o el foco encima). Una alerta de error se
+tiempo; se pausa con el puntero o el foco encima). Viven en `#toasts`, al
+final del `<body>` y siempre presente: una página que vuelve a sí misma
+(morph tras un formulario) lo empareja por id; dibujados dentro de
+`<main>`, el aviso se mezclaba con el encabezado (Fernando, 2026-10-25).
+Una alerta de error se
 queda hasta cerrarla, para no perder su código de referencia. Los toasts
 están **siempre encima de modales y de la guía de ayuda**, y se pueden usar
 ahí: son un popover (capa superior del navegador) que vive dentro del
@@ -996,7 +1007,9 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   menos humedad y daño; uva × rendimiento), que guarda tara y neto y solo
   se recalcula si cambia una entrada. `weighing_calculator_controller.js`
   es la vista previa (y avisa, sin bloquear, si sale más que el
-  inventario). Etapas (`SalesLifecycle`): salió → pesada en destino →
+  inventario). La báscula local se escribe **en una cifra o por pesadas**,
+  como en compras (`ShipmentWeighing`, Fernando, 2026-10-25): por pesadas,
+  el bruto y los sacos son la suma y no se escriben. Etapas (`SalesLifecycle`): salió → pesada en destino →
   vendida → cobrada. Número correlativo con bloqueo consultivo.
 - **Diferencia entre básculas**: neto del comprador − neto local, en lb y
   %, en la salida, la venta, las listas y los reportes. Se **resalta** si
@@ -1052,7 +1065,16 @@ salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
 - **Libro único** (`MoneyMovements`, «Movimientos»): todo lo que entra y
   sale de todos los módulos, **sin duplicar** (cada cosa se registra donde
   ocurre). Cada quien ve las fuentes de los módulos que puede ver. Las
-  transferencias solo salen al elegir una cuenta. «Entradas y salidas de
+  transferencias solo salen al elegir una cuenta. Cada movimiento lleva
+  **fecha y hora** (su fecha a la hora en que se registró, `Movement#at`)
+  y la lista va de lo más reciente a lo más viejo; los filtros siguen por
+  día (Fernando, 2026-10-25).
+- **Consolidación** (`finance/consolidation`, Fernando, 2026-10-25): los
+  pagos y cobros de los otros módulos registrados sin cuenta, con filtros;
+  se marcan (o «Marcar todos») y se les da una cuenta, o **la de su forma
+  de pago** (los de planilla, sin forma de pago, esperan). Solo cambia la
+  cuenta, auditado como cambio del registro (`AccountConsolidation`); pide
+  editar en `finance`. «Entradas y salidas de
   dinero» (Reportería) lee de aquí, con filtro y agrupación por cuenta.
 - **Gastos e inversiones** (`Expense`): categoría **propia, de dos
   niveles** (`FinanceCategory`; las de Fincas siguen aparte), detalle,

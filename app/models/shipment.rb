@@ -25,6 +25,9 @@ class Shipment < ApplicationRecord
   MAX_SACKS = 10_000
   # What each side's calculation reads.
   INPUTS = %w[gross_weight sacks humidity_percent damage_percent yield_factor].freeze
+  # The local scale: the gross weight and sacks typed, or the sums of
+  # weighings (ShipmentWeighing), as in the purchases.
+  WEIGHT_MODES = Purchase::WEIGHT_MODES
 
   belongs_to :buyer
   belongs_to :created_by, class_name: "User"
@@ -32,12 +35,16 @@ class Shipment < ApplicationRecord
   has_many :sale_lines, dependent: :restrict_with_error
   has_one :active_sale_line, -> { where(active: true) }, class_name: "SaleLine", inverse_of: :shipment
   has_one :sale, through: :active_sale_line
+  has_many :weighings, -> { order(:id) }, class_name: "ShipmentWeighing", dependent: :destroy, inverse_of: :shipment
+  accepts_nested_attributes_for :weighings, allow_destroy: true, reject_if: :blank_weighing?
 
   normalizes :remission_number, :weight_note_number, :carrier_name, :vehicle_plate, with: ->(value) { value.squish.presence }
   normalizes :observations, with: FieldFormats::STRIP
 
   validates :departed_at, presence: true
   validates :coffee_state, inclusion: { in: Purchase::COFFEE_STATES }
+  validates :origin_weight_mode, inclusion: { in: WEIGHT_MODES }
+  validate :weighings_present, if: :by_weighings?
   validates :remission_number, :weight_note_number, :carrier_name, :vehicle_plate, length: { maximum: 60 }
   validates :observations, length: { maximum: 500 }
   validates :origin_gross_weight, numericality: { greater_than: 0, less_than: MAX_WEIGHT }
@@ -48,6 +55,8 @@ class Shipment < ApplicationRecord
   validate :buyer_active, if: :will_save_change_to_buyer_id?
   validate :not_sold, on: :update
 
+  # First: by weighings, the local gross weight and sacks come from them.
+  before_validation :sum_weighings
   before_validation :clear_unused_inputs
   before_validation -> { calculate("origin") }, if: -> { recalculate?("origin") }
   before_validation -> { calculate("destination") }, if: -> { recalculate?("destination") }
@@ -86,6 +95,10 @@ class Shipment < ApplicationRecord
   def received? = received_on.present?
   def sold? = active_sale_line.present?
   def cherry? = coffee_state == "cherry"
+  def by_weighings? = origin_weight_mode == "weighings"
+
+  # Weighings that stay after saving (the form may mark some for removal).
+  def kept_weighings = weighings.reject(&:marked_for_destruction?)
 
   def status
     if voided? then "voided"
@@ -133,6 +146,26 @@ class Shipment < ApplicationRecord
   end
 
   private
+    def blank_weighing?(attributes)
+      attributes["id"].blank? && attributes.values_at("gross_weight", "sacks").all?(&:blank?)
+    end
+
+    # By weighings, the local gross weight and sacks are their sums (never
+    # typed). Back to one figure, the old weighings are removed.
+    def sum_weighings
+      if by_weighings?
+        kept = kept_weighings
+        self.origin_gross_weight = kept.sum { |weighing| weighing.gross_weight.to_d }
+        self.origin_sacks = kept.sum { |weighing| weighing.sacks.to_i }
+      elsif will_save_change_to_origin_weight_mode?
+        weighings.each(&:mark_for_destruction)
+      end
+    end
+
+    def weighings_present
+      errors.add(:weighings, :blank) if kept_weighings.empty?
+    end
+
     def recalculate?(side)
       return false if side == "destination" && !destination_entered?
 

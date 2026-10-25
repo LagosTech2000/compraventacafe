@@ -103,6 +103,8 @@ Rails.application.routes.draw do
     resources :other_incomes, only: %i[ new create destroy ]
     resources :categories, only: %i[ index new create edit update ]
     resource :budget, only: %i[ show update ]
+    # Giving an account to what was registered without one.
+    resource :consolidation, only: %i[ show update ]
   end
 
   namespace :farms do

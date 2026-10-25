@@ -10,7 +10,7 @@
           <div class="min-w-0">
             <p class="font-medium"><%= row.description %></p>
             <p class="text-xs text-ink-muted">
-              <%= [ l(row.date), t("reports.types.cash_movements.sources.#{row.source}"), row.person, row.account_name || t("reports.types.cash_movements.no_account") ].compact.join(" · ") %>
+              <%= [ l(row.at), t("reports.types.cash_movements.sources.#{row.source}"), row.person, row.account_name || t("reports.types.cash_movements.no_account") ].compact.join(" · ") %>
             </p>
           </div>
           <% if (path = movement_path(row)) %><%= link_to t("finance.movements.open"), path, class: "btn btn-sm shrink-0", data: { row_link: true, turbo_frame: "_top" } %><% end %>
@@ -43,7 +43,7 @@
       <tbody>
         <% rows.each do |row| %>
           <tr id="<%= "movement_#{row.key}" %>">
-            <td class="whitespace-nowrap"><%= l(row.date) %></td>
+            <td class="whitespace-nowrap" data-sort-value="<%= row.at.iso8601 %>"><%= l(row.at) %></td>
             <td><span class="badge <%= row.amount_in.positive? ? "badge-success" : "badge-neutral" %>"><%= t("reports.types.cash_movements.sources.#{row.source}") %></span></td>
             <td><%= row.description %></td>
             <td class="hidden @5xl:table-cell"><%= row.person || "—" %></td>

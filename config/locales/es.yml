@@ -1189,6 +1189,8 @@ es:
         origin_help: "El peso del camión antes de salir."
         calculation: "Cálculo de la salida"
         sacks_help: "Los sacos contados: se descuenta 1 lb por saco."
+        from_weighings: "Suma de las pesadas."
+        weighings_help: "Cada pesada con su peso y los sacos contados; el peso bruto y los sacos son la suma."
         tare: "Tara (lb)"
         net: "Peso neto (lb)"
         quintals: "QQ (125 lb)"
@@ -1218,6 +1220,13 @@ es:
         origin: "Báscula local"
         destination: "Báscula del comprador"
         not_weighed: "Todavía no se ha pesado en destino."
+        weighings:
+          one: "Por pesadas: 1 pesada"
+          other: "Por pesadas: %{count} pesadas"
+        weighing: "Pesada %{number}"
+        weighing_sacks:
+          one: "1 saco"
+          other: "%{count} sacos"
         gross: "Peso bruto (lb)"
         sacks: "Sacos"
         received_on: "Pesada el %{date}"
@@ -1466,6 +1475,7 @@ es:
       expenses: "Gastos"
       investments: "Inversiones"
       accounts: "Cuentas"
+      consolidation: "Consolidación"
       budget: "Presupuesto"
       categories: "Categorías"
       new_expense: "Nuevo gasto"
@@ -1478,6 +1488,7 @@ es:
           other: "%{count} movimientos de este mes no tienen cuenta: no cuentan en ningún saldo."
         over_budget: "%{category} pasó su presupuesto del mes: %{spent} de %{budget}."
         see: "Ver"
+        consolidate: "Asignarles cuenta"
         accounts: "Dónde está el dinero"
         transfer: "Transferir entre cuentas"
         income: "Otro ingreso"
@@ -1507,7 +1518,7 @@ es:
       confirm_remove: "¿Quitar este movimiento? Cambia el saldo de su cuenta."
       balance: "Saldo"
       columns:
-        date: "Fecha"
+        date: "Fecha y hora"
         source: "Origen"
         description: "Detalle"
         person: "Persona o beneficiario"
@@ -1614,7 +1625,7 @@ es:
         balance: "Saldo de hoy"
         empty: "No hay cuentas con estos filtros."
         unassigned: "Registrado sin cuenta (no cuenta en ningún saldo): entró %{in} y salió %{out}."
-        see_unassigned: "Ver esos movimientos"
+        see_unassigned: "Asignarles cuenta en Consolidación"
       new:
         title: "Nueva cuenta"
       edit:
@@ -1677,6 +1688,36 @@ es:
         success: "Categoría registrada."
       update:
         success: "Categoría actualizada."
+    consolidations:
+      show:
+        title: "Consolidación"
+        help: "Los pagos y cobros de los módulos que se registraron sin cuenta. Asígnales una para que los saldos de las cuentas estén completos."
+        search_placeholder: "Detalle o persona"
+        count:
+          zero: "Ningún movimiento sin cuenta"
+          one: "1 movimiento sin cuenta"
+          other: "%{count} movimientos sin cuenta"
+        marked:
+          zero: "Ninguno marcado"
+          one: "1 marcado"
+          other: "%{count} marcados"
+        mark_all: "Marcar todos"
+        account: "Cuenta"
+        assign: "Asignar a los marcados"
+        confirm: "¿Asignar esta cuenta a los movimientos marcados? Cambia el saldo de la cuenta."
+        by_method: "Asignar la cuenta de su forma de pago"
+        by_method_help: "Con «la cuenta de su forma de pago», cada movimiento marcado toma la cuenta que se sugiere para su forma de pago (Cuentas → «Se sugiere para»); los que no tienen forma de pago (planillas) esperan."
+        payment_method: "Forma de pago"
+        empty: "No hay movimientos sin cuenta con estos filtros. ¡Todo consolidado!"
+      update:
+        pick_account: "Elige la cuenta que les vas a asignar."
+        success:
+          zero: "No se asignó ninguna cuenta."
+          one: "Se asignó la cuenta a 1 movimiento."
+          other: "Se asignó la cuenta a %{count} movimientos."
+        skipped:
+          one: "1 movimiento sin cuenta sugerida quedó pendiente."
+          other: "%{count} movimientos sin cuenta sugerida quedaron pendientes."
     budgets:
       show:
         title: "Presupuesto"
@@ -3519,6 +3560,7 @@ es:
           - "Los gastos e inversiones del negocio se registran aquí, con su categoría, cuenta y, si quieres, la foto o el PDF del comprobante."
           - "El dinero que entra fuera de los módulos va en «Otro ingreso»; el que pasa de una cuenta a otra, en «Transferir»."
           - "Movimientos muestra todo junto; al elegir una cuenta, el saldo después de cada movimiento."
+          - "Consolidación lista lo registrado sin cuenta para asignarle una, de uno en uno o varios a la vez."
         tips:
           - "Nada se registra dos veces: los pagos de los otros módulos se ven aquí, pero se registran donde ocurren."
           - "Lo registrado sin cuenta no cuenta en ningún saldo; aparece aparte en Cuentas."
@@ -4480,6 +4522,17 @@ es:
             steps:
               - "Escribe el nombre y elige el tipo."
               - "Para una subcategoría, elige su categoría de primer nivel."
+        consolidations:
+          show:
+            title: "Consolidación"
+            summary: "Los pagos y cobros de los otros módulos que se registraron sin cuenta, para asignarles una."
+            steps:
+              - "Filtra por fechas, origen o busca por detalle o persona."
+              - "Marca los movimientos (o «Marcar todos»)."
+              - "Elige la cuenta y toca «Asignar a los marcados», o toca «Asignar la cuenta de su forma de pago» para que cada uno tome la que se sugiere para su forma de pago."
+            tips:
+              - "Solo cambia la cuenta; el pago queda como estaba y el cambio queda en la auditoría."
+              - "Los gastos, inversiones, otros ingresos y transferencias siempre llevan cuenta: no salen aquí."
         budgets:
           show:
             title: "Presupuesto"
@@ -5011,6 +5064,7 @@ es:
         hauler_payment: "el pago a carrero"
         buyer: "el comprador"
         shipment: "la salida de camión"
+        shipment_weighing: "la pesada de la salida"
         sale: "la venta"
         sale_line: "la salida vendida"
         sale_payment: "el cobro de venta"
@@ -5354,6 +5408,9 @@ es:
       sale:
         one: "Venta"
         other: "Ventas"
+      shipment_weighing:
+        one: "Pesada de salida"
+        other: "Pesadas de salidas"
       sale_line:
         one: "Salida vendida"
         other: "Salidas vendidas"
@@ -5472,6 +5529,19 @@ es:
         one: "Configuración del sitio"
         other: "Configuración del sitio"
     attributes:
+      webauthn_credential:
+        user_id: "Usuario"
+        external_id: "Identificador"
+        public_key: "Llave pública"
+        sign_count: "Usos"
+        nickname: "Nombre del dispositivo"
+        last_used_at: "Último uso"
+      profile_photo:
+        owner_type: "Tipo de dueño"
+        owner_id: "Dueño"
+        data: "Imagen"
+        content_type: "Tipo de imagen"
+        byte_size: "Tamaño (bytes)"
       money_account:
         name: "Nombre"
         kind: "Tipo"
@@ -5485,6 +5555,9 @@ es:
         observations: "Observaciones"
         active: "Activa"
       finance_category:
+        budgets: "Presupuestos"
+        children: "Subcategorías"
+        expenses: "Gastos"
         name: "Nombre"
         kind: "Tipo"
         kind/expense: "Gasto"
@@ -5493,6 +5566,10 @@ es:
         parent_id: "Categoría de primer nivel"
         active: "Activa"
       expense:
+        created_by_id: "Registró"
+        money_account_id: "Cuenta"
+        receipt: "Comprobante"
+        receipt_info: "Comprobante"
         kind: "Tipo"
         kind/expense: "Gasto"
         kind/investment: "Inversión"
@@ -5510,10 +5587,16 @@ es:
         observations: "Observaciones"
         created_by: "Registró"
       expense_receipt:
+        data: "Archivo"
+        expense_id: "Gasto"
+        filename: "Nombre del archivo"
         expense: "Gasto"
         content_type: "Tipo de archivo"
         byte_size: "Tamaño"
       other_income:
+        created_by: "Registró"
+        created_by_id: "Registró"
+        money_account_id: "Cuenta"
         received_on: "Fecha"
         money_account: "Cuenta"
         concept: "Concepto"
@@ -5521,6 +5604,8 @@ es:
         payment_method: "Forma de pago"
         observations: "Observaciones"
       account_transfer:
+        created_by: "Registró"
+        created_by_id: "Registró"
         transferred_on: "Fecha"
         from_account: "De la cuenta"
         from_account_id: "De la cuenta"
@@ -5529,10 +5614,16 @@ es:
         amount: "Monto"
         observations: "Observaciones"
       budget:
+        finance_category_id: "Categoría"
         category: "Categoría"
         month: "Mes"
         amount: "Monto"
       buyer:
+        department_id: "Departamento"
+        municipality_id: "Municipio"
+        sale_payments: "Cobros"
+        sales: "Ventas"
+        shipments: "Salidas"
         name: "Nombre o razón social"
         kind: "Tipo"
         kind/exporter: "Exportador"
@@ -5550,6 +5641,12 @@ es:
         observations: "Observaciones"
         active: "Activo"
       shipment:
+        active_sale_line: "Venta activa"
+        buyer_id: "Comprador"
+        created_by_id: "Registró"
+        sale: "Venta"
+        sale_lines: "Ventas de la salida"
+        voided_by_id: "Anuló"
         number: "Número"
         buyer: "Comprador"
         created_by: "Registró"
@@ -5561,6 +5658,8 @@ es:
         vehicle_plate: "Placa del camión"
         observations: "Observaciones"
         origin_gross_weight: "Peso bruto local (lb)"
+        origin_weight_mode: "Forma de pesar"
+        weighings: "Pesadas"
         origin_sacks: "Sacos"
         origin_humidity_percent: "Humedad (%)"
         origin_damage_percent: "Daño (%)"
@@ -5583,6 +5682,11 @@ es:
         status/sold: "Vendida"
         status/voided: "Anulada"
       sale:
+        buyer_id: "Comprador"
+        created_by_id: "Registró"
+        payments: "Cobros"
+        shipments: "Salidas"
+        voided_by_id: "Anuló"
         number: "Número"
         buyer: "Comprador"
         created_by: "Registró"
@@ -5607,7 +5711,17 @@ es:
         voided_by: "Anuló"
         void_reason: "Motivo de la anulación"
         lines: "Salidas"
+      shipment_weighing:
+        shipment_id: "Salida"
+        shipment: "Salida"
+        gross_weight: "Peso de la pesada (lb)"
+        sacks: "Sacos de la pesada"
+      shipment/weighings:
+        gross_weight: "Peso de la pesada (lb)"
+        sacks: "Sacos de la pesada"
       sale_line:
+        sale_id: "Venta"
+        shipment_id: "Salida"
         sale: "Venta"
         shipment: "Salida"
         origin_net_weight: "Neto local"
@@ -5615,6 +5729,10 @@ es:
         amount: "Monto"
         active: "Activa"
       sale_payment:
+        created_by_id: "Registró"
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
+        sale_id: "Venta"
         sale: "Venta"
         amount: "Monto"
         paid_on: "Fecha"
@@ -5637,6 +5755,7 @@ es:
         user_id: "Imprimió"
         body: "Texto impreso"
       user:
+        webauthn_id: "Identificador de huellas"
         name: "Nombre completo"
         email_address: "Correo electrónico"
         password: "Contraseña"
@@ -5754,6 +5873,8 @@ es:
         paid_on: "Fecha de pago"
         total: "Total"
       invoice_payment:
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
         invoice: "Factura"
         invoice_id: "Factura"
         created_by_id: "Registró"
@@ -5767,6 +5888,8 @@ es:
         can_price: "Precio de la lata (L)"
         active: "Activo"
       hauler_payment:
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
         hauler: "Carrero"
         hauler_id: "Carrero"
         created_by_id: "Registró"
@@ -5791,6 +5914,8 @@ es:
       collaborator:
         person_id: "Persona"
       loan:
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
         person: "Persona"
         person_id: "Persona"
         created_by_id: "Registró"
@@ -5811,6 +5936,9 @@ es:
         status/overdue: "Vencido"
         status/paid_off: "Pagado"
       loan_payment:
+        payroll_payment_line_id: "Línea de planilla"
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
         loan: "Préstamo"
         loan_id: "Préstamo"
         created_by_id: "Registró"
@@ -5848,9 +5976,11 @@ es:
         area_value: "Extensión"
         area_unit: "Unidad de la extensión"
       expense_category:
+        expenses: "Gastos"
         name: "Nombre"
         active: "Activa"
       payroll:
+        expenses: "Gastos"
         farm: "Finca"
         farm_id: "Finca"
         name: "Nombre"
@@ -5914,6 +6044,8 @@ es:
         payroll_member_id: "Empleado"
         member: "Empleado"
       payroll_payment:
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
         payroll_id: "Planilla"
         period_starts_on: "Inicio del período"
         period_ends_on: "Fin del período"
@@ -5924,6 +6056,10 @@ es:
         observations: "Observaciones"
         created_by_id: "Registró"
       payroll_payment_line:
+        overtime_hours: "Horas extra"
+        overtime_hour_rate: "Valor de la hora extra"
+        extra_days: "Días extra"
+        overtime_amount: "Monto de extras"
         payroll_payment_id: "Pago de planilla"
         payroll_member_id: "Empleado"
         basis: "Forma de pago"
@@ -5933,6 +6069,10 @@ es:
         loans_amount: "A préstamos"
         net_amount: "Recibe"
       payroll_expense:
+        created_by: "Registró"
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
+        payroll: "Planilla"
         payroll_id: "Planilla"
         category: "Categoría"
         expense_category_id: "Categoría"
@@ -5946,6 +6086,7 @@ es:
         params: "Filtros"
         user_id: "Usuario"
       site_setting:
+        logo_data: "Imagen del logo"
         business_name: "Nombre del negocio"
         location: "Ubicación"
         rtn: "RTN del negocio"
@@ -6017,6 +6158,8 @@ es:
         shipment:
           sold: "La salida ya está en una venta: no se cambian su comprador, estado ni pesos. Anula la venta primero."
           attributes:
+            weighings:
+              blank: "faltan: agrega al menos una pesada"
             base:
               sold: "La salida ya está en una venta: no se cambian su comprador, estado ni pesos. Anula la venta primero."
             buyer:
@@ -6029,9 +6172,9 @@ es:
               partial_not_less: "El cobro parcial debe ser menor que el total; si cobras todo, elige «De contado»."
               has_payments: "La venta tiene cobros: quítalos antes de anularla."
             lines:
-              blank: "Elige al menos una salida."
-              unavailable: "Alguna salida ya no está disponible (se vendió, se anuló o es de otro comprador). Revisa la lista."
-              mixed_states: "Las salidas son de distintos estados del café: haz una venta por cada estado."
+              blank: "faltan: elige al menos una salida"
+              unavailable: "no están todas disponibles (alguna se vendió, se anuló o es de otro comprador): revisa la lista"
+              mixed_states: "son de distintos estados del café: haz una venta por cada estado"
         sale_payment:
           attributes:
             base:

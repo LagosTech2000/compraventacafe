@@ -11,6 +11,18 @@ RSpec.describe Shipment do
     expect(cherry.number).to eq(2)
   end
 
+  it "sums its weighings into the local gross weight and sacks, and drops them back in one figure" do
+    shipment = create(:shipment, origin_weight_mode: "weighings", origin_gross_weight: nil, origin_sacks: nil,
+                                 weighings_attributes: [ { gross_weight: 600, sacks: 4 }, { gross_weight: 400, sacks: 2 } ])
+    # (1,000 − 6) × 0.49
+    expect(shipment).to have_attributes(origin_gross_weight: 1_000, origin_sacks: 6, origin_net_weight: BigDecimal("487.06"))
+    expect(build(:shipment, origin_weight_mode: "weighings")).not_to be_valid
+
+    shipment.update!(origin_weight_mode: "single", origin_gross_weight: 500, origin_sacks: 3)
+    expect(shipment.weighings.reload).to be_empty
+    expect(shipment.origin_net_weight).to eq(BigDecimal("243.53")) # (500 − 3) × 0.49
+  end
+
   it "keeps its weights when nothing they come from changes" do
     shipment = create(:shipment)
     shipment.update_columns(origin_net_weight: 1)

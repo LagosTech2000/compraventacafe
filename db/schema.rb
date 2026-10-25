@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_24_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_25_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -713,6 +713,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_24_120000) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "shipment_weighings", force: :cascade do |t|
+    t.bigint "shipment_id", null: false
+    t.decimal "gross_weight", precision: 12, scale: 2, null: false
+    t.integer "sacks", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["shipment_id"], name: "index_shipment_weighings_on_shipment_id"
+  end
+
   create_table "shipments", force: :cascade do |t|
     t.integer "number", null: false
     t.bigint "buyer_id", null: false
@@ -745,6 +754,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_24_120000) do
     t.integer "lock_version", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "origin_weight_mode", default: "single", null: false
     t.index ["buyer_id"], name: "index_shipments_on_buyer_id"
     t.index ["created_by_id"], name: "index_shipments_on_created_by_id"
     t.index ["departed_at"], name: "index_shipments_on_departed_at"
@@ -900,6 +910,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_24_120000) do
   add_foreign_key "sales", "users", column: "voided_by_id"
   add_foreign_key "saved_reports", "users"
   add_foreign_key "sessions", "users"
+  add_foreign_key "shipment_weighings", "shipments"
   add_foreign_key "shipments", "buyers"
   add_foreign_key "shipments", "users", column: "created_by_id"
   add_foreign_key "shipments", "users", column: "voided_by_id"

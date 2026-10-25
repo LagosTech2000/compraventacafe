@@ -6,7 +6,7 @@ RSpec.describe "Finance policies" do
   end
 
   [ MoneyAccountPolicy, FinanceCategoryPolicy, ExpensePolicy, ExpenseReceiptPolicy, OtherIncomePolicy, AccountTransferPolicy,
-    Finance::HomePolicy, Finance::MovementPolicy, Finance::BudgetPolicy ].each do |policy|
+    Finance::HomePolicy, Finance::MovementPolicy, Finance::BudgetPolicy, Finance::ConsolidationPolicy ].each do |policy|
     it "#{policy} belongs to the finance module" do
       expect(policy.module_key).to eq("finance")
       expect(policy.new(create(:user), nil)).to forbid_action(:index)

@@ -83,6 +83,32 @@ RSpec.describe "Finance flow" do
     expect(Budget.count).to eq(0)
   end
 
+  it "gives an account to what was registered without one, chosen or by its payment method" do
+    create(:permission, user:, module_key: "trading", can_read: true)
+    create(:permission, user:, module_key: "loans", can_read: true)
+    box = create(:money_account, name: "Caja", default_for: %w[cash])
+    bank = create(:money_account, name: "Banco", kind: "bank")
+    invoice = create(:invoice)
+    cash = invoice.payments.create!(amount: 10, paid_on: Time.zone.today, payment_method: "cash", created_by: user)
+    check = invoice.payments.create!(amount: 10, paid_on: Time.zone.today, payment_method: "check", created_by: user)
+    loan = create(:loan, cash_amount: 500)
+
+    get finance_consolidation_path
+    expect(response.body).to include("3 movimientos sin cuenta", "Factura #{invoice.display_number}", "Préstamo #{loan.id}")
+
+    patch finance_consolidation_path, params: { by_method: "1", items: [ "invoices:#{cash.id}", "invoices:#{check.id}", "loans:#{loan.id}" ] }
+    expect(flash[:notice]).to include("Se asignó la cuenta a 2 movimientos.", "1 movimiento sin cuenta sugerida quedó pendiente.")
+    expect([ cash.reload.money_account, check.reload.money_account, loan.reload.money_account ]).to eq([ box, nil, box ])
+
+    patch finance_consolidation_path, params: { account_id: bank.id, items: [ "invoices:#{check.id}", "invoices:#{cash.id}" ] }
+    expect(check.reload.money_account).to eq(bank)
+    expect(cash.reload.money_account).to eq(box) # it already had one
+    expect(AuditEvent.where(auditable: check, action: "update").last.changeset).to include("money_account_id")
+
+    patch finance_consolidation_path, params: { items: [ "invoices:#{check.id}" ] }
+    expect(flash[:alert]).to eq("Elige la cuenta que les vas a asignar.")
+  end
+
   it "takes the account in every module's payments, suggested by the payment method" do
     create(:permission, user:, module_key: "trading", can_read: true, can_update: true)
     bank = create(:money_account, name: "Banco", kind: "bank", default_for: %w[transfer])

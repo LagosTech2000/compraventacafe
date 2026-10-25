@@ -10,12 +10,17 @@ import { Controller } from "@hotwired/stimulus"
 //   QQ = net ÷ 125
 //
 // Changing the coffee state swaps humidity and damage for the yield, with
-// the new state's defaults. With an `originNet` value (the destination
+// the new state's defaults. By weighings (the local scale, as in the
+// purchases), the gross weight and the sacks are the sums of the weighings
+// (read only); weighings are added from a <template>, a saved one is marked
+// for removal and a new one dropped. With an `originNet` value (the destination
 // form), it also shows the difference with the local scale and marks it
 // when it passes the tolerance.
 export default class extends Controller {
   static targets = ["coffeeState", "gross", "sacks", "humidity", "damage", "yield", "parchmentField", "cherryField",
-                    "tare", "net", "quintals", "difference", "differenceBox", "stockNotice"]
+                    "tare", "net", "quintals", "difference", "differenceBox", "stockNotice",
+                    "weightMode", "weighingsSection", "weighings", "weighingTemplate", "weighing",
+                    "weighingGross", "weighingSacks", "weighingDestroy", "sumHelp"]
   static values = { tarePerSack: Number, quintalWeight: Number, defaults: Object, coffeeState: String,
                     originNet: Number, tolerance: Number, stock: Object, stockMessage: String }
 
@@ -39,7 +44,39 @@ export default class extends Controller {
     this.update()
   }
 
+  changeWeightMode() {
+    const byWeighings = this.byWeighings()
+    this.weighingsSectionTarget.hidden = !byWeighings
+    if (this.hasSumHelpTarget) this.sumHelpTarget.hidden = !byWeighings
+    this.grossTarget.readOnly = byWeighings
+    this.sacksTarget.readOnly = byWeighings
+    this.weighingTargets.forEach((weighing) => this.enableWeighing(weighing, byWeighings))
+    if (byWeighings && !this.visibleWeighings().length) this.addWeighing()
+    else if (!byWeighings) this.grossTarget.focus()
+    this.update()
+  }
+
+  addWeighing() {
+    const html = this.weighingTemplateTarget.innerHTML.replace(/NEW_RECORD/g, String(Date.now()))
+    this.weighingsTarget.insertAdjacentHTML("beforeend", html)
+    this.weighingTargets[this.weighingTargets.length - 1].querySelector("input[type='number']")?.focus()
+    this.update()
+  }
+
+  removeWeighing(event) {
+    const weighing = event.target.closest("[data-weighing-calculator-target~='weighing']")
+    if (weighing.querySelector("input[name$='[id]']")) {
+      this.field(weighing, "weighingDestroy").value = "1"
+      weighing.hidden = true
+      this.enableWeighing(weighing, true)
+    } else {
+      weighing.remove()
+    }
+    this.update()
+  }
+
   update() {
+    if (this.byWeighings()) this.sumWeighings()
     const gross = parseFloat(this.grossTarget.value)
     const sacks = Math.trunc(parseFloat(this.sacksTarget.value))
     if (!(gross > 0) || !(sacks >= 0)) return this.show(null)
@@ -99,6 +136,44 @@ export default class extends Controller {
     const over = net !== null && available !== undefined && net > available
     this.stockNoticeTarget.hidden = !over
     if (over) this.stockNoticeTarget.textContent = this.stockMessageValue.replace("%{stock}", this.pounds.format(available))
+  }
+
+  byWeighings() {
+    return this.weightModeTargets.find((radio) => radio.checked)?.value === "weighings"
+  }
+
+  visibleWeighings() {
+    return this.weighingTargets.filter((weighing) => !weighing.hidden)
+  }
+
+  // The local gross weight and sacks are the sums of the weighings.
+  sumWeighings() {
+    let gross = 0
+    let sacks = 0
+    this.visibleWeighings().forEach((weighing) => {
+      gross += this.positive(this.field(weighing, "weighingGross").value)
+      sacks += Math.trunc(this.positive(this.field(weighing, "weighingSacks").value))
+    })
+    gross = Math.round(gross * 100) / 100
+    this.grossTarget.value = gross > 0 ? gross.toFixed(2) : ""
+    this.sacksTarget.value = sacks > 0 ? String(sacks) : ""
+  }
+
+  // A weighing marked for removal only sends its id and removal mark.
+  enableWeighing(weighing, enabled) {
+    weighing.querySelectorAll("input").forEach((input) => {
+      const keep = input.name.endsWith("[id]") || input.name.endsWith("[_destroy]")
+      input.disabled = !enabled || (weighing.hidden && !keep)
+    })
+  }
+
+  field(element, name) {
+    return element.querySelector(`[data-weighing-calculator-target~='${name}']`)
+  }
+
+  positive(value) {
+    const parsed = parseFloat(value)
+    return parsed > 0 ? parsed : 0
   }
 
   toggle(field, visible) {

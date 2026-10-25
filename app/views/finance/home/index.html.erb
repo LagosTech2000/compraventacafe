@@ -20,7 +20,7 @@
     <% if @without_account.positive? %>
       <li class="flash-notice flex flex-wrap items-center justify-between gap-3">
         <span><%= t(".without_account", count: @without_account) %></span>
-        <%= link_to t(".see"), finance_movements_path(account: MovementFilter::NONE), class: "btn btn-sm" %>
+        <%= link_to t(".consolidate"), finance_consolidation_path, class: "btn btn-sm" %>
       </li>
     <% end %>
     <% over_budget.each do |line| %>
@@ -141,7 +141,7 @@
           <li class="flex items-center justify-between gap-3 py-2">
             <span class="min-w-0">
               <span class="block truncate font-medium"><%= movement.description %></span>
-              <span class="block text-xs text-ink-muted"><%= l(movement.date) %> · <%= t("reports.types.cash_movements.sources.#{movement.source}") %></span>
+              <span class="block text-xs text-ink-muted"><%= l(movement.at) %> · <%= t("reports.types.cash_movements.sources.#{movement.source}") %></span>
             </span>
             <span class="shrink-0 font-semibold tabular-nums <%= movement.amount_in.positive? ? "text-success" : "" %>">
               <%= movement.amount_in.positive? ? "+#{format_money(movement.amount_in)}" : "−#{format_money(movement.amount_out)}" %>

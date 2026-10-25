@@ -61,7 +61,8 @@ RSpec.describe "Sorting every list" do
     MovementFilter => -> { finance_movements_path(from: "", to: "") },
     ExpenseFilter => -> { finance_expenses_path(from: "", to: "") },
     MoneyAccountFilter => -> { finance_money_accounts_path },
-    FinanceCategoryFilter => -> { finance_categories_path }
+    FinanceCategoryFilter => -> { finance_categories_path },
+    ConsolidationFilter => -> { finance_consolidation_path }
   }.freeze
 
   it "covers every list filter" do
@@ -77,7 +78,7 @@ RSpec.describe "Sorting every list" do
       expect(response).to have_http_status(:ok)
 
       table = page.css("table.data-table").find { |candidate| candidate.at_css("th a.sort-link") }
-      headers = table.css("thead th").reject { it["class"].to_s.include?("cell-actions") }
+      headers = table.css("thead th").reject { it["class"].to_s.match?(/cell-actions|cell-select/) }
       expect(headers).to all(satisfy { it.at_css("a.sort-link") }), "headers without sort: #{headers.reject { it.at_css("a.sort-link") }.map(&:text)}"
 
       filter_class.sortings.each_key do |key|

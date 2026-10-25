@@ -34,6 +34,30 @@ RSpec.describe "Sales screens", type: :system do
     expect(Shipment.last).to have_attributes(coffee_state: "cherry", origin_net_weight: BigDecimal("184.88"))
   end
 
+  it "weighs the truck by weighings, as a purchase" do
+    visit new_sales_shipment_path
+    select "Beneficio Henola", from: "shipment_buyer_id"
+    choose "Por pesadas"
+    expect(page).to have_field("shipment_origin_gross_weight", readonly: true)
+    within(all("[data-weighing-calculator-target='weighing']").last) do
+      fill_in "Peso de la pesada (lb)", with: "600"
+      fill_in "Sacos de la pesada", with: "4"
+    end
+    click_button "Agregar pesada"
+    within(all("[data-weighing-calculator-target='weighing']").last) do
+      fill_in "Peso de la pesada (lb)", with: "400"
+      fill_in "Sacos de la pesada", with: "2"
+    end
+    expect(page).to have_field("shipment_origin_gross_weight", with: "1000.00")
+    expect(page).to have_field("shipment_origin_sacks", with: "6")
+    expect(page).to have_css("[data-weighing-calculator-target='net']", text: "487.06")
+
+    click_button "Registrar salida"
+    expect(page).to have_text("Salida 0001 registrada")
+    expect(Shipment.last).to have_attributes(origin_weight_mode: "weighings", origin_gross_weight: 1_000, origin_sacks: 6)
+    expect(Shipment.last.weighings.map(&:gross_weight)).to eq([ 600, 400 ])
+  end
+
   it "shows the difference with the local scale while weighing at destination, marked over the tolerance" do
     SiteSetting.instance.update!(weight_tolerance_percent: 1)
     shipment = create(:shipment, buyer:)

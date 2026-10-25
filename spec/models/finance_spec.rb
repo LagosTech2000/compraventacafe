@@ -1,6 +1,7 @@
 require "rails_helper"
 
 RSpec.describe "Control financiero" do
+  include ActiveSupport::Testing::TimeHelpers
   describe MoneyMovements do
     it "puts together every module's money, each once, with its account" do
       bank = create(:money_account, kind: "bank")
@@ -20,6 +21,14 @@ RSpec.describe "Control financiero" do
                                        "expenses" => 1, "investments" => 1, "other_incomes" => 1, "transfers" => 2)
       expect(described_class.new(account: bank.id).all.map(&:source)).to contain_exactly("invoices", "expenses")
       expect(described_class.new(account: :none).all.map(&:source)).not_to include("transfers", "expenses")
+    end
+
+    it "gives each movement its date at the hour it was registered, and lists them by that moment" do
+      travel_to(Time.zone.local(2026, 10, 20, 15, 30)) { create(:other_income, concept: "Tarde", received_on: Date.new(2026, 10, 20)) }
+      travel_to(Time.zone.local(2026, 10, 21, 8, 5)) { create(:other_income, concept: "Mañana", received_on: Date.new(2026, 10, 20)) }
+      movements = described_class.new(range: Date.new(2026, 10, 20)..Date.new(2026, 10, 20)).all
+      expect(movements.map(&:description)).to eq(%w[Mañana Tarde])
+      expect(movements.map { it.at.strftime("%d %H:%M") }).to eq([ "20 08:05", "20 15:30" ])
     end
 
     it "only gives each user the sources of the modules they read" do
