@@ -1,7 +1,8 @@
 # Pays one period of an employee of the Planilla interna (Fernando,
 # 2026-10-24), all or nothing:
 #
-#   salary      the role's, in full (it can be changed when paying)
+#   salary      the employee's own or the role's, in full (it can be
+#               changed when paying)
 #   overtime    hours × the role's overtime hour rate
 #   goals       the bonus of each goal of the period marked met
 #   free bonus  an amount with its reason
@@ -42,7 +43,7 @@ class StaffPaymentIssuer
   # the preview of a period before paying it counts none).
   def estimate
     role = member.role
-    salary = number(@salary, role.salary)
+    salary = number(@salary, member.salary)
     hours = number(@overtime_hours, 0)
     rate = role.overtime_hour_rate
     met = goals.select { @met_goal_ids.include?(it.id) }

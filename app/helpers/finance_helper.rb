@@ -32,9 +32,18 @@ module FinanceHelper
   end
 
   # "L 6,000.00 quincenal"
-  def staff_salary(role)
+  # Of a role, or of an employee (their own salary if they have one).
+  def staff_salary(role_or_member)
+    role = role_or_member.is_a?(StaffMember) ? role_or_member.role : role_or_member
     return t("finance.staff_roles.no_salary") unless role.priced?
 
-    t("finance.staff_roles.salary_per", amount: format_money(role.salary), frequency: role.human_pay_frequency.downcase)
+    t("finance.staff_roles.salary_per", amount: format_money(role_or_member.salary), frequency: role.human_pay_frequency.downcase)
+  end
+
+  # The salary in an employee's row: theirs (marked «propio») or the role's.
+  def staff_member_salary(member)
+    return tag.span(t("finance.staff_roles.no_salary"), class: "badge badge-warning") unless member.salary
+
+    safe_join([ format_money(member.salary), (tag.span(t("finance.staff_members.own_salary"), class: "badge badge-neutral") if member.own_salary?) ].compact, " ")
   end
 end

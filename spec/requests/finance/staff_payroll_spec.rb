@@ -101,10 +101,18 @@ RSpec.describe "Finance staff payroll" do
     get finance_staff_roles_path
     expect(page.at_css("#staff_role_#{role.id}").text.squish).to include("L 7,000.00", "Mensual")
 
-    member = create(:staff_member)
+    member = create(:staff_member, role:)
     get edit_finance_staff_member_path(member)
-    patch finance_staff_member_path(member), params: { staff_member: { active: "0", ends_on: "2026-10-31" } }
-    expect(member.reload).to have_attributes(active: false, ends_on: Date.new(2026, 10, 31))
+    expect(response.body).to include("Salario propio (L)")
+    patch finance_staff_member_path(member), params: { staff_member: { salary_override: "8000" } }
+    expect(member.reload.salary).to eq(8_000)
+    get finance_staff_members_path
+    expect(page.at_css("#staff_member_#{member.id}").text.squish).to include("L 8,000.00 propio")
+    get new_finance_staff_member_staff_payment_path(member)
+    expect(response.body).to include("Su salario propio")
+
+    patch finance_staff_member_path(member), params: { staff_member: { active: "0", ends_on: "2026-10-31", salary_override: "" } }
+    expect(member.reload).to have_attributes(active: false, ends_on: Date.new(2026, 10, 31), salary_override: nil)
 
     unused = create(:staff_role)
     delete finance_staff_role_path(unused)

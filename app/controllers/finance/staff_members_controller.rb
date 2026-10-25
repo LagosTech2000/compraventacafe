@@ -53,7 +53,7 @@ module Finance
       end
 
       def member_params
-        params.expect(staff_member: [ :person_id, :staff_role_id, :starts_on, :ends_on, :active, :observations ])
+        params.expect(staff_member: [ :person_id, :staff_role_id, :salary_override, :starts_on, :ends_on, :active, :observations ])
       end
   end
 end

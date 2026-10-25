@@ -1137,7 +1137,10 @@ salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
     o ninguna, `StaffRole#priced?`) y nadie de ese rol tiene períodos por
     pagar hasta llenarlos (Fernando, 2026-10-24).
   - **Empleados** (`StaffMember`): una persona con rol Colaborador, una
-    vez, en un rol, desde una fecha (fin opcional); se desactivan. Sus
+    vez, en un rol, desde una fecha (fin opcional); se desactivan. Puede
+    tener **salario propio** (`salary_override`, Fernando, 2026-10-24: dos
+    choferes del mismo rol con pago distinto), que manda sobre el del rol;
+    la frecuencia y la hora extra siguen siendo las del rol. Sus
     períodos siguen la frecuencia del rol; los pagados se quedan.
   - **Anticipos** (`StaffAdvance`): salen de la cuenta el día que se dan y
     se restan **completos del pago del período** que tiene esa fecha.

@@ -31,7 +31,7 @@
             <%= form.label :salary, StaffPayment.human_attribute_name(:salary), class: "field-label" %>
             <%= form.number_field :salary, value: estimate.salary.to_s("F"), required: true, min: 0, step: 0.01, inputmode: "decimal",
                   class: "field-input text-lg", data: { staff_payment_target: "salary", action: "staff-payment#update" } %>
-            <p class="mt-1 text-xs text-ink-muted"><%= t(".salary_help", salary: staff_salary(role)) %></p>
+            <p class="mt-1 text-xs text-ink-muted"><%= t(@member.own_salary? ? ".own_salary_help" : ".salary_help", salary: staff_salary(@member)) %></p>
           </div>
           <div>
             <%= form.label :overtime_hours, StaffPayment.human_attribute_name(:overtime_hours), class: "field-label" %>

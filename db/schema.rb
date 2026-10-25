@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_25_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_25_190000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -820,6 +820,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_180000) do
     t.text "observations"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "salary_override", precision: 12, scale: 2
     t.index ["person_id"], name: "index_staff_members_on_person_id", unique: true
     t.index ["staff_role_id"], name: "index_staff_members_on_staff_role_id"
   end

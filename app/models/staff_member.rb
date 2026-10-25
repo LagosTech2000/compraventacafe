@@ -1,5 +1,8 @@
 # An employee of the business's own payroll (Planilla interna): a person
 # with the collaborator role, in one role (StaffRole), from a date. Their
+# salary is their own if they have one (Fernando, 2026-10-24: same role,
+# different pay), otherwise their role's; the frequency and the overtime
+# hour rate are always the role's. Their
 # periods follow the role's frequency (PayPeriod, the same as Fincas): paid
 # ones stay as they were paid, the next ones follow the role. Each period is
 # paid once, in order (StaffPaymentIssuer): the role's salary, overtime,
@@ -20,6 +23,7 @@ class StaffMember < ApplicationRecord
 
   validates :person_id, uniqueness: true
   validates :starts_on, presence: true
+  validates :salary_override, numericality: { greater_than: 0, less_than: StaffRole::MAX_AMOUNT }, allow_nil: true
   validates :observations, length: { maximum: 500 }
   validate :person_is_collaborator, if: :will_save_change_to_person_id?
   validate :role_active, if: :will_save_change_to_staff_role_id?
@@ -32,6 +36,10 @@ class StaffMember < ApplicationRecord
   delegate :pay_frequency, to: :role
 
   def audit_label = person&.full_name
+
+  # What a period pays: their own salary, or their role's.
+  def salary = salary_override || role&.salary
+  def own_salary? = salary_override.present?
 
   # Its periods that have started by `through`, oldest first (PayPeriod);
   # none while its role has no salary.

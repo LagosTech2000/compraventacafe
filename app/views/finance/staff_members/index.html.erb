@@ -69,7 +69,7 @@
                   <%= avatar(member.person) %>
                   <div class="min-w-0">
                     <p class="font-medium"><%= member.full_name %></p>
-                    <p class="text-xs text-ink-muted"><%= member.role.name %> · <%= staff_salary(member.role) %></p>
+                    <p class="text-xs text-ink-muted"><%= member.role.name %> · <%= staff_salary(member) %></p>
                   </div>
                 </div>
                 <%= link_to t(".open"), finance_staff_member_path(member), class: "btn btn-sm shrink-0", data: { row_link: true } %>
@@ -104,7 +104,7 @@
                   <td><%= member.role.name %></td>
                   <td class="hidden @5xl:table-cell"><%= member.role.human_pay_frequency || "—" %></td>
                   <td class="whitespace-nowrap text-right tabular-nums">
-                    <%= member.role.salary ? format_money(member.role.salary) : tag.span(t("finance.staff_roles.no_salary"), class: "badge badge-warning") %>
+                    <%= staff_member_salary(member) %>
                   </td>
                   <td class="hidden whitespace-nowrap @5xl:table-cell"><%= l(member.starts_on) %></td>
                   <td class="whitespace-nowrap">

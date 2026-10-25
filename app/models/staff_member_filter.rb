@@ -9,7 +9,7 @@ class StaffMemberFilter < ListFilter
   sorts name: { sql: text("people.first_names", "people.last_names"), joins: :person },
         role: { sql: text("staff_roles.name"), joins: :role },
         pay_frequency: { sql: "staff_roles.pay_frequency", joins: :role },
-        salary: { sql: "staff_roles.salary", joins: :role },
+        salary: { sql: "COALESCE(staff_members.salary_override, staff_roles.salary)", joins: :role },
         starts_on: "staff_members.starts_on",
         next_period: { ruby: ->(member) { member.period_to_pay&.starts_on } }
 

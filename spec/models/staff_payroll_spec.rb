@@ -102,6 +102,19 @@ RSpec.describe "Planilla interna" do
     expect(loader.reload.period_to_pay.starts_on).to eq(Date.new(2026, 10, 1))
   end
 
+  it "pays an employee's own salary over the role's, with the role's frequency and overtime rate" do
+    driver = create(:staff_member, role:, starts_on: Date.new(2026, 10, 1), salary_override: 7_000)
+    other = create(:staff_member, role:, starts_on: Date.new(2026, 10, 1))
+    expect([ driver.salary, other.salary ]).to eq([ 7_000, 6_000 ])
+    expect(driver.period_to_pay).to eq(other.period_to_pay)
+
+    issuer = StaffPaymentIssuer.new(member: driver, period: driver.period_to_pay, user:, overtime_hours: "2", payment_method: "cash",
+                                    money_account_id: account.id)
+    expect(issuer.call).to be(true)
+    expect(issuer.payment).to have_attributes(salary: 7_000, overtime_amount: 100, net_total: 7_100)
+    expect(build(:staff_member, salary_override: 0)).not_to be_valid
+  end
+
   it "takes a collaborator once, in an active role" do
     expect(build(:staff_member, person: create(:person, :client))).not_to be_valid
     expect(build(:staff_member, person: member.person)).not_to be_valid

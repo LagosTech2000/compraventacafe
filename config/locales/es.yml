@@ -1551,6 +1551,7 @@ es:
           one: "1 movimiento"
           other: "%{count} movimientos"
     staff_members:
+      own_salary: "propio"
       statuses:
         active: "Activos"
         inactive: "Desactivados"
@@ -1625,6 +1626,8 @@ es:
         new_person: "¿No está? Registrar persona"
         pick_role: "Selecciona un rol"
         role_help: "El rol dice su salario, cada cuánto se le paga y el valor de su hora extra."
+        salary_override_placeholder: "El del rol"
+        salary_override_help: "Opcional: si gana distinto que su rol (por ejemplo, un chofer 7,000 y otro 8,000). Manda sobre el salario del rol; la frecuencia y la hora extra siguen siendo las del rol."
         new_role: "Nuevo rol"
         ends_on_help: "Opcional: el último día que trabajó."
         active: "Activo (sale en la planilla)"
@@ -1699,6 +1702,7 @@ es:
         no_salary: "El rol %{role} todavía no tiene salario: ponlo en «Editar rol» para poder pagar."
         earned: "Lo ganado"
         salary_help: "El del rol: %{salary}. Se puede cambiar para este pago."
+        own_salary_help: "Su salario propio: %{salary}. Se puede cambiar para este pago."
         overtime_help: "Cada hora a %{rate}."
         no_overtime_rate: "El rol no tiene valor de la hora extra: defínelo en el rol para anotar horas."
         goals: "Metas y bonos"
@@ -4738,6 +4742,7 @@ es:
             steps:
               - "Escribe el nombre del colaborador y elígelo de la lista. Si no existe, regístralo con «¿No está? Registrar persona»."
               - "Elige su rol: dice su salario, cada cuánto se le paga y el valor de su hora extra."
+              - "Si gana distinto que su rol, escribe su salario propio: manda sobre el del rol."
               - "Revisa la fecha de inicio: su primer período empieza ese día."
               - "Toca el botón de guardar."
             tips:
@@ -4782,7 +4787,7 @@ es:
             title: "Pagar un período"
             summary: "Lo que se le paga al empleado por el período que sigue: salario, horas extra y bonos, menos sus anticipos."
             steps:
-              - "Revisa el salario: es el del rol y se puede cambiar para este pago."
+              - "Revisa el salario: es su salario propio o, si no tiene, el del rol; se puede cambiar para este pago."
               - "Anota las horas extra, si el rol tiene valor de la hora."
               - "Marca las metas que cumplió y, si quieres, agrega un bono con su motivo."
               - "Revisa los anticipos del período: se restan completos."
@@ -5926,6 +5931,7 @@ es:
         person_id: "Empleado"
         role: "Rol"
         staff_role_id: "Rol"
+        salary_override: "Salario propio (L)"
         starts_on: "Fecha de inicio"
         ends_on: "Fecha de salida"
         active: "Activo"
