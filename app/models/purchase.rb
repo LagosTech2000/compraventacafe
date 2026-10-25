@@ -9,6 +9,9 @@ class Purchase < ApplicationRecord
   # The gross weight is typed in one figure, or is the sum of weighings
   # (PurchaseWeighing), each with the sacks counted on the scale.
   WEIGHT_MODES = %w[single weighings].freeze
+  # Kinds of damage of a parchment purchase with damage above 0: at least
+  # one (Fernando, 2026-10-24).
+  DAMAGE_TYPES = %w[yellow borer green pulp peeled].freeze
   # What the calculation reads. Results are recalculated only when one of
   # these changes, so a stored purchase keeps its numbers if the rule changes.
   # By weighings, the counted sacks are an input too.
@@ -19,7 +22,7 @@ class Purchase < ApplicationRecord
   # Optional: one of its producer's farms.
   belongs_to :farm, optional: true
   # Optional: the carrero who hauled it (Hauler). Their commission is
-  # calculated with their percent and can price of that moment, kept here.
+  # calculated with their price per pound of that moment, kept here.
   belongs_to :hauler, optional: true
   belongs_to :invoice, optional: true
   belongs_to :created_by, class_name: "User"
@@ -50,12 +53,14 @@ class Purchase < ApplicationRecord
   validate :voided_not_invoiced
   validate :hauler_active, if: :will_save_change_to_hauler_id?
   validate :hauler_commission_not_paid_out
+  validate :damage_types_chosen, if: -> { new_record? || will_save_change_to_damage_percent? || will_save_change_to_damage_types? }
 
   # First: by weighings, the gross weight and sacks come from them.
   before_validation :sum_weighings
   before_validation :clear_unused_inputs, if: :recalculate?
   before_validation :calculate, if: :recalculate?
   before_validation :assign_season
+  before_validation :settle_damage_types
   # After the calculation: it needs the net weight.
   before_validation :apply_hauler_commission
 
@@ -119,6 +124,13 @@ class Purchase < ApplicationRecord
     PurchaseCalculation.quintals(net_weight) if net_weight
   end
 
+  def damaged? = !cherry? && damage_percent.to_d.positive?
+
+  # "Amarillo, Broca".
+  def human_damage_types
+    damage_types.map { self.class.human_attribute_name("damage_types/#{it}") }.join(", ").presence
+  end
+
   def human_coffee_state
     self.class.human_attribute_name("coffee_state/#{coffee_state}")
   end
@@ -176,6 +188,15 @@ class Purchase < ApplicationRecord
       end
     end
 
+    # Only with damage; the known kinds, once each.
+    def settle_damage_types
+      self.damage_types = damaged? ? Array(damage_types).compact_blank.uniq & DAMAGE_TYPES : []
+    end
+
+    def damage_types_chosen
+      errors.add(:damage_types, :choose_at_least_one) if damaged? && damage_types.empty?
+    end
+
     def weighings_present
       errors.add(:weighings, :blank) if kept_weighings.empty?
     end
@@ -207,21 +228,26 @@ class Purchase < ApplicationRecord
       self.total = calculation.total
     end
 
-    # Chosen (or changed), the hauler's percent and can price of now are
-    # kept; the commission follows the net weight with them. Without a
-    # hauler, nothing.
+    # Chosen (or changed), the hauler's price per pound of now is kept; the
+    # commission follows the net weight with it. A purchase from before
+    # 2026-10-24 keeps its cans, can price and percent. Without a hauler,
+    # nothing.
     def apply_hauler_commission
       if hauler.nil?
-        self.hauler_commission_percent = self.hauler_can_price = self.hauler_cans = self.hauler_commission = nil
+        self.hauler_price_per_pound = self.hauler_commission_percent = self.hauler_can_price = self.hauler_cans = self.hauler_commission = nil
         return
       end
       if new_record? || will_save_change_to_hauler_id?
-        self.hauler_commission_percent = hauler.commission_percent
-        self.hauler_can_price = hauler.can_price
+        self.hauler_price_per_pound = hauler.price_per_pound
+        self.hauler_commission_percent = self.hauler_can_price = self.hauler_cans = nil
       end
       return unless net_weight && (new_record? || will_save_change_to_hauler_id? || will_save_change_to_net_weight? || hauler_commission.nil?)
 
-      self.hauler_cans, self.hauler_commission = Hauler.commission(net_weight:, percent: hauler_commission_percent, can_price: hauler_can_price)
+      if hauler_price_per_pound
+        self.hauler_commission = Hauler.commission(net_weight:, price_per_pound: hauler_price_per_pound)
+      else
+        self.hauler_cans, self.hauler_commission = Hauler.can_commission(net_weight:, percent: hauler_commission_percent, can_price: hauler_can_price)
+      end
     end
 
     def hauler_active

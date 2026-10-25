@@ -4,6 +4,10 @@
 #
 # A loan can be cash, supplies (fertilizer...) or both: its principal is the
 # cash plus the value of its supply lines, and interest runs on all of it.
+#
+# Lent to an intermediary (a producer of that kind), it can be marked so its
+# first GRACE_DAYS days bring no interest (Fernando, 2026-10-24); from day
+# 11 the interest runs as usual.
 class Loan < ApplicationRecord
   include Auditable
   include HasMoneyAccount
@@ -13,6 +17,7 @@ class Loan < ApplicationRecord
   STATUSES = %w[active overdue paid_off].freeze
   KINDS = %w[cash supplies mixed].freeze
   MAX_AMOUNT = 10_000_000
+  GRACE_DAYS = 10
 
   belongs_to :person
   belongs_to :created_by, class_name: "User"
@@ -29,6 +34,7 @@ class Loan < ApplicationRecord
   validates :disbursed_on, :due_on, presence: true
   validates :observations, length: { maximum: 500 }
   validate :due_on_not_before_disbursement
+  validate :grace_for_intermediaries, if: -> { interest_grace? && (will_save_change_to_interest_grace? || will_save_change_to_person_id?) }
 
   before_validation :compute_principal
 
@@ -51,6 +57,11 @@ class Loan < ApplicationRecord
 
   def audit_label
     "#{self.class.model_name.human} #{id} · #{person.full_name}"
+  end
+
+  # The day its interest starts to count, with the grace of an intermediary.
+  def interest_starts_on
+    interest_grace? ? disbursed_on + GRACE_DAYS : disbursed_on
   end
 
   # Days from the loan's date to its due date.
@@ -122,6 +133,10 @@ class Loan < ApplicationRecord
 
     def something_lent
       errors.add(:base, :nothing_lent) unless principal.to_d.positive?
+    end
+
+    def grace_for_intermediaries
+      errors.add(:interest_grace, :only_intermediaries) unless person&.intermediary?
     end
 
     def due_on_not_before_disbursement

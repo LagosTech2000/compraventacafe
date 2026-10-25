@@ -30,6 +30,8 @@ class Person < ApplicationRecord
   has_one :hauler, dependent: :restrict_with_error, autosave: true
   has_many :loans, dependent: :restrict_with_error
   has_many :payroll_members, dependent: :restrict_with_error
+  # In the business's own payroll (Planilla interna), once.
+  has_one :staff_member, dependent: :restrict_with_error
   has_many :private_document_prints, dependent: :restrict_with_error
 
   normalizes :first_names, :last_names, :civil_status, :nationality, with: ->(value) { value.squish.presence }
@@ -44,7 +46,7 @@ class Person < ApplicationRecord
   validates :email, field_format: :email, length: { maximum: 254 }
   validates :civil_status, :nationality, field_format: :person_name, length: { maximum: 100 }
   validate :role_chosen, if: :roles_from_form
-  validate :producer_removable, :hauler_removable
+  validate :producer_removable, :hauler_removable, :collaborator_removable
 
   scope :alphabetical, -> { order(:last_names, :first_names) }
   scope :search, ->(term) {
@@ -120,15 +122,19 @@ class Person < ApplicationRecord
 
   def producer_kind = producer&.kind || @producer_kind || "producer"
 
-  # A new hauler's commission percent and can price, from the form (both
-  # required); an existing hauler edits them in its own form.
-  %i[commission_percent can_price].each do |field|
+  # A new hauler's price per pound, from the form (required); an existing
+  # hauler edits it in its own form.
+  %i[price_per_pound].each do |field|
     define_method(:"hauler_#{field}=") do |value|
       instance_variable_set(:"@hauler_#{field}", value.presence)
       hauler.public_send(:"#{field}=", value.presence) if hauler&.new_record?
     end
     define_method(:"hauler_#{field}") { hauler ? hauler.public_send(field) : instance_variable_get(:"@hauler_#{field}") }
   end
+
+  # A producer of the intermediary kind (its loans can have 10 days without
+  # interest).
+  def intermediary? = producer.present? && producer.kind == "intermediary"
 
   # Has the role, and it is not being removed.
   def role?(role)
@@ -154,7 +160,7 @@ class Person < ApplicationRecord
     def role_defaults(role)
       case role
       when :producer then { kind: producer_kind }
-      when :hauler then { commission_percent: @hauler_commission_percent, can_price: @hauler_can_price }
+      when :hauler then { price_per_pound: @hauler_price_per_pound }
       else {}
       end
     end
@@ -176,5 +182,10 @@ class Person < ApplicationRecord
       return unless hauler&.marked_for_destruction? && hauler.in_use?
 
       errors.add(:base, :hauler_in_use)
+    end
+
+    # An employee of the Planilla interna stays a collaborator.
+    def collaborator_removable
+      errors.add(:base, :staff_member) if collaborator&.marked_for_destruction? && staff_member
     end
 end

@@ -268,7 +268,7 @@ RSpec.describe "Trading purchase flow" do
     end
   end
 
-  it "shows on the invoice what damage took off, in pounds and lempiras" do
+  it "shows on the invoice what damage took off in pounds, not in lempiras" do
     producer = create(:producer, zone:)
     purchase = create(:purchase, producer:, gross_weight: 146, humidity_percent: 51, damage_percent: 2.5, price_per_pound: 58)
     get new_trading_invoice_path(producer_id: producer.id)
@@ -277,9 +277,10 @@ RSpec.describe "Trading purchase flow" do
     post trading_invoices_path, params: { producer_id: producer.id, invoice: { purchase_ids: [ purchase.id ], payment_status: "pending" } }
     get trading_invoice_path(Invoice.last)
     receipt = Nokogiri::HTML(response.body).at_css("article")
-    expect(receipt.at_css("thead").text).to include("Daño (lb)", "Daño (L)")
-    expect(receipt.at_css("tbody tr").text.squish).to include("1.78 2.50 % L 103.24")
-    expect(receipt.at_css("tfoot").text.squish).to include("1.78 L 103.24")
+    expect(receipt.at_css("thead").text).to include("Daño (lb)")
+    expect(receipt.at_css("thead").text).not_to include("Daño (L)")
+    expect(receipt.at_css("tbody tr").text.squish).to include("1.78 2.50 %")
+    expect(receipt.text).not_to include("L 103.24")
   end
 
   it "shows the QQ of each purchase and of the whole invoice, also in the list" do
@@ -514,7 +515,7 @@ RSpec.describe "Trading purchase flow" do
       producer = create(:producer)
       post trading_purchases_path, headers: { "Turbo-Frame" => "modal" }, params: {
         purchase: { producer_id: producer.id, purchased_at: Time.zone.today, coffee_state: "wet_parchment",
-                    gross_weight: "146", humidity_percent: "51", damage_percent: "2", price_per_pound: "58" }
+                    gross_weight: "146", humidity_percent: "51", damage_percent: "2", damage_types: [ "", "yellow" ], price_per_pound: "58" }
       }
       result = Nokogiri::HTML(response.body).at_css("turbo-frame#modal [data-controller='modal-result']")
       expect(result["data-modal-result-refresh-value"]).to eq("true")

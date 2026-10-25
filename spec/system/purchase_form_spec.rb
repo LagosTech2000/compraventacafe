@@ -36,6 +36,21 @@ RSpec.describe "Purchase form preview", type: :system do
     expect(figures).to include("damageWeight" => "0.00", "damageAmount" => "L 0.00", "quintals" => "3.89", "total" => "L 29,194.20")
   end
 
+  it "asks for the kind of damage only when the damage is above 0" do
+    expect(page).to have_no_css("legend", text: "Tipo de daño")
+    fill_in "purchase_damage_percent", with: "2"
+    expect(page).to have_css("legend", text: "Tipo de daño")
+    expect(page.evaluate_script("document.getElementById('purchase_damage_types_yellow').validationMessage")).to eq("Elige al menos un tipo de daño.")
+
+    find("label", text: "Broca").click
+    find("label", text: "Pulpa").click
+    expect(page.evaluate_script("document.getElementById('purchase_damage_types_yellow').validationMessage")).to eq("")
+    expect(page).to have_checked_field("purchase_damage_types_borer", visible: :all)
+
+    fill_in "purchase_damage_percent", with: "0"
+    expect(page).to have_no_css("legend", text: "Tipo de daño")
+  end
+
   it "keeps sacks and tare while the humidity is missing" do
     fill_in "purchase_gross_weight", with: "1000"
     fill_in "purchase_humidity_percent", with: ""

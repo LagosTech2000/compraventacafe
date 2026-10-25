@@ -1,15 +1,8 @@
-<%# A hauler's commission percent and can price (both required): in the
-    hauler's form and, for a new hauler, in the person's form. `percent` and
-    `price` are the attributes; `model` the class whose names and formats
-    they take. %>
+<%# A hauler's price per net pound (required): in the hauler's form and, for
+    a new hauler, in the person's form. `price` is the attribute. %>
 <div>
-  <%= form.label percent, model.human_attribute_name(:commission_percent), class: "field-label" %>
-  <%= form.number_field percent, required: true, min: 0.01, max: 100, step: 0.01, inputmode: "decimal", class: "field-input tabular-nums",
-        placeholder: "10", data: { missing_message: "#{Hauler.human_attribute_name(:commission_percent)} #{t("errors.messages.blank")}" } %>
-</div>
-<div>
-  <%= form.label price, model.human_attribute_name(:can_price), class: "field-label" %>
-  <%= form.number_field price, required: true, min: 0.01, max: Hauler::MAX_CAN_PRICE - 0.01, step: 0.01, inputmode: "decimal",
-        class: "field-input tabular-nums", placeholder: "0.00",
-        data: { missing_message: "#{Hauler.human_attribute_name(:can_price)} #{t("errors.messages.blank")}" } %>
+  <%= form.label price, Hauler.human_attribute_name(:price_per_pound), class: "field-label" %>
+  <%= form.number_field price, required: true, min: 0.0001, max: Hauler::MAX_PRICE_PER_POUND - 0.0001, step: 0.0001, inputmode: "decimal",
+        class: "field-input tabular-nums", placeholder: "0.30",
+        data: { missing_message: "#{Hauler.human_attribute_name(:price_per_pound)} #{t("errors.messages.blank")}" } %>
 </div>

@@ -61,8 +61,7 @@
     <div class="min-w-0">
       <h2 id="purchase-hauler" class="text-sm font-semibold"><%= t(".hauled_by", name: hauler.full_name) %></h2>
       <p class="mt-1 text-sm text-ink-muted">
-        <%= t(".hauler_commission", cans: format_cans(@purchase.hauler_cans), price: format_money(@purchase.hauler_can_price),
-                                    percent: format_percent(@purchase.hauler_commission_percent)) %>
+        <%= t(".hauler_commission", terms: hauler_terms(@purchase)) %>
         <strong class="text-ink tabular-nums"><%= format_money(@purchase.hauler_commission) %></strong>
       </p>
       <p class="mt-1 text-xs text-ink-muted"><%= t(".hauler_paid_apart") %></p>
@@ -80,7 +79,7 @@
                 { yield_factor: @purchase.yield_factor && number_with_precision(@purchase.yield_factor, precision: 4, strip_insignificant_zeros: true) }
               else
                 { humidity_percent: format_pounds(@purchase.humidity_percent), damage_percent: format_pounds(@purchase.damage_percent),
-                  damage_weight: format_pounds(@purchase.damage_weight), damage_amount: (format_money(@purchase.damage_amount) if @purchase.damage_amount) }
+                  damage_types: @purchase.human_damage_types, damage_weight: format_pounds(@purchase.damage_weight), damage_amount: (format_money(@purchase.damage_amount) if @purchase.damage_amount) }
               end %>
   <% {
        purchased_at: l(@purchase.purchased_at, format: :long), season_year: format_season(@purchase.season),

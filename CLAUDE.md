@@ -76,7 +76,9 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Reportería | `reports` |
 | Productor / intermediario / finca propia | `Producer` (`kind`: `producer` / `intermediary` / `own_farm`) |
 | Carrero (rol de persona: trae el café con los carros del negocio y gana comisión) / pago a carrero | `Hauler` / `HaulerPayment` (`trading/hauler_payments#show` = recibo) |
-| Lata (16.5 lb netas) / precio de la lata / comisión del carrero | `Hauler::CAN_POUNDS` / `Hauler#can_price` / `Hauler#commission_percent`; en la compra `hauler_cans`, `hauler_commission` |
+| Precio por libra neta del carrero / comisión del carrero | `Hauler#price_per_pound`; en la compra `hauler_price_per_pound`, `hauler_commission` (las de antes del 2026-10-24: `hauler_cans`, `hauler_can_price`, `hauler_commission_percent`, `Hauler::CAN_POUNDS`) |
+| Tipo de daño (amarillo, broca, verde, pulpa, pelado) | `Purchase#damage_types` (`Purchase::DAMAGE_TYPES`: `yellow` / `borer` / `green` / `pulp` / `peeled`) |
+| Días sin interés de un intermediario | `Loan#interest_grace` (`Loan::GRACE_DAYS`, `Loan#interest_starts_on`) |
 | Tarea por monto fijo / por manzana / por barril / por abono | `PayrollTask#pricing`: `fixed` / `per_manzana` / `per_barrel` / `per_fertilizer` (`quantity`, `unit_price`, `barrel_liters`, `quantity_unit`) |
 | Clave del IHCAFE (Instituto Hondureño del Café) | `Producer#ihcafe_code` |
 | Ficha / resumen del productor | `ProducerProfile` |
@@ -155,6 +157,9 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Movimientos de dinero (libro único) | `MoneyMovements` (`MovementFilter`, `finance/movements`) |
 | Consolidación (dar cuenta a lo registrado sin cuenta) | `AccountConsolidation` (`finance/consolidation`, `ConsolidationFilter`) |
 | Cuenta de un pago de cualquier módulo | `money_account_id` (`HasMoneyAccount`) |
+| Ingresos (todo lo que entró) | `finance/incomes` (`IncomeFilter`) |
+| Planilla interna / rol / empleado | `StaffMember` / `StaffRole` (`salary`, `pay_frequency`, `overtime_hour_rate`) |
+| Pago de un período / anticipo / meta con bono | `StaffPayment` (`StaffPaymentIssuer`, `finance/staff_payments#show` = recibo) / `StaffAdvance` / `StaffGoal` (`met`) |
 
 ## Modelo de permisos
 
@@ -676,7 +681,7 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 | --- | --- |
 | `administration` | Usuarios y permisos, auditoría, configuración del sitio y documentos privados (solo administradores); respaldo de datos (solo el usuario con id 1); personas, clientes y colaboradores, con su ficha de productor; fincas y zonas (permisos del módulo); fusionar personas (solo administradores) |
 | `sales` | Comercialización: salidas de camiones con báscula local y del comprador, ventas por libra o quintal de 100 lb con cobros por abonos, compradores, inventario por estado del café con kárdex y cierre diario |
-| `finance` | Control financiero: cuentas (caja y bancos) con saldo y estado de cuenta, gastos e inversiones con categoría de dos niveles y comprobante, otros ingresos, transferencias, presupuesto mensual y el libro único de movimientos de todos los módulos |
+| `finance` | Control financiero: cuentas (caja y bancos) con saldo y estado de cuenta, ingresos, gastos e inversiones con categoría de dos niveles y comprobante, otros ingresos, transferencias, presupuesto mensual, la planilla interna del negocio (roles, anticipos, horas extra, metas y bonos) y el libro único de movimientos de todos los módulos |
 | `trading` | Demo: zonas, productores (con pestañas y QQ por temporada), carreros con su comisión y pagos con recibo, compras con cálculo por estado del café y anulación, facturas imprimibles (original y copia) con estado de pago, cierre diario |
 | `farms` | Fincas, planillas por día, por obra y de corte por lata, con roles y salarios, asistencia o latas por día, pagos por período (semanal, quincenal, mensual) con descuento a préstamos, planilla de pago imprimible y gastos por planilla |
 | `loans` | Préstamos en efectivo, insumos o mixtos a cualquier persona con interés simple, catálogo de insumos, abonos (también con café desde una compra o descontados en planilla) con recibo imprimible, estados de cuenta con historial crediticio y score de pago |
@@ -765,7 +770,7 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
   permisos. Quien hizo el cambio no se recarga dos veces (request id).
 - Avisan: `Purchase` (también a `sales`), `Invoice`, `InvoicePayment`, `Producer`, `Hauler`, `HaulerPayment` a `trading`;
   salidas, ventas, cobros y compradores a `sales`; cuentas, gastos,
-  ingresos, transferencias y presupuesto a `finance`;
+  ingresos, transferencias, presupuesto y planilla interna a `finance`;
   `Loan` a `loans`; `LoanPayment` a los dos (pago con café). Página nueva
   en vivo = `live_updates_from`; modelo nuevo = `include LiveUpdates`.
 - `live_refresh_controller.js` (en el `<body>`): con una ventana abierta
@@ -1100,6 +1105,36 @@ salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
 - Resumen: saldos, el mes contra los mismos días del anterior, por dónde
   y en qué categoría salió, el presupuesto del mes y los últimos
   movimientos. Reportería: `ExpensesReport` (con KPI de presupuesto).
+- **Ingresos** (`finance/incomes`, Fernando, 2026-10-24): todo lo que
+  entró (cobros de ventas, abonos a préstamos en dinero y otros ingresos,
+  de `MoneyMovements`, `IncomeFilter`), con el total y lo de cada origen;
+  «Registrar ingreso» anota un `OtherIncome`. Las transferencias no son
+  ingresos.
+- **Planilla interna** (`finance/staff`, Fernando, 2026-10-24: «planilla
+  interna del negocio») [CONFIRMADO]:
+  - **Roles** (`StaffRole`): salario **fijo por período**, que se paga
+    completo cada período (sin asistencia); frecuencia semanal, quincenal o
+    mensual (los períodos de `PayPeriod`, como Fincas); y **valor de la
+    hora extra por rol** (sin él no se anotan horas).
+  - **Empleados** (`StaffMember`): una persona con rol Colaborador, una
+    vez, en un rol, desde una fecha (fin opcional); se desactivan. Sus
+    períodos siguen la frecuencia del rol; los pagados se quedan.
+  - **Anticipos** (`StaffAdvance`): salen de la cuenta el día que se dan y
+    se restan **completos del pago del período** que tiene esa fecha.
+  - **Metas** (`StaffGoal`): texto y bono en lempiras por período; al
+    pagar se marca si la cumplió (el bono se suma). Además, un **bono
+    libre** con su motivo al pagar.
+  - **Pago** (`StaffPayment`, `StaffPaymentIssuer`, todo o nada): salario
+    + horas × valor de la hora + bonos − anticipos; guarda cada parte y su
+    recibo (original y copia). Sale de la cuenta el neto
+    (`MoneyMovements`: `staff_payments`, `staff_advances`; `AccountBalance`).
+    El Resumen avisa los períodos que llegaron a su día de pago.
+  - Decisiones de implementación, **pendientes de confirmar**: los
+    períodos se pagan en orden y solo se quita el último (libera sus
+    anticipos y metas); el salario se puede cambiar al pagar (p. ej. un
+    primer período incompleto: no se prorratea solo); si los anticipos
+    pasan de lo ganado no se paga; un anticipo o una meta no van en un
+    período ya pagado; la cuenta es obligatoria.
 - **La ganancia no se calcula**: cómo la calcula el dueño sigue abierto
   (pregunta 34).
 
@@ -1119,8 +1154,16 @@ textos; la clave y el código siguen siendo `trading`.
   - **Restado por daño** (pergamino): `damage_weight` = (bruto − tara) ×
     (1 − humedad%) × daño%, y `damage_amount` = esas libras × precio por
     libra. Se guardan en la compra y se muestran en el formulario, el
-    detalle, «Facturar compras» y la factura (con totales) (Fernando,
-    2026-10-12). En uva quedan vacíos.
+    detalle y «Facturar compras» (Fernando, 2026-10-12). En uva quedan
+    vacíos. **La factura solo lleva las libras**, no los lempiras
+    (Fernando, 2026-10-24: «quitar restado en lempiras por daño en las
+    facturas»).
+  - **Tipo de daño** (Fernando, 2026-10-24) [CONFIRMADO]: con daño mayor
+    a 0, «Nueva compra» pide **al menos uno** de amarillo, broca, verde,
+    pulpa o pelado (`Purchase#damage_types`, casillas que salen al
+    escribir el daño; `purchase_calculator_controller.js` avisa). Sale en
+    el detalle y en la factura. Las compras de antes sin tipo se pueden
+    anular; al cambiarles el daño lo piden.
 - **Forma de pesar** (`Purchase#weight_mode`) [CONFIRMADO, Fernando,
   2026-10-10]: `single` (peso bruto directo; sacos = bruto ÷ 165 y tara como
   arriba) o `weighings` (por pesadas, `PurchaseWeighing`: peso + sacos
@@ -1248,14 +1291,19 @@ textos; la clave y el código siguen siendo `trading`.
   todo formulario de persona; agregarlo o quitarlo pide crear en
   `trading`), aparte del tipo de productor «Intermediario»
   (`intermediary`; antes se llamaba «Carrero (intermediario)», Fernando
-  2026-10-16). **Comisión obligatoria al crearlo**: % y precio de
-  la lata, editables (`trading/haulers`). La compra puede llevar su carrero
-  (**opcional**, `Purchase#hauler`) y guarda la comisión y el precio de la
-  lata **de ese día** (cambiar el carrero solo cuenta para compras nuevas;
-  otro carrero en la compra toma los del nuevo). **Comisión = (libras
-  netas ÷ 16.5) × precio de la lata × %** (`Hauler.commission`,
-  `Hauler::CAN_POUNDS`), redondeada al centavo; `hauler_commission_
-  controller.js` la muestra como vista previa en «Nueva compra». **La paga
+  2026-10-16). **Precio por libra neta obligatorio al crearlo**, editable
+  (`trading/haulers`; Fernando, 2026-10-24: «quitar comisión de los
+  carreros y poner precio por libra neta nada más»). La compra puede
+  llevar su carrero (**opcional**, `Purchase#hauler`) y guarda el precio
+  **de ese día** (`hauler_price_per_pound`; cambiar el precio solo cuenta
+  para compras nuevas; otro carrero en la compra toma el del nuevo).
+  **Comisión = libras netas × precio por libra** (`Hauler.commission`),
+  redondeada al centavo; `hauler_commission_controller.js` la muestra como
+  vista previa en «Nueva compra». Las compras de antes del cambio
+  **conservan su comisión** y su cálculo por latas (libras netas ÷ 16.5 ×
+  precio de la lata × %, `Hauler.can_commission`) [CONFIRMADO: solo
+  compras nuevas]; cada carrero empezó con el precio equivalente (lata ×
+  % ÷ 16.5). **La paga
   el negocio, aparte**: no cambia la factura ni lo que se le paga al
   productor. Se le paga **por saldo acumulado** (comisiones de sus compras
   activas − pagos): cada pago (`HaulerPayment`, pide editar en `trading`)
@@ -1355,6 +1403,13 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
   buscador, lo que la persona tiene vacío, con «Completar datos» en un
   modal (`shared/_person_gaps`, `record_gaps_controller.js`,
   `person:updated`); la ficha del préstamo se recarga. Solo avisa.
+- **Primeros 10 días sin interés para intermediarios** (Fernando,
+  2026-10-24) [CONFIRMADO]: si la persona es productor intermediario, el
+  préstamo lleva la casilla «los primeros 10 días no generan interés»
+  (`Loan#interest_grace`, `loan_grace_controller.js` la muestra al
+  elegirlo). Los días 1–10 nunca cobran; desde el día 11 corre normal
+  (`LoanBalance` cuenta desde `Loan#interest_starts_on`). Solo se da a un
+  intermediario.
 - **Plazo en días** (Fernando, 2026-10-12): el formulario tiene «Plazo
   (días)» entre la fecha del préstamo y la fecha límite. Escribir los días
   llena la fecha límite y elegir la fecha muestra los días

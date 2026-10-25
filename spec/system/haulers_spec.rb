@@ -9,7 +9,7 @@ RSpec.describe "Carreros", type: :system do
   before { sign_in_as(user) }
 
   it "previews the carrero's commission as the purchase is typed, and hides it without one" do
-    create(:hauler, person: create(:person, first_names: "Rubén", last_names: "Ordóñez"), commission_percent: 10, can_price: 50)
+    create(:hauler, person: create(:person, first_names: "Rubén", last_names: "Ordóñez"), price_per_pound: "0.3")
     visit new_trading_purchase_path
     expect(page).to have_no_text("Comisión del carrero")
 
@@ -19,33 +19,31 @@ RSpec.describe "Carreros", type: :system do
     select "Rubén Ordóñez", from: "purchase_hauler_id"
 
     within("[data-hauler-commission-target='box']") do
-      expect(page).to have_text("Comisión 10 % · lata a L 50.00")
-      expect(page).to have_css("[data-hauler-commission-target='cans']", text: "100.00")
-      expect(page).to have_css("[data-hauler-commission-target='amount']", text: "L 500.00")
+      expect(page).to have_text("L 0.30 por libra neta")
+      expect(page).to have_css("[data-hauler-commission-target='amount']", text: "L 495.00")
     end
 
     fill_in "purchase_gross_weight", with: "836" # 830 lb net
-    expect(page).to have_css("[data-hauler-commission-target='amount']", text: "L 251.52")
+    expect(page).to have_css("[data-hauler-commission-target='amount']", text: "L 249.00")
 
     select "Sin carrero", from: "purchase_hauler_id"
     expect(page).to have_no_text("Comisión del carrero")
   end
 
-  it "asks a new carrero's percent and can price only while «Carrero» is checked" do
+  it "asks a new carrero's price per pound only while «Carrero» is checked" do
     visit new_administration_person_path
     fill_in "person_first_names", with: "Rubén"
     fill_in "person_last_names", with: "Ordóñez"
-    expect(page).to have_no_field("person_hauler_commission_percent")
+    expect(page).to have_no_field("person_hauler_price_per_pound")
 
     check "person_hauler_role"
-    expect(page).to have_field("person_hauler_commission_percent")
+    expect(page).to have_field("person_hauler_price_per_pound")
     find("main form [type=submit]").click
-    expect(find("#person_hauler_commission_percent").evaluate_script("this.validationMessage")).to eq("Comisión (%) no puede estar en blanco")
+    expect(find("#person_hauler_price_per_pound").evaluate_script("this.validationMessage")).to eq("Precio por libra neta (L) no puede estar en blanco")
 
-    fill_in "person_hauler_commission_percent", with: "10"
-    fill_in "person_hauler_can_price", with: "50"
+    fill_in "person_hauler_price_per_pound", with: "0.3"
     find("main form [type=submit]").click
     expect(page).to have_text("Persona creada.")
-    expect(Person.last.hauler).to have_attributes(commission_percent: 10, can_price: 50)
+    expect(Person.last.hauler).to have_attributes(price_per_pound: BigDecimal("0.3"))
   end
 end

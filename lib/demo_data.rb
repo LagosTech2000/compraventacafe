@@ -9,7 +9,7 @@ class DemoData
   AREA = { latitude: 14.0..14.25, longitude: -87.0..-86.7 }.freeze
   WORKERS = [ %w[Ramón Demo\ Seis], %w[Teresa Demo\ Siete], %w[Hugo Demo\ Ocho], %w[Irma Demo\ Nueve], %w[Félix Demo\ Diez] ].freeze
   # Carreros: [first names, last names, commission percent, can price].
-  HAULERS = [ [ "Rubén", "Demo Once", 10, 50 ], [ "Gloria", "Demo Doce", 8, 55 ] ].freeze
+  HAULERS = [ [ "Rubén", "Demo Once", 0.30 ], [ "Gloria", "Demo Doce", 0.27 ] ].freeze
   # Comercialización: [name, kind]. Fictitious, like everything here.
   BUYERS = [ [ "Exportadora Demo del Norte", "exporter" ], [ "Beneficio Demo El Paraíso", "processor" ] ].freeze
   # Control financiero: [category, [subcategories]] and some expenses [subcategory, description, payee, amount, days ago].
@@ -37,6 +37,7 @@ class DemoData
       loans(producers.map(&:person))
       farms
       finance
+      staff_payroll
     end
   end
 
@@ -53,9 +54,9 @@ class DemoData
     end
 
     def haulers
-      HAULERS.map do |first_names, last_names, commission_percent, can_price|
+      HAULERS.map do |first_names, last_names, price_per_pound|
         person = Person.find_or_create_by!(first_names:, last_names:)
-        Hauler.find_or_create_by!(person:) { |hauler| hauler.assign_attributes(commission_percent:, can_price:) }
+        Hauler.find_or_create_by!(person:) { |hauler| hauler.price_per_pound = price_per_pound }
       end
     end
 
@@ -81,6 +82,8 @@ class DemoData
         coffee_state = %w[wet_parchment wet_parchment wet_parchment dry_parchment cherry].sample(random: @random)
         inputs = PurchaseDefaults.inputs_for(coffee_state)
         inputs[:damage_percent] = [ 0, 2, 2.2, 2.5 ].sample(random: @random) if inputs.key?(:damage_percent)
+        # Damage names its kind; picked from the percent, so the random sequence stays the same.
+        inputs[:damage_types] = [ Purchase::DAMAGE_TYPES[(inputs[:damage_percent] * 10).to_i % Purchase::DAMAGE_TYPES.size] ] if inputs[:damage_percent].to_d.positive?
         Purchase.create!(
           producer:, zone: producer.zone, purchased_at: moment_of(date), created_by: @user, coffee_state:, **inputs,
           # About one in three hauled by a carrero.
@@ -227,6 +230,27 @@ class DemoData
       Loan.where(money_account_id: nil).where("cash_amount > 0").update_all(money_account_id: @box.id)
       PayrollPayment.where(money_account_id: nil).update_all(money_account_id: @box.id)
       PayrollExpense.where(money_account_id: nil).update_all(money_account_id: @box.id)
+    end
+
+    # The business's own payroll: two roles, two employees since last month,
+    # an advance and a goal in the current period, and the periods already
+    # due paid (the oldest ones) except the last one.
+    def staff_payroll
+      clerk = StaffRole.find_or_create_by!(name: "Secretaria (demo)") { |role| role.assign_attributes(salary: 7_500, pay_frequency: "biweekly", overtime_hour_rate: 60) }
+      keeper = StaffRole.find_or_create_by!(name: "Bodeguero (demo)") { |role| role.assign_attributes(salary: 2_000, pay_frequency: "weekly", overtime_hour_rate: 45) }
+      [ [ "Karla", "Demo Trece", clerk ], [ "Óscar", "Demo Catorce", keeper ] ].map do |first_names, last_names, role|
+        person = Person.find_or_create_by!(first_names:, last_names:)
+        person.update!(collaborator_role: "1") unless person.collaborator?
+        member = StaffMember.find_or_create_by!(person:) { |new_member| new_member.assign_attributes(role:, starts_on: Time.zone.today.prev_month.beginning_of_month) }
+        member.due_periods[0...-1].each do |period|
+          StaffPaymentIssuer.new(member: member.reload, period:, user: @user, paid_on: period.ends_on, payment_method: "cash", money_account_id: @box.id).call
+        end
+        current = member.reload.period_to_pay
+        next unless current
+
+        StaffAdvance.create!(member:, given_on: current.starts_on, amount: (role.salary / 4).round, payment_method: "cash", money_account: @box, created_by: @user)
+        StaffGoal.create!(member:, period_starts_on: current.starts_on, description: "Inventario de sacos al día", bonus_amount: 250, created_by: @user)
+      end
     end
 
     # Trucks of the week's wet parchment: one sold and collected, one sold

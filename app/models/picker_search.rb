@@ -18,7 +18,7 @@ class PickerSearch
       { id: record.id, label: record.picker_label, zone_id: record.zone_id, missing: record.missing_fields,
         farms: record.farms.select(&:active?).sort_by(&:name).map { |farm| [ farm.id, farm.name, farm.missing_fields ] } }
     when Person
-      { id: record.id, label: record.picker_label, missing: record.missing_fields }
+      { id: record.id, label: record.picker_label, missing: record.missing_fields, intermediary: record.intermediary? }
     end
   end
 
@@ -57,6 +57,6 @@ class PickerSearch
 
     def people(scope)
       scope = scope.where.not(id: except) if except
-      scope.picker_search(text).alphabetical
+      scope.picker_search(text).includes(:producer).alphabetical
     end
 end

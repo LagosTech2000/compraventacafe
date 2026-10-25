@@ -20,4 +20,17 @@ module FinanceHelper
   def signed_money(value)
     value.to_d.negative? ? "−#{format_money(value.to_d.abs)}" : format_money(value)
   end
+
+  # Where a period of the Planilla interna stands: paid, to pay (its payday
+  # came) or running.
+  def staff_period_badge(member, period, today = Time.zone.today)
+    key = if member.paid_period?(period) then "paid"
+    elsif period.due?(today) then "due"
+    else "running"
+    end
+    tag.span(t("finance.staff_members.period_status.#{key}"), class: "badge #{{ "paid" => "badge-success", "due" => "badge-danger", "running" => "badge-neutral" }[key]}")
+  end
+
+  # "L 6,000.00 quincenal"
+  def staff_salary(role) = t("finance.staff_roles.salary_per", amount: format_money(role.salary), frequency: role.human_pay_frequency.downcase)
 end

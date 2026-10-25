@@ -9,7 +9,7 @@
 <% over_budget = @budget_lines.select(&:over?) %>
 
 <%# What needs attention first. %>
-<% if @accounts.empty? || @without_account.positive? || over_budget.any? %>
+<% if @accounts.empty? || @without_account.positive? || over_budget.any? || @staff_due.any? %>
   <ul class="mb-6 space-y-2">
     <% if @accounts.empty? %>
       <li class="flash-notice flex flex-wrap items-center justify-between gap-3">
@@ -21,6 +21,12 @@
       <li class="flash-notice flex flex-wrap items-center justify-between gap-3">
         <span><%= t(".without_account", count: @without_account) %></span>
         <%= link_to t(".consolidate"), finance_consolidation_path, class: "btn btn-sm" %>
+      </li>
+    <% end %>
+    <% if @staff_due.any? %>
+      <li class="flash-notice flex flex-wrap items-center justify-between gap-3">
+        <span><%= t(".staff_due", count: @staff_due.size) %></span>
+        <%= link_to t(".see"), finance_staff_members_path, class: "btn btn-sm" %>
       </li>
     <% end %>
     <% over_budget.each do |line| %>

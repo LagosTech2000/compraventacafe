@@ -5,8 +5,7 @@ FactoryBot.define do
 
   factory :hauler do
     person
-    commission_percent { 10 }
-    can_price { 50 }
+    price_per_pound { 0.3 }
   end
 
   factory :hauler_payment do
@@ -34,6 +33,7 @@ FactoryBot.define do
     gross_weight { 146 }
     humidity_percent { coffee_state == "cherry" ? nil : 51 }
     damage_percent { coffee_state == "cherry" ? nil : 0 }
+    damage_types { coffee_state != "cherry" && damage_percent.to_d.positive? ? %w[borer] : [] }
     yield_factor { coffee_state == "cherry" ? 0.186 : nil }
     price_per_pound { 58 }
   end

@@ -1,0 +1,27 @@
+<% content_for :title, t(".title") %>
+<%= render "finance/nav" %>
+<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+<p class="mt-1 text-sm text-ink-muted"><%= @member.full_name %> · <%= t(".help") %></p>
+<%= form_with model: @goal, url: finance_staff_member_staff_goals_path(@member), scope: :staff_goal,
+      class: form_surface_class("mt-6 space-y-6"), data: { controller: "form-validation" } do |form| %>
+  <%= render "shared/form_errors", record: @goal %>
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div class="sm:col-span-2">
+      <%= form.label :period_starts_on, class: "field-label" %>
+      <%= form.select :period_starts_on, @member.goal_periods.map { [ format_period(it), it.starts_on.iso8601 ] },
+            { selected: @goal.period_starts_on&.iso8601 }, required: true, class: "field-input" %>
+    </div>
+    <div class="sm:col-span-2">
+      <%= form.label :description, class: "field-label" %>
+      <%= form.text_field :description, required: true, maxlength: 200, autofocus: true, class: "field-input", placeholder: t(".description_placeholder") %>
+    </div>
+    <div>
+      <%= form.label :bonus_amount, class: "field-label" %>
+      <%= form.number_field :bonus_amount, required: true, min: 0.01, step: 0.01, inputmode: "decimal", class: "field-input text-lg", placeholder: "0.00" %>
+    </div>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit t(".submit"), class: "btn btn-primary" %>
+    <%= cancel_button finance_staff_member_path(@member) %>
+  </div>
+<% end %>

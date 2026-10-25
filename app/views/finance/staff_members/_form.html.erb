@@ -1,0 +1,69 @@
+<%# An employee of the Planilla interna: a collaborator, their role and
+    their dates. %>
+<%= form_with model: member, url: member.persisted? ? finance_staff_member_path(member) : finance_staff_members_path,
+      scope: :staff_member, class: form_surface_class("max-w-2xl space-y-5"), data: { controller: "form-validation" } do |form| %>
+  <%= render "shared/form_errors", record: member %>
+
+  <% if member.persisted? %>
+    <p class="text-lg font-semibold"><%= member.full_name %></p>
+  <% else %>
+    <%= tag.div data: { controller: "record-picker record-gaps",
+                        action: "person:created@window->record-picker#add record-picker:picked->record-gaps#show " \
+                                "person:updated@window->record-picker#replace person:updated@window->record-gaps#update",
+                        **record_picker_data(:collaborators, selected: member.person, missing_message: t("finance.staff_members.form.person_missing")),
+                        **person_gaps_data(member.person) } do %>
+      <%= form.label :person_id, for: "person_search", class: "field-label" %>
+      <%= render "shared/record_picker_search", id: "person_search", value: member.person&.picker_label, required: true,
+            placeholder: t("finance.staff_members.form.person_placeholder"), missing_message: t("finance.staff_members.form.person_missing"),
+            autofocus: member.person.nil? %>
+      <%= form.hidden_field :person_id, data: { record_picker_target: "id" } %>
+      <p class="mt-1 text-xs text-ink-muted"><%= t("finance.staff_members.form.person_help") %></p>
+      <% if policy(Person).create? %>
+        <%= modal_link_to t("finance.staff_members.form.new_person"), new_administration_person_path(picker: 1, role: "collaborator"), class: "btn btn-sm mt-2" %>
+      <% end %>
+      <%= render "shared/person_gaps" %>
+    <% end %>
+  <% end %>
+
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div class="sm:col-span-2" data-controller="option-picker" data-action="staff-role:created@window->option-picker#add">
+      <%= form.label :staff_role_id, class: "field-label" %>
+      <% roles = StaffRole.active.or(StaffRole.where(id: member.staff_role_id)).alphabetical %>
+      <%= form.select :staff_role_id, roles.map { |role| [ "#{role.name} · #{staff_salary(role)}", role.id ] },
+            { include_blank: t("finance.staff_members.form.pick_role") }, required: true, class: "field-input",
+            data: { option_picker_target: "select", missing_message: "#{StaffMember.human_attribute_name(:role)} #{t("errors.messages.blank")}" } %>
+      <p class="mt-1 text-xs text-ink-muted"><%= t("finance.staff_members.form.role_help") %></p>
+      <% if policy(StaffRole).create? %>
+        <%= modal_link_to t("finance.staff_members.form.new_role"), new_finance_staff_role_path(picker: 1), class: "btn btn-sm mt-2" %>
+      <% end %>
+    </div>
+    <div>
+      <%= form.label :starts_on, class: "field-label" %>
+      <%= form.date_field :starts_on, required: true, class: "field-input" %>
+    </div>
+    <% if member.persisted? %>
+      <div>
+        <%= form.label :ends_on, class: "field-label" %>
+        <%= form.date_field :ends_on, class: "field-input" %>
+        <p class="mt-1 text-xs text-ink-muted"><%= t("finance.staff_members.form.ends_on_help") %></p>
+      </div>
+    <% end %>
+  </div>
+
+  <div>
+    <%= form.label :observations, class: "field-label" %>
+    <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+  </div>
+
+  <% if member.persisted? %>
+    <label class="flex items-center gap-2 text-sm">
+      <%= form.check_box :active, class: "size-4 accent-primary" %>
+      <%= t("finance.staff_members.form.active") %>
+    </label>
+  <% end %>
+
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= cancel_button member.persisted? ? finance_staff_member_path(member) : finance_staff_members_path %>
+  </div>
+<% end %>

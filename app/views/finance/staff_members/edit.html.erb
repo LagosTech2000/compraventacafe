@@ -1,0 +1,5 @@
+<% content_for :title, t(".title") %>
+<%= render "finance/nav" %>
+<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+<div class="mt-2"><%= help_guide_button HelpGuide.process(:staff_payroll), label: true %></div>
+<div class="mt-6"><%= render "form", member: @member %></div>

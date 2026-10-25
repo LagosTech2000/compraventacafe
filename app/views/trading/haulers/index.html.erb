@@ -8,7 +8,7 @@
 <div class="flex flex-wrap items-center justify-between gap-4">
   <div>
     <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
-    <p class="mt-1 text-sm text-ink-muted"><%= t(".help", pounds: number_with_precision(Hauler::CAN_POUNDS, precision: 1)) %></p>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
   </div>
   <% if policy(Hauler).create? %>
     <%= modal_link_to t(".new"), new_trading_hauler_path, class: "btn btn-primary" %>
@@ -37,7 +37,7 @@
               <%= avatar(hauler.person) %>
               <div class="min-w-0">
                 <p class="font-medium"><%= hauler.full_name %></p>
-                <p class="text-xs text-ink-muted"><%= t(".terms", percent: format_percent(hauler.commission_percent), price: format_money(hauler.can_price)) %></p>
+                <p class="text-xs text-ink-muted"><%= t("trading.haulers.terms_per_pound", price: format_price_per_pound(hauler.price_per_pound)) %></p>
               </div>
             </div>
             <%= detail_button trading_hauler_path(hauler) %>
@@ -56,8 +56,7 @@
           <tr>
             <%= sort_th t(".name"), :name, sorting %>
             <%= sort_th Person.human_attribute_name(:phone), :phone, sorting, class: "hidden @5xl:table-cell" %>
-            <%= sort_th Hauler.human_attribute_name(:commission_percent), :commission_percent, sorting, class: "text-right" %>
-            <%= sort_th Hauler.human_attribute_name(:can_price), :can_price, sorting, class: "text-right" %>
+            <%= sort_th Hauler.human_attribute_name(:price_per_pound), :price_per_pound, sorting, class: "text-right" %>
             <%= sort_th t(".commissions"), :commissions, sorting, class: "text-right" %>
             <%= sort_th t(".paid"), :paid, sorting, class: "hidden text-right @5xl:table-cell" %>
             <%= sort_th t(".balance"), :balance, sorting, class: "text-right" %>
@@ -72,8 +71,7 @@
                 <% unless hauler.active? %><span class="badge badge-neutral ml-1"><%= t(".statuses.inactive") %></span><% end %>
               </td>
               <td class="hidden whitespace-nowrap @5xl:table-cell"><%= format_phone(hauler.person.phone) %></td>
-              <td class="whitespace-nowrap text-right tabular-nums"><%= format_percent(hauler.commission_percent) %></td>
-              <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(hauler.can_price) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_price_per_pound(hauler.price_per_pound) %></td>
               <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(hauler.commissions_total) %></td>
               <td class="hidden whitespace-nowrap text-right tabular-nums @5xl:table-cell"><%= format_money(hauler.paid_total) %></td>
               <td class="whitespace-nowrap text-right font-semibold tabular-nums"><%= format_money(hauler.balance_total) %></td>

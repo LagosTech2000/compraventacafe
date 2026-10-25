@@ -3,7 +3,8 @@
 # duplicar»): each is registered once, where it happens, and read here.
 #
 #   out  payments to producers on invoices, payments to haulers, cash lent,
-#        payroll payments, payroll expenses, expenses and investments
+#        payroll payments, payroll expenses, expenses and investments, and
+#        the Planilla interna's payments and advances
 #   in   loan payments in cash, transfer or check, collections of coffee
 #        sales and other income
 #   both transfers between accounts: out of one, into the other (the
@@ -15,12 +16,13 @@
 # 2026-10-25: «fechas con hora»), newest last.
 class MoneyMovements
   SOURCES = %w[invoices hauler_payments loans loan_payments payroll_payments payroll_expenses
-               sale_payments expenses investments other_incomes transfers].freeze
+               sale_payments expenses investments staff_payments staff_advances other_incomes transfers].freeze
   # Which module each source's records belong to (who may read it).
   MODULES = {
     "invoices" => "trading", "hauler_payments" => "trading", "loans" => "loans", "loan_payments" => "loans",
     "payroll_payments" => "farms", "payroll_expenses" => "farms", "sale_payments" => "sales",
-    "expenses" => "finance", "investments" => "finance", "other_incomes" => "finance", "transfers" => "finance"
+    "expenses" => "finance", "investments" => "finance", "staff_payments" => "finance", "staff_advances" => "finance",
+    "other_incomes" => "finance", "transfers" => "finance"
   }.freeze
   NAME = "people.first_names || ' ' || people.last_names".freeze
 
@@ -166,6 +168,33 @@ class MoneyMovements
           movement(id:, date:, created_at:, source: kind == "expense" ? "expenses" : "investments", description:, person: payee,
                    payment_method: method_label(Invoice, method), amount_out: amount, account_id:, category:,
                    route: [ kind == "expense" ? :finance_expense_path : :finance_investment_path, id ])
+        end
+    end
+
+    # What left the account when paying a period: the net (its advances
+    # left when they were given).
+    def staff_payments
+      narrowed(StaffPayment.joins(member: :person).joins(:role), "staff_payments.paid_on", "staff_payments.money_account_id")
+        .pluck("staff_payments.id", "staff_payments.staff_member_id", "staff_payments.paid_on", "staff_payments.net_total", "staff_payments.payment_method",
+               Arel.sql(NAME), "staff_roles.name", "staff_payments.period_starts_on", "staff_payments.period_ends_on",
+               "staff_payments.money_account_id", "staff_payments.created_at")
+        .map do |id, member_id, date, amount, method, name, role, from, to, account_id, created_at|
+          period = "#{I18n.l(from, format: :short)} – #{I18n.l(to, format: :short)}"
+          movement(id:, date:, created_at:, source: "staff_payments",
+                   description: I18n.t("money_movements.staff_payment", number: format("%04d", id), role:, period:),
+                   person: name, payment_method: method_label(Invoice, method), amount_out: amount, account_id:,
+                   route: [ :finance_staff_member_staff_payment_path, member_id, id ])
+        end
+    end
+
+    def staff_advances
+      narrowed(StaffAdvance.joins(member: :person), "staff_advances.given_on", "staff_advances.money_account_id")
+        .pluck("staff_advances.id", "staff_advances.staff_member_id", "staff_advances.given_on", "staff_advances.amount",
+               "staff_advances.payment_method", Arel.sql(NAME), "staff_advances.money_account_id", "staff_advances.created_at")
+        .map do |id, member_id, date, amount, method, name, account_id, created_at|
+          movement(id:, date:, created_at:, source: "staff_advances", description: I18n.t("money_movements.staff_advance", number: format("%04d", id)),
+                   person: name, payment_method: method_label(Invoice, method), amount_out: amount, account_id:,
+                   route: [ :finance_staff_member_path, member_id ])
         end
     end
 

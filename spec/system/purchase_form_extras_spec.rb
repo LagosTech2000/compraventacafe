@@ -39,8 +39,7 @@ RSpec.describe "Purchase form extras", type: :system do
     visit new_trading_purchase_path
     click_link "Nuevo carrero"
     within("dialog[open]") do
-      fill_in "hauler_commission_percent", with: "10"
-      fill_in "hauler_can_price", with: "50"
+      fill_in "hauler_price_per_pound", with: "0.3"
       fill_in "hauler_person_attributes_first_names", with: "Pedro"
       fill_in "hauler_person_attributes_last_names", with: "Cruz"
       find("[type=submit]").click
@@ -48,7 +47,7 @@ RSpec.describe "Purchase form extras", type: :system do
 
     expect(page).to have_no_css("dialog[open]")
     expect(page).to have_select("purchase_hauler_id", selected: "Pedro Cruz")
-    expect(page).to have_css("[data-hauler-commission-target='terms']", text: "Comisión 10")
+    expect(page).to have_css("[data-hauler-commission-target='terms']", text: "L 0.30 por libra neta")
   end
 
   it "shows the producer's card beside the form" do

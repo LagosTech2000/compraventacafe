@@ -340,6 +340,8 @@ es:
     payroll_payment: "%{payroll} · %{farm} (%{period})"
     payroll_expense: "%{description} · %{farm}"
     sale_payment: "Cobro de la venta %{number}"
+    staff_payment: "Planilla interna %{number} · %{role} (%{period})"
+    staff_advance: "Anticipo %{number} de planilla interna"
     transfer: "De %{from} a %{to}"
   coffee_markets:
     show:
@@ -771,7 +773,7 @@ es:
         voided_notice: "Compra anulada el %{date} por %{name}. No cuenta en listas, totales ni facturación."
         invoiced_notice: "Esta compra ya está en la factura %{number} y no se puede modificar."
         hauled_by: "Carreada por %{name}"
-        hauler_commission: "Comisión: %{cans} latas × %{price} × %{percent} ="
+        hauler_commission: "Comisión: %{terms} ="
         hauler_paid_apart: "La paga el negocio aparte: no cambia lo que se le paga al productor."
         view_hauler: "Ver carrero"
         view_invoice: "Ver factura %{number}"
@@ -797,12 +799,15 @@ es:
         complete_farm: "Completar datos de la finca"
         new_hauler: "Nuevo carrero"
         hauler_help: "Si la trajo un carrero, gana su comisión por esta compra."
-        hauler_terms: "Comisión %{percent} · lata a %{price}"
+        hauler_terms: "%{price} por libra neta"
+        hauler_terms_by_cans: "Calculada por latas (antes del cambio): comisión %{percent} · lata a %{price}"
         hauler_commission: "Comisión del carrero"
         hauler_paid_apart: "La paga el negocio aparte: no cambia lo que se le paga al productor."
         calculation: "Cálculo"
         cancel: "Cancelar"
         weighings_help: "Anota cada pesada con su peso y los sacos contados. El peso bruto y los sacos son la suma; la tara es 1 lb por saco contado."
+        damage_types_help: "Con daño, elige uno o más tipos."
+        damage_types_missing: "Elige al menos un tipo de daño."
         add_weighing: "Agregar pesada"
         remove_weighing: "Quitar pesada"
         gross_from_weighings: "Suma de las pesadas: se cambia en las pesadas."
@@ -957,9 +962,11 @@ es:
       destroy:
         success: "Abono quitado."
     haulers:
+      terms_per_pound: "%{price} por libra neta"
+      terms_by_cans: "%{cans} latas × %{price} × %{percent}"
       index:
         title: "Carreros"
-        help: "Traen el café de los productores con los carros del negocio y ganan una comisión por compra: latas (libras netas ÷ %{pounds}) × precio de la lata × comisión. La paga el negocio, aparte del productor."
+        help: "Traen el café de los productores con los carros del negocio y ganan por compra: libras netas × su precio por libra. La paga el negocio, aparte del productor."
         new: "Nuevo carrero"
         search_placeholder: "Nombre, DNI o RTN"
         status: "Estado"
@@ -967,7 +974,6 @@ es:
           active: "Activos"
           inactive: "Desactivados"
         name: "Nombre"
-        terms: "%{percent} · lata a %{price}"
         commissions: "Comisiones"
         paid: "Pagado"
         balance: "Se le debe"
@@ -983,7 +989,7 @@ es:
           paid: "Pagado"
           balance: "Se le debe"
         record: "Ficha del carrero"
-        formula: "Comisión de cada compra = (libras netas ÷ %{pounds}) × precio de la lata × comisión. Cada compra guarda la comisión y el precio de su día."
+        formula: "Comisión de cada compra = libras netas × precio por libra. Cada compra guarda el precio de su día; las de antes del cambio conservan su cálculo por latas."
         payments: "Pagos"
         receipt: "Recibo"
         receipt_number: "Recibo %{number}"
@@ -993,9 +999,7 @@ es:
         purchases: "Compras que carreó"
         tabs_label: "Secciones del carrero"
         net_weight: "Neto (lb)"
-        cans: "Latas"
         commission: "Comisión"
-        commission_line: "%{cans} latas × %{price} × %{percent} ="
         no_purchases: "No hay compras carreadas con esos filtros."
       new:
         title: "Nuevo carrero"
@@ -1003,8 +1007,8 @@ es:
         title: "Editar carrero"
       form:
         commission: "Comisión"
-        commission_help: "Por cada compra que carree gana: latas (libras netas ÷ %{pounds}) × precio de la lata × comisión. Las dos son obligatorias."
-        changes_help: "Si las cambias, solo cuentan para las compras nuevas: cada compra guarda las de su día."
+        commission_help: "Por cada compra que carree gana: libras netas × su precio por libra. Es obligatorio."
+        changes_help: "Si lo cambias, solo cuenta para las compras nuevas: cada compra guarda el de su día."
         active: "Activo (se puede elegir en las compras nuevas)"
       create:
         success: "Carrero registrado."
@@ -1472,17 +1476,22 @@ es:
     nav:
       home: "Resumen"
       movements: "Movimientos"
+      incomes: "Ingresos"
       expenses: "Gastos"
       investments: "Inversiones"
       accounts: "Cuentas"
       consolidation: "Consolidación"
       budget: "Presupuesto"
+      staff: "Planilla"
       categories: "Categorías"
       new_expense: "Nuevo gasto"
     home:
       index:
         no_accounts: "Todavía no hay cuentas. Registra la caja y los bancos para llevar sus saldos."
         new_account: "Nueva cuenta"
+        staff_due:
+          one: "1 período de la planilla interna ya llegó a su día de pago."
+          other: "%{count} períodos de la planilla interna ya llegaron a su día de pago."
         without_account:
           one: "1 movimiento de este mes no tiene cuenta: no cuenta en ningún saldo."
           other: "%{count} movimientos de este mes no tienen cuenta: no cuentan en ningún saldo."
@@ -1541,6 +1550,204 @@ es:
           zero: "Ningún movimiento"
           one: "1 movimiento"
           other: "%{count} movimientos"
+    staff_members:
+      statuses:
+        active: "Activos"
+        inactive: "Desactivados"
+      period_status:
+        paid: "Pagado"
+        due: "Por pagar"
+        running: "En curso"
+      index:
+        title: "Planilla interna"
+        help: "Los empleados del negocio: cada uno en un rol con su salario por período. Al pagar un período se suman horas extra y bonos, y se restan sus anticipos."
+        new: "Nuevo empleado"
+        roles: "Roles"
+        search_placeholder: "Nombre, DNI o RTN"
+        status: "Estado"
+        name: "Nombre"
+        next_period: "Período por pagar"
+        pay: "Pagar"
+        open: "Abrir"
+        empty: "No hay empleados con esos filtros."
+        due_title: "Períodos por pagar"
+        figures:
+          members: "Empleados activos"
+          due: "Períodos por pagar"
+          due_amount: "A pagar (sin bonos)"
+          advances: "Anticipos sin descontar"
+      show:
+        pay: "Pagar %{period}"
+        pay_short: "Pagar"
+        new_advance: "Dar anticipo"
+        new_goal: "Poner meta"
+        edit: "Editar empleado"
+        record: "Ficha del empleado"
+        tabs_label: "Secciones del empleado"
+        tabs:
+          periods: "Períodos"
+          payments: "Pagos"
+          advances: "Anticipos"
+          goals: "Metas"
+        figures:
+          next: "Período %{period}"
+          next_none: "Sin período por pagar"
+          advances: "Anticipos sin descontar"
+          paid: "Pagado en total"
+        paid_line: "Pagado: %{amount} el %{date}"
+        estimate_line: "A pagar hoy: %{amount} (sin bonos)"
+        receipt: "Recibo"
+        remove: "Quitar"
+        no_periods: "Todavía no empieza su primer período."
+        no_payments: "Todavía no se le ha pagado."
+        no_advances: "No tiene anticipos."
+        no_goals: "No tiene metas."
+        columns:
+          number: "Recibo"
+          period: "Período"
+        advance_status:
+          pending: "Por descontar"
+          taken_off: "Descontado"
+        goal_status:
+          pending: "Por revisar"
+          met: "Cumplida"
+          missed: "No cumplida"
+        goal_line: "Bono %{bonus} · %{period}"
+        confirm_remove_payment: "¿Quitar este pago? Sus anticipos y metas vuelven a quedar pendientes."
+        confirm_remove_advance: "¿Quitar este anticipo?"
+        confirm_remove_goal: "¿Quitar esta meta?"
+      form:
+        person_placeholder: "Escribe el nombre, DNI o RTN"
+        person_missing: "Elige al empleado de la lista"
+        person_help: "Una persona con el rol de colaborador."
+        new_person: "¿No está? Registrar persona"
+        pick_role: "Selecciona un rol"
+        role_help: "El rol dice su salario, cada cuánto se le paga y el valor de su hora extra."
+        new_role: "Nuevo rol"
+        ends_on_help: "Opcional: el último día que trabajó."
+        active: "Activo (sale en la planilla)"
+      new:
+        title: "Nuevo empleado"
+      edit:
+        title: "Editar empleado"
+      create:
+        success: "Empleado agregado a la planilla."
+      update:
+        success: "Empleado actualizado."
+      destroy:
+        success: "Empleado quitado de la planilla."
+    staff_roles:
+      salary_per: "%{amount} %{frequency}"
+      index:
+        title: "Roles de la planilla"
+        help: "Cada rol con su salario por período, cada cuánto se paga y el valor de su hora extra."
+        new: "Nuevo rol"
+        search_placeholder: "Nombre del rol"
+        members_column: "Empleados"
+        members:
+          one: "1 empleado"
+          other: "%{count} empleados"
+        edit: "Editar"
+        empty: "No hay roles con esos filtros."
+      form:
+        name_placeholder: "Por ejemplo: Contador, Bodeguero, Chofer"
+        salary_help: "Se paga completo en cada período."
+        frequency_help: "Semanal (cierra el sábado), quincenal (1–15 y 16–fin de mes) o mensual."
+        overtime_help: "Opcional. Sin este valor no se anotan horas extra."
+        changes_help: "Si lo cambias, cuenta para los períodos que faltan por pagar: los pagados se quedan como se pagaron."
+        active: "Activo (se puede elegir para un empleado)"
+      new:
+        title: "Nuevo rol"
+      edit:
+        title: "Editar rol"
+        remove: "Quitar el rol"
+        confirm_remove: "¿Quitar este rol? Nadie lo ha usado todavía."
+      create:
+        success: "Rol registrado."
+      update:
+        success: "Rol actualizado."
+      destroy:
+        success: "Rol quitado."
+    staff_advances:
+      new:
+        title: "Dar anticipo"
+        help: "Se resta completo del pago del período en que se da."
+        submit: "Registrar anticipo"
+      create:
+        success: "Anticipo registrado."
+      destroy:
+        success: "Anticipo quitado."
+    staff_goals:
+      new:
+        title: "Poner meta"
+        help: "Al pagar el período se marca si la cumplió; si la cumplió, el bono se suma."
+        description_placeholder: "Por ejemplo: ordenar la bodega antes del viernes"
+        submit: "Poner meta"
+      create:
+        success: "Meta registrada."
+      destroy:
+        success: "Meta quitada."
+    staff_payments:
+      new:
+        title: "Pagar período"
+        nothing_to_pay: "No hay período por pagar: todavía no empieza o ya se pagó."
+        earned: "Lo ganado"
+        salary_help: "El del rol: %{salary}. Se puede cambiar para este pago."
+        overtime_help: "Cada hora a %{rate}."
+        no_overtime_rate: "El rol no tiene valor de la hora extra: defínelo en el rol para anotar horas."
+        goals: "Metas y bonos"
+        goals_help: "Marca las metas que cumplió: su bono se suma."
+        no_goals: "No tiene metas para este período."
+        extra_bonus_placeholder: "Por qué se le da"
+        advances: "Anticipos del período"
+        advances_help: "Se restan completos."
+        no_advances: "No tiene anticipos en este período."
+        negative: "Los anticipos pasan de lo ganado: no se puede pagar así."
+        submit: "Pagar"
+        totals:
+          salary: "Salario"
+          overtime: "Horas extra"
+          bonuses: "Bonos"
+          gross: "Total ganado"
+          advances: "Anticipos"
+          net: "Se le entrega"
+      create:
+        success: "Período pagado."
+        nothing_to_pay: "No hay período por pagar: todavía no empieza o ya se pagó."
+      show:
+        title: "Recibo %{number} de planilla interna"
+        print: "Imprimir"
+        original: "ORIGINAL"
+        copy: "COPIA"
+        back: "Volver al empleado"
+      destroy:
+        success: "Pago quitado: sus anticipos y metas vuelven a quedar pendientes."
+      receipt:
+        title: "Recibo de pago de planilla"
+        employee: "Empleado"
+        period: "Período"
+        overtime: "Horas extra: %{hours} × %{rate}"
+        goal: "Bono por meta: %{description}"
+        extra_bonus: "Bono: %{reason}"
+        advance: "Anticipo del %{date}"
+        net: "Se le entrega"
+        receiver_signature: "Recibí conforme"
+        payer_signature: "Entregó"
+        registered_by: "Registró: %{name}"
+    incomes:
+      index:
+        title: "Ingresos"
+        help: "Todo el dinero que entró: cobros de ventas de café, abonos a préstamos y otros ingresos (aporte del dueño, préstamo del banco…). Las transferencias entre cuentas no son ingresos."
+        new: "Registrar ingreso"
+        search_placeholder: "Detalle o persona"
+        total: "Total ingresado"
+        person: "Quién pagó"
+        amount: "Monto"
+        empty: "No hay ingresos con estos filtros."
+        count:
+          zero: "Ningún ingreso"
+          one: "1 ingreso"
+          other: "%{count} ingresos"
     expenses:
       form:
         description_placeholder:
@@ -1835,6 +2042,7 @@ es:
         new_payment: "Registrar abono"
         credit_account: "Estado de cuenta"
         frozen_notice: "Este préstamo ya tiene abonos: no se puede editar ni borrar."
+        interest_grace: "Intermediario: los primeros %{days} días sin interés (corre desde el %{date})"
         principal: "Capital (efectivo + insumos)"
         supplies: "Insumos prestados"
         supplies_amount: "Valor de los insumos"
@@ -1861,6 +2069,7 @@ es:
         new_person: "¿No está? Registrar persona"
         borrower_card: "Ficha de la persona elegida"
         rate_help: "Porcentaje por mes. El interés corre por día (mes de 30 días) sobre el capital pendiente."
+        interest_grace: "Intermediario: los primeros %{days} días no generan interés"
         term_days: "Plazo (días)"
         term_days_help: "Escribe los días y se llena la fecha límite, o elige la fecha y aquí salen los días."
         what_is_lent: "Qué se presta"
@@ -3484,7 +3693,7 @@ es:
             help: "Una persona puede tener varios roles."
       cash_movements:
         title: "Entradas y salidas de dinero"
-        description: "El dinero que salió (pagos de facturas, pagos a carreros, préstamos en efectivo, planillas, gastos de planilla, gastos e inversiones) y el que entró (abonos a préstamos en efectivo, transferencia o cheque, cobros de ventas de café y otros ingresos), según lo registrado; cada quien ve lo de los módulos que puede ver. Las transferencias entre cuentas salen al elegir una cuenta."
+        description: "El dinero que salió (pagos de facturas, pagos a carreros, préstamos en efectivo, planillas, gastos de planilla, gastos e inversiones, pagos y anticipos de la planilla interna) y el que entró (abonos a préstamos en efectivo, transferencia o cheque, cobros de ventas de café y otros ingresos), según lo registrado; cada quien ve lo de los módulos que puede ver. Las transferencias entre cuentas salen al elegir una cuenta."
         sources:
           invoices: "Pago de factura"
           hauler_payments: "Pago a carrero"
@@ -3495,6 +3704,8 @@ es:
           sale_payments: "Cobro de venta"
           expenses: "Gasto"
           investments: "Inversión"
+          staff_payments: "Pago de planilla interna"
+          staff_advances: "Anticipo de planilla interna"
           other_incomes: "Otro ingreso"
           transfers: "Transferencia entre cuentas"
         no_account: "Sin cuenta"
@@ -3616,13 +3827,25 @@ es:
         tips:
           - "Un abono no pasa del saldo ni va antes de la fecha de la factura o del último abono."
           - "Solo se quita el último abono."
+      staff_payroll:
+        title: "Planilla interna del negocio"
+        summary: "Los empleados del negocio cobran el salario de su rol en cada período, con horas extra, metas con bono y anticipos."
+        steps:
+          - "En «Roles» crea cada rol con su salario por período, su frecuencia (semanal, quincenal o mensual) y el valor de su hora extra."
+          - "Con «Nuevo empleado» agrega a un colaborador en un rol, desde su fecha de inicio."
+          - "Durante el período, «Dar anticipo» le entrega dinero y «Poner meta» le pone una meta con su bono."
+          - "Cuando llega el día de pago, «Pagar»: salario + horas extra + bonos de las metas cumplidas + bono adicional − anticipos del período."
+          - "Al pagar se abre el recibo para imprimir (original y copia). El pago sale de la cuenta elegida y aparece en Movimientos."
+        tips:
+          - "Los períodos se pagan en orden; solo se quita el último pago."
+          - "Los anticipos salen de la cuenta el día que se dan; al pagar solo se restan de lo que se entrega."
       hauler_commission:
         title: "Comisión y pagos de un carrero"
         summary: "El carrero trae el café con los carros del negocio y gana una comisión por cada compra que trae."
         steps:
-          - "Al registrarlo se anotan su porcentaje y el precio de la lata; se pueden cambiar después y cuentan para las compras nuevas."
-          - "En «Nueva compra» elige al carrero: la compra guarda su porcentaje y su precio de la lata de ese día."
-          - "Comisión = (libras netas ÷ 16.5) × precio de la lata × porcentaje."
+          - "Al registrarlo se anota su precio por libra neta; se puede cambiar después y cuenta para las compras nuevas."
+          - "En «Nueva compra» elige al carrero: la compra guarda su precio por libra de ese día."
+          - "Comisión = libras netas × precio por libra."
           - "La paga el negocio aparte: no cambia la factura ni lo que se le paga al productor."
           - "En su página está lo que ha ganado, lo pagado y el saldo; «Registrar pago» paga del saldo, con su recibo."
         tips:
@@ -4137,9 +4360,9 @@ es:
             steps:
               - "Busca por nombre, DNI o RTN, o mira los desactivados."
               - "Toca un carrero (o «Detalle») para ver sus compras, sus pagos y lo que se le debe."
-              - "Con «Nuevo carrero» registras a uno con su comisión y su precio de la lata."
+              - "Con «Nuevo carrero» registras a uno con su precio por libra neta."
             tips:
-              - "Comisión de cada compra = latas (libras netas ÷ 16.5) × precio de la lata × comisión."
+              - "Comisión de cada compra = libras netas × precio por libra."
               - "La comisión la paga el negocio aparte: no cambia lo que se le paga al productor."
           show:
             title: "Ficha del carrero"
@@ -4149,13 +4372,13 @@ es:
               - "Toca «Registrar pago» para pagarle todo o una parte; se abre su recibo para imprimir."
               - "En «Compras que carreó» filtra por temporada; cada una abre su detalle."
             tips:
-              - "Cada compra guarda la comisión y el precio de la lata de su día: cambiarlos solo cuenta para las compras nuevas."
+              - "Cada compra guarda el precio por libra de su día: cambiarlo solo cuenta para las compras nuevas. Las compras de antes del cambio conservan su cálculo por latas."
               - "Solo se puede quitar el último pago."
           form:
             title: "Registrar o editar un carrero"
-            summary: "Su comisión (%), su precio de la lata y sus datos de persona."
+            summary: "Su precio por libra neta y sus datos de persona."
             steps:
-              - "Escribe la comisión y el precio de la lata: los dos son obligatorios."
+              - "Escribe el precio por libra neta: es obligatorio."
               - "Llena sus datos: solo nombres y apellidos son obligatorios."
               - "Toca el botón de guardar."
             tips:
@@ -4462,6 +4685,105 @@ es:
               - "Filtra por fechas, cuenta, origen, entrada o salida, o busca por detalle."
               - "Al elegir una cuenta salen sus transferencias y el saldo después de cada movimiento."
               - "Toca «Abrir» para ir al registro en su módulo."
+        staff_members:
+          index:
+            title: "Planilla interna"
+            summary: "Los empleados del negocio, su rol, su salario y el período que sigue por pagar."
+            steps:
+              - "Arriba, cuántos períodos ya llegaron a su día de pago y cuánto se pagaría (sin bonos)."
+              - "En «Períodos por pagar», toca «Pagar» en el que sigue de cada empleado."
+              - "Toca un empleado para ver sus períodos, pagos, anticipos y metas."
+              - "Con «Nuevo empleado» agregas a un colaborador en un rol; con «Roles», los salarios y frecuencias."
+            tips:
+              - "Cada período se paga una vez y en orden."
+              - "Un empleado que ya no trabaja se desactiva desde «Editar empleado»: sus pagos se conservan."
+          show:
+            title: "Ficha del empleado"
+            summary: "Sus períodos con lo pagado o lo que falta, sus recibos, anticipos y metas."
+            steps:
+              - "«Pagar» abre el pago del período que sigue."
+              - "«Dar anticipo» entrega dinero que se resta completo del pago de ese período."
+              - "«Poner meta» le pone una meta con su bono a un período: al pagarlo se marca si la cumplió."
+            tips:
+              - "Solo se quita el último pago; al quitarlo, sus anticipos y metas vuelven a quedar pendientes."
+              - "Un anticipo o una meta de un período ya pagado no se puede quitar."
+          form:
+            title: "Agregar o editar un empleado"
+            summary: "Un colaborador del negocio en un rol, desde una fecha."
+            steps:
+              - "Escribe el nombre del colaborador y elígelo de la lista. Si no existe, regístralo con «¿No está? Registrar persona»."
+              - "Elige su rol: dice su salario, cada cuánto se le paga y el valor de su hora extra."
+              - "Revisa la fecha de inicio: su primer período empieza ese día."
+              - "Toca el botón de guardar."
+            tips:
+              - "Cambiar el rol cuenta para los períodos que faltan por pagar."
+        staff_roles:
+          index:
+            title: "Roles de la planilla interna"
+            summary: "Cada rol con su salario por período, su frecuencia de pago y el valor de su hora extra."
+            steps:
+              - "Busca un rol o mira los desactivados."
+              - "Toca «Editar» para cambiar su salario, frecuencia o valor de la hora extra."
+              - "Toca «Nuevo rol» para crear uno."
+            tips:
+              - "Un cambio cuenta para los períodos que faltan por pagar: lo pagado se queda como se pagó."
+          form:
+            title: "Registrar o editar un rol"
+            summary: "Nombre, salario por período, frecuencia de pago y, si aplica, el valor de la hora extra."
+            steps:
+              - "Escribe el nombre y el salario: se paga completo en cada período."
+              - "Elige la frecuencia: semanal (cierra el sábado), quincenal (1–15 y 16–fin de mes) o mensual."
+              - "Si se pagan horas extra, escribe el valor de la hora."
+              - "Toca el botón de guardar."
+        staff_advances:
+          form:
+            title: "Dar un anticipo"
+            summary: "Dinero que se le adelanta a un empleado y se resta completo del pago de su período."
+            steps:
+              - "Escribe el monto y la fecha: el anticipo se resta del período que tiene esa fecha."
+              - "Elige la forma de pago y la cuenta de donde salió."
+              - "Toca «Registrar anticipo»."
+            tips:
+              - "No se puede dar con fecha de un período ya pagado."
+        staff_goals:
+          form:
+            title: "Poner una meta"
+            summary: "Una meta para un período, con el bono que gana si la cumple."
+            steps:
+              - "Elige el período, escribe la meta y el bono en lempiras."
+              - "Al pagar el período, marca si la cumplió: si sí, el bono se suma al pago."
+        staff_payments:
+          form:
+            title: "Pagar un período"
+            summary: "Lo que se le paga al empleado por el período que sigue: salario, horas extra y bonos, menos sus anticipos."
+            steps:
+              - "Revisa el salario: es el del rol y se puede cambiar para este pago."
+              - "Anota las horas extra, si el rol tiene valor de la hora."
+              - "Marca las metas que cumplió y, si quieres, agrega un bono con su motivo."
+              - "Revisa los anticipos del período: se restan completos."
+              - "Elige la fecha, la forma de pago y la cuenta, y toca «Pagar»: se abre su recibo."
+            tips:
+              - "Los totales de la derecha son una vista previa: el sistema los calcula de nuevo al guardar."
+              - "Si los anticipos pasan de lo ganado, no se puede pagar."
+          show:
+            title: "Recibo de planilla interna"
+            summary: "El comprobante del pago de un período, con original y copia, cada uno en su hoja."
+            steps:
+              - "Toca «Imprimir»: el original y la copia salen cada uno en su hoja."
+              - "El empleado firma «Recibí conforme»."
+        incomes:
+          index:
+            title: "Ingresos"
+            summary: "Todo el dinero que entró: cobros de ventas de café, abonos a préstamos y otros ingresos."
+            steps:
+              - "Filtra por fechas, cuenta u origen, o busca por detalle o persona; la lista se actualiza sola."
+              - "Arriba, el total ingresado y lo que trajo cada origen."
+              - "Toca «Registrar ingreso» para anotar dinero que no viene de otro módulo: un aporte del dueño, un préstamo del banco…"
+              - "Toca «Abrir» para ir al cobro o al abono en su módulo."
+            tips:
+              - "Cada ingreso se registra una sola vez, donde ocurre: aquí solo se juntan."
+              - "Las transferencias entre cuentas no son ingresos: el dinero sigue en el negocio."
+              - "Un otro ingreso no se edita: se quita y se registra de nuevo."
         expenses:
           index:
             title: "Gastos e inversiones"
@@ -4793,6 +5115,7 @@ es:
               - "Para prestar insumos, toca «Agregar insumo», elígelo y escribe la cantidad. El precio se pone solo y lo puedes cambiar."
               - "Revisa el resumen: efectivo, insumos y capital del préstamo."
               - "Escribe la tasa de interés mensual, revisa la fecha del préstamo y elige la fecha límite."
+              - "Si la persona es un productor intermediario, puedes marcar que los primeros 10 días no generen interés: desde el día 11 corre normal."
               - "Toca el botón de guardar."
             tips:
               - "El capital es el efectivo más el valor de los insumos; el interés corre sobre todo el capital."
@@ -5088,6 +5411,11 @@ es:
         other_income: "el otro ingreso"
         account_transfer: "la transferencia entre cuentas"
         budget: "el presupuesto"
+        staff_role: "el rol de la planilla interna"
+        staff_member: "el empleado de la planilla interna"
+        staff_payment: "el pago de la planilla interna"
+        staff_advance: "el anticipo"
+        staff_goal: "la meta"
         loan: "el préstamo"
         loan_payment: "el abono"
         supply: "el insumo"
@@ -5292,6 +5620,7 @@ es:
         payrolls: "Planillas"
         hauled_purchases: "Compras carreadas"
         hauler_payments: "Pagos a carrero"
+        staff: "Planilla interna"
       new:
         title: "Fusionar personas"
         help: "Para cuando la misma persona se registró dos veces (por ejemplo, con el nombre escrito distinto). Elige a la otra persona y cuál queda; después, dato por dato, qué valor se conserva. Todo lo de la otra (compras, facturas, fincas, préstamos y planillas) pasa a la que queda, y la otra se borra."
@@ -5451,6 +5780,21 @@ es:
       hauler_payment:
         one: "Pago a carrero"
         other: "Pagos a carreros"
+      staff_role:
+        one: "Rol de planilla interna"
+        other: "Roles de planilla interna"
+      staff_member:
+        one: "Empleado de planilla interna"
+        other: "Empleados de planilla interna"
+      staff_payment:
+        one: "Pago de planilla interna"
+        other: "Pagos de planilla interna"
+      staff_advance:
+        one: "Anticipo"
+        other: "Anticipos"
+      staff_goal:
+        one: "Meta"
+        other: "Metas"
       user:
         one: "Usuario"
         other: "Usuarios"
@@ -5542,6 +5886,69 @@ es:
         one: "Configuración del sitio"
         other: "Configuración del sitio"
     attributes:
+      staff_role:
+        name: "Nombre del rol"
+        salary: "Salario por período (L)"
+        pay_frequency: "Frecuencia de pago"
+        pay_frequency/weekly: "Semanal"
+        pay_frequency/biweekly: "Quincenal"
+        pay_frequency/monthly: "Mensual"
+        overtime_hour_rate: "Valor de la hora extra (L)"
+        active: "Activo"
+      staff_member:
+        person: "Empleado"
+        person_id: "Empleado"
+        role: "Rol"
+        staff_role_id: "Rol"
+        starts_on: "Fecha de inicio"
+        ends_on: "Fecha de salida"
+        active: "Activo"
+        observations: "Observaciones"
+      staff_payment:
+        member: "Empleado"
+        staff_member_id: "Empleado"
+        role: "Rol"
+        staff_role_id: "Rol"
+        period_starts_on: "Inicio del período"
+        period_ends_on: "Fin del período"
+        salary: "Salario (L)"
+        overtime_hours: "Horas extra"
+        overtime_hour_rate: "Valor de la hora extra (L)"
+        overtime_amount: "Horas extra (L)"
+        goals_bonus: "Bonos por metas (L)"
+        extra_bonus: "Bono adicional (L)"
+        extra_bonus_reason: "Motivo del bono"
+        gross_total: "Total ganado (L)"
+        advances_total: "Anticipos (L)"
+        net_total: "Entregado (L)"
+        paid_on: "Fecha de pago"
+        payment_method: "Forma de pago"
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
+        observations: "Observaciones"
+        created_by_id: "Registró"
+      staff_advance:
+        member: "Empleado"
+        staff_member_id: "Empleado"
+        given_on: "Fecha del anticipo"
+        amount: "Monto (L)"
+        payment_method: "Forma de pago"
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
+        observations: "Observaciones"
+        payment: "Pago donde se descontó"
+        staff_payment_id: "Pago donde se descontó"
+        created_by_id: "Registró"
+      staff_goal:
+        member: "Empleado"
+        staff_member_id: "Empleado"
+        period_starts_on: "Período"
+        description: "Meta"
+        bonus_amount: "Bono (L)"
+        met: "Cumplida"
+        payment: "Pago"
+        staff_payment_id: "Pago"
+        created_by_id: "Registró"
       webauthn_credential:
         user_id: "Usuario"
         external_id: "Identificador"
@@ -5837,6 +6244,7 @@ es:
         hauler_commission_percent: "Comisión del carrero (%)"
         hauler_can_price: "Precio de la lata del carrero (L)"
         hauler_cans: "Latas"
+        hauler_price_per_pound: "Precio por libra del carrero (L)"
         hauler_commission: "Comisión"
         zone: "Zona"
         zone_id: "Zona"
@@ -5852,6 +6260,12 @@ es:
         damage_percent: "Daño (%)"
         damage_weight: "Restado por daño (lb)"
         damage_amount: "Restado por daño (L)"
+        damage_types: "Tipo de daño"
+        damage_types/yellow: "Amarillo"
+        damage_types/borer: "Broca"
+        damage_types/green: "Verde"
+        damage_types/pulp: "Pulpa"
+        damage_types/peeled: "Pelado"
         yield_factor: "Rendimiento"
         price_per_pound: "Precio por libra (L)"
         sacks: "Sacos"
@@ -5898,8 +6312,7 @@ es:
       hauler:
         person: "Persona"
         person_id: "Persona"
-        commission_percent: "Comisión (%)"
-        can_price: "Precio de la lata (L)"
+        price_per_pound: "Precio por libra neta (L)"
         active: "Activo"
       hauler_payment:
         money_account: "Cuenta"
@@ -5930,6 +6343,7 @@ es:
       loan:
         money_account: "Cuenta"
         money_account_id: "Cuenta"
+        interest_grace: "Días sin interés"
         person: "Persona"
         person_id: "Persona"
         created_by_id: "Registró"
@@ -6134,6 +6548,45 @@ es:
         can_destroy: "Borrar"
     errors:
       models:
+        staff_member:
+          attributes:
+            person:
+              not_collaborator: "debe tener el rol de colaborador"
+            person_id:
+              taken: "ya está en la planilla interna"
+            role:
+              inactive: "está desactivado"
+            ends_on:
+              before_start: "no puede ser antes de la fecha de inicio"
+              before_paid_period: "deja fuera un período ya pagado"
+            starts_on:
+              after_paid_period: "deja fuera un período ya pagado"
+        staff_payment:
+          attributes:
+            base:
+              not_next_period: "Ese período no es el que sigue por pagar: los períodos se pagan en orden."
+              advances_over_earnings: "Los anticipos pasan de lo ganado en el período: no se puede pagar así."
+              not_latest: "Solo se quita el último pago del empleado."
+            overtime_hours:
+              without_rate: "no se pueden anotar: el rol no tiene valor de la hora extra"
+            money_account:
+              inactive: "está desactivada"
+        staff_advance:
+          attributes:
+            given_on:
+              outside_employment: "no está dentro de las fechas del empleado"
+              in_paid_period: "cae en un período ya pagado"
+            money_account:
+              inactive: "está desactivada"
+            base:
+              taken_off: "Este anticipo ya se descontó en un pago: quita ese pago primero."
+        staff_goal:
+          attributes:
+            period_starts_on:
+              outside_employment: "no está dentro de las fechas del empleado"
+              in_paid_period: "ya se pagó"
+            base:
+              paid: "La meta ya se revisó en un pago: quita ese pago primero."
         money_account:
           attributes:
             default_for:
@@ -6208,6 +6661,7 @@ es:
           role_required: "Marca al menos un rol: cliente, colaborador, productor o carrero."
           producer_in_use: "No se puede quitar el rol de productor: ya tiene compras, facturas o fincas."
           hauler_in_use: "No se puede quitar el rol de carrero: ya tiene compras carreadas o pagos. Desactívalo en su ficha de carrero."
+          staff_member: "No se puede quitar el rol de colaborador: está en la planilla interna. Desactívalo allí."
         farm:
           attributes:
             producer:
@@ -6373,6 +6827,7 @@ es:
         person_merge:
           same_person: "Elige a otra persona: no se puede fusionar una persona consigo misma."
           shared_payroll: "Las dos personas están en la planilla %{payrolls}: quita a una de ella antes de fusionarlas."
+          both_staff: "Las dos personas están en la planilla interna: deja a una sola antes de fusionarlas."
           failed: "No se pudo fusionar: %{detail}"
         payroll_timesheet:
           closed: "Este período ya se pagó: no se puede cambiar."
@@ -6407,6 +6862,8 @@ es:
     messages:
       accepted: "debe ser aceptado"
       blank: "no puede estar en blanco"
+      choose_at_least_one: "elige al menos uno"
+      only_intermediaries: "solo se da a un productor intermediario"
       confirmation: "no coincide con %{attribute}"
       empty: "no puede estar vacío"
       equal_to: "debe ser igual a %{count}"

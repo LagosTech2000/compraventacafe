@@ -20,5 +20,9 @@ RSpec.describe DemoData do
     expect(MoneyAccount.pluck(:bank_key).compact).to contain_exactly("ficohsa", "atlantida", "bac", "occidente", "other")
     expect(Expense.count).to eq(7)
     expect(AccountBalance.new.unassigned.in).to eq(0)
+    expect(StaffMember.count).to eq(2)
+    expect(StaffPayment.count).to be_positive
+    expect(StaffMember.all.map(&:period_to_pay)).to all(be_present)
+    expect(StaffAdvance.count).to eq(2)
   end
 end

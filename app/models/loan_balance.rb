@@ -5,6 +5,9 @@
 #     interest = principal owed × monthly rate × days / 30
 #   a payment covers the interest owed first; the rest lowers the principal
 #
+# With the grace of an intermediary (Loan#interest_grace), the first 10 days
+# bring no interest: it counts from Loan#interest_starts_on.
+#
 # Interest keeps running after the due date at the same rate: there is no
 # late fee (not defined). Each payment stores how it was split, so past
 # payments do not change if the rule changes; only the days since the last
@@ -16,6 +19,7 @@ class LoanBalance
 
   def initialize(loan, as_of: Time.zone.today, payments: loan.payments.chronological)
     @rate = loan.monthly_interest_rate.to_d / 100
+    @interest_starts_on = loan.interest_starts_on
     @principal_owed = loan.principal.to_d
     @principal_paid = @interest_paid = unpaid_interest = 0.to_d
     last_date = loan.disbursed_on
@@ -49,7 +53,7 @@ class LoanBalance
 
   private
     def interest_between(from, to)
-      days = (to - from).to_i
+      days = (to - [ from, @interest_starts_on ].max).to_i
       return 0.to_d unless days.positive?
 
       (principal_owed * @rate * days / DAYS_PER_MONTH).round(2)

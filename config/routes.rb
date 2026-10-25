@@ -94,6 +94,7 @@ Rails.application.routes.draw do
   namespace :finance do
     root "home#index"
     resources :movements, only: :index
+    resources :incomes, only: :index
     resources :expenses, defaults: { kind: "expense" }
     resources :investments, controller: "expenses", defaults: { kind: "investment" }
     # The receipt's photo or PDF of an expense.
@@ -105,6 +106,14 @@ Rails.application.routes.draw do
     resource :budget, only: %i[ show update ]
     # Giving an account to what was registered without one.
     resource :consolidation, only: %i[ show update ]
+    # The business's own payroll (Planilla interna): roles and employees,
+    # each with their payments by period, advances and goals.
+    resources :staff_roles, path: "staff/roles", only: %i[ index new create edit update destroy ]
+    resources :staff_members, path: "staff" do
+      resources :staff_payments, path: "payments", only: %i[ new create show destroy ]
+      resources :staff_advances, path: "advances", only: %i[ new create destroy ]
+      resources :staff_goals, path: "goals", only: %i[ new create destroy ]
+    end
   end
 
   namespace :farms do

@@ -1,0 +1,56 @@
+<%# One printed copy of the receipt of a Planilla interna payment: what the
+    period paid, line by line, and the advances taken off. `label` is
+    ORIGINAL or COPIA. %>
+<% member = payment.member %>
+<% person = member.person %>
+<article class="rounded-2xl border border-line bg-white p-5 shadow-[0_1px_2px_rgb(29_21_18/0.04)] break-inside-avoid print:p-3 print:shadow-none print:rounded-none print:border-ink">
+  <%= render "shared/print_letterhead", title: t("finance.staff_payments.receipt.title"), number: payment.display_number, label: %>
+
+  <dl class="mt-4 grid grid-cols-1 gap-x-6 gap-y-1 text-sm min-[30rem]:grid-cols-2 print:mt-2 print:grid-cols-2">
+    <div><dt class="inline font-semibold"><%= t("finance.staff_payments.receipt.employee") %>:</dt> <dd class="inline"><%= person.full_name %></dd></div>
+    <% if person.dni.present? %>
+      <div><dt class="inline font-semibold"><%= Person.human_attribute_name(:dni) %>:</dt> <dd class="inline"><%= person.dni %></dd></div>
+    <% end %>
+    <div><dt class="inline font-semibold"><%= StaffMember.human_attribute_name(:role) %>:</dt> <dd class="inline"><%= payment.role.name %></dd></div>
+    <div><dt class="inline font-semibold"><%= t("finance.staff_payments.receipt.period") %>:</dt> <dd class="inline"><%= format_period(payment.period) %></dd></div>
+    <div><dt class="inline font-semibold"><%= StaffPayment.human_attribute_name(:paid_on) %>:</dt> <dd class="inline"><%= l(payment.paid_on, format: :long) %></dd></div>
+    <div><dt class="inline font-semibold"><%= StaffPayment.human_attribute_name(:payment_method) %>:</dt> <dd class="inline"><%= payment.human_payment_method %></dd></div>
+    <div><dt class="inline font-semibold"><%= MoneyAccount.model_name.human %>:</dt> <dd class="inline"><%= payment.money_account.name %></dd></div>
+  </dl>
+
+  <table class="data-table mt-4 text-sm print:mt-2">
+    <tbody>
+      <tr><td><%= StaffPayment.human_attribute_name(:salary) %></td><td class="text-right tabular-nums"><%= format_money(payment.salary) %></td></tr>
+      <% if payment.overtime_hours.positive? %>
+        <tr>
+          <td><%= t("finance.staff_payments.receipt.overtime", hours: number_with_precision(payment.overtime_hours, precision: 2, strip_insignificant_zeros: true),
+                                                              rate: format_money(payment.overtime_hour_rate)) %></td>
+          <td class="text-right tabular-nums"><%= format_money(payment.overtime_amount) %></td>
+        </tr>
+      <% end %>
+      <% payment.goals.select(&:met).each do |goal| %>
+        <tr><td><%= t("finance.staff_payments.receipt.goal", description: goal.description) %></td><td class="text-right tabular-nums"><%= format_money(goal.bonus_amount) %></td></tr>
+      <% end %>
+      <% if payment.extra_bonus.positive? %>
+        <tr><td><%= t("finance.staff_payments.receipt.extra_bonus", reason: payment.extra_bonus_reason) %></td><td class="text-right tabular-nums"><%= format_money(payment.extra_bonus) %></td></tr>
+      <% end %>
+      <tr class="font-semibold"><td><%= StaffPayment.human_attribute_name(:gross_total) %></td><td class="text-right tabular-nums"><%= format_money(payment.gross_total) %></td></tr>
+      <% payment.advances.sort_by(&:given_on).each do |advance| %>
+        <tr><td><%= t("finance.staff_payments.receipt.advance", date: l(advance.given_on)) %></td><td class="text-right tabular-nums">−<%= format_money(advance.amount) %></td></tr>
+      <% end %>
+    </tbody>
+    <tfoot>
+      <tr class="text-base font-bold"><td><%= t("finance.staff_payments.receipt.net") %></td><td class="text-right tabular-nums"><%= format_money(payment.net_total) %></td></tr>
+    </tfoot>
+  </table>
+
+  <% if payment.observations.present? %>
+    <p class="mt-3 text-sm"><span class="font-semibold"><%= StaffPayment.human_attribute_name(:observations) %>:</span> <%= payment.observations %></p>
+  <% end %>
+
+  <footer class="mt-10 flex flex-wrap items-end justify-between gap-6 text-sm print:mt-8">
+    <div class="w-56 border-t border-ink pt-1 text-center"><%= t("finance.staff_payments.receipt.receiver_signature") %></div>
+    <div class="w-56 border-t border-ink pt-1 text-center"><%= t("finance.staff_payments.receipt.payer_signature") %></div>
+    <p class="w-full text-xs text-ink-muted"><%= t("finance.staff_payments.receipt.registered_by", name: payment.created_by.name) %></p>
+  </footer>
+</article>

@@ -29,7 +29,7 @@ module Trading
         close_modal_with notice: t(".success"), fallback: trading_hauler_path(@hauler),
                          event: "hauler:created",
                          detail: { id: @hauler.id, label: @hauler.full_name, name: @hauler.full_name,
-                                   data: { percent: @hauler.commission_percent.to_s, canPrice: @hauler.can_price.to_s } }
+                                   data: { pricePerPound: @hauler.price_per_pound.to_s } }
       else
         render :new, status: :unprocessable_content
       end
@@ -53,7 +53,7 @@ module Trading
 
       def hauler_params
         params.expect(hauler: [
-          :commission_percent, :can_price, :active,
+          :price_per_pound, :active,
           person_attributes: [ :id, :first_names, :last_names, :dni, :rtn, :phone, :email, :civil_status, :nationality, :zone_id,
                                :department_id, :municipality_id, :address_line, :latitude, :longitude,
                                :photo_upload, :remove_photo, :client_role, :collaborator_role ]

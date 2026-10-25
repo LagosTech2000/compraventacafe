@@ -46,4 +46,34 @@ FactoryBot.define do
     month { Time.zone.today.beginning_of_month }
     amount { 1_000 }
   end
+
+  factory :staff_role do
+    sequence(:name) { |n| "Rol #{n}" }
+    salary { 6_000 }
+    pay_frequency { "biweekly" }
+    overtime_hour_rate { 50 }
+  end
+
+  factory :staff_member do
+    person { association(:person, :collaborator) }
+    role { association(:staff_role) }
+    starts_on { Time.zone.today.beginning_of_month }
+  end
+
+  factory :staff_advance do
+    member { association(:staff_member) }
+    money_account
+    association :created_by, factory: :user
+    given_on { Time.zone.today }
+    amount { 500 }
+    payment_method { "cash" }
+  end
+
+  factory :staff_goal do
+    member { association(:staff_member) }
+    association :created_by, factory: :user
+    period_starts_on { member.period_to_pay&.starts_on || Time.zone.today }
+    description { "Ordenar la bodega" }
+    bonus_amount { 300 }
+  end
 end

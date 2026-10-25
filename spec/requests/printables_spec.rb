@@ -57,6 +57,16 @@ RSpec.describe "Printable documents" do
     expect_letterhead("Cierre de comercialización")
   end
 
+  it "puts it on the Planilla interna's receipts, original and copy" do
+    member = create(:staff_member, starts_on: Time.zone.today - 40)
+    issuer = StaffPaymentIssuer.new(member:, period: member.period_to_pay, user:, payment_method: "cash",
+                                    money_account_id: create(:money_account).id)
+    issuer.call
+    get finance_staff_member_staff_payment_path(member, issuer.payment)
+    expect_letterhead("Recibo de pago de planilla", count: 2)
+    expect_copy_on_its_own_page
+  end
+
   it "puts it on an account's statement" do
     account = create(:money_account, name: "Caja de la bodega")
     get finance_money_account_path(account)

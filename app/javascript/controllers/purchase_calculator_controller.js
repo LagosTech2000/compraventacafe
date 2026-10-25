@@ -16,8 +16,9 @@ export default class extends Controller {
   static targets = ["coffeeState", "gross", "grossHelp", "humidity", "damage", "yield", "price",
                     "parchmentField", "cherryField", "sacks", "tare", "damageWeight", "damageAmount", "netWeight", "quintals", "total",
                     "weightMode", "weighingsSection", "weighings", "weighingTemplate", "weighing",
-                    "weighingDestroy", "weighingGross", "weighingSacks"]
-  static values = { sackWeight: Number, tarePerSack: Number, quintalWeight: Number, defaults: Object }
+                    "weighingDestroy", "weighingGross", "weighingSacks", "damageTypes", "damageType"]
+  static values = { sackWeight: Number, tarePerSack: Number, quintalWeight: Number, defaults: Object,
+                    damageTypesMessage: String }
 
   connect() {
     this.pounds = new Intl.NumberFormat("es-HN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -75,6 +76,7 @@ export default class extends Controller {
   }
 
   update() {
+    this.showDamageTypes()
     let gross = parseFloat(this.grossTarget.value)
     let sacks = null
     if (this.byWeighings()) {
@@ -121,6 +123,17 @@ export default class extends Controller {
     const damage = this.damagePercent()
     if (!(humidity >= 0) || damage === null) return null
     return (1 - humidity / 100) * (1 - damage / 100)
+  }
+
+  // Parchment with damage above 0 asks for its kinds: at least one, which
+  // the browser says before sending (the server checks it too).
+  showDamageTypes() {
+    if (!this.hasDamageTypesTarget) return
+    const damaged = this.coffeeStateTarget.value !== "cherry" && this.damagePercent() > 0
+    this.damageTypesTarget.hidden = !damaged
+    this.damageTypesTarget.querySelectorAll("input").forEach((input) => { input.disabled = !damaged })
+    const chosen = this.damageTypeTargets.some((box) => box.checked)
+    this.damageTypeTargets[0]?.setCustomValidity(damaged && !chosen ? this.damageTypesMessageValue : "")
   }
 
   // An empty damage field means no damage (0 %), as the server takes it.

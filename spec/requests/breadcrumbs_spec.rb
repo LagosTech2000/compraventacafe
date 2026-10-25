@@ -69,6 +69,20 @@ RSpec.describe "Breadcrumbs" do
     expect(crumbs.first(2)).to eq([ "Carreros", "Ana Zelaya" ])
   end
 
+  it "goes up through the Planilla interna from an employee, their payment and the roles" do
+    member = create(:staff_member, person: producer.person.tap { it.update!(collaborator_role: "1") }, starts_on: Time.zone.today - 40)
+    issuer = StaffPaymentIssuer.new(member:, period: member.period_to_pay, user: admin, payment_method: "cash",
+                                    money_account_id: create(:money_account).id)
+    issuer.call
+
+    get finance_staff_member_path(member)
+    expect(crumbs).to eq([ "Planilla interna", "Ana Zelaya" ])
+    get finance_staff_member_staff_payment_path(member, issuer.payment)
+    expect(crumbs.first(2)).to eq([ "Planilla interna", "Ana Zelaya" ])
+    get finance_staff_roles_path
+    expect(crumbs).to eq([ "Planilla interna", "Roles de la planilla" ])
+  end
+
   it "goes up from a person, a user and a farm in Administración" do
     get administration_person_path(producer.person)
     expect(crumbs).to eq([ "Personas", "Ana Zelaya" ])

@@ -33,7 +33,7 @@ RSpec.describe "Control financiero" do
 
     it "only gives each user the sources of the modules they read" do
       user = create(:user).tap { create(:permission, user: it, module_key: "finance", can_read: true) }
-      expect(described_class.sources_for(user)).to eq(%w[expenses investments other_incomes transfers])
+      expect(described_class.sources_for(user)).to eq(%w[expenses investments staff_payments staff_advances other_incomes transfers])
     end
   end
 

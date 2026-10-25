@@ -6,8 +6,7 @@ class HaulerFilter < ListFilter
 
   sorts name: { sql: text("people.first_names", "people.last_names"), joins: :person },
         phone: { sql: "people.phone", joins: :person },
-        commission_percent: "haulers.commission_percent",
-        can_price: "haulers.can_price",
+        price_per_pound: "haulers.price_per_pound",
         commissions: "commissions_total",
         paid: "paid_total",
         balance: "balance_total"

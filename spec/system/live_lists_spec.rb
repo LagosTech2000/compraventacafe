@@ -28,6 +28,10 @@ RSpec.describe "Live lists", type: :system do
     create(:sale, buyer: create(:buyer, name: "Beneficio Mejía"))
     create(:expense, description: "Flete Zelaya", category: create(:finance_category, name: "Zelaya fletes"), money_account: create(:money_account, name: "Caja Zelaya"))
     create(:expense, description: "Comida Mejía", category: create(:finance_category, name: "Mejía comida"), money_account: create(:money_account, name: "Banco Mejía"))
+    create(:other_income, concept: "Aporte Zelaya")
+    create(:staff_member, person: ana.person, role: create(:staff_role, name: "Zelaya bodega"))
+    create(:staff_member, person: create(:person, :collaborator, first_names: "Rosa", last_names: "Mejía"), role: create(:staff_role, name: "Mejía chofer"))
+    create(:other_income, concept: "Préstamo Mejía")
     sign_in_as(user)
   end
 
@@ -38,7 +42,8 @@ RSpec.describe "Live lists", type: :system do
     "/loans/credit_accounts" => "credit-accounts-list", "/loans/supplies" => "supplies-list",
     "/farms/farms" => "farms-list", "/farms/expense_categories" => "expense-categories-list",
     "/sales/shipments" => "shipments-list", "/sales/sales" => "sales-list", "/sales/buyers" => "buyers-list",
-    "/finance/movements" => "movements-list", "/finance/expenses" => "expenses-list", "/finance/money_accounts" => "accounts-list",
+    "/finance/movements" => "movements-list", "/finance/incomes" => "incomes-list",
+    "/finance/staff" => "staff-list", "/finance/staff/roles" => "staff-roles-list", "/finance/expenses" => "expenses-list", "/finance/money_accounts" => "accounts-list",
     "/finance/categories" => "categories-list", "/finance/consolidation" => "consolidation-list"
   }.each do |path, frame|
     it "filters #{path} as the user types, in its frame" do

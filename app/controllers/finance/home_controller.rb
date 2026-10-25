@@ -15,6 +15,7 @@ module Finance
       @budget = BudgetSheet.new(Season.for(@today))
       @budget_lines = @budget.month_lines(@today.beginning_of_month)
       @without_account = @month.count { |movement| movement.account_id.nil? }
+      @staff_due = StaffOverview.new(today: @today).due
       @latest = MoneyMovements.new(range: (@today - 30)..@today, sources:).all.reject(&:transfer?).last(8).reverse
     end
 

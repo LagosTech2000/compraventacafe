@@ -42,6 +42,14 @@ RSpec.describe "Process guides" do
     end
   end
 
+  it "explains the Planilla interna where it is run" do
+    member = create(:staff_member)
+    [ finance_staff_members_path, finance_staff_roles_path, finance_staff_member_path(member), new_finance_staff_member_staff_payment_path(member) ].each do |path|
+      get path
+      expect(guides).to include("Ayuda: Planilla interna del negocio"), path
+    end
+  end
+
   it "explains paying a period and the harvest on the timesheet, and saved filters on the reports" do
     payroll = create(:payroll, kind: "harvest", can_price: 40)
     get farms_payroll_timesheet_path(payroll)

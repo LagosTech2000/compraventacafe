@@ -53,6 +53,7 @@
        Loan.human_attribute_name(:cash_amount) => format_money(@loan.cash_amount),
        t(".supplies_amount") => format_money(@loan.supplies_amount),
        t(".rate") => format_rate(@loan.monthly_interest_rate),
+       Loan.human_attribute_name(:interest_grace) => (t(".interest_grace", days: Loan::GRACE_DAYS, date: l(@loan.interest_starts_on)) if @loan.interest_grace?),
        Loan.human_attribute_name(:disbursed_on) => l(@loan.disbursed_on, format: :long),
        Loan.human_attribute_name(:due_on) => l(@loan.due_on, format: :long),
        t(".term") => t(".term_days", count: @loan.term_days),

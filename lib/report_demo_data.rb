@@ -234,6 +234,8 @@ class ReportDemoData
       inputs = PurchaseDefaults.inputs_for(state)
       inputs[:humidity_percent] = (inputs[:humidity_percent] + @random.rand(-3.0..3.0)).round(1) if inputs[:humidity_percent]
       inputs[:damage_percent] = pick([ 0, 0, 1.5, 2, 2.2, 2.5 ]) if inputs.key?(:damage_percent)
+      # Damage names its kind; picked from the percent, so the random sequence stays the same.
+      inputs[:damage_types] = [ Purchase::DAMAGE_TYPES[(inputs[:damage_percent] * 10).to_i % Purchase::DAMAGE_TYPES.size] ] if inputs[:damage_percent].to_d.positive?
       inputs[:yield_factor] = (0.17 + @random.rand * 0.03).round(4) if inputs[:yield_factor]
       size = producer.kind == "intermediary" ? @random.rand(300..1_200) : @random.rand(60..520)
       weight = if @random.rand < 0.3

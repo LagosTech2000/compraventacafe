@@ -27,6 +27,8 @@ RSpec.describe "Sorting every list" do
     create(:sale, buyer:)
     create(:shipment, buyer:)
     create(:expense)
+    create(:other_income)
+    create(:staff_member)
     sign_in admin
   end
 
@@ -59,6 +61,9 @@ RSpec.describe "Sorting every list" do
     BuyerShipmentFilter => -> { sales_buyer_path(buyer, tab: "shipments") },
     StockLedgerFilter => -> { sales_stock_path },
     MovementFilter => -> { finance_movements_path(from: "", to: "") },
+    IncomeFilter => -> { finance_incomes_path(from: "", to: "") },
+    StaffMemberFilter => -> { finance_staff_members_path },
+    StaffRoleFilter => -> { finance_staff_roles_path },
     ExpenseFilter => -> { finance_expenses_path(from: "", to: "") },
     FinanceCategoryFilter => -> { finance_categories_path },
     ConsolidationFilter => -> { finance_consolidation_path }
