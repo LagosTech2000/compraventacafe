@@ -262,11 +262,13 @@ class DemoData
     # still on its way.
     def coffee_sales
       buyers = BUYERS.map { |name, kind| Buyer.find_or_create_by!(name:) { |buyer| buyer.kind = kind } }
+      carrier = Carrier.find_or_create_by!(name: "Transporte Demo") { |new_carrier| new_carrier.contact_name = "Mario Demo" }
+      truck = Truck.find_or_create_by!(plate: "HDM 0001") { |new_truck| new_truck.assign_attributes(brand_model: "Isuzu NPR (demo)", capacity_quintals: 80) }
       [ [ 5, 900, 6, 0, :paid ], [ 3, 800, 5, 1, :partial ], [ 2, 700, 5, -1.5, nil ], [ 0, 600, 4, nil, nil ] ].each_with_index do |(days_ago, gross, sacks, loss, sale), i|
         buyer = buyers[i % buyers.size]
         departed_at = moment_of(Time.zone.today - days_ago)
         shipment = Shipment.create!(buyer:, created_by: @user, departed_at:, coffee_state: "wet_parchment", remission_number: (330 + i).to_s,
-                                    carrier_name: "Transporte Demo", origin_gross_weight: gross, origin_sacks: sacks,
+                                    carrier:, truck:, driver_name: "Mario Demo", origin_gross_weight: gross, origin_sacks: sacks,
                                     origin_humidity_percent: 51, origin_damage_percent: 0)
         next if loss.nil?
 

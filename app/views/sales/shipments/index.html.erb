@@ -26,6 +26,8 @@
           season_options(Shipment.all), selected: @filter.season_year,
           all: t("shared.filters.all_seasons"), data: { controller: "season-filter", action: "season-filter#clearDates" } %>
     <%= filter_select form, :buyer_id, Shipment.human_attribute_name(:buyer), Buyer.alphabetical.pluck(:name, :id), selected: @filter.buyer_id %>
+    <%= filter_select form, :carrier_id, Shipment.human_attribute_name(:carrier), Carrier.alphabetical.pluck(:name, :id), selected: @filter.carrier_id %>
+    <%= filter_select form, :truck_id, Shipment.human_attribute_name(:truck), Truck.alphabetical.pluck(:plate, :id), selected: @filter.truck_id %>
     <%= filter_select form, :coffee_state, Shipment.human_attribute_name(:coffee_state),
           enum_options(Purchase, :coffee_state, Purchase::COFFEE_STATES), selected: @filter.coffee_state %>
     <%= filter_select form, :status, t("sales.shipments.table.status"), status_labels, selected: @filter.status,
@@ -42,6 +44,8 @@
                               season_year: ->(year) { format_season(Season.new(year)) },
                               q: ->(text) { t("shared.filters.chips.q", text:) },
                               buyer_id: ->(id) { Buyer.find_by(id:)&.name },
+                              carrier_id: ->(id) { Carrier.find_by(id:)&.name },
+                              truck_id: ->(id) { Truck.find_by(id:)&.plate },
                               coffee_state: ->(state) { Purchase.human_attribute_name("coffee_state/#{state}") },
                               status: ->(value) { Shipment.human_attribute_name("status/#{value}") },
                               over_tolerance: ->(_) { t(".over_tolerance_chip") }) %>

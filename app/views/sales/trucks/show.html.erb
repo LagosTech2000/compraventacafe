@@ -1,0 +1,39 @@
+<% content_for :title, @truck.plate %>
+<%= live_updates_from :sales %>
+<%= render "sales/nav" %>
+<%= render "shared/breadcrumbs", crumbs: [ [ t("sales.nav.trucks"), sales_trucks_path ], [ @truck.plate ] ] %>
+
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= @truck.plate %></h1>
+    <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
+      <span class="badge badge-neutral"><%= t("sales.trucks.owners.#{@truck.own ? "own" : "others"}") %></span>
+      <span class="<%= @truck.active? ? "badge badge-success" : "badge badge-neutral" %>"><%= t("sales.buyers.index.statuses.#{@truck.active? ? "active" : "inactive"}") %></span>
+      <% if @truck.brand_model %><span><%= @truck.brand_model %></span><% end %>
+    </p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <% if policy(@truck).update? %>
+      <%= modal_link_to t("sales.trucks.show.edit"), edit_sales_truck_path(@truck), class: "btn" %>
+    <% end %>
+    <% if modal_request? %>
+      <%= page_link_to t("sales.buyers.show.full_page"), sales_truck_path(@truck), class: "btn" %>
+    <% end %>
+  </div>
+</div>
+
+<div class="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+  <aside class="panel p-4 lg:order-last" aria-labelledby="truck-record">
+    <h2 id="truck-record" class="font-semibold"><%= t("sales.trucks.show.record") %></h2>
+    <dl class="mt-3 grid grid-cols-1 gap-y-3 text-sm">
+      <% [ [ Truck.human_attribute_name(:brand_model), @truck.brand_model ], [ Truck.human_attribute_name(:color), @truck.color ],
+           [ Truck.human_attribute_name(:capacity_quintals), (format_pounds(@truck.capacity_quintals) if @truck.capacity_quintals) ] ].each do |label, value| %>
+        <div><dt class="text-xs text-ink-muted"><%= label %></dt><dd><%= value.presence || "—" %></dd></div>
+      <% end %>
+    </dl>
+    <% if @truck.observations %><p class="mt-3 text-sm"><%= @truck.observations %></p><% end %>
+  </aside>
+
+  <%= render "sales/shipments/of_record", path: sales_truck_path(@truck), filter: @filter, shipments: @shipments, next_page: @next_page,
+        frame: "truck-shipments-list", seasons_scope: @truck.shipments %>
+</div>

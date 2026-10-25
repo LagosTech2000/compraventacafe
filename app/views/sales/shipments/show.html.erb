@@ -64,7 +64,10 @@
 <section class="mt-4 panel p-4" aria-labelledby="shipment-details">
   <h2 id="shipment-details" class="font-semibold"><%= t(".details") %></h2>
   <dl class="mt-3 grid grid-cols-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
-    <% { remission_number: @shipment.remission_number, carrier_name: @shipment.carrier_name, vehicle_plate: @shipment.vehicle_plate,
+    <% { remission_number: @shipment.remission_number,
+         carrier: (@shipment.carrier && (policy(@shipment.carrier).show? ? link_to(@shipment.carrier.name, sales_carrier_path(@shipment.carrier), class: "link") : @shipment.carrier.name)),
+         truck: (@shipment.truck && (policy(@shipment.truck).show? ? link_to(@shipment.truck.label, sales_truck_path(@shipment.truck), class: "link") : @shipment.truck.label)),
+         driver: @shipment.driver_label,
          season_year: format_season(@shipment.season), created_by: @shipment.created_by.name }.each do |key, value| %>
       <div><dt class="text-xs text-ink-muted"><%= Shipment.human_attribute_name(key) %></dt><dd><%= value.presence || "—" %></dd></div>
     <% end %>

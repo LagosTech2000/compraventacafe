@@ -111,6 +111,11 @@ class ReportDemoData
         [ parent, children.to_h { |child, cost| [ FinanceCategory.find_or_create_by!(name: child, kind: "expense", parent:), cost ] } ]
       end
       @buyers = BUYERS.map { |name, kind| Buyer.find_or_create_by!(name:) { |buyer| buyer.kind = kind } }
+      # Who carries the trucks: a carrier with its truck, or the business's own.
+      @transport = {
+        "Transporte Demo" => [ Carrier.find_or_create_by!(name: "Transporte Demo"), Truck.find_or_create_by!(plate: "HDM 0002") { it.brand_model = "Hino 500 (demo)" } ],
+        "Camión propio" => [ nil, Truck.find_or_create_by!(plate: "HDM 0003") { it.assign_attributes(brand_model: "Isuzu NPR (demo)", own: true) } ]
+      }
     end
 
     def person(zone: nil)
@@ -316,7 +321,8 @@ class ReportDemoData
         gross = (net / (1 - humidity / 100.0)).round
         sacks = (gross / PurchaseCalculation::SACK_WEIGHT.to_f).ceil
         shipment = Shipment.create!(buyer: pick(@buyers), created_by: pick(@clerks), departed_at: moment(date), coffee_state: state,
-                                    remission_number: (400 + @counts[:shipments]).to_s, carrier_name: pick([ "Transporte Demo", "Camión propio" ]),
+                                    remission_number: (400 + @counts[:shipments]).to_s,
+                                    **[ :carrier, :truck ].zip(@transport.fetch(pick([ "Transporte Demo", "Camión propio" ]))).to_h,
                                     origin_gross_weight: gross + sacks, origin_sacks: sacks, origin_humidity_percent: humidity, origin_damage_percent: 0)
         @in_transit << [ shipment, date + @random.rand(0..2) ]
         @counts[:shipments] += 1

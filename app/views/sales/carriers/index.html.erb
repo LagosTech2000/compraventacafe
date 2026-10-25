@@ -1,0 +1,76 @@
+<% content_for :title, t(".title") %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= live_updates_from :sales %>
+<%= render "sales/nav" %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <% if policy(Carrier).create? %>
+    <%= modal_link_to t(".new"), new_sales_carrier_path, class: "btn btn-primary" %>
+  <% end %>
+</div>
+
+<% statuses = CarrierFilter::STATUSES.map { [ t("sales.buyers.index.statuses.#{it}"), it ] } %>
+<div data-controller="live-filter">
+<%= render layout: "shared/filters", locals: { filter: @filter, url: sales_carriers_path, frame: "carriers-list", live: true } do |form| %>
+  <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("sales.carriers.index.search_placeholder") %>
+  <%= filter_select form, :status, t("sales.buyers.index.status"), statuses, selected: @filter.status %>
+<% end %>
+
+<%= list_frame "carriers-list" do %>
+<%= live_list_status @filter, status: statuses %>
+<% sorting = { filter: @filter, frame: "carriers-list" } %>
+<% if @carriers.any? %>
+  <div class="mt-6 @container">
+    <ul class="space-y-3 @3xl:hidden">
+      <% @carriers.each do |carrier| %>
+        <li class="data-card" id="<%= dom_id(carrier, :card) %>">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="font-medium"><%= carrier.name %></p>
+              <p class="text-xs text-ink-muted"><%= [ carrier.contact_name, (format_phone(carrier.phone) if carrier.phone), t(".shipments_count", count: carrier.shipments_count) ].compact.join(" · ") %></p>
+            </div>
+            <%= detail_button sales_carrier_path(carrier) %>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+    <div class="hidden overflow-x-auto panel @3xl:block">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <%= sort_th Carrier.human_attribute_name(:name), :name, sorting %>
+            <%= sort_th Carrier.human_attribute_name(:rtn), :rtn, sorting, class: "hidden @5xl:table-cell" %>
+            <%= sort_th Carrier.human_attribute_name(:contact_name), :contact_name, sorting %>
+            <%= sort_th Carrier.human_attribute_name(:phone), :phone, sorting %>
+            <%= sort_th t(".shipments"), :shipments, sorting, class: "text-right" %>
+            <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @carriers.each do |carrier| %>
+            <tr id="<%= dom_id(carrier) %>">
+              <td class="font-medium">
+                <%= carrier.name %>
+                <% unless carrier.active? %><span class="badge badge-neutral ml-1"><%= t("sales.buyers.index.statuses.inactive") %></span><% end %>
+              </td>
+              <td class="hidden tabular-nums @5xl:table-cell"><%= carrier.rtn || "—" %></td>
+              <td><%= carrier.contact_name || "—" %></td>
+              <td class="whitespace-nowrap"><%= carrier.phone ? format_phone(carrier.phone) : "—" %></td>
+              <td class="text-right tabular-nums"><%= carrier.shipments_count %></td>
+              <td class="cell-actions"><%= detail_button sales_carrier_path(carrier) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "carriers-list" %>
+<% else %>
+  <p class="empty-state mt-6"><%= t(".empty") %></p>
+<% end %>
+<% end %>
+</div>

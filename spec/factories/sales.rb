@@ -55,4 +55,13 @@ FactoryBot.define do
     paid_on { Time.zone.today }
     payment_method { "cash" }
   end
+
+  factory :carrier do
+    sequence(:name) { |n| "Transportes #{n}" }
+  end
+
+  factory :truck do
+    sequence(:plate) { |n| format("HAA %04d", n) }
+    brand_model { "Isuzu NPR" }
+  end
 end

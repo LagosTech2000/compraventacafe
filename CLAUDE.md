@@ -140,6 +140,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Comprador (exportador / beneficio / otro) | `Buyer` (`kind`: `exporter` / `processor` / `other`) |
 | Salida de camión / báscula local / báscula del comprador | `Shipment` / `origin_*` / `destination_*` (`ArrivalsController`, `shipments/:id/arrival`) |
 | Nota de peso / remisión | `Shipment#weight_note_number` / `remission_number` |
+| Transportista / camión / motorista de la salida | `Carrier` / `Truck` (`own`: del negocio) / `Shipment#driver` (un `StaffMember`) o `driver_name` |
 | Pesadas de la salida (báscula local) | `ShipmentWeighing` (`Shipment#origin_weight_mode`: `single` / `weighings`) |
 | En camino / pesada sin vender / vendida | `Shipment#status`: `in_transit` / `received` / `sold` (+ `voided`) |
 | Venta / salida vendida / cobro de venta | `Sale` / `SaleLine` / `SalePayment` (`SaleIssuer`) |
@@ -1010,7 +1011,12 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   (`StockLedger`, `sales/stock#show`) lista cada compra y salida con el
   saldo después de cada una.
 - **Salida de camión** (`Shipment`): comprador, estado del café, remisión,
-  transportista, placa. Se pesa en la **báscula local** (`origin_*`) y, al
+  transportista y camión **de sus catálogos** (`Carrier`, `Truck`: dos
+  catálogos sueltos, Fernando, 2026-10-25; Comercialización →
+  Transportistas y Camiones, con su ficha y sus salidas, «Nuevo» desde la
+  salida) y **motorista**: un empleado de la planilla interna o un nombre
+  escrito (`driver`, `driver_name`). Lo que las salidas tenían escrito
+  (transportista, placa) pasó a los catálogos en la migración. Se pesa en la **báscula local** (`origin_*`) y, al
   llegar, en la **del comprador** (`destination_*`, con nota de peso y
   fecha; `ArrivalsController`). Cada neto usa **el mismo cálculo de la
   compra** (`PurchaseCalculation` con sacos contados: bruto − 1 lb × saco,

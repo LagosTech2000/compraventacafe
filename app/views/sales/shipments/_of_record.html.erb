@@ -1,0 +1,20 @@
+<%# The shipments of a carrier or a truck, on its page: by season and
+    state (BuyerShipmentFilter), answered in their own frame. %>
+<section class="min-w-0" aria-labelledby="<%= frame %>-title">
+  <h2 id="<%= frame %>-title" class="mb-3 text-lg font-semibold"><%= t("sales.shipments.of_record.title") %></h2>
+  <%= render layout: "shared/filters", locals: { filter:, url: path, frame: } do |form| %>
+    <%= filter_select form, :season_year, Purchase.human_attribute_name(:season_year), season_options(seasons_scope), selected: filter.season_year,
+          all: t("shared.filters.all_seasons") %>
+    <%= filter_select form, :status, t("sales.shipments.table.status"),
+          ShipmentFilter::STATUSES.map { [ Shipment.human_attribute_name("status/#{it}"), it ] }, selected: filter.status,
+          all: t("sales.shipments.index.all_active") %>
+  <% end %>
+  <%= list_frame frame do %>
+    <% if shipments.any? %>
+      <div class="mt-4"><%= render "sales/shipments/table", shipments:, sorting: { filter:, frame: } %></div>
+      <%= render "shared/pagination", filter:, next_page:, frame: %>
+    <% else %>
+      <p class="empty-state mt-4"><%= t("sales.shipments.of_record.empty") %></p>
+    <% end %>
+  <% end %>
+</section>

@@ -1,0 +1,42 @@
+<%# A truck: its plate, make and model, color, capacity and whether it is the
+    business's own. Opened from a shipment's form (picker=1), saving adds it
+    there. %>
+<%= form_with model: [ :sales, truck ], class: form_surface_class("space-y-6"), data: { controller: "form-validation" } do |form| %>
+  <%= hidden_field_tag :picker, "1" if picker_request? %>
+  <%= render "shared/form_errors", record: truck %>
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div>
+      <%= form.label :plate, class: "field-label" %>
+      <%= form.text_field :plate, autofocus: true, required: true, maxlength: 20, class: "field-input uppercase", placeholder: "HAA 1234",
+            data: { missing_message: "#{Truck.human_attribute_name(:plate)} #{t("errors.messages.blank")}" } %>
+    </div>
+    <div>
+      <%= form.label :brand_model, class: "field-label" %>
+      <%= form.text_field :brand_model, maxlength: 80, class: "field-input", placeholder: t("sales.trucks.form.brand_model_placeholder") %>
+    </div>
+    <div>
+      <%= form.label :color, class: "field-label" %>
+      <%= form.text_field :color, maxlength: 80, class: "field-input" %>
+    </div>
+    <div>
+      <%= form.label :capacity_quintals, class: "field-label" %>
+      <%= form.number_field :capacity_quintals, min: 0.01, max: Truck::MAX_CAPACITY - 0.01, step: 0.01, inputmode: "decimal", class: "field-input" %>
+    </div>
+    <label class="flex items-center gap-2 text-sm font-medium sm:col-span-2">
+      <%= form.check_box :own, class: "size-4 accent-primary" %> <%= t("sales.trucks.form.own") %>
+    </label>
+    <div class="sm:col-span-2">
+      <%= form.label :observations, class: "field-label" %>
+      <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+    </div>
+    <% if truck.persisted? %>
+      <label class="flex items-center gap-2 text-sm font-medium">
+        <%= form.check_box :active, class: "size-4 accent-primary" %> <%= Truck.human_attribute_name(:active) %>
+      </label>
+    <% end %>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= cancel_button truck.persisted? ? sales_truck_path(truck) : sales_trucks_path %>
+  </div>
+<% end %>

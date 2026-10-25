@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_25_200000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_25_210000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -77,6 +77,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_200000) do
     t.index ["department_id"], name: "index_buyers_on_department_id"
     t.index ["municipality_id"], name: "index_buyers_on_municipality_id"
     t.index ["rtn"], name: "index_buyers_on_rtn", unique: true, where: "(rtn IS NOT NULL)"
+  end
+
+  create_table "carriers", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "rtn"
+    t.string "phone"
+    t.string "contact_name"
+    t.text "observations"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((name)::text)", name: "index_carriers_on_lower_name", unique: true
   end
 
   create_table "clients", force: :cascade do |t|
@@ -733,8 +745,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_200000) do
     t.integer "season_year", null: false
     t.string "coffee_state", null: false
     t.string "remission_number"
-    t.string "carrier_name"
-    t.string "vehicle_plate"
     t.text "observations"
     t.decimal "origin_gross_weight", precision: 12, scale: 2, null: false
     t.integer "origin_sacks", null: false
@@ -758,11 +768,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_200000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "origin_weight_mode", default: "single", null: false
+    t.bigint "carrier_id"
+    t.bigint "truck_id"
+    t.bigint "driver_id"
+    t.string "driver_name"
     t.index ["buyer_id"], name: "index_shipments_on_buyer_id"
+    t.index ["carrier_id"], name: "index_shipments_on_carrier_id"
     t.index ["created_by_id"], name: "index_shipments_on_created_by_id"
     t.index ["departed_at"], name: "index_shipments_on_departed_at"
+    t.index ["driver_id"], name: "index_shipments_on_driver_id"
     t.index ["number"], name: "index_shipments_on_number", unique: true
     t.index ["season_year"], name: "index_shipments_on_season_year"
+    t.index ["truck_id"], name: "index_shipments_on_truck_id"
     t.index ["voided_by_id"], name: "index_shipments_on_voided_by_id"
   end
 
@@ -884,6 +901,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_200000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index "lower((name)::text)", name: "index_supplies_on_lower_name", unique: true
+  end
+
+  create_table "trucks", force: :cascade do |t|
+    t.string "plate", null: false
+    t.string "brand_model"
+    t.string "color"
+    t.decimal "capacity_quintals", precision: 8, scale: 2
+    t.boolean "own", default: false, null: false
+    t.text "observations"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["plate"], name: "index_trucks_on_plate", unique: true
   end
 
   create_table "users", force: :cascade do |t|
@@ -1012,6 +1042,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_200000) do
   add_foreign_key "sessions", "users"
   add_foreign_key "shipment_weighings", "shipments"
   add_foreign_key "shipments", "buyers"
+  add_foreign_key "shipments", "carriers"
+  add_foreign_key "shipments", "staff_members", column: "driver_id"
+  add_foreign_key "shipments", "trucks"
   add_foreign_key "shipments", "users", column: "created_by_id"
   add_foreign_key "shipments", "users", column: "voided_by_id"
   add_foreign_key "staff_advances", "money_accounts"

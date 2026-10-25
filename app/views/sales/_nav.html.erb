@@ -10,8 +10,9 @@
       <%= link_to t("sales.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>
     <% end %>
     <span class="mx-1 h-6 w-px shrink-0 self-center bg-primary/20" aria-hidden="true"></span>
-    <%= link_to t("sales.nav.buyers"), sales_buyers_path, class: nav_link_class(sales_buyers_path),
-          aria: { current: (current_page?(sales_buyers_path) ? "page" : nil) } %>
+    <% { buyers: sales_buyers_path, carriers: sales_carriers_path, trucks: sales_trucks_path }.each do |key, path| %>
+      <%= link_to t("sales.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>
+    <% end %>
     <% if policy(Shipment).create? %>
       <span class="subnav-action"><%= link_to t("sales.nav.new_shipment"), new_sales_shipment_path, class: "btn btn-primary btn-sm" %></span>
     <% end %>

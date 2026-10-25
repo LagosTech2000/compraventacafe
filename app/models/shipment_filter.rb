@@ -9,6 +9,8 @@ class ShipmentFilter < ListFilter
   field :season_year, :id
   field :q, :text
   field :buyer_id, :id
+  field :carrier_id, :id
+  field :truck_id, :id
   field :coffee_state, :choice, in: Purchase::COFFEE_STATES
   field :status, :choice, in: STATUSES
   field :over_tolerance, :choice, in: %w[1]
@@ -35,6 +37,8 @@ class ShipmentFilter < ListFilter
     scope = scope.where(season_year:) if season_year
     scope = search(scope) if q
     scope = scope.where(buyer_id:) if buyer_id
+    scope = scope.where(carrier_id:) if carrier_id
+    scope = scope.where(truck_id:) if truck_id
     scope = scope.where(coffee_state:) if coffee_state
     scope = status ? scope.with_status(status) : scope.active
     scope = scope.where("ABS(#{DIFFERENCE_PERCENT}) > ?", WeightTolerance.percent) if over_tolerance && WeightTolerance.percent
@@ -46,7 +50,9 @@ class ShipmentFilter < ListFilter
       text = like(q)
       number = q.to_s.delete("^0-9").presence&.to_i
       conditions = scope.where(buyer_id: Buyer.where("buyers.name ILIKE ?", text).select(:id))
-                        .or(scope.where("shipments.remission_number ILIKE ? OR shipments.weight_note_number ILIKE ? OR shipments.carrier_name ILIKE ?",
+                        .or(scope.where(carrier_id: Carrier.where("carriers.name ILIKE ?", text).select(:id)))
+                        .or(scope.where(truck_id: Truck.where("trucks.plate ILIKE ?", text).select(:id)))
+                        .or(scope.where("shipments.remission_number ILIKE ? OR shipments.weight_note_number ILIKE ? OR shipments.driver_name ILIKE ?",
                                         text, text, text))
       number ? conditions.or(scope.where(number:)) : conditions
     end

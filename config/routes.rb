@@ -85,6 +85,8 @@ Rails.application.routes.draw do
       resources :payments, only: %i[ new create show destroy ], controller: "sale_payments"
     end
     resources :buyers, except: :destroy
+    resources :carriers, except: :destroy
+    resources :trucks, except: :destroy
     resource :stock, only: :show
     resource :daily_close, only: :show
   end

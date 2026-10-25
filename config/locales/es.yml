@@ -151,6 +151,8 @@ es:
       no_role: "Sin rol asignado"
       pick_payment_method: "Selecciona la forma de pago"
       pick_buyer: "Selecciona el comprador"
+      no_carrier: "Sin transportista asignado"
+      no_truck: "Sin camión asignado"
       pick_account: "Selecciona la cuenta"
       no_account: "Sin cuenta"
       no_hauler: "Sin carrero"
@@ -1084,7 +1086,59 @@ es:
       stock: "Inventario"
       daily_close: "Cierre diario"
       buyers: "Compradores"
+      carriers: "Transportistas"
+      trucks: "Camiones"
       new_shipment: "Nueva salida"
+    carriers:
+      index:
+        title: "Transportistas"
+        help: "Quienes llevan el café al comprador, con cuántas salidas han llevado."
+        new: "Nuevo transportista"
+        search_placeholder: "Nombre, RTN o contacto"
+        shipments: "Salidas"
+        shipments_count:
+          zero: "Sin salidas"
+          one: "1 salida"
+          other: "%{count} salidas"
+        empty: "No hay transportistas con esos filtros."
+      show:
+        edit: "Editar transportista"
+        record: "Ficha del transportista"
+      new:
+        title: "Nuevo transportista"
+      edit:
+        title: "Editar %{name}"
+      create:
+        success: "Transportista registrado."
+      update:
+        success: "Transportista actualizado."
+    trucks:
+      owners:
+        own: "Del negocio"
+        others: "De terceros"
+      index:
+        title: "Camiones"
+        help: "Los camiones que llevan el café al comprador: los del negocio y los de terceros."
+        new: "Nuevo camión"
+        search_placeholder: "Placa, marca o color"
+        owner: "De quién"
+        capacity: "%{quintals} QQ"
+        shipments: "Salidas"
+        empty: "No hay camiones con esos filtros."
+      form:
+        brand_model_placeholder: "Por ejemplo: Isuzu NPR"
+        own: "Es del negocio"
+      show:
+        edit: "Editar camión"
+        record: "Ficha del camión"
+      new:
+        title: "Nuevo camión"
+      edit:
+        title: "Editar %{plate}"
+      create:
+        success: "Camión registrado."
+      update:
+        success: "Camión actualizado."
     stock:
       title: "Café en inventario"
       as_of: "Al %{date}"
@@ -1187,8 +1241,17 @@ es:
           origin_net: "Neto local (lb)"
           destination_net: "Neto comprador (lb)"
           difference: "Diferencia de las pesadas en destino (lb)"
+      of_record:
+        title: "Sus salidas"
+        empty: "No hay salidas con esos filtros."
       form:
         new_buyer: "Nuevo comprador"
+        transport: "Transporte"
+        new_carrier: "Nuevo transportista"
+        new_truck: "Nuevo camión"
+        driver_typed: "Escribirlo abajo"
+        driver_name_placeholder: "Nombre del motorista"
+        driver_help: "Un chofer de la planilla interna, o escribe el nombre del motorista del transportista."
         origin: "Báscula local"
         origin_help: "El peso del camión antes de salir."
         calculation: "Cálculo de la salida"
@@ -4759,6 +4822,46 @@ es:
               - "Agrega RTN, contacto, teléfono, correo y dirección si los tienes."
             tips:
               - "Un comprador con salidas no se borra: se desactiva y deja de salir en las salidas nuevas."
+        carriers:
+          index:
+            title: "Transportistas"
+            summary: "Quienes llevan el café al comprador, con cuántas salidas han llevado."
+            steps:
+              - "Busca por nombre, RTN o contacto, o mira los desactivados."
+              - "Toca una fila para ver su ficha y sus salidas."
+              - "Toca «Nuevo transportista» para registrar uno; también se puede desde «Nueva salida»."
+          show:
+            title: "Ficha del transportista"
+            summary: "Sus datos y las salidas que ha llevado, por temporada y estado."
+            steps:
+              - "Filtra sus salidas por temporada o estado; cada una abre su detalle."
+          form:
+            title: "Registrar o editar un transportista"
+            summary: "Nombre o razón social, RTN, teléfono y contacto."
+            steps:
+              - "Escribe el nombre; lo demás es opcional."
+            tips:
+              - "Uno con salidas no se borra: se desactiva y deja de salir en las salidas nuevas."
+        trucks:
+          index:
+            title: "Camiones"
+            summary: "Los camiones que llevan el café: los del negocio y los de terceros."
+            steps:
+              - "Busca por placa, marca o color; filtra los del negocio o los de terceros."
+              - "Toca una fila para ver su ficha y sus salidas."
+              - "Toca «Nuevo camión» para registrar uno; también se puede desde «Nueva salida»."
+          show:
+            title: "Ficha del camión"
+            summary: "Sus datos y las salidas en que ha ido, por temporada y estado."
+            steps:
+              - "Filtra sus salidas por temporada o estado; cada una abre su detalle."
+          form:
+            title: "Registrar o editar un camión"
+            summary: "Placa, marca y modelo, color, capacidad en QQ y si es del negocio."
+            steps:
+              - "Escribe la placa (se guarda en mayúsculas); lo demás es opcional."
+            tips:
+              - "Uno con salidas no se borra: se desactiva y deja de salir en las salidas nuevas."
         stocks:
           show:
             title: "Inventario"
@@ -5523,6 +5626,8 @@ es:
         hauler: "el carrero"
         hauler_payment: "el pago a carrero"
         buyer: "el comprador"
+        carrier: "el transportista"
+        truck: "el camión"
         shipment: "la salida de camión"
         shipment_weighing: "la pesada de la salida"
         sale: "la venta"
@@ -5866,6 +5971,12 @@ es:
       budget:
         one: "Presupuesto"
         other: "Presupuestos"
+      carrier:
+        one: "Transportista"
+        other: "Transportistas"
+      truck:
+        one: "Camión"
+        other: "Camiones"
       buyer:
         one: "Comprador"
         other: "Compradores"
@@ -6175,6 +6286,21 @@ es:
         category: "Categoría"
         month: "Mes"
         amount: "Monto"
+      carrier:
+        name: "Nombre o razón social"
+        rtn: "RTN"
+        phone: "Teléfono"
+        contact_name: "Contacto"
+        observations: "Observaciones"
+        active: "Activo"
+      truck:
+        plate: "Placa"
+        brand_model: "Marca y modelo"
+        color: "Color"
+        capacity_quintals: "Capacidad (QQ)"
+        own: "Del negocio"
+        observations: "Observaciones"
+        active: "Activo"
       buyer:
         department_id: "Departamento"
         municipality_id: "Municipio"
@@ -6211,8 +6337,13 @@ es:
         season_year: "Temporada"
         coffee_state: "Estado del café"
         remission_number: "Remisión"
-        carrier_name: "Transportista"
-        vehicle_plate: "Placa del camión"
+        carrier: "Transportista"
+        carrier_id: "Transportista"
+        truck: "Camión"
+        truck_id: "Camión"
+        driver: "Motorista"
+        driver_id: "Motorista"
+        driver_name: "Motorista (escrito)"
         observations: "Observaciones"
         origin_gross_weight: "Peso bruto local (lb)"
         origin_weight_mode: "Forma de pesar"
@@ -6771,6 +6902,10 @@ es:
             base:
               sold: "La salida ya está en una venta: no se cambian su comprador, estado ni pesos. Anula la venta primero."
             buyer:
+              inactive: "está desactivado"
+            carrier:
+              inactive: "está desactivado"
+            truck:
               inactive: "está desactivado"
             received_on:
               before_departure: "no puede ser antes de la salida"

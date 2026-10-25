@@ -1,0 +1,38 @@
+<% content_for :title, @carrier.name %>
+<%= live_updates_from :sales %>
+<%= render "sales/nav" %>
+<%= render "shared/breadcrumbs", crumbs: [ [ t("sales.nav.carriers"), sales_carriers_path ], [ @carrier.name ] ] %>
+
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= @carrier.name %></h1>
+    <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
+      <span class="badge badge-neutral"><%= Carrier.model_name.human %></span>
+      <span class="<%= @carrier.active? ? "badge badge-success" : "badge badge-neutral" %>"><%= t("sales.buyers.index.statuses.#{@carrier.active? ? "active" : "inactive"}") %></span>
+    </p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <% if policy(@carrier).update? %>
+      <%= modal_link_to t("sales.carriers.show.edit"), edit_sales_carrier_path(@carrier), class: "btn" %>
+    <% end %>
+    <% if modal_request? %>
+      <%= page_link_to t("sales.buyers.show.full_page"), sales_carrier_path(@carrier), class: "btn" %>
+    <% end %>
+  </div>
+</div>
+
+<div class="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+  <aside class="panel p-4 lg:order-last" aria-labelledby="carrier-record">
+    <h2 id="carrier-record" class="font-semibold"><%= t("sales.carriers.show.record") %></h2>
+    <dl class="mt-3 grid grid-cols-1 gap-y-3 text-sm">
+      <% [ [ Carrier.human_attribute_name(:rtn), @carrier.rtn ], [ Carrier.human_attribute_name(:contact_name), @carrier.contact_name ],
+           [ Carrier.human_attribute_name(:phone), (link_to(format_phone(@carrier.phone), "tel:#{@carrier.phone}", class: "link") if @carrier.phone) ] ].each do |label, value| %>
+        <div><dt class="text-xs text-ink-muted"><%= label %></dt><dd><%= value.presence || "—" %></dd></div>
+      <% end %>
+    </dl>
+    <% if @carrier.observations %><p class="mt-3 text-sm"><%= @carrier.observations %></p><% end %>
+  </aside>
+
+  <%= render "sales/shipments/of_record", path: sales_carrier_path(@carrier), filter: @filter, shipments: @shipments, next_page: @next_page,
+        frame: "carrier-shipments-list", seasons_scope: @carrier.shipments %>
+</div>

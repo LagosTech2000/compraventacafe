@@ -11,6 +11,25 @@ RSpec.describe "Sales screens", type: :system do
 
   before { sign_in_as(user) }
 
+  it "registers a carrier and a truck from the shipment form and picks them" do
+    visit new_sales_shipment_path
+    click_link "Nuevo transportista"
+    within("dialog[open]") do
+      fill_in "carrier_name", with: "Fletes del Norte"
+      find("[type=submit]").click
+    end
+    expect(page).to have_no_css("dialog[open]")
+    expect(page).to have_select("shipment_carrier_id", selected: "Fletes del Norte")
+
+    click_link "Nuevo camión"
+    within("dialog[open]") do
+      fill_in "truck_plate", with: "hbb 4321"
+      find("[type=submit]").click
+    end
+    expect(page).to have_no_css("dialog[open]")
+    expect(page).to have_select("shipment_truck_id", selected: "HBB 4321")
+  end
+
   it "calculates a shipment while typing, warns over the stock and saves it" do
     create(:purchase, gross_weight: 500) # (500 − 4) × 0.49 = 243.04 lb in stock
     visit new_sales_shipment_path

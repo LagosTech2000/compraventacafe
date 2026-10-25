@@ -30,6 +30,11 @@ class Shipment < ApplicationRecord
   WEIGHT_MODES = Purchase::WEIGHT_MODES
 
   belongs_to :buyer
+  # Who hauled it and in what truck (catalogs apart), and who drove it: an
+  # employee of the Planilla interna, or a name typed (Fernando, 2026-10-25).
+  belongs_to :carrier, optional: true
+  belongs_to :truck, optional: true
+  belongs_to :driver, class_name: "StaffMember", optional: true
   belongs_to :created_by, class_name: "User"
   belongs_to :voided_by, class_name: "User", optional: true
   has_many :sale_lines, dependent: :restrict_with_error
@@ -38,14 +43,16 @@ class Shipment < ApplicationRecord
   has_many :weighings, -> { order(:id) }, class_name: "ShipmentWeighing", dependent: :destroy, inverse_of: :shipment
   accepts_nested_attributes_for :weighings, allow_destroy: true, reject_if: :blank_weighing?
 
-  normalizes :remission_number, :weight_note_number, :carrier_name, :vehicle_plate, with: ->(value) { value.squish.presence }
+  normalizes :remission_number, :weight_note_number, :driver_name, with: ->(value) { value.squish.presence }
   normalizes :observations, with: FieldFormats::STRIP
 
   validates :departed_at, presence: true
   validates :coffee_state, inclusion: { in: Purchase::COFFEE_STATES }
   validates :origin_weight_mode, inclusion: { in: WEIGHT_MODES }
   validate :weighings_present, if: :by_weighings?
-  validates :remission_number, :weight_note_number, :carrier_name, :vehicle_plate, length: { maximum: 60 }
+  validates :remission_number, :weight_note_number, length: { maximum: 60 }
+  validates :driver_name, length: { maximum: 120 }
+  validate :carrier_and_truck_active
   validates :observations, length: { maximum: 500 }
   validates :origin_gross_weight, numericality: { greater_than: 0, less_than: MAX_WEIGHT }
   validates :origin_sacks, numericality: { only_integer: true, greater_than: 0, less_than: MAX_SACKS }
@@ -61,6 +68,8 @@ class Shipment < ApplicationRecord
   before_validation -> { calculate("origin") }, if: -> { recalculate?("origin") }
   before_validation -> { calculate("destination") }, if: -> { recalculate?("destination") }
   before_validation :assign_season
+  # The employee chosen as driver wins over a name typed.
+  before_validation { self.driver_name = nil if driver_id }
   before_create :assign_number
 
   # Set when the destination weighing is saved: then it is required.
@@ -88,6 +97,9 @@ class Shipment < ApplicationRecord
   end
 
   def display_number = format("%04d", number)
+
+  # Who drove it: the employee chosen, or the name typed.
+  def driver_label = driver&.full_name || driver_name
 
   def audit_label = "#{display_number} · #{buyer&.name}"
 
@@ -240,11 +252,16 @@ class Shipment < ApplicationRecord
       errors.add(:buyer, :inactive) if buyer && !buyer.active?
     end
 
+    def carrier_and_truck_active
+      errors.add(:carrier, :inactive) if will_save_change_to_carrier_id? && carrier && !carrier.active?
+      errors.add(:truck, :inactive) if will_save_change_to_truck_id? && truck && !truck.active?
+    end
+
     # In a sale its weights and buyer are what was charged.
     def not_sold
       return unless sold?
 
-      changed_inputs = (changed - %w[updated_at lock_version observations remission_number carrier_name vehicle_plate weight_note_number])
+      changed_inputs = (changed - %w[updated_at lock_version observations remission_number carrier_id truck_id driver_id driver_name weight_note_number])
       errors.add(:base, :sold) if changed_inputs.any?
     end
 

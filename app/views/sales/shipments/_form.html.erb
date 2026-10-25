@@ -41,13 +41,41 @@
           <%= form.label :remission_number, class: "field-label" %>
           <%= form.text_field :remission_number, maxlength: 60, class: "field-input" %>
         </div>
-        <div>
-          <%= form.label :carrier_name, class: "field-label" %>
-          <%= form.text_field :carrier_name, maxlength: 60, class: "field-input" %>
-        </div>
-        <div>
-          <%= form.label :vehicle_plate, class: "field-label" %>
-          <%= form.text_field :vehicle_plate, maxlength: 60, class: "field-input" %>
+      </section>
+
+      <%# Who hauls it: the carrier and the truck from their catalogs (each
+          with «Nuevo» in a modal), and the driver: an employee of the
+          Planilla interna, or a name typed. %>
+      <section aria-labelledby="shipment-transport" class="space-y-3">
+        <h2 id="shipment-transport" class="font-semibold"><%= t(".transport") %></h2>
+        <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div data-controller="option-picker" data-action="carrier:created@window->option-picker#add">
+            <%= form.label :carrier_id, class: "field-label" %>
+            <% carriers = Carrier.active.or(Carrier.where(id: shipment.carrier_id)).alphabetical %>
+            <%= form.collection_select :carrier_id, carriers, :id, :name, { include_blank: t("shared.select.no_carrier") },
+                  class: "field-input", data: { option_picker_target: "select" } %>
+            <% if policy(Carrier).create? %>
+              <%= modal_link_to t(".new_carrier"), new_sales_carrier_path(picker: 1), class: "btn btn-sm mt-2" %>
+            <% end %>
+          </div>
+          <div data-controller="option-picker" data-action="truck:created@window->option-picker#add">
+            <%= form.label :truck_id, class: "field-label" %>
+            <% trucks = Truck.active.or(Truck.where(id: shipment.truck_id)).alphabetical %>
+            <%= form.collection_select :truck_id, trucks, :id, :label, { include_blank: t("shared.select.no_truck") },
+                  class: "field-input", data: { option_picker_target: "select" } %>
+            <% if policy(Truck).create? %>
+              <%= modal_link_to t(".new_truck"), new_sales_truck_path(picker: 1), class: "btn btn-sm mt-2" %>
+            <% end %>
+          </div>
+          <div>
+            <%= form.label :driver_id, class: "field-label" %>
+            <% drivers = StaffMember.active.or(StaffMember.where(id: shipment.driver_id)).includes(:person, :role).newest_first %>
+            <%= form.select :driver_id, drivers.map { [ "#{it.full_name} · #{it.role.name}", it.id ] },
+                  { include_blank: t(".driver_typed") }, class: "field-input" %>
+            <%= form.text_field :driver_name, maxlength: 120, class: "field-input mt-2", placeholder: t(".driver_name_placeholder"),
+                  aria: { label: Shipment.human_attribute_name(:driver_name) } %>
+            <p class="mt-1 text-xs text-ink-muted"><%= t(".driver_help") %></p>
+          </div>
         </div>
       </section>
 
