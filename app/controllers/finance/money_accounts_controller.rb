@@ -50,7 +50,7 @@ module Finance
       end
 
       def account_params
-        params.expect(money_account: [ :name, :kind, :bank_name, :account_number, :opening_balance, :opening_on, :observations, :active,
+        params.expect(money_account: [ :name, :kind, :bank_key, :bank_name, :account_number, :opening_balance, :opening_on, :observations, :active,
                                        default_for: [] ])
       end
   end

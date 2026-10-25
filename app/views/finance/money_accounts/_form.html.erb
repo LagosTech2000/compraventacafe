@@ -6,13 +6,27 @@
       <%= form.text_field :name, required: true, maxlength: 80, autofocus: true, class: "field-input", placeholder: t("finance.money_accounts.form.name_placeholder"),
             data: { missing_message: "#{MoneyAccount.human_attribute_name(:name)} #{t("errors.messages.blank")}" } %>
     </div>
-    <div>
-      <%= form.label :kind, class: "field-label" %>
-      <%= form.select :kind, enum_options(MoneyAccount, :kind, MoneyAccount::KINDS), {}, required: true, class: "field-input" %>
-    </div>
-    <div>
-      <%= form.label :bank_name, class: "field-label" %>
-      <%= form.text_field :bank_name, maxlength: 80, class: "field-input" %>
+    <%# A bank account picks its bank (Honduras' main ones, or «Otro banco»
+        typed by hand); a cash box has none (bank_choice_controller.js). %>
+    <div class="grid gap-5 sm:col-span-2 sm:grid-cols-2" data-controller="bank-choice">
+      <div>
+        <%= form.label :kind, class: "field-label" %>
+        <%= form.select :kind, enum_options(MoneyAccount, :kind, MoneyAccount::KINDS), {}, required: true, class: "field-input",
+              data: { bank_choice_target: "kind", action: "bank-choice#update" } %>
+      </div>
+      <div data-bank-choice-target="bankFields" class="grid gap-5 sm:col-span-2 sm:grid-cols-2">
+        <div>
+          <%= form.label :bank_key, class: "field-label" %>
+          <%= form.select :bank_key, HondurasBank.all.map { |key, name| [ name, key ] } + [ [ t("finance.money_accounts.form.other_bank"), HondurasBank::OTHER ] ],
+                { prompt: t("finance.money_accounts.form.pick_bank") }, class: "field-input",
+                data: { bank_choice_target: "bank", action: "bank-choice#update", required_when_shown: true } %>
+        </div>
+        <div data-bank-choice-target="otherField">
+          <%= form.label :bank_name, t("finance.money_accounts.form.bank_name"), class: "field-label" %>
+          <%= form.text_field :bank_name, maxlength: 80, class: "field-input", placeholder: t("finance.money_accounts.form.bank_name_placeholder"),
+                data: { required_when_shown: true } %>
+        </div>
+      </div>
     </div>
     <div>
       <%= form.label :account_number, class: "field-label" %>

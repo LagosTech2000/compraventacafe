@@ -1612,6 +1612,10 @@ es:
         name_placeholder: "Por ejemplo: Caja de la bodega, Banco Atlántida"
         opening_help: "El saldo con que empieza la cuenta en el sistema, a esa fecha."
         default_for_help: "Al registrar un pago con esa forma, se sugiere esta cuenta."
+        pick_bank: "Selecciona el banco"
+        other_bank: "Otro banco (escribirlo)"
+        bank_name: "Nombre del banco"
+        bank_name_placeholder: "Por ejemplo: Banpaís, Davivienda, Lafise"
       index:
         title: "Cuentas"
         help: "La caja y los bancos del negocio, con su saldo de hoy."
@@ -1626,6 +1630,10 @@ es:
         empty: "No hay cuentas con estos filtros."
         unassigned: "Registrado sin cuenta (no cuenta en ningún saldo): entró %{in} y salió %{out}."
         see_unassigned: "Asignarles cuenta en Consolidación"
+      card:
+        balance: "Saldo de hoy"
+        cash: "Dinero en efectivo"
+        open: "Abrir %{name}, saldo %{balance}"
       new:
         title: "Nueva cuenta"
       edit:
@@ -1642,6 +1650,11 @@ es:
         statement: "Estado de cuenta"
         balance_today: "Saldo de hoy"
         since: "desde el %{date}"
+        month_in: "Entró este mes"
+        month_out: "Salió este mes"
+        details: "Datos de la cuenta"
+        "yes": "Sí"
+        "no": "No"
         movements: "Movimientos de la cuenta"
     account_transfers:
       new:
@@ -5548,6 +5561,7 @@ es:
         kind/cash: "Caja (efectivo)"
         kind/bank: "Banco"
         bank_name: "Banco"
+        bank_key: "Banco"
         account_number: "Número de cuenta"
         opening_balance: "Saldo inicial"
         opening_on: "Fecha del saldo inicial"

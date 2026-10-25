@@ -25,55 +25,13 @@
   <% end %>
   <%= list_frame "accounts-list" do %>
     <%= live_list_status @filter, status: statuses, kind: kinds %>
-    <% sorting = { filter: @filter, frame: "accounts-list" } %>
     <% if @accounts.any? %>
-      <div class="mt-6 @container">
-        <ul class="space-y-3 @3xl:hidden">
-          <% @accounts.each do |account| %>
-            <li class="data-card" id="<%= dom_id(account, :card) %>">
-              <div class="flex items-start justify-between gap-3">
-                <div class="min-w-0">
-                  <p class="font-medium"><%= account.name %></p>
-                  <p class="text-xs text-ink-muted"><%= [ account.human_kind, account.bank_name, account.account_number ].compact.join(" · ") %></p>
-                </div>
-                <%= link_to t(".open"), finance_money_account_path(account), class: "btn btn-sm", data: { row_link: true } %>
-              </div>
-              <p class="mt-2 text-lg font-bold tabular-nums"><%= signed_money(@balance.for(account)) %></p>
-            </li>
-          <% end %>
-        </ul>
-        <div class="hidden overflow-x-auto panel @3xl:block">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <%= sort_th MoneyAccount.human_attribute_name(:name), :name, sorting %>
-                <%= sort_th MoneyAccount.human_attribute_name(:kind), :kind, sorting %>
-                <%= sort_th MoneyAccount.human_attribute_name(:bank_name), :bank_name, sorting, class: "hidden @5xl:table-cell" %>
-                <%= sort_th MoneyAccount.human_attribute_name(:account_number), :account_number, sorting, class: "hidden @5xl:table-cell" %>
-                <%= sort_th MoneyAccount.human_attribute_name(:opening_on), :opening_on, sorting, class: "hidden @5xl:table-cell" %>
-                <%= sort_th t(".balance"), :balance, sorting, class: "text-right" %>
-                <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
-              </tr>
-            </thead>
-            <tbody>
-              <% @accounts.each do |account| %>
-                <tr id="<%= dom_id(account) %>">
-                  <td class="font-medium">
-                    <%= account.name %>
-                    <% unless account.active? %><span class="badge badge-neutral ml-1"><%= t(".statuses.inactive") %></span><% end %>
-                  </td>
-                  <td><%= account.human_kind %></td>
-                  <td class="hidden @5xl:table-cell"><%= account.bank_name || "—" %></td>
-                  <td class="hidden @5xl:table-cell"><%= account.account_number || "—" %></td>
-                  <td class="hidden @5xl:table-cell"><%= l(account.opening_on) %></td>
-                  <td class="whitespace-nowrap text-right font-semibold tabular-nums"><%= signed_money(@balance.for(account)) %></td>
-                  <td class="cell-actions"><%= link_to t(".open"), finance_money_account_path(account), class: "btn btn-sm", data: { row_link: true } %></td>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <%# Cards, each in its bank's colors; the whole card opens the account. %>
+      <ul class="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3" role="list">
+        <% @accounts.each do |account| %>
+          <li class="data-card data-card-bare" id="<%= dom_id(account) %>"><%= render "finance/money_accounts/card", account:, balance: @balance.for(account) %></li>
+        <% end %>
+      </ul>
       <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "accounts-list" %>
     <% else %>
       <p class="empty-state mt-6"><%= t(".empty") %></p>

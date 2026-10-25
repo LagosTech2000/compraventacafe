@@ -60,14 +60,13 @@ RSpec.describe "Sorting every list" do
     StockLedgerFilter => -> { sales_stock_path },
     MovementFilter => -> { finance_movements_path(from: "", to: "") },
     ExpenseFilter => -> { finance_expenses_path(from: "", to: "") },
-    MoneyAccountFilter => -> { finance_money_accounts_path },
     FinanceCategoryFilter => -> { finance_categories_path },
     ConsolidationFilter => -> { finance_consolidation_path }
   }.freeze
 
   it "covers every list filter" do
     names = Dir[Rails.root.join("app/models/*_filter.rb")].map { File.basename(it, ".rb").camelize } -
-            %w[ListFilter ExpenseCategoryFilter] # expense categories: cards only, no table
+            %w[ListFilter ExpenseCategoryFilter MoneyAccountFilter] # cards only, no table
     expect(LISTS.keys.map(&:name)).to match_array(names)
   end
 

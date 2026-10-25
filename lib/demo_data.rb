@@ -186,9 +186,17 @@ class DemoData
       box = MoneyAccount.find_or_create_by!(name: "Caja de la bodega (demo)") do |account|
         account.assign_attributes(kind: "cash", opening_balance: 150_000, opening_on: Time.zone.today - 30, default_for: %w[cash])
       end
-      bank = MoneyAccount.find_or_create_by!(name: "Banco Demo") do |account|
-        account.assign_attributes(kind: "bank", bank_name: "Banco Demo", account_number: "0000-1234", opening_balance: 400_000,
+      bank = MoneyAccount.find_or_create_by!(name: "Cuenta de cheques (demo)") do |account|
+        account.assign_attributes(kind: "bank", bank_key: "ficohsa", account_number: "2100 4455 1234", opening_balance: 400_000,
                                   opening_on: Time.zone.today - 30, default_for: %w[transfer check])
+      end
+      # One more of each bank, so the cards show every look.
+      [ [ "Ahorro (demo)", "atlantida", "3300 1122 5678" ], [ "Planillas (demo)", "bac", "7300 9988 4321" ],
+        [ "Cosecha (demo)", "occidente", "1100 2233 8765" ], [ "Reserva (demo)", "other", "0099 0011 2468" ] ].each do |name, bank_key, number|
+        MoneyAccount.find_or_create_by!(name:) do |account|
+          account.assign_attributes(kind: "bank", bank_key:, bank_name: ("Banco Demo" if bank_key == "other"), account_number: number,
+                                    opening_balance: 25_000, opening_on: Time.zone.today - 30)
+        end
       end
       [ box, bank ]
     end

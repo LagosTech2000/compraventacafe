@@ -147,6 +147,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Cierre de comercialización | `SalesDailyClose` |
 | Control financiero | `finance` |
 | Cuenta (caja / banco) / saldo de la cuenta | `MoneyAccount` (`kind`: `cash` / `bank`, `default_for`) / `AccountBalance` |
+| Banco de la cuenta / tarjeta de la cuenta | `MoneyAccount#bank_key` (`HondurasBank`, `db/data/honduras_banks.yml`, `other`) / `finance/money_accounts/_card`, `.bank-card-*` |
 | Gasto / inversión / comprobante | `Expense` (`kind`: `expense` / `investment`) / `ExpenseReceipt` |
 | Categoría financiera (dos niveles) | `FinanceCategory` (`parent`) |
 | Otro ingreso / transferencia entre cuentas | `OtherIncome` / `AccountTransfer` |
@@ -1054,7 +1055,15 @@ salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
   fecha; cada una dice para qué formas de pago se sugiere (`default_for`).
   Saldo = inicial + entradas − salidas (`AccountBalance`, sumas en SQL de
   todas las fuentes). Se desactivan; no se borran. Estado de cuenta
-  imprimible con el saldo después de cada movimiento.
+  imprimible con el saldo después de cada movimiento. **La lista son
+  tarjetas** tipo tarjeta de crédito (Fernando, 2026-10-25), con los
+  colores de su banco: Ficohsa azul, Banco Atlántida rojo con blanco,
+  BAC Honduras rojo, Banco de Occidente naranja con blanco; otro banco,
+  uno de cuatro estilos (`OTHER_STYLES`, fijo por cuenta), y la caja,
+  café. Toda la tarjeta abre el detalle, que la repite junto a sus datos.
+  El banco se elige de `db/data/honduras_banks.yml` (datos de referencia,
+  como los departamentos) o «Otro banco» y se escribe (`bank_key`
+  `other` + `bank_name`); una caja no lleva banco.
 - **Cuenta en todos los pagos**: abonos a factura (también al facturar),
   pagos a carreros, préstamos (la parte en efectivo), abonos a préstamos
   (con café o por planilla no llevan), pagos de planilla, gastos de

@@ -1,0 +1,12 @@
+# Banks of Honduras the account form offers (Fernando, 2026-10-25), each
+# with the look of its card on the Cuentas screen (.bank-card-<key> in
+# application.css). Any other bank is typed by hand ("other"). Proper names:
+# like the places, reference data outside es.yml.
+ficohsa:
+  name: "Ficohsa"
+atlantida:
+  name: "Banco Atlántida"
+bac:
+  name: "BAC Honduras"
+occidente:
+  name: "Banco de Occidente"

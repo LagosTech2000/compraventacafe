@@ -37,6 +37,19 @@ RSpec.describe "Control financiero" do
     end
   end
 
+  describe MoneyAccount do
+    it "takes its bank from Honduras' main banks or typed by hand, and its card follows it" do
+      ficohsa = create(:money_account, kind: "bank", bank_key: "ficohsa", bank_name: "lo que sea", account_number: "2100 4455 1234")
+      expect(ficohsa).to have_attributes(bank_name: "Ficohsa", card_style: "ficohsa", masked_number: "•••• 1234")
+      other = create(:money_account, kind: "bank", bank_key: "other", bank_name: "Banpaís")
+      expect(other.bank_name).to eq("Banpaís")
+      expect(HondurasBank::OTHER_STYLES).to include(other.card_style)
+      expect(build(:money_account, kind: "bank", bank_key: "other", bank_name: "")).not_to be_valid
+      expect(build(:money_account, kind: "bank", bank_key: nil)).not_to be_valid
+      expect(HondurasBank.all.values).to eq([ "Ficohsa", "Banco Atlántida", "BAC Honduras", "Banco de Occidente" ])
+    end
+  end
+
   describe AccountBalance do
     it "adds the opening balance, what came in and minus what went out, up to a day" do
       box = create(:money_account, opening_balance: 1_000)

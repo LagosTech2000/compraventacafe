@@ -40,6 +40,28 @@ RSpec.describe "Finance screens", type: :system do
     expect(loans.map { it.reload.money_account }).to all(eq(bank))
   end
 
+  it "shows the accounts as cards in their bank's colors that open their detail, and picks the bank or types another" do
+    create(:money_account, name: "Cheques", kind: "bank", bank_key: "ficohsa", account_number: "2100 4455 1234")
+    visit finance_money_accounts_path
+    expect(page).to have_css(".bank-card-ficohsa", text: "•••• 1234")
+    expect(page).to have_css(".bank-card-cash", text: "Caja de la bodega")
+    find(".bank-card-ficohsa").click
+    expect(page).to have_css("h1", text: "Cheques")
+    expect(page).to have_text("Datos de la cuenta")
+
+    visit new_finance_money_account_path
+    expect(page).to have_no_field("money_account_bank_key")
+    fill_in "money_account_name", with: "Ahorros"
+    select "Banco", from: "money_account_kind"
+    select "BAC Honduras", from: "money_account_bank_key"
+    expect(page).to have_no_field("money_account_bank_name")
+    select "Otro banco (escribirlo)", from: "money_account_bank_key"
+    fill_in "money_account_bank_name", with: "Banpaís"
+    click_button "Crear Cuenta"
+    expect(page).to have_text("Cuenta registrada")
+    expect(MoneyAccount.find_by(name: "Ahorros")).to have_attributes(bank_key: "other", bank_name: "Banpaís")
+  end
+
   it "suggests the account when paying an invoice" do
     invoice = create(:invoice)
     visit trading_invoice_path(invoice)

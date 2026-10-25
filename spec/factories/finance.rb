@@ -2,6 +2,8 @@ FactoryBot.define do
   factory :money_account do
     sequence(:name) { |n| "Caja #{n}" }
     kind { "cash" }
+    bank_key { kind == "bank" ? "other" : nil }
+    bank_name { kind == "bank" ? "Banco Demo" : nil }
     opening_balance { 0 }
     opening_on { Time.zone.today - 30 }
   end

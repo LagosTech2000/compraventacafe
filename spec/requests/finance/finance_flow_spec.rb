@@ -13,10 +13,10 @@ RSpec.describe "Finance flow" do
   before { sign_in user }
 
   it "registers accounts, an expense with its receipt, other income and a transfer, and keeps each balance" do
-    post finance_money_accounts_path, params: { money_account: { name: "Caja de la bodega", kind: "cash", opening_balance: "5000",
+    post finance_money_accounts_path, params: { money_account: { name: "Caja de la bodega", kind: "cash", bank_key: "bac", bank_name: "X", opening_balance: "5000",
                                                                  opening_on: Time.zone.today - 10, default_for: [ "", "cash" ] } }
     box = MoneyAccount.find_by!(name: "Caja de la bodega")
-    expect(box.default_for).to eq([ "cash" ])
+    expect(box).to have_attributes(default_for: [ "cash" ], bank_key: nil, bank_name: nil, card_style: "cash")
     bank = create(:money_account, name: "Banco Atlántida", kind: "bank", opening_balance: 20_000, default_for: %w[transfer check])
     fuel = create(:finance_category, name: "Combustible", parent: create(:finance_category, name: "Transporte"))
 

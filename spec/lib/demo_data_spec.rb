@@ -16,7 +16,8 @@ RSpec.describe DemoData do
     expect(Buyer.pluck(:name)).to all(include("Demo"))
     expect(Shipment.all.map(&:status)).to contain_exactly("sold", "sold", "received", "in_transit")
     expect(Sale.pluck(:payment_status)).to contain_exactly("paid", "partial")
-    expect(MoneyAccount.count).to eq(2)
+    expect(MoneyAccount.count).to eq(6)
+    expect(MoneyAccount.pluck(:bank_key).compact).to contain_exactly("ficohsa", "atlantida", "bac", "occidente", "other")
     expect(Expense.count).to eq(7)
     expect(AccountBalance.new.unassigned.in).to eq(0)
   end

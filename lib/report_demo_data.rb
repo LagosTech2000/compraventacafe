@@ -101,9 +101,9 @@ class ReportDemoData
       @producers = producers
       @workers = workers
       @farms = farms
-      @accounts = [ [ "Caja (demo)", "cash", %w[cash], 100_000 ], [ "Banco Demo Uno", "bank", %w[transfer check], 600_000 ] ].map do |name, kind, methods, opening|
+      @accounts = [ [ "Caja (demo)", "cash", %w[cash], 100_000 ], [ "Cuenta principal (demo)", "bank", %w[transfer check], 600_000 ] ].map do |name, kind, methods, opening|
         MoneyAccount.find_or_create_by!(name:) do |account|
-          account.assign_attributes(kind:, default_for: methods, opening_balance: opening, opening_on: @from)
+          account.assign_attributes(kind:, bank_key: ("atlantida" if kind == "bank"), default_for: methods, opening_balance: opening, opening_on: @from)
         end
       end
       @business_categories = BUSINESS_EXPENSES.to_h do |name, children|
