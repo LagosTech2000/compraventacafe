@@ -746,7 +746,10 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
   `config/application.rb`): páginas, turbo streams, JSON y CSV; imágenes
   y el zip del respaldo van tal cual. **YJIT** lo enciende Rails solo
   (`config.yjit`) si el Ruby lo trae; el log de arranque dice si quedó
-  activo (`config/initializers/yjit.rb`): **verificar en Render**.
+  activo (initializer `report_yjit` en `config/application.rb`, después de
+  `enable_yjit`; antes se revisaba muy pronto y siempre decía «not
+  available», Fernando 2026-10-23): **verificar en Render** que diga
+  «YJIT enabled».
 - **Tiempo máximo por consulta** en producción: `statement_timeout` 15 s
   (`DB_STATEMENT_TIMEOUT` lo cambia; `bin/render-build.sh` lo pone en 0
   para migraciones y cargas).

@@ -23,6 +23,18 @@ module Compraventacafe
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.1
 
+    # Whether YJIT (Ruby's faster engine) is on, in the boot log, to check
+    # it on Render. Rails turns it on (config.yjit) in its very last boot
+    # step (:enable_yjit), after every config.after_initialize: checked
+    # earlier, it always said "not available".
+    initializer :report_yjit, after: :enable_yjit do
+      message = if defined?(RubyVM::YJIT) && RubyVM::YJIT.enabled? then "YJIT enabled"
+      elsif defined?(RubyVM::YJIT.enable) then "YJIT available but off (config.yjit is false in this environment)"
+      else "YJIT not compiled into this Ruby (#{RUBY_DESCRIPTION})"
+      end
+      Rails.logger.info(message)
+    end
+
     # Please, add to the `ignore` list any other `lib` subdirectories that do
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
