@@ -19,7 +19,7 @@ module Sales
       @buyer = Buyer.find_by(id: params[:buyer_id])
 
       if @buyer
-        @sale = @buyer.sales.build(sold_on: Time.zone.today, price_unit: "quintal", payment_status: "pending")
+        @sale = @buyer.sales.build(sold_on: Time.zone.today, price_unit: "quintal", quintal_pounds: Sale::QUINTAL_POUNDS, payment_status: "pending")
         @shipments = @buyer.shipments.unsold.newest_first
       else
         # Buyers whose latest shipment ready to sell is most recent come first.
@@ -58,11 +58,11 @@ module Sales
       end
 
       def issue_params
-        permitted = params.expect(sale: [ :sold_on, :price_unit, :unit_price, :buyer_document_number, :observations,
+        permitted = params.expect(sale: [ :sold_on, :price_unit, :unit_price, :quintal_pounds, :buyer_document_number, :observations,
                                           :payment_status, :payment_method, :paid_on, :amount, :money_account_id, :advance_amount, shipment_ids: [] ])
         {
           shipment_ids: permitted[:shipment_ids],
-          sale: permitted.slice(:sold_on, :price_unit, :unit_price, :buyer_document_number, :observations).to_h,
+          sale: permitted.slice(:sold_on, :price_unit, :unit_price, :quintal_pounds, :buyer_document_number, :observations).to_h,
           payment_status: permitted[:payment_status], payment_method: permitted[:payment_method],
           paid_on: permitted[:paid_on], amount: permitted[:amount], money_account_id: permitted[:money_account_id],
           advance_amount: permitted[:advance_amount]

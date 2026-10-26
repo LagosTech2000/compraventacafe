@@ -104,7 +104,7 @@ RSpec.describe "Sales screens", type: :system do
 
     uncheck dom_id(Shipment.find_by(coffee_state: "dry_parchment"), :select)
     expect(page).to have_css("[data-sale-builder-target='mixed']", visible: false)
-    # 964.32 lb ÷ 120 × L 6,000
+    # 964.32 lb ÷ 120 (by default) × L 6,000
     expect(page).to have_css("[data-sale-builder-target='total']", text: "L 48,216.00")
     expect(page).to have_css("[data-sale-builder-target='quintals']", text: "8.04")
 
@@ -118,6 +118,46 @@ RSpec.describe "Sales screens", type: :system do
     expect(page).to have_text("Venta 0001 registrada")
     expect(Sale.last).to have_attributes(total: BigDecimal("57859.20"), payment_status: "paid")
     expect(Sale.last.shipments).to contain_exactly(first, second)
+  end
+
+  it "names the price after its unit and takes the pounds of the quintal, 120 unless changed" do
+    create(:shipment, :received, buyer:) # 482.16 lb at the buyer's
+    visit new_sales_sale_path(buyer_id: buyer.id)
+    total = "[data-sale-builder-target='total']"
+
+    expect(page).to have_field("sale_quintal_pounds", with: "120")
+    expect(page).to have_css("label[for=sale_unit_price]", text: "Precio por quintal (L)")
+    fill_in "sale_unit_price", with: "6000"
+    expect(page).to have_css(total, text: "L 24,108.00")
+
+    fill_in "sale_quintal_pounds", with: "100"
+    expect(page).to have_css(total, text: "L 28,929.60")
+    expect(page).to have_css("[data-sale-builder-target='quintals']", text: "4.82")
+
+    choose "Por libra"
+    expect(page).to have_css("label[for=sale_unit_price]", text: "Precio por libra (L)")
+    expect(page).to have_no_field("sale_quintal_pounds")
+    choose "Por quintal"
+    expect(page).to have_css("label[for=sale_unit_price]", text: "Precio por quintal (L)")
+
+    click_button "Registrar venta"
+    expect(page).to have_text("Venta 0001 registrada")
+    expect(Sale.last).to have_attributes(quintal_pounds: 100, total: BigDecimal("28929.60"))
+  end
+
+  it "says what the advance taken off is in coffee, net and gross, at the price typed" do
+    create(:buyer_advance, buyer:, amount: 5_000)
+    create(:shipment, :received, buyer:) # 482.16 lb net, 990 gross at the buyer's
+    visit new_sales_sale_path(buyer_id: buyer.id)
+
+    fill_in "sale_unit_price", with: "6000"
+    fill_in "sale_advance_amount", with: "3000"
+    # L 3,000 ÷ L 50 a pound (L 6,000 ÷ 120 lb)
+    expect(page).to have_text("Equivale a 60.00 lb netas y 123.20 lb brutas de café, a este precio.")
+
+    choose "Por libra"
+    fill_in "sale_unit_price", with: "60"
+    expect(page).to have_text("Equivale a 50.00 lb netas y 102.66 lb brutas de café, a este precio.")
   end
 
   def dom_id(record, prefix) = ActionView::RecordIdentifier.dom_id(record, prefix)

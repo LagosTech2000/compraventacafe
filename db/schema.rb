@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_25_220000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_25_230000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -712,6 +712,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_220000) do
     t.integer "lock_version", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "quintal_pounds", precision: 8, scale: 2, default: "120.0", null: false
     t.index ["buyer_id"], name: "index_sales_on_buyer_id"
     t.index ["created_by_id"], name: "index_sales_on_created_by_id"
     t.index ["number"], name: "index_sales_on_number", unique: true

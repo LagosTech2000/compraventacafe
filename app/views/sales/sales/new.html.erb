@@ -30,7 +30,6 @@
   <%= form_with model: @sale, url: sales_sales_path, class: form_surface_class("@container max-w-none"),
         data: { controller: "form-validation unsaved-changes sale-builder", action: unsaved_changes_actions,
                 unsaved_changes_message_value: t("shared.unsaved_changes.leave"),
-                sale_builder_quintal_pounds_value: Sale::QUINTAL_POUNDS,
                 sale_builder_tolerance_value: WeightTolerance.percent.to_f,
                 sale_builder_count_one_value: t(".count.one"), sale_builder_count_other_value: t(".count.other") } do |form| %>
     <%= hidden_field_tag :buyer_id, @buyer.id %>
@@ -56,6 +55,7 @@
                 <%= check_box_tag "sale[shipment_ids][]", shipment.id, chosen.empty? || chosen.include?(shipment.id), id: dom_id(shipment, :select),
                       class: "mt-1 size-4 shrink-0 accent-primary",
                       data: { sale_builder_target: "shipment", action: "sale-builder#update", net: shipment.destination_net_weight.to_f,
+                              gross: shipment.destination_gross_weight.to_f,
                               origin_net: shipment.origin_net_weight.to_f, coffee_state: shipment.coffee_state } %>
                 <span class="min-w-0 flex-1">
                   <span class="flex flex-wrap items-baseline justify-between gap-2">
@@ -110,10 +110,23 @@
               <% end %>
             </div>
           </div>
+          <%# The quintal's pounds: 120 unless this sale says otherwise. Only by the quintal. %>
+          <div data-sale-builder-target="quintalField">
+            <%= form.label :quintal_pounds, class: "field-label" %>
+            <%= form.number_field :quintal_pounds, required: true, min: 1, max: 999.99, step: 0.01, inputmode: "decimal", class: "field-input",
+                  data: { sale_builder_target: "quintalPounds", action: "sale-builder#update",
+                          missing_message: "#{Sale.human_attribute_name(:quintal_pounds)} #{t("errors.messages.blank")}" } %>
+            <p class="mt-1 text-xs text-ink-muted"><%= t(".quintal_pounds_help", pounds: Sale::QUINTAL_POUNDS) %></p>
+          </div>
           <div>
-            <%= form.label :unit_price, class: "field-label" %>
+            <%# Its name follows the unit chosen: per quintal or per pound. %>
+            <label for="sale_unit_price" class="field-label">
+              <span data-sale-builder-target="priceLabel" data-unit="quintal"><%= t(".price_per_quintal") %></span>
+              <span data-sale-builder-target="priceLabel" data-unit="pound" hidden><%= t(".price_per_pound") %></span>
+            </label>
             <%= form.number_field :unit_price, required: true, min: 0.01, max: 9_999_999.99, step: 0.01, inputmode: "decimal",
-                  class: "field-input text-lg", data: { sale_builder_target: "price", action: "sale-builder#update" } %>
+                  class: "field-input text-lg", data: { sale_builder_target: "price", action: "sale-builder#update",
+                                                         missing_message: "#{Sale.human_attribute_name(:unit_price)} #{t("errors.messages.blank")}" } %>
           </div>
         </fieldset>
 
@@ -140,8 +153,12 @@
           <div class="panel p-4">
             <%= label_tag "sale_advance_amount", t(".advance_amount"), class: "field-label" %>
             <%= number_field_tag "sale[advance_amount]", params.dig(:sale, :advance_amount), id: "sale_advance_amount", min: 0, max: advance_balance,
-                  step: 0.01, inputmode: "decimal", class: "field-input", placeholder: "0.00" %>
+                  step: 0.01, inputmode: "decimal", class: "field-input", placeholder: "0.00",
+                  data: { sale_builder_target: "advance", action: "sale-builder#update" } %>
             <p class="mt-1 text-xs text-ink-muted"><%= t(".advance_help", balance: format_money(advance_balance)) %></p>
+            <%# The coffee that money stands for, at this sale's price. %>
+            <p class="mt-2 text-sm font-medium" hidden data-sale-builder-target="advancePounds"
+               data-template="<%= t(".advance_pounds", net: "%{net}", gross: "%{gross}") %>"></p>
           </div>
         <% end %>
 

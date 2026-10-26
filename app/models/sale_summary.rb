@@ -1,5 +1,5 @@
 # Totals of a set of sales (a day, a season, a filtered list), in SQL:
-# how many, the buyer's net, QQ of 120 lb, money, and where the money
+# how many, the buyer's net, QQ (each sale's own pounds), money, and where the money
 # stands (collected, collected in part, pending). Voided sales are left out.
 class SaleSummary
   STATES = Sale::PAYMENT_STATUSES.reverse.freeze # paid, partial, pending
@@ -14,7 +14,7 @@ class SaleSummary
   def net_weight = @sales.sum(:net_weight)
   def origin_net_weight = @sales.sum(:origin_net_weight)
   def net_difference = net_weight - origin_net_weight
-  def quintals = (net_weight / Sale::QUINTAL_POUNDS).round(2)
+  def quintals = @sales.sum("sales.net_weight / sales.quintal_pounds").round(2)
   def total = @sales.sum(:total)
   def collected = SalePayment.where(sale_id: @sales.select(:id)).sum(:amount)
   def balance_due = total - collected

@@ -24,6 +24,9 @@
         <dt><%= t("sales.sale_payments.receipt.amount") %></dt>
         <dd class="tabular-nums"><%= format_money(payment.amount) %></dd>
       </div>
+      <% if payment.advance? %>
+        <p class="py-1 text-xs" data-advance-pounds><%= sale.advance_pounds_text(payment.amount) %></p>
+      <% end %>
     </dl>
     <dl class="text-sm">
       <div class="flex justify-between gap-4 py-0.5">

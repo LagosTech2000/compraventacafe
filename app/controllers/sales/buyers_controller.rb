@@ -25,7 +25,7 @@ module Sales
         @shipments, @next_page = @filter.results(@buyer.shipments)
       when "advances"
         @advances = @buyer.advances.includes(:money_account, :created_by).newest_first.to_a
-        @taken = @buyer.sale_payments.advance.includes(:sale).merge(SalePayment.newest_first).to_a
+        @taken = @buyer.sale_payments.advance.includes(sale: { lines: :shipment }).merge(SalePayment.newest_first).to_a
       when "payments"
         @payments = @buyer.sale_payments.includes(:sale, :created_by).merge(SalePayment.newest_first).to_a
       end

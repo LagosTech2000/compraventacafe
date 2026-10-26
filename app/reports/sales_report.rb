@@ -1,4 +1,4 @@
-# Coffee sold (Comercialización): the buyer's net, quintals of 120 lb, the
+# Coffee sold (Comercialización): the buyer's net, quintals (each sale's own), the
 # money, what was collected and what is owed, and how long buyers take to
 # pay. Voided sales are left out.
 class SalesReport < Report
@@ -8,10 +8,10 @@ class SalesReport < Report
   PAID = "COALESCE(sale_paid.amount, 0)".freeze
   BALANCE = "(sales.total - #{PAID})".freeze
   UNPAID = "sales.payment_status IN ('pending', 'partial')".freeze
-  QUINTALS = "SUM(sales.net_weight) / #{Sale::QUINTAL_POUNDS}".freeze
+  QUINTALS = "SUM(sales.net_weight / sales.quintal_pounds)".freeze
   DIFFERENCE = "(sales.net_weight - sales.origin_net_weight)".freeze
   DIFFERENCE_PERCENT = "SUM(#{DIFFERENCE}) * 100 / NULLIF(SUM(sales.origin_net_weight), 0)".freeze
-  PRICE_PER_QUINTAL = "SUM(sales.total) / NULLIF(SUM(sales.net_weight) / #{Sale::QUINTAL_POUNDS}, 0)".freeze
+  PRICE_PER_QUINTAL = "SUM(sales.total) / NULLIF(SUM(sales.net_weight / sales.quintal_pounds), 0)".freeze
   DAYS_TO_PAY = "(sales.paid_on - sales.sold_on)".freeze
   STATUS_TONES = InvoicesReport::STATUS_TONES
 
