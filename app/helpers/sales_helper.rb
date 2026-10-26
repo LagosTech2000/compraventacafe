@@ -36,6 +36,17 @@ module SalesHelper
     end
   end
 
+  # How a processing cost was charged: "L 0.50 por libra bruta de lo que
+  # entró · 1,000.00 lb" or "Monto total".
+  def processing_cost_terms(cost)
+    return ProcessingCost.human_attribute_name("pricing/total") if cost.total?
+
+    unit = cost.per_quintal? ? t("sales.processing_costs.terms.quintal", pounds: cost.quintal_pounds) : t("sales.processing_costs.terms.pound")
+    t("sales.processing_costs.terms.per_unit", price: format_price_per_pound(cost.unit_price), unit:,
+      kind: ProcessingCost.human_attribute_name("weight_kind/#{cost.weight_kind}").downcase,
+      side: ProcessingCost.human_attribute_name("weight_side/#{cost.weight_side}").downcase, pounds: format_pounds(cost.base_pounds))
+  end
+
   # How long a lot has been in stock: hours for the first two days (cherry
   # counts them), then days.
   def stock_age(lot)

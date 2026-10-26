@@ -1,0 +1,113 @@
+<% content_for :title, t(".title", number: @conversion.display_number) %>
+<%= render "sales/nav" %>
+<% unless modal_request? %>
+  <%= render "shared/breadcrumbs", crumbs: conversion_crumbs(@conversion, [ t(".crumb") ]) %>
+<% end %>
+
+<h1 class="text-2xl font-bold"><%= t(".title", number: @conversion.display_number) %></h1>
+<p class="mt-1 text-sm text-ink-muted"><%= t(".help", site: @conversion.processing_site&.name || "—", from: @conversion.human_from_state, to: @conversion.human_to_state) %></p>
+
+<%# The weights a cost per unit can be charged on: what came out only once it has its result. %>
+<% bases = { input: { gross: @conversion.input_gross_weight, net: @conversion.input_net_weight } }
+   bases[:output] = { gross: @conversion.output_gross_weight, net: @conversion.output_net_weight } if @conversion.finished? %>
+<%= form_with model: @cost, url: sales_coffee_conversion_costs_path(@conversion), class: form_surface_class("@container mt-6 max-w-none"),
+      data: { controller: "form-validation processing-cost", processing_cost_bases_value: bases.to_json } do |form| %>
+  <%= render "shared/form_errors", record: @cost %>
+  <div class="grid items-start gap-6 @5xl:grid-cols-[minmax(0,1fr)_20rem]">
+    <div class="min-w-0 space-y-5">
+      <div class="grid gap-5 sm:grid-cols-2">
+        <div>
+          <%= form.label :concept, class: "field-label" %>
+          <%= form.select :concept, enum_options(ProcessingCost, :concept, ProcessingCost::CONCEPTS), { prompt: t("shared.select.pick_concept") },
+                required: true, class: "field-input" %>
+        </div>
+        <div>
+          <%= form.label :description, class: "field-label" %>
+          <%= form.text_field :description, maxlength: 200, class: "field-input", placeholder: t(".description_placeholder") %>
+        </div>
+      </div>
+
+      <fieldset>
+        <legend class="field-label"><%= ProcessingCost.human_attribute_name(:pricing) %></legend>
+        <div class="flex flex-wrap gap-x-6 gap-y-2">
+          <% ProcessingCost::PRICINGS.each do |pricing| %>
+            <label class="flex min-h-11 cursor-pointer items-center gap-2 text-sm font-medium">
+              <%= form.radio_button :pricing, pricing, class: "size-4 accent-primary",
+                    data: { processing_cost_target: "pricing", action: "processing-cost#update" } %>
+              <%= ProcessingCost.human_attribute_name("pricing/#{pricing}") %>
+            </label>
+          <% end %>
+        </div>
+      </fieldset>
+
+      <div data-processing-cost-target="amountField">
+        <%= form.label :amount, class: "field-label" %>
+        <%= form.number_field :amount, min: 0.01, step: 0.01, inputmode: "decimal", class: "field-input max-w-xs text-lg",
+              data: { processing_cost_target: "amount", action: "processing-cost#update" } %>
+      </div>
+
+      <%# Per pound or per quintal: on what weight, and the price. %>
+      <div class="grid gap-5 sm:grid-cols-2" data-processing-cost-target="unitFields">
+        <fieldset>
+          <legend class="field-label"><%= ProcessingCost.human_attribute_name(:weight_side) %></legend>
+          <% ProcessingCost::WEIGHT_SIDES.each do |side| %>
+            <% blocked = side == "output" && !@conversion.finished? %>
+            <label class="flex min-h-11 items-center gap-2 text-sm font-medium <%= blocked ? "text-ink-muted" : "cursor-pointer" %>">
+              <%= form.radio_button :weight_side, side, class: "size-4 accent-primary", disabled: blocked,
+                    data: { processing_cost_target: "side", action: "processing-cost#update", always_disabled: blocked } %>
+              <%= ProcessingCost.human_attribute_name("weight_side/#{side}") %>
+              <% if blocked %><span class="text-xs font-normal"><%= t(".output_later") %></span><% end %>
+            </label>
+          <% end %>
+        </fieldset>
+        <fieldset>
+          <legend class="field-label"><%= ProcessingCost.human_attribute_name(:weight_kind) %></legend>
+          <% ProcessingCost::WEIGHT_KINDS.each do |kind| %>
+            <label class="flex min-h-11 cursor-pointer items-center gap-2 text-sm font-medium">
+              <%= form.radio_button :weight_kind, kind, class: "size-4 accent-primary",
+                    data: { processing_cost_target: "kind", action: "processing-cost#update" } %>
+              <%= ProcessingCost.human_attribute_name("weight_kind/#{kind}") %>
+            </label>
+          <% end %>
+        </fieldset>
+        <div data-processing-cost-target="quintalField">
+          <%= form.label :quintal_pounds, class: "field-label" %>
+          <%= form.select :quintal_pounds, ProcessingCost::QUINTAL_POUNDS.map { [ t(".quintal", pounds: it), it ] }, { selected: @cost.quintal_pounds || 100 },
+                class: "field-input", data: { processing_cost_target: "quintals", action: "processing-cost#update" } %>
+        </div>
+        <div>
+          <%= form.label :unit_price, class: "field-label" %>
+          <%= form.number_field :unit_price, min: 0.0001, step: 0.0001, inputmode: "decimal", class: "field-input",
+                data: { processing_cost_target: "unitPrice", action: "processing-cost#update" } %>
+        </div>
+      </div>
+
+      <div class="grid gap-5 sm:grid-cols-3" data-controller="money-account" data-money-account-defaults-value="<%= MoneyAccount.defaults_by_method.to_json %>">
+        <div>
+          <%= form.label :paid_on, class: "field-label" %>
+          <%= form.date_field :paid_on, required: true, class: "field-input" %>
+        </div>
+        <div>
+          <%= form.label :payment_method, class: "field-label" %>
+          <%= form.select :payment_method, enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS),
+                { include_blank: t("shared.select.pick_payment_method") }, required: true, class: "field-input",
+                data: { money_account_target: "method", action: "money-account#suggest",
+                        missing_message: "#{ProcessingCost.human_attribute_name(:payment_method)} #{t("errors.messages.blank")}" } %>
+        </div>
+        <%= render "shared/money_account_field", form: %>
+      </div>
+    </div>
+
+    <aside class="space-y-4 @5xl:sticky @5xl:top-24">
+      <div class="clay p-4">
+        <p class="text-sm font-semibold"><%= t(".preview") %></p>
+        <p class="mt-1 text-2xl font-bold tabular-nums" data-processing-cost-target="result">—</p>
+        <p class="text-xs text-ink-muted"><%= t(".base") %> <span class="tabular-nums" data-processing-cost-target="base"></span></p>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <%= form.submit t(".submit"), class: "btn btn-primary" %>
+        <%= cancel_button sales_coffee_conversion_path(@conversion) %>
+      </div>
+    </aside>
+  </div>
+<% end %>

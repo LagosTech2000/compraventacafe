@@ -36,6 +36,8 @@ class CoffeeConversion < ApplicationRecord
   belongs_to :output_warehouse, class_name: "Warehouse", optional: true
   # Where it is processed (client, 2026-10-26); the ones before have none.
   belongs_to :processing_site, optional: true
+  # What processing it cost (client, 2026-10-26).
+  has_many :processing_costs, -> { chronological }, dependent: :restrict_with_error, inverse_of: :coffee_conversion
   belongs_to :created_by, class_name: "User"
   belongs_to :finished_by, class_name: "User", optional: true
   belongs_to :voided_by, class_name: "User", optional: true
@@ -105,8 +107,9 @@ class CoffeeConversion < ApplicationRecord
     inputs[:yield_factor] || (1 - BigDecimal(inputs[:humidity_percent].to_s) / 100)
   end
 
-  # Lempiras added by processing, by conversion id (none yet).
-  def self.processing_costs_by_conversion = {}
+  # Lempiras its processing cost, by conversion id: they add to the value
+  # of the coffee that came out (CoffeeLots).
+  def self.processing_costs_by_conversion = ProcessingCost.group(:coffee_conversion_id).sum(:amount)
 
   # The estimate a new process starts with (site settings): 37.95 % of
   # cherry's gross as wet parchment, 50 % of wet parchment's when dried.
@@ -163,6 +166,11 @@ class CoffeeConversion < ApplicationRecord
   def shrink_weight = output_gross_weight && (input_gross_weight - output_gross_weight)
   def shrink_percent = shrink_weight && input_gross_weight.positive? ? (shrink_weight * 100 / input_gross_weight).round(2) : nil
 
+  def costs_total = processing_costs.sum(:amount)
+
+  # Lempiras of processing per net pound that came out.
+  def cost_per_output_pound = output_net_weight.to_d.positive? && costs_total.positive? ? (costs_total / output_net_weight).round(2) : nil
+
   # Pounds the damage took off what came out, as in a purchase.
   def output_damage_weight
     return 0 unless output_weighed? && to_state != "cherry"
@@ -174,9 +182,11 @@ class CoffeeConversion < ApplicationRecord
   # The result was weighed with humidity and damage (not with the stock's proportion).
   def output_weighed? = output_ratio_source == "weighed"
 
-  # Voids a conversion in process: its coffee goes back to its state.
+  # Voids a conversion in process: its coffee goes back to its state. Not
+  # with costs registered: that money was spent (remove them first).
   def void!(user)
     raise ActiveRecord::RecordInvalid, tap { errors.add(:base, :finished) } unless in_process?
+    raise ActiveRecord::RecordInvalid, tap { errors.add(:base, :has_costs) } if processing_costs.exists?
 
     update!(voided_at: Time.current, voided_by: user)
   end
@@ -184,6 +194,7 @@ class CoffeeConversion < ApplicationRecord
   # Takes the result off: back to in process.
   def reopen!
     raise ActiveRecord::RecordInvalid, tap { errors.add(:base, :not_finished) } unless finished?
+    raise ActiveRecord::RecordInvalid, tap { errors.add(:base, :output_costs) } if processing_costs.exists?(weight_side: "output")
 
     self.finishing = false
     update!(finished_at: nil, finished_by: nil, output_warehouse: nil, output_gross_weight: nil, output_net_weight: nil, output_ratio: nil, output_ratio_source: nil,

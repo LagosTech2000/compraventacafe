@@ -70,4 +70,26 @@ RSpec.describe "Coffee conversions screens", type: :system do
     find("[data-coffee-state=total]").click
     expect(page).to have_current_path(sales_stock_state_path("total"))
   end
+
+  it "calculates a processing cost as it is typed and shows only the fields of the way it is charged" do
+    conversion = create(:coffee_conversion, :finished, input_gross_weight: 1_000, weighed_at: 3.hours.ago) # 400 lb out
+    visit new_sales_coffee_conversion_cost_path(conversion)
+
+    expect(page).to have_no_field("processing_cost_unit_price")
+    fill_in "processing_cost_amount", with: "300"
+    expect(page).to have_css("[data-processing-cost-target=result]", text: "L 300.00")
+
+    choose "Por quintal"
+    expect(page).to have_no_field("processing_cost_amount")
+    fill_in "processing_cost_unit_price", with: "20"
+    expect(page).to have_css("[data-processing-cost-target=result]", text: "L 200.00") # 1,000 lb ÷ 100 × 20
+    select "Quintal de 125 lb", from: "processing_cost_quintal_pounds"
+    choose "Que salió"
+    expect(page).to have_css("[data-processing-cost-target=base]", text: "400.00 lb")
+    expect(page).to have_css("[data-processing-cost-target=result]", text: "L 64.00") # 400 ÷ 125 × 20
+
+    choose "Por libra"
+    expect(page).to have_no_select("processing_cost_quintal_pounds")
+    expect(page).to have_css("[data-processing-cost-target=result]", text: "L 8,000.00")
+  end
 end

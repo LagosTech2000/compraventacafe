@@ -40,6 +40,7 @@ RSpec.describe "Queries per page" do
       warehouse = create(:warehouse)
       create(:purchase, producer:, warehouse:, coffee_state: "cherry", purchased_at: 2.days.ago)
       create(:warehouse_transfer, to_warehouse: warehouse, net_weight: 10)
+      create(:processing_cost, coffee_conversion: create(:coffee_conversion))
       create(:expense)
       create(:other_income)
       member = create(:staff_member, starts_on: Time.zone.today - 40)

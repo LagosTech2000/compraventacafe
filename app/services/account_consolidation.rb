@@ -14,7 +14,8 @@
 class AccountConsolidation
   MODELS = {
     "invoices" => "InvoicePayment", "hauler_payments" => "HaulerPayment", "loans" => "Loan", "loan_payments" => "LoanPayment",
-    "payroll_payments" => "PayrollPayment", "payroll_expenses" => "PayrollExpense", "sale_payments" => "SalePayment"
+    "payroll_payments" => "PayrollPayment", "payroll_expenses" => "PayrollExpense", "sale_payments" => "SalePayment",
+    "processing_costs" => "ProcessingCost"
   }.freeze
   SOURCES = MODELS.keys.freeze
   # The records that have a category, and its column.
@@ -22,7 +23,8 @@ class AccountConsolidation
   # What each record's audit label reads, loaded at once.
   PRELOADS = {
     "invoices" => :invoice, "hauler_payments" => { hauler: :person }, "loans" => :person, "loan_payments" => { loan: :person },
-    "payroll_payments" => { payroll: :farm }, "payroll_expenses" => { payroll: :farm }, "sale_payments" => { sale: :buyer }
+    "payroll_payments" => { payroll: :farm }, "payroll_expenses" => { payroll: :farm }, "sale_payments" => { sale: :buyer },
+    "processing_costs" => :coffee_conversion
   }.freeze
 
   # assigned: given an account; skipped: waiting for one (by method);

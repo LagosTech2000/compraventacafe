@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_26_070000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_26_080000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -640,6 +640,30 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_070000) do
     t.index ["updated_by_id"], name: "index_private_documents_on_updated_by_id"
   end
 
+  create_table "processing_costs", force: :cascade do |t|
+    t.bigint "coffee_conversion_id", null: false
+    t.string "concept", null: false
+    t.string "description"
+    t.string "pricing", null: false
+    t.string "weight_side"
+    t.string "weight_kind"
+    t.integer "quintal_pounds"
+    t.decimal "base_pounds", precision: 12, scale: 2
+    t.decimal "quantity", precision: 14, scale: 4
+    t.decimal "unit_price", precision: 12, scale: 4
+    t.decimal "amount", precision: 14, scale: 2, null: false
+    t.date "paid_on", null: false
+    t.string "payment_method", null: false
+    t.bigint "money_account_id"
+    t.bigint "created_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["coffee_conversion_id"], name: "index_processing_costs_on_coffee_conversion_id"
+    t.index ["created_by_id"], name: "index_processing_costs_on_created_by_id"
+    t.index ["money_account_id"], name: "index_processing_costs_on_money_account_id"
+    t.index ["paid_on"], name: "index_processing_costs_on_paid_on"
+  end
+
   create_table "processing_sites", force: :cascade do |t|
     t.string "name", null: false
     t.boolean "own", default: false, null: false
@@ -1158,6 +1182,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_070000) do
   add_foreign_key "private_document_prints", "private_documents"
   add_foreign_key "private_document_prints", "users"
   add_foreign_key "private_documents", "users", column: "updated_by_id"
+  add_foreign_key "processing_costs", "coffee_conversions"
+  add_foreign_key "processing_costs", "money_accounts"
+  add_foreign_key "processing_costs", "users", column: "created_by_id"
   add_foreign_key "producers", "people"
   add_foreign_key "purchase_weighings", "purchases"
   add_foreign_key "purchases", "farms"

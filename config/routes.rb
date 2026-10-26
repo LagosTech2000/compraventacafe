@@ -110,6 +110,8 @@ Rails.application.routes.draw do
         patch :reopen
       end
       resource :result, only: %i[ edit update ], controller: "conversion_results"
+      # What processing it cost.
+      resources :costs, only: %i[ new create destroy ], controller: "processing_costs"
     end
     resource :daily_close, only: :show
   end

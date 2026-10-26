@@ -153,6 +153,7 @@ es:
       pick_buyer: "Selecciona el comprador"
       pick_warehouse: "Selecciona la bodega"
       pick_processing_site: "Selecciona el lugar"
+      pick_concept: "Selecciona el concepto"
       main_warehouse: "Bodega 1"
       no_carrier: "Sin transportista asignado"
       no_truck: "Sin camión asignado"
@@ -362,6 +363,7 @@ es:
           action: "Asignar salario"
   money_movements:
     invoice: "Factura %{number}"
+    processing_cost: "%{concept} · proceso %{number}"
     hauler_payment: "Recibo %{number} de comisiones de carreo"
     loan: "Préstamo %{number}"
     loan_payment: "Recibo %{number} del préstamo %{loan}"
@@ -1209,6 +1211,25 @@ es:
         success: "Camión registrado."
       update:
         success: "Camión actualizado."
+    processing_costs:
+      terms:
+        per_unit: "%{price} por %{unit} %{kind} de lo %{side} · %{pounds} lb"
+        pound: "libra"
+        quintal: "quintal de %{pounds} lb"
+      new:
+        title: "Gasto del proceso %{number}"
+        crumb: "Registrar gasto"
+        help: "%{site} · %{from} → %{to}. Se suma al valor del café que salió y sale de la cuenta que elijas."
+        description_placeholder: "Opcional; obligatorio si es «Otro»"
+        output_later: "(cuando se registre el resultado)"
+        quintal: "Quintal de %{pounds} lb"
+        preview: "Monto del gasto"
+        base: "Calculado sobre"
+        submit: "Registrar gasto"
+      create:
+        success: "Gasto de %{amount} registrado."
+      destroy:
+        success: "Gasto quitado."
     processing_sites:
       owners:
         own: "Del negocio"
@@ -1802,6 +1823,16 @@ es:
         voided: "Anulado el %{date} por %{name}."
         full_page: "Ver en página completa"
         back: "Volver a procesos"
+        costs:
+          title: "Gastos del proceso"
+          help: "Flete, secado, mano de obra y lo demás que costó procesarlo. Se suman al valor del café que salió."
+          new: "Registrar gasto"
+          how: "Cómo se cobró"
+          remove: "Quitar"
+          confirm_remove: "¿Quitar este gasto? Sale de los movimientos de su cuenta."
+          total: "Total de gastos"
+          per_pound: "Gasto por libra neta que salió"
+          none: "Todavía no hay gastos registrados para este proceso."
         estimate:
           title: "Lo estimado contra lo real"
           estimated: "Debía salir (%{percent})"
@@ -4297,7 +4328,7 @@ es:
             help: "Una persona puede tener varios roles."
       cash_movements:
         title: "Entradas y salidas de dinero"
-        description: "El dinero que salió (pagos de facturas, pagos a carreros, préstamos en efectivo, planillas, gastos de planilla, gastos e inversiones, pagos y anticipos de la planilla interna) y el que entró (abonos a préstamos en efectivo, transferencia o cheque, cobros de ventas de café y otros ingresos), según lo registrado; cada quien ve lo de los módulos que puede ver. Las transferencias entre cuentas salen al elegir una cuenta."
+        description: "El dinero que salió (pagos de facturas, pagos a carreros, préstamos en efectivo, planillas, gastos de planilla, gastos de procesamiento del café, gastos e inversiones, pagos y anticipos de la planilla interna) y el que entró (abonos a préstamos en efectivo, transferencia o cheque, cobros de ventas de café y otros ingresos), según lo registrado; cada quien ve lo de los módulos que puede ver. Las transferencias entre cuentas salen al elegir una cuenta."
         sources:
           invoices: "Pago de factura"
           hauler_payments: "Pago a carrero"
@@ -4307,6 +4338,7 @@ es:
           payroll_expenses: "Gasto de planilla"
           sale_payments: "Cobro de venta"
           buyer_advances: "Anticipo de comprador"
+          processing_costs: "Gasto de procesamiento"
           expenses: "Gasto"
           investments: "Inversión"
           staff_payments: "Pago de planilla interna"
@@ -4389,6 +4421,7 @@ es:
           - "Cuando salga, abre el proceso y toca «Registrar resultado»: pesa lo que salió como una compra (libras brutas, sacos, humedad y daño). Se suma a su inventario."
           - "Al mandar a procesar se ve cuánto debería salir según el rendimiento estimado (37.95 % de la uva, 50 % al secar, o el que escribas)."
           - "El detalle compara lo estimado con lo que salió, la merma y las libras netas que entraron con las que salieron."
+          - "En el detalle, «Registrar gasto» anota lo que costó procesarlo (flete, secado, mano de obra…); se suma al valor del café."
         tips:
           - "El rendimiento estimado es solo una proyección; el promedio de los procesos terminados sale debajo para comparar."
           - "Las libras netas que entran se calculan solas con lo que ya hay de ese estado en el inventario."
@@ -5368,6 +5401,18 @@ es:
             steps:
               - "Escribe el nombre (por ejemplo, «Bodega 1»); se puede cambiar después."
               - "Marca «Bodega por defecto» si las compras nuevas deben entrar en ella."
+        processing_costs:
+          form:
+            title: "Registrar un gasto del proceso"
+            summary: "Lo que costó procesar el café: flete, secado, mano de obra, carga y descarga, alquiler, combustible u otro."
+            steps:
+              - "Elige el concepto y cómo se cobró: monto total, por libra o por quintal."
+              - "Por libra o por quintal, elige sobre qué café se cobra (lo que entró o lo que salió), si son libras brutas o netas y de cuántas libras es el quintal; el monto se calcula solo."
+              - "Escribe la fecha, la forma de pago y la cuenta de donde salió el dinero."
+            tips:
+              - "Un gasto sobre lo que salió solo se puede registrar cuando el proceso tiene su resultado."
+              - "El formulario empieza con la forma de cobrar del último gasto de ese lugar."
+              - "El gasto sale en Movimientos de Control financiero y se suma al valor del café que salió."
         processing_sites:
           index:
             title: "Lugares de procesamiento"
@@ -6255,6 +6300,7 @@ es:
         coffee_conversion: "el proceso de café"
         warehouse: "la bodega"
         processing_site: "el lugar de procesamiento"
+        processing_cost: "el gasto de procesamiento"
         warehouse_transfer: "el traslado entre bodegas"
         carrier: "el transportista"
         truck: "el camión"
@@ -6640,6 +6686,9 @@ es:
       processing_site:
         one: "Lugar de procesamiento"
         other: "Lugares de procesamiento"
+      processing_cost:
+        one: "Gasto de procesamiento"
+        other: "Gastos de procesamiento"
       warehouse_transfer:
         one: "Traslado entre bodegas"
         other: "Traslados entre bodegas"
@@ -7128,6 +7177,42 @@ es:
         voided_at: "Anulada el"
         voided_by: "Anuló"
         voided_by_id: "Anuló"
+      processing_cost:
+        coffee_conversion: "Proceso"
+        coffee_conversion_id: "Proceso"
+        concept: "Concepto"
+        concept/freight: "Flete"
+        concept/drying: "Secado"
+        concept/labor: "Mano de obra"
+        concept/loading: "Carga y descarga"
+        concept/rental: "Alquiler de patio o secadora"
+        concept/fuel: "Combustible"
+        concept/other: "Otro"
+        description: "Detalle"
+        pricing: "Cómo se cobra"
+        pricing/total: "Monto total"
+        pricing/per_pound: "Por libra"
+        pricing/per_quintal: "Por quintal"
+        weight_side: "Sobre el café"
+        weight_side/input: "Que entró"
+        weight_side/output: "Que salió"
+        weight_kind: "En libras"
+        weight_kind/gross: "Brutas"
+        weight_kind/net: "Netas"
+        quintal_pounds: "Libras por quintal"
+        base_pounds: "Libras sobre las que se cobró"
+        quantity: "Cantidad cobrada"
+        unit_price: "Precio (L)"
+        amount: "Monto (L)"
+        paid_on: "Fecha de pago"
+        payment_method: "Forma de pago"
+        payment_method/cash: "Efectivo"
+        payment_method/transfer: "Transferencia"
+        payment_method/check: "Cheque"
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
+        created_by: "Registró"
+        created_by_id: "Registró"
       processing_site:
         name: "Nombre"
         own: "Es del negocio"
@@ -7564,6 +7649,8 @@ es:
             base:
               finished: "El proceso ya tiene su resultado: quítalo primero."
               not_finished: "El proceso todavía no tiene resultado."
+              has_costs: "El proceso tiene gastos registrados: quítalos primero para anularlo."
+              output_costs: "El proceso tiene gastos cobrados sobre lo que salió: quítalos primero para quitar el resultado."
             finished_at:
               before_weighed: "no puede ser antes de cuando se pesó lo que entró"
             warehouse:
@@ -7577,6 +7664,14 @@ es:
             base:
               main_inactive: "La bodega por defecto no se puede desactivar: elige antes otra por defecto."
               has_coffee: "La bodega todavía tiene café: trasládalo a otra antes de desactivarla."
+        processing_cost:
+          attributes:
+            base:
+              voided: "El proceso está anulado: ya no lleva gastos."
+            weight_side:
+              not_weighed: "no puede ser «Que salió» hasta que se registre el resultado"
+            description:
+              blank: "es obligatorio cuando el concepto es «Otro»"
         warehouse_transfer:
           attributes:
             base:

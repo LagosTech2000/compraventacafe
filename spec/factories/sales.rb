@@ -93,6 +93,17 @@ FactoryBot.define do
     net_weight { 100 }
   end
 
+  # L 500 of freight, paid in cash.
+  factory :processing_cost do
+    coffee_conversion
+    association :created_by, factory: :user
+    concept { "freight" }
+    pricing { "total" }
+    amount { 500 }
+    paid_on { Time.zone.today }
+    payment_method { "cash" }
+  end
+
   factory :carrier do
     sequence(:name) { |n| "Transportes #{n}" }
   end

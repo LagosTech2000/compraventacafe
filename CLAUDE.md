@@ -159,6 +159,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Lo que debes y lo que te deben (Inicio) | `Dashboard#owed_by_business` / `#owed_to_business` |
 | Proceso de café («Procesar café»: uva → húmedo, húmedo → seco; antes «conversión») / en proceso / resultado | `CoffeeConversion` (`sales/coffee_conversions`, `ConversionResultsController`) / `in_process` / `output_*` |
 | Lugar de procesamiento / rendimiento estimado / merma | `ProcessingSite` (`sales/processing_sites`) / `CoffeeConversion#estimated_yield_percent` / `#shrink_weight` |
+| Gasto de procesamiento (monto total / por libra / por quintal) | `ProcessingCost` (`pricing`: `total` / `per_pound` / `per_quintal`; `weight_side`, `weight_kind`, `quintal_pounds`) |
 | Cierre de comercialización | `SalesDailyClose` |
 | Control financiero | `finance` |
 | Cuenta (caja / banco) / saldo de la cuenta | `MoneyAccount` (`kind`: `cash` / `bank`, `default_for`) / `AccountBalance` |
@@ -1069,8 +1070,9 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   compra (lo pagado a los productores por el café que queda) + costos
   acumulados = costo total, y costo por libra neta. Los costos acumulados
   son **la comisión del carrero** de cada compra (respuesta 20) y, en el
-  resultado de una conversión, los costos del café que entró. Combustible,
-  personal y mantenimiento del vehículo esperan la pregunta 23.
+  resultado de un proceso, los costos del café que entró más **sus gastos
+  de procesamiento**. Combustible, personal y mantenimiento del vehículo
+  fuera de un proceso esperan la pregunta 23.
 - **Uva sin procesar** (`CherryAlert`, cliente, 2026-10-26) [CONFIRMADO]:
   un lote de uva que lleva **12 horas** sale con aviso y a las **24**,
   urgente; las dos horas se cambian en Configuración del sitio. Sale en el
@@ -1120,7 +1122,23 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   rendimiento real, la **merma** (brutas que entraron − brutas que
   salieron) y el **promedio** de los procesos terminados de ese estado
   (`CoffeeConversion.average_yield_percent`), que también sale al mandar a
-  procesar. La lista filtra por lugar y tiene el rendimiento real. El kárdex
+  procesar. La lista filtra por lugar y tiene el rendimiento real.
+- **Gastos de procesamiento** (`ProcessingCost`, cliente, 2026-10-26)
+  [CONFIRMADO]: desde el detalle del proceso, «Registrar gasto»: flete,
+  secado, mano de obra, carga y descarga, alquiler de patio o secadora,
+  combustible u otro (con detalle). Se cobra por **monto total**, **por
+  libra** o **por quintal**; por unidad se elige sobre qué café (lo que
+  entró o, ya con resultado, lo que salió), libras brutas o netas y el
+  quintal de 100, 120 o 125 lb, y **se guarda la base** (libras, cantidad,
+  precio, monto). Fecha, forma de pago y cuenta (opcional, como los pagos
+  de los otros módulos: `MoneyMovements` `processing_costs`,
+  `AccountBalance`, Consolidación). Se suman al valor del café que salió
+  (`CoffeeLots`) y el detalle dice el total y el gasto por libra neta que
+  salió. Se registran o se quitan, no se editan. Decisiones de
+  implementación, **pendientes de confirmar**: un gasto nuevo empieza con
+  la forma de cobrar del último gasto de ese lugar; un proceso con gastos
+  no se anula y uno con gastos sobre lo que salió no pierde su resultado
+  (quitarlos primero). El kárdex
   (`StockLedger`, `sales/stock#show`) lista cada compra y salida con el
   saldo después de cada una.
 - **Salida de camión** (`Shipment`): comprador, estado del café, remisión,
@@ -1896,7 +1914,7 @@ sistema ya guarda**; no agregan reglas de negocio.
 | Si la factura siempre agrupa hasta 4 compras | Hoy no hay límite | Cliente |
 | Cómo calcula el dueño la ganancia | Reporte de ganancias | Cliente |
 | Combustible, personal y mantenimiento del vehículo en el valor del café: ¿por lote o repartidos por libra? (pregunta 23) | Sumarlos a los costos acumulados del inventario | Cliente |
-| Decisiones de implementación de inventario por lotes y bodegas (2026-10-26): libras netas, reparto en proporción, lotes recalculados, traslado en netas, cuándo se desactiva una bodega | Ajustes a lotes y bodegas | Fernando / Cliente |
+| Decisiones de implementación de inventario por lotes y bodegas (2026-10-26): libras netas, reparto en proporción, lotes recalculados, traslado en netas, cuándo se desactiva una bodega; gastos de procesamiento: forma de cobrar del último gasto del lugar, procesos con gastos no se anulan | Ajustes a lotes, bodegas y gastos | Fernando / Cliente |
 | Calidad por bodega | Depende de las categorías de calidad | Cliente |
 | Decisiones nuevas, por confirmar (2026-10-25): la liquidación del comprador pasa a ser lo que se cobra de la venta; los avisos de «Nueva compra» salen cuando la humedad, el rendimiento o el precio se alejan más de 30 % de lo normal (`PurchaseDefaults::UNUSUAL_PERCENT`) | Ajustes a la venta y a los avisos de la compra | Fernando / Cliente |
 | Contratos: moneda, cobro, aplicar libras a contratos | Ventas / contratos | Cliente |
