@@ -1426,6 +1426,9 @@ es:
         net: "Neto del comprador (lb)"
         quintals: "QQ de venta"
         difference: "Diferencia con la báscula local"
+        difference_money:
+          less: "%{amount} que no se cobran a este precio"
+          more: "%{amount} de más a este precio"
         mixed_states: "Elegiste salidas de dos estados del café: una venta lleva un solo estado. Haz una venta por cada uno."
         payment: "Cobro"
         advance_amount: "Descontar de anticipos (L)"

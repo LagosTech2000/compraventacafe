@@ -4,7 +4,7 @@ import { Controller } from "@hotwired/stimulus"
 // server (SaleIssuer) repeats it on save and its result is the one kept.
 //
 //   net        = Σ buyer's net of the chosen shipments
-//   difference = net − Σ local net (lb and %)
+//   difference = net − Σ local net (lb and %), and in lempiras at the price per pound
 //   QQ         = net ÷ the sale's pounds per quintal (120 unless changed)
 //   total      = net ÷ pounds per quintal × price (by the quintal) or net × price (by the pound)
 //   advance    = the money taken off advances in coffee: ÷ the price of a
@@ -15,7 +15,7 @@ import { Controller } from "@hotwired/stimulus"
 // choosing shipments of two says so.
 export default class extends Controller {
   static targets = ["shipment", "unit", "price", "priceLabel", "quintalField", "quintalPounds", "count", "net", "quintals",
-                    "difference", "total", "mixed", "differenceBox", "advance", "advancePounds"]
+                    "difference", "differenceMoney", "total", "mixed", "differenceBox", "advance", "advancePounds"]
   static values = { tolerance: Number, countOne: String, countOther: String }
 
   connect() {
@@ -74,7 +74,19 @@ export default class extends Controller {
     } else {
       this.totalTarget.textContent = "—"
     }
+    this.showDifferenceMoney(chosen.length ? this.round(net - origin) : 0, pricePerPound)
     this.showAdvancePounds(pricePerPound, net, gross)
+  }
+
+  // "−427.77 lb = L 27,805.05 que no se cobran a este precio"
+  showDifferenceMoney(difference, pricePerPound) {
+    const target = this.differenceMoneyTarget
+    const show = difference !== 0 && pricePerPound > 0
+    target.hidden = !show
+    if (!show) return
+
+    const amount = this.round(Math.abs(difference) * pricePerPound)
+    target.textContent = target.dataset[difference < 0 ? "less" : "more"].replace("%{amount}", `L ${this.pounds.format(amount)}`)
   }
 
   // What the advance taken off stands for in coffee, at this price.

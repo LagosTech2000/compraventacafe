@@ -1105,9 +1105,10 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   cambian las etiquetas.
 - **La diferencia de peso en lempiras** (Fernando, 2026-10-25): neto del
   comprador − neto local × el precio por libra de esa venta
-  (`Sale#difference_amount`, `SaleSummary#difference_amount` en SQL); en el
-  detalle de la venta («… lb menos: L … que no se cobraron») y en los
-  resúmenes del día y de la temporada.
+  (`Sale#difference_amount`, `SaleSummary#difference_amount` en SQL); en
+  «Nueva venta» bajo la diferencia en libras, al escribir el precio
+  (`sale_builder_controller.js`), en el detalle de la venta («… lb menos:
+  L … que no se cobraron») y en los resúmenes del día y de la temporada.
 - **Liquidación del comprador** (Fernando, 2026-10-25): lo que el
   comprador dice que paga en su propia liquidación (`buyer_total`) y el
   motivo de la diferencia (`buyer_total_reason`, obligatorio si no

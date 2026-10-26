@@ -107,10 +107,14 @@ RSpec.describe "Sales screens", type: :system do
     # 964.32 lb ÷ 120 (by default) × L 6,000
     expect(page).to have_css("[data-sale-builder-target='total']", text: "L 48,216.00")
     expect(page).to have_css("[data-sale-builder-target='quintals']", text: "8.04")
+    # The scales' difference, also in lempiras at the price typed: 9.80 lb × L 50
+    expect(page).to have_css("[data-sale-builder-target='difference']", text: "−9.80 lb")
+    expect(page).to have_css("[data-sale-builder-target='differenceMoney']", text: "L 490.00 que no se cobran a este precio")
 
     choose "Por libra"
     fill_in "sale_unit_price", with: "60"
     expect(page).to have_css("[data-sale-builder-target='total']", text: "L 57,859.20")
+    expect(page).to have_css("[data-sale-builder-target='differenceMoney']", text: "L 588.00")
 
     select "De contado (cobrada completa)", from: "sale_payment_status"
     select "Transferencia", from: "sale_payment_method"

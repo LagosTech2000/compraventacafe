@@ -138,6 +138,9 @@
             <div class="col-span-2 rounded-lg p-1 data-[over-tolerance=true]:ring-2 data-[over-tolerance=true]:ring-danger" data-sale-builder-target="differenceBox">
               <dt class="text-xs text-ink-muted"><%= t(".difference") %></dt>
               <dd class="font-semibold tabular-nums" data-sale-builder-target="difference">—</dd>
+              <%# The same difference in lempiras, at the price typed (Fernando, 2026-10-25). %>
+              <dd class="text-xs tabular-nums text-ink-muted" hidden data-sale-builder-target="differenceMoney"
+                  data-less="<%= t(".difference_money.less") %>" data-more="<%= t(".difference_money.more") %>"></dd>
             </div>
             <div class="col-span-2 border-t border-line pt-3">
               <dt class="text-xs text-ink-muted"><%= Sale.human_attribute_name(:total) %></dt>
