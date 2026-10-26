@@ -1,0 +1,2 @@
+<% tone = { "in_process" => "badge-neutral", "finished" => "badge-success", "voided" => "badge-danger" }.fetch(conversion.status) %>
+<span class="badge <%= tone %>"><%= conversion.human_status %></span>

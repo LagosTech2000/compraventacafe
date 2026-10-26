@@ -56,6 +56,21 @@ FactoryBot.define do
     payment_method { "cash" }
   end
 
+  # Cherry weighed to become wet parchment (in process); `finished` enters
+  # what came out. Each net uses its state's net/gross proportion.
+  factory :coffee_conversion do
+    from_state { "cherry" }
+    weighed_at { Time.current }
+    input_gross_weight { 1_000 }
+    association :created_by, factory: :user
+
+    trait :finished do
+      finished_at { weighed_at + 1.hour }
+      output_gross_weight { 400 }
+      finishing { true }
+    end
+  end
+
   factory :carrier do
     sequence(:name) { |n| "Transportes #{n}" }
   end

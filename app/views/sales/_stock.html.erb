@@ -7,11 +7,17 @@
     <p class="text-sm text-ink-muted"><%= t("sales.stock.as_of", date: l(stock.date, format: :long)) %></p>
   </div>
   <div class="flex flex-wrap gap-3">
+    <%# Each card opens the kardex, of everything or of its state. %>
     <%= render "sales/stock_card", title: t("sales.stock.total"), key: "total", gross: stock.gross_stock, net: stock.stock,
-                                   quintals: stock.quintals, css: "ring-2 ring-primary" %>
+                                   quintals: stock.quintals, css: "ring-2 ring-primary", path: sales_stock_path(anchor: "stock-ledger-title") %>
     <% stock.rows.each do |row| %>
       <%= render "sales/stock_card", title: row.human_coffee_state, key: row.coffee_state, gross: row.gross_stock, net: row.stock,
-                                     quintals: row.quintals, row: %>
+                                     quintals: row.quintals, row:, path: sales_stock_path(coffee_state: row.coffee_state, anchor: "stock-ledger-title") %>
+    <% end %>
+    <%# Coffee being converted (weighed, its result not entered yet): apart from the states. %>
+    <% if stock.in_process_gross.positive? %>
+      <%= render "sales/stock_card", title: t("sales.stock.in_process"), key: "in_process", gross: stock.in_process_gross, net: stock.in_process_net,
+                                     quintals: stock.in_process_quintals, path: sales_coffee_conversions_path(status: "in_process") %>
     <% end %>
   </div>
   <% if stock.rows.any? { it.stock.negative? } %>

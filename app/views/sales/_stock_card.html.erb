@@ -1,8 +1,11 @@
 <%# One card of «Café en inventario»: gross pounds, net pounds and quintals,
     in that order. `row` (a CoffeeStock::Row) adds what is out of the
-    warehouse; `key` names its live values. %>
+    warehouse; `key` names its live values; with `path` the whole card is a
+    link (to the kardex of that state, or to the conversions in process). %>
 <% row = local_assigns[:row] %>
-<div class="stat min-w-0 flex-1 basis-56 <%= local_assigns[:css] %>" data-coffee-state="<%= key %>">
+<% path = local_assigns[:path] %>
+<%= tag.public_send(path ? :a : :div, href: path, class: "stat block min-w-0 flex-1 basis-56 #{"transition hover:ring-primary/40" if path} #{local_assigns[:css]}",
+                    data: { coffee_state: key }) do %>
   <h3 class="text-sm font-semibold text-ink"><%= title %></h3>
   <dl class="mt-2 space-y-1">
     <% { gross: [ t("sales.stock.gross"), t("sales.stock.pounds", pounds: format_pounds(gross)), gross ],
@@ -20,4 +23,4 @@
       <%= t("sales.stock.out_detail", in_transit: format_pounds(row.in_transit), unsold: format_pounds(row.unsold)) %>
     </p>
   <% end %>
-</div>
+<% end %>

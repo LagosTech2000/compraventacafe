@@ -1,0 +1,56 @@
+<% content_for :title, t(".title", number: @conversion.display_number) %>
+<%= render "sales/nav" %>
+<% unless modal_request? %>
+  <%= render "shared/breadcrumbs", crumbs: conversion_crumbs(@conversion, [ t(".crumb") ]) %>
+<% end %>
+
+<h1 class="text-2xl font-bold"><%= t(".title", number: @conversion.display_number) %></h1>
+<p class="mt-1 text-sm text-ink-muted">
+  <%= t(".subtitle", from: @conversion.human_from_state, to: @conversion.human_to_state,
+                     gross: format_pounds(@conversion.input_gross_weight), net: format_pounds(@conversion.input_net_weight)) %>
+</p>
+
+<% ratio, source = CoffeeConversion.ratio_for(@conversion.to_state, Time.zone.today) %>
+<%= form_with model: @conversion, url: sales_coffee_conversion_result_path(@conversion), method: :patch,
+      class: form_surface_class("@container mt-6 max-w-none"),
+      data: { controller: "form-validation conversion-preview",
+              conversion_preview_state_value: @conversion.to_state,
+              conversion_preview_ratios_value: { @conversion.to_state => ratio.to_f }.to_json,
+              conversion_preview_sources_value: { @conversion.to_state => t("sales.coffee_conversions.ratio_sources.#{source}") }.to_json,
+              conversion_preview_quintal_weight_value: PurchaseCalculation::QUINTAL_WEIGHT } do |form| %>
+  <%= render "shared/form_errors", record: @conversion %>
+  <%= form.hidden_field :lock_version %>
+  <div class="grid items-start gap-6 @5xl:grid-cols-[minmax(0,1fr)_20rem]">
+    <div class="grid min-w-0 gap-5 sm:grid-cols-2">
+      <div>
+        <%= form.label :finished_at, class: "field-label" %>
+        <%= form.datetime_local_field :finished_at, required: true, class: "field-input",
+              data: { missing_message: "#{CoffeeConversion.human_attribute_name(:finished_at)} #{t("errors.messages.blank")}" } %>
+      </div>
+      <div>
+        <%= form.label :output_gross_weight, t(".output_gross", state: @conversion.human_to_state), class: "field-label" %>
+        <%= form.number_field :output_gross_weight, required: true, min: 0.01, step: 0.01, inputmode: "decimal", class: "field-input text-lg",
+              autofocus: true, data: { conversion_preview_target: "gross", action: "conversion-preview#update",
+                                       missing_message: "#{CoffeeConversion.human_attribute_name(:output_gross_weight)} #{t("errors.messages.blank")}" } %>
+      </div>
+    </div>
+
+    <aside class="space-y-4 @5xl:sticky @5xl:top-24">
+      <div class="clay p-4">
+        <p class="text-sm font-semibold"><%= t(".preview", state: @conversion.human_to_state) %></p>
+        <dl class="mt-2 grid grid-cols-2 gap-3">
+          <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.net") %></dt><dd class="text-xl font-bold tabular-nums" data-conversion-preview-target="net">—</dd></div>
+          <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.quintals_label") %></dt><dd class="text-xl font-bold tabular-nums" data-conversion-preview-target="quintals">—</dd></div>
+          <div class="col-span-2">
+            <dt class="text-xs text-ink-muted"><%= t("sales.coffee_conversions.show.ratio") %></dt>
+            <dd class="tabular-nums"><span data-conversion-preview-target="ratio">—</span> · <span class="text-xs text-ink-muted" data-conversion-preview-target="ratioSource"></span></dd>
+          </div>
+        </dl>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <%= form.submit t(".submit"), class: "btn btn-primary" %>
+        <%= cancel_button sales_coffee_conversion_path(@conversion) %>
+      </div>
+    </aside>
+  </div>
+<% end %>

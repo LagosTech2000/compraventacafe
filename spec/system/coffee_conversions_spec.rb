@@ -1,0 +1,57 @@
+require "rails_helper"
+
+# Converting coffee on screen: the preview of what leaves the stock and of
+# what comes in (conversion_preview_controller.js), and the stock's cards
+# that open the kardex of their state.
+RSpec.describe "Coffee conversions screens", type: :system do
+  let(:user) { create(:user, :admin) }
+
+  before do
+    create(:purchase, gross_weight: 2_000) # 973.63 lb net of wet parchment: 0.486815 a gross pound
+    sign_in_as(user)
+  end
+
+  it "previews what leaves the stock, warns past it, and enters what came out" do
+    visit sales_coffee_conversions_path
+    click_link "Nueva conversión"
+
+    within("dialog[open]") do
+      choose "Pergamino húmedo → Pergamino seco"
+      expect(page).to have_css("[data-conversion-preview-target=available]", text: "2,000.00 lb")
+      expect(page).to have_css("[data-conversion-preview-target=toState]", text: "Pergamino seco")
+      fill_in "coffee_conversion_input_gross_weight", with: "1000"
+      expect(page).to have_css("[data-conversion-preview-target=net]", text: "486.82 lb")
+      expect(page).to have_css("[data-conversion-preview-target=quintals]", text: "3.89")
+      expect(page).to have_css("[data-conversion-preview-target=ratio]", text: "0.4868")
+
+      fill_in "coffee_conversion_input_gross_weight", with: "2500"
+      expect(page).to have_css("[data-conversion-preview-target=overStock]", visible: true)
+      fill_in "coffee_conversion_input_gross_weight", with: "1000"
+      expect(page).to have_css("[data-conversion-preview-target=overStock]", visible: :hidden)
+      click_button "Pesar y poner en conversión"
+    end
+    expect(page).to have_no_css("dialog[open]")
+    conversion = CoffeeConversion.sole
+
+    visit sales_coffee_conversion_path(conversion)
+    click_link "Registrar resultado"
+    within("dialog[open]") do
+      fill_in "coffee_conversion_output_gross_weight", with: "600"
+      expect(page).to have_css("[data-conversion-preview-target=net]", text: "528.00 lb")
+      click_button "Registrar resultado"
+    end
+    expect(page).to have_text("ya está en el inventario")
+    expect(conversion.reload.output_net_weight).to eq(528)
+  end
+
+  it "opens the kardex of a state from its card on the summary" do
+    visit sales_root_path
+    find("[data-coffee-state=wet_parchment]").click
+    expect(page).to have_current_path(sales_stock_path(coffee_state: "wet_parchment"))
+    expect(page).to have_select("coffee_state", selected: "Pergamino húmedo")
+
+    visit sales_root_path
+    find("[data-coffee-state=total]").click
+    expect(page).to have_current_path(sales_stock_path)
+  end
+end

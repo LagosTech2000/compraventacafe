@@ -28,11 +28,17 @@ module SalesHelper
   # Where a kardex entry opens: its purchase (only for who sees Compra de
   # café) or its shipment.
   def ledger_entry_path(entry)
-    if entry.kind == "purchase"
-      trading_purchase_path(entry.record) if policy(Purchase).show?
-    else
-      sales_shipment_path(entry.record)
+    case entry.kind
+    when "purchase" then (trading_purchase_path(entry.record) if policy(Purchase).show?)
+    when "shipment" then sales_shipment_path(entry.record)
+    else sales_coffee_conversion_path(entry.record)
     end
+  end
+
+  # "+1,000.00" / "−487.06" / "0.00": a kardex move in or out.
+  def signed_pounds(value)
+    sign = if value.positive? then "+" elsif value.negative? then "−" else "" end
+    "#{sign}#{format_pounds(value.abs)}"
   end
 
   private

@@ -91,6 +91,14 @@ Rails.application.routes.draw do
     resources :carriers, except: :destroy
     resources :trucks, except: :destroy
     resource :stock, only: :show
+    # Coffee converted to the next state: weighed first, its result later.
+    resources :coffee_conversions, path: "conversions", only: %i[ index show new create ] do
+      member do
+        patch :void
+        patch :reopen
+      end
+      resource :result, only: %i[ edit update ], controller: "conversion_results"
+    end
     resource :daily_close, only: :show
   end
 

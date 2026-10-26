@@ -1,10 +1,21 @@
 # The coffee's kardex (Comercialización → Inventario): every purchase that
-# came in and every shipment that left, between two dates, with the balance
-# after each one, by coffee state. Voided ones are left out, as in the stock.
-# The balance before the first day comes from CoffeeStock.
+# came in, every shipment that left and every conversion (what went into it
+# and what came out), between two dates, with the balance after each one,
+# by coffee state, in gross and net pounds (and QQ). Voided ones are left
+# out, as in the stock. The balance before the first day comes from
+# CoffeeStock.
 class StockLedger
-  Entry = Data.define(:kind, :record, :at, :coffee_state, :pounds_in, :pounds_out, :balance) do
+  KINDS = %w[purchase shipment conversion_out conversion_in].freeze
+  # Same moment: what comes in first.
+  ORDER = { "purchase" => 0, "conversion_in" => 1, "conversion_out" => 2, "shipment" => 3 }.freeze
+
+  Entry = Data.define(:kind, :record, :at, :coffee_state, :pounds_in, :pounds_out, :gross_in, :gross_out, :balance, :gross_balance) do
     def human_coffee_state = Purchase.human_attribute_name("coffee_state/#{coffee_state}")
+    def in? = pounds_in.positive? || gross_in.positive?
+    def net = pounds_in - pounds_out
+    def gross = gross_in - gross_out
+    def quintals = PurchaseCalculation.quintals(net)
+    def key = "#{kind}_#{record.id}"
   end
 
   attr_reader :from, :to, :coffee_state
@@ -15,25 +26,33 @@ class StockLedger
     @coffee_state = coffee_state
   end
 
-  # Net pounds in stock when the period begins (end of the day before).
-  def opening
-    @opening ||= opening_stock.rows.select { |row| coffee_state.nil? || row.coffee_state == coffee_state }.sum(&:stock)
-  end
+  # Net and gross pounds in stock when the period begins (end of the day before).
+  def opening = @opening ||= opening_rows.sum(&:stock)
+  def gross_opening = @gross_opening ||= opening_rows.sum(&:gross_stock)
 
   def closing = entries.last&.balance || opening
+  def gross_closing = entries.last&.gross_balance || gross_opening
   def pounds_in = entries.sum(&:pounds_in)
   def pounds_out = entries.sum(&:pounds_out)
+  def gross_in = entries.sum(&:gross_in)
+  def gross_out = entries.sum(&:gross_out)
 
   # Oldest first, each with the balance after it (of its state, or of all
   # when no state is chosen).
   def entries
     @entries ||= begin
       balances = Hash.new(0)
-      opening_stock.rows.each { |row| balances[row.coffee_state] = row.stock }
-      moves.sort_by { |move| [ move[:at], move[:kind] == "purchase" ? 0 : 1, move[:record].id ] }.map do |move|
+      gross_balances = Hash.new(0)
+      opening_stock.rows.each do |row|
+        balances[row.coffee_state] = row.stock
+        gross_balances[row.coffee_state] = row.gross_stock
+      end
+      moves.sort_by { |move| [ move[:at], ORDER.fetch(move[:kind]), move[:record].id ] }.map do |move|
         balances[move[:coffee_state]] += move[:pounds_in] - move[:pounds_out]
+        gross_balances[move[:coffee_state]] += move[:gross_in] - move[:gross_out]
         balance = coffee_state ? balances[coffee_state] : balances.values.sum
-        Entry.new(**move, balance:)
+        gross_balance = coffee_state ? gross_balances[coffee_state] : gross_balances.values.sum
+        Entry.new(**move, balance:, gross_balance:)
       end
     end
   end
@@ -43,17 +62,27 @@ class StockLedger
       @opening_stock ||= CoffeeStock.new(from ? from - 1 : Date.new(2000, 1, 1))
     end
 
+    def opening_rows = opening_stock.rows.select { |row| coffee_state.nil? || row.coffee_state == coffee_state }
+
     def moves
       range = Purchase.day_range(from..to)
       purchases = Purchase.active.where(purchased_at: range).includes(producer: :person)
       shipments = Shipment.active.where(departed_at: range).includes(:buyer)
+      weighed = CoffeeConversion.active.where(weighed_at: range)
+      came_out = CoffeeConversion.active.where(finished_at: range)
       if coffee_state
         purchases = purchases.where(coffee_state:)
         shipments = shipments.where(coffee_state:)
+        weighed = weighed.where(from_state: coffee_state)
+        came_out = came_out.where(to_state: coffee_state)
       end
-      purchases.map { |purchase| { kind: "purchase", record: purchase, at: purchase.purchased_at, coffee_state: purchase.coffee_state,
-                                   pounds_in: purchase.net_weight, pounds_out: 0 } } +
-        shipments.map { |shipment| { kind: "shipment", record: shipment, at: shipment.departed_at, coffee_state: shipment.coffee_state,
-                                     pounds_in: 0, pounds_out: shipment.origin_net_weight } }
+      purchases.map { |purchase| move("purchase", purchase, purchase.purchased_at, purchase.coffee_state, net_in: purchase.net_weight, gross_in: purchase.gross_weight) } +
+        shipments.map { |shipment| move("shipment", shipment, shipment.departed_at, shipment.coffee_state, net_out: shipment.origin_net_weight, gross_out: shipment.origin_gross_weight) } +
+        weighed.map { |conversion| move("conversion_out", conversion, conversion.weighed_at, conversion.from_state, net_out: conversion.input_net_weight, gross_out: conversion.input_gross_weight) } +
+        came_out.map { |conversion| move("conversion_in", conversion, conversion.finished_at, conversion.to_state, net_in: conversion.output_net_weight, gross_in: conversion.output_gross_weight) }
+    end
+
+    def move(kind, record, at, state, net_in: 0, net_out: 0, gross_in: 0, gross_out: 0)
+      { kind:, record:, at:, coffee_state: state, pounds_in: net_in.to_d, pounds_out: net_out.to_d, gross_in: gross_in.to_d, gross_out: gross_out.to_d }
     end
 end

@@ -19,6 +19,12 @@ module ModuleBreadcrumbsHelper
   end
 
   # Comercialización: a shipment or a sale always shows its buyer.
+  # A coffee conversion goes up through the list of conversions.
+  def conversion_crumbs(conversion, *rest)
+    [ [ t("sales.nav.coffee_conversions"), sales_coffee_conversions_path ],
+      [ t("sales.coffee_conversions.show.title", number: conversion.display_number), sales_coffee_conversion_path(conversion) ], *rest ]
+  end
+
   def buyer_crumbs(buyer, *rest)
     [ [ t("sales.nav.buyers"), sales_buyers_path ], [ buyer.name, sales_buyer_path(buyer) ], *rest ]
   end

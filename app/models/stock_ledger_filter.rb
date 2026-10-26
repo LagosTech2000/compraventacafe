@@ -7,11 +7,22 @@ class StockLedgerFilter < ListFilter
 
   sorts at: { ruby: ->(entry) { entry.at } },
         kind: { ruby: ->(entry) { entry.kind } },
-        who: { ruby: ->(entry) { entry.kind == "purchase" ? entry.record.producer.full_name : entry.record.buyer.name } },
+        who: { ruby: ->(entry) { StockLedgerFilter.who(entry) } },
         coffee_state: { ruby: ->(entry) { entry.human_coffee_state } },
-        pounds_in: { ruby: ->(entry) { entry.pounds_in } },
-        pounds_out: { ruby: ->(entry) { entry.pounds_out } },
+        gross: { ruby: ->(entry) { entry.gross } },
+        net: { ruby: ->(entry) { entry.net } },
+        quintals: { ruby: ->(entry) { entry.quintals } },
         balance: { ruby: ->(entry) { entry.balance } }
+
+  # Who an entry is with, to sort by it: the producer, the buyer, or the
+  # conversion's number.
+  def self.who(entry)
+    case entry.kind
+    when "purchase" then entry.record.producer.full_name
+    when "shipment" then entry.record.buyer.name
+    else entry.record.display_number
+    end
+  end
 
   def ledger = @ledger ||= StockLedger.new(from:, to: to || Time.zone.today, coffee_state:)
 

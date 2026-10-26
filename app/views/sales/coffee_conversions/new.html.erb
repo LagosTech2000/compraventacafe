@@ -1,0 +1,81 @@
+<% content_for :title, t(".title") %>
+<%= render "sales/nav" %>
+<% unless modal_request? %>
+  <%= render "shared/breadcrumbs", crumbs: [ [ t("sales.nav.coffee_conversions"), sales_coffee_conversions_path ], [ t(".title") ] ] %>
+<% end %>
+
+<div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+  <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+  <%= help_guide_button HelpGuide.process(:coffee_conversion), label: true %>
+</div>
+<p class="mb-4 text-sm text-ink-muted"><%= t(".help") %></p>
+
+<% states = CoffeeConversion::NEXT_STATE.keys %>
+<% ratios = states.to_h { |state| [ state, CoffeeConversion.ratio_for(state, Time.zone.today) ] } %>
+<%= form_with model: @conversion, url: sales_coffee_conversions_path, class: form_surface_class("@container max-w-none"),
+      data: { controller: "form-validation unsaved-changes conversion-preview", action: unsaved_changes_actions,
+              unsaved_changes_message_value: t("shared.unsaved_changes.leave"),
+              conversion_preview_ratios_value: ratios.transform_values { it.first.to_f }.to_json,
+              conversion_preview_sources_value: ratios.transform_values { t("sales.coffee_conversions.ratio_sources.#{it.last}") }.to_json,
+              conversion_preview_stock_value: states.index_with { @stock.row(it).gross_stock.to_f }.to_json,
+              conversion_preview_to_states_value: CoffeeConversion::NEXT_STATE.transform_values { CoffeeConversion.human_state(it) }.to_json,
+              conversion_preview_quintal_weight_value: PurchaseCalculation::QUINTAL_WEIGHT } do |form| %>
+  <%= render "shared/form_errors", record: @conversion %>
+  <div class="grid items-start gap-6 @5xl:grid-cols-[minmax(0,1fr)_20rem]">
+    <div class="min-w-0 space-y-5">
+      <fieldset>
+        <legend class="field-label"><%= t(".what") %></legend>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <% CoffeeConversion::NEXT_STATE.each do |from, to| %>
+            <label class="flex cursor-pointer items-center gap-3 rounded-xl bg-surface p-3 text-sm ring-1 ring-line has-checked:bg-primary-soft has-checked:ring-primary">
+              <%= form.radio_button :from_state, from, class: "size-4 accent-primary",
+                    data: { conversion_preview_target: "state", action: "conversion-preview#update" } %>
+              <span class="font-medium"><%= CoffeeConversion.human_state(from) %> → <%= CoffeeConversion.human_state(to) %></span>
+            </label>
+          <% end %>
+        </div>
+      </fieldset>
+      <div class="grid gap-5 sm:grid-cols-2">
+        <div>
+          <%= form.label :weighed_at, class: "field-label" %>
+          <%= form.datetime_local_field :weighed_at, required: true, class: "field-input",
+                data: { missing_message: "#{CoffeeConversion.human_attribute_name(:weighed_at)} #{t("errors.messages.blank")}" } %>
+        </div>
+        <div>
+          <%= form.label :input_gross_weight, class: "field-label" %>
+          <%= form.number_field :input_gross_weight, required: true, min: 0.01, step: 0.01, inputmode: "decimal", class: "field-input text-lg",
+                autofocus: true, data: { conversion_preview_target: "gross", action: "conversion-preview#update",
+                                         missing_message: "#{CoffeeConversion.human_attribute_name(:input_gross_weight)} #{t("errors.messages.blank")}" } %>
+          <p class="mt-1 text-xs text-ink-muted"><%= t(".available") %> <span class="tabular-nums" data-conversion-preview-target="available"></span></p>
+        </div>
+      </div>
+      <div>
+        <%= form.label :observations, class: "field-label" %>
+        <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+      </div>
+    </div>
+
+    <aside class="space-y-4 @5xl:sticky @5xl:top-24">
+      <div class="clay p-4">
+        <p class="text-sm font-semibold"><%= t(".preview") %></p>
+        <dl class="mt-2 grid grid-cols-2 gap-3">
+          <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.net") %></dt><dd class="text-xl font-bold tabular-nums" data-conversion-preview-target="net">—</dd></div>
+          <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.quintals_label") %></dt><dd class="text-xl font-bold tabular-nums" data-conversion-preview-target="quintals">—</dd></div>
+          <div class="col-span-2">
+            <dt class="text-xs text-ink-muted"><%= t("sales.coffee_conversions.show.ratio") %></dt>
+            <dd class="tabular-nums"><span data-conversion-preview-target="ratio">—</span> · <span class="text-xs text-ink-muted" data-conversion-preview-target="ratioSource"></span></dd>
+          </div>
+          <div class="col-span-2">
+            <dt class="text-xs text-ink-muted"><%= t(".becomes") %></dt>
+            <dd class="font-medium" data-conversion-preview-target="toState"></dd>
+          </div>
+        </dl>
+        <p class="flash-alert mt-3" role="status" hidden data-conversion-preview-target="overStock"><%= t(".over_stock") %></p>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <%= form.submit t(".submit"), class: "btn btn-primary" %>
+        <%= cancel_button sales_coffee_conversions_path %>
+      </div>
+    </aside>
+  </div>
+<% end %>

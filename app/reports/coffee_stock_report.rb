@@ -1,12 +1,13 @@
 # The coffee's kardex in a period (Comercialización): every purchase that
-# came in (its net) and every truck that left (its net on the local scale),
+# came in (its net), every truck that left (its net on the local scale) and
+# every conversion (what went into it, what came out of it),
 # by coffee state, with the stock before, after and in between. Voided ones
 # are left out, as in the stock. Purchases and shipments are put together
 # in Ruby (InMemoryReport).
 class CoffeeStockReport < Report
   include InMemoryReport
 
-  KINDS = %w[purchase shipment].freeze
+  KINDS = StockLedger::KINDS
 
   Entry = Data.define(:id, :date, :at, :kind, :description, :coffee_state, :pounds_in, :pounds_out, :route) do
     def net = pounds_in - pounds_out
@@ -85,7 +86,26 @@ class CoffeeStockReport < Report
     end
 
     def load(in_period)
-      purchases(in_period) + shipments(in_period)
+      purchases(in_period) + shipments(in_period) + conversions(in_period)
+    end
+
+    # A conversion moves coffee twice: out of its state when weighed, into
+    # the new one when its result is entered.
+    def conversions(in_period)
+      out = within(CoffeeConversion.active, in_period, column: "coffee_conversions.weighed_at", type: :datetime)
+              .pluck(:id, :number, :weighed_at, :from_state, :to_state, :input_net_weight)
+              .map { |id, number, at, from, to, net| conversion_entry("conversion_out", id, number, at, from, to, from, pounds_out: net) }
+      came = within(CoffeeConversion.active.where.not(finished_at: nil), in_period, column: "coffee_conversions.finished_at", type: :datetime)
+               .pluck(:id, :number, :finished_at, :from_state, :to_state, :output_net_weight)
+               .map { |id, number, at, from, to, net| conversion_entry("conversion_in", id, number, at, from, to, to, pounds_in: net) }
+      out + came
+    end
+
+    def conversion_entry(kind, id, number, at, from, to, state, pounds_in: 0, pounds_out: 0)
+      Entry.new(id: "#{kind}-#{id}", date: at.in_time_zone.to_date, at:, kind:,
+                description: I18n.t("reports.types.coffee_stock.#{kind}", number: format("%04d", number),
+                                    from: CoffeeConversion.human_state(from), to: CoffeeConversion.human_state(to)),
+                coffee_state: state, pounds_in: pounds_in.to_d, pounds_out: pounds_out.to_d, route: [ :sales_coffee_conversion_path, id ])
     end
 
     def purchases(in_period)
@@ -93,7 +113,7 @@ class CoffeeStockReport < Report
         .pluck("purchases.id", "purchases.purchased_at", "purchases.coffee_state", "purchases.net_weight",
                Arel.sql("people.first_names || ' ' || people.last_names"))
         .map do |id, at, state, net, name|
-          Entry.new(id:, date: at.in_time_zone.to_date, at:, kind: "purchase", description: I18n.t("reports.types.coffee_stock.purchase", number: id, name:),
+          Entry.new(id: "purchase-#{id}", date: at.in_time_zone.to_date, at:, kind: "purchase", description: I18n.t("reports.types.coffee_stock.purchase", number: id, name:),
                     coffee_state: state, pounds_in: net.to_d, pounds_out: 0.to_d, route: [ :trading_purchase_path, id ])
         end
     end
@@ -102,7 +122,7 @@ class CoffeeStockReport < Report
       within(Shipment.active.joins(:buyer), in_period, column: "shipments.departed_at", type: :datetime)
         .pluck("shipments.id", "shipments.number", "shipments.departed_at", "shipments.coffee_state", "shipments.origin_net_weight", "buyers.name")
         .map do |id, number, at, state, net, name|
-          Entry.new(id:, date: at.in_time_zone.to_date, at:, kind: "shipment",
+          Entry.new(id: "shipment-#{id}", date: at.in_time_zone.to_date, at:, kind: "shipment",
                     description: I18n.t("reports.types.coffee_stock.shipment", number: format("%04d", number), name:),
                     coffee_state: state, pounds_in: 0.to_d, pounds_out: net.to_d, route: [ :sales_shipment_path, id ])
         end

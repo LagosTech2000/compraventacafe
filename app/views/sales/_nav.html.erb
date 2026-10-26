@@ -6,7 +6,8 @@
     <%= render "shared/module_title", module_key: "sales" %>
     <%= link_to t("sales.nav.home"), sales_root_path, class: nav_link_class(sales_root_path, exact: true),
           aria: { current: (current_page?(sales_root_path) ? "page" : nil) } %>
-    <% { shipments: sales_shipments_path, sales: sales_sales_path, stock: sales_stock_path, daily_close: sales_daily_close_path }.each do |key, path| %>
+    <% { shipments: sales_shipments_path, sales: sales_sales_path, stock: sales_stock_path, coffee_conversions: sales_coffee_conversions_path,
+         daily_close: sales_daily_close_path }.each do |key, path| %>
       <%= link_to t("sales.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>
     <% end %>
     <span class="mx-1 h-6 w-px shrink-0 self-center bg-primary/20" aria-hidden="true"></span>

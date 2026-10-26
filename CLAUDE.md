@@ -148,6 +148,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Precio por libra / por quintal / libras por quintal (120 por defecto) | `Sale#price_unit`: `pound` / `quintal`; `Sale#quintal_pounds` (`Sale::QUINTAL_POUNDS`) |
 | Tolerancia de diferencia de peso | `SiteSetting#weight_tolerance_percent` (`WeightTolerance`) |
 | Inventario / kárdex | `CoffeeStock` / `StockLedger` (`sales/stock#show`), reporte `CoffeeStockReport` |
+| Conversión de café (uva → húmedo, húmedo → seco) / en conversión / resultado | `CoffeeConversion` (`sales/coffee_conversions`, `ConversionResultsController`) / `in_process` / `output_*` |
 | Cierre de comercialización | `SalesDailyClose` |
 | Control financiero | `finance` |
 | Cuenta (caja / banco) / saldo de la cuenta | `MoneyAccount` (`kind`: `cash` / `bank`, `default_for`) / `AccountBalance` |
@@ -1014,7 +1015,30 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   de «Café en inventario» (total, uva, pergamino húmedo y seco) dice
   **libras brutas, libras netas y quintales, en ese orden** (Fernando,
   2026-10-25); las brutas = bruto de las compras activas − bruto local de
-  las salidas no anuladas (`CoffeeStock#gross_stock`, `sales/_stock_card`). A una fecha (fin
+  las salidas no anuladas (`CoffeeStock#gross_stock`, `sales/_stock_card`).
+  **Cada tarjeta abre el kárdex** de su estado (`sales/stock?coffee_state=`;
+  la del total, sin filtro), en el Resumen y en Inventario. El kárdex
+  lleva brutas, netas y quintales de cada movimiento y de los saldos.
+- **Conversiones de café** (`CoffeeConversion`, Fernando, 2026-10-25)
+  [CONFIRMADO]: uva → pergamino húmedo y húmedo → pergamino seco, en dos
+  pasos. Primero se pesan las **libras brutas que entran**: salen de su
+  estado ese momento y quedan **«En conversión»** (tarjeta aparte en el
+  inventario, `CoffeeStock#in_process_*`). Después se registra **un solo
+  resultado**, las **libras brutas que salieron** en el estado nuevo, que
+  se suman a él. **Las netas de cada lado = brutas × la proporción
+  neto/bruto de ese estado en el inventario de ese día**
+  (`CoffeeConversion.ratio_for`); se guardan la proporción y de dónde
+  salió. Entran al kárdex (`conversion_out` / `conversion_in`) y al
+  reporte de inventario. Pantallas: Comercialización → Conversiones,
+  «Convertir café» en Inventario, con vista previa
+  (`conversion_preview_controller.js`). Decisiones de implementación,
+  **pendientes de confirmar**: sin inventario de ese estado, la proporción
+  sale de sus compras y, sin compras, del valor inicial de las compras
+  (rendimiento de la uva, 1 − humedad del pergamino); pesar más de lo que
+  hay avisa y no bloquea; una conversión en conversión se anula (el café
+  vuelve) y a una terminada se le quita el resultado; la vista previa usa
+  la proporción de hoy aunque la fecha sea otra (el servidor usa la de la
+  fecha). A una fecha (fin
   del día); de lo que salió, «en camino» y «pesado sin vender». El kárdex
   (`StockLedger`, `sales/stock#show`) lista cada compra y salida con el
   saldo después de cada una.

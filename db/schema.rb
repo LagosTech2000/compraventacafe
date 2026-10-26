@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_25_230000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_26_010000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -112,6 +112,36 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_230000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["person_id"], name: "index_clients_on_person_id", unique: true
+  end
+
+  create_table "coffee_conversions", force: :cascade do |t|
+    t.integer "number", null: false
+    t.string "from_state", null: false
+    t.string "to_state", null: false
+    t.datetime "weighed_at", null: false
+    t.decimal "input_gross_weight", precision: 12, scale: 2, null: false
+    t.decimal "input_net_weight", precision: 12, scale: 2, null: false
+    t.decimal "input_ratio", precision: 8, scale: 6, null: false
+    t.string "input_ratio_source", null: false
+    t.datetime "finished_at"
+    t.decimal "output_gross_weight", precision: 12, scale: 2
+    t.decimal "output_net_weight", precision: 12, scale: 2
+    t.decimal "output_ratio", precision: 8, scale: 6
+    t.string "output_ratio_source"
+    t.text "observations"
+    t.bigint "created_by_id", null: false
+    t.bigint "finished_by_id"
+    t.datetime "voided_at"
+    t.bigint "voided_by_id"
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_coffee_conversions_on_created_by_id"
+    t.index ["finished_at"], name: "index_coffee_conversions_on_finished_at"
+    t.index ["finished_by_id"], name: "index_coffee_conversions_on_finished_by_id"
+    t.index ["number"], name: "index_coffee_conversions_on_number", unique: true
+    t.index ["voided_by_id"], name: "index_coffee_conversions_on_voided_by_id"
+    t.index ["weighed_at"], name: "index_coffee_conversions_on_weighed_at"
   end
 
   create_table "collaborators", force: :cascade do |t|
@@ -979,6 +1009,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_230000) do
   add_foreign_key "buyers", "departments"
   add_foreign_key "buyers", "municipalities"
   add_foreign_key "clients", "people"
+  add_foreign_key "coffee_conversions", "users", column: "created_by_id"
+  add_foreign_key "coffee_conversions", "users", column: "finished_by_id"
+  add_foreign_key "coffee_conversions", "users", column: "voided_by_id"
   add_foreign_key "collaborators", "people"
   add_foreign_key "expense_receipts", "expenses"
   add_foreign_key "expenses", "finance_categories"
