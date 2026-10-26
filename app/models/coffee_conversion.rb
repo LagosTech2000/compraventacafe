@@ -30,6 +30,10 @@ class CoffeeConversion < ApplicationRecord
   MAX_WEIGHT = 1_000_000_000
   MAX_SACKS = 100_000
 
+  # Where its coffee is taken from, and where the result comes into
+  # (client, 2026-10-26): the same one unless chosen.
+  belongs_to :warehouse
+  belongs_to :output_warehouse, class_name: "Warehouse", optional: true
   belongs_to :created_by, class_name: "User"
   belongs_to :finished_by, class_name: "User", optional: true
   belongs_to :voided_by, class_name: "User", optional: true
@@ -39,6 +43,8 @@ class CoffeeConversion < ApplicationRecord
   # Set while registering the result (Sales::ConversionResultsController).
   attr_accessor :finishing
 
+  before_validation { self.warehouse ||= Warehouse.main! if new_record? }
+  before_validation { self.output_warehouse ||= warehouse if finishing }
   before_validation :set_to_state
   before_validation :weigh_input, if: -> { new_record? || input_gross_weight_changed? || weighed_at_changed? }
   before_validation :weigh_output, if: :finishing
@@ -55,6 +61,7 @@ class CoffeeConversion < ApplicationRecord
     validates :output_damage_percent, numericality: { greater_than_or_equal_to: 0, less_than: 100 }
   end
   validate :finished_after_weighed, if: :finishing
+  validate :warehouses_active
 
   before_create :assign_number
 
@@ -91,6 +98,9 @@ class CoffeeConversion < ApplicationRecord
     inputs[:yield_factor] || (1 - BigDecimal(inputs[:humidity_percent].to_s) / 100)
   end
 
+  # Lempiras added by processing, by conversion id (none yet).
+  def self.processing_costs_by_conversion = {}
+
   def self.human_state(state) = Purchase.human_attribute_name("coffee_state/#{state}")
 
   def display_number = format("%04d", number)
@@ -118,6 +128,14 @@ class CoffeeConversion < ApplicationRecord
   # 2026-10-25): below zero, the coffee gave less than what was paid for.
   def net_difference = output_net_weight && (output_net_weight - input_net_weight)
   def net_difference_percent = net_difference && input_net_weight.positive? ? (net_difference / input_net_weight * 100).round(1) : nil
+  # Pounds the damage took off what came out, as in a purchase.
+  def output_damage_weight
+    return 0 unless output_weighed? && to_state != "cherry"
+
+    PurchaseCalculation.new(coffee_state: to_state, gross_weight: output_gross_weight, price_per_pound: 0, humidity_percent: output_humidity_percent,
+                            damage_percent: output_damage_percent, counted_sacks: output_sacks).damage_weight.to_d
+  end
+
   # The result was weighed with humidity and damage (not with the stock's proportion).
   def output_weighed? = output_ratio_source == "weighed"
 
@@ -133,7 +151,7 @@ class CoffeeConversion < ApplicationRecord
     raise ActiveRecord::RecordInvalid, tap { errors.add(:base, :not_finished) } unless finished?
 
     self.finishing = false
-    update!(finished_at: nil, finished_by: nil, output_gross_weight: nil, output_net_weight: nil, output_ratio: nil, output_ratio_source: nil,
+    update!(finished_at: nil, finished_by: nil, output_warehouse: nil, output_gross_weight: nil, output_net_weight: nil, output_ratio: nil, output_ratio_source: nil,
             output_sacks: nil, output_tare: nil, output_humidity_percent: nil, output_damage_percent: nil)
   end
 
@@ -164,6 +182,11 @@ class CoffeeConversion < ApplicationRecord
 
     def finished_after_weighed
       errors.add(:finished_at, :before_weighed) if finished_at && weighed_at && finished_at < weighed_at
+    end
+
+    def warehouses_active
+      errors.add(:warehouse, :inactive) if will_save_change_to_warehouse_id? && warehouse && !warehouse.active?
+      errors.add(:output_warehouse, :inactive) if will_save_change_to_output_warehouse_id? && output_warehouse && !output_warehouse.active?
     end
 
     def assign_number

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_26_040000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_26_060000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -154,11 +154,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_040000) do
     t.decimal "output_tare", precision: 12, scale: 2
     t.decimal "output_humidity_percent", precision: 5, scale: 2
     t.decimal "output_damage_percent", precision: 5, scale: 2
+    t.bigint "warehouse_id", null: false
+    t.bigint "output_warehouse_id"
     t.index ["created_by_id"], name: "index_coffee_conversions_on_created_by_id"
     t.index ["finished_at"], name: "index_coffee_conversions_on_finished_at"
     t.index ["finished_by_id"], name: "index_coffee_conversions_on_finished_by_id"
     t.index ["number"], name: "index_coffee_conversions_on_number", unique: true
+    t.index ["output_warehouse_id"], name: "index_coffee_conversions_on_output_warehouse_id"
     t.index ["voided_by_id"], name: "index_coffee_conversions_on_voided_by_id"
+    t.index ["warehouse_id"], name: "index_coffee_conversions_on_warehouse_id"
     t.index ["weighed_at"], name: "index_coffee_conversions_on_weighed_at"
   end
 
@@ -696,6 +700,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_040000) do
     t.decimal "hauler_commission", precision: 12, scale: 2
     t.string "damage_types", default: [], null: false, array: true
     t.decimal "hauler_price_per_pound", precision: 12, scale: 4
+    t.bigint "warehouse_id", null: false
     t.index ["created_by_id"], name: "index_purchases_on_created_by_id"
     t.index ["farm_id"], name: "index_purchases_on_farm_id"
     t.index ["hauler_id"], name: "index_purchases_on_hauler_id"
@@ -705,6 +710,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_040000) do
     t.index ["season_year"], name: "index_purchases_on_season_year"
     t.index ["voided_at"], name: "index_purchases_on_voided_at"
     t.index ["voided_by_id"], name: "index_purchases_on_voided_by_id"
+    t.index ["warehouse_id"], name: "index_purchases_on_warehouse_id"
     t.index ["zone_id"], name: "index_purchases_on_zone_id"
   end
 
@@ -839,6 +845,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_040000) do
     t.bigint "truck_id"
     t.bigint "driver_id"
     t.string "driver_name"
+    t.bigint "warehouse_id", null: false
     t.index ["buyer_id"], name: "index_shipments_on_buyer_id"
     t.index ["carrier_id"], name: "index_shipments_on_carrier_id"
     t.index ["created_by_id"], name: "index_shipments_on_created_by_id"
@@ -848,6 +855,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_040000) do
     t.index ["season_year"], name: "index_shipments_on_season_year"
     t.index ["truck_id"], name: "index_shipments_on_truck_id"
     t.index ["voided_by_id"], name: "index_shipments_on_voided_by_id"
+    t.index ["warehouse_id"], name: "index_shipments_on_warehouse_id"
   end
 
   create_table "site_settings", force: :cascade do |t|
@@ -861,6 +869,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_040000) do
     t.datetime "updated_at", null: false
     t.string "rtn"
     t.decimal "weight_tolerance_percent", precision: 5, scale: 2
+    t.integer "cherry_warning_hours", default: 12, null: false
+    t.integer "cherry_critical_hours", default: 24, null: false
   end
 
   create_table "staff_advances", force: :cascade do |t|
@@ -998,6 +1008,39 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_040000) do
     t.index ["webauthn_id"], name: "index_users_on_webauthn_id", unique: true
   end
 
+  create_table "warehouse_transfers", force: :cascade do |t|
+    t.integer "number", null: false
+    t.datetime "transferred_at", null: false
+    t.bigint "from_warehouse_id", null: false
+    t.bigint "to_warehouse_id", null: false
+    t.string "coffee_state", null: false
+    t.decimal "net_weight", precision: 12, scale: 2, null: false
+    t.decimal "gross_weight", precision: 12, scale: 2, null: false
+    t.text "observations"
+    t.bigint "created_by_id", null: false
+    t.datetime "voided_at"
+    t.bigint "voided_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_warehouse_transfers_on_created_by_id"
+    t.index ["from_warehouse_id"], name: "index_warehouse_transfers_on_from_warehouse_id"
+    t.index ["number"], name: "index_warehouse_transfers_on_number", unique: true
+    t.index ["to_warehouse_id"], name: "index_warehouse_transfers_on_to_warehouse_id"
+    t.index ["transferred_at"], name: "index_warehouse_transfers_on_transferred_at"
+    t.index ["voided_by_id"], name: "index_warehouse_transfers_on_voided_by_id"
+  end
+
+  create_table "warehouses", force: :cascade do |t|
+    t.string "name", null: false
+    t.boolean "main", default: false, null: false
+    t.text "observations"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((name)::text)", name: "index_warehouses_on_lower_name", unique: true
+    t.index ["main"], name: "index_warehouses_on_main", unique: true, where: "main"
+  end
+
   create_table "webauthn_credentials", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "external_id", null: false
@@ -1034,6 +1077,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_040000) do
   add_foreign_key "coffee_conversions", "users", column: "created_by_id"
   add_foreign_key "coffee_conversions", "users", column: "finished_by_id"
   add_foreign_key "coffee_conversions", "users", column: "voided_by_id"
+  add_foreign_key "coffee_conversions", "warehouses"
+  add_foreign_key "coffee_conversions", "warehouses", column: "output_warehouse_id"
   add_foreign_key "collaborators", "people"
   add_foreign_key "expense_receipts", "expenses"
   add_foreign_key "expenses", "finance_categories"
@@ -1104,6 +1149,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_040000) do
   add_foreign_key "purchases", "producers"
   add_foreign_key "purchases", "users", column: "created_by_id"
   add_foreign_key "purchases", "users", column: "voided_by_id"
+  add_foreign_key "purchases", "warehouses"
   add_foreign_key "purchases", "zones"
   add_foreign_key "sale_lines", "sales"
   add_foreign_key "sale_lines", "shipments"
@@ -1122,6 +1168,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_040000) do
   add_foreign_key "shipments", "trucks"
   add_foreign_key "shipments", "users", column: "created_by_id"
   add_foreign_key "shipments", "users", column: "voided_by_id"
+  add_foreign_key "shipments", "warehouses"
   add_foreign_key "staff_advances", "money_accounts"
   add_foreign_key "staff_advances", "staff_members"
   add_foreign_key "staff_advances", "staff_payments"
@@ -1136,5 +1183,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_040000) do
   add_foreign_key "staff_payments", "staff_members"
   add_foreign_key "staff_payments", "staff_roles"
   add_foreign_key "staff_payments", "users", column: "created_by_id"
+  add_foreign_key "warehouse_transfers", "users", column: "created_by_id"
+  add_foreign_key "warehouse_transfers", "users", column: "voided_by_id"
+  add_foreign_key "warehouse_transfers", "warehouses", column: "from_warehouse_id"
+  add_foreign_key "warehouse_transfers", "warehouses", column: "to_warehouse_id"
   add_foreign_key "webauthn_credentials", "users"
 end

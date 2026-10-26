@@ -1,23 +1,25 @@
-<%# The coffee in stock (CoffeeStock), one card per coffee state: gross
-    pounds, net pounds and QQ in the warehouse, in that order, and of what
-    left, in transit and not sold. %>
+<%# The coffee in stock (CoffeeStock), of every warehouse or one: one card
+    per coffee state with its net pounds, the total and what is being
+    processed. Each card opens its detail (lots, value, movements). %>
+<% warehouse = local_assigns[:warehouse] %>
+<% alert = local_assigns[:alert] %>
 <section aria-labelledby="sales-stock">
   <div class="mb-3 flex flex-wrap items-baseline justify-between gap-3">
-    <h2 id="sales-stock" class="text-lg font-semibold"><%= t("sales.stock.title") %></h2>
+    <h2 id="sales-stock" class="text-lg font-semibold"><%= t("sales.stock.title") %><%= " · #{warehouse.name}" if warehouse %></h2>
     <p class="text-sm text-ink-muted"><%= t("sales.stock.as_of", date: l(stock.date, format: :long)) %></p>
   </div>
   <div class="flex flex-wrap gap-3">
-    <%# Each card opens the kardex, of everything or of its state. %>
-    <%= render "sales/stock_card", title: t("sales.stock.total"), key: "total", gross: stock.gross_stock, net: stock.stock,
-                                   quintals: stock.quintals, css: "ring-2 ring-primary", path: sales_stock_path(anchor: "stock-ledger-title") %>
+    <%= render "sales/stock_card", title: t("sales.stock.total"), key: "total", net: stock.stock, css: "ring-2 ring-primary",
+                                   path: sales_stock_state_path("total", warehouse_id: warehouse&.id) %>
     <% stock.rows.each do |row| %>
-      <%= render "sales/stock_card", title: row.human_coffee_state, key: row.coffee_state, gross: row.gross_stock, net: row.stock,
-                                     quintals: row.quintals, row:, path: sales_stock_path(coffee_state: row.coffee_state, anchor: "stock-ledger-title") %>
+      <%= render "sales/stock_card", title: row.human_coffee_state, key: row.coffee_state, net: row.stock,
+                                     alert: (alert&.level if row.coffee_state == "cherry"),
+                                     path: sales_stock_state_path(row.coffee_state, warehouse_id: warehouse&.id) %>
     <% end %>
-    <%# Coffee being converted (weighed, its result not entered yet): apart from the states. %>
-    <% if stock.in_process_gross.positive? %>
-      <%= render "sales/stock_card", title: t("sales.stock.in_process"), key: "in_process", gross: stock.in_process_gross, net: stock.in_process_net,
-                                     quintals: stock.in_process_quintals, path: sales_coffee_conversions_path(status: "in_process") %>
+    <%# Coffee being processed (weighed, its result not entered yet): apart from the states. %>
+    <% if stock.in_process_net.positive? %>
+      <%= render "sales/stock_card", title: t("sales.stock.in_process"), key: "in_process", net: stock.in_process_net,
+                                     path: sales_coffee_conversions_path(status: "in_process") %>
     <% end %>
   </div>
   <% if stock.rows.any? { it.stock.negative? } %>

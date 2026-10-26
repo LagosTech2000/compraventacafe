@@ -4,6 +4,7 @@ class StockLedgerFilter < ListFilter
   field :from, :date, default: -> { Time.zone.today.beginning_of_month }
   field :to, :date, default: -> { Time.zone.today }
   field :coffee_state, :choice, in: Purchase::COFFEE_STATES
+  field :warehouse_id, :id
 
   sorts at: { ruby: ->(entry) { entry.at } },
         kind: { ruby: ->(entry) { entry.kind } },
@@ -24,7 +25,8 @@ class StockLedgerFilter < ListFilter
     end
   end
 
-  def ledger = @ledger ||= StockLedger.new(from:, to: to || Time.zone.today, coffee_state:)
+  def warehouse = @warehouse ||= warehouse_id && Warehouse.find_by(id: warehouse_id)
+  def ledger = @ledger ||= StockLedger.new(from:, to: to || Time.zone.today, coffee_state:, warehouse:)
 
   # Newest first, as every list; each entry keeps the balance after it.
   def apply(_scope) = ledger.entries.reverse

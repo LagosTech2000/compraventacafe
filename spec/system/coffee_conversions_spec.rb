@@ -50,14 +50,15 @@ RSpec.describe "Coffee conversions screens", type: :system do
     expect(conversion.reload.output_net_weight).to eq(BigDecimal("524.48"))
   end
 
-  it "opens the kardex of a state from its card on the summary" do
+  it "opens a state's detail from its card on the summary, and its kardex from there" do
     visit sales_root_path
     find("[data-coffee-state=wet_parchment]").click
-    expect(page).to have_current_path(sales_stock_path(coffee_state: "wet_parchment"))
+    expect(page).to have_current_path(sales_stock_state_path("wet_parchment"))
+    click_link "Ver movimientos"
     expect(page).to have_select("coffee_state", selected: "Pergamino húmedo")
 
     visit sales_root_path
     find("[data-coffee-state=total]").click
-    expect(page).to have_current_path(sales_stock_path)
+    expect(page).to have_current_path(sales_stock_state_path("total"))
   end
 end

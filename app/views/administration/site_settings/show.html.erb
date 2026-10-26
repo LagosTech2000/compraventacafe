@@ -33,6 +33,10 @@
         <dd class="mt-1 tabular-nums"><%= setting.weight_tolerance_percent ? format_percent(setting.weight_tolerance_percent) : "—" %></dd>
       </div>
       <div>
+        <dt class="text-xs font-semibold tracking-wide text-ink-muted uppercase"><%= t("administration.site_settings.form.cherry_alert") %></dt>
+        <dd class="mt-1 tabular-nums"><%= t("administration.site_settings.show.cherry_alert", warning: setting.cherry_warning_hours, critical: setting.cherry_critical_hours) %></dd>
+      </div>
+      <div>
         <dt class="text-xs font-semibold tracking-wide text-ink-muted uppercase"><%= SiteSetting.human_attribute_name(:logo) %></dt>
         <dd class="mt-1">
           <% if setting.logo? %>

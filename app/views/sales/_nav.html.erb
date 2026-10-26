@@ -11,7 +11,7 @@
       <%= link_to t("sales.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>
     <% end %>
     <span class="mx-1 h-6 w-px shrink-0 self-center bg-primary/20" aria-hidden="true"></span>
-    <% { buyers: sales_buyers_path, carriers: sales_carriers_path, trucks: sales_trucks_path }.each do |key, path| %>
+    <% { buyers: sales_buyers_path, carriers: sales_carriers_path, trucks: sales_trucks_path, warehouses: sales_warehouses_path }.each do |key, path| %>
       <%= link_to t("sales.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>
     <% end %>
     <% if policy(Shipment).create? %>

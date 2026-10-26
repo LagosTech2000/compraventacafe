@@ -139,6 +139,13 @@
             data: { purchase_calculator_target: "coffeeState", unusual_values_target: "state",
                     action: "purchase-calculator#changeCoffeeState unusual-values#check" } %>
     </div>
+
+    <%# Where it is kept: the default warehouse unless chosen (client, 2026-10-26). %>
+    <div>
+      <%= form.label :warehouse_id, class: "field-label" %>
+      <%= form.collection_select :warehouse_id, Warehouse.options_for(purchase.warehouse_id), :id, :name,
+            { selected: purchase.warehouse_id || Warehouse.main&.id, include_blank: (t("shared.select.main_warehouse") unless Warehouse.main) }, class: "field-input" %>
+    </div>
   <% end %>
 
   <%# The gross weight in one figure, or by weighings: then it is their sum

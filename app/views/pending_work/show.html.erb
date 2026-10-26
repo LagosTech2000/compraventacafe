@@ -13,6 +13,7 @@
   <% groups << :shipments_in_transit if dashboard.shipments_in_transit.any? %>
   <% groups << :unsold_shipments if dashboard.unsold_shipments.any? %>
   <% groups << :unpaid_sales if dashboard.unpaid_sales.any? %>
+  <% groups << :cherry_waiting if dashboard.cherry_waiting.any? %>
   <% groups << :open_conversions if dashboard.open_conversions.any? %>
   <% groups << :negative_stock if dashboard.negative_stock.any? %>
 <% end %>
@@ -109,6 +110,29 @@
               <%= page_link_to t("shared.detail"), trading_hauler_path(hauler), class: "btn btn-sm" %>
               <% if policy(HaulerPayment.new(hauler:)).create? %>
                 <%= modal_link_to t(".groups.haulers_to_pay.action"), new_trading_hauler_payment_path(hauler), class: "btn btn-sm btn-primary" %>
+              <% end %>
+            </span>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
+  <% if groups.include?(:cherry_waiting) %>
+    <section id="pending-cherry_waiting" role="tabpanel" aria-labelledby="pending-tab-cherry_waiting" data-tabs-target="panel" <%= "hidden" unless groups.first == :cherry_waiting %>>
+      <p class="text-xs text-ink-muted"><%= t(".groups.cherry_waiting.help") %></p>
+      <ul class="mt-2 divide-y divide-line">
+        <% dashboard.cherry_waiting.each do |item| %>
+          <li class="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm" id="pending-cherry-<%= item.lot.key %>">
+            <span class="min-w-0">
+              <span class="block font-medium"><%= render "sales/lots/origin", lot: item.lot %></span>
+              <span class="block text-xs text-ink-muted"><%= t(".groups.cherry_waiting.detail", entered: l(item.lot.entered_at, format: :short), hours: item.hours) %></span>
+            </span>
+            <span class="flex items-center gap-2">
+              <span class="badge <%= item.critical? ? "badge-danger" : "badge-warning" %>"><%= t("sales.cherry_alert.levels.#{item.level}") %></span>
+              <span class="font-semibold tabular-nums"><%= format_pounds(item.lot.net) %> lb</span>
+              <% if policy(CoffeeConversion).create? %>
+                <%= modal_link_to t(".groups.cherry_waiting.action"), new_sales_coffee_conversion_path(from_state: "cherry", warehouse_id: item.lot.warehouse_id), class: "btn btn-sm btn-primary" %>
               <% end %>
             </span>
           </li>

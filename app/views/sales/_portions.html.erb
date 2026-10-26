@@ -1,0 +1,35 @@
+<%# Where the coffee of a move came from (CoffeeLots): each lot it took,
+    the oldest first, with its date and the net pounds taken. A part with
+    no lot is coffee taken over what there was. %>
+<% CoffeeLots.preload(portions.filter_map(&:lot)) %>
+<section class="panel p-4" aria-labelledby="<%= id %>">
+  <h2 id="<%= id %>" class="font-semibold"><%= title %></h2>
+  <% if portions.any? %>
+    <div class="mt-3 overflow-x-auto">
+      <table class="data-table data-table-compact" data-controller="table-sort">
+        <thead>
+          <tr>
+            <th><%= t("sales.lots.columns.origin") %></th>
+            <th><%= t("sales.lots.columns.entered_at") %></th>
+            <th class="text-right"><%= t("sales.lots.columns.taken") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% portions.each do |portion| %>
+            <tr>
+              <% if portion.shortfall? %>
+                <td class="text-danger" colspan="2"><%= t("sales.lots.shortfall") %></td>
+              <% else %>
+                <td><%= render "sales/lots/origin", lot: portion.lot %></td>
+                <td class="whitespace-nowrap" data-sort-value="<%= portion.lot.entered_at.to_i %>"><%= l(portion.lot.entered_at) %></td>
+              <% end %>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(portion.net) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p class="mt-2 text-sm text-ink-muted"><%= t("sales.lots.none_taken") %></p>
+  <% end %>
+</section>

@@ -22,7 +22,7 @@ class SiteSetting < ApplicationRecord
   MAX_LOGO_SIZE = 1.megabyte
   # Every column but the logo's bytes, for pages that only need to know
   # whether there is a logo.
-  LIGHT_COLUMNS = %w[id business_name location rtn weight_tolerance_percent logo_content_type logo_filename logo_byte_size created_at updated_at].freeze
+  LIGHT_COLUMNS = %w[id business_name location rtn weight_tolerance_percent cherry_warning_hours cherry_critical_hours logo_content_type logo_filename logo_byte_size created_at updated_at].freeze
 
   self.audit_skipped_attributes = %w[logo_data]
 
@@ -37,6 +37,9 @@ class SiteSetting < ApplicationRecord
   validates :rtn, field_format: :rtn
   # Comercialización: from what difference between scales a shipment stands out.
   validates :weight_tolerance_percent, numericality: { greater_than: 0, less_than: 100 }, allow_nil: true
+  # Hours cherry may wait before a warning, and before a critical alert.
+  validates :cherry_warning_hours, :cherry_critical_hours, numericality: { only_integer: true, greater_than: 0, less_than_or_equal_to: 720 }
+  validate :critical_after_warning
   validate :logo_is_an_image
 
   before_validation :take_logo
@@ -76,6 +79,12 @@ class SiteSetting < ApplicationRecord
       elsif ActiveModel::Type::Boolean.new.cast(remove_logo)
         self.logo_data = self.logo_content_type = self.logo_filename = self.logo_byte_size = nil
       end
+    end
+
+    def critical_after_warning
+      return unless cherry_warning_hours.is_a?(Integer) && cherry_critical_hours.is_a?(Integer)
+
+      errors.add(:cherry_critical_hours, :after_warning) if cherry_critical_hours <= cherry_warning_hours
     end
 
     def logo_is_an_image

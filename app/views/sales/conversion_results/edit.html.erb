@@ -27,6 +27,11 @@
               data: { missing_message: "#{CoffeeConversion.human_attribute_name(:finished_at)} #{t("errors.messages.blank")}" } %>
       </div>
       <div>
+        <%= form.label :output_warehouse_id, class: "field-label" %>
+        <%= form.collection_select :output_warehouse_id, Warehouse.options_for(@conversion.output_warehouse_id), :id, :name,
+              { selected: @conversion.output_warehouse_id || @conversion.warehouse_id }, class: "field-input" %>
+      </div>
+      <div>
         <%= form.label :output_gross_weight, t(".output_gross", state: @conversion.human_to_state), class: "field-label" %>
         <%= form.number_field :output_gross_weight, required: true, min: 0.01, step: 0.01, inputmode: "decimal", class: "field-input text-lg",
               autofocus: true, data: { conversion_preview_target: "gross", action: "conversion-preview#update",

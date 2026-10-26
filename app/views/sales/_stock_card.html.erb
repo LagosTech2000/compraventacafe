@@ -1,30 +1,16 @@
-<%# One card of «Café en inventario»: gross pounds, net pounds and quintals,
-    in that order. `row` (a CoffeeStock::Row) adds what is out of the
-    warehouse; `key` names its live values; with `path` the whole card is a
-    link (to the kardex of that state, or to the conversions in process). %>
-<% row = local_assigns[:row] %>
-<% path = local_assigns[:path] %>
-<%= tag.public_send(path ? :a : :div, href: path, class: "stat block min-w-0 flex-1 basis-56 #{"transition hover:ring-primary/40" if path} #{local_assigns[:css]}",
-                    data: { coffee_state: key }) do %>
-  <h3 class="text-sm font-semibold text-ink"><%= title %></h3>
-  <dl class="mt-2 space-y-1">
-    <% { gross: [ t("sales.stock.gross"), t("sales.stock.pounds", pounds: format_pounds(gross)), gross ],
-         net: [ t("sales.stock.net"), t("sales.stock.pounds", pounds: format_pounds(net)), net ],
-         quintals: [ t("sales.stock.quintals_label"), format_pounds(quintals), quintals ] }.each do |part, (label, value, number)| %>
-      <div class="flex items-baseline justify-between gap-3" data-stock-part="<%= part %>">
-        <dt class="text-xs text-ink-muted"><%= label %></dt>
-        <dd class="mt-0 tabular-nums <%= part == :net ? "text-xl font-bold" : "text-base font-semibold" %> <%= "text-danger" if number.negative? %>"
-            data-live-value="stock-<%= key %>-<%= part %>"><%= value %></dd>
-      </div>
+<%# One card of «Café en inventario»: its net pounds, the figure that always
+    shows (client, 2026-10-26); the rest is in its detail, where the whole
+    card leads. `alert` marks cherry that waited too long. %>
+<%= link_to path, class: "stat block min-w-0 flex-1 basis-44 transition hover:ring-primary/40 #{local_assigns[:css]}",
+            data: { coffee_state: key, turbo_frame: "_top" } do %>
+  <span class="flex items-start justify-between gap-2">
+    <span class="text-sm font-semibold text-ink"><%= title %></span>
+    <% if (level = local_assigns[:alert]) %>
+      <span class="badge <%= level == "critical" ? "badge-danger" : "badge-warning" %>" data-cherry-alert="<%= level %>"><%= t("sales.cherry_alert.levels.#{level}") %></span>
     <% end %>
-  </dl>
-  <%# What the cherry's net pounds mean, in words (Fernando, 2026-10-25). %>
-  <% if key == "cherry" %>
-    <p class="mt-2 text-xs text-ink-muted" data-cherry-net-note><%= t("sales.stock.cherry_net") %></p>
-  <% end %>
-  <% if row && (row.in_transit.positive? || row.unsold.positive?) %>
-    <p class="mt-2 text-xs text-ink-muted">
-      <%= t("sales.stock.out_detail", in_transit: format_pounds(row.in_transit), unsold: format_pounds(row.unsold)) %>
-    </p>
-  <% end %>
+  </span>
+  <span class="mt-2 block text-2xl font-bold tabular-nums <%= "text-danger" if net.negative? %>" data-live-value="stock-<%= key %>-net">
+    <%= t("sales.stock.pounds", pounds: format_pounds(net)) %>
+  </span>
+  <span class="block text-xs text-ink-muted"><%= t("sales.stock.net") %></span>
 <% end %>

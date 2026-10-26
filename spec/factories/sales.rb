@@ -73,6 +73,20 @@ FactoryBot.define do
     end
   end
 
+  factory :warehouse do
+    sequence(:name) { |n| "Bodega de prueba #{n}" }
+  end
+
+  # Moves wet parchment from the default warehouse to another one.
+  factory :warehouse_transfer do
+    from_warehouse { Warehouse.main! }
+    to_warehouse { association(:warehouse) }
+    association :created_by, factory: :user
+    transferred_at { Time.current }
+    coffee_state { "wet_parchment" }
+    net_weight { 100 }
+  end
+
   factory :carrier do
     sequence(:name) { |n| "Transportes #{n}" }
   end

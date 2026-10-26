@@ -2,10 +2,11 @@
     is calculated while typing; leaving with more than the stock of that
     coffee state warns, without stopping it (stock: CoffeeStock). %>
 <% buyers = Buyer.active.or(Buyer.where(id: shipment.buyer_id)).alphabetical %>
-<%# The stock this shipment can take: editing, its own weight is back in it. %>
-<% available = stock.rows.to_h { |row| [ row.coffee_state, row.stock.to_f ] } %>
-<% if shipment.persisted? && shipment.coffee_state_in_database %>
-  <% available[shipment.coffee_state_in_database] += shipment.origin_net_weight_in_database.to_f %>
+<%# The stock this shipment can take, by warehouse: editing, its own weight is back in it. %>
+<% by_warehouse = CoffeeStock.net_by_warehouse %>
+<% available = Warehouse.active.or(Warehouse.where(id: shipment.warehouse_id)).to_h { |warehouse| [ warehouse.id, Purchase::COFFEE_STATES.index_with { by_warehouse[[ warehouse.id, it ]].to_f } ] } %>
+<% if shipment.persisted? && shipment.coffee_state_in_database && available[shipment.warehouse_id_in_database] %>
+  <% available[shipment.warehouse_id_in_database][shipment.coffee_state_in_database] += shipment.origin_net_weight_in_database.to_f %>
 <% end %>
 <%= form_with model: [ :sales, shipment ], class: form_surface_class("@container max-w-none"),
       data: { controller: "form-validation weighing-calculator unsaved-changes", action: unsaved_changes_actions,
@@ -36,6 +37,12 @@
           <%= form.label :coffee_state, class: "field-label" %>
           <%= form.select :coffee_state, enum_options(Purchase, :coffee_state, Purchase::COFFEE_STATES), {}, required: true, class: "field-input",
                 data: { weighing_calculator_target: "coffeeState", action: "weighing-calculator#changeCoffeeState" } %>
+        </div>
+        <div>
+          <%= form.label :warehouse_id, class: "field-label" %>
+          <%= form.collection_select :warehouse_id, Warehouse.options_for(shipment.warehouse_id), :id, :name,
+                { selected: shipment.warehouse_id || Warehouse.main&.id, include_blank: (t("shared.select.main_warehouse") unless Warehouse.main) },
+                class: "field-input", data: { weighing_calculator_target: "warehouse", action: "weighing-calculator#checkStock" } %>
         </div>
         <div>
           <%= form.label :remission_number, class: "field-label" %>

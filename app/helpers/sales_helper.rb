@@ -31,7 +31,28 @@ module SalesHelper
     case entry.kind
     when "purchase" then (trading_purchase_path(entry.record) if policy(Purchase).show?)
     when "shipment" then sales_shipment_path(entry.record)
+    when "transfer_in", "transfer_out" then sales_warehouse_transfer_path(entry.record)
     else sales_coffee_conversion_path(entry.record)
+    end
+  end
+
+  # How long a lot has been in stock: hours for the first two days (cherry
+  # counts them), then days.
+  def stock_age(lot)
+    hours = lot.hours
+    hours < 48 ? t("sales.lots.hours", count: hours) : t("sales.lots.days", count: lot.days)
+  end
+
+  # "Todas · Bodega 1 · Bodega 2": links to the same page of one warehouse
+  # or of all, inside `frame`.
+  def warehouse_tabs(warehouses, current, frame:, &path)
+    tag.nav(class: "flex flex-wrap gap-2", aria: { label: Warehouse.model_name.human(count: 2) }) do
+      safe_join([ nil, *warehouses ].map do |warehouse|
+        active = current&.id == warehouse&.id
+        link_to(warehouse&.name || t("sales.warehouses.all"), path.call(warehouse&.id),
+                class: "btn btn-sm #{"btn-primary" if active}", aria: { current: (active ? "page" : nil) },
+                data: { turbo_frame: frame, turbo_action: "advance" })
+      end)
     end
   end
 

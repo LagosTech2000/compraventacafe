@@ -13,11 +13,14 @@
 <% states = CoffeeConversion::NEXT_STATE.keys %>
 <%# How many net pounds each gross pound is, to preview the net. %>
 <% ratios = states.to_h { |state| [ state, CoffeeConversion.ratio_for(state, Time.zone.today).first ] } %>
+<%# Gross pounds of each state in each warehouse, to warn when it takes more. %>
+<% warehouses = Warehouse.options_for(@conversion.warehouse_id) %>
+<% gross_stock = warehouses.to_h { |warehouse| stock = CoffeeStock.new(warehouse:); [ warehouse.id, states.index_with { stock.row(it).gross_stock.to_f } ] } %>
 <%= form_with model: @conversion, url: sales_coffee_conversions_path, class: form_surface_class("@container max-w-none"),
       data: { controller: "form-validation unsaved-changes conversion-preview", action: unsaved_changes_actions,
               unsaved_changes_message_value: t("shared.unsaved_changes.leave"),
               conversion_preview_ratios_value: ratios.transform_values(&:to_f).to_json,
-              conversion_preview_stock_value: states.index_with { @stock.row(it).gross_stock.to_f }.to_json,
+              conversion_preview_stock_value: gross_stock.to_json,
               conversion_preview_to_states_value: CoffeeConversion::NEXT_STATE.transform_values { CoffeeConversion.human_state(it) }.to_json,
               conversion_preview_quintal_weight_value: PurchaseCalculation::QUINTAL_WEIGHT } do |form| %>
   <%= render "shared/form_errors", record: @conversion %>
@@ -36,6 +39,12 @@
         </div>
       </fieldset>
       <div class="grid gap-5 sm:grid-cols-2">
+        <div class="sm:col-span-2">
+          <%= form.label :warehouse_id, class: "field-label" %>
+          <%= form.collection_select :warehouse_id, warehouses, :id, :name,
+                { selected: @conversion.warehouse_id || Warehouse.main&.id, include_blank: (t("shared.select.main_warehouse") unless Warehouse.main) },
+                class: "field-input", data: { conversion_preview_target: "warehouse", action: "conversion-preview#update" } %>
+        </div>
         <div>
           <%= form.label :weighed_at, class: "field-label" %>
           <%= form.datetime_local_field :weighed_at, required: true, class: "field-input",

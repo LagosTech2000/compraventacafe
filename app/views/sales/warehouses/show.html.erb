@@ -1,0 +1,56 @@
+<% content_for :title, @warehouse.name %>
+<%= live_updates_from :sales %>
+<%= render "sales/nav" %>
+<%= render "shared/breadcrumbs", crumbs: [ [ t("sales.nav.warehouses"), sales_warehouses_path ], [ @warehouse.name ] ] %>
+
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= @warehouse.name %></h1>
+    <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
+      <span class="badge badge-neutral"><%= Warehouse.model_name.human %></span>
+      <% if @warehouse.main? %><span class="badge badge-success"><%= t("sales.warehouses.index.main") %></span><% end %>
+      <span class="<%= @warehouse.active? ? "badge badge-success" : "badge badge-neutral" %>"><%= t("sales.warehouses.index.statuses.#{@warehouse.active? ? "active" : "inactive"}") %></span>
+    </p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <% if @warehouse.active? && policy(WarehouseTransfer).create? %>
+      <%= modal_link_to t(".transfer"), new_sales_warehouse_transfer_path(from_warehouse_id: @warehouse.id), class: "btn btn-primary" %>
+    <% end %>
+    <% if policy(@warehouse).update? %>
+      <%= modal_link_to t(".edit"), edit_sales_warehouse_path(@warehouse), class: "btn" %>
+    <% end %>
+    <% if policy(@warehouse).destroy? %>
+      <%= button_to t(".destroy"), sales_warehouse_path(@warehouse), method: :delete, class: "btn",
+            form: { data: { turbo_confirm: t(".destroy_confirm", name: @warehouse.name), turbo_frame: "_top" } } %>
+    <% end %>
+    <% if modal_request? %>
+      <%= page_link_to t("sales.buyers.show.full_page"), sales_warehouse_path(@warehouse), class: "btn" %>
+    <% end %>
+  </div>
+</div>
+<% if @warehouse.observations %><p class="mt-3 text-sm"><%= @warehouse.observations %></p><% end %>
+
+<section class="mt-6" aria-labelledby="warehouse-stock">
+  <h2 id="warehouse-stock" class="mb-3 text-lg font-semibold"><%= t(".stock") %></h2>
+  <div class="flex flex-wrap gap-3">
+    <% @stock.rows.each do |row| %>
+      <%= link_to sales_stock_path(coffee_state: row.coffee_state, warehouse_id: @warehouse.id), class: "stat block min-w-0 flex-1 basis-48 transition hover:ring-primary/40",
+                  data: { coffee_state: row.coffee_state } do %>
+        <dt class="text-sm font-semibold text-ink"><%= row.human_coffee_state %></dt>
+        <dd class="tabular-nums <%= "text-danger" if row.stock.negative? %>"><%= t("sales.stock.pounds", pounds: format_pounds(row.stock)) %></dd>
+      <% end %>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-8" aria-labelledby="warehouse-transfers">
+  <h2 id="warehouse-transfers" class="text-lg font-semibold"><%= t(".transfers") %></h2>
+  <%= list_frame "warehouse-transfers-list" do %>
+    <% if @transfers.any? %>
+      <%= render "sales/warehouse_transfers/table", transfers: @transfers, sorting: { filter: @filter, frame: "warehouse-transfers-list" } %>
+      <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "warehouse-transfers-list" %>
+    <% else %>
+      <p class="empty-state mt-4"><%= t(".no_transfers") %></p>
+    <% end %>
+  <% end %>
+</section>

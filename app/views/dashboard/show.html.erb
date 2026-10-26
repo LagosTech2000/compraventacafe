@@ -99,6 +99,8 @@
   <% pending << [ :unsold_shipments, unsold.size, nil, (policy(Sale).create? ? new_sales_sale_path : sales_shipments_path(status: "received")) ] if unsold.any? %>
   <% unpaid_sales = dashboard.unpaid_sales %>
   <% pending << [ :unpaid_sales, unpaid_sales.size, dashboard.sales_owed, sales_sales_path(payment_status: "unpaid") ] if unpaid_sales.any? %>
+  <% cherry_waiting = dashboard.cherry_waiting %>
+  <% pending << [ :cherry_waiting, cherry_waiting.size, nil, sales_stock_state_path("cherry") ] if cherry_waiting.any? %>
   <% open_conversions = dashboard.open_conversions %>
   <% pending << [ :open_conversions, open_conversions.size, nil, sales_coffee_conversions_path(status: "in_process") ] if open_conversions.any? %>
   <% negative = dashboard.negative_stock %>

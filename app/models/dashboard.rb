@@ -99,6 +99,8 @@ class Dashboard
   # Conversions waiting for their result (Fernando, 2026-10-25): their
   # coffee is out of its state until then. The oldest first.
   def open_conversions = @open_conversions ||= CoffeeConversion.in_process.order(:weighed_at).to_a
+  # Cherry that has waited too long to be processed (CherryAlert), the oldest first.
+  def cherry_waiting = @cherry_waiting ||= CherryAlert.new.items.tap { |items| CoffeeLots.preload(items.map(&:lot)) }
 
   # Coffee states whose stock went below zero: a purchase is missing or a
   # shipment or conversion took the wrong state (Fernando, 2026-10-25).

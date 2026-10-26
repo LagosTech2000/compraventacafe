@@ -1,0 +1,60 @@
+<% content_for :title, t(".title") %>
+<%= render "sales/nav" %>
+<% unless modal_request? %>
+  <%= render "shared/breadcrumbs", crumbs: [ [ t("sales.nav.stock"), sales_stock_path ], [ t("sales.warehouse_transfers.index.title"), sales_warehouse_transfers_path ], [ t(".title") ] ] %>
+<% end %>
+
+<h1 class="mb-2 text-2xl font-bold"><%= t(".title") %></h1>
+<p class="mb-4 text-sm text-ink-muted"><%= t(".help") %></p>
+
+<%# Net pounds of each state in each active warehouse, for the preview. %>
+<% stock = CoffeeStock.net_by_warehouse %>
+<% warehouses = Warehouse.active.alphabetical %>
+<%= form_with model: @transfer, url: sales_warehouse_transfers_path, class: form_surface_class("@container max-w-none"),
+      data: { controller: "form-validation unsaved-changes transfer-preview", action: unsaved_changes_actions,
+              unsaved_changes_message_value: t("shared.unsaved_changes.leave"),
+              transfer_preview_stock_value: warehouses.to_h { |warehouse| [ warehouse.id, Purchase::COFFEE_STATES.index_with { stock[[ warehouse.id, it ]].to_f } ] }.to_json } do |form| %>
+  <%= render "shared/form_errors", record: @transfer %>
+  <div class="grid items-start gap-6 @5xl:grid-cols-[minmax(0,1fr)_20rem]">
+    <div class="min-w-0 grid gap-5 sm:grid-cols-2">
+      <div>
+        <%= form.label :from_warehouse_id, class: "field-label" %>
+        <%= form.collection_select :from_warehouse_id, warehouses, :id, :name, { prompt: t("shared.select.pick_warehouse") }, required: true, class: "field-input",
+              data: { transfer_preview_target: "from", action: "transfer-preview#update" } %>
+      </div>
+      <div>
+        <%= form.label :to_warehouse_id, class: "field-label" %>
+        <%= form.collection_select :to_warehouse_id, warehouses, :id, :name, { prompt: t("shared.select.pick_warehouse") }, required: true, class: "field-input" %>
+      </div>
+      <div>
+        <%= form.label :coffee_state, class: "field-label" %>
+        <%= form.select :coffee_state, enum_options(Purchase, :coffee_state, Purchase::COFFEE_STATES), {}, required: true, class: "field-input",
+              data: { transfer_preview_target: "state", action: "transfer-preview#update" } %>
+      </div>
+      <div>
+        <%= form.label :transferred_at, class: "field-label" %>
+        <%= form.datetime_local_field :transferred_at, required: true, class: "field-input" %>
+      </div>
+      <div class="sm:col-span-2">
+        <%= form.label :net_weight, class: "field-label" %>
+        <%= form.number_field :net_weight, required: true, min: 0.01, step: 0.01, inputmode: "decimal", class: "field-input text-lg", autofocus: true,
+              data: { transfer_preview_target: "net", action: "transfer-preview#update",
+                      missing_message: "#{WarehouseTransfer.human_attribute_name(:net_weight)} #{t("errors.messages.blank")}" } %>
+        <p class="mt-1 text-xs text-ink-muted"><%= t(".available") %> <span class="tabular-nums" data-transfer-preview-target="available"></span></p>
+      </div>
+      <div class="sm:col-span-2">
+        <%= form.label :observations, class: "field-label" %>
+        <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+      </div>
+    </div>
+
+    <aside class="space-y-4 @5xl:sticky @5xl:top-24">
+      <p class="text-sm text-ink-muted"><%= t(".oldest_first") %></p>
+      <p class="flash-alert" role="status" hidden data-transfer-preview-target="overStock"><%= t(".over_stock") %></p>
+      <div class="flex flex-wrap gap-3">
+        <%= form.submit t(".submit"), class: "btn btn-primary" %>
+        <%= cancel_button sales_warehouse_transfers_path %>
+      </div>
+    </aside>
+  </div>
+<% end %>

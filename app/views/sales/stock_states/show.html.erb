@@ -1,0 +1,131 @@
+<% title = @coffee_state ? Purchase.human_attribute_name("coffee_state/#{@coffee_state}") : t("sales.stock.total") %>
+<% content_for :title, title %>
+<%= live_updates_from :sales %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= render "sales/nav" %>
+<%= render "shared/breadcrumbs", crumbs: [ [ t("sales.nav.stock"), sales_stock_path ], [ title ] ] %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <h1 class="text-2xl font-bold"><%= title %></h1>
+  <div class="flex flex-wrap gap-2">
+    <%= help_guide_button HelpGuide.process(:coffee_lots), label: true %>
+    <% if @coffee_state.in?(CoffeeConversion::NEXT_STATE.keys) && policy(CoffeeConversion).create? %>
+      <%= modal_link_to t(".process"), new_sales_coffee_conversion_path(from_state: @coffee_state, warehouse_id: @warehouse&.id), class: "btn btn-primary" %>
+    <% end %>
+    <% if policy(WarehouseTransfer).create? %>
+      <%= modal_link_to t(".transfer"), new_sales_warehouse_transfer_path(coffee_state: @coffee_state, from_warehouse_id: @warehouse&.id), class: "btn" %>
+    <% end %>
+  </div>
+</div>
+
+<%= turbo_frame_tag "stock-state", class: "query-frame block", target: "_top", data: { turbo_action: "advance", controller: "frame-scroll" } do %>
+  <div class="mt-4"><%= warehouse_tabs(@warehouses, @warehouse, frame: "stock-state") { |id| sales_stock_state_path(params[:coffee_state], warehouse_id: id) } %></div>
+
+  <% gross = @rows.sum(&:gross_stock) %>
+  <% net = @rows.sum(&:stock) %>
+  <div class="mt-4 grid items-start gap-4 lg:grid-cols-2">
+    <section class="panel p-4" aria-labelledby="state-figures">
+      <h2 id="state-figures" class="font-semibold"><%= t(".figures") %></h2>
+      <p class="mt-2 text-3xl font-bold tabular-nums <%= "text-danger" if net.negative? %>" data-live-value="state-net"><%= t("sales.stock.pounds", pounds: format_pounds(net)) %></p>
+      <p class="text-sm text-ink-muted"><%= t("sales.stock.net") %></p>
+      <%# What the cherry's net pounds mean, in words (Fernando, 2026-10-25). %>
+      <% if @coffee_state == "cherry" %><p class="mt-1 text-xs text-ink-muted" data-cherry-net-note><%= t("sales.stock.cherry_net") %></p><% end %>
+      <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+        <% [ [ t("sales.stock.gross"), t("sales.stock.pounds", pounds: format_pounds(gross)) ],
+             [ t("sales.stock.quintals_label"), format_pounds(PurchaseCalculation.quintals(net)) ],
+             [ t(".sacks"), number_with_precision(@totals.sacks, precision: 0, delimiter: ",") ],
+             [ t(".damage"), t("sales.stock.pounds", pounds: format_pounds(@totals.damage)) ] ].each do |label, value| %>
+          <div><dt class="text-xs text-ink-muted"><%= label %></dt><dd class="font-semibold tabular-nums"><%= value %></dd></div>
+        <% end %>
+      </dl>
+      <% in_transit = @rows.sum(&:in_transit) %>
+      <% unsold = @rows.sum(&:unsold) %>
+      <% if in_transit.positive? || unsold.positive? %>
+        <p class="mt-3 text-xs text-ink-muted"><%= t("sales.stock.out_detail", in_transit: format_pounds(in_transit), unsold: format_pounds(unsold)) %></p>
+      <% end %>
+    </section>
+
+    <%# What the coffee left in stock cost (client, 2026-10-26: «Valor del inventario»). %>
+    <section class="panel p-4" aria-labelledby="state-value" data-stock-value>
+      <h2 id="state-value" class="font-semibold"><%= t(".value.title") %></h2>
+      <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
+        <div><dt class="text-xs text-ink-muted"><%= t(".value.purchase") %></dt><dd class="font-semibold tabular-nums"><%= format_money(@totals.purchase_value) %></dd></div>
+        <div><dt class="text-xs text-ink-muted"><%= t(".value.costs") %></dt><dd class="font-semibold tabular-nums"><%= format_money(@totals.costs) %></dd></div>
+        <div><dt class="text-xs text-ink-muted"><%= t(".value.total") %></dt><dd class="text-xl font-bold tabular-nums"><%= format_money(@totals.value) %></dd></div>
+        <div><dt class="text-xs text-ink-muted"><%= t(".value.per_pound") %></dt><dd class="text-xl font-bold tabular-nums"><%= @totals.cost_per_pound ? format_money(@totals.cost_per_pound) : "—" %></dd></div>
+      </dl>
+      <p class="mt-3 text-xs text-ink-muted"><%= t(".value.help") %></p>
+    </section>
+  </div>
+
+  <% if @alert&.any? %>
+    <%= render "sales/cherry_alert", alert: @alert, warehouse: @warehouse %>
+  <% end %>
+
+  <section class="mt-6" aria-labelledby="state-lots">
+    <div class="flex flex-wrap items-baseline justify-between gap-3">
+      <div>
+        <h2 id="state-lots" class="text-lg font-semibold"><%= t(".lots.title") %></h2>
+        <p class="mt-1 text-sm text-ink-muted"><%= t(".lots.help") %></p>
+      </div>
+      <%= link_to t(".ledger"), sales_stock_path(coffee_state: @coffee_state, warehouse_id: @warehouse&.id, anchor: "stock-ledger-title"),
+            class: "btn btn-sm", data: { turbo_frame: "_top" } %>
+    </div>
+    <% if @lots.any? %>
+      <% thresholds = CherryAlert.hours %>
+      <div class="mt-4 @container">
+        <ul class="space-y-3 @3xl:hidden">
+          <% @lots.reverse_each do |lot| %>
+            <li class="data-card" id="lot_card_<%= lot.key %>">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="font-medium"><%= render "sales/lots/origin", lot: %></p>
+                  <p class="text-xs text-ink-muted"><%= l(lot.entered_at) %> · <%= stock_age(lot) %>
+                    <% unless @warehouse %> · <%= @warehouses.find { it.id == lot.warehouse_id }&.name %><% end %></p>
+                </div>
+                <%= render "sales/lots/badges", lot:, first: @first_out.include?(lot), thresholds: %>
+              </div>
+              <p class="mt-2 text-sm tabular-nums"><%= t(".lots.card_line", left: format_pounds(lot.net), entered: format_pounds(lot.net_in), value: format_money(lot.value)) %></p>
+            </li>
+          <% end %>
+        </ul>
+        <div class="hidden overflow-x-auto panel @3xl:block">
+          <table class="data-table data-table-compact" data-controller="table-sort">
+            <thead>
+              <tr>
+                <th><%= t("sales.lots.columns.origin") %></th>
+                <% unless @coffee_state %><th><%= Purchase.human_attribute_name(:coffee_state) %></th><% end %>
+                <% unless @warehouse %><th><%= Warehouse.model_name.human %></th><% end %>
+                <th><%= t("sales.lots.columns.entered_at") %></th>
+                <th><%= t("sales.lots.columns.age") %></th>
+                <th class="text-right"><%= t("sales.lots.columns.entered") %></th>
+                <th class="text-right"><%= t("sales.lots.columns.left") %></th>
+                <th class="text-right"><%= t(".sacks") %></th>
+                <th class="text-right"><%= t("sales.lots.columns.value") %></th>
+                <th data-sort="false"><span class="sr-only"><%= t("sales.lots.columns.status") %></span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @lots.reverse_each do |lot| %>
+                <tr id="lot_<%= lot.key %>">
+                  <td><%= render "sales/lots/origin", lot: %></td>
+                  <% unless @coffee_state %><td><%= lot.human_coffee_state %></td><% end %>
+                  <% unless @warehouse %><td><%= @warehouses.find { it.id == lot.warehouse_id }&.name %></td><% end %>
+                  <td class="whitespace-nowrap" data-sort-value="<%= lot.entered_at.to_i %>"><%= l(lot.entered_at) %></td>
+                  <td class="whitespace-nowrap" data-sort-value="<%= lot.hours %>"><%= stock_age(lot) %></td>
+                  <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(lot.net_in) %></td>
+                  <td class="whitespace-nowrap text-right font-semibold tabular-nums"><%= format_pounds(lot.net) %></td>
+                  <td class="whitespace-nowrap text-right tabular-nums"><%= number_with_precision(lot.sacks, precision: 1) %></td>
+                  <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(lot.value) %></td>
+                  <td><%= render "sales/lots/badges", lot:, first: @first_out.include?(lot), thresholds: %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% else %>
+      <p class="empty-state mt-4"><%= t(".lots.empty") %></p>
+    <% end %>
+  </section>
+<% end %>

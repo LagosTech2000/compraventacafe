@@ -4,13 +4,23 @@
 <%= render "sales/nav" %>
 
 <h1 class="sr-only"><%= t(".title") %></h1>
-<% if policy(CoffeeConversion).create? %>
-  <div class="mb-4 flex flex-wrap justify-end gap-2">
+<div class="mb-4 flex flex-wrap justify-end gap-2">
+  <% if policy(Warehouse).index? %>
+    <%= link_to t(".warehouses"), sales_warehouses_path, class: "btn" %>
+  <% end %>
+  <% if policy(WarehouseTransfer).create? %>
+    <%= modal_link_to t(".transfer"), new_sales_warehouse_transfer_path(from_warehouse_id: @warehouse&.id), class: "btn" %>
+  <% end %>
+  <% if policy(CoffeeConversion).create? %>
     <%= help_guide_button HelpGuide.process(:coffee_conversion), label: true %>
-    <%= modal_link_to t(".convert"), new_sales_coffee_conversion_path, class: "btn btn-primary" %>
-  </div>
-<% end %>
-<%= render "sales/stock", stock: @stock %>
+    <%= modal_link_to t(".convert"), new_sales_coffee_conversion_path(warehouse_id: @warehouse&.id), class: "btn btn-primary" %>
+  <% end %>
+</div>
+
+<%= turbo_frame_tag "stock-page", class: "query-frame block", target: "_top", data: { turbo_action: "advance", controller: "frame-scroll" } do %>
+<div class="mb-4"><%= warehouse_tabs(@warehouses, @warehouse, frame: "stock-page") { |id| sales_stock_path(warehouse_id: id) } %></div>
+<%= render "sales/stock", stock: @stock, warehouse: @warehouse, alert: @alert %>
+<% if @alert.any? %><%= render "sales/cherry_alert", alert: @alert, warehouse: @warehouse %><% end %>
 
 <h2 id="stock-ledger-title" class="mt-8 scroll-mt-24 text-lg font-semibold"><%= t(".ledger") %></h2>
 <p class="mt-1 text-sm text-ink-muted"><%= t(".ledger_help") %></p>
@@ -21,19 +31,24 @@
     <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
     <%= filter_select form, :coffee_state, Purchase.human_attribute_name(:coffee_state),
           enum_options(Purchase, :coffee_state, Purchase::COFFEE_STATES), selected: @filter.coffee_state %>
+    <%= form.hidden_field :warehouse_id, value: @filter.warehouse_id %>
   <% end %>
 
   <%= list_frame "stock-ledger" do %>
     <%= render "shared/filter_status", filter: @filter, count: t(".count", count: @filter.total_count), periods: quick_periods(@filter),
           chips: filter_chips(@filter, coffee_state: ->(state) { Purchase.human_attribute_name("coffee_state/#{state}") }) %>
 
-    <%# Gross, net and QQ, like the stock's cards. %>
-    <div class="mt-4 flex flex-wrap gap-3">
+    <%# The period in one line: what there was, what came in and left, what is left. %>
+    <dl class="mt-4 grid gap-3 panel p-4 sm:grid-cols-4" data-ledger-totals>
       <% { opening: [ @ledger.gross_opening, @ledger.opening ], pounds_in: [ @ledger.gross_in, @ledger.pounds_in ],
            pounds_out: [ @ledger.gross_out, @ledger.pounds_out ], closing: [ @ledger.gross_closing, @ledger.closing ] }.each do |key, (gross, net)| %>
-        <%= render "sales/stock_card", title: t(".totals.#{key}"), key: "ledger-#{key}", gross:, net:, quintals: PurchaseCalculation.quintals(net) %>
+        <div data-ledger-total="<%= key %>">
+          <dt class="text-xs text-ink-muted"><%= t(".totals.#{key}") %></dt>
+          <dd class="text-lg font-bold tabular-nums"><%= t("sales.stock.pounds", pounds: format_pounds(net)) %></dd>
+          <dd class="text-xs text-ink-muted tabular-nums"><%= t(".balance_gross", gross: format_pounds(gross)) %></dd>
+        </div>
       <% end %>
-    </div>
+    </dl>
 
     <% sorting = { filter: @filter, frame: "stock-ledger" } %>
     <% if @entries.any? %>
@@ -99,3 +114,4 @@
     <% end %>
   <% end %>
 </div>
+<% end %>

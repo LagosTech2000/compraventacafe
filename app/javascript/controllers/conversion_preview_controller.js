@@ -9,7 +9,7 @@ import { Controller } from "@hotwired/stimulus"
 // it is weighed like a purchase: (gross − 1 lb × sack) × (1 − humidity) ×
 // (1 − damage), and it says how many net pounds more or less than what went in.
 export default class extends Controller {
-  static targets = ["state", "gross", "net", "quintals", "toState", "available", "overStock", "sacks", "humidity", "damage", "difference"]
+  static targets = ["state", "gross", "net", "quintals", "toState", "available", "overStock", "sacks", "humidity", "damage", "difference", "warehouse"]
   static values = { ratios: Object, stock: Object, toStates: Object, state: String, quintalWeight: Number, inputNet: Number }
 
   connect() {
@@ -29,7 +29,8 @@ export default class extends Controller {
     if (this.hasDifferenceTarget) this.showDifference(net)
 
     if (this.hasAvailableTarget) {
-      const available = parseFloat(this.stockValue[state] ?? 0)
+      const stock = this.hasWarehouseTarget ? (this.stockValue[this.warehouseTarget.value] || {}) : this.stockValue
+      const available = parseFloat(stock[state] ?? 0)
       this.availableTarget.textContent = `${this.pounds.format(available)} lb`
       this.overStockTarget.hidden = !(gross > available)
     }

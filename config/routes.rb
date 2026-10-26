@@ -92,7 +92,15 @@ Rails.application.routes.draw do
     end
     resources :carriers, except: :destroy
     resources :trucks, except: :destroy
+    resources :warehouses
+    # Coffee moved from one warehouse to another.
+    resources :warehouse_transfers, path: "transfers", only: %i[ index show new create ] do
+      patch :void, on: :member
+    end
     resource :stock, only: :show
+    # One coffee state of the stock (or all: "total"), lot by lot.
+    get "stock/:coffee_state", to: "stock_states#show", as: :stock_state,
+                               constraints: { coffee_state: /cherry|wet_parchment|dry_parchment|total/ }
     # Coffee converted to the next state: weighed first, its result later.
     resources :coffee_conversions, path: "conversions", only: %i[ index show new create ] do
       member do

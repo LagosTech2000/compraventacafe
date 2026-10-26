@@ -1,0 +1,11 @@
+<%# A lot's marks: the next one to go out (the oldest of its warehouse) and,
+    for cherry, how long it has waited (CherryAlert). %>
+<% level = CherryAlert.level_for(lot, thresholds:) %>
+<span class="flex flex-wrap justify-end gap-1">
+  <% if first %><span class="badge badge-neutral"><%= t("sales.lots.first_out") %></span><% end %>
+  <% if level %>
+    <span class="badge <%= level == "critical" ? "badge-danger" : "badge-warning" %>" data-cherry-alert="<%= level %>">
+      <%= t("sales.cherry_alert.levels.#{level}") %>
+    </span>
+  <% end %>
+</span>

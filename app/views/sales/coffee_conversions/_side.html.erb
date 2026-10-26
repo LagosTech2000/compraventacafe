@@ -12,6 +12,9 @@
         <dt class="text-xs text-ink-muted"><%= CoffeeConversion.human_attribute_name(input ? :weighed_at : :finished_at) %></dt>
         <dd><%= l(input ? conversion.weighed_at : conversion.finished_at) %></dd>
       </div>
+      <% if (warehouse = input ? conversion.warehouse : conversion.output_warehouse) %>
+        <div class="col-span-2"><dt class="text-xs text-ink-muted"><%= Warehouse.model_name.human %></dt><dd><%= warehouse.name %></dd></div>
+      <% end %>
       <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.gross") %></dt><dd class="font-semibold tabular-nums"><%= t("sales.stock.pounds", pounds: format_pounds(gross)) %></dd></div>
       <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.net") %></dt><dd class="text-lg font-bold tabular-nums"><%= t("sales.stock.pounds", pounds: format_pounds(conversion["#{side}_net_weight"])) %></dd></div>
       <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.quintals_label") %></dt><dd class="font-semibold tabular-nums"><%= format_pounds(input ? conversion.input_quintals : conversion.output_quintals) %></dd></div>

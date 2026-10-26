@@ -46,7 +46,10 @@
   </div>
 <% end %>
 
-<div class="mt-8"><%= render "sales/stock", stock: @stock %></div>
+<div class="mt-8">
+  <%= render "sales/stock", stock: @stock, alert: @alert %>
+  <% if @alert.any? %><%= render "sales/cherry_alert", alert: @alert %><% end %>
+</div>
 
 <h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".today", date: l(@daily_close.date, format: :long)) %></h2>
 <%= render "sales/summary", summary: @daily_close.summary %>

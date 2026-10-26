@@ -7,7 +7,7 @@ RSpec.describe "Coffee conversions" do
 
   def page = Nokogiri::HTML(response.body)
   def card(key) = page.at_css("[data-coffee-state=#{key}]")
-  def card_values(key) = card(key).css("dd").map { it.text.squish }
+  def card_net(key) = card(key).at_css("[data-live-value]").text.squish
 
   before do
     create(:purchase, gross_weight: 2_000) # 973.63 lb net of wet parchment
@@ -27,8 +27,8 @@ RSpec.describe "Coffee conversions" do
     expect(AuditEvent.where(auditable: conversion, action: "create")).to exist
 
     get sales_stock_path
-    expect(card_values("wet_parchment")).to eq([ "1,000.00 lb", "486.81 lb", "3.89" ])
-    expect(card_values("in_process")).to eq([ "1,000.00 lb", "486.82 lb", "3.89" ])
+    expect(card_net("wet_parchment")).to eq("486.81 lb")
+    expect(card_net("in_process")).to eq("486.82 lb")
     expect(card("in_process")["href"]).to eq(sales_coffee_conversions_path(status: "in_process"))
 
     get edit_sales_coffee_conversion_result_path(conversion)
@@ -39,7 +39,7 @@ RSpec.describe "Coffee conversions" do
     expect(conversion.reload).to have_attributes(status: "finished", output_net_weight: BigDecimal("524.48"), output_damage_percent: 0, finished_by: admin)
 
     get sales_stock_path
-    expect(card_values("dry_parchment")).to eq([ "600.00 lb", "524.48 lb", "4.20" ])
+    expect(card_net("dry_parchment")).to eq("524.48 lb")
     expect(card("in_process")).to be_nil
     rows = page.css("#stock-ledger tbody tr").map { it.text.squish }
     expect(rows).to include(a_string_including("De conversión", "Pergamino seco", "+600.00", "+524.48", "+4.20"),
@@ -68,11 +68,11 @@ RSpec.describe "Coffee conversions" do
     expect(response.body).to include("Pesado el no puede estar en blanco")
   end
 
-  it "opens the kardex of each card from the summary, filtered by its state" do
+  it "opens the detail of each card from the summary, and the kardex filtered by its state" do
     get sales_root_path
-    expect(card("total")["href"]).to start_with(sales_stock_path)
+    expect(card("total")["href"]).to eq(sales_stock_state_path("total"))
     %w[cherry wet_parchment dry_parchment].each do |state|
-      expect(card(state)["href"]).to eq(sales_stock_path(coffee_state: state, anchor: "stock-ledger-title"))
+      expect(card(state)["href"]).to eq(sales_stock_state_path(state))
     end
 
     get sales_stock_path(coffee_state: "wet_parchment")

@@ -5,6 +5,7 @@ module Sales
     def index
       authorize [ :sales, :home ]
       @stock = CoffeeStock.new
+      @alert = CherryAlert.new
       shipments = policy_scope(Shipment)
       @in_transit = shipments.in_transit
       @unsold = shipments.unsold

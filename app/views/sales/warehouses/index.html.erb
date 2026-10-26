@@ -1,0 +1,86 @@
+<% content_for :title, t(".title") %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= live_updates_from :sales %>
+<%= render "sales/nav" %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <% if policy(WarehouseTransfer).index? %>
+      <%= link_to t(".transfers"), sales_warehouse_transfers_path, class: "btn" %>
+    <% end %>
+    <% if policy(Warehouse).create? %>
+      <%= modal_link_to t(".new"), new_sales_warehouse_path, class: "btn btn-primary" %>
+    <% end %>
+  </div>
+</div>
+
+<% statuses = WarehouseFilter::STATUSES.map { [ t("sales.warehouses.index.statuses.#{it}"), it ] } %>
+<div data-controller="live-filter">
+<%= render layout: "shared/filters", locals: { filter: @filter, url: sales_warehouses_path, frame: "warehouses-list", live: true } do |form| %>
+  <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("sales.warehouses.index.search_placeholder") %>
+  <%= filter_select form, :status, t("sales.buyers.index.status"), statuses, selected: @filter.status %>
+<% end %>
+
+<%= list_frame "warehouses-list" do %>
+<%= live_list_status @filter, status: statuses %>
+<% sorting = { filter: @filter, frame: "warehouses-list" } %>
+<% if @warehouses.any? %>
+  <div class="mt-6 @container">
+    <ul class="space-y-3 @3xl:hidden">
+      <% @warehouses.each do |warehouse| %>
+        <li class="data-card" id="<%= dom_id(warehouse, :card) %>">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="font-medium"><%= warehouse.name %>
+                <% if warehouse.main? %><span class="badge badge-success ml-1"><%= t(".main") %></span><% end %></p>
+              <p class="text-xs text-ink-muted">
+                <%= Purchase::COFFEE_STATES.map { "#{Purchase.human_attribute_name("coffee_state/#{it}")}: #{format_pounds(warehouse["net_#{it}"])} lb" }.join(" · ") %>
+              </p>
+            </div>
+            <%= detail_button sales_warehouse_path(warehouse) %>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+    <div class="hidden overflow-x-auto panel @3xl:block">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <%= sort_th Warehouse.human_attribute_name(:name), :name, sorting %>
+            <%= sort_th Warehouse.human_attribute_name(:main), :main, sorting %>
+            <% Purchase::COFFEE_STATES.each do |state| %>
+              <%= sort_th t(".net_of", state: Purchase.human_attribute_name("coffee_state/#{state}")), :"net_#{state}", sorting, class: "text-right" %>
+            <% end %>
+            <%= sort_th t(".total"), :total, sorting, class: "text-right" %>
+            <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @warehouses.each do |warehouse| %>
+            <tr id="<%= dom_id(warehouse) %>">
+              <td class="font-medium">
+                <%= warehouse.name %>
+                <% unless warehouse.active? %><span class="badge badge-neutral ml-1"><%= t("sales.warehouses.index.statuses.inactive") %></span><% end %>
+              </td>
+              <td><%= warehouse.main? ? tag.span(t(".main"), class: "badge badge-success") : "—" %></td>
+              <% Purchase::COFFEE_STATES.each do |state| %>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(warehouse["net_#{state}"]) %></td>
+              <% end %>
+              <td class="whitespace-nowrap text-right font-semibold tabular-nums"><%= format_pounds(warehouse["net_total"]) %></td>
+              <td class="cell-actions"><%= detail_button sales_warehouse_path(warehouse) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "warehouses-list" %>
+<% else %>
+  <p class="empty-state mt-6"><%= t(".empty") %></p>
+<% end %>
+<% end %>
+</div>

@@ -60,12 +60,12 @@ module Sales
 
     private
       def set_shipment
-        @shipment = Shipment.includes(:buyer, :carrier, :truck, { driver: :person }, :created_by, :voided_by, :active_sale_line, :sale, :weighings).find(params[:id])
+        @shipment = Shipment.includes(:buyer, :warehouse, :carrier, :truck, { driver: :person }, :created_by, :voided_by, :active_sale_line, :sale, :weighings).find(params[:id])
         authorize @shipment unless action_name == "void"
       end
 
       def shipment_params
-        params.expect(shipment: [ :departed_at, :buyer_id, :coffee_state, :remission_number, :carrier_id, :truck_id, :driver_id, :driver_name, :observations,
+        params.expect(shipment: [ :departed_at, :buyer_id, :warehouse_id, :coffee_state, :remission_number, :carrier_id, :truck_id, :driver_id, :driver_name, :observations,
                                   :origin_gross_weight, :origin_sacks, :origin_humidity_percent, :origin_damage_percent,
                                   :origin_yield_factor, :origin_weight_mode, :lock_version,
                                   weighings_attributes: [ [ :id, :gross_weight, :sacks, :_destroy ] ] ])

@@ -28,7 +28,7 @@ module Sales
       end
 
       def result_params
-        params.expect(coffee_conversion: [ :finished_at, :output_gross_weight, :output_sacks, :output_humidity_percent, :output_damage_percent, :lock_version ])
+        params.expect(coffee_conversion: [ :finished_at, :output_warehouse_id, :output_gross_weight, :output_sacks, :output_humidity_percent, :output_damage_percent, :lock_version ])
       end
   end
 end

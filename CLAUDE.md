@@ -148,6 +148,10 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Precio por libra / por quintal / libras por quintal (120 por defecto) | `Sale#price_unit`: `pound` / `quintal`; `Sale#quintal_pounds` (`Sale::QUINTAL_POUNDS`) |
 | Tolerancia de diferencia de peso | `SiteSetting#weight_tolerance_percent` (`WeightTolerance`) |
 | Inventario / kárdex | `CoffeeStock` / `StockLedger` (`sales/stock#show`), reporte `CoffeeStockReport` |
+| Bodega (por defecto) / traslado entre bodegas | `Warehouse` (`main`) / `WarehouseTransfer` (`sales/warehouse_transfers`) |
+| Lote (lo que queda de una compra o de un proceso) / detalle de un inventario | `CoffeeLots` (`Lot`, `Portion`) / `sales/stock_states#show` (`/sales/stock/:coffee_state`, `total` = todo) |
+| Valor del inventario (valor de compra + costos acumulados) | `CoffeeLots::Totals#value`, `#cost_per_pound` |
+| Uva sin procesar (aviso / urgente) | `CherryAlert` (`SiteSetting#cherry_warning_hours` / `#cherry_critical_hours`) |
 | QQ de compra (÷ 125) / QQ de venta (÷ libras por quintal de la venta) | `PurchaseCalculation.quintals` / `Sale#quintals` |
 | Liquidación del comprador / lo que se cobra | `Sale#buyer_total`, `buyer_total_reason` (`sales/sale_settlements`) / `Sale#amount_due` |
 | Diferencia de peso en lempiras | `Sale#difference_amount`, `SaleSummary#difference_amount` |
@@ -949,7 +953,7 @@ pendientes); tareas pendientes, solo si existen (compras sin facturar,
 facturas sin cancelar, préstamos vencidos, períodos por pagar, empleados
 de planillas por día sin salario; y desde el 2026-10-25 **carreros por
 pagar**, **conversiones abiertas** y **estados del café en negativo** en
-el inventario); **lo que debes y lo que te deben** (Fernando, 2026-10-25,
+el inventario; desde el 2026-10-26, **uva sin procesar**); **lo que debes y lo que te deben** (Fernando, 2026-10-25,
 `Dashboard#owed_by_business` / `#owed_to_business`: facturas por pagar,
 comisiones de carreros, planillas de fincas e interna por pagar y
 anticipos de compradores contra ventas y préstamos por cobrar, con caja y
@@ -1023,14 +1027,54 @@ contado/crédito, forma de pago) [CONFIRMADO]:
 
 - **Inventario** (`CoffeeStock`): libras netas **por estado del café**. Las
   compras activas suman su `net_weight`; las salidas no anuladas restan su
-  neto local. Se muestra también en QQ de compra (÷125). Cada tarjeta
-  de «Café en inventario» (total, uva, pergamino húmedo y seco) dice
-  **libras brutas, libras netas y quintales, en ese orden** (Fernando,
-  2026-10-25); las brutas = bruto de las compras activas − bruto local de
-  las salidas no anuladas (`CoffeeStock#gross_stock`, `sales/_stock_card`).
-  **Cada tarjeta abre el kárdex** de su estado (`sales/stock?coffee_state=`;
-  la del total, sin filtro), en el Resumen y en Inventario. El kárdex
-  lleva brutas, netas y quintales de cada movimiento y de los saldos.
+  neto local. Se muestra también en QQ de compra (÷125). **Cada tarjeta de
+  «Café en inventario» muestra solo las libras netas** (cliente,
+  2026-10-26: «libras total netas siempre, pero al dar clic poder ver
+  todos esos números»; reemplaza las tres cifras del 2026-10-25) y **abre
+  el detalle de su estado** (`sales/stock_states#show`; la del total, de
+  todos): libras netas, brutas (`CoffeeStock#gross_stock`), QQ, sacos,
+  daño aplicado, «Valor del inventario» y sus **lotes**. El kárdex sigue
+  debajo en Inventario («Ver movimientos» desde el detalle) y lleva
+  brutas, netas y quintales de cada movimiento y de los saldos.
+- **Bodegas** (`Warehouse`, cliente, 2026-10-26) [CONFIRMADO]: se crean
+  «Bodega 1» (por defecto, `main`) y «Bodega 2», se renombran y se agregan.
+  Cada compra entra a una bodega (la de por defecto, salvo que se elija
+  otra), cada salida y cada conversión sacan de una y el resultado de una
+  conversión entra a la que se elija (`output_warehouse_id`). Inventario y
+  el detalle se ven de todas o de una (pestañas, frame `stock-page` /
+  `stock-state`); el kárdex de una bodega incluye sus traslados. **Traslados**
+  (`WarehouseTransfer`, `sales/warehouse_transfers`): estado del café y
+  libras netas, de una bodega a otra; se anulan. Lo ya registrado pasó a
+  «Bodega 1» (migración `CreateWarehouses`); en una base nueva,
+  `Warehouse.main!` crea «Bodega 1» con la primera compra. Decisiones de
+  implementación, **pendientes de confirmar**: el traslado se escribe en
+  libras netas (sus brutas salen de la proporción de esa bodega) y pasar
+  de lo que hay avisa sin bloquear; una bodega usada se desactiva (no se
+  borra) y solo sin café adentro y si no es la de por defecto.
+- **Lotes** (`CoffeeLots`, cliente, 2026-10-26) [CONFIRMADO: «se priorizan
+  las compras más viejas»]: cada compra (y cada resultado de conversión)
+  es un lote; las salidas, conversiones y traslados toman café **de los
+  lotes más viejos primero**. El detalle lista los lotes con café: de qué
+  compra o proceso viene, cuándo entró, cuánto lleva en bodega, cuánto
+  entró y cuánto queda, sacos y valor, con «Sale primero» en el más viejo
+  de cada bodega; el traslado y las salidas dicen de qué lotes salió su
+  café (`sales/_portions`). No se guarda nada: se recalcula en orden cada
+  vez (anular o corregir algo reacomoda los lotes). Decisiones de
+  implementación, **pendientes de confirmar**: se cuenta en libras netas;
+  al sacar parte de un lote, sus sacos, daño y valor bajan en la misma
+  proporción que las libras; una compra con fecha atrasada cambia qué
+  lote salió antes.
+- **Valor del inventario** (cliente, 2026-10-26) [CONFIRMADO]: valor de
+  compra (lo pagado a los productores por el café que queda) + costos
+  acumulados = costo total, y costo por libra neta. Los costos acumulados
+  son **la comisión del carrero** de cada compra (respuesta 20) y, en el
+  resultado de una conversión, los costos del café que entró. Combustible,
+  personal y mantenimiento del vehículo esperan la pregunta 23.
+- **Uva sin procesar** (`CherryAlert`, cliente, 2026-10-26) [CONFIRMADO]:
+  un lote de uva que lleva **12 horas** sale con aviso y a las **24**,
+  urgente; las dos horas se cambian en Configuración del sitio. Sale en el
+  Resumen, en Inventario, en el detalle de la uva y en Tareas pendientes
+  del Inicio («Uva sin procesar»), con «Procesar».
 - **Conversiones de café** (`CoffeeConversion`, Fernando, 2026-10-25)
   [CONFIRMADO]: uva → pergamino húmedo y húmedo → pergamino seco, en dos
   pasos. Primero se pesan las **libras brutas que entran**: salen de su
@@ -1835,6 +1879,9 @@ sistema ya guarda**; no agregan reglas de negocio.
 | Planillas: séptimo día, décimo, IHSS u otras deducciones o bonos | Cálculo legal de planillas | Cliente |
 | Si la factura siempre agrupa hasta 4 compras | Hoy no hay límite | Cliente |
 | Cómo calcula el dueño la ganancia | Reporte de ganancias | Cliente |
+| Combustible, personal y mantenimiento del vehículo en el valor del café: ¿por lote o repartidos por libra? (pregunta 23) | Sumarlos a los costos acumulados del inventario | Cliente |
+| Decisiones de implementación de inventario por lotes y bodegas (2026-10-26): libras netas, reparto en proporción, lotes recalculados, traslado en netas, cuándo se desactiva una bodega | Ajustes a lotes y bodegas | Fernando / Cliente |
+| Calidad por bodega | Depende de las categorías de calidad | Cliente |
 | Decisiones nuevas, por confirmar (2026-10-25): la liquidación del comprador pasa a ser lo que se cobra de la venta; los avisos de «Nueva compra» salen cuando la humedad, el rendimiento o el precio se alejan más de 30 % de lo normal (`PurchaseDefaults::UNUSUAL_PERCENT`) | Ajustes a la venta y a los avisos de la compra | Fernando / Cliente |
 | Contratos: moneda, cobro, aplicar libras a contratos | Ventas / contratos | Cliente |
 | Reporte exacto que piden el contador y el SAR | Reportería | Cliente |

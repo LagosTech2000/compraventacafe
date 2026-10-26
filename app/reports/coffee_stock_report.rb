@@ -7,7 +7,8 @@
 class CoffeeStockReport < Report
   include InMemoryReport
 
-  KINDS = StockLedger::KINDS
+  # Of the whole business: a transfer between warehouses changes nothing here.
+  KINDS = StockLedger::KINDS - %w[transfer_in transfer_out]
 
   Entry = Data.define(:id, :date, :at, :kind, :description, :coffee_state, :pounds_in, :pounds_out, :route) do
     def net = pounds_in - pounds_out
