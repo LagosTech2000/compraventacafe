@@ -15,8 +15,11 @@ RSpec.describe "Coffee in stock cards" do
     %w[total cherry wet_parchment dry_parchment].each do |key|
       card = page.at_css("[data-coffee-state=#{key}]")
       expect(card.css("[data-stock-part]").map { it["data-stock-part"] }).to eq(%w[gross net quintals]), key
-      expect(card.css("dt").map(&:text)).to eq([ "Libras brutas", "Libras netas", "Quintales" ])
+      expect(card.css("dt").map(&:text)).to eq([ "Libras brutas", "Libras netas", "QQ de compra" ])
     end
+    # The cherry's net pounds, said in words; the quintals named apart from the sale's.
+    expect(page.at_css("[data-coffee-state=cherry] [data-cherry-net-note]").text).to include("el café que se espera sacar")
+    expect(page.at_css("[data-coffee-state=wet_parchment] [data-cherry-net-note]")).to be_nil
     wet = page.at_css("[data-coffee-state=wet_parchment]")
     expect(wet.css("dd").map { it.text.squish }).to eq([ "2,000.00 lb", "973.63 lb", "7.79" ])
   end

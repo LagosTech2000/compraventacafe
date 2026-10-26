@@ -5,7 +5,7 @@
 <p class="mt-1 text-sm text-ink-muted"><%= t(".sale", number: @sale.display_number, buyer: @sale.buyer.name) %></p>
 
 <dl class="mt-4 grid grid-cols-3 gap-3">
-  <% { total: @sale.total, paid_total: @sale.paid_total, balance_due: @sale.balance_due }.each do |key, value| %>
+  <% { total: @sale.total, buyer_total: @sale.buyer_total, paid_total: @sale.paid_total, balance_due: @sale.balance_due }.compact.each do |key, value| %>
     <div class="stat">
       <dt><%= t("sales.sales.payments.#{key}") %></dt>
       <dd><%= format_money(value) %></dd>

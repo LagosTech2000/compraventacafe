@@ -6,7 +6,7 @@ class SalesReport < Report
     LEFT JOIN (SELECT sale_id, SUM(amount) AS amount FROM sale_payments GROUP BY sale_id) sale_paid ON sale_paid.sale_id = sales.id
   SQL
   PAID = "COALESCE(sale_paid.amount, 0)".freeze
-  BALANCE = "(sales.total - #{PAID})".freeze
+  BALANCE = "(COALESCE(sales.buyer_total, sales.total) - #{PAID})".freeze
   UNPAID = "sales.payment_status IN ('pending', 'partial')".freeze
   QUINTALS = "SUM(sales.net_weight / sales.quintal_pounds)".freeze
   DIFFERENCE = "(sales.net_weight - sales.origin_net_weight)".freeze

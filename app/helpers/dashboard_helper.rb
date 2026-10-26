@@ -52,6 +52,9 @@ module DashboardHelper
     when :periods_to_pay then dashboard.periods_to_pay.size
     when :members_without_wage then dashboard.members_without_wage.size
     when :over_budget then dashboard.over_budget.size
+    when :open_conversions then dashboard.open_conversions.size
+    when :negative_stock then dashboard.negative_stock.size
+    when :haulers_to_pay then dashboard.haulers_to_pay.size
     end
   end
 end

@@ -15,6 +15,8 @@ class MoneyAccount < ApplicationRecord
 
   KINDS = %w[cash bank].freeze
 
+  has_many :cash_counts, -> { newest_first }, dependent: :restrict_with_error, inverse_of: :money_account
+
   normalizes :name, :bank_name, :account_number, with: ->(value) { value.squish.presence }
   normalizes :observations, with: FieldFormats::STRIP
 

@@ -81,6 +81,8 @@ Rails.application.routes.draw do
     end
     resources :sales, only: %i[ index show new create ] do
       patch :void, on: :member
+      # The buyer's settlement: what it pays per its own liquidation.
+      resource :settlement, only: %i[edit update], controller: "sale_settlements"
       # What the buyer pays ("cobros"), each with its receipt.
       resources :payments, only: %i[ new create show destroy ], controller: "sale_payments"
     end
@@ -115,6 +117,8 @@ Rails.application.routes.draw do
     resources :money_accounts, except: :destroy
     resources :account_transfers, only: %i[ new create destroy ]
     resources :other_incomes, only: %i[ new create destroy ]
+    # Cash counts ("arqueos"): what was counted against the system's balance.
+    resources :cash_counts, only: %i[ new create destroy ]
     resources :categories, only: %i[ index new create edit update ]
     resource :budget, only: %i[ show update ]
     # Giving an account to what was registered without one.

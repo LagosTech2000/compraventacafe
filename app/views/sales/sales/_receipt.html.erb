@@ -66,6 +66,12 @@
       <dt><%= Sale.human_attribute_name(:total) %></dt>
       <dd class="tabular-nums"><%= format_money(sale.total) %></dd>
     </div>
+    <% if sale.buyer_total %>
+      <div class="flex justify-between gap-4 py-0.5" data-buyer-settlement>
+        <dt><%= t("sales.sales.receipt.buyer_total", reason: sale.buyer_total_reason || "—") %></dt>
+        <dd class="tabular-nums"><%= format_money(sale.buyer_total) %></dd>
+      </div>
+    <% end %>
     <% payments.each do |payment| %>
       <div class="flex justify-between gap-4 py-0.5">
         <dt><%= t("sales.sales.receipt.payment", number: payment.display_number, date: l(payment.paid_on), method: payment.human_payment_method) %></dt>

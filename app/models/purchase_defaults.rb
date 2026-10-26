@@ -16,6 +16,12 @@ module PurchaseDefaults
     end
   end
 
+  # How far a value may go from the usual one before the form warns
+  # (Fernando, 2026-10-25: only a warning, it never stops the purchase):
+  # humidity and yield from their starting value, the price from the day's
+  # average for that coffee state. Pending to confirm with the client.
+  UNUSUAL_PERCENT = 30
+
   # What the form's calculator switches to when the coffee state changes.
   def self.by_coffee_state
     Purchase::COFFEE_STATES.index_with { |state| inputs_for(state) }

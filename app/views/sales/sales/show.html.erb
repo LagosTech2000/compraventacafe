@@ -32,10 +32,28 @@
       <% if policy(SalePayment.new(sale: @sale)).create? %>
         <%= modal_link_to t("sales.sales.show.new_payment"), new_sales_sale_payment_path(@sale), class: "btn btn-primary" %>
       <% end %>
+      <% if policy(@sale).settle? %>
+        <%= modal_link_to t("sales.sales.show.settle"), edit_sales_sale_settlement_path(@sale), class: "btn" %>
+      <% end %>
+    <% end %>
+    <% if (difference = @sale.settlement_difference) %>
+      <%# The buyer's liquidation against the sale (Fernando, 2026-10-25). %>
+      <p class="<%= difference.negative? ? "flash-alert" : "flash-notice" %> mt-3" role="status" data-settlement-difference>
+        <%= t(".settlement.#{difference.negative? ? "less" : (difference.zero? ? "same" : "more")}",
+              buyer_total: format_money(@sale.buyer_total), amount: format_money(difference.abs), reason: @sale.buyer_total_reason) %>
+      </p>
     <% end %>
     <% if @sale.over_tolerance? %>
       <p class="flash-alert mt-3" role="status">
         <%= t(".over_tolerance", tolerance: format_percent(WeightTolerance.percent)) %> <%= weight_difference(@sale) %>
+      </p>
+    <% end %>
+    <% unless @sale.net_difference.zero? %>
+      <%# The scales' difference in money (Fernando, 2026-10-25). %>
+      <p class="mt-3 text-sm" data-weight-difference-money>
+        <%= t(".difference_money.#{@sale.net_difference.negative? ? "less" : "more"}",
+              pounds: format_pounds(@sale.net_difference.abs), amount: format_money(@sale.difference_amount.abs),
+              price: format_money(@sale.price_per_pound)) %>
       </p>
     <% end %>
     <%= render "sales/sales/payments", sale: @sale %>

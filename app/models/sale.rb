@@ -5,7 +5,9 @@
 # SaleIssuer; weights and total are kept as they were then.
 #
 # Collected in payments (SalePayment), like the invoices: pending, partial,
-# paid. It is not edited: voided (only without payments) its shipments are
+# paid. The buyer's settlement (buyer_total, with its reason) is what the
+# buyer says it pays per its own liquidation; once entered, it is what is
+# collected (amount_due) instead of the total. It is not edited: voided (only without payments) its shipments are
 # free for another sale, and its lines stay as a record.
 class Sale < ApplicationRecord
   include Auditable
@@ -30,7 +32,7 @@ class Sale < ApplicationRecord
   # stops the sale from refreshing its status.
   has_many :payments, -> { in_order }, class_name: "SalePayment", dependent: :restrict_with_error, inverse_of: :sale, validate: false
 
-  normalizes :buyer_document_number, :void_reason, with: ->(value) { value.squish.presence }
+  normalizes :buyer_document_number, :void_reason, :buyer_total_reason, with: ->(value) { value.squish.presence }
   normalizes :observations, with: FieldFormats::STRIP
 
   validates :sold_on, presence: true
@@ -43,6 +45,10 @@ class Sale < ApplicationRecord
   validates :buyer_document_number, length: { maximum: 60 }
   validates :void_reason, length: { maximum: 200 }
   validates :observations, length: { maximum: 500 }
+  validates :buyer_total, numericality: { greater_than: 0, less_than: 1_000_000_000 }, allow_nil: true
+  validates :buyer_total_reason, length: { maximum: 200 }
+  validates :buyer_total_reason, presence: true, if: -> { buyer_total.present? && buyer_total != total }
+  validate :buyer_total_covers_payments, if: :buyer_total_changed?
   validates :lines, presence: true, on: :create
 
   before_create :assign_number
@@ -102,13 +108,21 @@ class Sale < ApplicationRecord
   # The buyer's net − the local net, over its shipments.
   def net_difference = net_weight - origin_net_weight
   def difference_percent = origin_net_weight.positive? ? (net_difference * 100 / origin_net_weight).round(2) : nil
+  # That difference in money, at the sale's price per pound (Fernando,
+  # 2026-10-25): below zero, coffee that left and was not charged for.
+  def difference_amount = (net_difference * price_per_pound).round(2)
 
   def over_tolerance?(tolerance = WeightTolerance.percent)
     tolerance.present? && difference_percent.present? && difference_percent.abs > tolerance
   end
 
+  # What is collected: the buyer's settlement when entered, else the total.
+  def amount_due = buyer_total || total
+  # The buyer's settlement − the sale's total (below zero: it pays less).
+  def settlement_difference = buyer_total && (buyer_total - total)
+
   def paid_total = payments.reject(&:new_record?).sum(&:amount)
-  def balance_due = voided? ? 0 : total - paid_total
+  def balance_due = voided? ? 0 : amount_due - paid_total
 
   def human_payment_status = self.class.human_attribute_name("payment_status/#{payment_status}")
   # "Por quintal de 120 lb" or "Por libra".
@@ -144,7 +158,7 @@ class Sale < ApplicationRecord
   # Status, date and method from the payments (read from the database).
   def refresh_payment_status!
     paid = payments.sum(:amount)
-    status = if paid >= total then "paid"
+    status = if paid >= amount_due then "paid"
     elsif paid.positive? then "partial"
     else "pending"
     end
@@ -167,7 +181,23 @@ class Sale < ApplicationRecord
     end
   end
 
+  # Enters (or clears, with nil) the buyer's settlement and refreshes the status.
+  def settle!(buyer_total:, reason:)
+    transaction do
+      lock!
+      update!(buyer_total:, buyer_total_reason: reason)
+      refresh_payment_status!
+    end
+  end
+
   private
+    def buyer_total_covers_payments
+      return unless buyer_total
+
+      paid = payments.sum(:amount)
+      errors.add(:buyer_total, :below_paid, paid: ActiveSupport::NumberHelper.number_to_currency(paid)) if buyer_total < paid
+    end
+
     def assign_number
       self.class.connection.execute("SELECT pg_advisory_xact_lock(#{NUMBERING_LOCK_KEY})")
       self.number = (self.class.maximum(:number) || 0) + 1

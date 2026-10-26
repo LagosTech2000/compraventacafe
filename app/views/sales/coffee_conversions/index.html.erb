@@ -49,6 +49,11 @@
                 <%= t(".card_line", input: format_pounds(conversion.input_gross_weight),
                                     output: conversion.output_gross_weight ? format_pounds(conversion.output_gross_weight) : "—") %>
               </p>
+              <% if conversion.net_difference %>
+                <p class="text-xs tabular-nums <%= conversion.net_difference.negative? ? "text-danger" : "text-ink-muted" %>">
+                  <%= t(".card_difference", pounds: signed_pounds(conversion.net_difference)) %>
+                </p>
+              <% end %>
               <div class="mt-3 flex justify-end"><%= detail_button sales_coffee_conversion_path(conversion) %></div>
             </li>
           <% end %>
@@ -64,6 +69,7 @@
                 <%= sort_th t(".columns.input_net"), :input_net, sorting, class: "text-right" %>
                 <%= sort_th t(".columns.output_gross"), :output_gross, sorting, class: "text-right" %>
                 <%= sort_th t(".columns.output_net"), :output_net, sorting, class: "text-right" %>
+                <%= sort_th t(".columns.net_difference"), :net_difference, sorting, class: "text-right" %>
                 <%= sort_th CoffeeConversion.human_attribute_name(:status), :status, sorting %>
                 <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
               </tr>
@@ -81,6 +87,7 @@
                   <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(conversion.input_net_weight) %></td>
                   <td class="whitespace-nowrap text-right tabular-nums"><%= conversion.output_gross_weight ? format_pounds(conversion.output_gross_weight) : "—" %></td>
                   <td class="whitespace-nowrap text-right tabular-nums"><%= conversion.output_net_weight ? format_pounds(conversion.output_net_weight) : "—" %></td>
+                  <td class="whitespace-nowrap text-right tabular-nums <%= "text-danger" if conversion.net_difference&.negative? %>"><%= conversion.net_difference ? signed_pounds(conversion.net_difference) : "—" %></td>
                   <td><%= render "sales/coffee_conversions/status", conversion: %></td>
                   <td class="cell-actions"><%= detail_button sales_coffee_conversion_path(conversion) %></td>
                 </tr>

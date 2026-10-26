@@ -34,18 +34,20 @@ RSpec.describe "Coffee conversions" do
     get edit_sales_coffee_conversion_result_path(conversion)
     expect(response).to have_http_status(:ok)
     patch sales_coffee_conversion_result_path(conversion), params: { coffee_conversion: { finished_at: Time.current.change(sec: 0),
-                                                                                           output_gross_weight: "600", lock_version: conversion.lock_version } }
-    expect(conversion.reload).to have_attributes(status: "finished", output_net_weight: 528, finished_by: admin)
+                                                                                           output_gross_weight: "600", output_sacks: "4", output_humidity_percent: "12",
+                                                                                           output_damage_percent: "", lock_version: conversion.lock_version } }
+    expect(conversion.reload).to have_attributes(status: "finished", output_net_weight: BigDecimal("524.48"), output_damage_percent: 0, finished_by: admin)
 
     get sales_stock_path
-    expect(card_values("dry_parchment")).to eq([ "600.00 lb", "528.00 lb", "4.22" ])
+    expect(card_values("dry_parchment")).to eq([ "600.00 lb", "524.48 lb", "4.20" ])
     expect(card("in_process")).to be_nil
     rows = page.css("#stock-ledger tbody tr").map { it.text.squish }
-    expect(rows).to include(a_string_including("De conversión", "Pergamino seco", "+600.00", "+528.00", "+4.22"),
+    expect(rows).to include(a_string_including("De conversión", "Pergamino seco", "+600.00", "+524.48", "+4.20"),
                             a_string_including("A conversión", "Pergamino húmedo", "−1,000.00", "−486.82", "−3.89"))
 
     get sales_coffee_conversion_path(conversion)
-    expect(page.at_css("[data-conversion-side=output]").text.squish).to include("600.00 lb", "528.00 lb", "4.22")
+    expect(page.at_css("[data-conversion-side=output]").text.squish).to include("600.00 lb", "524.48 lb", "4.20", "Sacos que salieron4", "12.00")
+    expect(page.at_css("[data-conversion-comparison]").text.squish).to include("486.82 lb", "524.48 lb", "37.66 lb más", "7.7 %")
     expect(response.body).not_to include("roporción") # the net/gross proportion is not shown: it confuses
   end
 

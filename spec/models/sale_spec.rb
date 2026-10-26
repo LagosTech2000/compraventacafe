@@ -62,4 +62,33 @@ RSpec.describe Sale do
     create(:sale_payment, sale:, amount: sale.balance_due)
     expect(sale.reload).to be_paid
   end
+
+  it "puts the scales' difference in money at the sale's price per pound, also over many sales" do
+    sale = create(:sale) # buyer 482.16 lb against 487.06 local, at L 50 a pound
+    expect(sale.net_difference).to eq(BigDecimal("-4.90"))
+    expect(sale.difference_amount).to eq(BigDecimal("-245"))
+
+    create(:sale, price_unit: "pound", unit_price: 60) # the same 4.90 lb at L 60
+    expect(SaleSummary.new(described_class.all).difference_amount).to eq(BigDecimal("-539"))
+  end
+
+  it "collects the buyer's settlement once entered, never below what was paid, with its reason" do
+    sale = create(:sale) # L 24,108
+    create(:sale_payment, sale:, amount: 10_000)
+
+    sale.settle!(buyer_total: 23_000, reason: "Calidad")
+    expect(sale.reload).to have_attributes(amount_due: 23_000, balance_due: 13_000, settlement_difference: -1_108, payment_status: "partial")
+    expect(SaleSummary.new(described_class.all).balance_due).to eq(13_000)
+    payment = create(:sale_payment, sale:, amount: 13_000)
+    expect(sale.reload.payment_status).to eq("paid")
+    expect(payment.balance_after).to eq(0)
+
+    expect { sale.settle!(buyer_total: 9_000, reason: "Calidad") }.to raise_error(ActiveRecord::RecordInvalid)
+    expect(sale.errors[:buyer_total]).to be_present
+    expect { sale.reload.settle!(buyer_total: 23_500, reason: "") }.to raise_error(ActiveRecord::RecordInvalid)
+    expect(sale.errors[:buyer_total_reason]).to be_present
+
+    sale.reload.settle!(buyer_total: nil, reason: nil) # back to its own total
+    expect(sale.reload).to have_attributes(amount_due: BigDecimal("24108"), payment_status: "partial", balance_due: BigDecimal("1108"))
+  end
 end

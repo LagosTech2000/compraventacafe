@@ -24,6 +24,13 @@ FactoryBot.define do
     payment_method { "cash" }
   end
 
+  factory :cash_count do
+    money_account
+    association :created_by, factory: :user
+    counted_on { Time.zone.today }
+    counted_amount { 1_000 }
+  end
+
   factory :other_income do
     money_account
     association :created_by, factory: :user

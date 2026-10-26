@@ -330,6 +330,24 @@ es:
           help: "Categorías que este mes gastaron más de lo presupuestado."
           detail: "Gastado %{spent} de %{budget}"
           action: "Ver presupuesto"
+        haulers_to_pay:
+          title: "Carreros por pagar"
+          help: "Lo que se le debe a cada carrero en comisiones, lo más grande primero."
+          action: "Pagar"
+        open_conversions:
+          title: "Conversiones abiertas"
+          help: "Café que se pesó para convertirlo y todavía no tiene resultado: está fuera de su estado hasta que se registre cuánto salió."
+          name: "Conversión %{number} · %{from} → %{to}"
+          days:
+            zero: "pesada hoy"
+            one: "pesada hace 1 día"
+            other: "pesada hace %{count} días"
+          action: "Registrar resultado"
+        negative_stock:
+          title: "Inventario en negativo"
+          help: "Estados del café con menos de cero en inventario: falta registrar una compra, o una salida o conversión tomó el estado equivocado."
+          detail: "%{gross} lb brutas · %{net} lb netas"
+          action: "Ver movimientos"
         members_without_wage:
           title: "Empleados sin salario"
           help: "En planillas por día: sin rol ni salario propio, sus días no se pueden pagar."
@@ -405,7 +423,7 @@ es:
         title: "Resumen de operaciones"
         purchases_today: "Compras de hoy"
         season_quintals: "QQ de la temporada"
-        coffee_stock: "QQ en inventario"
+        coffee_stock: "QQ de compra en inventario"
         sales_owed: "Ventas por cobrar"
         open_loans: "Préstamos por cobrar"
         active_farms: "Fincas activas"
@@ -435,6 +453,21 @@ es:
         pending:
           one: "1 tipo de tarea por atender"
           other: "%{count} tipos de tarea por atender"
+      debts:
+        title: "Lo que debes y lo que te deben"
+        owes: "Debes"
+        owed: "Te deben"
+        accounts: "Caja y bancos hoy"
+        see_accounts: "Ver cuentas"
+        none: "Nada por ahora."
+        lines:
+          invoices: "Facturas por pagar a productores"
+          haulers: "Comisiones de carreros"
+          payrolls: "Planillas de fincas por pagar"
+          staff: "Planilla interna por pagar"
+          buyer_advances: "Anticipos de compradores (en café)"
+          sales: "Ventas por cobrar"
+          loans: "Préstamos por cobrar"
       pending:
         title: "Tareas pendientes"
         detail: "Ver el detalle"
@@ -462,6 +495,15 @@ es:
         over_budget:
           one: "1 categoría pasó su presupuesto del mes por"
           other: "%{count} categorías pasaron su presupuesto del mes por"
+        haulers_to_pay:
+          one: "1 carrero por pagar:"
+          other: "%{count} carreros por pagar:"
+        open_conversions:
+          one: "1 conversión espera su resultado"
+          other: "%{count} conversiones esperan su resultado"
+        negative_stock:
+          one: "1 estado del café quedó en negativo en el inventario"
+          other: "%{count} estados del café quedaron en negativo en el inventario"
         members_without_wage:
           one: "1 empleado de una planilla por día sin salario: sus días no se pueden pagar"
           other: "%{count} empleados de planillas por día sin salario: sus días no se pueden pagar"
@@ -475,6 +517,9 @@ es:
           periods_to_pay: "Pagar"
           members_without_wage: "Asignar salario"
           over_budget: "Ver presupuesto"
+          haulers_to_pay: "Ver carreros"
+          open_conversions: "Ver conversiones"
+          negative_stock: "Ver movimientos"
       activity:
         title: "Actividad reciente"
         open: "Abrir"
@@ -811,6 +856,16 @@ es:
         weighings_help: "Anota cada pesada con su peso y los sacos contados. El peso bruto y los sacos son la suma; la tara es 1 lb por saco contado."
         damage_types_help: "Con daño, elige uno o más tipos."
         damage_types_missing: "Elige al menos un tipo de daño."
+        unusual:
+          humidity:
+            low: "%{value} % es muy poca humedad para %{state}; lo normal está cerca de %{normal} %. Revisa que esté bien escrita."
+            high: "%{value} % es mucha humedad para %{state}; lo normal está cerca de %{normal} %. Revisa que esté bien escrita."
+          yield:
+            low: "Un rendimiento de %{value} es muy bajo; lo normal está cerca de %{normal}. Revisa que esté bien escrito."
+            high: "Un rendimiento de %{value} es muy alto; lo normal está cerca de %{normal}. Revisa que esté bien escrito."
+          price:
+            low: "Este precio está %{percent} % abajo del promedio de hoy para %{state} (L %{average}). Revisa que esté bien escrito."
+            high: "Este precio está %{percent} % arriba del promedio de hoy para %{state} (L %{average}). Revisa que esté bien escrito."
         add_weighing: "Agregar pesada"
         remove_weighing: "Quitar pesada"
         gross_from_weighings: "Suma de las pesadas: se cambia en las pesadas."
@@ -1146,20 +1201,22 @@ es:
       as_of: "Al %{date}"
       total: "Todo el inventario"
       pounds: "%{pounds} lb"
-      quintals: "%{quintals} QQ"
+      quintals: "%{quintals} QQ de compra"
       gross: "Libras brutas"
       net: "Libras netas"
-      quintals_label: "Quintales"
+      quintals_label: "QQ de compra"
       in_process: "En conversión"
+      cherry_net: "Las libras netas de la uva son el café que se espera sacar de ella, no lo que pesó."
       out_detail: "Fuera: %{in_transit} lb en camino · %{unsold} lb pesadas sin vender"
       negative: "Hay más café en salidas que en compras para algún estado del café. Revisa que estén registradas todas las compras y que las salidas tengan el estado correcto."
-      help: "Libras brutas y netas: suben con cada compra (su peso bruto y su peso neto) y bajan con cada salida de camión (su bruto y su neto en la báscula local). Una conversión saca su café del estado de origen al pesarlo («En conversión») y lo suma al estado nuevo al registrar el resultado. Las anuladas no cuentan. Quintales de 125 lb netas, como en las compras. Toca una tarjeta para ver sus movimientos."
+      help: "Libras brutas y netas: suben con cada compra (su peso bruto y su peso neto) y bajan con cada salida de camión (su bruto y su neto en la báscula local). Una conversión saca su café del estado de origen al pesarlo («En conversión») y lo suma al estado nuevo al registrar el resultado. Las anuladas no cuentan. Los «QQ de compra» son de 125 lb netas, como en las compras; los «QQ de venta» usan las libras por quintal de cada venta (120 si no se cambian). Toca una tarjeta para ver sus movimientos."
     summary:
       sales: "Ventas"
       buyers: "Compradores"
       net_weight: "Libras netas (comprador)"
       quintals: "QQ de venta"
       difference: "Diferencia de peso (lb)"
+      difference_amount: "Diferencia de peso (L)"
       total: "Total vendido"
       balance_due: "Por cobrar"
       states_title: "Estado de cobro"
@@ -1266,7 +1323,7 @@ es:
         weighings_help: "Cada pesada con su peso y los sacos contados; el peso bruto y los sacos son la suma."
         tare: "Tara (lb)"
         net: "Peso neto (lb)"
-        quintals: "QQ (125 lb)"
+        quintals: "QQ de compra (125 lb)"
         formula: "Igual que en las compras: (bruto − 1 lb por saco) menos la humedad y el daño; en uva, por el rendimiento."
         submit: "Registrar salida"
         over_stock: "Sale más de lo que hay en inventario de este estado del café (%{stock} lb). Se puede guardar igual."
@@ -1334,7 +1391,7 @@ es:
       table:
         number: "No."
         net: "Neto (lb)"
-        quintals: "QQ"
+        quintals: "QQ de venta"
         price: "Precio"
         difference: "Diferencia de peso"
         balance: "Por cobrar"
@@ -1367,7 +1424,7 @@ es:
           one: "1 salida elegida"
           other: "%{count} salidas elegidas"
         net: "Neto del comprador (lb)"
-        quintals: "QQ"
+        quintals: "QQ de venta"
         difference: "Diferencia con la báscula local"
         mixed_states: "Elegiste salidas de dos estados del café: una venta lleva un solo estado. Haz una venta por cada uno."
         payment: "Cobro"
@@ -1393,15 +1450,24 @@ es:
         original: "ORIGINAL"
         copy: "COPIA"
         new_payment: "Registrar cobro"
+        settle: "Liquidación del comprador"
+        settlement:
+          less: "Según su liquidación, el comprador paga %{buyer_total}: %{amount} menos que la venta. Motivo: %{reason}. Se cobra lo de su liquidación."
+          more: "Según su liquidación, el comprador paga %{buyer_total}: %{amount} más que la venta. Motivo: %{reason}. Se cobra lo de su liquidación."
+          same: "La liquidación del comprador coincide con la venta: %{buyer_total}."
         voided: "Venta anulada el %{date} por %{name}."
         void_reason: " Motivo: %{reason}"
         over_tolerance: "La diferencia de peso de esta venta pasa la tolerancia del %{tolerance}:"
+        difference_money:
+          less: "El comprador pesó %{pounds} lb menos que la báscula local: %{amount} que no se cobraron (a %{price} la libra de esta venta)."
+          more: "El comprador pesó %{pounds} lb más que la báscula local: %{amount} de más (a %{price} la libra de esta venta)."
         void: "Anular venta"
         void_help: "Solo se anula una venta sin cobros. Sus salidas quedan libres para venderlas a otro comprador o en otra venta; si el café regresó, anula también la salida."
         confirm_void: "¿Anular esta venta? No se puede deshacer."
       payments:
         title: "Cobros"
         total: "Total"
+        buyer_total: "Liquidación del comprador"
         paid_total: "Cobrado"
         balance_due: "Por cobrar"
         number: "Recibo"
@@ -1415,6 +1481,7 @@ es:
         amount: "Monto"
         charged: "Cobrado sobre %{pounds} lb del comprador (%{quintals} QQ de %{quintal_pounds} lb)"
         payment: "Cobro %{number} · %{date} · %{method}"
+        buyer_total: "Liquidación del comprador (%{reason})"
         balance_due: "Por cobrar"
         buyer_signature: "Firma del comprador"
         seller_signature: "Firma por el negocio"
@@ -1442,6 +1509,16 @@ es:
         giver_signature: "Entregó (comprador)"
         receiver_signature: "Recibió"
         registered_by: "Registró: %{name}"
+    sale_settlements:
+      edit:
+        title: "Liquidación del comprador · venta %{number}"
+        crumb: "Liquidación del comprador"
+        help: "Lo que %{buyer} dice que paga en su liquidación (boleta o comprobante). La venta suma %{total}; si su liquidación dice otra cosa, escribe cuánto y por qué. Desde ahí se cobra lo de su liquidación."
+        total_hint: "Déjalo vacío para volver a cobrar el total de la venta."
+        reason_placeholder: "Calidad, flete, retención…"
+        submit: "Guardar liquidación"
+      update:
+        success: "Liquidación del comprador guardada."
     sale_payments:
       new:
         advance_option: "Con anticipo (saldo %{balance})"
@@ -1545,6 +1622,8 @@ es:
           input_net: "Entró netas (lb)"
           output_gross: "Salió brutas (lb)"
           output_net: "Salió netas (lb)"
+          net_difference: "Diferencia netas (lb)"
+        card_difference: "Netas que salieron contra las que entraron: %{pounds} lb"
       show:
         title: "Conversión %{number}"
         input: "Entró: %{state}"
@@ -1557,9 +1636,15 @@ es:
         confirm_reopen: "¿Quitar el resultado? Lo que salió deja el inventario y la conversión vuelve a quedar en conversión."
         voided: "Anulada el %{date} por %{name}."
         full_page: "Ver en página completa"
-        gross_yield: "Rendimiento en bruto"
-        gross_yield_value: "%{value} % (libras brutas que salieron por cada 100 que entraron)"
         back: "Volver a conversiones"
+        comparison:
+          title: "Lo que entró contra lo que salió"
+          went_in: "Netas que entraron"
+          came_out: "Netas que salieron"
+          difference: "Diferencia"
+          more: "%{pounds} lb más (+%{percent} %)"
+          less: "%{pounds} lb menos (−%{percent} %)"
+          help: "Las netas que entraron son las que se pagaron en las compras; las que salieron, las que se pesaron. Si salen menos, el café rindió menos de lo que se pagó."
       new:
         title: "Nueva conversión"
         help: "Pesa el café que va a convertirse: sale de su estado en este momento y queda en conversión. Cuando salga, registra cuánto salió en el estado nuevo."
@@ -1581,7 +1666,12 @@ es:
         crumb: "Resultado"
         subtitle: "%{from} → %{to}. Entró: %{gross} lb brutas (%{net} lb netas)."
         output_gross: "Libras brutas que salieron en %{state}"
+        sacks_hint: "Se resta 1 lb por saco, como en las compras."
         preview: "Lo que entra al inventario de %{state}"
+        difference:
+          more: "%{pounds} lb netas más que las que entraron (+%{percent} %)"
+          less: "%{pounds} lb netas menos que las que entraron (−%{percent} %)"
+          same: "Las mismas libras netas que entraron"
         submit: "Registrar resultado"
       update:
         success: "Resultado de la conversión %{number} registrado: ya está en el inventario."
@@ -1592,7 +1682,7 @@ es:
         ledger_help: "Cada compra que entró, cada salida que se fue y cada conversión, con el saldo después de cada uno, en libras brutas, netas y quintales."
         balance: "Saldo (lb netas)"
         balance_gross: "%{gross} lb brutas"
-        card_line: "%{gross} lb brutas · %{net} lb netas · %{quintals} QQ"
+        card_line: "%{gross} lb brutas · %{net} lb netas · %{quintals} QQ de compra"
         convert: "Convertir café"
         empty: "No hay movimientos en estas fechas."
         count:
@@ -1610,7 +1700,7 @@ es:
           who: "Productor, salida o conversión"
           gross: "Brutas (lb)"
           net: "Netas (lb)"
-          quintals: "QQ"
+          quintals: "QQ de compra"
         kinds:
           purchase: "Compra"
           shipment: "Salida"
@@ -1651,11 +1741,14 @@ es:
         payments_empty: "Ese día no hubo cobros."
       report:
         title: "Cierre de comercialización"
+        open_conversions:
+          one: "En conversión al cierre: 1 conversión sin resultado · %{gross} lb brutas · %{net} lb netas"
+          other: "En conversión al cierre: %{count} conversiones sin resultado · %{gross} lb brutas · %{net} lb netas"
         stock:
           purchased: "Comprado (lb)"
           shipped: "Salió (lb)"
           stock: "En inventario (lb)"
-          quintals: "QQ"
+          quintals: "QQ de compra"
           in_transit: "En camino (lb)"
           unsold: "Sin vender (lb)"
   finance:
@@ -2127,6 +2220,7 @@ es:
         success: "Cuenta actualizada."
       show:
         income: "Otro ingreso"
+        cash_count: "Arqueo"
         transfer: "Transferir"
         edit: "Editar"
         print: "Imprimir estado de cuenta"
@@ -2148,6 +2242,28 @@ es:
         success: "Transferencia registrada."
       destroy:
         success: "Transferencia quitada."
+    cash_counts:
+      new:
+        title: "Arqueo de caja"
+        help: "Cuenta el dinero que hay de verdad y escríbelo. Se compara con el saldo que el sistema tiene para esa cuenta al final de ese día."
+        account_prompt: "Selecciona la cuenta"
+        amount_hint: "Lo que contaste (o lo que dice el banco), en lempiras."
+        observations_placeholder: "Quién estuvo presente, de qué es la diferencia…"
+        submit: "Guardar arqueo"
+      create:
+        success: "Arqueo guardado. Diferencia: %{difference}."
+      destroy:
+        success: "Arqueo quitado."
+      list:
+        title: "Arqueos"
+        help: "Lo que se contó contra el saldo del sistema ese día. Si falta dinero, la diferencia sale en rojo."
+        new: "Hacer arqueo"
+        difference: "Diferencia"
+        matches: "Cuadra"
+        actions: "Acciones"
+        destroy: "Quitar"
+        confirm_destroy: "¿Quitar este arqueo? Queda en la auditoría."
+        empty: "Todavía no hay arqueos de esta cuenta."
     other_incomes:
       new:
         title: "Otro ingreso"
@@ -3532,7 +3648,7 @@ es:
           coffee_state: "Estado del café"
           buyer_document_number: "Documento del comprador"
           net_weight: "Neto (lb)"
-          quintals: "QQ"
+          quintals: "QQ de venta"
           unit_price: "Precio"
           difference_percent: "Diferencia de peso (%)"
           total: "Total"
@@ -3541,13 +3657,13 @@ es:
           payment_status: "Estado de cobro"
           days: "Días"
           count: "Ventas"
-          price_per_quintal: "Precio prom. por QQ"
+          price_per_quintal: "Precio prom. por QQ de venta"
           pending: "Por cobrar"
         kpis:
           count: "Ventas"
-          quintals: "QQ vendidos"
+          quintals: "QQ de venta vendidos"
           total: "Total vendido"
-          price_per_quintal: "Precio promedio por QQ"
+          price_per_quintal: "Precio promedio por QQ de venta"
           paid: "Cobrado"
           pending: "Por cobrar"
           difference_percent: "Diferencia de peso (%)"
@@ -4079,9 +4195,10 @@ es:
         steps:
           - "En Comercialización → Conversiones (o «Convertir café» en Inventario), toca «Nueva conversión»."
           - "Elige qué se convierte y escribe las libras brutas que entran. Ese café sale de su estado y queda «En conversión»."
-          - "Cuando salga, abre la conversión y toca «Registrar resultado»: escribe las libras brutas que salieron en el estado nuevo. Se suman a su inventario."
+          - "Cuando salga, abre la conversión y toca «Registrar resultado»: pesa lo que salió como una compra (libras brutas, sacos, humedad y daño). Se suma a su inventario."
+          - "El detalle compara las libras netas que entraron con las que salieron: si salen menos, el café rindió menos de lo que se pagó."
         tips:
-          - "Las libras netas y los quintales se calculan solos con lo que ya hay de ese estado en el inventario."
+          - "Las libras netas que entran se calculan solas con lo que ya hay de ese estado en el inventario."
           - "Una conversión en proceso se puede anular: el café vuelve a su estado. A una terminada se le puede quitar el resultado."
           - "En Inventario, toca una tarjeta para ver los movimientos de ese estado, también las conversiones."
       finance_money:
@@ -4653,6 +4770,8 @@ es:
               - "Pergamino: peso neto = (peso bruto − tara) menos el porcentaje de humedad, y a eso se le resta el porcentaje de daño. «Restado por daño» muestra cuántas libras quita el daño y cuánto es en lempiras (libras × precio por libra)."
               - "Uva: peso neto = (peso bruto − tara) × rendimiento."
               - "Quintales (QQ) = peso neto ÷ 125. Total = peso neto × precio por libra."
+              - "Si la humedad o el rendimiento se alejan mucho de lo normal, o el precio del promedio de hoy para ese estado, sale un aviso debajo del campo para revisar que esté bien escrito. No impide guardar."
+              - "Uva: las libras netas son el café que se espera sacar de esa uva (en pergamino), no las libras que pesó. Por eso 1,000 lb de uva dan unas 186 lb netas."
               - "Cada compra queda en la temporada de su fecha: la temporada empieza el 1 de septiembre."
               - "El cálculo que se guarda es el del sistema; el de la pantalla es una vista previa."
         invoice_payments:
@@ -4935,8 +5054,17 @@ es:
               - "Escribe el número de la factura o comprobante del comprador."
               - "Elige el cobro: a crédito, parcial o de contado, y guarda."
             tips:
-              - "Total = libras netas del comprador ÷ 100 × precio por quintal, o libras × precio por libra."
+              - "Total = libras netas del comprador ÷ libras por quintal × precio por quintal, o libras × precio por libra."
               - "La columna de la derecha muestra el total y la diferencia de peso mientras eliges."
+        sale_settlements:
+          form:
+            title: "Liquidación del comprador"
+            summary: "Lo que el comprador paga según su propia liquidación, cuando no coincide con la venta."
+            steps:
+              - "Escribe el total de su liquidación (boleta o comprobante) y el motivo de la diferencia."
+              - "Guarda: desde ahí la venta cobra lo de su liquidación, y el detalle dice cuánto menos o más paga."
+            tips:
+              - "No puede ser menos de lo ya cobrado. Vacío, la venta vuelve a cobrar su propio total."
         sale_payments:
           show:
             title: "Recibo de cobro"
@@ -5038,7 +5166,8 @@ es:
             title: "Conversión"
             summary: "Lo que entró y lo que salió de una conversión, con sus libras brutas, netas y quintales."
             steps:
-              - "Si todavía está en conversión, toca «Registrar resultado» y escribe las libras brutas que salieron."
+              - "Si todavía está en conversión, toca «Registrar resultado» y pesa lo que salió."
+              - "«Lo que entró contra lo que salió» dice cuántas libras netas más o menos dio el café."
               - "«Anular» devuelve el café a su estado (solo en conversión); «Quitar el resultado» la regresa a en conversión."
           form:
             title: "Nueva conversión"
@@ -5052,9 +5181,10 @@ es:
         conversion_results:
           form:
             title: "Resultado de la conversión"
-            summary: "Las libras brutas que salieron en el estado nuevo."
+            summary: "El café que salió en el estado nuevo, pesado como una compra."
             steps:
-              - "Escribe la fecha y hora y las libras brutas que salieron; a la derecha se ven sus libras netas y quintales."
+              - "Escribe la fecha y hora, las libras brutas que salieron, los sacos, la humedad y el daño (vacío es 0 %)."
+              - "A la derecha se ven sus libras netas y quintales, y cuántas libras netas más o menos que las que entraron."
               - "Toca «Registrar resultado»: se suman al inventario del estado nuevo."
         stocks:
           show:
@@ -5259,6 +5389,17 @@ es:
             summary: "Dinero que pasa de una cuenta a otra del negocio."
             steps:
               - "Elige de qué cuenta sale y a cuál entra, el monto y la fecha, y guarda."
+        cash_counts:
+          form:
+            title: "Arqueo de caja"
+            summary: "Comparar el dinero que se contó con el saldo que dice el sistema."
+            steps:
+              - "Elige la cuenta (la caja, por lo general) y la fecha."
+              - "Cuenta el dinero y escribe cuánto hay. Para un banco, escribe lo que dice el banco."
+              - "Guarda: la cuenta muestra el arqueo con el saldo del sistema de ese día y la diferencia."
+            tips:
+              - "Si falta dinero, la diferencia sale en rojo: revisa que estén registrados todos los pagos y cobros de ese día, y que tengan su cuenta."
+              - "Un arqueo no cambia el saldo de la cuenta: solo lo compara."
         other_incomes:
           form:
             title: "Otro ingreso"
@@ -6162,6 +6303,9 @@ es:
       other_income:
         one: "Otro ingreso"
         other: "Otros ingresos"
+      cash_count:
+        one: "Arqueo de caja"
+        other: "Arqueos de caja"
       account_transfer:
         one: "Transferencia entre cuentas"
         other: "Transferencias entre cuentas"
@@ -6464,6 +6608,15 @@ es:
         expense: "Gasto"
         content_type: "Tipo de archivo"
         byte_size: "Tamaño"
+      cash_count:
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
+        counted_on: "Fecha del arqueo"
+        counted_amount: "Contado (L)"
+        system_balance: "Saldo del sistema (L)"
+        observations: "Observaciones"
+        created_by: "Contó"
+        created_by_id: "Contó"
       other_income:
         created_by: "Registró"
         created_by_id: "Registró"
@@ -6574,6 +6727,8 @@ es:
         status/voided: "Anulada"
       sale:
         buyer_id: "Comprador"
+        buyer_total: "Liquidación del comprador (L)"
+        buyer_total_reason: "Motivo de la diferencia"
         created_by_id: "Registró"
         payments: "Cobros"
         shipments: "Salidas"
@@ -6647,6 +6802,10 @@ es:
         finished_at: "Salió el"
         output_gross_weight: "Libras brutas que salieron"
         output_net_weight: "Libras netas que salieron"
+        output_sacks: "Sacos que salieron"
+        output_tare: "Tara al salir"
+        output_humidity_percent: "Humedad al salir (%)"
+        output_damage_percent: "Daño al salir (%)"
         output_ratio: "Proporción neto/bruto al salir"
         output_ratio_source: "De dónde salió la proporción al salir"
         observations: "Observaciones"
@@ -7132,6 +7291,12 @@ es:
           attributes:
             money_account:
               inactive: "está desactivada"
+        cash_count:
+          attributes:
+            money_account:
+              inactive: "está desactivada"
+            counted_on:
+              future: "no puede ser en el futuro"
         account_transfer:
           attributes:
             to_account:
@@ -7163,6 +7328,10 @@ es:
             base:
               partial_not_less: "El cobro parcial debe ser menor que el total; si cobras todo, elige «De contado»."
               has_payments: "La venta tiene cobros: quítalos antes de anularla."
+            buyer_total:
+              below_paid: "no puede ser menos de lo ya cobrado (%{paid})"
+            buyer_total_reason:
+              blank: "hace falta: di por qué la liquidación es distinta a la venta"
             lines:
               blank: "faltan: elige al menos una salida"
               unavailable: "no están todas disponibles (alguna se vendió, se anuló o es de otro comprador): revisa la lista"

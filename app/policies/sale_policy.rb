@@ -12,6 +12,11 @@ class SalePolicy < ApplicationPolicy
     false
   end
 
+  # Entering the buyer's settlement (what it pays per its own liquidation).
+  def settle?
+    can?(:update) && (!record.is_a?(Sale) || !record.voided?)
+  end
+
   def void?
     can?(:destroy) && (!record.is_a?(Sale) || record.voidable?)
   end

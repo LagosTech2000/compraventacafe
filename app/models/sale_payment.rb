@@ -53,7 +53,7 @@ class SalePayment < ApplicationRecord
   # What the sale still owed after this payment.
   def balance_after
     paid_until = sale.payments.select { |payment| ([ payment.paid_on, payment.id ] <=> [ paid_on, id ]) <= 0 }.sum(&:amount)
-    sale.total - paid_until
+    sale.amount_due - paid_until
   end
 
   private

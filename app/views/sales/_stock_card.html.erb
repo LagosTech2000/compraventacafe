@@ -18,6 +18,10 @@
       </div>
     <% end %>
   </dl>
+  <%# What the cherry's net pounds mean, in words (Fernando, 2026-10-25). %>
+  <% if key == "cherry" %>
+    <p class="mt-2 text-xs text-ink-muted" data-cherry-net-note><%= t("sales.stock.cherry_net") %></p>
+  <% end %>
   <% if row && (row.in_transit.positive? || row.unsold.positive?) %>
     <p class="mt-2 text-xs text-ink-muted">
       <%= t("sales.stock.out_detail", in_transit: format_pounds(row.in_transit), unsold: format_pounds(row.unsold)) %>

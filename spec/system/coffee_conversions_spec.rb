@@ -36,12 +36,18 @@ RSpec.describe "Coffee conversions screens", type: :system do
     visit sales_coffee_conversion_path(conversion)
     click_link "Registrar resultado"
     within("dialog[open]") do
+      expect(page).to have_field("coffee_conversion_output_humidity_percent", with: "12")
       fill_in "coffee_conversion_output_gross_weight", with: "600"
-      expect(page).to have_css("[data-conversion-preview-target=net]", text: "528.00 lb")
+      fill_in "coffee_conversion_output_sacks", with: "4"
+      expect(page).to have_css("[data-conversion-preview-target=net]", text: "524.48 lb")
+      expect(page).to have_css("[data-conversion-preview-target=quintals]", text: "4.20")
+      fill_in "coffee_conversion_output_damage_percent", with: "2"
+      expect(page).to have_css("[data-conversion-preview-target=net]", text: "513.99 lb")
+      fill_in "coffee_conversion_output_damage_percent", with: ""
       click_button "Registrar resultado"
     end
     expect(page).to have_text("ya está en el inventario")
-    expect(conversion.reload.output_net_weight).to eq(528)
+    expect(conversion.reload.output_net_weight).to eq(BigDecimal("524.48"))
   end
 
   it "opens the kardex of a state from its card on the summary" do

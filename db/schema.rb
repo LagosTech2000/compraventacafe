@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_26_010000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_26_040000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -107,6 +107,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_010000) do
     t.index "lower((name)::text)", name: "index_carriers_on_lower_name", unique: true
   end
 
+  create_table "cash_counts", force: :cascade do |t|
+    t.bigint "money_account_id", null: false
+    t.date "counted_on", null: false
+    t.decimal "counted_amount", precision: 14, scale: 2, null: false
+    t.decimal "system_balance", precision: 14, scale: 2, null: false
+    t.string "observations"
+    t.bigint "created_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_cash_counts_on_created_by_id"
+    t.index ["money_account_id", "counted_on"], name: "index_cash_counts_on_money_account_id_and_counted_on"
+    t.index ["money_account_id"], name: "index_cash_counts_on_money_account_id"
+  end
+
   create_table "clients", force: :cascade do |t|
     t.bigint "person_id", null: false
     t.datetime "created_at", null: false
@@ -136,6 +150,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_010000) do
     t.integer "lock_version", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "output_sacks"
+    t.decimal "output_tare", precision: 12, scale: 2
+    t.decimal "output_humidity_percent", precision: 5, scale: 2
+    t.decimal "output_damage_percent", precision: 5, scale: 2
     t.index ["created_by_id"], name: "index_coffee_conversions_on_created_by_id"
     t.index ["finished_at"], name: "index_coffee_conversions_on_finished_at"
     t.index ["finished_by_id"], name: "index_coffee_conversions_on_finished_by_id"
@@ -743,6 +761,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_010000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.decimal "quintal_pounds", precision: 8, scale: 2, default: "120.0", null: false
+    t.decimal "buyer_total", precision: 14, scale: 2
+    t.string "buyer_total_reason"
     t.index ["buyer_id"], name: "index_sales_on_buyer_id"
     t.index ["created_by_id"], name: "index_sales_on_created_by_id"
     t.index ["number"], name: "index_sales_on_number", unique: true
@@ -1008,6 +1028,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_010000) do
   add_foreign_key "buyer_advances", "users", column: "created_by_id"
   add_foreign_key "buyers", "departments"
   add_foreign_key "buyers", "municipalities"
+  add_foreign_key "cash_counts", "money_accounts"
+  add_foreign_key "cash_counts", "users", column: "created_by_id"
   add_foreign_key "clients", "people"
   add_foreign_key "coffee_conversions", "users", column: "created_by_id"
   add_foreign_key "coffee_conversions", "users", column: "finished_by_id"

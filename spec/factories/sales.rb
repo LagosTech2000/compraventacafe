@@ -56,8 +56,8 @@ FactoryBot.define do
     payment_method { "cash" }
   end
 
-  # Cherry weighed to become wet parchment (in process); `finished` enters
-  # what came out. Each net uses its state's net/gross proportion.
+  # Cherry weighed to become wet parchment (in process); `finished` weighs
+  # what came out (sacks, humidity, damage).
   factory :coffee_conversion do
     from_state { "cherry" }
     weighed_at { Time.current }
@@ -67,6 +67,8 @@ FactoryBot.define do
     trait :finished do
       finished_at { weighed_at + 1.hour }
       output_gross_weight { 400 }
+      output_sacks { 4 }
+      output_humidity_percent { 51 }
       finishing { true }
     end
   end

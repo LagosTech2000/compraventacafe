@@ -148,6 +148,11 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Precio por libra / por quintal / libras por quintal (120 por defecto) | `Sale#price_unit`: `pound` / `quintal`; `Sale#quintal_pounds` (`Sale::QUINTAL_POUNDS`) |
 | Tolerancia de diferencia de peso | `SiteSetting#weight_tolerance_percent` (`WeightTolerance`) |
 | Inventario / kárdex | `CoffeeStock` / `StockLedger` (`sales/stock#show`), reporte `CoffeeStockReport` |
+| QQ de compra (÷ 125) / QQ de venta (÷ libras por quintal de la venta) | `PurchaseCalculation.quintals` / `Sale#quintals` |
+| Liquidación del comprador / lo que se cobra | `Sale#buyer_total`, `buyer_total_reason` (`sales/sale_settlements`) / `Sale#amount_due` |
+| Diferencia de peso en lempiras | `Sale#difference_amount`, `SaleSummary#difference_amount` |
+| Arqueo de caja | `CashCount` (`finance/cash_counts`) |
+| Lo que debes y lo que te deben (Inicio) | `Dashboard#owed_by_business` / `#owed_to_business` |
 | Conversión de café (uva → húmedo, húmedo → seco) / en conversión / resultado | `CoffeeConversion` (`sales/coffee_conversions`, `ConversionResultsController`) / `in_process` / `output_*` |
 | Cierre de comercialización | `SalesDailyClose` |
 | Control financiero | `finance` |
@@ -942,7 +947,14 @@ usuario puede hacer en módulos que puede ver); resumen de operaciones
 (compras de hoy, QQ de la temporada, préstamos por cobrar, fincas activas y
 pendientes); tareas pendientes, solo si existen (compras sin facturar,
 facturas sin cancelar, préstamos vencidos, períodos por pagar, empleados
-de planillas por día sin salario); actividad reciente de los módulos que
+de planillas por día sin salario; y desde el 2026-10-25 **carreros por
+pagar**, **conversiones abiertas** y **estados del café en negativo** en
+el inventario); **lo que debes y lo que te deben** (Fernando, 2026-10-25,
+`Dashboard#owed_by_business` / `#owed_to_business`: facturas por pagar,
+comisiones de carreros, planillas de fincas e interna por pagar y
+anticipos de compradores contra ventas y préstamos por cobrar, con caja y
+bancos al lado; solo sumas de lo que cada módulo ya guarda, de los módulos
+que el usuario ve, cada línea abre su lugar); actividad reciente de los módulos que
 ve, con enlace; café en la bolsa y usuarios conectados; y sus módulos. La cifra
 «Pendientes» (y «Ver el detalle» del panel) abre en el modal **Tareas
 pendientes** (`PendingWorkController`): **una pestaña por tipo** con
@@ -1025,15 +1037,23 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   estado ese momento y quedan **«En conversión»** (tarjeta aparte en el
   inventario, `CoffeeStock#in_process_*`). Después se registra **un solo
   resultado**, las **libras brutas que salieron** en el estado nuevo, que
-  se suman a él. **Las netas de cada lado = brutas × la proporción
+  se suman a él. **Las netas que entran = brutas × la proporción
   neto/bruto de ese estado en el inventario de ese día**
-  (`CoffeeConversion.ratio_for`); se guardan la proporción y de dónde
-  salió, pero **no se muestran en pantalla** (Fernando, 2026-10-25: no es
-  un dato claro para el usuario; solo salen en la auditoría). Entran al kárdex (`conversion_out` / `conversion_in`) y al
+  (`CoffeeConversion.ratio_for`). **Lo que sale se pesa como una compra**
+  (Fernando, 2026-10-25): brutas, sacos contados, humedad y daño, con
+  `PurchaseCalculation` (`output_sacks`, `output_tare`,
+  `output_humidity_percent`, `output_damage_percent`;
+  `output_ratio_source` «weighed»); los resultados de antes usaron la
+  proporción del estado nuevo y se quedan así. Se guardan la proporción y
+  de dónde salió, pero **no se muestran en pantalla** (Fernando,
+  2026-10-25: no es un dato claro para el usuario; solo salen en la
+  auditoría). **El detalle compara las netas que entraron con las que
+  salieron** («Lo que entró contra lo que salió», `net_difference`): si
+  salen menos, el café rindió menos de lo que se pagó; la lista lo tiene
+  como columna y la vista previa del resultado lo dice al escribir. Entran al kárdex (`conversion_out` / `conversion_in`) y al
   reporte de inventario. Pantallas: Comercialización → Conversiones,
   «Convertir café» en Inventario, con vista previa
-  (`conversion_preview_controller.js`). Decisiones de implementación,
-  **pendientes de confirmar**: sin inventario de ese estado, la proporción
+  (`conversion_preview_controller.js`). Reglas **confirmadas** (Fernando, 2026-10-25): sin inventario de ese estado, la proporción
   sale de sus compras y, sin compras, del valor inicial de las compras
   (rendimiento de la uva, 1 − humedad del pergamino); pesar más de lo que
   hay avisa y no bloquea; una conversión en conversión se anula (el café
@@ -1079,6 +1099,25 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   quintal
   (`Sale.amount_for`). Guarda netos y total. Documento del comprador
   (factura o comprobante). Imprimible (nota de venta, original y copia).
+- **Dos quintales, dos nombres** (Fernando, 2026-10-25): el inventario,
+  las compras y el kárdex dicen **«QQ de compra»** (÷ 125); la venta, su
+  cierre y su reporte, **«QQ de venta»** (÷ sus libras por quintal). Solo
+  cambian las etiquetas.
+- **La diferencia de peso en lempiras** (Fernando, 2026-10-25): neto del
+  comprador − neto local × el precio por libra de esa venta
+  (`Sale#difference_amount`, `SaleSummary#difference_amount` en SQL); en el
+  detalle de la venta («… lb menos: L … que no se cobraron») y en los
+  resúmenes del día y de la temporada.
+- **Liquidación del comprador** (Fernando, 2026-10-25): lo que el
+  comprador dice que paga en su propia liquidación (`buyer_total`) y el
+  motivo de la diferencia (`buyer_total_reason`, obligatorio si no
+  coincide), desde el detalle de la venta (`sales/sale_settlements`, pide
+  editar en `sales`, `SalePolicy#settle?`; auditado). Decisión de
+  implementación, **pendiente de confirmar**: con liquidación, **lo que se
+  cobra es lo de la liquidación** (`Sale#amount_due`: estado de cobro,
+  saldo, recibos, por cobrar del comprador, del Inicio y de los reportes);
+  no baja de lo ya cobrado y vacía vuelve al total de la venta. El total
+  de la venta (café vendido) no cambia.
 - **Cobro por abonos** (`SalePayment`), como las facturas: pendiente →
   cobro parcial → cobrada; contado = un abono por el total al crear la
   venta; cada cobro con recibo (original y copia). Registrar pide editar
@@ -1110,7 +1149,7 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   netas, y × bruto ÷ neto del comprador en sus salidas = libras brutas
   (`Sale#pounds_for`, `advance_pounds_text`), al venderlo (vista previa),
   en los cobros y el recibo de la venta y en la pestaña «Anticipos» del
-  comprador. Decisión de implementación, **pendiente de confirmar**: las
+  comprador. Regla **confirmadas** (Fernando, 2026-10-25): las
   brutas salen en la proporción bruto/neto de esa venta. Quitar ese cobro devuelve el monto al saldo;
   un anticipo ya descontado no se quita. Pestaña «Anticipos» del
   comprador.
@@ -1178,6 +1217,13 @@ salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
   hasta 1 MB). Se editan y borran con permisos, auditados.
 - **Otro ingreso** (`OtherIncome`: aporte del dueño, préstamo del banco…)
   y **transferencias** (`AccountTransfer`) se registran o se quitan.
+- **Arqueo de caja** (`CashCount`, Fernando, 2026-10-25): lo que se contó
+  en una cuenta (la caja, por lo general) contra el saldo del sistema al
+  final de ese día (`AccountBalance`), guardado como estaba
+  (`system_balance`), con quién contó y observaciones. Desde la cuenta
+  («Arqueo», `finance/cash_counts`, pide crear en `finance`; se quita con
+  borrar, no se edita; auditado). La cuenta lista sus arqueos con la
+  diferencia (en rojo si falta). No mueve el saldo.
 - **Presupuesto** (`Budget`, `BudgetSheet`): por categoría de primer nivel
   y mes de la temporada, contra los gastos e inversiones de esa categoría
   y sus subcategorías. Resaltado al pasarse; en el Inicio y en Tareas
@@ -1238,7 +1284,7 @@ salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
     recibo (original y copia). Sale de la cuenta el neto
     (`MoneyMovements`: `staff_payments`, `staff_advances`; `AccountBalance`).
     El Resumen avisa los períodos que llegaron a su día de pago.
-  - Decisiones de implementación, **pendientes de confirmar**: los
+  - Reglas **confirmadas** (Fernando, 2026-10-25): los
     períodos se pagan en orden y solo se quita el último (libera sus
     anticipos y metas); si los anticipos pasan de lo ganado no se paga; un
     anticipo o una meta no van en un período ya pagado; la cuenta es
@@ -1283,6 +1329,13 @@ textos; la clave y el código siguen siendo `trading`.
   entrada** (`Purchase::CALCULATION_INPUTS`), para que el histórico no cambie
   si la regla cambia. `purchase_calculator_controller.js` lo replica solo
   como vista previa; el servidor manda.
+- **Avisos de valores raros** (Fernando, 2026-10-25,
+  `unusual_values_controller.js`): «Nueva compra» avisa debajo del campo,
+  **sin impedir guardar**, si la humedad o el rendimiento se alejan más de
+  `PurchaseDefaults::UNUSUAL_PERCENT` (30 %, **pendiente de confirmar**) de
+  su valor inicial, o el precio de ese tanto del promedio de hoy para ese
+  estado (`Purchase.average_prices_on`; sin compras de ese estado hoy, no
+  compara).
 - Valores iniciales (`PurchaseDefaults`), todos editables: humedad 51 % en
   pergamino húmedo y 12 % en seco, daño 0 %, rendimiento 0.186 en uva. El
   daño vacío cuenta como 0 % (vista previa y servidor). Con datos
@@ -1364,8 +1417,8 @@ textos; la clave y el código siguen siendo `trading`.
   Al facturar se elige pendiente, cancelada o pago parcial con el monto
   pagado (`InvoiceIssuer`, todo o nada). Registrar un abono pide editar en
   `trading`; quitarlo, borrar (`InvoicePaymentPolicy`). Las facturas
-  canceladas de antes se migraron a un abono por su total. Decisiones de
-  implementación, **pendientes de confirmar**: un abono no pasa del saldo
+  canceladas de antes se migraron a un abono por su total. Reglas
+  **confirmadas** (Fernando, 2026-10-25): un abono no pasa del saldo
   ni va antes de la fecha de la factura o del último abono; solo se quita el
   último; el pago con café de una compra facturada solo toma lo que la
   factura todavía debe (`Purchase#available_for_loans`).
@@ -1418,8 +1471,8 @@ textos; la clave y el código siguen siendo `trading`.
   activas − pagos): cada pago (`HaulerPayment`, pide editar en `trading`)
   tiene su recibo imprimible, original y copia en hojas separadas, y
   guarda el saldo que quedó (`balance_after`) para que el recibo no
-  cambie. Salen en «Entradas y salidas de dinero». Decisiones de
-  implementación, **pendientes de confirmar**: un pago no pasa del saldo
+  cambie. Salen en «Entradas y salidas de dinero». Reglas
+  **confirmadas** (Fernando, 2026-10-25): un pago no pasa del saldo
   ni va antes del último; solo se quita el último; una compra no se anula,
   borra ni cambia de carrero o de peso si eso deja al carrero debiendo lo
   ya pagado; un carrero desactivado no se elige en compras nuevas. Al
@@ -1464,7 +1517,8 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
   capital. Cada abono guarda su reparto (`interest_amount`,
   `principal_amount`) para que el histórico no cambie si la regla cambia.
 - Después de la fecha límite el interés sigue con la misma tasa; **no hay
-  recargo por mora** (no está definido).
+  recargo por mora** [CONFIRMADO, Fernando, 2026-10-25: el cliente no
+  recarga por mora].
 - Los abonos van en orden de fecha y no superan lo que se debe a esa fecha.
   Al quedar en cero, el préstamo se marca pagado (`paid_off_on`).
 - Un préstamo con abonos no se edita ni se borra; un abono no se edita y
@@ -1484,8 +1538,8 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
   el interés corre sobre todo el capital. El efectivo vacío cuenta como 0
   (el formulario muestra `0.00` solo como placeholder). El capital no se escribe: lo
   calcula `Loan` (`loan_composition_controller.js` es solo vista previa).
-- **Pago con café** [Fernando delegó la regla, 2026-10-10; diseño propuesto
-  en esta sesión, pendiente de confirmar]: desde el detalle de una compra se
+- **Pago con café** [Fernando delegó la regla, 2026-10-10; diseño
+  propuesto, CONFIRMADO por Fernando el 2026-10-25]: desde el detalle de una compra se
   abonan o saldan los préstamos de la persona del productor
   (`PurchaseLoanSettlement`, pantalla `trading/loan_settlements`). Reglas:
   - Cada abono es un `LoanPayment` normal con forma de pago "Con café" y
@@ -1661,8 +1715,8 @@ Reglas decididas por Fernando el 2026-10-10 [CONFIRMADO]:
   de la planilla; días × su salario por día; se suman a «A pagar» y al pago
   del período, y la línea de pago guarda horas, valor, días y monto
   (`PayrollPaymentLine#overtime_*`). Sin valor de la hora no se anotan
-  horas (la casilla queda cerrada con el aviso). Decisiones de
-  implementación, **pendientes de confirmar**: los días extra van de medio
+  horas (la casilla queda cerrada con el aviso). Reglas
+  **confirmadas** (Fernando, 2026-10-25): los días extra van de medio
   en medio (como la asistencia) y las horas aceptan cualquier decimal.
 - **Grilla de asistencia y latas** con columnas de ancho fijo
   (`timesheet-grid`, `.timesheet-cell`): cada casilla queda centrada bajo
@@ -1776,17 +1830,11 @@ sistema ya guarda**; no agregan reglas de negocio.
 | Tabla de precios (zona + calidad + bolsa) y categorías de calidad | Precio automático; hoy es manual | Cliente |
 | Retención de fin de temporada | Reporte de retención | Cliente |
 | Reportes por temporada (qué muestran) | El reporte de temporada que pida el cliente; los reportes generales ya filtran por temporada | Cliente |
-| Préstamos: recargo por mora | Mora | Cliente |
-| Pago con café: confirmar las reglas propuestas (ver Préstamos) | Ajustes al abono con compra | Fernando / Cliente |
-| Abonos a factura: confirmar orden por fecha, quitar solo el último y tope del pago con café (ver Compra de café) | Ajustes a los abonos | Fernando / Cliente |
-| Pagos a carreros: confirmar orden por fecha, quitar solo el último y que una compra no deje al carrero debiendo lo ya pagado (ver Carreros) | Ajustes a los pagos de carreros | Fernando / Cliente |
 | Inventario de insumos (existencias, costo de compra) | Control de bodega de insumos | Cliente |
-| Horas y días extra: confirmar días extra de medio en medio y horas con cualquier decimal | Ajustes a las extras de planilla | Fernando / Cliente |
 | Planillas: séptimo día, décimo, IHSS u otras deducciones o bonos | Cálculo legal de planillas | Cliente |
 | Si la factura siempre agrupa hasta 4 compras | Hoy no hay límite | Cliente |
-| Control financiero: confirmar decisiones de implementación (la cuenta es opcional en los pagos de los otros módulos y obligatoria en gastos e ingresos; el presupuesto solo cuenta los gastos e inversiones de Control financiero, no los gastos de planilla; otros ingresos y transferencias no se editan, se quitan y se registran de nuevo) | Ajustes a Control financiero | Fernando / Cliente |
 | Cómo calcula el dueño la ganancia | Reporte de ganancias | Cliente |
-| Comercialización: confirmar decisiones de implementación (una salida lleva un solo estado del café y una venta también; salir con más de lo que hay en inventario avisa y no bloquea; la tolerancia resalta la diferencia en ambos sentidos; cobros en orden de fecha, sin pasar del saldo y quitando solo el último; la venta no se edita, se anula y se rehace) | Ajustes a Comercialización | Fernando / Cliente |
+| Decisiones nuevas, por confirmar (2026-10-25): la liquidación del comprador pasa a ser lo que se cobra de la venta; los avisos de «Nueva compra» salen cuando la humedad, el rendimiento o el precio se alejan más de 30 % de lo normal (`PurchaseDefaults::UNUSUAL_PERCENT`) | Ajustes a la venta y a los avisos de la compra | Fernando / Cliente |
 | Contratos: moneda, cobro, aplicar libras a contratos | Ventas / contratos | Cliente |
 | Reporte exacto que piden el contador y el SAR | Reportería | Cliente |
 | `pg_dump` en Render (versión ≥ 18) | Que el respaldo incluya `base.dump` en producción | Fernando + Render |
@@ -1799,7 +1847,15 @@ sistema ya guarda**; no agregan reglas de negocio.
 | Paleta de colores y tipografía | Pulido visual antes de la demo | Fernando |
 | Qué pasa si el cliente rechaza el estilo en la demo | — | Fernando |
 
-Resueltos: versión de Ruby (3.4.x), Ubuntu 24.04 LTS, ambiente WSL, regla del
+Resueltos: confirmadas por Fernando el 2026-10-25 las decisiones de
+implementación de pago con café, abonos a factura, pagos a carreros, horas
+y días extra, Control financiero (cuenta opcional en los otros módulos y
+obligatoria en gastos e ingresos; presupuesto sin gastos de planilla; otros
+ingresos y transferencias se quitan y se registran de nuevo),
+Comercialización (un estado por salida y por venta; salir de más avisa;
+tolerancia en ambos sentidos; cobros en orden, sin pasar del saldo, quitando
+solo el último; la venta no se edita), conversiones, anticipos y planilla
+interna; **no hay recargo por mora**. Versión de Ruby (3.4.x), Ubuntu 24.04 LTS, ambiente WSL, regla del
 último administrador activo (se bloquea), idioma del código (inglés), campos de
 `Person`, personas/clientes/colaboradores en `administration`, formato,
 unicidad y obligatoriedad de DNI (13 dígitos) y RTN (14 dígitos): ninguno es

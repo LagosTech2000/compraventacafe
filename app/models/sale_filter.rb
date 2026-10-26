@@ -16,7 +16,7 @@ class SaleFilter < ListFilter
     buyer: { sql: text("buyers.name"), joins: :buyer },
     coffee_state: "sales.coffee_state", net: "sales.net_weight", quintals: "sales.net_weight / sales.quintal_pounds",
     price: "sales.unit_price", difference: "sales.net_weight - sales.origin_net_weight",
-    total: "sales.total", balance: "sales.total - #{PAID}",
+    total: "sales.total", balance: "COALESCE(sales.buyer_total, sales.total) - #{PAID}",
     payment_status: %w[sales.voided_at sales.payment_status]
   }.freeze
   sorts(**SORTS)

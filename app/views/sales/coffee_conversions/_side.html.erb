@@ -15,6 +15,11 @@
       <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.gross") %></dt><dd class="font-semibold tabular-nums"><%= t("sales.stock.pounds", pounds: format_pounds(gross)) %></dd></div>
       <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.net") %></dt><dd class="text-lg font-bold tabular-nums"><%= t("sales.stock.pounds", pounds: format_pounds(conversion["#{side}_net_weight"])) %></dd></div>
       <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.quintals_label") %></dt><dd class="font-semibold tabular-nums"><%= format_pounds(input ? conversion.input_quintals : conversion.output_quintals) %></dd></div>
+      <% if !input && conversion.output_weighed? %>
+        <div><dt class="text-xs text-ink-muted"><%= CoffeeConversion.human_attribute_name(:output_sacks) %></dt><dd class="tabular-nums"><%= conversion.output_sacks %></dd></div>
+        <div><dt class="text-xs text-ink-muted"><%= CoffeeConversion.human_attribute_name(:output_humidity_percent) %></dt><dd class="tabular-nums"><%= number_with_precision(conversion.output_humidity_percent, precision: 2) %></dd></div>
+        <div><dt class="text-xs text-ink-muted"><%= CoffeeConversion.human_attribute_name(:output_damage_percent) %></dt><dd class="tabular-nums"><%= number_with_precision(conversion.output_damage_percent, precision: 2) %></dd></div>
+      <% end %>
     </dl>
   <% else %>
     <p class="mt-2 text-sm text-ink-muted"><%= t("sales.coffee_conversions.show.no_output") %></p>

@@ -5,6 +5,7 @@
        sales: summary.sales_count, buyers: summary.buyers_count,
        net_weight: format_pounds(summary.net_weight), quintals: format_pounds(summary.quintals),
        difference: format_pounds(summary.net_difference),
+       difference_amount: format_money(summary.difference_amount),
        total: format_money(summary.total), balance_due: format_money(summary.balance_due)
      }.each do |key, value| %>
     <div class="stat min-w-0 flex-1 basis-36">

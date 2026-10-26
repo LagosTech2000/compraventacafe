@@ -12,6 +12,7 @@ class CoffeeConversionFilter < ListFilter
         from_state: "coffee_conversions.from_state",
         input_gross: "coffee_conversions.input_gross_weight", input_net: "coffee_conversions.input_net_weight",
         output_gross: "coffee_conversions.output_gross_weight", output_net: "coffee_conversions.output_net_weight",
+        net_difference: "(coffee_conversions.output_net_weight - coffee_conversions.input_net_weight)",
         status: %w[coffee_conversions.voided_at coffee_conversions.finished_at]
 
   def apply(scope)

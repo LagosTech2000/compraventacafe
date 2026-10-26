@@ -56,6 +56,30 @@ RSpec.describe "Pending work" do
     expect(section(:members_without_wage).at_css("a[href='#{edit_farms_payroll_member_path(member.payroll, member)}']")).to be_present
   end
 
+  it "lists open conversions, coffee states below zero and haulers owed (Fernando, 2026-10-25)" do
+    admin = create(:user, :admin)
+    hauler = create(:hauler, person: create(:person, first_names: "Luis", last_names: "Mejía"))
+    create(:purchase, gross_weight: 2_000, hauler:) # wet parchment, with commission
+    conversion = create(:coffee_conversion, from_state: "wet_parchment", input_gross_weight: 500, weighed_at: 2.days.ago)
+    create(:shipment, coffee_state: "dry_parchment", origin_gross_weight: 165, origin_sacks: 1, origin_humidity_percent: 12)
+    sign_in admin
+
+    get root_path
+    expect(page.at_css("#dashboard-pending").text.squish)
+      .to include("1 carrero por pagar", "1 conversión espera su resultado", "1 estado del café quedó en negativo")
+
+    get pending_work_path, headers: { "Turbo-Frame" => "modal" }
+    expect(section(:haulers_to_pay).text.squish).to include("Luis Mejía", format("L %.2f", hauler.reload.balance))
+    expect(section(:haulers_to_pay).at_css("a[href='#{new_trading_hauler_payment_path(hauler)}']")).to be_present
+    expect(section(:open_conversions).text.squish).to include("Conversión #{conversion.display_number}", "Pergamino húmedo → Pergamino seco", "pesada hace 2 días")
+    expect(section(:open_conversions).at_css("a[href='#{edit_sales_coffee_conversion_result_path(conversion)}']")).to be_present
+    expect(section(:negative_stock).text.squish).to include("Pergamino seco", "−165.00 lb brutas")
+    expect(section(:negative_stock).at_css("a")["href"]).to eq(sales_stock_path(coffee_state: "dry_parchment", anchor: "stock-ledger-title"))
+
+    get sales_daily_close_path(date: Time.zone.today)
+    expect(page.at_css("[data-open-conversions]").text.squish).to include("1 conversión sin resultado", "500.00 lb brutas")
+  end
+
   it "shows only the modules the user reads, and only the buttons they may use" do
     reader = create(:user).tap { create(:permission, user: it, module_key: "trading", can_read: true) }
     create(:purchase)

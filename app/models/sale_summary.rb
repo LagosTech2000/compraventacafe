@@ -14,10 +14,17 @@ class SaleSummary
   def net_weight = @sales.sum(:net_weight)
   def origin_net_weight = @sales.sum(:origin_net_weight)
   def net_difference = net_weight - origin_net_weight
+  # The weight difference in money, each sale at its own price per pound.
+  def difference_amount
+    @sales.sum(Arel.sql("(sales.net_weight - sales.origin_net_weight) * " \
+                        "CASE WHEN sales.price_unit = 'quintal' THEN sales.unit_price / sales.quintal_pounds ELSE sales.unit_price END")).round(2)
+  end
   def quintals = @sales.sum("sales.net_weight / sales.quintal_pounds").round(2)
   def total = @sales.sum(:total)
   def collected = SalePayment.where(sale_id: @sales.select(:id)).sum(:amount)
-  def balance_due = total - collected
+  # What is collected: each sale's buyer settlement when entered, else its total.
+  def amount_due = @sales.sum("COALESCE(sales.buyer_total, sales.total)")
+  def balance_due = amount_due - collected
 
   # [State, ...] in STATES order, every state (zero ones too).
   def payment_states

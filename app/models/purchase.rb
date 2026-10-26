@@ -72,6 +72,13 @@ class Purchase < ApplicationRecord
 
   # Purchases of a day (or a range of days), in Tegucigalpa time.
   scope :on, ->(dates) { where(purchased_at: day_range(dates)) }
+
+  # The day's average price per net pound of each coffee state, of active
+  # purchases: {"wet_parchment" => 60.1, ...}. What the form compares against.
+  def self.average_prices_on(date)
+    active.on(date).group(:coffee_state).having("SUM(net_weight) > 0")
+          .pluck(:coffee_state, Arel.sql("SUM(total) / SUM(net_weight)")).to_h { |state, price| [ state, price.round(2).to_f ] }
+  end
   scope :active, -> { where(voided_at: nil) }
   scope :voided, -> { where.not(voided_at: nil) }
   # Waiting to be invoiced: neither invoiced nor voided.

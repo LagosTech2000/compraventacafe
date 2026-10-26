@@ -57,6 +57,29 @@ RSpec.describe "Home page" do
     expect(actions).to eq([ "Productores" ]) # reading only: no "Registrar compra" nor "Facturar compras"
   end
 
+  it "sums what the business owes and is owed, only for the modules the user reads (Fernando, 2026-10-25)" do
+    admin = create(:user, :admin)
+    purchase = create(:purchase, hauler: create(:hauler))
+    InvoiceIssuer.new(producer: purchase.producer, user: admin, purchase_ids: [ purchase.id ], payment_status: "pending").call
+    create(:sale) # L 24,108 to collect
+    create(:loan, cash_amount: 500, monthly_interest_rate: 0)
+    sign_in admin
+
+    get root_path
+    debts = Nokogiri::HTML(response.body).at_css("#dashboard-debts")
+    owes = debts.at_css("[data-debts=owes]").text.squish
+    expect(owes).to include("Facturas por pagar a productores", "Comisiones de carreros")
+    expect(owes).to include(format("L %s", ActiveSupport::NumberHelper.number_to_delimited(format("%.2f", Invoice.sole.balance_due + purchase.hauler.balance))))
+    expect(debts.at_css("[data-debts=owed]").text.squish).to include("Ventas por cobrar", "L 24,108.00", "Préstamos por cobrar", "L 500.00", "L 24,608.00")
+
+    reader = create(:user).tap { create(:permission, user: it, module_key: "loans", can_read: true) }
+    sign_in reader
+    get root_path
+    debts = Nokogiri::HTML(response.body).at_css("#dashboard-debts")
+    expect(debts.text).not_to include("Facturas", "Ventas")
+    expect(debts.at_css("[data-debts=owed]").text.squish).to include("Préstamos por cobrar", "L 500.00")
+  end
+
   it "offers creating only in modules the user can see" do
     sign_in user_with("farms").tap { |user| create(:permission, user:, module_key: "loans", can_create: true) }
     get root_path

@@ -3,14 +3,17 @@
 #
 # 1. The gross pounds that go in are weighed: they leave their state at
 #    once and are "in process" (CoffeeStock#in_process).
-# 2. The gross pounds that came out in the new state are entered (one
-#    result, it is finished): they add to that state.
+# 2. The coffee that came out in the new state is weighed (one result, it
+#    is finished): it adds to that state.
 #
-# The net of each side is its gross × the net/gross proportion of its state
+# What goes in leaves the stock at the net/gross proportion of its state
 # (.ratio_for): the one in stock that day; with no stock of that state, its
 # purchases'; with none, the purchase form's defaults (cherry's yield,
-# 1 − the parchment's humidity). The proportion and where it came from are
-# kept, so the conversion never changes afterwards.
+# 1 − the parchment's humidity). What comes out is weighed like a purchase
+# or a shipment (Fernando, 2026-10-25): gross, counted sacks, humidity and
+# damage, with PurchaseCalculation. Results registered before used the
+# proportion of the new state instead. The proportion and where it came
+# from are kept, so the conversion never changes afterwards.
 #
 # A conversion in process is voided (never deleted) and its coffee goes
 # back; a finished one can have its result removed, back to in process.
@@ -23,8 +26,9 @@ class CoffeeConversion < ApplicationRecord
   # What each state turns into.
   NEXT_STATE = { "cherry" => "wet_parchment", "wet_parchment" => "dry_parchment" }.freeze
   STATUSES = %w[in_process finished voided].freeze
-  RATIO_SOURCES = %w[stock purchases default].freeze
+  RATIO_SOURCES = %w[stock purchases default weighed].freeze
   MAX_WEIGHT = 1_000_000_000
+  MAX_SACKS = 100_000
 
   belongs_to :created_by, class_name: "User"
   belongs_to :finished_by, class_name: "User", optional: true
@@ -46,6 +50,9 @@ class CoffeeConversion < ApplicationRecord
   with_options if: :finishing do
     validates :finished_at, presence: true
     validates :output_gross_weight, numericality: { greater_than: 0, less_than: MAX_WEIGHT }
+    validates :output_sacks, numericality: { only_integer: true, greater_than: 0, less_than: MAX_SACKS }
+    validates :output_humidity_percent, numericality: { greater_than_or_equal_to: 0, less_than: 100 }
+    validates :output_damage_percent, numericality: { greater_than_or_equal_to: 0, less_than: 100 }
   end
   validate :finished_after_weighed, if: :finishing
 
@@ -107,8 +114,12 @@ class CoffeeConversion < ApplicationRecord
   def input_quintals = PurchaseCalculation.quintals(input_net_weight)
   def output_quintals = output_net_weight && PurchaseCalculation.quintals(output_net_weight)
 
-  # The gross that came out for each gross pound that went in.
-  def gross_yield = output_gross_weight && input_gross_weight.positive? ? (output_gross_weight / input_gross_weight).round(4) : nil
+  # Net pounds that came out minus the ones that went in (Fernando,
+  # 2026-10-25): below zero, the coffee gave less than what was paid for.
+  def net_difference = output_net_weight && (output_net_weight - input_net_weight)
+  def net_difference_percent = net_difference && input_net_weight.positive? ? (net_difference / input_net_weight * 100).round(1) : nil
+  # The result was weighed with humidity and damage (not with the stock's proportion).
+  def output_weighed? = output_ratio_source == "weighed"
 
   # Voids a conversion in process: its coffee goes back to its state.
   def void!(user)
@@ -122,7 +133,8 @@ class CoffeeConversion < ApplicationRecord
     raise ActiveRecord::RecordInvalid, tap { errors.add(:base, :not_finished) } unless finished?
 
     self.finishing = false
-    update!(finished_at: nil, finished_by: nil, output_gross_weight: nil, output_net_weight: nil, output_ratio: nil, output_ratio_source: nil)
+    update!(finished_at: nil, finished_by: nil, output_gross_weight: nil, output_net_weight: nil, output_ratio: nil, output_ratio_source: nil,
+            output_sacks: nil, output_tare: nil, output_humidity_percent: nil, output_damage_percent: nil)
   end
 
   private
@@ -138,10 +150,16 @@ class CoffeeConversion < ApplicationRecord
     end
 
     def weigh_output
-      return unless to_state && finished_at && output_gross_weight.to_d.positive?
+      self.output_damage_percent ||= 0 # empty counts as 0 %, as in purchases
+      return unless to_state && output_gross_weight.to_d.positive? && output_sacks.to_i.positive? && output_humidity_percent.present?
 
-      self.output_ratio, self.output_ratio_source = self.class.ratio_for(to_state, finished_at.to_date)
-      self.output_net_weight = (output_gross_weight * output_ratio).round(2)
+      calculation = PurchaseCalculation.new(coffee_state: to_state, gross_weight: output_gross_weight, price_per_pound: 0,
+                                            humidity_percent: output_humidity_percent, damage_percent: output_damage_percent,
+                                            counted_sacks: output_sacks)
+      self.output_tare = calculation.tare
+      self.output_net_weight = calculation.net_weight
+      self.output_ratio = (calculation.net_weight / output_gross_weight).round(6)
+      self.output_ratio_source = "weighed"
     end
 
     def finished_after_weighed

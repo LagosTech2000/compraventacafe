@@ -5,7 +5,7 @@ RSpec.describe "Finance policies" do
     create(:user).tap { |u| create(:permission, user: u, module_key: "finance", **flags) }.reload
   end
 
-  [ MoneyAccountPolicy, FinanceCategoryPolicy, ExpensePolicy, ExpenseReceiptPolicy, OtherIncomePolicy, AccountTransferPolicy,
+  [ MoneyAccountPolicy, FinanceCategoryPolicy, ExpensePolicy, ExpenseReceiptPolicy, OtherIncomePolicy, AccountTransferPolicy, CashCountPolicy,
     Finance::HomePolicy, Finance::MovementPolicy, Finance::BudgetPolicy, Finance::ConsolidationPolicy ].each do |policy|
     it "#{policy} belongs to the finance module" do
       expect(policy.module_key).to eq("finance")
@@ -19,6 +19,9 @@ RSpec.describe "Finance policies" do
     expect(FinanceCategoryPolicy.new(full, build(:finance_category))).to forbid_action(:destroy)
     expect(OtherIncomePolicy.new(full, build(:other_income))).to forbid_action(:update)
     expect(AccountTransferPolicy.new(full, build(:account_transfer))).to forbid_action(:update)
+    expect(CashCountPolicy.new(full, build(:cash_count))).to forbid_action(:update)
+    expect(CashCountPolicy.new(full, build(:cash_count))).to permit_actions(%i[create destroy])
+    expect(CashCountPolicy.new(member(can_read: true), build(:cash_count))).to forbid_action(:create)
     expect(ExpensePolicy.new(full, build(:expense))).to permit_actions(%i[edit update destroy])
   end
 end
