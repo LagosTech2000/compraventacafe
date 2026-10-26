@@ -34,6 +34,8 @@ class CoffeeConversion < ApplicationRecord
   # (client, 2026-10-26): the same one unless chosen.
   belongs_to :warehouse
   belongs_to :output_warehouse, class_name: "Warehouse", optional: true
+  # Where it is processed (client, 2026-10-26); the ones before have none.
+  belongs_to :processing_site, optional: true
   belongs_to :created_by, class_name: "User"
   belongs_to :finished_by, class_name: "User", optional: true
   belongs_to :voided_by, class_name: "User", optional: true
@@ -52,6 +54,11 @@ class CoffeeConversion < ApplicationRecord
   validates :from_state, inclusion: { in: NEXT_STATE.keys }
   validates :weighed_at, presence: true
   validates :input_gross_weight, numericality: { greater_than: 0, less_than: MAX_WEIGHT }
+  # What it should give, in gross pounds of the new state per 100 that go
+  # in: only a projection (client, 2026-10-26); the real one is weighed.
+  validates :estimated_yield_percent, numericality: { greater_than: 0, less_than_or_equal_to: 100 }, on: :create
+  validates :processing_site, presence: true, on: :create
+  validates :input_humidity_percent, numericality: { greater_than_or_equal_to: 0, less_than: 100 }, allow_nil: true
   validates :observations, length: { maximum: 500 }
   with_options if: :finishing do
     validates :finished_at, presence: true
@@ -101,6 +108,21 @@ class CoffeeConversion < ApplicationRecord
   # Lempiras added by processing, by conversion id (none yet).
   def self.processing_costs_by_conversion = {}
 
+  # The estimate a new process starts with (site settings): 37.95 % of
+  # cherry's gross as wet parchment, 50 % of wet parchment's when dried.
+  def self.default_yield_percent(from_state)
+    setting = SiteSetting.current
+    from_state == "cherry" ? setting.cherry_yield_percent : setting.drying_yield_percent
+  end
+
+  # What processes of a state really gave, all together: gross pounds that
+  # came out per 100 that went in (nil without finished ones).
+  def self.average_yield_percent(from_state)
+    finished = self.finished.where(from_state:)
+    went_in = finished.sum(:input_gross_weight)
+    (finished.sum(:output_gross_weight) * 100 / went_in).round(2) if went_in.positive?
+  end
+
   def self.human_state(state) = Purchase.human_attribute_name("coffee_state/#{state}")
 
   def display_number = format("%04d", number)
@@ -128,6 +150,19 @@ class CoffeeConversion < ApplicationRecord
   # 2026-10-25): below zero, the coffee gave less than what was paid for.
   def net_difference = output_net_weight && (output_net_weight - input_net_weight)
   def net_difference_percent = net_difference && input_net_weight.positive? ? (net_difference / input_net_weight * 100).round(1) : nil
+  # The gross pounds it should give (nil for the ones before estimates).
+  def estimated_output_gross = estimated_yield_percent && (input_gross_weight * estimated_yield_percent / 100).round(2)
+
+  # What it really gave: gross pounds out per 100 in.
+  def output_yield_percent = output_gross_weight && input_gross_weight.positive? ? (output_gross_weight * 100 / input_gross_weight).round(2) : nil
+
+  # Real − estimated gross pounds: below zero, it gave less than expected.
+  def estimate_difference = output_gross_weight && estimated_output_gross && (output_gross_weight - estimated_output_gross)
+
+  # Shrink (merma): the gross pounds lost between going in and coming out.
+  def shrink_weight = output_gross_weight && (input_gross_weight - output_gross_weight)
+  def shrink_percent = shrink_weight && input_gross_weight.positive? ? (shrink_weight * 100 / input_gross_weight).round(2) : nil
+
   # Pounds the damage took off what came out, as in a purchase.
   def output_damage_weight
     return 0 unless output_weighed? && to_state != "cherry"
@@ -187,6 +222,7 @@ class CoffeeConversion < ApplicationRecord
     def warehouses_active
       errors.add(:warehouse, :inactive) if will_save_change_to_warehouse_id? && warehouse && !warehouse.active?
       errors.add(:output_warehouse, :inactive) if will_save_change_to_output_warehouse_id? && output_warehouse && !output_warehouse.active?
+      errors.add(:processing_site, :inactive) if will_save_change_to_processing_site_id? && processing_site && !processing_site.active?
     end
 
     def assign_number

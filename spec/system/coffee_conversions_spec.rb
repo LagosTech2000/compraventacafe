@@ -8,27 +8,34 @@ RSpec.describe "Coffee conversions screens", type: :system do
 
   before do
     create(:purchase, gross_weight: 2_000) # 973.63 lb net of wet parchment: 0.486815 a gross pound
+    create(:processing_site, name: "Patio")
     sign_in_as(user)
   end
 
   it "previews what leaves the stock, warns past it, and enters what came out" do
     visit sales_coffee_conversions_path
-    click_link "Nueva conversión"
+    click_link "Procesar café"
 
     within("dialog[open]") do
+      expect(page).to have_field("coffee_conversion_estimated_yield_percent", with: "37.95")
+      expect(page).to have_no_field("coffee_conversion_input_humidity_percent")
       choose "Pergamino húmedo → Pergamino seco"
+      expect(page).to have_field("coffee_conversion_estimated_yield_percent", with: "50")
+      fill_in "coffee_conversion_input_humidity_percent", with: "51"
+      select "Patio", from: "coffee_conversion_processing_site_id"
       expect(page).to have_css("[data-conversion-preview-target=available]", text: "2,000.00 lb")
       expect(page).to have_css("[data-conversion-preview-target=toState]", text: "Pergamino seco")
       fill_in "coffee_conversion_input_gross_weight", with: "1000"
       expect(page).to have_css("[data-conversion-preview-target=net]", text: "486.82 lb")
       expect(page).to have_css("[data-conversion-preview-target=quintals]", text: "3.89")
+      expect(page).to have_css("[data-conversion-preview-target=estimatedOutput]", text: "500.00 lb")
       expect(page).to have_no_text("roporción")
 
       fill_in "coffee_conversion_input_gross_weight", with: "2500"
       expect(page).to have_css("[data-conversion-preview-target=overStock]", visible: true)
       fill_in "coffee_conversion_input_gross_weight", with: "1000"
       expect(page).to have_css("[data-conversion-preview-target=overStock]", visible: :hidden)
-      click_button "Pesar y poner en conversión"
+      click_button "Pesar y mandar a procesar"
     end
     expect(page).to have_no_css("dialog[open]")
     conversion = CoffeeConversion.sole
@@ -41,6 +48,8 @@ RSpec.describe "Coffee conversions screens", type: :system do
       fill_in "coffee_conversion_output_sacks", with: "4"
       expect(page).to have_css("[data-conversion-preview-target=net]", text: "524.48 lb")
       expect(page).to have_css("[data-conversion-preview-target=quintals]", text: "4.20")
+      expect(page).to have_css("[data-conversion-preview-target=realYield]", text: "60 %")
+      expect(page).to have_css("[data-conversion-preview-target=estimateDifference]", text: "100.00 lb brutas más de lo estimado")
       fill_in "coffee_conversion_output_damage_percent", with: "2"
       expect(page).to have_css("[data-conversion-preview-target=net]", text: "513.99 lb")
       fill_in "coffee_conversion_output_damage_percent", with: ""

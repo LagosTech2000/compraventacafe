@@ -43,6 +43,40 @@
   <%= render "sales/coffee_conversions/side", conversion: @conversion, side: "output" %>
 </div>
 
+<%# What it should have given against what it gave (client, 2026-10-26),
+    the shrink, and what the processes of that state give on average. %>
+<% if @conversion.estimated_output_gross %>
+  <section class="mt-4 panel p-4" data-conversion-estimate aria-labelledby="conversion-estimate">
+    <h2 id="conversion-estimate" class="font-semibold"><%= t(".estimate.title") %></h2>
+    <dl class="mt-3 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
+      <div>
+        <dt class="text-xs text-ink-muted"><%= t(".estimate.estimated", percent: format_percent(@conversion.estimated_yield_percent)) %></dt>
+        <dd class="text-lg font-bold tabular-nums"><%= t("sales.stock.pounds", pounds: format_pounds(@conversion.estimated_output_gross)) %></dd>
+      </div>
+      <% if @conversion.output_gross_weight %>
+        <div>
+          <dt class="text-xs text-ink-muted"><%= t(".estimate.real", percent: format_percent(@conversion.output_yield_percent)) %></dt>
+          <dd class="text-lg font-bold tabular-nums"><%= t("sales.stock.pounds", pounds: format_pounds(@conversion.output_gross_weight)) %></dd>
+        </div>
+        <% difference = @conversion.estimate_difference %>
+        <div>
+          <dt class="text-xs text-ink-muted"><%= t(".estimate.difference") %></dt>
+          <dd class="text-lg font-bold tabular-nums <%= difference.negative? ? "text-danger" : "text-success" %>">
+            <%= t(".estimate.#{difference.negative? ? "less" : "more"}", pounds: format_pounds(difference.abs)) %>
+          </dd>
+        </div>
+        <div>
+          <dt class="text-xs text-ink-muted"><%= t(".estimate.shrink") %></dt>
+          <dd class="text-lg font-bold tabular-nums"><%= t(".estimate.shrink_value", pounds: format_pounds(@conversion.shrink_weight), percent: format_percent(@conversion.shrink_percent)) %></dd>
+        </div>
+      <% end %>
+    </dl>
+    <% if (average = CoffeeConversion.average_yield_percent(@conversion.from_state)) %>
+      <p class="mt-2 text-xs text-ink-muted"><%= t(".estimate.average", state: @conversion.human_from_state, percent: format_percent(average)) %></p>
+    <% end %>
+  </section>
+<% end %>
+
 <%# What came out against what went in, in net pounds (Fernando, 2026-10-25):
     the uva or the parchment gave more or less than what was paid for. %>
 <% if (difference = @conversion.net_difference) %>

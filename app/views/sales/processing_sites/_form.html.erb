@@ -1,0 +1,29 @@
+<%# A place where coffee is processed. Opened from «Procesar café»
+    (picker=1), saving adds it there. %>
+<%= form_with model: [ :sales, site ], class: form_surface_class("space-y-6"), data: { controller: "form-validation" } do |form| %>
+  <%= hidden_field_tag :picker, "1" if picker_request? %>
+  <%= render "shared/form_errors", record: site %>
+  <div class="grid gap-5">
+    <div>
+      <%= form.label :name, class: "field-label" %>
+      <%= form.text_field :name, autofocus: true, required: true, maxlength: 120, class: "field-input", placeholder: t("sales.processing_sites.form.name_placeholder"),
+            data: { missing_message: "#{ProcessingSite.human_attribute_name(:name)} #{t("errors.messages.blank")}" } %>
+    </div>
+    <label class="flex items-center gap-2 text-sm font-medium">
+      <%= form.check_box :own, class: "size-4 accent-primary" %> <%= ProcessingSite.human_attribute_name(:own) %>
+    </label>
+    <div>
+      <%= form.label :observations, class: "field-label" %>
+      <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+    </div>
+    <% if site.persisted? %>
+      <label class="flex items-center gap-2 text-sm font-medium">
+        <%= form.check_box :active, class: "size-4 accent-primary" %> <%= ProcessingSite.human_attribute_name(:active) %>
+      </label>
+    <% end %>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= cancel_button site.persisted? ? sales_processing_site_path(site) : sales_processing_sites_path %>
+  </div>
+<% end %>

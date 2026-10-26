@@ -25,7 +25,7 @@ module Sales
 
       if @warehouse.save
         close_modal_with notice: t(".success", name: @warehouse.name), fallback: sales_warehouse_path(@warehouse),
-                         event: "warehouse:created", detail: { id: @warehouse.id, label: @warehouse.name }
+                         event: "warehouse:created", detail: { id: @warehouse.id, label: @warehouse.name, name: @warehouse.name }
       else
         render :new, status: :unprocessable_content
       end

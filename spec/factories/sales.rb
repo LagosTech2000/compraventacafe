@@ -58,8 +58,14 @@ FactoryBot.define do
 
   # Cherry weighed to become wet parchment (in process); `finished` weighs
   # what came out (sacks, humidity, damage).
+  factory :processing_site do
+    sequence(:name) { |n| "Máquina ecológica #{n}" }
+  end
+
   factory :coffee_conversion do
     from_state { "cherry" }
+    processing_site
+    estimated_yield_percent { from_state == "cherry" ? 37.95 : 50 }
     weighed_at { Time.current }
     input_gross_weight { 1_000 }
     association :created_by, factory: :user

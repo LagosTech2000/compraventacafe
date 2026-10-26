@@ -152,6 +152,7 @@ es:
       pick_payment_method: "Selecciona la forma de pago"
       pick_buyer: "Selecciona el comprador"
       pick_warehouse: "Selecciona la bodega"
+      pick_processing_site: "Selecciona el lugar"
       main_warehouse: "Bodega 1"
       no_carrier: "Sin transportista asignado"
       no_truck: "Sin camión asignado"
@@ -342,9 +343,9 @@ es:
           detail: "Entró el %{entered} · %{hours} h en bodega"
           action: "Procesar"
         open_conversions:
-          title: "Conversiones abiertas"
-          help: "Café que se pesó para convertirlo y todavía no tiene resultado: está fuera de su estado hasta que se registre cuánto salió."
-          name: "Conversión %{number} · %{from} → %{to}"
+          title: "Procesos sin resultado"
+          help: "Café que se pesó para procesarlo y todavía no tiene resultado: está fuera de su estado hasta que se registre cuánto salió."
+          name: "Proceso %{number} · %{from} → %{to}"
           days:
             zero: "pesada hoy"
             one: "pesada hace 1 día"
@@ -352,7 +353,7 @@ es:
           action: "Registrar resultado"
         negative_stock:
           title: "Inventario en negativo"
-          help: "Estados del café con menos de cero en inventario: falta registrar una compra, o una salida o conversión tomó el estado equivocado."
+          help: "Estados del café con menos de cero en inventario: falta registrar una compra, o una salida o un proceso tomó el estado equivocado."
           detail: "%{gross} lb brutas · %{net} lb netas"
           action: "Ver movimientos"
         members_without_wage:
@@ -509,8 +510,8 @@ es:
           one: "1 lote de uva lleva demasiadas horas sin procesar"
           other: "%{count} lotes de uva llevan demasiadas horas sin procesar"
         open_conversions:
-          one: "1 conversión espera su resultado"
-          other: "%{count} conversiones esperan su resultado"
+          one: "1 proceso espera su resultado"
+          other: "%{count} procesos esperan su resultado"
         negative_stock:
           one: "1 estado del café quedó en negativo en el inventario"
           other: "%{count} estados del café quedaron en negativo en el inventario"
@@ -529,7 +530,7 @@ es:
           over_budget: "Ver presupuesto"
           haulers_to_pay: "Ver carreros"
           cherry_waiting: "Ver la uva"
-          open_conversions: "Ver conversiones"
+          open_conversions: "Ver procesos"
           negative_stock: "Ver movimientos"
       activity:
         title: "Actividad reciente"
@@ -1151,7 +1152,7 @@ es:
       shipments: "Salidas"
       sales: "Ventas"
       stock: "Inventario"
-      coffee_conversions: "Conversiones"
+      coffee_conversions: "Procesos"
       daily_close: "Cierre diario"
       buyers: "Compradores"
       carriers: "Transportistas"
@@ -1208,6 +1209,36 @@ es:
         success: "Camión registrado."
       update:
         success: "Camión actualizado."
+    processing_sites:
+      owners:
+        own: "Del negocio"
+        others: "De terceros"
+      index:
+        title: "Lugares de procesamiento"
+        help: "Dónde se procesa el café: máquinas ecológicas de otros, el patio, una secadora…"
+        new: "Nuevo lugar"
+        search_placeholder: "Nombre del lugar"
+        owner: "De quién"
+        processes: "Procesos"
+        processes_count:
+          zero: "Sin procesos"
+          one: "1 proceso"
+          other: "%{count} procesos"
+        empty: "No hay lugares con esos filtros."
+      form:
+        name_placeholder: "Por ejemplo: Máquina ecológica La Esperanza, Patio, Secadora El Pino"
+      show:
+        edit: "Editar lugar"
+        processes: "Procesos en este lugar"
+        empty: "Todavía no hay procesos en este lugar."
+      new:
+        title: "Nuevo lugar de procesamiento"
+      edit:
+        title: "Editar %{name}"
+      create:
+        success: "Lugar registrado."
+      update:
+        success: "Lugar actualizado."
     warehouses:
       first_name: "Bodega 1"
       numbered: "Bodega %{number}"
@@ -1334,7 +1365,7 @@ es:
       gross: "Libras brutas"
       net: "Libras netas"
       quintals_label: "QQ de compra"
-      in_process: "En conversión"
+      in_process: "En proceso"
       cherry_net: "Las libras netas de la uva son el café que se espera sacar de ella, no lo que pesó."
       out_detail: "Fuera: %{in_transit} lb en camino · %{unsold} lb pesadas sin vender"
       negative: "Hay más café en salidas que en compras para algún estado del café. Revisa que estén registradas todas las compras y que las salidas tengan el estado correcto."
@@ -1727,48 +1758,60 @@ es:
         no_payments: "Todavía no hay cobros."
     coffee_conversions:
       statuses:
-        in_process: "En conversión"
-        finished: "Terminada"
-        voided: "Anulada"
+        in_process: "En proceso"
+        finished: "Terminado"
+        voided: "Anulado"
       lifecycle:
-        label: "Etapas de la conversión"
+        label: "Etapas del proceso"
         next_badge: "Sigue"
         stages:
-          weighed: "Pesada (en conversión)"
+          weighed: "Pesado (en proceso)"
           finished: "Resultado registrado"
         hint:
-          weighed: "El café que entró ya salió de su estado y está en conversión. Cuando salga, registra cuánto salió en el estado nuevo."
+          weighed: "El café que entró ya salió de su estado y está en proceso. Cuando salga, registra cuánto salió en el estado nuevo."
           finished: "Lo que salió ya está en el inventario del estado nuevo."
       index:
-        title: "Conversiones"
+        title: "Procesos"
         help: "El café que pasa de uva a pergamino húmedo y de húmedo a seco: primero se pesa lo que entra, después se registra lo que salió."
-        new: "Nueva conversión"
+        new: "Procesar café"
         search_placeholder: "Número u observaciones"
-        all_active: "Todas (sin anuladas)"
-        empty: "No hay conversiones que coincidan con los filtros."
+        all_active: "Todos (sin anulados)"
+        empty: "No hay procesos que coincidan con los filtros."
         card_line: "Entró %{input} lb brutas · salió %{output} lb brutas"
         columns:
           number: "Número"
-          conversion: "Conversión"
+          conversion: "Proceso"
           input_gross: "Entró brutas (lb)"
           input_net: "Entró netas (lb)"
           output_gross: "Salió brutas (lb)"
           output_net: "Salió netas (lb)"
           net_difference: "Diferencia netas (lb)"
+          yield: "Rendimiento real"
         card_difference: "Netas que salieron contra las que entraron: %{pounds} lb"
+        sites: "Lugares"
       show:
-        title: "Conversión %{number}"
+        title: "Proceso %{number}"
         input: "Entró: %{state}"
         output: "Salió: %{state}"
         no_output: "Todavía no se registra cuánto salió."
         register_result: "Registrar resultado"
         void: "Anular"
-        confirm_void: "¿Anular esta conversión? El café vuelve a su estado. No se puede deshacer."
+        confirm_void: "¿Anular este proceso? El café vuelve a su estado. No se puede deshacer."
         reopen: "Quitar el resultado"
-        confirm_reopen: "¿Quitar el resultado? Lo que salió deja el inventario y la conversión vuelve a quedar en conversión."
-        voided: "Anulada el %{date} por %{name}."
+        confirm_reopen: "¿Quitar el resultado? Lo que salió deja el inventario y el proceso vuelve a quedar en proceso."
+        voided: "Anulado el %{date} por %{name}."
         full_page: "Ver en página completa"
-        back: "Volver a conversiones"
+        back: "Volver a procesos"
+        estimate:
+          title: "Lo estimado contra lo real"
+          estimated: "Debía salir (%{percent})"
+          real: "Salió (%{percent})"
+          difference: "Diferencia"
+          more: "%{pounds} lb brutas más de lo estimado"
+          less: "%{pounds} lb brutas menos de lo estimado"
+          shrink: "Merma"
+          shrink_value: "%{pounds} lb (%{percent})"
+          average: "En promedio, los procesos de %{state} dan %{percent} de sus libras brutas."
         comparison:
           title: "Lo que entró contra lo que salió"
           went_in: "Netas que entraron"
@@ -1778,23 +1821,29 @@ es:
           less: "%{pounds} lb menos (−%{percent} %)"
           help: "Las netas que entraron son las que se pagaron en las compras; las que salieron, las que se pesaron. Si salen menos, el café rindió menos de lo que se pagó."
       new:
-        title: "Nueva conversión"
-        help: "Pesa el café que va a convertirse: sale de su estado en este momento y queda en conversión. Cuando salga, registra cuánto salió en el estado nuevo."
-        what: "¿Qué se convierte?"
+        title: "Procesar café"
+        help: "Pesa el café que se manda a procesar: sale de su estado en este momento y queda en proceso. Cuando salga, registra cuánto salió en el estado nuevo."
+        what: "¿Qué se procesa?"
         available: "En inventario:"
         preview: "Lo que sale del inventario"
-        becomes: "Se convierte en"
+        becomes: "Sale como"
+        new_site: "Nuevo lugar"
+        estimate: "Debería salir"
+        estimate_help: "Libras brutas, según el rendimiento estimado, de"
+        average: "En promedio, tus procesos de este café han dado %{percent} %."
+        no_average: "Todavía no hay procesos terminados de este café para comparar."
+        humidity_help: "Opcional. La humedad del pergamino que entra a secar."
         over_stock: "Es más de lo que hay en inventario de este estado. Revisa el peso o registra primero las compras."
-        submit: "Pesar y poner en conversión"
+        submit: "Pesar y mandar a procesar"
       create:
-        success: "Conversión %{number} pesada: el café quedó en conversión."
+        success: "Proceso %{number} pesado: el café quedó en proceso."
       void:
-        success: "Conversión anulada: el café volvió a su estado."
+        success: "Proceso anulado: el café volvió a su estado."
       reopen:
-        success: "Se quitó el resultado: la conversión volvió a quedar en conversión."
+        success: "Se quitó el resultado: el proceso volvió a quedar en proceso."
     conversion_results:
       edit:
-        title: "Resultado de la conversión %{number}"
+        title: "Resultado del proceso %{number}"
         crumb: "Resultado"
         subtitle: "%{from} → %{to}. Entró: %{gross} lb brutas (%{net} lb netas)."
         output_gross: "Libras brutas que salieron en %{state}"
@@ -1805,17 +1854,23 @@ es:
           less: "%{pounds} lb netas menos que las que entraron (−%{percent} %)"
           same: "Las mismas libras netas que entraron"
         submit: "Registrar resultado"
+        real_yield: "Rendimiento real"
+        estimated: "Debía salir (%{percent})"
+        estimate_difference:
+          more: "%{pounds} lb brutas más de lo estimado"
+          less: "%{pounds} lb brutas menos de lo estimado"
+          same: "Lo mismo que lo estimado"
       update:
-        success: "Resultado de la conversión %{number} registrado: ya está en el inventario."
+        success: "Resultado del proceso %{number} registrado: ya está en el inventario."
     stocks:
       show:
         title: "Inventario"
         ledger: "Movimientos del inventario"
-        ledger_help: "Cada compra que entró, cada salida que se fue, cada conversión y, al elegir una bodega, cada traslado, con el saldo después de cada uno."
+        ledger_help: "Cada compra que entró, cada salida que se fue, cada proceso y, al elegir una bodega, cada traslado, con el saldo después de cada uno."
         balance: "Saldo (lb netas)"
         balance_gross: "%{gross} lb brutas"
         card_line: "%{gross} lb brutas · %{net} lb netas · %{quintals} QQ de compra"
-        convert: "Convertir café"
+        convert: "Procesar café"
         transfer: "Trasladar café"
         warehouses: "Bodegas"
         empty: "No hay movimientos en estas fechas."
@@ -1831,15 +1886,15 @@ es:
         columns:
           at: "Fecha"
           kind: "Movimiento"
-          who: "Productor, salida o conversión"
+          who: "Productor, salida, proceso o traslado"
           gross: "Brutas (lb)"
           net: "Netas (lb)"
           quintals: "QQ de compra"
         kinds:
           purchase: "Compra"
           shipment: "Salida"
-          conversion_out: "A conversión"
-          conversion_in: "De conversión"
+          conversion_out: "A proceso"
+          conversion_in: "De proceso"
           transfer_in: "Llegó por traslado"
           transfer_out: "Salió por traslado"
     daily_closes:
@@ -1878,8 +1933,8 @@ es:
       report:
         title: "Cierre de comercialización"
         open_conversions:
-          one: "En conversión al cierre: 1 conversión sin resultado · %{gross} lb brutas · %{net} lb netas"
-          other: "En conversión al cierre: %{count} conversiones sin resultado · %{gross} lb brutas · %{net} lb netas"
+          one: "En proceso al cierre: 1 proceso sin resultado · %{gross} lb brutas · %{net} lb netas"
+          other: "En proceso al cierre: %{count} procesos sin resultado · %{gross} lb brutas · %{net} lb netas"
         stock:
           purchased: "Comprado (lb)"
           shipped: "Salió (lb)"
@@ -3828,13 +3883,13 @@ es:
         description: "Cada compra que entró al inventario (su peso neto) y cada salida de camión que se fue (su neto local), por estado del café, con el inventario al empezar y al terminar el período."
         purchase: "Compra %{number} · %{name}"
         shipment: "Salida %{number} · %{name}"
-        conversion_out: "Conversión %{number} · %{from} → %{to}"
-        conversion_in: "Conversión %{number} · %{from} → %{to}"
+        conversion_out: "Proceso %{number} · %{from} → %{to}"
+        conversion_in: "Proceso %{number} · %{from} → %{to}"
         kinds:
           purchase: "Compra"
           shipment: "Salida"
-          conversion_out: "A conversión"
-          conversion_in: "De conversión"
+          conversion_out: "A proceso"
+          conversion_in: "De proceso"
         columns:
           at: "Fecha"
           kind: "Movimiento"
@@ -4326,17 +4381,19 @@ es:
         - "El Inicio y las pantallas de Compra de café y Préstamos se actualizan solas cuando otra persona registra algo: lo nuevo aparece con un brillo y las cifras que cambian dan un pulso. Abajo a la izquierda dice «En vivo». Si tienes una ventana abierta, se actualiza al cerrarla."
     processes:
       coffee_conversion:
-        title: "Convertir café"
+        title: "Procesar café"
         summary: "Pasar café de uva a pergamino húmedo, o de húmedo a pergamino seco, en dos pasos: pesar lo que entra y registrar lo que salió."
         steps:
-          - "En Comercialización → Conversiones (o «Convertir café» en Inventario), toca «Nueva conversión»."
-          - "Elige qué se convierte y escribe las libras brutas que entran. Ese café sale de su estado y queda «En conversión»."
-          - "Cuando salga, abre la conversión y toca «Registrar resultado»: pesa lo que salió como una compra (libras brutas, sacos, humedad y daño). Se suma a su inventario."
-          - "El detalle compara las libras netas que entraron con las que salieron: si salen menos, el café rindió menos de lo que se pagó."
+          - "En Comercialización → Procesos (o en Inventario), toca «Procesar café»."
+          - "Elige qué se procesa, la bodega, el lugar y las libras brutas que entran. Ese café sale de su estado y queda «En proceso»."
+          - "Cuando salga, abre el proceso y toca «Registrar resultado»: pesa lo que salió como una compra (libras brutas, sacos, humedad y daño). Se suma a su inventario."
+          - "Al mandar a procesar se ve cuánto debería salir según el rendimiento estimado (37.95 % de la uva, 50 % al secar, o el que escribas)."
+          - "El detalle compara lo estimado con lo que salió, la merma y las libras netas que entraron con las que salieron."
         tips:
+          - "El rendimiento estimado es solo una proyección; el promedio de los procesos terminados sale debajo para comparar."
           - "Las libras netas que entran se calculan solas con lo que ya hay de ese estado en el inventario."
-          - "Una conversión en proceso se puede anular: el café vuelve a su estado. A una terminada se le puede quitar el resultado."
-          - "En Inventario, toca una tarjeta para ver los movimientos de ese estado, también las conversiones."
+          - "Un proceso que espera su resultado se puede anular: el café vuelve a su estado. A uno terminado se le puede quitar el resultado."
+          - "En Inventario, toca una tarjeta para ver los movimientos de ese estado, también los procesos."
       coffee_lots:
         title: "Lotes, bodegas y valor del café"
         summary: "Cada compra entra a una bodega como un lote; el café sale de los lotes más viejos primero."
@@ -5311,6 +5368,26 @@ es:
             steps:
               - "Escribe el nombre (por ejemplo, «Bodega 1»); se puede cambiar después."
               - "Marca «Bodega por defecto» si las compras nuevas deben entrar en ella."
+        processing_sites:
+          index:
+            title: "Lugares de procesamiento"
+            summary: "Dónde se procesa el café, con cuántos procesos ha tenido cada uno."
+            steps:
+              - "Busca por nombre o mira los desactivados."
+              - "Toca una fila para ver sus procesos."
+              - "«Nuevo lugar» registra uno; también se puede desde «Procesar café»."
+          show:
+            title: "Lugar de procesamiento"
+            summary: "Sus datos y los procesos que se han hecho ahí, con su rendimiento real."
+            steps:
+              - "Toca un proceso para ver lo estimado contra lo real y su merma."
+          form:
+            title: "Registrar o editar un lugar"
+            summary: "El nombre del lugar y si es del negocio."
+            steps:
+              - "Escribe el nombre; marca «Es del negocio» si es propio (el patio, por ejemplo)."
+            tips:
+              - "Uno con procesos no se borra: se desactiva y deja de salir en los procesos nuevos."
         warehouse_transfers:
           index:
             title: "Traslados entre bodegas"
@@ -5360,31 +5437,31 @@ es:
               - "Toca «Imprimir»: el original y la copia salen cada uno en su hoja."
         coffee_conversions:
           index:
-            title: "Conversiones"
-            summary: "El café que pasa de uva a pergamino húmedo y de húmedo a seco, con lo que entró y lo que salió de cada conversión."
+            title: "Procesos"
+            summary: "El café que pasa de uva a pergamino húmedo y de húmedo a seco, con lo que entró y lo que salió de cada proceso."
             steps:
-              - "Filtra por fecha, estado o etapa; «En conversión» son las que esperan su resultado."
-              - "Toca una fila para ver la conversión y registrar su resultado."
-              - "«Nueva conversión» pesa café para convertirlo."
+              - "Filtra por fecha, estado o etapa; «En proceso» son los que esperan su resultado."
+              - "Toca una fila para ver el proceso y registrar su resultado."
+              - "«Procesar café» pesa café para mandarlo a procesar."
           show:
-            title: "Conversión"
-            summary: "Lo que entró y lo que salió de una conversión, con sus libras brutas, netas y quintales."
+            title: "Proceso"
+            summary: "Lo que entró y lo que salió de un proceso, con sus libras brutas, netas y quintales."
             steps:
-              - "Si todavía está en conversión, toca «Registrar resultado» y pesa lo que salió."
+              - "Si todavía está en proceso, toca «Registrar resultado» y pesa lo que salió."
               - "«Lo que entró contra lo que salió» dice cuántas libras netas más o menos dio el café."
-              - "«Anular» devuelve el café a su estado (solo en conversión); «Quitar el resultado» la regresa a en conversión."
+              - "«Anular» devuelve el café a su estado (solo en proceso); «Quitar el resultado» lo regresa a en proceso."
           form:
-            title: "Nueva conversión"
-            summary: "Pesa el café que va a convertirse."
+            title: "Procesar café"
+            summary: "Pesa el café que se manda a procesar."
             steps:
-              - "Elige qué se convierte: uva a pergamino húmedo o húmedo a seco."
+              - "Elige qué se procesa: uva a pergamino húmedo o húmedo a seco."
               - "Escribe la fecha y hora y las libras brutas que entran; a la derecha se ven sus libras netas y quintales."
-              - "Toca «Pesar y poner en conversión»: sale de su estado y queda en conversión."
+              - "Toca «Pesar y mandar a procesar»: sale de su estado y queda en proceso."
             tips:
               - "Si es más de lo que hay en inventario, avisa sin impedirlo."
         conversion_results:
           form:
-            title: "Resultado de la conversión"
+            title: "Resultado del proceso"
             summary: "El café que salió en el estado nuevo, pesado como una compra."
             steps:
               - "Escribe la fecha y hora, las libras brutas que salieron, los sacos, la humedad y el daño (vacío es 0 %)."
@@ -5397,8 +5474,8 @@ es:
             steps:
               - "Arriba, las libras netas de hoy por estado del café. Toca una tarjeta para ver sus lotes, su valor y sus cifras."
               - "Elige una bodega para ver solo su café."
-              - "Abajo, cada compra que entró, cada salida que se fue, cada conversión y cada traslado en las fechas elegidas, con el saldo después de cada uno."
-              - "«Convertir café» pasa café de uva a pergamino húmedo o de húmedo a seco; «Trasladar café», de una bodega a otra."
+              - "Abajo, cada compra que entró, cada salida que se fue, cada proceso y cada traslado en las fechas elegidas, con el saldo después de cada uno."
+              - "«Procesar café» pasa café de uva a pergamino húmedo o de húmedo a seco; «Trasladar café», de una bodega a otra."
             tips:
               - "Las compras y salidas anuladas no cuentan."
               - "Si hay uva que lleva demasiadas horas sin procesar, sale un aviso con el botón para procesarla."
@@ -6108,6 +6185,7 @@ es:
         navbar: "Barra de navegación"
         sign_in: "Inicio de sesión"
         cherry_alert: "Aviso a las %{warning} h · urgente a las %{critical} h"
+        yields: "Uva a húmedo: %{cherry} · secado: %{drying}"
       edit:
         title: "Editar la configuración del sitio"
       form:
@@ -6119,6 +6197,8 @@ es:
         weight_tolerance_help: "Opcional. En Comercialización, una salida cuya báscula del comprador difiere de la local en más de este porcentaje (más o menos) sale resaltada. Vacía, no se resalta ninguna."
         cherry_alert: "Alerta de uva sin procesar (horas)"
         cherry_alert_help: "Comercialización avisa cuando un lote de uva lleva en bodega más de estas horas sin procesar: primero un aviso y después, urgente."
+        yields: "Rendimiento estimado al procesar (%)"
+        yields_help: "Con cuánto empieza «Procesar café»: libras brutas que deberían salir por cada 100 que entran. Es solo una proyección y se cambia en cada proceso; después se anota lo que salió de verdad."
         logo_help: "PNG, JPG, WebP o GIF de hasta %{size}. Mejor cuadrado: se muestra en un círculo pequeño."
         remove_logo: "Quitar el logo actual (%{name}) y volver al grano de café"
         preview: "Vista previa"
@@ -6172,8 +6252,9 @@ es:
         hauler_payment: "el pago a carrero"
         buyer: "el comprador"
         buyer_advance: "el anticipo del comprador"
-        coffee_conversion: "la conversión de café"
+        coffee_conversion: "el proceso de café"
         warehouse: "la bodega"
+        processing_site: "el lugar de procesamiento"
         warehouse_transfer: "el traslado entre bodegas"
         carrier: "el transportista"
         truck: "el camión"
@@ -6551,11 +6632,14 @@ es:
         one: "Anticipo de comprador"
         other: "Anticipos de compradores"
       coffee_conversion:
-        one: "Conversión de café"
-        other: "Conversiones de café"
+        one: "Proceso de café"
+        other: "Procesos de café"
       warehouse:
         one: "Bodega"
         other: "Bodegas"
+      processing_site:
+        one: "Lugar de procesamiento"
+        other: "Lugares de procesamiento"
       warehouse_transfer:
         one: "Traslado entre bodegas"
         other: "Traslados entre bodegas"
@@ -7020,6 +7104,10 @@ es:
         input_ratio_source: "De dónde salió la proporción al entrar"
         warehouse: "Bodega"
         warehouse_id: "Bodega"
+        processing_site: "Lugar"
+        processing_site_id: "Lugar"
+        estimated_yield_percent: "Rendimiento estimado (%)"
+        input_humidity_percent: "Humedad al entrar (%)"
         output_warehouse: "Bodega a la que entra"
         output_warehouse_id: "Bodega a la que entra"
         finished_at: "Salió el"
@@ -7040,6 +7128,11 @@ es:
         voided_at: "Anulada el"
         voided_by: "Anuló"
         voided_by_id: "Anuló"
+      processing_site:
+        name: "Nombre"
+        own: "Es del negocio"
+        observations: "Observaciones"
+        active: "Activo"
       warehouse:
         name: "Nombre"
         main: "Bodega por defecto"
@@ -7438,6 +7531,8 @@ es:
         logo_byte_size: "Tamaño del logo (bytes)"
         weight_tolerance_percent: "Tolerancia de diferencia de peso (%)"
         cherry_warning_hours: "Aviso después de (horas)"
+        cherry_yield_percent: "Uva a pergamino húmedo (%)"
+        drying_yield_percent: "Secado: húmedo a pergamino seco (%)"
         cherry_critical_hours: "Urgente después de (horas)"
       purchase/weighings:
         gross_weight: "Peso de la pesada (lb)"
@@ -7467,14 +7562,16 @@ es:
         coffee_conversion:
           attributes:
             base:
-              finished: "La conversión ya tiene su resultado: quítalo primero."
-              not_finished: "La conversión todavía no tiene resultado."
+              finished: "El proceso ya tiene su resultado: quítalo primero."
+              not_finished: "El proceso todavía no tiene resultado."
             finished_at:
               before_weighed: "no puede ser antes de cuando se pesó lo que entró"
             warehouse:
               inactive: "está desactivada: elige otra"
             output_warehouse:
               inactive: "está desactivada: elige otra"
+            processing_site:
+              inactive: "está desactivado: elige otro"
         warehouse:
           attributes:
             base:

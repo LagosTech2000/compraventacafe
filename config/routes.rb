@@ -93,6 +93,8 @@ Rails.application.routes.draw do
     resources :carriers, except: :destroy
     resources :trucks, except: :destroy
     resources :warehouses
+    # Where coffee is processed.
+    resources :processing_sites, path: "sites", except: :destroy
     # Coffee moved from one warehouse to another.
     resources :warehouse_transfers, path: "transfers", only: %i[ index show new create ] do
       patch :void, on: :member

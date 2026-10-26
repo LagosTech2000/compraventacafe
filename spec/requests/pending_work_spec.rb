@@ -66,18 +66,18 @@ RSpec.describe "Pending work" do
 
     get root_path
     expect(page.at_css("#dashboard-pending").text.squish)
-      .to include("1 carrero por pagar", "1 conversión espera su resultado", "1 estado del café quedó en negativo")
+      .to include("1 carrero por pagar", "1 proceso espera su resultado", "1 estado del café quedó en negativo")
 
     get pending_work_path, headers: { "Turbo-Frame" => "modal" }
     expect(section(:haulers_to_pay).text.squish).to include("Luis Mejía", format("L %.2f", hauler.reload.balance))
     expect(section(:haulers_to_pay).at_css("a[href='#{new_trading_hauler_payment_path(hauler)}']")).to be_present
-    expect(section(:open_conversions).text.squish).to include("Conversión #{conversion.display_number}", "Pergamino húmedo → Pergamino seco", "pesada hace 2 días")
+    expect(section(:open_conversions).text.squish).to include("Proceso #{conversion.display_number}", "Pergamino húmedo → Pergamino seco", "pesada hace 2 días")
     expect(section(:open_conversions).at_css("a[href='#{edit_sales_coffee_conversion_result_path(conversion)}']")).to be_present
     expect(section(:negative_stock).text.squish).to include("Pergamino seco", "−165.00 lb brutas")
     expect(section(:negative_stock).at_css("a")["href"]).to eq(sales_stock_path(coffee_state: "dry_parchment", anchor: "stock-ledger-title"))
 
     get sales_daily_close_path(date: Time.zone.today)
-    expect(page.at_css("[data-open-conversions]").text.squish).to include("1 conversión sin resultado", "500.00 lb brutas")
+    expect(page.at_css("[data-open-conversions]").text.squish).to include("1 proceso sin resultado", "500.00 lb brutas")
   end
 
   it "shows only the modules the user reads, and only the buttons they may use" do

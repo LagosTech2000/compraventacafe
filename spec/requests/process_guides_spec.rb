@@ -31,7 +31,7 @@ RSpec.describe "Process guides" do
     conversion = create(:coffee_conversion)
     [ sales_coffee_conversions_path, new_sales_coffee_conversion_path, sales_coffee_conversion_path(conversion), sales_stock_path ].each do |path|
       get path
-      expect(guides).to include("Ayuda: Convertir café"), path
+      expect(guides).to include("Ayuda: Procesar café"), path
     end
   end
 

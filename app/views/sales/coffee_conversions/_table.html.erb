@@ -1,0 +1,66 @@
+<%# Processes (coffee conversions): the list, and a site's processes.
+    `sorting` (filter + frame) sorts on the server. %>
+<div class="mt-6 @container">
+  <ul class="space-y-3 @3xl:hidden">
+    <% conversions.each do |conversion| %>
+      <li class="data-card" id="<%= dom_id(conversion, :card) %>">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="font-semibold"><%= t("sales.coffee_conversions.show.title", number: conversion.display_number) %></p>
+            <p class="text-sm"><%= conversion.human_from_state %> → <%= conversion.human_to_state %></p>
+            <p class="text-xs text-ink-muted"><%= l(conversion.weighed_at) %><%= " · #{conversion.processing_site.name}" if conversion.processing_site %></p>
+            <% if conversion.observations %><p class="truncate text-xs text-ink-muted"><%= conversion.observations %></p><% end %>
+          </div>
+          <%= render "sales/coffee_conversions/status", conversion: %>
+        </div>
+        <p class="mt-2 text-sm tabular-nums">
+          <%= t("sales.coffee_conversions.index.card_line", input: format_pounds(conversion.input_gross_weight),
+                              output: conversion.output_gross_weight ? format_pounds(conversion.output_gross_weight) : "—") %>
+        </p>
+        <% if conversion.net_difference %>
+          <p class="text-xs tabular-nums <%= conversion.net_difference.negative? ? "text-danger" : "text-ink-muted" %>">
+            <%= t("sales.coffee_conversions.index.card_difference", pounds: signed_pounds(conversion.net_difference)) %>
+          </p>
+        <% end %>
+        <div class="mt-3 flex justify-end"><%= detail_button sales_coffee_conversion_path(conversion) %></div>
+      </li>
+    <% end %>
+  </ul>
+  <div class="hidden overflow-x-auto panel @3xl:block">
+    <table class="data-table data-table-compact">
+      <thead>
+        <tr>
+          <%= sort_th t("sales.coffee_conversions.index.columns.number"), :number, sorting %>
+          <%= sort_th CoffeeConversion.human_attribute_name(:weighed_at), :weighed_at, sorting %>
+          <%= sort_th t("sales.coffee_conversions.index.columns.conversion"), :from_state, sorting %>
+          <%= sort_th CoffeeConversion.human_attribute_name(:processing_site), :processing_site, sorting %>
+          <%= sort_th t("sales.coffee_conversions.index.columns.input_gross"), :input_gross, sorting, class: "text-right" %>
+          <%= sort_th t("sales.coffee_conversions.index.columns.output_gross"), :output_gross, sorting, class: "text-right" %>
+          <%= sort_th t("sales.coffee_conversions.index.columns.yield"), :yield, sorting, class: "text-right" %>
+          <%= sort_th t("sales.coffee_conversions.index.columns.net_difference"), :net_difference, sorting, class: "text-right" %>
+          <%= sort_th CoffeeConversion.human_attribute_name(:status), :status, sorting %>
+          <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% conversions.each do |conversion| %>
+          <tr id="<%= dom_id(conversion) %>">
+            <td class="tabular-nums"><%= conversion.display_number %></td>
+            <td class="whitespace-nowrap"><%= l(conversion.weighed_at) %></td>
+            <td>
+              <%= conversion.human_from_state %> → <%= conversion.human_to_state %>
+              <% if conversion.observations %><span class="block max-w-xs truncate text-xs text-ink-muted"><%= conversion.observations %></span><% end %>
+            </td>
+            <td><%= conversion.processing_site&.name || "—" %></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(conversion.input_gross_weight) %></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= conversion.output_gross_weight ? format_pounds(conversion.output_gross_weight) : "—" %></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= conversion.output_yield_percent ? format_percent(conversion.output_yield_percent) : "—" %></td>
+            <td class="whitespace-nowrap text-right tabular-nums <%= "text-danger" if conversion.net_difference&.negative? %>"><%= conversion.net_difference ? signed_pounds(conversion.net_difference) : "—" %></td>
+            <td><%= render "sales/coffee_conversions/status", conversion: %></td>
+            <td class="cell-actions"><%= detail_button sales_coffee_conversion_path(conversion) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

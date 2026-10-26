@@ -50,6 +50,22 @@
     <p class="mt-1 text-xs text-ink-muted"><%= t("administration.site_settings.form.cherry_alert_help") %></p>
   </fieldset>
 
+  <%# What a process starts estimating (client, 2026-10-26). %>
+  <fieldset>
+    <legend class="field-label"><%= t("administration.site_settings.form.yields") %></legend>
+    <div class="grid max-w-md gap-4 sm:grid-cols-2">
+      <div>
+        <%= form.label :cherry_yield_percent, class: "text-xs text-ink-muted" %>
+        <%= form.number_field :cherry_yield_percent, required: true, min: 0.01, max: 100, step: 0.01, inputmode: "decimal", class: "field-input" %>
+      </div>
+      <div>
+        <%= form.label :drying_yield_percent, class: "text-xs text-ink-muted" %>
+        <%= form.number_field :drying_yield_percent, required: true, min: 0.01, max: 100, step: 0.01, inputmode: "decimal", class: "field-input" %>
+      </div>
+    </div>
+    <p class="mt-1 text-xs text-ink-muted"><%= t("administration.site_settings.form.yields_help") %></p>
+  </fieldset>
+
   <div>
     <%= form.label :logo, class: "field-label" %>
     <%= form.file_field :logo, accept: SiteSetting::LOGO_SIGNATURES.keys.join(","), class: "field-input py-2",

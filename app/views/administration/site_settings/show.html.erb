@@ -37,6 +37,10 @@
         <dd class="mt-1 tabular-nums"><%= t("administration.site_settings.show.cherry_alert", warning: setting.cherry_warning_hours, critical: setting.cherry_critical_hours) %></dd>
       </div>
       <div>
+        <dt class="text-xs font-semibold tracking-wide text-ink-muted uppercase"><%= t("administration.site_settings.form.yields") %></dt>
+        <dd class="mt-1 tabular-nums"><%= t("administration.site_settings.show.yields", cherry: format_percent(setting.cherry_yield_percent), drying: format_percent(setting.drying_yield_percent)) %></dd>
+      </div>
+      <div>
         <dt class="text-xs font-semibold tracking-wide text-ink-muted uppercase"><%= SiteSetting.human_attribute_name(:logo) %></dt>
         <dd class="mt-1">
           <% if setting.logo? %>

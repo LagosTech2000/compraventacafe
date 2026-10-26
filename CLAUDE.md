@@ -157,7 +157,8 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Diferencia de peso en lempiras | `Sale#difference_amount`, `SaleSummary#difference_amount` |
 | Arqueo de caja | `CashCount` (`finance/cash_counts`) |
 | Lo que debes y lo que te deben (Inicio) | `Dashboard#owed_by_business` / `#owed_to_business` |
-| Conversión de café (uva → húmedo, húmedo → seco) / en conversión / resultado | `CoffeeConversion` (`sales/coffee_conversions`, `ConversionResultsController`) / `in_process` / `output_*` |
+| Proceso de café («Procesar café»: uva → húmedo, húmedo → seco; antes «conversión») / en proceso / resultado | `CoffeeConversion` (`sales/coffee_conversions`, `ConversionResultsController`) / `in_process` / `output_*` |
+| Lugar de procesamiento / rendimiento estimado / merma | `ProcessingSite` (`sales/processing_sites`) / `CoffeeConversion#estimated_yield_percent` / `#shrink_weight` |
 | Cierre de comercialización | `SalesDailyClose` |
 | Control financiero | `finance` |
 | Cuenta (caja / banco) / saldo de la cuenta | `MoneyAccount` (`kind`: `cash` / `bank`, `default_for`) / `AccountBalance` |
@@ -1104,7 +1105,22 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   vuelve) y a una terminada se le quita el resultado; la vista previa usa
   la proporción de hoy aunque la fecha sea otra (el servidor usa la de la
   fecha). A una fecha (fin
-  del día); de lo que salió, «en camino» y «pesado sin vender». El kárdex
+  del día); de lo que salió, «en camino» y «pesado sin vender».
+- **Procesar café** (cliente, 2026-10-26) [CONFIRMADO]: en la interfaz las
+  conversiones se llaman **procesos** («Procesar café», Comercialización →
+  Procesos; solo cambiaron los textos). Cada proceso nuevo lleva su
+  **lugar** (`ProcessingSite`: máquinas ecológicas de otros, el patio, la
+  secadora; catálogo con «Es del negocio», se desactiva) y su **rendimiento
+  estimado**: libras brutas del estado nuevo por cada 100 que entran,
+  **37.95 % de uva a húmedo y 50 % al secar** (respuestas 2 y 21–22),
+  editable en cada proceso y en Configuración del sitio
+  (`cherry_yield_percent`, `drying_yield_percent`). Es solo una proyección:
+  el resultado se pesa. Al secar se anota, opcional, la **humedad al
+  entrar**. El detalle muestra **lo estimado contra lo real**, el
+  rendimiento real, la **merma** (brutas que entraron − brutas que
+  salieron) y el **promedio** de los procesos terminados de ese estado
+  (`CoffeeConversion.average_yield_percent`), que también sale al mandar a
+  procesar. La lista filtra por lugar y tiene el rendimiento real. El kárdex
   (`StockLedger`, `sales/stock#show`) lista cada compra y salida con el
   saldo después de cada una.
 - **Salida de camión** (`Shipment`): comprador, estado del café, remisión,

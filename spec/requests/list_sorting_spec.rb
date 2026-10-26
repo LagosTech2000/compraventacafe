@@ -70,6 +70,7 @@ RSpec.describe "Sorting every list" do
     CarrierFilter => -> { sales_carriers_path },
     TruckFilter => -> { sales_trucks_path },
     WarehouseFilter => -> { sales_warehouses_path },
+    ProcessingSiteFilter => -> { sales_processing_sites_path },
     WarehouseTransferFilter => -> { sales_warehouse_transfers_path },
     StaffRoleFilter => -> { finance_staff_roles_path },
     ExpenseFilter => -> { finance_expenses_path(from: "", to: "") },

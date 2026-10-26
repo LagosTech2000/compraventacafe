@@ -22,7 +22,7 @@ class SiteSetting < ApplicationRecord
   MAX_LOGO_SIZE = 1.megabyte
   # Every column but the logo's bytes, for pages that only need to know
   # whether there is a logo.
-  LIGHT_COLUMNS = %w[id business_name location rtn weight_tolerance_percent cherry_warning_hours cherry_critical_hours logo_content_type logo_filename logo_byte_size created_at updated_at].freeze
+  LIGHT_COLUMNS = %w[id business_name location rtn weight_tolerance_percent cherry_warning_hours cherry_critical_hours cherry_yield_percent drying_yield_percent logo_content_type logo_filename logo_byte_size created_at updated_at].freeze
 
   self.audit_skipped_attributes = %w[logo_data]
 
@@ -40,6 +40,9 @@ class SiteSetting < ApplicationRecord
   # Hours cherry may wait before a warning, and before a critical alert.
   validates :cherry_warning_hours, :cherry_critical_hours, numericality: { only_integer: true, greater_than: 0, less_than_or_equal_to: 720 }
   validate :critical_after_warning
+  # What a process starts estimating (client, 2026-10-26): gross pounds of
+  # the new state per 100 that go in.
+  validates :cherry_yield_percent, :drying_yield_percent, numericality: { greater_than: 0, less_than_or_equal_to: 100 }
   validate :logo_is_an_image
 
   before_validation :take_logo

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_26_060000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_26_070000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -156,11 +156,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_060000) do
     t.decimal "output_damage_percent", precision: 5, scale: 2
     t.bigint "warehouse_id", null: false
     t.bigint "output_warehouse_id"
+    t.bigint "processing_site_id"
+    t.decimal "estimated_yield_percent", precision: 5, scale: 2
+    t.decimal "input_humidity_percent", precision: 5, scale: 2
     t.index ["created_by_id"], name: "index_coffee_conversions_on_created_by_id"
     t.index ["finished_at"], name: "index_coffee_conversions_on_finished_at"
     t.index ["finished_by_id"], name: "index_coffee_conversions_on_finished_by_id"
     t.index ["number"], name: "index_coffee_conversions_on_number", unique: true
     t.index ["output_warehouse_id"], name: "index_coffee_conversions_on_output_warehouse_id"
+    t.index ["processing_site_id"], name: "index_coffee_conversions_on_processing_site_id"
     t.index ["voided_by_id"], name: "index_coffee_conversions_on_voided_by_id"
     t.index ["warehouse_id"], name: "index_coffee_conversions_on_warehouse_id"
     t.index ["weighed_at"], name: "index_coffee_conversions_on_weighed_at"
@@ -636,6 +640,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_060000) do
     t.index ["updated_by_id"], name: "index_private_documents_on_updated_by_id"
   end
 
+  create_table "processing_sites", force: :cascade do |t|
+    t.string "name", null: false
+    t.boolean "own", default: false, null: false
+    t.text "observations"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((name)::text)", name: "index_processing_sites_on_lower_name", unique: true
+  end
+
   create_table "producers", force: :cascade do |t|
     t.bigint "person_id", null: false
     t.string "kind", null: false
@@ -871,6 +885,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_060000) do
     t.decimal "weight_tolerance_percent", precision: 5, scale: 2
     t.integer "cherry_warning_hours", default: 12, null: false
     t.integer "cherry_critical_hours", default: 24, null: false
+    t.decimal "cherry_yield_percent", precision: 5, scale: 2, default: "37.95", null: false
+    t.decimal "drying_yield_percent", precision: 5, scale: 2, default: "50.0", null: false
   end
 
   create_table "staff_advances", force: :cascade do |t|
@@ -1074,6 +1090,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_060000) do
   add_foreign_key "cash_counts", "money_accounts"
   add_foreign_key "cash_counts", "users", column: "created_by_id"
   add_foreign_key "clients", "people"
+  add_foreign_key "coffee_conversions", "processing_sites"
   add_foreign_key "coffee_conversions", "users", column: "created_by_id"
   add_foreign_key "coffee_conversions", "users", column: "finished_by_id"
   add_foreign_key "coffee_conversions", "users", column: "voided_by_id"

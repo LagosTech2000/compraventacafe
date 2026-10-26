@@ -17,7 +17,8 @@ module Sales
     def new
       from_state = params[:from_state].presence_in(CoffeeConversion::NEXT_STATE.keys) || "cherry"
       warehouse = Warehouse.active.find_by(id: params[:warehouse_id]) || Warehouse.main
-      @conversion = authorize CoffeeConversion.new(from_state:, warehouse:, weighed_at: Time.current.change(sec: 0))
+      @conversion = authorize CoffeeConversion.new(from_state:, warehouse:, weighed_at: Time.current.change(sec: 0),
+                                                   estimated_yield_percent: CoffeeConversion.default_yield_percent(from_state))
       @stock = CoffeeStock.new
     end
 
@@ -46,12 +47,13 @@ module Sales
 
     private
       def set_conversion
-        @conversion = CoffeeConversion.includes(:warehouse, :output_warehouse, :created_by, :finished_by, :voided_by).find(params[:id])
+        @conversion = CoffeeConversion.includes(:warehouse, :output_warehouse, :processing_site, :created_by, :finished_by, :voided_by).find(params[:id])
         authorize @conversion unless action_name.in?(%w[void reopen])
       end
 
       def conversion_params
-        params.expect(coffee_conversion: [ :from_state, :warehouse_id, :weighed_at, :input_gross_weight, :observations ])
+        params.expect(coffee_conversion: [ :from_state, :warehouse_id, :processing_site_id, :weighed_at, :input_gross_weight, :estimated_yield_percent,
+                                                         :input_humidity_percent, :observations ])
       end
   end
 end

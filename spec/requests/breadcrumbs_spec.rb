@@ -29,9 +29,9 @@ RSpec.describe "Breadcrumbs" do
   it "goes up through the list from a coffee conversion and its result" do
     conversion = create(:coffee_conversion)
     get sales_coffee_conversion_path(conversion)
-    expect(crumbs).to eq([ "Conversiones", "Conversión #{conversion.display_number}" ])
+    expect(crumbs).to eq([ "Procesos", "Proceso #{conversion.display_number}" ])
     get edit_sales_coffee_conversion_result_path(conversion)
-    expect(crumbs).to eq([ "Conversiones", "Conversión #{conversion.display_number}", "Resultado" ])
+    expect(crumbs).to eq([ "Procesos", "Proceso #{conversion.display_number}", "Resultado" ])
   end
 
   it "goes up through the stock from a coffee state, a warehouse and a transfer" do

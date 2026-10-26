@@ -7,7 +7,8 @@ RSpec.describe CoffeeConversion do
   let(:user) { create(:user) }
   let(:wet_stock) { create(:purchase, gross_weight: 2_000) } # 973.63 net: 0.486815 a gross pound
 
-  def convert(**attributes) = described_class.create!(from_state: "wet_parchment", weighed_at: Time.current, created_by: user, **attributes)
+  def convert(**attributes) = described_class.create!(from_state: "wet_parchment", weighed_at: Time.current, created_by: user,
+                                                      processing_site: create(:processing_site), estimated_yield_percent: 50, **attributes)
 
   def finish(conversion, gross, sacks: 4, humidity: 12, damage: nil)
     conversion.assign_attributes(finished_at: Time.current, output_gross_weight: gross, output_sacks: sacks,

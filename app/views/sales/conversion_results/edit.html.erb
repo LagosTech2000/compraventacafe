@@ -16,6 +16,8 @@
       data: { controller: "form-validation conversion-preview",
               conversion_preview_state_value: @conversion.to_state,
               conversion_preview_input_net_value: @conversion.input_net_weight.to_f,
+              conversion_preview_input_gross_value: @conversion.input_gross_weight.to_f,
+              conversion_preview_estimated_gross_value: @conversion.estimated_output_gross.to_f,
               conversion_preview_quintal_weight_value: PurchaseCalculation::QUINTAL_WEIGHT } do |form| %>
   <%= render "shared/form_errors", record: @conversion %>
   <%= form.hidden_field :lock_version %>
@@ -63,6 +65,16 @@
         <dl class="mt-2 grid grid-cols-2 gap-3">
           <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.net") %></dt><dd class="text-xl font-bold tabular-nums" data-conversion-preview-target="net">—</dd></div>
           <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.quintals_label") %></dt><dd class="text-xl font-bold tabular-nums" data-conversion-preview-target="quintals">—</dd></div>
+        </dl>
+        <%# What it really gave against what was estimated (client, 2026-10-26). %>
+        <dl class="mt-3 grid grid-cols-2 gap-3 border-t border-line pt-3">
+          <div><dt class="text-xs text-ink-muted"><%= t(".real_yield") %></dt><dd class="text-lg font-bold tabular-nums" data-conversion-preview-target="realYield">—</dd></div>
+          <% if @conversion.estimated_output_gross %>
+            <div><dt class="text-xs text-ink-muted"><%= t(".estimated", percent: format_percent(@conversion.estimated_yield_percent)) %></dt>
+              <dd class="text-lg font-bold tabular-nums"><%= t("sales.stock.pounds", pounds: format_pounds(@conversion.estimated_output_gross)) %></dd></div>
+            <p class="col-span-2 text-sm" data-conversion-preview-target="estimateDifference"
+               data-more="<%= t(".estimate_difference.more") %>" data-less="<%= t(".estimate_difference.less") %>" data-same="<%= t(".estimate_difference.same") %>"></p>
+          <% end %>
         </dl>
         <p class="mt-3 border-t border-line pt-3 text-sm" data-conversion-preview-target="difference"
            data-more="<%= t(".difference.more") %>" data-less="<%= t(".difference.less") %>" data-same="<%= t(".difference.same") %>"></p>

@@ -1,24 +1,49 @@
 import { Controller } from "@hotwired/stimulus"
 
-// A coffee conversion's weighing, as a preview (the server repeats it on
-// save and its result is the one kept); the net ÷ 125 is the QQ.
+// A process's weighing, as a preview (the server repeats it on save and its
+// result is the one kept); the net ÷ 125 is the QQ.
 //
-// In «Nueva conversión» (what goes in) the net is the gross typed × the
-// net/gross proportion of the state chosen; its gross in stock is shown,
-// and typing more warns without stopping it. In the result (what came out)
-// it is weighed like a purchase: (gross − 1 lb × sack) × (1 − humidity) ×
-// (1 − damage), and it says how many net pounds more or less than what went in.
+// In «Procesar café» (what goes in) the net is the gross typed × the
+// net/gross proportion of the state chosen; its gross in stock (of the
+// warehouse chosen) is shown, and typing more warns without stopping it.
+// The estimate says how many gross pounds should come out (gross × the
+// estimated %), and below it, what the processes of that state really gave.
+// Changing the state puts its starting estimate and hides the humidity of
+// cherry (it has none).
+//
+// In the result (what came out) it is weighed like a purchase: (gross − 1
+// lb × sack) × (1 − humidity) × (1 − damage), and it says how many net
+// pounds more or less than what went in, the real yield and how far it is
+// from the estimate.
 export default class extends Controller {
-  static targets = ["state", "gross", "net", "quintals", "toState", "available", "overStock", "sacks", "humidity", "damage", "difference", "warehouse"]
-  static values = { ratios: Object, stock: Object, toStates: Object, state: String, quintalWeight: Number, inputNet: Number }
+  static targets = ["state", "gross", "net", "quintals", "toState", "available", "overStock", "sacks", "humidity", "damage", "difference", "warehouse",
+                    "estimate", "estimatedOutput", "average", "humidityField", "realYield", "estimateDifference"]
+  static values = { ratios: Object, stock: Object, toStates: Object, state: String, quintalWeight: Number, inputNet: Number,
+                    defaults: Object, averages: Object, inputGross: Number, estimatedGross: Number }
 
   connect() {
     this.pounds = new Intl.NumberFormat("es-HN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    this.percent = new Intl.NumberFormat("es-HN", { maximumFractionDigits: 2 })
     this.update()
   }
 
+  changeState() {
+    const state = this.currentState()
+    if (this.hasEstimateTarget && this.defaultsValue[state] !== undefined) this.estimateTarget.value = this.defaultsValue[state]
+    if (this.hasHumidityFieldTarget) {
+      const cherry = state === "cherry"
+      this.humidityFieldTarget.hidden = cherry
+      this.humidityFieldTarget.querySelectorAll("input").forEach((input) => { input.disabled = cherry })
+    }
+    this.update()
+  }
+
+  currentState() {
+    return this.stateTargets.find((radio) => radio.checked)?.value || this.stateValue
+  }
+
   update() {
-    const state = this.stateTargets.find((radio) => radio.checked)?.value || this.stateValue
+    const state = this.currentState()
     const gross = parseFloat(this.grossTarget.value)
     const net = this.hasHumidityTarget ? this.weighed(gross) : this.byRatio(gross, parseFloat(this.ratiosValue[state]))
 
@@ -27,6 +52,8 @@ export default class extends Controller {
     if (this.hasToStateTarget) this.toStateTarget.textContent = this.toStatesValue[state] || ""
 
     if (this.hasDifferenceTarget) this.showDifference(net)
+    if (this.hasEstimatedOutputTarget) this.showEstimate(gross, state)
+    if (this.hasRealYieldTarget) this.showRealYield(gross)
 
     if (this.hasAvailableTarget) {
       const stock = this.hasWarehouseTarget ? (this.stockValue[this.warehouseTarget.value] || {}) : this.stockValue
@@ -34,6 +61,32 @@ export default class extends Controller {
       this.availableTarget.textContent = `${this.pounds.format(available)} lb`
       this.overStockTarget.hidden = !(gross > available)
     }
+  }
+
+  // What should come out, and what the processes of this state really gave.
+  showEstimate(gross, state) {
+    const estimate = parseFloat(this.estimateTarget.value)
+    this.estimatedOutputTarget.textContent = gross > 0 && estimate > 0 ? `${this.pounds.format(this.round(gross * estimate / 100))} lb` : "—"
+    if (!this.hasAverageTarget) return
+    const average = this.averagesValue[state]
+    this.averageTarget.textContent = average === null || average === undefined
+      ? this.averageTarget.dataset.none
+      : this.averageTarget.dataset.some.replace("%{percent}", this.percent.format(average))
+  }
+
+  // The result: what it really gave (gross out per 100 in) and how far from the estimate.
+  showRealYield(gross) {
+    if (!(gross > 0) || !(this.inputGrossValue > 0)) {
+      this.realYieldTarget.textContent = "—"
+      if (this.hasEstimateDifferenceTarget) this.estimateDifferenceTarget.textContent = ""
+      return
+    }
+    this.realYieldTarget.textContent = `${this.percent.format(this.round(gross * 100 / this.inputGrossValue))} %`
+    if (!this.hasEstimateDifferenceTarget || !(this.estimatedGrossValue > 0)) return
+    const difference = this.round(gross - this.estimatedGrossValue)
+    const target = this.estimateDifferenceTarget
+    const key = difference > 0 ? "more" : difference < 0 ? "less" : "same"
+    target.textContent = target.dataset[key].replace("%{pounds}", this.pounds.format(Math.abs(difference)))
   }
 
   byRatio(gross, ratio) {

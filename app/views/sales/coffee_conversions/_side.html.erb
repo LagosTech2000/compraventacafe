@@ -15,6 +15,13 @@
       <% if (warehouse = input ? conversion.warehouse : conversion.output_warehouse) %>
         <div class="col-span-2"><dt class="text-xs text-ink-muted"><%= Warehouse.model_name.human %></dt><dd><%= warehouse.name %></dd></div>
       <% end %>
+      <% if input && conversion.processing_site %>
+        <div class="col-span-2"><dt class="text-xs text-ink-muted"><%= CoffeeConversion.human_attribute_name(:processing_site) %></dt>
+          <dd><%= policy(conversion.processing_site).show? ? link_to(conversion.processing_site.name, sales_processing_site_path(conversion.processing_site), class: "link") : conversion.processing_site.name %></dd></div>
+      <% end %>
+      <% if input && conversion.input_humidity_percent %>
+        <div><dt class="text-xs text-ink-muted"><%= CoffeeConversion.human_attribute_name(:input_humidity_percent) %></dt><dd class="tabular-nums"><%= number_with_precision(conversion.input_humidity_percent, precision: 2) %></dd></div>
+      <% end %>
       <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.gross") %></dt><dd class="font-semibold tabular-nums"><%= t("sales.stock.pounds", pounds: format_pounds(gross)) %></dd></div>
       <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.net") %></dt><dd class="text-lg font-bold tabular-nums"><%= t("sales.stock.pounds", pounds: format_pounds(conversion["#{side}_net_weight"])) %></dd></div>
       <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.quintals_label") %></dt><dd class="font-semibold tabular-nums"><%= format_pounds(input ? conversion.input_quintals : conversion.output_quintals) %></dd></div>
