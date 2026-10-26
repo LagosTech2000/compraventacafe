@@ -1028,7 +1028,8 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   se suman a él. **Las netas de cada lado = brutas × la proporción
   neto/bruto de ese estado en el inventario de ese día**
   (`CoffeeConversion.ratio_for`); se guardan la proporción y de dónde
-  salió. Entran al kárdex (`conversion_out` / `conversion_in`) y al
+  salió, pero **no se muestran en pantalla** (Fernando, 2026-10-25: no es
+  un dato claro para el usuario; solo salen en la auditoría). Entran al kárdex (`conversion_out` / `conversion_in`) y al
   reporte de inventario. Pantallas: Comercialización → Conversiones,
   «Convertir café» en Inventario, con vista previa
   (`conversion_preview_controller.js`). Decisiones de implementación,

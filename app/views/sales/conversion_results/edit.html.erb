@@ -10,13 +10,13 @@
                      gross: format_pounds(@conversion.input_gross_weight), net: format_pounds(@conversion.input_net_weight)) %>
 </p>
 
-<% ratio, source = CoffeeConversion.ratio_for(@conversion.to_state, Time.zone.today) %>
+<%# How many net pounds each gross pound is, to preview the net. %>
+<% ratio = CoffeeConversion.ratio_for(@conversion.to_state, Time.zone.today).first %>
 <%= form_with model: @conversion, url: sales_coffee_conversion_result_path(@conversion), method: :patch,
       class: form_surface_class("@container mt-6 max-w-none"),
       data: { controller: "form-validation conversion-preview",
               conversion_preview_state_value: @conversion.to_state,
               conversion_preview_ratios_value: { @conversion.to_state => ratio.to_f }.to_json,
-              conversion_preview_sources_value: { @conversion.to_state => t("sales.coffee_conversions.ratio_sources.#{source}") }.to_json,
               conversion_preview_quintal_weight_value: PurchaseCalculation::QUINTAL_WEIGHT } do |form| %>
   <%= render "shared/form_errors", record: @conversion %>
   <%= form.hidden_field :lock_version %>
@@ -41,10 +41,6 @@
         <dl class="mt-2 grid grid-cols-2 gap-3">
           <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.net") %></dt><dd class="text-xl font-bold tabular-nums" data-conversion-preview-target="net">—</dd></div>
           <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.quintals_label") %></dt><dd class="text-xl font-bold tabular-nums" data-conversion-preview-target="quintals">—</dd></div>
-          <div class="col-span-2">
-            <dt class="text-xs text-ink-muted"><%= t("sales.coffee_conversions.show.ratio") %></dt>
-            <dd class="tabular-nums"><span data-conversion-preview-target="ratio">—</span> · <span class="text-xs text-ink-muted" data-conversion-preview-target="ratioSource"></span></dd>
-          </div>
         </dl>
       </div>
       <div class="flex flex-wrap gap-3">

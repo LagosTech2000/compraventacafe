@@ -22,7 +22,7 @@ RSpec.describe "Coffee conversions screens", type: :system do
       fill_in "coffee_conversion_input_gross_weight", with: "1000"
       expect(page).to have_css("[data-conversion-preview-target=net]", text: "486.82 lb")
       expect(page).to have_css("[data-conversion-preview-target=quintals]", text: "3.89")
-      expect(page).to have_css("[data-conversion-preview-target=ratio]", text: "0.4868")
+      expect(page).to have_no_text("roporción")
 
       fill_in "coffee_conversion_input_gross_weight", with: "2500"
       expect(page).to have_css("[data-conversion-preview-target=overStock]", visible: true)

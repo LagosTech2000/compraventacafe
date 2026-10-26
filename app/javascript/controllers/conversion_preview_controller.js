@@ -8,8 +8,8 @@ import { Controller } from "@hotwired/stimulus"
 // gross in stock is shown, and typing more warns without stopping it. In
 // the result the state is fixed (what came out).
 export default class extends Controller {
-  static targets = ["state", "gross", "net", "quintals", "ratio", "ratioSource", "toState", "available", "overStock"]
-  static values = { ratios: Object, sources: Object, stock: Object, toStates: Object, state: String, quintalWeight: Number }
+  static targets = ["state", "gross", "net", "quintals", "toState", "available", "overStock"]
+  static values = { ratios: Object, stock: Object, toStates: Object, state: String, quintalWeight: Number }
 
   connect() {
     this.pounds = new Intl.NumberFormat("es-HN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -24,8 +24,6 @@ export default class extends Controller {
 
     this.netTarget.textContent = net === null ? "—" : `${this.pounds.format(net)} lb`
     this.quintalsTarget.textContent = net === null ? "—" : this.pounds.format(this.round(net / this.quintalWeightValue))
-    if (this.hasRatioTarget) this.ratioTarget.textContent = ratio > 0 ? ratio.toFixed(4) : "—"
-    if (this.hasRatioSourceTarget) this.ratioSourceTarget.textContent = this.sourcesValue[state] || ""
     if (this.hasToStateTarget) this.toStateTarget.textContent = this.toStatesValue[state] || ""
 
     if (this.hasAvailableTarget) {

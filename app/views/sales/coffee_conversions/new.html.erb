@@ -11,12 +11,12 @@
 <p class="mb-4 text-sm text-ink-muted"><%= t(".help") %></p>
 
 <% states = CoffeeConversion::NEXT_STATE.keys %>
-<% ratios = states.to_h { |state| [ state, CoffeeConversion.ratio_for(state, Time.zone.today) ] } %>
+<%# How many net pounds each gross pound is, to preview the net. %>
+<% ratios = states.to_h { |state| [ state, CoffeeConversion.ratio_for(state, Time.zone.today).first ] } %>
 <%= form_with model: @conversion, url: sales_coffee_conversions_path, class: form_surface_class("@container max-w-none"),
       data: { controller: "form-validation unsaved-changes conversion-preview", action: unsaved_changes_actions,
               unsaved_changes_message_value: t("shared.unsaved_changes.leave"),
-              conversion_preview_ratios_value: ratios.transform_values { it.first.to_f }.to_json,
-              conversion_preview_sources_value: ratios.transform_values { t("sales.coffee_conversions.ratio_sources.#{it.last}") }.to_json,
+              conversion_preview_ratios_value: ratios.transform_values(&:to_f).to_json,
               conversion_preview_stock_value: states.index_with { @stock.row(it).gross_stock.to_f }.to_json,
               conversion_preview_to_states_value: CoffeeConversion::NEXT_STATE.transform_values { CoffeeConversion.human_state(it) }.to_json,
               conversion_preview_quintal_weight_value: PurchaseCalculation::QUINTAL_WEIGHT } do |form| %>
@@ -61,10 +61,6 @@
         <dl class="mt-2 grid grid-cols-2 gap-3">
           <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.net") %></dt><dd class="text-xl font-bold tabular-nums" data-conversion-preview-target="net">—</dd></div>
           <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.quintals_label") %></dt><dd class="text-xl font-bold tabular-nums" data-conversion-preview-target="quintals">—</dd></div>
-          <div class="col-span-2">
-            <dt class="text-xs text-ink-muted"><%= t("sales.coffee_conversions.show.ratio") %></dt>
-            <dd class="tabular-nums"><span data-conversion-preview-target="ratio">—</span> · <span class="text-xs text-ink-muted" data-conversion-preview-target="ratioSource"></span></dd>
-          </div>
           <div class="col-span-2">
             <dt class="text-xs text-ink-muted"><%= t(".becomes") %></dt>
             <dd class="font-medium" data-conversion-preview-target="toState"></dd>

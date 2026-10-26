@@ -45,7 +45,8 @@ RSpec.describe "Coffee conversions" do
                             a_string_including("A conversión", "Pergamino húmedo", "−1,000.00", "−486.82", "−3.89"))
 
     get sales_coffee_conversion_path(conversion)
-    expect(page.at_css("[data-conversion-side=output]").text.squish).to include("600.00 lb", "528.00 lb", "valor inicial de las compras")
+    expect(page.at_css("[data-conversion-side=output]").text.squish).to include("600.00 lb", "528.00 lb", "4.22")
+    expect(response.body).not_to include("roporción") # the net/gross proportion is not shown: it confuses
   end
 
   it "voids one in process and takes a result off" do

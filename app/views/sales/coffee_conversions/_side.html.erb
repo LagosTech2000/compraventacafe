@@ -1,6 +1,5 @@
 <%# One side of a conversion: what went in (`side` "input") or what came
-    out ("output"): state, when, gross, net, QQ and the net/gross
-    proportion used, with where it came from. %>
+    out ("output"): state, when, gross, net and QQ. %>
 <% input = side == "input" %>
 <% gross = conversion["#{side}_gross_weight"] %>
 <section class="panel p-4" aria-labelledby="conversion-<%= side %>" data-conversion-side="<%= side %>">
@@ -16,11 +15,6 @@
       <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.gross") %></dt><dd class="font-semibold tabular-nums"><%= t("sales.stock.pounds", pounds: format_pounds(gross)) %></dd></div>
       <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.net") %></dt><dd class="text-lg font-bold tabular-nums"><%= t("sales.stock.pounds", pounds: format_pounds(conversion["#{side}_net_weight"])) %></dd></div>
       <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.quintals_label") %></dt><dd class="font-semibold tabular-nums"><%= format_pounds(input ? conversion.input_quintals : conversion.output_quintals) %></dd></div>
-      <div>
-        <dt class="text-xs text-ink-muted"><%= t("sales.coffee_conversions.show.ratio") %></dt>
-        <dd class="tabular-nums"><%= number_with_precision(conversion["#{side}_ratio"], precision: 4) %></dd>
-        <dd class="text-xs text-ink-muted"><%= t("sales.coffee_conversions.ratio_sources.#{conversion["#{side}_ratio_source"]}") %></dd>
-      </div>
     </dl>
   <% else %>
     <p class="mt-2 text-sm text-ink-muted"><%= t("sales.coffee_conversions.show.no_output") %></p>
