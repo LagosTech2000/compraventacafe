@@ -1,31 +1,19 @@
-<%# The coffee in stock (CoffeeStock), one card per coffee state: net pounds
-    and QQ in the warehouse, and of what left, in transit and not sold. %>
+<%# The coffee in stock (CoffeeStock), one card per coffee state: gross
+    pounds, net pounds and QQ in the warehouse, in that order, and of what
+    left, in transit and not sold. %>
 <section aria-labelledby="sales-stock">
   <div class="mb-3 flex flex-wrap items-baseline justify-between gap-3">
     <h2 id="sales-stock" class="text-lg font-semibold"><%= t("sales.stock.title") %></h2>
     <p class="text-sm text-ink-muted"><%= t("sales.stock.as_of", date: l(stock.date, format: :long)) %></p>
   </div>
-  <dl class="flex flex-wrap gap-3">
-    <div class="stat min-w-0 flex-1 basis-48 ring-2 ring-primary">
-      <dt><%= t("sales.stock.total") %></dt>
-      <dd data-live-value="stock-total"><%= t("sales.stock.pounds", pounds: format_pounds(stock.stock)) %></dd>
-      <dd class="text-sm font-normal text-ink-muted"><%= t("sales.stock.quintals", quintals: format_pounds(stock.quintals)) %></dd>
-    </div>
+  <div class="flex flex-wrap gap-3">
+    <%= render "sales/stock_card", title: t("sales.stock.total"), key: "total", gross: stock.gross_stock, net: stock.stock,
+                                   quintals: stock.quintals, css: "ring-2 ring-primary" %>
     <% stock.rows.each do |row| %>
-      <div class="stat min-w-0 flex-1 basis-48" data-coffee-state="<%= row.coffee_state %>">
-        <dt><%= row.human_coffee_state %></dt>
-        <dd data-live-value="stock-<%= row.coffee_state %>" class="<%= "text-danger" if row.stock.negative? %>">
-          <%= t("sales.stock.pounds", pounds: format_pounds(row.stock)) %>
-        </dd>
-        <dd class="text-sm font-normal text-ink-muted"><%= t("sales.stock.quintals", quintals: format_pounds(row.quintals)) %></dd>
-        <% if row.in_transit.positive? || row.unsold.positive? %>
-          <dd class="mt-1 text-xs font-normal text-ink-muted">
-            <%= t("sales.stock.out_detail", in_transit: format_pounds(row.in_transit), unsold: format_pounds(row.unsold)) %>
-          </dd>
-        <% end %>
-      </div>
+      <%= render "sales/stock_card", title: row.human_coffee_state, key: row.coffee_state, gross: row.gross_stock, net: row.stock,
+                                     quintals: row.quintals, row: %>
     <% end %>
-  </dl>
+  </div>
   <% if stock.rows.any? { it.stock.negative? } %>
     <p class="flash-alert mt-3" role="status"><%= t("sales.stock.negative") %></p>
   <% end %>

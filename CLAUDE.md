@@ -1010,7 +1010,11 @@ contado/crédito, forma de pago) [CONFIRMADO]:
 
 - **Inventario** (`CoffeeStock`): libras netas **por estado del café**. Las
   compras activas suman su `net_weight`; las salidas no anuladas restan su
-  neto local. Se muestra también en QQ de compra (÷125). A una fecha (fin
+  neto local. Se muestra también en QQ de compra (÷125). Cada tarjeta
+  de «Café en inventario» (total, uva, pergamino húmedo y seco) dice
+  **libras brutas, libras netas y quintales, en ese orden** (Fernando,
+  2026-10-25); las brutas = bruto de las compras activas − bruto local de
+  las salidas no anuladas (`CoffeeStock#gross_stock`, `sales/_stock_card`). A una fecha (fin
   del día); de lo que salió, «en camino» y «pesado sin vender». El kárdex
   (`StockLedger`, `sales/stock#show`) lista cada compra y salida con el
   saldo después de cada una.

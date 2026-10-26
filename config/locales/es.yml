@@ -1146,9 +1146,12 @@ es:
       total: "Todo el inventario"
       pounds: "%{pounds} lb"
       quintals: "%{quintals} QQ"
+      gross: "Libras brutas"
+      net: "Libras netas"
+      quintals_label: "Quintales"
       out_detail: "Fuera: %{in_transit} lb en camino · %{unsold} lb pesadas sin vender"
       negative: "Hay más café en salidas que en compras para algún estado del café. Revisa que estén registradas todas las compras y que las salidas tengan el estado correcto."
-      help: "Libras netas: suben con cada compra (su peso neto) y bajan con cada salida de camión (su peso neto en la báscula local). Las anuladas no cuentan. QQ de 125 lb, como en las compras."
+      help: "Libras brutas y netas: suben con cada compra (su peso bruto y su peso neto) y bajan con cada salida de camión (su bruto y su neto en la báscula local). Las anuladas no cuentan. Quintales de 125 lb netas, como en las compras."
     summary:
       sales: "Ventas"
       buyers: "Compradores"

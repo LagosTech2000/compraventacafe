@@ -1,0 +1,23 @@
+<%# One card of «Café en inventario»: gross pounds, net pounds and quintals,
+    in that order. `row` (a CoffeeStock::Row) adds what is out of the
+    warehouse; `key` names its live values. %>
+<% row = local_assigns[:row] %>
+<div class="stat min-w-0 flex-1 basis-56 <%= local_assigns[:css] %>" data-coffee-state="<%= key %>">
+  <h3 class="text-sm font-semibold text-ink"><%= title %></h3>
+  <dl class="mt-2 space-y-1">
+    <% { gross: [ t("sales.stock.gross"), t("sales.stock.pounds", pounds: format_pounds(gross)), gross ],
+         net: [ t("sales.stock.net"), t("sales.stock.pounds", pounds: format_pounds(net)), net ],
+         quintals: [ t("sales.stock.quintals_label"), format_pounds(quintals), quintals ] }.each do |part, (label, value, number)| %>
+      <div class="flex items-baseline justify-between gap-3" data-stock-part="<%= part %>">
+        <dt class="text-xs text-ink-muted"><%= label %></dt>
+        <dd class="mt-0 tabular-nums <%= part == :net ? "text-xl font-bold" : "text-base font-semibold" %> <%= "text-danger" if number.negative? %>"
+            data-live-value="stock-<%= key %>-<%= part %>"><%= value %></dd>
+      </div>
+    <% end %>
+  </dl>
+  <% if row && (row.in_transit.positive? || row.unsold.positive?) %>
+    <p class="mt-2 text-xs text-ink-muted">
+      <%= t("sales.stock.out_detail", in_transit: format_pounds(row.in_transit), unsold: format_pounds(row.unsold)) %>
+    </p>
+  <% end %>
+</div>
