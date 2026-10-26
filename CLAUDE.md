@@ -138,6 +138,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Número en letras | `NumberWords` (palabras en `es.yml`, `number_words`) |
 | Comercialización | `sales` |
 | Comprador (exportador / beneficio / otro) | `Buyer` (`kind`: `exporter` / `processor` / `other`) |
+| Nueva salida (venta / procesamiento / traslado) | `sales/departures#new` (elige el tipo y abre su formulario) |
 | Salida de camión / báscula local / báscula del comprador | `Shipment` / `origin_*` / `destination_*` (`ArrivalsController`, `shipments/:id/arrival`) |
 | Nota de peso / remisión | `Shipment#weight_note_number` / `remission_number` |
 | Transportista / camión / motorista de la salida | `Carrier` / `Truck` (`own`: del negocio) / `Shipment#driver` (un `StaffMember`) o `driver_name` |
@@ -1123,6 +1124,11 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   salieron) y el **promedio** de los procesos terminados de ese estado
   (`CoffeeConversion.average_yield_percent`), que también sale al mandar a
   procesar. La lista filtra por lugar y tiene el rendimiento real.
+- **Nueva salida** (cliente, 2026-10-26) [CONFIRMADO]: el botón principal
+  del módulo primero pregunta para qué sale el café: **venta** (la salida
+  de camión), **procesamiento** («Procesar café») o **traslado** entre
+  bodegas (`sales/departures#new`); cada uno abre su formulario. Las dos
+  últimas no son ventas.
 - **Gastos de procesamiento** (`ProcessingCost`, cliente, 2026-10-26)
   [CONFIRMADO]: desde el detalle del proceso, «Registrar gasto»: flete,
   secado, mano de obra, carga y descarga, alquiler de patio o secadora,

@@ -1211,6 +1211,20 @@ es:
         success: "Camión registrado."
       update:
         success: "Camión actualizado."
+    departures:
+      new:
+        title: "Nueva salida"
+        help: "¿Para qué sale el café? Elige y se abre su formulario."
+        kinds:
+          sale:
+            title: "Venta"
+            description: "Un camión que sale con café para un comprador, pesado en la báscula local."
+          processing:
+            title: "Procesamiento"
+            description: "Café que sale a procesar: de uva a pergamino húmedo o de húmedo a seco. Queda en proceso hasta registrar lo que salió."
+          transfer:
+            title: "Traslado"
+            description: "Café que pasa de una bodega a otra."
     processing_costs:
       terms:
         per_unit: "%{price} por %{unit} %{kind} de lo %{side} · %{pounds} lb"
@@ -5401,6 +5415,16 @@ es:
             steps:
               - "Escribe el nombre (por ejemplo, «Bodega 1»); se puede cambiar después."
               - "Marca «Bodega por defecto» si las compras nuevas deben entrar en ella."
+        departures:
+          form:
+            title: "Nueva salida"
+            summary: "El café no siempre sale para venderse: primero se elige para qué sale."
+            steps:
+              - "Venta: un camión con café para un comprador (la salida de camión de siempre)."
+              - "Procesamiento: café que sale a procesar; se descuenta de su inventario y queda en proceso."
+              - "Traslado: café que pasa de una bodega a otra."
+            tips:
+              - "Ninguna de las dos últimas es una venta: solo transforman o mueven el café."
         processing_costs:
           form:
             title: "Registrar un gasto del proceso"

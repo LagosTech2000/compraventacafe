@@ -14,8 +14,8 @@
     <% { buyers: sales_buyers_path, carriers: sales_carriers_path, trucks: sales_trucks_path, warehouses: sales_warehouses_path }.each do |key, path| %>
       <%= link_to t("sales.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>
     <% end %>
-    <% if policy(Shipment).create? %>
-      <span class="subnav-action"><%= link_to t("sales.nav.new_shipment"), new_sales_shipment_path, class: "btn btn-primary btn-sm" %></span>
+    <% if policy([ :sales, :departure ]).create? %>
+      <span class="subnav-action"><%= link_to t("sales.nav.new_shipment"), new_sales_departure_path, class: "btn btn-primary btn-sm" %></span>
     <% end %>
   </div>
 </nav>

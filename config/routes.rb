@@ -74,6 +74,8 @@ Rails.application.routes.draw do
   # buyer, are weighed again there, and are sold and collected.
   namespace :sales do
     root "home#index"
+    # «Nueva salida»: to sell, to process or to another warehouse.
+    resource :departure, only: :new
     resources :shipments, except: :destroy do
       patch :void, on: :member
       # Weighed on the buyer's scale.
