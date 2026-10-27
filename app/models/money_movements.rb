@@ -3,8 +3,8 @@
 # duplicar»): each is registered once, where it happens, and read here.
 #
 #   out  payments to producers on invoices, payments to haulers, cash lent,
-#        payroll payments, payroll expenses, expenses and investments, and
-#        the Planilla interna's payments and advances
+#        payroll payments, payroll expenses, expenses and investments, the
+#        Planilla interna's payments and advances, and processing costs
 #   in   loan payments in cash, transfer or check, collections of coffee
 #        sales (not the ones «con anticipo»: that money came in with the
 #        buyer's advance), buyers' advances and other income
@@ -17,11 +17,11 @@
 # 2026-10-25: «fechas con hora»), newest last.
 class MoneyMovements
   SOURCES = %w[invoices hauler_payments loans loan_payments payroll_payments payroll_expenses
-               sale_payments buyer_advances expenses investments staff_payments staff_advances other_incomes transfers].freeze
+               sale_payments buyer_advances processing_costs expenses investments staff_payments staff_advances other_incomes transfers].freeze
   # Which module each source's records belong to (who may read it).
   MODULES = {
     "invoices" => "trading", "hauler_payments" => "trading", "loans" => "loans", "loan_payments" => "loans",
-    "payroll_payments" => "farms", "payroll_expenses" => "farms", "sale_payments" => "sales", "buyer_advances" => "sales",
+    "payroll_payments" => "farms", "payroll_expenses" => "farms", "sale_payments" => "sales", "buyer_advances" => "sales", "processing_costs" => "sales",
     "expenses" => "finance", "investments" => "finance", "staff_payments" => "finance", "staff_advances" => "finance",
     "other_incomes" => "finance", "transfers" => "finance"
   }.freeze
@@ -166,6 +166,20 @@ class MoneyMovements
           movement(id:, date:, created_at:, source: "buyer_advances", description: I18n.t("money_movements.buyer_advance", number: format("%04d", id)),
                    person: name, payment_method: method_label(Invoice, method), amount_in: amount, account_id:,
                    route: [ :sales_buyer_buyer_advance_path, buyer_id, id ])
+        end
+    end
+
+    def processing_costs
+      narrowed(ProcessingCost.joins(:coffee_conversion), "processing_costs.paid_on", "processing_costs.money_account_id")
+        .pluck("processing_costs.id", "processing_costs.paid_on", "processing_costs.payment_method", "processing_costs.concept",
+               "processing_costs.description", "processing_costs.amount", "coffee_conversions.id", "coffee_conversions.number",
+               "processing_costs.money_account_id", "processing_costs.created_at")
+        .map do |id, date, method, concept, description, amount, conversion_id, number, account_id, created_at|
+          concept_label = [ ProcessingCost.human_attribute_name("concept/#{concept}"), description ].compact.join(" · ")
+          movement(id:, date:, created_at:, source: "processing_costs",
+                   description: I18n.t("money_movements.processing_cost", concept: concept_label, number: format("%04d", number)),
+                   payment_method: method_label(Invoice, method), amount_out: amount, account_id:,
+                   route: [ :sales_coffee_conversion_path, conversion_id ])
         end
     end
 

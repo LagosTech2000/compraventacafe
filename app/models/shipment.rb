@@ -30,6 +30,8 @@ class Shipment < ApplicationRecord
   WEIGHT_MODES = Purchase::WEIGHT_MODES
 
   belongs_to :buyer
+  # The warehouse it leaves from (client, 2026-10-26).
+  belongs_to :warehouse
   # Who hauled it and in what truck (catalogs apart), and who drove it: an
   # employee of the Planilla interna, or a name typed (Fernando, 2026-10-25).
   belongs_to :carrier, optional: true
@@ -53,6 +55,7 @@ class Shipment < ApplicationRecord
   validates :remission_number, :weight_note_number, length: { maximum: 60 }
   validates :driver_name, length: { maximum: 120 }
   validate :carrier_and_truck_active
+  validate :warehouse_active, if: :will_save_change_to_warehouse_id?
   validates :observations, length: { maximum: 500 }
   validates :origin_gross_weight, numericality: { greater_than: 0, less_than: MAX_WEIGHT }
   validates :origin_sacks, numericality: { only_integer: true, greater_than: 0, less_than: MAX_SACKS }
@@ -63,6 +66,7 @@ class Shipment < ApplicationRecord
   validate :not_sold, on: :update
 
   # First: by weighings, the local gross weight and sacks come from them.
+  before_validation { self.warehouse ||= Warehouse.main! if new_record? }
   before_validation :sum_weighings
   before_validation :clear_unused_inputs
   before_validation -> { calculate("origin") }, if: -> { recalculate?("origin") }
@@ -272,5 +276,9 @@ class Shipment < ApplicationRecord
     def assign_number
       self.class.connection.execute("SELECT pg_advisory_xact_lock(#{NUMBERING_LOCK_KEY})")
       self.number = (self.class.maximum(:number) || 0) + 1
+    end
+
+    def warehouse_active
+      errors.add(:warehouse, :inactive) if warehouse && !warehouse.active?
     end
 end

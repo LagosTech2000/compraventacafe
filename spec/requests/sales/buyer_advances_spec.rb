@@ -42,6 +42,13 @@ RSpec.describe "Sales buyer advances" do
     expect(buyer.advance_balance).to eq(2_000)
     # No money moved: the advance's money already came in.
     expect(MoneyMovements.new.all.map(&:source)).not_to include("sale_payments")
+    # L 3,000 at L 6,000 the QQ of 120 lb (L 50 a pound) is 60 lb net; the
+    # buyer weighed 990 lb gross for 482.16 net, so 123.20 lb gross.
+    equivalent = "Equivale a 60.00 lb netas y 123.20 lb brutas"
+    get sales_sale_path(sale)
+    expect(response.body).to include(equivalent)
+    get sales_sale_payment_path(sale, sale.payments.sole)
+    expect(response.body).to include(equivalent)
 
     post sales_sale_payments_path(sale), params: { sale_payment: { amount: "2500", paid_on: Time.zone.today, payment_method: "advance", money_account_id: bank.id } }
     expect(response).to have_http_status(:unprocessable_content)
@@ -50,7 +57,7 @@ RSpec.describe "Sales buyer advances" do
     post sales_sale_payments_path(sale), params: { sale_payment: { amount: "2000", paid_on: Time.zone.today, payment_method: "advance" } }
     expect(buyer.advance_balance).to eq(0)
     get sales_buyer_path(buyer, tab: "advances")
-    expect(response.body).to include("Descontado de ventas", "−L 2,000.00", "−L 3,000.00")
+    expect(response.body).to include("Descontado de ventas", "−L 2,000.00", "−L 3,000.00", equivalent, "Equivale a 40.00 lb netas y 82.13 lb brutas")
     expect(page.css("button").map(&:text)).not_to include("Quitar") # used: it stays
 
     delete sales_sale_payment_path(sale, sale.payments.order(:id).last)

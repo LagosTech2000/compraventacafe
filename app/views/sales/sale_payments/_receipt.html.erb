@@ -24,15 +24,24 @@
         <dt><%= t("sales.sale_payments.receipt.amount") %></dt>
         <dd class="tabular-nums"><%= format_money(payment.amount) %></dd>
       </div>
+      <% if payment.advance? %>
+        <p class="py-1 text-xs" data-advance-pounds><%= sale.advance_pounds_text(payment.amount) %></p>
+      <% end %>
     </dl>
     <dl class="text-sm">
       <div class="flex justify-between gap-4 py-0.5">
         <dt><%= Sale.human_attribute_name(:total) %></dt>
         <dd class="tabular-nums"><%= format_money(sale.total) %></dd>
       </div>
+      <% if sale.buyer_total %>
+        <div class="flex justify-between gap-4 py-0.5">
+          <dt><%= Sale.human_attribute_name(:buyer_total) %></dt>
+          <dd class="tabular-nums"><%= format_money(sale.buyer_total) %></dd>
+        </div>
+      <% end %>
       <div class="flex justify-between gap-4 py-0.5">
         <dt><%= t("sales.sale_payments.receipt.paid_until") %></dt>
-        <dd class="tabular-nums"><%= format_money(sale.total - balance_after) %></dd>
+        <dd class="tabular-nums"><%= format_money(sale.amount_due - balance_after) %></dd>
       </div>
       <div class="flex justify-between gap-4 border-t border-ink py-1 font-bold">
         <dt><%= t("sales.sale_payments.receipt.balance_after") %></dt>

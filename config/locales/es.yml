@@ -151,6 +151,10 @@ es:
       no_role: "Sin rol asignado"
       pick_payment_method: "Selecciona la forma de pago"
       pick_buyer: "Selecciona el comprador"
+      pick_warehouse: "Selecciona la bodega"
+      pick_processing_site: "Selecciona el lugar"
+      pick_concept: "Selecciona el concepto"
+      main_warehouse: "Bodega 1"
       no_carrier: "Sin transportista asignado"
       no_truck: "Sin camión asignado"
       pick_account: "Selecciona la cuenta"
@@ -330,12 +334,36 @@ es:
           help: "Categorías que este mes gastaron más de lo presupuestado."
           detail: "Gastado %{spent} de %{budget}"
           action: "Ver presupuesto"
+        haulers_to_pay:
+          title: "Carreros por pagar"
+          help: "Lo que se le debe a cada carrero en comisiones, lo más grande primero."
+          action: "Pagar"
+        cherry_waiting:
+          title: "Uva sin procesar"
+          help: "Uva que ya lleva más horas de las recomendadas en bodega: se daña si no se procesa a tiempo. La más vieja primero."
+          detail: "Entró el %{entered} · %{hours} h en bodega"
+          action: "Procesar"
+        open_conversions:
+          title: "Procesos sin resultado"
+          help: "Café que se pesó para procesarlo y todavía no tiene resultado: está fuera de su estado hasta que se registre cuánto salió."
+          name: "Proceso %{number} · %{from} → %{to}"
+          days:
+            zero: "pesada hoy"
+            one: "pesada hace 1 día"
+            other: "pesada hace %{count} días"
+          action: "Registrar resultado"
+        negative_stock:
+          title: "Inventario en negativo"
+          help: "Estados del café con menos de cero en inventario: falta registrar una compra, o una salida o un proceso tomó el estado equivocado."
+          detail: "%{gross} lb brutas · %{net} lb netas"
+          action: "Ver movimientos"
         members_without_wage:
           title: "Empleados sin salario"
           help: "En planillas por día: sin rol ni salario propio, sus días no se pueden pagar."
           action: "Asignar salario"
   money_movements:
     invoice: "Factura %{number}"
+    processing_cost: "%{concept} · proceso %{number}"
     hauler_payment: "Recibo %{number} de comisiones de carreo"
     loan: "Préstamo %{number}"
     loan_payment: "Recibo %{number} del préstamo %{loan}"
@@ -405,7 +433,7 @@ es:
         title: "Resumen de operaciones"
         purchases_today: "Compras de hoy"
         season_quintals: "QQ de la temporada"
-        coffee_stock: "QQ en inventario"
+        coffee_stock: "QQ de compra en inventario"
         sales_owed: "Ventas por cobrar"
         open_loans: "Préstamos por cobrar"
         active_farms: "Fincas activas"
@@ -435,6 +463,21 @@ es:
         pending:
           one: "1 tipo de tarea por atender"
           other: "%{count} tipos de tarea por atender"
+      debts:
+        title: "Lo que debes y lo que te deben"
+        owes: "Debes"
+        owed: "Te deben"
+        accounts: "Caja y bancos hoy"
+        see_accounts: "Ver cuentas"
+        none: "Nada por ahora."
+        lines:
+          invoices: "Facturas por pagar a productores"
+          haulers: "Comisiones de carreros"
+          payrolls: "Planillas de fincas por pagar"
+          staff: "Planilla interna por pagar"
+          buyer_advances: "Anticipos de compradores (en café)"
+          sales: "Ventas por cobrar"
+          loans: "Préstamos por cobrar"
       pending:
         title: "Tareas pendientes"
         detail: "Ver el detalle"
@@ -462,6 +505,18 @@ es:
         over_budget:
           one: "1 categoría pasó su presupuesto del mes por"
           other: "%{count} categorías pasaron su presupuesto del mes por"
+        haulers_to_pay:
+          one: "1 carrero por pagar:"
+          other: "%{count} carreros por pagar:"
+        cherry_waiting:
+          one: "1 lote de uva lleva demasiadas horas sin procesar"
+          other: "%{count} lotes de uva llevan demasiadas horas sin procesar"
+        open_conversions:
+          one: "1 proceso espera su resultado"
+          other: "%{count} procesos esperan su resultado"
+        negative_stock:
+          one: "1 estado del café quedó en negativo en el inventario"
+          other: "%{count} estados del café quedaron en negativo en el inventario"
         members_without_wage:
           one: "1 empleado de una planilla por día sin salario: sus días no se pueden pagar"
           other: "%{count} empleados de planillas por día sin salario: sus días no se pueden pagar"
@@ -475,6 +530,10 @@ es:
           periods_to_pay: "Pagar"
           members_without_wage: "Asignar salario"
           over_budget: "Ver presupuesto"
+          haulers_to_pay: "Ver carreros"
+          cherry_waiting: "Ver la uva"
+          open_conversions: "Ver procesos"
+          negative_stock: "Ver movimientos"
       activity:
         title: "Actividad reciente"
         open: "Abrir"
@@ -811,6 +870,16 @@ es:
         weighings_help: "Anota cada pesada con su peso y los sacos contados. El peso bruto y los sacos son la suma; la tara es 1 lb por saco contado."
         damage_types_help: "Con daño, elige uno o más tipos."
         damage_types_missing: "Elige al menos un tipo de daño."
+        unusual:
+          humidity:
+            low: "%{value} % es muy poca humedad para %{state}; lo normal está cerca de %{normal} %. Revisa que esté bien escrita."
+            high: "%{value} % es mucha humedad para %{state}; lo normal está cerca de %{normal} %. Revisa que esté bien escrita."
+          yield:
+            low: "Un rendimiento de %{value} es muy bajo; lo normal está cerca de %{normal}. Revisa que esté bien escrito."
+            high: "Un rendimiento de %{value} es muy alto; lo normal está cerca de %{normal}. Revisa que esté bien escrito."
+          price:
+            low: "Este precio está %{percent} % abajo del promedio de hoy para %{state} (L %{average}). Revisa que esté bien escrito."
+            high: "Este precio está %{percent} % arriba del promedio de hoy para %{state} (L %{average}). Revisa que esté bien escrito."
         add_weighing: "Agregar pesada"
         remove_weighing: "Quitar pesada"
         gross_from_weighings: "Suma de las pesadas: se cambia en las pesadas."
@@ -1085,10 +1154,12 @@ es:
       shipments: "Salidas"
       sales: "Ventas"
       stock: "Inventario"
+      coffee_conversions: "Procesos"
       daily_close: "Cierre diario"
       buyers: "Compradores"
       carriers: "Transportistas"
       trucks: "Camiones"
+      warehouses: "Bodegas"
       new_shipment: "Nueva salida"
     carriers:
       index:
@@ -1140,21 +1211,207 @@ es:
         success: "Camión registrado."
       update:
         success: "Camión actualizado."
+    departures:
+      new:
+        title: "Nueva salida"
+        help: "¿Para qué sale el café? Elige y se abre su formulario."
+        kinds:
+          sale:
+            title: "Venta"
+            description: "Un camión que sale con café para un comprador, pesado en la báscula local."
+          processing:
+            title: "Procesamiento"
+            description: "Café que sale a procesar: de uva a pergamino húmedo o de húmedo a seco. Queda en proceso hasta registrar lo que salió."
+          transfer:
+            title: "Traslado"
+            description: "Café que pasa de una bodega a otra."
+    processing_costs:
+      terms:
+        per_unit: "%{price} por %{unit} %{kind} de lo %{side} · %{pounds} lb"
+        pound: "libra"
+        quintal: "quintal de %{pounds} lb"
+      new:
+        title: "Gasto del proceso %{number}"
+        crumb: "Registrar gasto"
+        help: "%{site} · %{from} → %{to}. Se suma al valor del café que salió y sale de la cuenta que elijas."
+        description_placeholder: "Opcional; obligatorio si es «Otro»"
+        output_later: "(cuando se registre el resultado)"
+        quintal: "Quintal de %{pounds} lb"
+        preview: "Monto del gasto"
+        base: "Calculado sobre"
+        submit: "Registrar gasto"
+      create:
+        success: "Gasto de %{amount} registrado."
+      destroy:
+        success: "Gasto quitado."
+    processing_sites:
+      owners:
+        own: "Del negocio"
+        others: "De terceros"
+      index:
+        title: "Lugares de procesamiento"
+        help: "Dónde se procesa el café: máquinas ecológicas de otros, el patio, una secadora…"
+        new: "Nuevo lugar"
+        search_placeholder: "Nombre del lugar"
+        owner: "De quién"
+        processes: "Procesos"
+        processes_count:
+          zero: "Sin procesos"
+          one: "1 proceso"
+          other: "%{count} procesos"
+        empty: "No hay lugares con esos filtros."
+      form:
+        name_placeholder: "Por ejemplo: Máquina ecológica La Esperanza, Patio, Secadora El Pino"
+      show:
+        edit: "Editar lugar"
+        processes: "Procesos en este lugar"
+        empty: "Todavía no hay procesos en este lugar."
+      new:
+        title: "Nuevo lugar de procesamiento"
+      edit:
+        title: "Editar %{name}"
+      create:
+        success: "Lugar registrado."
+      update:
+        success: "Lugar actualizado."
+    warehouses:
+      first_name: "Bodega 1"
+      numbered: "Bodega %{number}"
+      all: "Todas"
+      index:
+        title: "Bodegas"
+        help: "Dónde se guarda el café, con las libras netas que tiene cada una de cada estado."
+        new: "Nueva bodega"
+        transfers: "Traslados"
+        search_placeholder: "Nombre de la bodega"
+        main: "Por defecto"
+        net_of: "%{state} (lb netas)"
+        total: "Total (lb netas)"
+        empty: "No hay bodegas con esos filtros."
+        statuses:
+          active: "Activas"
+          inactive: "Inactivas"
+      form:
+        main_help: "Las compras nuevas entran en esta bodega, salvo que se elija otra."
+        active_help: "Desactivada, ya no se elige en compras, salidas ni traslados. Solo se desactiva sin café adentro y si no es la de por defecto."
+      show:
+        transfer: "Trasladar café"
+        edit: "Editar bodega"
+        destroy: "Borrar"
+        destroy_confirm: "¿Borrar la bodega «%{name}»? No tiene ningún movimiento."
+        stock: "Café en esta bodega"
+        transfers: "Traslados de esta bodega"
+        no_transfers: "Esta bodega no tiene traslados."
+      new:
+        title: "Nueva bodega"
+      edit:
+        title: "Editar %{name}"
+      create:
+        success: "Bodega «%{name}» registrada."
+      update:
+        success: "Bodega actualizada."
+      destroy:
+        success: "Bodega «%{name}» borrada."
+    warehouse_transfers:
+      voided: "Anulado"
+      index:
+        title: "Traslados entre bodegas"
+        help: "Café que pasó de una bodega a otra. Salen primero los lotes más viejos y cada uno conserva su fecha."
+        new: "Trasladar café"
+        show: "Mostrar"
+        active: "Vigentes"
+        voided: "Anulados"
+        empty: "No hay traslados con esos filtros."
+      new:
+        title: "Trasladar café"
+        help: "Pasa café de una bodega a otra, en libras netas de un estado del café."
+        available: "En la bodega de salida hay"
+        oldest_first: "Salen primero los lotes más viejos de ese café en la bodega de salida, y cada uno conserva su fecha."
+        over_stock: "Es más de lo que hay de ese café en la bodega de salida. Se puede guardar igual."
+        submit: "Trasladar"
+      create:
+        success: "Traslado %{number} registrado."
+      show:
+        title: "Traslado %{number}"
+        void: "Anular"
+        confirm_void: "¿Anular este traslado? El café vuelve a la bodega de donde salió."
+        voided: "Anulado el %{date} por %{name}."
+        lots: "Lotes que se trasladaron"
+      void:
+        success: "Traslado anulado: el café volvió a su bodega."
+    lots:
+      columns:
+        origin: "De dónde viene"
+        entered_at: "Entró"
+        age: "En bodega"
+        entered: "Entraron (lb netas)"
+        left: "Quedan (lb netas)"
+        value: "Valor"
+        status: "Marcas"
+        taken: "Libras netas"
+      purchase: "Compra de %{producer}"
+      conversion: "Proceso %{number} (de %{from})"
+      transferred: "Llegó con el traslado %{number}"
+      shortfall: "Sin lote: salió más café del que había registrado"
+      none_taken: "No tomó café de ningún lote."
+      first_out: "Sale primero"
+      hours:
+        zero: "menos de 1 hora"
+        one: "1 hora"
+        other: "%{count} horas"
+      days:
+        one: "1 día"
+        other: "%{count} días"
+    cherry_alert:
+      levels:
+        warning: "Uva esperando"
+        critical: "Uva urgente"
+      title:
+        one: "%{pounds} lb netas de uva llevan demasiadas horas sin procesar (1 lote)"
+        other: "%{pounds} lb netas de uva llevan demasiadas horas sin procesar (%{count} lotes)"
+      item: "Entró el %{entered} · %{hours} h en bodega · %{pounds} lb netas"
+      process: "Procesar uva"
+    stock_states:
+      show:
+        process: "Procesar"
+        transfer: "Trasladar"
+        figures: "Café en inventario"
+        sacks: "Sacos"
+        damage: "Daño aplicado"
+        ledger: "Ver movimientos"
+        value:
+          title: "Valor del inventario"
+          purchase: "Valor de compra"
+          costs: "Costos acumulados"
+          total: "Costo total"
+          per_pound: "Costo por libra neta"
+          help: "Valor de compra: lo que se pagó a los productores por el café que queda. Costos acumulados: la comisión de los carreros y, en el café procesado, lo que costó procesarlo. Es dinero invertido en café, no efectivo."
+        lots:
+          title: "Lotes"
+          help: "Cada compra o proceso que todavía tiene café, con su fecha y cuánto lleva en bodega. Cuando sale café, sale primero el lote más viejo."
+          card_line: "Quedan %{left} de %{entered} lb netas · %{value}"
+          empty: "No queda café de este estado."
     stock:
       title: "Café en inventario"
       as_of: "Al %{date}"
       total: "Todo el inventario"
       pounds: "%{pounds} lb"
-      quintals: "%{quintals} QQ"
+      quintals: "%{quintals} QQ de compra"
+      gross: "Libras brutas"
+      net: "Libras netas"
+      quintals_label: "QQ de compra"
+      in_process: "En proceso"
+      cherry_net: "Las libras netas de la uva son el café que se espera sacar de ella, no lo que pesó."
       out_detail: "Fuera: %{in_transit} lb en camino · %{unsold} lb pesadas sin vender"
       negative: "Hay más café en salidas que en compras para algún estado del café. Revisa que estén registradas todas las compras y que las salidas tengan el estado correcto."
-      help: "Libras netas: suben con cada compra (su peso neto) y bajan con cada salida de camión (su peso neto en la báscula local). Las anuladas no cuentan. QQ de 125 lb, como en las compras."
+      help: "Libras netas. Toca un inventario para ver sus libras brutas, sacos, daño, valor y lotes."
     summary:
       sales: "Ventas"
       buyers: "Compradores"
       net_weight: "Libras netas (comprador)"
-      quintals: "QQ de venta (120 lb)"
+      quintals: "QQ de venta"
       difference: "Diferencia de peso (lb)"
+      difference_amount: "Diferencia de peso (L)"
       total: "Total vendido"
       balance_due: "Por cobrar"
       states_title: "Estado de cobro"
@@ -1261,7 +1518,7 @@ es:
         weighings_help: "Cada pesada con su peso y los sacos contados; el peso bruto y los sacos son la suma."
         tare: "Tara (lb)"
         net: "Peso neto (lb)"
-        quintals: "QQ (125 lb)"
+        quintals: "QQ de compra (125 lb)"
         formula: "Igual que en las compras: (bruto − 1 lb por saco) menos la humedad y el daño; en uva, por el rendimiento."
         submit: "Registrar salida"
         over_stock: "Sale más de lo que hay en inventario de este estado del café (%{stock} lb). Se puede guardar igual."
@@ -1317,6 +1574,9 @@ es:
         success: "Peso en destino de la salida %{number} guardado."
     sales:
       voided: "Anulada"
+      price_unit_quintal: "Por quintal de %{pounds} lb"
+      # The coffee an advance taken off stands for, at the sale's price.
+      advance_pounds: "Equivale a %{net} lb netas y %{gross} lb brutas"
       statuses:
         unpaid: "Por cobrar (pendiente o parcial)"
         pending: "Pendiente de cobro"
@@ -1326,7 +1586,7 @@ es:
       table:
         number: "No."
         net: "Neto (lb)"
-        quintals: "QQ (120 lb)"
+        quintals: "QQ de venta"
         price: "Precio"
         difference: "Diferencia de peso"
         balance: "Por cobrar"
@@ -1359,12 +1619,19 @@ es:
           one: "1 salida elegida"
           other: "%{count} salidas elegidas"
         net: "Neto del comprador (lb)"
-        quintals: "QQ (120 lb)"
+        quintals: "QQ de venta"
         difference: "Diferencia con la báscula local"
+        difference_money:
+          less: "%{amount} que no se cobran a este precio"
+          more: "%{amount} de más a este precio"
         mixed_states: "Elegiste salidas de dos estados del café: una venta lleva un solo estado. Haz una venta por cada uno."
         payment: "Cobro"
         advance_amount: "Descontar de anticipos (L)"
         advance_help: "El comprador tiene %{balance} en anticipos. Lo que escribas se descuenta como un cobro «con anticipo», sin mover dinero; lo que quede se cobra como elijas abajo."
+        advance_pounds: "Equivale a %{net} lb netas y %{gross} lb brutas de café, a este precio."
+        quintal_pounds_help: "%{pounds} si no se cambia. La venta guarda las suyas."
+        price_per_quintal: "Precio por quintal (L)"
+        price_per_pound: "Precio por libra (L)"
         amount: "Monto cobrado ahora"
         submit: "Registrar venta"
         choices:
@@ -1381,15 +1648,24 @@ es:
         original: "ORIGINAL"
         copy: "COPIA"
         new_payment: "Registrar cobro"
+        settle: "Liquidación del comprador"
+        settlement:
+          less: "Según su liquidación, el comprador paga %{buyer_total}: %{amount} menos que la venta. Motivo: %{reason}. Se cobra lo de su liquidación."
+          more: "Según su liquidación, el comprador paga %{buyer_total}: %{amount} más que la venta. Motivo: %{reason}. Se cobra lo de su liquidación."
+          same: "La liquidación del comprador coincide con la venta: %{buyer_total}."
         voided: "Venta anulada el %{date} por %{name}."
         void_reason: " Motivo: %{reason}"
         over_tolerance: "La diferencia de peso de esta venta pasa la tolerancia del %{tolerance}:"
+        difference_money:
+          less: "El comprador pesó %{pounds} lb menos que la báscula local: %{amount} que no se cobraron (a %{price} la libra de esta venta)."
+          more: "El comprador pesó %{pounds} lb más que la báscula local: %{amount} de más (a %{price} la libra de esta venta)."
         void: "Anular venta"
         void_help: "Solo se anula una venta sin cobros. Sus salidas quedan libres para venderlas a otro comprador o en otra venta; si el café regresó, anula también la salida."
         confirm_void: "¿Anular esta venta? No se puede deshacer."
       payments:
         title: "Cobros"
         total: "Total"
+        buyer_total: "Liquidación del comprador"
         paid_total: "Cobrado"
         balance_due: "Por cobrar"
         number: "Recibo"
@@ -1401,8 +1677,9 @@ es:
         title: "Nota de venta"
         shipment: "Salida"
         amount: "Monto"
-        charged: "Cobrado sobre %{pounds} lb del comprador (%{quintals} QQ de 120 lb)"
+        charged: "Cobrado sobre %{pounds} lb del comprador (%{quintals} QQ de %{quintal_pounds} lb)"
         payment: "Cobro %{number} · %{date} · %{method}"
+        buyer_total: "Liquidación del comprador (%{reason})"
         balance_due: "Por cobrar"
         buyer_signature: "Firma del comprador"
         seller_signature: "Firma por el negocio"
@@ -1430,6 +1707,16 @@ es:
         giver_signature: "Entregó (comprador)"
         receiver_signature: "Recibió"
         registered_by: "Registró: %{name}"
+    sale_settlements:
+      edit:
+        title: "Liquidación del comprador · venta %{number}"
+        crumb: "Liquidación del comprador"
+        help: "Lo que %{buyer} dice que paga en su liquidación (boleta o comprobante). La venta suma %{total}; si su liquidación dice otra cosa, escribe cuánto y por qué. Desde ahí se cobra lo de su liquidación."
+        total_hint: "Déjalo vacío para volver a cobrar el total de la venta."
+        reason_placeholder: "Calidad, flete, retención…"
+        submit: "Guardar liquidación"
+      update:
+        success: "Liquidación del comprador guardada."
     sale_payments:
       new:
         advance_option: "Con anticipo (saldo %{balance})"
@@ -1504,31 +1791,157 @@ es:
         no_sales: "No hay ventas con estos filtros."
         no_shipments: "No hay salidas con estos filtros."
         no_payments: "Todavía no hay cobros."
+    coffee_conversions:
+      statuses:
+        in_process: "En proceso"
+        finished: "Terminado"
+        voided: "Anulado"
+      lifecycle:
+        label: "Etapas del proceso"
+        next_badge: "Sigue"
+        stages:
+          weighed: "Pesado (en proceso)"
+          finished: "Resultado registrado"
+        hint:
+          weighed: "El café que entró ya salió de su estado y está en proceso. Cuando salga, registra cuánto salió en el estado nuevo."
+          finished: "Lo que salió ya está en el inventario del estado nuevo."
+      index:
+        title: "Procesos"
+        help: "El café que pasa de uva a pergamino húmedo y de húmedo a seco: primero se pesa lo que entra, después se registra lo que salió."
+        new: "Procesar café"
+        search_placeholder: "Número u observaciones"
+        all_active: "Todos (sin anulados)"
+        empty: "No hay procesos que coincidan con los filtros."
+        card_line: "Entró %{input} lb brutas · salió %{output} lb brutas"
+        columns:
+          number: "Número"
+          conversion: "Proceso"
+          input_gross: "Entró brutas (lb)"
+          input_net: "Entró netas (lb)"
+          output_gross: "Salió brutas (lb)"
+          output_net: "Salió netas (lb)"
+          net_difference: "Diferencia netas (lb)"
+          yield: "Rendimiento real"
+        card_difference: "Netas que salieron contra las que entraron: %{pounds} lb"
+        sites: "Lugares"
+      show:
+        title: "Proceso %{number}"
+        input: "Entró: %{state}"
+        output: "Salió: %{state}"
+        no_output: "Todavía no se registra cuánto salió."
+        register_result: "Registrar resultado"
+        void: "Anular"
+        confirm_void: "¿Anular este proceso? El café vuelve a su estado. No se puede deshacer."
+        reopen: "Quitar el resultado"
+        confirm_reopen: "¿Quitar el resultado? Lo que salió deja el inventario y el proceso vuelve a quedar en proceso."
+        voided: "Anulado el %{date} por %{name}."
+        full_page: "Ver en página completa"
+        back: "Volver a procesos"
+        costs:
+          title: "Gastos del proceso"
+          help: "Flete, secado, mano de obra y lo demás que costó procesarlo. Se suman al valor del café que salió."
+          new: "Registrar gasto"
+          how: "Cómo se cobró"
+          remove: "Quitar"
+          confirm_remove: "¿Quitar este gasto? Sale de los movimientos de su cuenta."
+          total: "Total de gastos"
+          per_pound: "Gasto por libra neta que salió"
+          none: "Todavía no hay gastos registrados para este proceso."
+        estimate:
+          title: "Lo estimado contra lo real"
+          estimated: "Debía salir (%{percent})"
+          real: "Salió (%{percent})"
+          difference: "Diferencia"
+          more: "%{pounds} lb brutas más de lo estimado"
+          less: "%{pounds} lb brutas menos de lo estimado"
+          shrink: "Merma"
+          shrink_value: "%{pounds} lb (%{percent})"
+          average: "En promedio, los procesos de %{state} dan %{percent} de sus libras brutas."
+        comparison:
+          title: "Lo que entró contra lo que salió"
+          went_in: "Netas que entraron"
+          came_out: "Netas que salieron"
+          difference: "Diferencia"
+          more: "%{pounds} lb más (+%{percent} %)"
+          less: "%{pounds} lb menos (−%{percent} %)"
+          help: "Las netas que entraron son las que se pagaron en las compras; las que salieron, las que se pesaron. Si salen menos, el café rindió menos de lo que se pagó."
+      new:
+        title: "Procesar café"
+        help: "Pesa el café que se manda a procesar: sale de su estado en este momento y queda en proceso. Cuando salga, registra cuánto salió en el estado nuevo."
+        what: "¿Qué se procesa?"
+        available: "En inventario:"
+        preview: "Lo que sale del inventario"
+        becomes: "Sale como"
+        new_site: "Nuevo lugar"
+        estimate: "Debería salir"
+        estimate_help: "Libras brutas, según el rendimiento estimado, de"
+        average: "En promedio, tus procesos de este café han dado %{percent} %."
+        no_average: "Todavía no hay procesos terminados de este café para comparar."
+        humidity_help: "Opcional. La humedad del pergamino que entra a secar."
+        over_stock: "Es más de lo que hay en inventario de este estado. Revisa el peso o registra primero las compras."
+        submit: "Pesar y mandar a procesar"
+      create:
+        success: "Proceso %{number} pesado: el café quedó en proceso."
+      void:
+        success: "Proceso anulado: el café volvió a su estado."
+      reopen:
+        success: "Se quitó el resultado: el proceso volvió a quedar en proceso."
+    conversion_results:
+      edit:
+        title: "Resultado del proceso %{number}"
+        crumb: "Resultado"
+        subtitle: "%{from} → %{to}. Entró: %{gross} lb brutas (%{net} lb netas)."
+        output_gross: "Libras brutas que salieron en %{state}"
+        sacks_hint: "Se resta 1 lb por saco, como en las compras."
+        preview: "Lo que entra al inventario de %{state}"
+        difference:
+          more: "%{pounds} lb netas más que las que entraron (+%{percent} %)"
+          less: "%{pounds} lb netas menos que las que entraron (−%{percent} %)"
+          same: "Las mismas libras netas que entraron"
+        submit: "Registrar resultado"
+        real_yield: "Rendimiento real"
+        estimated: "Debía salir (%{percent})"
+        estimate_difference:
+          more: "%{pounds} lb brutas más de lo estimado"
+          less: "%{pounds} lb brutas menos de lo estimado"
+          same: "Lo mismo que lo estimado"
+      update:
+        success: "Resultado del proceso %{number} registrado: ya está en el inventario."
     stocks:
       show:
         title: "Inventario"
         ledger: "Movimientos del inventario"
-        ledger_help: "Cada compra que entró y cada salida que se fue, con el saldo después de cada una."
-        balance: "Saldo (lb)"
+        ledger_help: "Cada compra que entró, cada salida que se fue, cada proceso y, al elegir una bodega, cada traslado, con el saldo después de cada uno."
+        balance: "Saldo (lb netas)"
+        balance_gross: "%{gross} lb brutas"
+        card_line: "%{gross} lb brutas · %{net} lb netas · %{quintals} QQ de compra"
+        convert: "Procesar café"
+        transfer: "Trasladar café"
+        warehouses: "Bodegas"
         empty: "No hay movimientos en estas fechas."
         count:
           zero: "Ningún movimiento"
           one: "1 movimiento"
           other: "%{count} movimientos"
         totals:
-          opening: "Saldo al empezar (lb)"
-          pounds_in: "Entró (lb)"
-          pounds_out: "Salió (lb)"
-          closing: "Saldo al terminar (lb)"
+          opening: "Saldo al empezar"
+          pounds_in: "Entró"
+          pounds_out: "Salió"
+          closing: "Saldo al terminar"
         columns:
           at: "Fecha"
           kind: "Movimiento"
-          who: "Productor o salida"
-          pounds_in: "Entra (lb)"
-          pounds_out: "Sale (lb)"
+          who: "Productor, salida, proceso o traslado"
+          gross: "Brutas (lb)"
+          net: "Netas (lb)"
+          quintals: "QQ de compra"
         kinds:
           purchase: "Compra"
           shipment: "Salida"
+          conversion_out: "A proceso"
+          conversion_in: "De proceso"
+          transfer_in: "Llegó por traslado"
+          transfer_out: "Salió por traslado"
     daily_closes:
       show:
         title: "Cierre de comercialización del %{date}"
@@ -1564,11 +1977,14 @@ es:
         payments_empty: "Ese día no hubo cobros."
       report:
         title: "Cierre de comercialización"
+        open_conversions:
+          one: "En proceso al cierre: 1 proceso sin resultado · %{gross} lb brutas · %{net} lb netas"
+          other: "En proceso al cierre: %{count} procesos sin resultado · %{gross} lb brutas · %{net} lb netas"
         stock:
           purchased: "Comprado (lb)"
           shipped: "Salió (lb)"
           stock: "En inventario (lb)"
-          quintals: "QQ"
+          quintals: "QQ de compra"
           in_transit: "En camino (lb)"
           unsold: "Sin vender (lb)"
   finance:
@@ -2040,6 +2456,7 @@ es:
         success: "Cuenta actualizada."
       show:
         income: "Otro ingreso"
+        cash_count: "Arqueo"
         transfer: "Transferir"
         edit: "Editar"
         print: "Imprimir estado de cuenta"
@@ -2061,6 +2478,28 @@ es:
         success: "Transferencia registrada."
       destroy:
         success: "Transferencia quitada."
+    cash_counts:
+      new:
+        title: "Arqueo de caja"
+        help: "Cuenta el dinero que hay de verdad y escríbelo. Se compara con el saldo que el sistema tiene para esa cuenta al final de ese día."
+        account_prompt: "Selecciona la cuenta"
+        amount_hint: "Lo que contaste (o lo que dice el banco), en lempiras."
+        observations_placeholder: "Quién estuvo presente, de qué es la diferencia…"
+        submit: "Guardar arqueo"
+      create:
+        success: "Arqueo guardado. Diferencia: %{difference}."
+      destroy:
+        success: "Arqueo quitado."
+      list:
+        title: "Arqueos"
+        help: "Lo que se contó contra el saldo del sistema ese día. Si falta dinero, la diferencia sale en rojo."
+        new: "Hacer arqueo"
+        difference: "Diferencia"
+        matches: "Cuadra"
+        actions: "Acciones"
+        destroy: "Quitar"
+        confirm_destroy: "¿Quitar este arqueo? Queda en la auditoría."
+        empty: "Todavía no hay arqueos de esta cuenta."
     other_incomes:
       new:
         title: "Otro ingreso"
@@ -3437,7 +3876,7 @@ es:
             help: "Libras netas que salieron de cada estado."
       sales:
         title: "Ventas de café"
-        description: "Cada venta (sin las anuladas): libras del comprador, QQ de 120 lb, precio, total, lo cobrado, lo que falta y cuánto tardan en pagar."
+        description: "Cada venta (sin las anuladas): libras del comprador, QQ (con las libras por quintal de cada venta), precio, total, lo cobrado, lo que falta y cuánto tardan en pagar."
         columns:
           number: "Venta"
           sold_on: "Fecha"
@@ -3445,7 +3884,7 @@ es:
           coffee_state: "Estado del café"
           buyer_document_number: "Documento del comprador"
           net_weight: "Neto (lb)"
-          quintals: "QQ (120 lb)"
+          quintals: "QQ de venta"
           unit_price: "Precio"
           difference_percent: "Diferencia de peso (%)"
           total: "Total"
@@ -3454,13 +3893,13 @@ es:
           payment_status: "Estado de cobro"
           days: "Días"
           count: "Ventas"
-          price_per_quintal: "Precio prom. por QQ"
+          price_per_quintal: "Precio prom. por QQ de venta"
           pending: "Por cobrar"
         kpis:
           count: "Ventas"
-          quintals: "QQ vendidos (120 lb)"
+          quintals: "QQ de venta vendidos"
           total: "Total vendido"
-          price_per_quintal: "Precio promedio por QQ"
+          price_per_quintal: "Precio promedio por QQ de venta"
           paid: "Cobrado"
           pending: "Por cobrar"
           difference_percent: "Diferencia de peso (%)"
@@ -3471,7 +3910,7 @@ es:
             help: "El total de las ventas por estado de cobro: cobrada, cobro parcial o pendiente."
           prices:
             title: "QQ vendidos y precio promedio"
-            help: "Barras: QQ de 120 lb vendidos. Línea: precio promedio por QQ (total ÷ QQ)."
+            help: "Barras: QQ vendidos (cada venta con sus libras por quintal). Línea: precio promedio por QQ (total ÷ QQ)."
           buyers:
             title: "A quién se le vende más"
             help: "Total vendido a cada comprador."
@@ -3489,9 +3928,13 @@ es:
         description: "Cada compra que entró al inventario (su peso neto) y cada salida de camión que se fue (su neto local), por estado del café, con el inventario al empezar y al terminar el período."
         purchase: "Compra %{number} · %{name}"
         shipment: "Salida %{number} · %{name}"
+        conversion_out: "Proceso %{number} · %{from} → %{to}"
+        conversion_in: "Proceso %{number} · %{from} → %{to}"
         kinds:
           purchase: "Compra"
           shipment: "Salida"
+          conversion_out: "A proceso"
+          conversion_in: "De proceso"
         columns:
           at: "Fecha"
           kind: "Movimiento"
@@ -3899,7 +4342,7 @@ es:
             help: "Una persona puede tener varios roles."
       cash_movements:
         title: "Entradas y salidas de dinero"
-        description: "El dinero que salió (pagos de facturas, pagos a carreros, préstamos en efectivo, planillas, gastos de planilla, gastos e inversiones, pagos y anticipos de la planilla interna) y el que entró (abonos a préstamos en efectivo, transferencia o cheque, cobros de ventas de café y otros ingresos), según lo registrado; cada quien ve lo de los módulos que puede ver. Las transferencias entre cuentas salen al elegir una cuenta."
+        description: "El dinero que salió (pagos de facturas, pagos a carreros, préstamos en efectivo, planillas, gastos de planilla, gastos de procesamiento del café, gastos e inversiones, pagos y anticipos de la planilla interna) y el que entró (abonos a préstamos en efectivo, transferencia o cheque, cobros de ventas de café y otros ingresos), según lo registrado; cada quien ve lo de los módulos que puede ver. Las transferencias entre cuentas salen al elegir una cuenta."
         sources:
           invoices: "Pago de factura"
           hauler_payments: "Pago a carrero"
@@ -3909,6 +4352,7 @@ es:
           payroll_expenses: "Gasto de planilla"
           sale_payments: "Cobro de venta"
           buyer_advances: "Anticipo de comprador"
+          processing_costs: "Gasto de procesamiento"
           expenses: "Gasto"
           investments: "Inversión"
           staff_payments: "Pago de planilla interna"
@@ -3982,6 +4426,32 @@ es:
         - "Si aparece un error con un código de referencia, pásale ese código a un administrador."
         - "El Inicio y las pantallas de Compra de café y Préstamos se actualizan solas cuando otra persona registra algo: lo nuevo aparece con un brillo y las cifras que cambian dan un pulso. Abajo a la izquierda dice «En vivo». Si tienes una ventana abierta, se actualiza al cerrarla."
     processes:
+      coffee_conversion:
+        title: "Procesar café"
+        summary: "Pasar café de uva a pergamino húmedo, o de húmedo a pergamino seco, en dos pasos: pesar lo que entra y registrar lo que salió."
+        steps:
+          - "En Comercialización → Procesos (o en Inventario), toca «Procesar café»."
+          - "Elige qué se procesa, la bodega, el lugar y las libras brutas que entran. Ese café sale de su estado y queda «En proceso»."
+          - "Cuando salga, abre el proceso y toca «Registrar resultado»: pesa lo que salió como una compra (libras brutas, sacos, humedad y daño). Se suma a su inventario."
+          - "Al mandar a procesar se ve cuánto debería salir según el rendimiento estimado (37.95 % de la uva, 50 % al secar, o el que escribas)."
+          - "El detalle compara lo estimado con lo que salió, la merma y las libras netas que entraron con las que salieron."
+          - "En el detalle, «Registrar gasto» anota lo que costó procesarlo (flete, secado, mano de obra…); se suma al valor del café."
+        tips:
+          - "El rendimiento estimado es solo una proyección; el promedio de los procesos terminados sale debajo para comparar."
+          - "Las libras netas que entran se calculan solas con lo que ya hay de ese estado en el inventario."
+          - "Un proceso que espera su resultado se puede anular: el café vuelve a su estado. A uno terminado se le puede quitar el resultado."
+          - "En Inventario, toca una tarjeta para ver los movimientos de ese estado, también los procesos."
+      coffee_lots:
+        title: "Lotes, bodegas y valor del café"
+        summary: "Cada compra entra a una bodega como un lote; el café sale de los lotes más viejos primero."
+        steps:
+          - "Al registrar una compra se elige su bodega (viene puesta la de por defecto)."
+          - "Cada salida, proceso o traslado dice de qué bodega sale, y toma el café de los lotes más viejos de ese estado."
+          - "En Inventario, toca un estado del café para ver sus lotes: cuándo entró cada uno, cuánto lleva en bodega y cuánto queda."
+          - "El valor del inventario suma lo que se pagó por el café que queda y los costos que se le agregaron."
+        tips:
+          - "Cuando sale parte de un lote, sus sacos, su daño y su valor bajan en la misma proporción que las libras."
+          - "La uva que lleva más horas de las configuradas sale con aviso en Comercialización y en las tareas pendientes del Inicio."
       finance_money:
         title: "Cuentas, gastos y movimientos"
         summary: "Control financiero junta todo el dinero que entra y sale del negocio, de todos los módulos, y lleva el saldo de cada cuenta."
@@ -4002,7 +4472,7 @@ es:
         steps:
           - "Nueva salida: elige el comprador, el estado del café y escribe el peso bruto y los sacos de la báscula local (con la humedad y el daño, o el rendimiento en uva). El inventario baja con su peso neto."
           - "Cuando el camión llega, en la salida toca «Registrar peso en destino» y copia la nota de peso del comprador. El sistema muestra la diferencia entre las dos básculas."
-          - "Nueva venta: elige el comprador y marca sus salidas ya pesadas en destino (todas del mismo estado del café). Escribe el precio por quintal (120 lb) o por libra y el número de documento del comprador."
+          - "Nueva venta: elige el comprador y marca sus salidas ya pesadas en destino (todas del mismo estado del café). Escribe el precio por quintal (de 120 lb, o las libras que diga esa venta) o por libra y el número de documento del comprador."
           - "Elige cómo se cobra: de contado (cobrada completa), con un cobro parcial o a crédito."
           - "Después, en la venta, «Registrar cobro» por cada pago del comprador. Cada cobro tiene su recibo, original y copia en hojas separadas."
         tips:
@@ -4551,6 +5021,8 @@ es:
               - "Pergamino: peso neto = (peso bruto − tara) menos el porcentaje de humedad, y a eso se le resta el porcentaje de daño. «Restado por daño» muestra cuántas libras quita el daño y cuánto es en lempiras (libras × precio por libra)."
               - "Uva: peso neto = (peso bruto − tara) × rendimiento."
               - "Quintales (QQ) = peso neto ÷ 125. Total = peso neto × precio por libra."
+              - "Si la humedad o el rendimiento se alejan mucho de lo normal, o el precio del promedio de hoy para ese estado, sale un aviso debajo del campo para revisar que esté bien escrito. No impide guardar."
+              - "Uva: las libras netas son el café que se espera sacar de esa uva (en pergamino), no las libras que pesó. Por eso 1,000 lb de uva dan unas 186 lb netas."
               - "Cada compra queda en la temporada de su fecha: la temporada empieza el 1 de septiembre."
               - "El cálculo que se guarda es el del sistema; el de la pantalla es una vista previa."
         invoice_payments:
@@ -4829,12 +5301,21 @@ es:
             steps:
               - "Elige el comprador."
               - "Marca sus salidas (todas del mismo estado del café)."
-              - "Escribe la fecha, si el precio es por quintal (120 lb) o por libra, y el precio."
+              - "Escribe la fecha y si el precio es por quintal o por libra. Por quintal, revisa las libras por quintal (120 si no las cambias) y escribe el precio del quintal; por libra, el de la libra."
               - "Escribe el número de la factura o comprobante del comprador."
               - "Elige el cobro: a crédito, parcial o de contado, y guarda."
             tips:
-              - "Total = libras netas del comprador ÷ 100 × precio por quintal, o libras × precio por libra."
+              - "Total = libras netas del comprador ÷ libras por quintal × precio por quintal, o libras × precio por libra."
               - "La columna de la derecha muestra el total y la diferencia de peso mientras eliges."
+        sale_settlements:
+          form:
+            title: "Liquidación del comprador"
+            summary: "Lo que el comprador paga según su propia liquidación, cuando no coincide con la venta."
+            steps:
+              - "Escribe el total de su liquidación (boleta o comprobante) y el motivo de la diferencia."
+              - "Guarda: desde ahí la venta cobra lo de su liquidación, y el detalle dice cuánto menos o más paga."
+            tips:
+              - "No puede ser menos de lo ya cobrado. Vacío, la venta vuelve a cobrar su propio total."
         sale_payments:
           show:
             title: "Recibo de cobro"
@@ -4911,6 +5392,105 @@ es:
               - "Escribe la placa (se guarda en mayúsculas); lo demás es opcional."
             tips:
               - "Uno con salidas no se borra: se desactiva y deja de salir en las salidas nuevas."
+        warehouses:
+          index:
+            title: "Bodegas"
+            summary: "Dónde se guarda el café, con las libras netas que tiene cada una."
+            steps:
+              - "Cada fila dice cuánto café de cada estado hay en esa bodega."
+              - "Toca una fila para ver su café y sus traslados."
+              - "Toca «Nueva bodega» para agregar una; se le puede cambiar el nombre cuando quieras."
+            tips:
+              - "La bodega «Por defecto» es donde entran las compras nuevas, salvo que se elija otra."
+              - "Una bodega sin movimientos se borra; una usada se desactiva, y solo sin café adentro."
+          show:
+            title: "Detalle de la bodega"
+            summary: "El café que tiene de cada estado y los traslados que entraron o salieron de ella."
+            steps:
+              - "Toca un estado del café para ver sus lotes en esta bodega."
+              - "«Trasladar café» pasa café de esta bodega a otra."
+          form:
+            title: "Registrar o editar una bodega"
+            summary: "Su nombre y si es la bodega por defecto de las compras."
+            steps:
+              - "Escribe el nombre (por ejemplo, «Bodega 1»); se puede cambiar después."
+              - "Marca «Bodega por defecto» si las compras nuevas deben entrar en ella."
+        departures:
+          form:
+            title: "Nueva salida"
+            summary: "El café no siempre sale para venderse: primero se elige para qué sale."
+            steps:
+              - "Venta: un camión con café para un comprador (la salida de camión de siempre)."
+              - "Procesamiento: café que sale a procesar; se descuenta de su inventario y queda en proceso."
+              - "Traslado: café que pasa de una bodega a otra."
+            tips:
+              - "Ninguna de las dos últimas es una venta: solo transforman o mueven el café."
+        processing_costs:
+          form:
+            title: "Registrar un gasto del proceso"
+            summary: "Lo que costó procesar el café: flete, secado, mano de obra, carga y descarga, alquiler, combustible u otro."
+            steps:
+              - "Elige el concepto y cómo se cobró: monto total, por libra o por quintal."
+              - "Por libra o por quintal, elige sobre qué café se cobra (lo que entró o lo que salió), si son libras brutas o netas y de cuántas libras es el quintal; el monto se calcula solo."
+              - "Escribe la fecha, la forma de pago y la cuenta de donde salió el dinero."
+            tips:
+              - "Un gasto sobre lo que salió solo se puede registrar cuando el proceso tiene su resultado."
+              - "El formulario empieza con la forma de cobrar del último gasto de ese lugar."
+              - "El gasto sale en Movimientos de Control financiero y se suma al valor del café que salió."
+        processing_sites:
+          index:
+            title: "Lugares de procesamiento"
+            summary: "Dónde se procesa el café, con cuántos procesos ha tenido cada uno."
+            steps:
+              - "Busca por nombre o mira los desactivados."
+              - "Toca una fila para ver sus procesos."
+              - "«Nuevo lugar» registra uno; también se puede desde «Procesar café»."
+          show:
+            title: "Lugar de procesamiento"
+            summary: "Sus datos y los procesos que se han hecho ahí, con su rendimiento real."
+            steps:
+              - "Toca un proceso para ver lo estimado contra lo real y su merma."
+          form:
+            title: "Registrar o editar un lugar"
+            summary: "El nombre del lugar y si es del negocio."
+            steps:
+              - "Escribe el nombre; marca «Es del negocio» si es propio (el patio, por ejemplo)."
+            tips:
+              - "Uno con procesos no se borra: se desactiva y deja de salir en los procesos nuevos."
+        warehouse_transfers:
+          index:
+            title: "Traslados entre bodegas"
+            summary: "El historial del café que pasó de una bodega a otra."
+            steps:
+              - "Filtra por fechas, bodega o estado del café."
+              - "Toca un traslado para ver qué lotes se movieron."
+              - "Toca «Trasladar café» para registrar uno."
+          show:
+            title: "Detalle del traslado"
+            summary: "De qué bodega a cuál, cuánto café y de qué lotes salió."
+            steps:
+              - "Los lotes más viejos salen primero y conservan su fecha en la otra bodega."
+              - "«Anular» devuelve el café a la bodega de donde salió."
+          form:
+            title: "Trasladar café"
+            summary: "Pasar café de una bodega a otra."
+            steps:
+              - "Elige la bodega de donde sale y a la que entra, y el estado del café."
+              - "Escribe las libras netas que se trasladan."
+            tips:
+              - "Si es más de lo que hay en la bodega de salida, el sistema avisa pero deja guardar."
+        stock_states:
+          show:
+            title: "Detalle del inventario"
+            summary: "Las cifras, el valor y los lotes de un estado del café (o de todo), en todas las bodegas o en una."
+            steps:
+              - "Arriba, las libras netas y, al lado, las brutas, los quintales, los sacos y el daño aplicado."
+              - "«Valor del inventario»: lo que se pagó por el café que queda, los costos que se le sumaron y el costo por libra."
+              - "Abajo, cada lote con café: de qué compra o proceso viene, cuándo entró, cuánto lleva en bodega y cuánto queda."
+              - "Elige una bodega arriba para ver solo la suya."
+            tips:
+              - "«Sale primero» marca el lote más viejo de cada bodega: es el que sale en la próxima salida, proceso o traslado."
+              - "En la uva, «Uva esperando» y «Uva urgente» marcan los lotes que llevan demasiadas horas sin procesar."
         buyer_advances:
           form:
             title: "Registrar un anticipo de comprador"
@@ -4924,15 +5504,50 @@ es:
             summary: "El comprobante de un anticipo, con original y copia, cada uno en su hoja."
             steps:
               - "Toca «Imprimir»: el original y la copia salen cada uno en su hoja."
+        coffee_conversions:
+          index:
+            title: "Procesos"
+            summary: "El café que pasa de uva a pergamino húmedo y de húmedo a seco, con lo que entró y lo que salió de cada proceso."
+            steps:
+              - "Filtra por fecha, estado o etapa; «En proceso» son los que esperan su resultado."
+              - "Toca una fila para ver el proceso y registrar su resultado."
+              - "«Procesar café» pesa café para mandarlo a procesar."
+          show:
+            title: "Proceso"
+            summary: "Lo que entró y lo que salió de un proceso, con sus libras brutas, netas y quintales."
+            steps:
+              - "Si todavía está en proceso, toca «Registrar resultado» y pesa lo que salió."
+              - "«Lo que entró contra lo que salió» dice cuántas libras netas más o menos dio el café."
+              - "«Anular» devuelve el café a su estado (solo en proceso); «Quitar el resultado» lo regresa a en proceso."
+          form:
+            title: "Procesar café"
+            summary: "Pesa el café que se manda a procesar."
+            steps:
+              - "Elige qué se procesa: uva a pergamino húmedo o húmedo a seco."
+              - "Escribe la fecha y hora y las libras brutas que entran; a la derecha se ven sus libras netas y quintales."
+              - "Toca «Pesar y mandar a procesar»: sale de su estado y queda en proceso."
+            tips:
+              - "Si es más de lo que hay en inventario, avisa sin impedirlo."
+        conversion_results:
+          form:
+            title: "Resultado del proceso"
+            summary: "El café que salió en el estado nuevo, pesado como una compra."
+            steps:
+              - "Escribe la fecha y hora, las libras brutas que salieron, los sacos, la humedad y el daño (vacío es 0 %)."
+              - "A la derecha se ven sus libras netas y quintales, y cuántas libras netas más o menos que las que entraron."
+              - "Toca «Registrar resultado»: se suman al inventario del estado nuevo."
         stocks:
           show:
             title: "Inventario"
             summary: "El café en inventario por estado y sus movimientos."
             steps:
-              - "Arriba, el saldo de hoy por estado del café, en libras netas y QQ."
-              - "Abajo, cada compra que entró y cada salida que se fue en las fechas elegidas, con el saldo después de cada una."
+              - "Arriba, las libras netas de hoy por estado del café. Toca una tarjeta para ver sus lotes, su valor y sus cifras."
+              - "Elige una bodega para ver solo su café."
+              - "Abajo, cada compra que entró, cada salida que se fue, cada proceso y cada traslado en las fechas elegidas, con el saldo después de cada uno."
+              - "«Procesar café» pasa café de uva a pergamino húmedo o de húmedo a seco; «Trasladar café», de una bodega a otra."
             tips:
               - "Las compras y salidas anuladas no cuentan."
+              - "Si hay uva que lleva demasiadas horas sin procesar, sale un aviso con el botón para procesarla."
         daily_closes:
           show:
             title: "Cierre diario de comercialización"
@@ -5126,6 +5741,17 @@ es:
             summary: "Dinero que pasa de una cuenta a otra del negocio."
             steps:
               - "Elige de qué cuenta sale y a cuál entra, el monto y la fecha, y guarda."
+        cash_counts:
+          form:
+            title: "Arqueo de caja"
+            summary: "Comparar el dinero que se contó con el saldo que dice el sistema."
+            steps:
+              - "Elige la cuenta (la caja, por lo general) y la fecha."
+              - "Cuenta el dinero y escribe cuánto hay. Para un banco, escribe lo que dice el banco."
+              - "Guarda: la cuenta muestra el arqueo con el saldo del sistema de ese día y la diferencia."
+            tips:
+              - "Si falta dinero, la diferencia sale en rojo: revisa que estén registrados todos los pagos y cobros de ese día, y que tengan su cuenta."
+              - "Un arqueo no cambia el saldo de la cuenta: solo lo compara."
         other_incomes:
           form:
             title: "Otro ingreso"
@@ -5627,6 +6253,8 @@ es:
         preview: "Así se ve"
         navbar: "Barra de navegación"
         sign_in: "Inicio de sesión"
+        cherry_alert: "Aviso a las %{warning} h · urgente a las %{critical} h"
+        yields: "Uva a húmedo: %{cherry} · secado: %{drying}"
       edit:
         title: "Editar la configuración del sitio"
       form:
@@ -5636,6 +6264,10 @@ es:
         rtn_placeholder: "14 dígitos"
         rtn_help: "Opcional. El RTN del negocio, que sale en las facturas debajo del nombre y la ubicación."
         weight_tolerance_help: "Opcional. En Comercialización, una salida cuya báscula del comprador difiere de la local en más de este porcentaje (más o menos) sale resaltada. Vacía, no se resalta ninguna."
+        cherry_alert: "Alerta de uva sin procesar (horas)"
+        cherry_alert_help: "Comercialización avisa cuando un lote de uva lleva en bodega más de estas horas sin procesar: primero un aviso y después, urgente."
+        yields: "Rendimiento estimado al procesar (%)"
+        yields_help: "Con cuánto empieza «Procesar café»: libras brutas que deberían salir por cada 100 que entran. Es solo una proyección y se cambia en cada proceso; después se anota lo que salió de verdad."
         logo_help: "PNG, JPG, WebP o GIF de hasta %{size}. Mejor cuadrado: se muestra en un círculo pequeño."
         remove_logo: "Quitar el logo actual (%{name}) y volver al grano de café"
         preview: "Vista previa"
@@ -5689,6 +6321,11 @@ es:
         hauler_payment: "el pago a carrero"
         buyer: "el comprador"
         buyer_advance: "el anticipo del comprador"
+        coffee_conversion: "el proceso de café"
+        warehouse: "la bodega"
+        processing_site: "el lugar de procesamiento"
+        processing_cost: "el gasto de procesamiento"
+        warehouse_transfer: "el traslado entre bodegas"
         carrier: "el transportista"
         truck: "el camión"
         shipment: "la salida de camión"
@@ -6028,6 +6665,9 @@ es:
       other_income:
         one: "Otro ingreso"
         other: "Otros ingresos"
+      cash_count:
+        one: "Arqueo de caja"
+        other: "Arqueos de caja"
       account_transfer:
         one: "Transferencia entre cuentas"
         other: "Transferencias entre cuentas"
@@ -6061,6 +6701,21 @@ es:
       buyer_advance:
         one: "Anticipo de comprador"
         other: "Anticipos de compradores"
+      coffee_conversion:
+        one: "Proceso de café"
+        other: "Procesos de café"
+      warehouse:
+        one: "Bodega"
+        other: "Bodegas"
+      processing_site:
+        one: "Lugar de procesamiento"
+        other: "Lugares de procesamiento"
+      processing_cost:
+        one: "Gasto de procesamiento"
+        other: "Gastos de procesamiento"
+      warehouse_transfer:
+        one: "Traslado entre bodegas"
+        other: "Traslados entre bodegas"
       private_document:
         one: "Documento privado"
         other: "Documentos privados"
@@ -6327,6 +6982,15 @@ es:
         expense: "Gasto"
         content_type: "Tipo de archivo"
         byte_size: "Tamaño"
+      cash_count:
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
+        counted_on: "Fecha del arqueo"
+        counted_amount: "Contado (L)"
+        system_balance: "Saldo del sistema (L)"
+        observations: "Observaciones"
+        created_by: "Contó"
+        created_by_id: "Contó"
       other_income:
         created_by: "Registró"
         created_by_id: "Registró"
@@ -6391,6 +7055,8 @@ es:
         active: "Activo"
       shipment:
         active_sale_line: "Venta activa"
+        warehouse: "Bodega"
+        warehouse_id: "Bodega"
         buyer_id: "Comprador"
         created_by_id: "Registró"
         sale: "Venta"
@@ -6437,6 +7103,8 @@ es:
         status/voided: "Anulada"
       sale:
         buyer_id: "Comprador"
+        buyer_total: "Liquidación del comprador (L)"
+        buyer_total_reason: "Motivo de la diferencia"
         created_by_id: "Registró"
         payments: "Cobros"
         shipments: "Salidas"
@@ -6448,8 +7116,9 @@ es:
         coffee_state: "Estado del café"
         price_unit: "Precio por"
         price_unit/pound: "Por libra"
-        price_unit/quintal: "Por quintal (120 lb)"
+        price_unit/quintal: "Por quintal"
         unit_price: "Precio (L)"
+        quintal_pounds: "Libras por quintal"
         buyer_document_number: "Factura o comprobante del comprador"
         observations: "Observaciones"
         origin_net_weight: "Neto local"
@@ -6497,6 +7166,103 @@ es:
         payment_method/advance: "Con anticipo"
         observations: "Observaciones"
         created_by: "Registró"
+      coffee_conversion:
+        number: "Número"
+        from_state: "Estado que entra"
+        to_state: "Estado que sale"
+        weighed_at: "Pesado el"
+        input_gross_weight: "Libras brutas que entran"
+        input_net_weight: "Libras netas que entran"
+        input_ratio: "Proporción neto/bruto al entrar"
+        input_ratio_source: "De dónde salió la proporción al entrar"
+        warehouse: "Bodega"
+        warehouse_id: "Bodega"
+        processing_site: "Lugar"
+        processing_site_id: "Lugar"
+        estimated_yield_percent: "Rendimiento estimado (%)"
+        input_humidity_percent: "Humedad al entrar (%)"
+        output_warehouse: "Bodega a la que entra"
+        output_warehouse_id: "Bodega a la que entra"
+        finished_at: "Salió el"
+        output_gross_weight: "Libras brutas que salieron"
+        output_net_weight: "Libras netas que salieron"
+        output_sacks: "Sacos que salieron"
+        output_tare: "Tara al salir"
+        output_humidity_percent: "Humedad al salir (%)"
+        output_damage_percent: "Daño al salir (%)"
+        output_ratio: "Proporción neto/bruto al salir"
+        output_ratio_source: "De dónde salió la proporción al salir"
+        observations: "Observaciones"
+        status: "Estado"
+        created_by: "Pesó"
+        created_by_id: "Pesó"
+        finished_by: "Registró el resultado"
+        finished_by_id: "Registró el resultado"
+        voided_at: "Anulada el"
+        voided_by: "Anuló"
+        voided_by_id: "Anuló"
+      processing_cost:
+        coffee_conversion: "Proceso"
+        coffee_conversion_id: "Proceso"
+        concept: "Concepto"
+        concept/freight: "Flete"
+        concept/drying: "Secado"
+        concept/labor: "Mano de obra"
+        concept/loading: "Carga y descarga"
+        concept/rental: "Alquiler de patio o secadora"
+        concept/fuel: "Combustible"
+        concept/other: "Otro"
+        description: "Detalle"
+        pricing: "Cómo se cobra"
+        pricing/total: "Monto total"
+        pricing/per_pound: "Por libra"
+        pricing/per_quintal: "Por quintal"
+        weight_side: "Sobre el café"
+        weight_side/input: "Que entró"
+        weight_side/output: "Que salió"
+        weight_kind: "En libras"
+        weight_kind/gross: "Brutas"
+        weight_kind/net: "Netas"
+        quintal_pounds: "Libras por quintal"
+        base_pounds: "Libras sobre las que se cobró"
+        quantity: "Cantidad cobrada"
+        unit_price: "Precio (L)"
+        amount: "Monto (L)"
+        paid_on: "Fecha de pago"
+        payment_method: "Forma de pago"
+        payment_method/cash: "Efectivo"
+        payment_method/transfer: "Transferencia"
+        payment_method/check: "Cheque"
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
+        created_by: "Registró"
+        created_by_id: "Registró"
+      processing_site:
+        name: "Nombre"
+        own: "Es del negocio"
+        observations: "Observaciones"
+        active: "Activo"
+      warehouse:
+        name: "Nombre"
+        main: "Bodega por defecto"
+        observations: "Observaciones"
+        active: "Activa"
+      warehouse_transfer:
+        number: "Número"
+        transferred_at: "Fecha y hora"
+        from_warehouse: "De la bodega"
+        from_warehouse_id: "De la bodega"
+        to_warehouse: "A la bodega"
+        to_warehouse_id: "A la bodega"
+        coffee_state: "Estado del café"
+        net_weight: "Libras netas"
+        gross_weight: "Libras brutas"
+        observations: "Observaciones"
+        created_by: "Registró"
+        created_by_id: "Registró"
+        voided_at: "Anulado el"
+        voided_by: "Anuló"
+        voided_by_id: "Anuló"
       buyer_advance:
         buyer: "Comprador"
         buyer_id: "Comprador"
@@ -6583,6 +7349,8 @@ es:
         person_id: "Persona"
       purchase:
         purchased_at: "Fecha y hora"
+        warehouse: "Bodega"
+        warehouse_id: "Bodega"
         producer: "Productor"
         producer_id: "Productor"
         farm: "Finca"
@@ -6871,6 +7639,10 @@ es:
         logo_content_type: "Tipo de imagen del logo"
         logo_byte_size: "Tamaño del logo (bytes)"
         weight_tolerance_percent: "Tolerancia de diferencia de peso (%)"
+        cherry_warning_hours: "Aviso después de (horas)"
+        cherry_yield_percent: "Uva a pergamino húmedo (%)"
+        drying_yield_percent: "Secado: húmedo a pergamino seco (%)"
+        cherry_critical_hours: "Urgente después de (horas)"
       purchase/weighings:
         gross_weight: "Peso de la pesada (lb)"
         sacks: "Sacos de la pesada"
@@ -6896,6 +7668,43 @@ es:
         can_destroy: "Borrar"
     errors:
       models:
+        coffee_conversion:
+          attributes:
+            base:
+              finished: "El proceso ya tiene su resultado: quítalo primero."
+              not_finished: "El proceso todavía no tiene resultado."
+              has_costs: "El proceso tiene gastos registrados: quítalos primero para anularlo."
+              output_costs: "El proceso tiene gastos cobrados sobre lo que salió: quítalos primero para quitar el resultado."
+            finished_at:
+              before_weighed: "no puede ser antes de cuando se pesó lo que entró"
+            warehouse:
+              inactive: "está desactivada: elige otra"
+            output_warehouse:
+              inactive: "está desactivada: elige otra"
+            processing_site:
+              inactive: "está desactivado: elige otro"
+        warehouse:
+          attributes:
+            base:
+              main_inactive: "La bodega por defecto no se puede desactivar: elige antes otra por defecto."
+              has_coffee: "La bodega todavía tiene café: trasládalo a otra antes de desactivarla."
+        processing_cost:
+          attributes:
+            base:
+              voided: "El proceso está anulado: ya no lleva gastos."
+            weight_side:
+              not_weighed: "no puede ser «Que salió» hasta que se registre el resultado"
+            description:
+              blank: "es obligatorio cuando el concepto es «Otro»"
+        warehouse_transfer:
+          attributes:
+            base:
+              voided: "El traslado ya está anulado."
+            to_warehouse:
+              same: "debe ser otra bodega"
+              inactive: "está desactivada: elige otra"
+            from_warehouse:
+              inactive: "está desactivada: elige otra"
         staff_member:
           attributes:
             person:
@@ -6964,6 +7773,12 @@ es:
           attributes:
             money_account:
               inactive: "está desactivada"
+        cash_count:
+          attributes:
+            money_account:
+              inactive: "está desactivada"
+            counted_on:
+              future: "no puede ser en el futuro"
         account_transfer:
           attributes:
             to_account:
@@ -6984,6 +7799,8 @@ es:
               sold: "La salida ya está en una venta: no se cambian su comprador, estado ni pesos. Anula la venta primero."
             buyer:
               inactive: "está desactivado"
+            warehouse:
+              inactive: "está desactivada: elige otra"
             carrier:
               inactive: "está desactivado"
             truck:
@@ -6995,6 +7812,10 @@ es:
             base:
               partial_not_less: "El cobro parcial debe ser menor que el total; si cobras todo, elige «De contado»."
               has_payments: "La venta tiene cobros: quítalos antes de anularla."
+            buyer_total:
+              below_paid: "no puede ser menos de lo ya cobrado (%{paid})"
+            buyer_total_reason:
+              blank: "hace falta: di por qué la liquidación es distinta a la venta"
             lines:
               blank: "faltan: elige al menos una salida"
               unavailable: "no están todas disponibles (alguna se vendió, se anuló o es de otro comprador): revisa la lista"
@@ -7120,6 +7941,8 @@ es:
               taken: "ya lo usas en otro filtro guardado"
         site_setting:
           attributes:
+            cherry_critical_hours:
+              after_warning: "debe ser más que las horas del aviso"
             logo:
               too_big: "pesa más de %{size}: elige una imagen más liviana"
               not_an_image: "debe ser una imagen PNG, JPG, WebP o GIF"
@@ -7129,6 +7952,8 @@ es:
           attributes:
             hauler:
               inactive: "está desactivado: elige otro o actívalo en su ficha"
+            warehouse:
+              inactive: "está desactivada: elige otra"
             invoice:
               other_producer: "pertenece a otro productor"
             farm:

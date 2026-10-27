@@ -1,0 +1,18 @@
+<% content_for :title, t(".title") %>
+<%= render "sales/nav" %>
+
+<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+<p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+
+<%# The kind first (client, 2026-10-26); each opens its own form. %>
+<div class="mt-6 grid gap-4 md:grid-cols-3" data-departure-kinds>
+  <% if policy(Shipment).create? %>
+    <%= render "shared/tile", path: new_sales_shipment_path, icon_name: :sales, title: t(".kinds.sale.title"), description: t(".kinds.sale.description") %>
+  <% end %>
+  <% if policy(CoffeeConversion).create? %>
+    <%= render "shared/tile", path: new_sales_coffee_conversion_path, icon_name: :bean, title: t(".kinds.processing.title"), description: t(".kinds.processing.description") %>
+  <% end %>
+  <% if policy(WarehouseTransfer).create? %>
+    <%= render "shared/tile", path: new_sales_warehouse_transfer_path, icon_name: :home, title: t(".kinds.transfer.title"), description: t(".kinds.transfer.description") %>
+  <% end %>
+</div>

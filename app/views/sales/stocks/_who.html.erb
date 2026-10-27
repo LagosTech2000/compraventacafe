@@ -1,6 +1,12 @@
-<%# Who a kardex entry is with: the producer of a purchase, the buyer of a shipment. %>
-<% if entry.kind == "purchase" %>
+<%# Who a kardex entry is with: the producer of a purchase, the buyer of a
+    shipment, or the conversion (what went into it, what came out). %>
+<% case entry.kind %>
+<% when "purchase" %>
   <%= entry.record.producer.full_name %>
-<% else %>
+<% when "shipment" %>
   <%= t("sales.shipments.show.title", number: entry.record.display_number) %> · <%= entry.record.buyer.name %>
+<% when "transfer_in", "transfer_out" %>
+  <%= t("sales.warehouse_transfers.show.title", number: entry.record.display_number) %> · <%= entry.record.from_warehouse.name %> → <%= entry.record.to_warehouse.name %>
+<% else %>
+  <%= t("sales.coffee_conversions.show.title", number: entry.record.display_number) %> · <%= entry.record.human_from_state %> → <%= entry.record.human_to_state %>
 <% end %>

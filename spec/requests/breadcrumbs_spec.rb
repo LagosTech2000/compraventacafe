@@ -26,6 +26,24 @@ RSpec.describe "Breadcrumbs" do
     expect(crumbs.size).to eq(4)
   end
 
+  it "goes up through the list from a coffee conversion and its result" do
+    conversion = create(:coffee_conversion)
+    get sales_coffee_conversion_path(conversion)
+    expect(crumbs).to eq([ "Procesos", "Proceso #{conversion.display_number}" ])
+    get edit_sales_coffee_conversion_result_path(conversion)
+    expect(crumbs).to eq([ "Procesos", "Proceso #{conversion.display_number}", "Resultado" ])
+  end
+
+  it "goes up through the stock from a coffee state, a warehouse and a transfer" do
+    get sales_stock_state_path("cherry")
+    expect(crumbs).to eq([ "Inventario", "Uva" ])
+    transfer = create(:warehouse_transfer, net_weight: 1)
+    get sales_warehouse_transfer_path(transfer)
+    expect(crumbs).to eq([ "Inventario", "Traslados entre bodegas", "Traslado #{transfer.display_number}" ])
+    get sales_warehouse_path(transfer.to_warehouse)
+    expect(crumbs).to eq([ "Bodegas", transfer.to_warehouse.name ])
+  end
+
   it "goes up through the buyer from a shipment, a sale and its receipt" do
     buyer = create(:buyer, name: "Beneficio Henola")
     sale = create(:sale, buyer:)

@@ -1,0 +1,16 @@
+<%# One card of «Café en inventario»: its net pounds, the figure that always
+    shows (client, 2026-10-26); the rest is in its detail, where the whole
+    card leads. `alert` marks cherry that waited too long. %>
+<%= link_to path, class: "stat block min-w-0 flex-1 basis-44 transition hover:ring-primary/40 #{local_assigns[:css]}",
+            data: { coffee_state: key, turbo_frame: "_top" } do %>
+  <span class="flex items-start justify-between gap-2">
+    <span class="text-sm font-semibold text-ink"><%= title %></span>
+    <% if (level = local_assigns[:alert]) %>
+      <span class="badge <%= level == "critical" ? "badge-danger" : "badge-warning" %>" data-cherry-alert="<%= level %>"><%= t("sales.cherry_alert.levels.#{level}") %></span>
+    <% end %>
+  </span>
+  <span class="mt-2 block text-2xl font-bold tabular-nums <%= "text-danger" if net.negative? %>" data-live-value="stock-<%= key %>-net">
+    <%= t("sales.stock.pounds", pounds: format_pounds(net)) %>
+  </span>
+  <span class="block text-xs text-ink-muted"><%= t("sales.stock.net") %></span>
+<% end %>

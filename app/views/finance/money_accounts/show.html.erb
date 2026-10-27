@@ -15,6 +15,7 @@
   </div>
   <div class="flex flex-wrap gap-2">
     <% if @account.active? && policy(OtherIncome).create? %><%= modal_link_to t(".income"), new_finance_other_income_path(account: @account.id), class: "btn" %><% end %>
+    <% if @account.active? && policy(CashCount).create? %><%= modal_link_to t(".cash_count"), new_finance_cash_count_path(account: @account.id), class: "btn" %><% end %>
     <% if @account.active? && policy(AccountTransfer).create? %><%= modal_link_to t(".transfer"), new_finance_account_transfer_path(from: @account.id), class: "btn" %><% end %>
     <% if policy(@account).update? %><%= modal_link_to t(".edit"), edit_finance_money_account_path(@account), class: "btn" %><% end %>
     <div data-controller="print"><button type="button" class="btn" data-action="print#print"><%= t(".print") %></button></div>
@@ -52,6 +53,8 @@
     </section>
   </div>
 </div>
+
+<%= render "finance/money_accounts/cash_counts", account: @account %>
 
 <h2 class="mt-8 text-lg font-semibold"><%= t(".movements") %></h2>
 <div data-controller="live-filter">

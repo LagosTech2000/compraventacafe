@@ -40,6 +40,7 @@ class AccountBalance
         [ PayrollExpense.all, "spent_on", "amount", "money_account_id", :out ],
         [ SalePayment.in_money, "paid_on", "amount", "money_account_id", :in ],
         [ BuyerAdvance.all, "received_on", "amount", "money_account_id", :in ],
+        [ ProcessingCost.all, "paid_on", "amount", "money_account_id", :out ],
         [ Expense.all, "spent_on", "amount", "money_account_id", :out ],
         [ StaffPayment.all, "paid_on", "net_total", "money_account_id", :out ],
         [ StaffAdvance.all, "given_on", "amount", "money_account_id", :out ],

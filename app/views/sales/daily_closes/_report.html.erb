@@ -39,6 +39,13 @@
       <% end %>
     </tbody>
   </table>
+  <% if close.stock.in_process_gross.positive? %>
+    <%# Coffee weighed for a conversion with no result yet at the close (Fernando, 2026-10-25). %>
+    <p class="mt-1 text-[8.5pt]" data-open-conversions>
+      <%= t(".open_conversions", count: close.stock.in_process.count, gross: format_pounds(close.stock.in_process_gross),
+                                 net: format_pounds(close.stock.in_process_net)) %>
+    </p>
+  <% end %>
 
   <% [ [ :departed, close.departed ], [ :received, close.received ] ].each do |key, shipments| %>
     <% next if shipments.empty? %>

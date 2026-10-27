@@ -1,0 +1,32 @@
+<%# A warehouse: its name (renamed at will) and whether purchases start in it. %>
+<%= form_with model: [ :sales, warehouse ], class: form_surface_class("space-y-6"), data: { controller: "form-validation" } do |form| %>
+  <%= hidden_field_tag :picker, "1" if picker_request? %>
+  <%= render "shared/form_errors", record: warehouse %>
+  <div class="grid gap-5">
+    <div>
+      <%= form.label :name, class: "field-label" %>
+      <%= form.text_field :name, autofocus: true, required: true, maxlength: 80, class: "field-input",
+            data: { missing_message: "#{Warehouse.human_attribute_name(:name)} #{t("errors.messages.blank")}" } %>
+    </div>
+    <label class="flex items-start gap-2 text-sm font-medium">
+      <%= form.check_box :main, class: "mt-0.5 size-4 accent-primary" %>
+      <span><%= Warehouse.human_attribute_name(:main) %>
+        <span class="block text-xs font-normal text-ink-muted"><%= t("sales.warehouses.form.main_help") %></span></span>
+    </label>
+    <div>
+      <%= form.label :observations, class: "field-label" %>
+      <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+    </div>
+    <% if warehouse.persisted? %>
+      <label class="flex items-start gap-2 text-sm font-medium">
+        <%= form.check_box :active, class: "mt-0.5 size-4 accent-primary" %>
+        <span><%= Warehouse.human_attribute_name(:active) %>
+          <span class="block text-xs font-normal text-ink-muted"><%= t("sales.warehouses.form.active_help") %></span></span>
+      </label>
+    <% end %>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= cancel_button warehouse.persisted? ? sales_warehouse_path(warehouse) : sales_warehouses_path %>
+  </div>
+<% end %>

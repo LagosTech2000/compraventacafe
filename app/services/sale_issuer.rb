@@ -19,7 +19,7 @@ class SaleIssuer
     @buyer = buyer
     @shipment_ids = Array(shipment_ids).compact_blank.map(&:to_i)
     @user = user
-    @attributes = sale.to_h.symbolize_keys.slice(:sold_on, :price_unit, :unit_price, :buyer_document_number, :observations)
+    @attributes = sale.to_h.symbolize_keys.slice(:sold_on, :price_unit, :unit_price, :quintal_pounds, :buyer_document_number, :observations)
     @payment_status = payment_status.presence_in(PAYMENT_CHOICES) || "pending"
     @payment = { payment_method: payment_method.presence, paid_on: paid_on.presence || @attributes[:sold_on].presence || Time.zone.today,
                  amount: amount.presence, money_account_id: money_account_id.presence }
@@ -51,16 +51,18 @@ class SaleIssuer
   private
     def build_lines(sale, shipments)
       sale.coffee_state = shipments.first.coffee_state
-      price_ok = sale.unit_price.to_d.positive? && sale.price_unit.in?(Sale::PRICE_UNITS)
+      price_ok = sale.unit_price.to_d.positive? && sale.price_unit.in?(Sale::PRICE_UNITS) && sale.quintal_pounds.to_d.positive?
       shipments.sort_by(&:number).each do |shipment|
-        amount = price_ok ? Sale.amount_for(shipment.destination_net_weight, unit_price: sale.unit_price, price_unit: sale.price_unit) : 0
+        amount = price_ok ? Sale.amount_for(shipment.destination_net_weight, **sale_price(sale)) : 0
         sale.lines.build(shipment:, net_weight: shipment.destination_net_weight, origin_net_weight: shipment.origin_net_weight, amount:)
       end
       sale.net_weight = shipments.sum(&:destination_net_weight)
       sale.origin_net_weight = shipments.sum(&:origin_net_weight)
       # On the whole weight, so rounding per line never moves a cent.
-      sale.total = price_ok ? Sale.amount_for(sale.net_weight, unit_price: sale.unit_price, price_unit: sale.price_unit) : 0
+      sale.total = price_ok ? Sale.amount_for(sale.net_weight, **sale_price(sale)) : 0
     end
+
+    def sale_price(sale) = { unit_price: sale.unit_price, price_unit: sale.price_unit, quintal_pounds: sale.quintal_pounds }
 
     # What is taken off the buyer's advances, on the sale's day.
     def take_advance(sale)

@@ -1,0 +1,47 @@
+<%# Transfers between warehouses. `sorting` (filter + frame) sorts on the server. %>
+<div class="mt-4 @container">
+  <ul class="space-y-3 @3xl:hidden">
+    <% transfers.each do |transfer| %>
+      <li class="data-card" id="<%= dom_id(transfer, :card) %>">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="font-medium"><%= t("sales.warehouse_transfers.show.title", number: transfer.display_number) %>
+              <% if transfer.voided? %><span class="badge badge-neutral ml-1"><%= t("sales.warehouse_transfers.voided") %></span><% end %></p>
+            <p class="text-xs text-ink-muted"><%= l(transfer.transferred_at) %> · <%= transfer.from_warehouse.name %> → <%= transfer.to_warehouse.name %></p>
+            <p class="text-sm tabular-nums"><%= transfer.human_coffee_state %> · <%= t("sales.stock.pounds", pounds: format_pounds(transfer.net_weight)) %></p>
+          </div>
+          <%= detail_button sales_warehouse_transfer_path(transfer) %>
+        </div>
+      </li>
+    <% end %>
+  </ul>
+  <div class="hidden overflow-x-auto panel @3xl:block">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <%= sort_th WarehouseTransfer.human_attribute_name(:number), :number, sorting %>
+          <%= sort_th WarehouseTransfer.human_attribute_name(:transferred_at), :transferred_at, sorting %>
+          <%= sort_th WarehouseTransfer.human_attribute_name(:from_warehouse), :from_warehouse, sorting %>
+          <%= sort_th WarehouseTransfer.human_attribute_name(:to_warehouse), :to_warehouse, sorting %>
+          <%= sort_th WarehouseTransfer.human_attribute_name(:coffee_state), :coffee_state, sorting %>
+          <%= sort_th WarehouseTransfer.human_attribute_name(:net_weight), :net_weight, sorting, class: "text-right" %>
+          <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% transfers.each do |transfer| %>
+          <tr id="<%= dom_id(transfer) %>">
+            <td class="font-medium tabular-nums"><%= transfer.display_number %>
+              <% if transfer.voided? %><span class="badge badge-neutral ml-1"><%= t("sales.warehouse_transfers.voided") %></span><% end %></td>
+            <td class="whitespace-nowrap"><%= l(transfer.transferred_at) %></td>
+            <td><%= transfer.from_warehouse.name %></td>
+            <td><%= transfer.to_warehouse.name %></td>
+            <td><%= transfer.human_coffee_state %></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(transfer.net_weight) %></td>
+            <td class="cell-actions"><%= detail_button sales_warehouse_transfer_path(transfer) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

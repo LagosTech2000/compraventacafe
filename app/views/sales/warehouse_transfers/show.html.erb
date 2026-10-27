@@ -1,0 +1,50 @@
+<% content_for :title, t(".title", number: @transfer.display_number) %>
+<%= live_updates_from :sales %>
+<%= render "sales/nav" %>
+<%= render "shared/breadcrumbs", crumbs: [ [ t("sales.nav.stock"), sales_stock_path ], [ t("sales.warehouse_transfers.index.title"), sales_warehouse_transfers_path ],
+                                           [ t(".title", number: @transfer.display_number) ] ] %>
+
+<div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title", number: @transfer.display_number) %></h1>
+    <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
+      <% if @transfer.voided? %><span class="badge badge-neutral"><%= t("sales.warehouse_transfers.voided") %></span><% end %>
+      <span><%= @transfer.from_warehouse.name %> → <%= @transfer.to_warehouse.name %></span>
+    </p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <% if policy(@transfer).void? %>
+      <%= button_to t(".void"), void_sales_warehouse_transfer_path(@transfer), method: :patch, class: "btn",
+            form: { data: { turbo_confirm: t(".confirm_void") } } %>
+    <% end %>
+    <% if modal_request? %>
+      <%= page_link_to t("sales.buyers.show.full_page"), sales_warehouse_transfer_path(@transfer), class: "btn" %>
+    <% end %>
+  </div>
+</div>
+
+<% if @transfer.voided? %>
+  <p class="flash-alert mb-6" role="status"><%= t(".voided", date: l(@transfer.voided_at), name: @transfer.voided_by&.name) %></p>
+<% end %>
+
+<dl class="grid gap-3 panel p-4 text-sm sm:grid-cols-3" id="transfer-details">
+  <% [ [ WarehouseTransfer.human_attribute_name(:transferred_at), l(@transfer.transferred_at) ],
+       [ WarehouseTransfer.human_attribute_name(:from_warehouse), @transfer.from_warehouse.name ],
+       [ WarehouseTransfer.human_attribute_name(:to_warehouse), @transfer.to_warehouse.name ],
+       [ WarehouseTransfer.human_attribute_name(:coffee_state), @transfer.human_coffee_state ],
+       [ WarehouseTransfer.human_attribute_name(:net_weight), t("sales.stock.pounds", pounds: format_pounds(@transfer.net_weight)) ],
+       [ WarehouseTransfer.human_attribute_name(:gross_weight), t("sales.stock.pounds", pounds: format_pounds(@transfer.gross_weight)) ],
+       [ WarehouseTransfer.human_attribute_name(:created_by), @transfer.created_by.name ] ].each do |label, value| %>
+    <div><dt class="text-xs text-ink-muted"><%= label %></dt><dd class="font-medium tabular-nums"><%= value %></dd></div>
+  <% end %>
+  <% if @transfer.observations %>
+    <div class="sm:col-span-3">
+      <dt class="text-xs text-ink-muted"><%= WarehouseTransfer.human_attribute_name(:observations) %></dt>
+      <dd class="whitespace-pre-line"><%= @transfer.observations %></dd>
+    </div>
+  <% end %>
+</dl>
+
+<% unless @transfer.voided? %>
+  <div class="mt-4"><%= render "sales/portions", portions: @portions, id: "transfer-lots", title: t(".lots") %></div>
+<% end %>

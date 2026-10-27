@@ -74,6 +74,8 @@ Rails.application.routes.draw do
   # buyer, are weighed again there, and are sold and collected.
   namespace :sales do
     root "home#index"
+    # «Nueva salida»: to sell, to process or to another warehouse.
+    resource :departure, only: :new
     resources :shipments, except: :destroy do
       patch :void, on: :member
       # Weighed on the buyer's scale.
@@ -81,6 +83,8 @@ Rails.application.routes.draw do
     end
     resources :sales, only: %i[ index show new create ] do
       patch :void, on: :member
+      # The buyer's settlement: what it pays per its own liquidation.
+      resource :settlement, only: %i[edit update], controller: "sale_settlements"
       # What the buyer pays ("cobros"), each with its receipt.
       resources :payments, only: %i[ new create show destroy ], controller: "sale_payments"
     end
@@ -90,7 +94,27 @@ Rails.application.routes.draw do
     end
     resources :carriers, except: :destroy
     resources :trucks, except: :destroy
+    resources :warehouses
+    # Where coffee is processed.
+    resources :processing_sites, path: "sites", except: :destroy
+    # Coffee moved from one warehouse to another.
+    resources :warehouse_transfers, path: "transfers", only: %i[ index show new create ] do
+      patch :void, on: :member
+    end
     resource :stock, only: :show
+    # One coffee state of the stock (or all: "total"), lot by lot.
+    get "stock/:coffee_state", to: "stock_states#show", as: :stock_state,
+                               constraints: { coffee_state: /cherry|wet_parchment|dry_parchment|total/ }
+    # Coffee converted to the next state: weighed first, its result later.
+    resources :coffee_conversions, path: "conversions", only: %i[ index show new create ] do
+      member do
+        patch :void
+        patch :reopen
+      end
+      resource :result, only: %i[ edit update ], controller: "conversion_results"
+      # What processing it cost.
+      resources :costs, only: %i[ new create destroy ], controller: "processing_costs"
+    end
     resource :daily_close, only: :show
   end
 
@@ -107,6 +131,8 @@ Rails.application.routes.draw do
     resources :money_accounts, except: :destroy
     resources :account_transfers, only: %i[ new create destroy ]
     resources :other_incomes, only: %i[ new create destroy ]
+    # Cash counts ("arqueos"): what was counted against the system's balance.
+    resources :cash_counts, only: %i[ new create destroy ]
     resources :categories, only: %i[ index new create edit update ]
     resource :budget, only: %i[ show update ]
     # Giving an account to what was registered without one.

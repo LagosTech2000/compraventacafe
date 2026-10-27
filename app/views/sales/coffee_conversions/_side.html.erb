@@ -1,0 +1,37 @@
+<%# One side of a conversion: what went in (`side` "input") or what came
+    out ("output"): state, when, gross, net and QQ. %>
+<% input = side == "input" %>
+<% gross = conversion["#{side}_gross_weight"] %>
+<section class="panel p-4" aria-labelledby="conversion-<%= side %>" data-conversion-side="<%= side %>">
+  <h2 id="conversion-<%= side %>" class="font-semibold">
+    <%= t("sales.coffee_conversions.show.#{side}", state: input ? conversion.human_from_state : conversion.human_to_state) %>
+  </h2>
+  <% if gross %>
+    <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
+      <div class="col-span-2">
+        <dt class="text-xs text-ink-muted"><%= CoffeeConversion.human_attribute_name(input ? :weighed_at : :finished_at) %></dt>
+        <dd><%= l(input ? conversion.weighed_at : conversion.finished_at) %></dd>
+      </div>
+      <% if (warehouse = input ? conversion.warehouse : conversion.output_warehouse) %>
+        <div class="col-span-2"><dt class="text-xs text-ink-muted"><%= Warehouse.model_name.human %></dt><dd><%= warehouse.name %></dd></div>
+      <% end %>
+      <% if input && conversion.processing_site %>
+        <div class="col-span-2"><dt class="text-xs text-ink-muted"><%= CoffeeConversion.human_attribute_name(:processing_site) %></dt>
+          <dd><%= policy(conversion.processing_site).show? ? link_to(conversion.processing_site.name, sales_processing_site_path(conversion.processing_site), class: "link") : conversion.processing_site.name %></dd></div>
+      <% end %>
+      <% if input && conversion.input_humidity_percent %>
+        <div><dt class="text-xs text-ink-muted"><%= CoffeeConversion.human_attribute_name(:input_humidity_percent) %></dt><dd class="tabular-nums"><%= number_with_precision(conversion.input_humidity_percent, precision: 2) %></dd></div>
+      <% end %>
+      <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.gross") %></dt><dd class="font-semibold tabular-nums"><%= t("sales.stock.pounds", pounds: format_pounds(gross)) %></dd></div>
+      <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.net") %></dt><dd class="text-lg font-bold tabular-nums"><%= t("sales.stock.pounds", pounds: format_pounds(conversion["#{side}_net_weight"])) %></dd></div>
+      <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.quintals_label") %></dt><dd class="font-semibold tabular-nums"><%= format_pounds(input ? conversion.input_quintals : conversion.output_quintals) %></dd></div>
+      <% if !input && conversion.output_weighed? %>
+        <div><dt class="text-xs text-ink-muted"><%= CoffeeConversion.human_attribute_name(:output_sacks) %></dt><dd class="tabular-nums"><%= conversion.output_sacks %></dd></div>
+        <div><dt class="text-xs text-ink-muted"><%= CoffeeConversion.human_attribute_name(:output_humidity_percent) %></dt><dd class="tabular-nums"><%= number_with_precision(conversion.output_humidity_percent, precision: 2) %></dd></div>
+        <div><dt class="text-xs text-ink-muted"><%= CoffeeConversion.human_attribute_name(:output_damage_percent) %></dt><dd class="tabular-nums"><%= number_with_precision(conversion.output_damage_percent, precision: 2) %></dd></div>
+      <% end %>
+    </dl>
+  <% else %>
+    <p class="mt-2 text-sm text-ink-muted"><%= t("sales.coffee_conversions.show.no_output") %></p>
+  <% end %>
+</section>

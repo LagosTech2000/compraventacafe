@@ -1,0 +1,46 @@
+<% content_for :title, t(".title") %>
+<%= live_updates_from :sales %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= render "sales/nav" %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <%= help_guide_button HelpGuide.process(:coffee_conversion), label: true %>
+    <% if policy(ProcessingSite).index? %>
+      <%= link_to t(".sites"), sales_processing_sites_path, class: "btn" %>
+    <% end %>
+    <% if policy(CoffeeConversion).create? %>
+      <%= modal_link_to t(".new"), new_sales_coffee_conversion_path, class: "btn btn-primary" %>
+    <% end %>
+  </div>
+</div>
+
+<% statuses = CoffeeConversion::STATUSES.map { [ t("sales.coffee_conversions.statuses.#{it}"), it ] } %>
+<% from_states = CoffeeConversion::NEXT_STATE.keys.map { [ CoffeeConversion.human_state(it), it ] } %>
+<% sites = ProcessingSite.alphabetical.map { [ it.name, it.id ] } %>
+<div data-controller="live-filter">
+  <%= render layout: "shared/filters", locals: { filter: @filter, url: sales_coffee_conversions_path, frame: "conversions-list", live: true } do |form| %>
+    <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("sales.coffee_conversions.index.search_placeholder") %>
+    <%= filter_date_field form, :from, t("shared.filters.from"), value: @filter.from %>
+    <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
+    <%= filter_select form, :from_state, CoffeeConversion.human_attribute_name(:from_state), from_states, selected: @filter.from_state %>
+    <%= filter_select form, :processing_site_id, CoffeeConversion.human_attribute_name(:processing_site), sites, selected: @filter.processing_site_id %>
+    <%= filter_select form, :status, CoffeeConversion.human_attribute_name(:status), statuses, selected: @filter.status,
+          all: t("sales.coffee_conversions.index.all_active") %>
+  <% end %>
+
+  <%= list_frame "conversions-list" do %>
+    <%= live_list_status @filter, status: statuses, from_state: from_states, processing_site_id: sites %>
+    <% sorting = { filter: @filter, frame: "conversions-list" } %>
+    <% if @conversions.any? %>
+      <%= render "sales/coffee_conversions/table", conversions: @conversions, sorting: %>
+      <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "conversions-list" %>
+    <% else %>
+      <p class="empty-state mt-6"><%= t(".empty") %></p>
+    <% end %>
+  <% end %>
+</div>

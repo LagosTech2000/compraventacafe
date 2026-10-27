@@ -169,7 +169,10 @@
               <% @taken.each do |payment| %>
                 <tr id="<%= dom_id(payment, :taken) %>">
                   <td class="whitespace-nowrap"><%= l(payment.paid_on) %></td>
-                  <td class="tabular-nums"><%= payment.sale.display_number %><%= " · #{t("sales.sales.voided")}" if payment.sale.voided? %></td>
+                  <td class="tabular-nums">
+                    <%= payment.sale.display_number %><%= " · #{t("sales.sales.voided")}" if payment.sale.voided? %>
+                    <span class="block text-xs text-ink-muted" data-advance-pounds><%= payment.sale.advance_pounds_text(payment.amount) %></span>
+                  </td>
                   <td class="whitespace-nowrap text-right tabular-nums">−<%= format_money(payment.amount) %></td>
                   <td class="cell-actions"><%= link_to t("finance.movements.open"), sales_sale_path(payment.sale), class: "btn btn-sm", data: { row_link: true } %></td>
                 </tr>

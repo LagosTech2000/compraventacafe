@@ -9,7 +9,7 @@ RSpec.describe "Queries per page" do
   let(:admin) { create(:user, :admin) }
 
   PAGES = %w[/ /pending_work /trading /trading/purchases /trading/producers /trading/invoices /trading/daily_close
-             /trading/haulers /sales /sales/shipments /sales/sales /sales/buyers /sales/carriers /sales/trucks /sales/stock /sales/daily_close /finance /finance/movements /finance/incomes /finance/staff /finance/staff/roles /finance/staff/sheet /finance/staff/sheet?view=month /finance/staff/sheet?view=history /finance/expenses /finance/money_accounts /finance/categories /finance/budget /loans /loans/loans /loans/credit_accounts /farms/farms /administration/people].freeze
+             /trading/haulers /sales /sales/shipments /sales/sales /sales/buyers /sales/carriers /sales/trucks /sales/warehouses /sales/transfers /sales/sites /sales/stock /sales/stock/wet_parchment /sales/stock/total /sales/conversions /sales/daily_close /finance /finance/movements /finance/incomes /finance/staff /finance/staff/roles /finance/staff/sheet /finance/staff/sheet?view=month /finance/staff/sheet?view=history /finance/expenses /finance/money_accounts /finance/categories /finance/budget /loans /loans/loans /loans/credit_accounts /farms/farms /administration/people].freeze
 
   def queries(path)
     count = 0
@@ -35,6 +35,12 @@ RSpec.describe "Queries per page" do
       create(:hauler)
       create(:sale, buyer: create(:buyer))
       create(:shipment, carrier: create(:carrier), truck: create(:truck))
+      create(:coffee_conversion, :finished)
+      create(:coffee_conversion)
+      warehouse = create(:warehouse)
+      create(:purchase, producer:, warehouse:, coffee_state: "cherry", purchased_at: 2.days.ago)
+      create(:warehouse_transfer, to_warehouse: warehouse, net_weight: 10)
+      create(:processing_cost, coffee_conversion: create(:coffee_conversion))
       create(:expense)
       create(:other_income)
       member = create(:staff_member, starts_on: Time.zone.today - 40)

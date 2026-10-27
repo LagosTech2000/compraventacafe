@@ -27,6 +27,21 @@ RSpec.describe "Process guides" do
     expect(guides).to include("Ayuda: Fusionar dos registros de la misma persona")
   end
 
+  it "explains converting coffee where it is done" do
+    conversion = create(:coffee_conversion)
+    [ sales_coffee_conversions_path, new_sales_coffee_conversion_path, sales_coffee_conversion_path(conversion), sales_stock_path ].each do |path|
+      get path
+      expect(guides).to include("Ayuda: Procesar café"), path
+    end
+  end
+
+  it "explains lots, warehouses and the coffee's value where the stock is seen" do
+    [ sales_stock_state_path("wet_parchment"), sales_stock_state_path("total") ].each do |path|
+      get path
+      expect(guides).to include("Ayuda: Lotes, bodegas y valor del café"), path
+    end
+  end
+
   it "explains the sales flow where shipments and sales are made" do
     sale = create(:sale)
     [ sales_shipments_path, new_sales_shipment_path, sales_shipment_path(sale.shipments.first), new_sales_sale_path, sales_sale_path(sale) ].each do |path|

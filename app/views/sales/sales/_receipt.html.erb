@@ -59,13 +59,19 @@
 
   <dl class="mt-3 ml-auto w-full max-w-sm text-sm print:mt-2">
     <div class="flex justify-between gap-4 py-0.5">
-      <dt><%= t("sales.sales.receipt.charged", pounds: format_pounds(sale.net_weight), quintals: format_pounds(sale.quintals)) %></dt>
+      <dt><%= t("sales.sales.receipt.charged", pounds: format_pounds(sale.net_weight), quintals: format_pounds(sale.quintals), quintal_pounds: sale.quintal_pounds_label) %></dt>
       <dd></dd>
     </div>
     <div class="flex justify-between gap-4 border-t border-ink py-1 font-bold">
       <dt><%= Sale.human_attribute_name(:total) %></dt>
       <dd class="tabular-nums"><%= format_money(sale.total) %></dd>
     </div>
+    <% if sale.buyer_total %>
+      <div class="flex justify-between gap-4 py-0.5" data-buyer-settlement>
+        <dt><%= t("sales.sales.receipt.buyer_total", reason: sale.buyer_total_reason || "—") %></dt>
+        <dd class="tabular-nums"><%= format_money(sale.buyer_total) %></dd>
+      </div>
+    <% end %>
     <% payments.each do |payment| %>
       <div class="flex justify-between gap-4 py-0.5">
         <dt><%= t("sales.sales.receipt.payment", number: payment.display_number, date: l(payment.paid_on), method: payment.human_payment_method) %></dt>

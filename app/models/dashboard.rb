@@ -48,6 +48,33 @@ class Dashboard
   def active_farms_count = Farm.of_business.active.count
   def running_payrolls = @running_payrolls ||= Payroll.active(today).includes(:payments).to_a
 
+  # --- What the business owes and is owed (Fernando, 2026-10-25) -----------------
+  # Only sums of what each module already keeps, of the modules the user
+  # reads; each line opens where it comes from.
+  Debt = Data.define(:key, :amount, :path)
+
+  def owed_by_business
+    @owed_by_business ||= [
+      (Debt.new(:invoices, unpaid_invoices.sum(&:balance_due), [ :trading_invoices_path, { payment_status: "unpaid" } ]) if can?("trading")),
+      (Debt.new(:haulers, haulers_to_pay.sum(&:balance), [ :trading_haulers_path ]) if can?("trading")),
+      (Debt.new(:payrolls, periods_to_pay.sum { |payroll, period| payroll.calculation(period).gross_total }, [ :farms_root_path ]) if can?("farms")),
+      (Debt.new(:staff, StaffOverview.new(today:).due_amount, [ :finance_staff_sheet_path ]) if can?("finance")),
+      (Debt.new(:buyer_advances, buyer_advances_balance, [ :sales_buyers_path ]) if can?("sales"))
+    ].compact.select { it.amount.positive? }
+  end
+
+  def owed_to_business
+    @owed_to_business ||= [
+      (Debt.new(:sales, sales_owed, [ :sales_sales_path, { payment_status: "unpaid" } ]) if can?("sales")),
+      (Debt.new(:loans, loans_owed, [ :loans_credit_accounts_path ]) if can?("loans"))
+    ].compact.select { it.amount.positive? }
+  end
+
+  # Money buyers gave in advance and are still owed in coffee.
+  def buyer_advances_balance
+    BuyerAdvance.sum(:amount) - SalePayment.advance.joins(:sale).merge(Sale.active).sum(:amount)
+  end
+
   # --- Pending work --------------------------------------------------------------
 
   def uninvoiced = @uninvoiced ||= PurchaseSummary.new(Purchase.uninvoiced)
@@ -68,6 +95,21 @@ class Dashboard
   def shipments_in_transit = @shipments_in_transit ||= Shipment.in_transit.includes(:buyer, :active_sale_line).order(:departed_at).to_a
   # Weighed at the buyer's, waiting for a sale.
   def unsold_shipments = @unsold_shipments ||= Shipment.unsold.includes(:buyer, :active_sale_line).order(:departed_at).to_a
+
+  # Conversions waiting for their result (Fernando, 2026-10-25): their
+  # coffee is out of its state until then. The oldest first.
+  def open_conversions = @open_conversions ||= CoffeeConversion.in_process.order(:weighed_at).to_a
+  # Cherry that has waited too long to be processed (CherryAlert), the oldest first.
+  def cherry_waiting = @cherry_waiting ||= CherryAlert.new.items.tap { |items| CoffeeLots.preload(items.map(&:lot)) }
+
+  # Coffee states whose stock went below zero: a purchase is missing or a
+  # shipment or conversion took the wrong state (Fernando, 2026-10-25).
+  def negative_stock = @negative_stock ||= coffee_stock.rows.select { |row| row.stock.negative? || row.gross_stock.negative? }
+
+  # Haulers the business owes commission to, the largest first.
+  def haulers_to_pay
+    @haulers_to_pay ||= Hauler.with_totals.includes(:person).to_a.select { |hauler| hauler.balance.positive? }.sort_by { -it.balance }
+  end
 
   # Pay periods whose day has come and are not paid, with something to pay.
   def periods_to_pay

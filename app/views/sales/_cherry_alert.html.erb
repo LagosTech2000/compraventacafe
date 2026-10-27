@@ -1,0 +1,24 @@
+<%# Cherry that has waited too long to be processed (CherryAlert): how much,
+    the oldest lots and a link to process it. %>
+<% critical = alert.level == "critical" %>
+<section class="mt-4 <%= critical ? "flash-alert" : "flash-notice" %>" role="status" data-cherry-alert="<%= alert.level %>"
+         aria-labelledby="cherry-alert-title">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <h2 id="cherry-alert-title" class="font-semibold">
+        <%= icon(:alert, css: "mr-1 inline size-4 align-text-bottom") %>
+        <%= t("sales.cherry_alert.title", pounds: format_pounds(alert.net), count: alert.items.size) %>
+      </h2>
+      <ul class="mt-1 space-y-0.5 text-sm">
+        <% alert.items.first(5).each do |item| %>
+          <li><span class="badge <%= item.critical? ? "badge-danger" : "badge-warning" %> mr-1"><%= t("sales.cherry_alert.levels.#{item.level}") %></span>
+            <%= t("sales.cherry_alert.item", entered: l(item.lot.entered_at, format: :short), hours: item.hours, pounds: format_pounds(item.lot.net)) %></li>
+        <% end %>
+      </ul>
+    </div>
+    <% if policy(CoffeeConversion).create? %>
+      <%= modal_link_to t("sales.cherry_alert.process"), new_sales_coffee_conversion_path(from_state: "cherry", warehouse_id: local_assigns[:warehouse]&.id),
+            class: "btn btn-sm btn-primary" %>
+    <% end %>
+  </div>
+</section>

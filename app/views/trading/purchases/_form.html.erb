@@ -15,7 +15,7 @@
 <%# Wide (page or modal): the calculation and the buttons stay in a column on
     the right while typing; narrow: they follow the fields. %>
 <%= form_with model: [ :trading, purchase ], class: form_surface_class("@container max-w-none"),
-      data: { controller: "form-validation hauler-commission purchase-calculator unsaved-changes",
+      data: { controller: "form-validation hauler-commission purchase-calculator unusual-values unsaved-changes",
               action: "purchase-calculator:calculated->hauler-commission#calculated #{unsaved_changes_actions}",
               unsaved_changes_message_value: t("shared.unsaved_changes.leave"),
               hauler_commission_can_pounds_value: Hauler::CAN_POUNDS.to_f,
@@ -25,7 +25,12 @@
               purchase_calculator_tare_per_sack_value: PurchaseCalculation::TARE_PER_SACK,
               purchase_calculator_quintal_weight_value: PurchaseCalculation::QUINTAL_WEIGHT,
               purchase_calculator_defaults_value: PurchaseDefaults.by_coffee_state.to_json,
-              purchase_calculator_damage_types_message_value: t(".damage_types_missing") } do |form| %>
+              purchase_calculator_damage_types_message_value: t(".damage_types_missing"),
+              unusual_values_defaults_value: PurchaseDefaults.by_coffee_state.to_json,
+              unusual_values_averages_value: Purchase.average_prices_on(Time.zone.today).to_json,
+              unusual_values_percent_value: PurchaseDefaults::UNUSUAL_PERCENT,
+              unusual_values_states_value: Purchase::COFFEE_STATES.index_with { Purchase.human_attribute_name("coffee_state/#{it}") }.to_json,
+              unusual_values_messages_value: t(".unusual").to_json } do |form| %>
   <%= render "shared/form_errors", record: purchase %>
   <%# Optimistic locking: saving over someone else's newer change fails. %>
   <%= form.hidden_field :lock_version if purchase.persisted? %>
@@ -131,7 +136,15 @@
     <div>
       <%= form.label :coffee_state, class: "field-label" %>
       <%= form.select :coffee_state, enum_options(Purchase, :coffee_state, Purchase::COFFEE_STATES), {}, required: true, class: "field-input",
-            data: { purchase_calculator_target: "coffeeState", action: "purchase-calculator#changeCoffeeState" } %>
+            data: { purchase_calculator_target: "coffeeState", unusual_values_target: "state",
+                    action: "purchase-calculator#changeCoffeeState unusual-values#check" } %>
+    </div>
+
+    <%# Where it is kept: the default warehouse unless chosen (client, 2026-10-26). %>
+    <div>
+      <%= form.label :warehouse_id, class: "field-label" %>
+      <%= form.collection_select :warehouse_id, Warehouse.options_for(purchase.warehouse_id), :id, :name,
+            { selected: purchase.warehouse_id || Warehouse.main&.id, include_blank: (t("shared.select.main_warehouse") unless Warehouse.main) }, class: "field-input" %>
     </div>
   <% end %>
 
@@ -188,7 +201,9 @@
       <%= form.label :humidity_percent, class: "field-label" %>
       <%= form.number_field :humidity_percent, required: true, min: 0, max: 99.99, step: 0.01, inputmode: "decimal",
             disabled: purchase.cherry?, class: "field-input text-lg",
-            data: { purchase_calculator_target: "humidity", action: "purchase-calculator#update" } %>
+            data: { purchase_calculator_target: "humidity", unusual_values_target: "humidity",
+                    action: "purchase-calculator#update unusual-values#check" } %>
+      <p class="mt-1 text-xs font-medium text-warning" data-unusual-values-target="humidityWarning" role="status" hidden></p>
     </div>
     <div data-purchase-calculator-target="parchmentField" <%= "hidden" if purchase.cherry? %>>
       <%= form.label :damage_percent, class: "field-label" %>
@@ -217,12 +232,16 @@
       <%= form.label :yield_factor, class: "field-label" %>
       <%= form.number_field :yield_factor, required: true, min: 0.0001, max: 1, step: 0.0001, inputmode: "decimal",
             disabled: !purchase.cherry?, class: "field-input text-lg",
-            data: { purchase_calculator_target: "yield", action: "purchase-calculator#update" } %>
+            data: { purchase_calculator_target: "yield", unusual_values_target: "yieldFactor",
+                    action: "purchase-calculator#update unusual-values#check" } %>
+      <p class="mt-1 text-xs font-medium text-warning" data-unusual-values-target="yieldWarning" role="status" hidden></p>
     </div>
     <div>
       <%= form.label :price_per_pound, class: "field-label" %>
       <%= form.number_field :price_per_pound, required: true, min: 0.01, max: 99_999.99, step: 0.01, inputmode: "decimal",
-            class: "field-input text-lg", data: { purchase_calculator_target: "price", action: "purchase-calculator#update" } %>
+            class: "field-input text-lg", data: { purchase_calculator_target: "price", unusual_values_target: "price",
+                                                  action: "purchase-calculator#update unusual-values#check" } %>
+      <p class="mt-1 text-xs font-medium text-warning" data-unusual-values-target="priceWarning" role="status" hidden></p>
     </div>
 
   </section>

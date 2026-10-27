@@ -1,0 +1,51 @@
+<%# The account's cash counts ("arqueos", Fernando, 2026-10-25): what was
+    counted against what the system said that day, newest first. %>
+<% counts = account.cash_counts.includes(:created_by) %>
+<section class="mt-8 print:hidden" aria-labelledby="account-cash-counts">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h2 id="account-cash-counts" class="text-lg font-semibold"><%= t("finance.cash_counts.list.title") %></h2>
+    <% if account.active? && policy(CashCount).create? %>
+      <%= modal_link_to t("finance.cash_counts.list.new"), new_finance_cash_count_path(account: account.id), class: "btn btn-sm btn-primary" %>
+    <% end %>
+  </div>
+  <p class="mt-1 text-sm text-ink-muted"><%= t("finance.cash_counts.list.help") %></p>
+  <% if counts.any? %>
+    <div class="mt-3 overflow-x-auto panel">
+      <table class="data-table data-table-compact" data-controller="table-sort">
+        <thead>
+          <tr>
+            <th><%= CashCount.human_attribute_name(:counted_on) %></th>
+            <th class="text-right"><%= CashCount.human_attribute_name(:system_balance) %></th>
+            <th class="text-right"><%= CashCount.human_attribute_name(:counted_amount) %></th>
+            <th class="text-right"><%= t("finance.cash_counts.list.difference") %></th>
+            <th><%= CashCount.human_attribute_name(:created_by) %></th>
+            <th><%= CashCount.human_attribute_name(:observations) %></th>
+            <th class="cell-actions" data-sort="false"><span class="sr-only"><%= t("finance.cash_counts.list.actions") %></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% counts.each do |count| %>
+            <tr id="<%= dom_id(count) %>" data-cash-count>
+              <td class="whitespace-nowrap"><%= l(count.counted_on) %></td>
+              <td class="text-right tabular-nums"><%= signed_money(count.system_balance) %></td>
+              <td class="text-right tabular-nums"><%= format_money(count.counted_amount) %></td>
+              <td class="text-right font-semibold tabular-nums <%= count.difference.negative? ? "text-danger" : (count.difference.positive? ? "text-warning" : "text-success") %>">
+                <%= count.difference.zero? ? t("finance.cash_counts.list.matches") : signed_money(count.difference) %>
+              </td>
+              <td><%= count.created_by.name %></td>
+              <td class="max-w-xs truncate"><%= count.observations %></td>
+              <td class="cell-actions">
+                <% if policy(count).destroy? %>
+                  <%= button_to t("finance.cash_counts.list.destroy"), finance_cash_count_path(count), method: :delete, class: "btn btn-sm",
+                        form: { data: { turbo_confirm: t("finance.cash_counts.list.confirm_destroy") } } %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p class="empty-state mt-3"><%= t("finance.cash_counts.list.empty") %></p>
+  <% end %>
+</section>

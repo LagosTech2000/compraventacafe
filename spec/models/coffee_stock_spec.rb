@@ -18,6 +18,19 @@ RSpec.describe CoffeeStock do
     expect(stock.row("cherry").stock).to eq(0)
   end
 
+  it "counts gross pounds the same way: the purchases' gross minus the shipments' local gross" do
+    create(:purchase, gross_weight: 2_000)
+    create(:purchase, gross_weight: 2_000, voided_at: Time.current)
+    create(:purchase, coffee_state: "dry_parchment", gross_weight: 165, humidity_percent: 12)
+    create(:shipment, origin_gross_weight: 700)
+    create(:shipment, origin_gross_weight: 500, voided_at: Time.current)
+
+    stock = described_class.new
+    expect(stock.row("wet_parchment")).to have_attributes(gross_purchased: 2_000, gross_shipped: 700, gross_stock: 1_300)
+    expect(stock.row("dry_parchment").gross_stock).to eq(165)
+    expect(stock.gross_stock).to eq(1_465)
+  end
+
   it "counts up to the end of a day" do
     create(:purchase, gross_weight: 2_000, purchased_at: 2.days.ago)
     create(:shipment, departed_at: Time.current)

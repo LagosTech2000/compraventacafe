@@ -38,6 +38,14 @@ RSpec.describe "Sales policies" do
       create(:sale_payment, sale:, amount: 1)
       expect(described_class.new(full, sale.reload)).to forbid_action(:void)
     end
+
+    it "enters the buyer's settlement with the update permission, while the sale is active" do
+      sale = create(:sale)
+      expect(described_class.new(seller(can_read: true, can_update: true), sale)).to permit_action(:settle)
+      expect(described_class.new(seller(can_read: true, can_create: true), sale)).to forbid_action(:settle)
+      sale.void!(full)
+      expect(described_class.new(full, sale)).to forbid_action(:settle)
+    end
   end
 
   describe SalePaymentPolicy do

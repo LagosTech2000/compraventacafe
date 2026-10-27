@@ -1,0 +1,38 @@
+<% content_for :title, t(".title") %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= live_updates_from :sales %>
+<%= render "sales/nav" %>
+<%= render "shared/breadcrumbs", crumbs: [ [ t("sales.nav.stock"), sales_stock_path ], [ t(".title") ] ] %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <% if policy(WarehouseTransfer).create? %>
+    <%= modal_link_to t(".new"), new_sales_warehouse_transfer_path, class: "btn btn-primary" %>
+  <% end %>
+</div>
+
+<% warehouses = Warehouse.alphabetical %>
+<div data-controller="live-filter">
+<%= render layout: "shared/filters", locals: { filter: @filter, url: sales_warehouse_transfers_path, frame: "transfers-list", live: true } do |form| %>
+  <%= filter_date_field form, :from, t("shared.filters.from"), value: @filter.from %>
+  <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
+  <%= filter_select form, :warehouse_id, Warehouse.model_name.human, warehouses.map { [ it.name, it.id ] }, selected: @filter.warehouse_id %>
+  <%= filter_select form, :coffee_state, Purchase.human_attribute_name(:coffee_state),
+        enum_options(Purchase, :coffee_state, Purchase::COFFEE_STATES), selected: @filter.coffee_state %>
+  <%= filter_select form, :voided, t("sales.warehouse_transfers.index.show"), [ [ t("sales.warehouse_transfers.index.voided"), "1" ] ], selected: @filter.voided, all: t("sales.warehouse_transfers.index.active") %>
+<% end %>
+
+<%= list_frame "transfers-list" do %>
+  <%= live_list_status @filter, warehouse_id: warehouses.map { [ it.name, it.id ] },
+        coffee_state: ->(state) { Purchase.human_attribute_name("coffee_state/#{state}") }, voided: ->(_) { t(".voided") } %>
+  <% if @transfers.any? %>
+    <%= render "table", transfers: @transfers, sorting: { filter: @filter, frame: "transfers-list" } %>
+    <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "transfers-list" %>
+  <% else %>
+    <p class="empty-state mt-6"><%= t(".empty") %></p>
+  <% end %>
+<% end %>
+</div>

@@ -1,0 +1,73 @@
+<% content_for :title, t(".title") %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= live_updates_from :sales %>
+<%= render "sales/nav" %>
+<%= render "shared/breadcrumbs", crumbs: [ [ t("sales.nav.coffee_conversions"), sales_coffee_conversions_path ], [ t(".title") ] ] %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <% if policy(ProcessingSite).create? %>
+    <%= modal_link_to t(".new"), new_sales_processing_site_path, class: "btn btn-primary" %>
+  <% end %>
+</div>
+
+<% statuses = ProcessingSiteFilter::STATUSES.map { [ t("sales.buyers.index.statuses.#{it}"), it ] } %>
+<div data-controller="live-filter">
+<%= render layout: "shared/filters", locals: { filter: @filter, url: sales_processing_sites_path, frame: "processing-sites-list", live: true } do |form| %>
+  <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("sales.processing_sites.index.search_placeholder") %>
+  <%= filter_select form, :status, t("sales.buyers.index.status"), statuses, selected: @filter.status %>
+<% end %>
+
+<%= list_frame "processing-sites-list" do %>
+<%= live_list_status @filter, status: statuses %>
+<% sorting = { filter: @filter, frame: "processing-sites-list" } %>
+<% if @sites.any? %>
+  <div class="mt-6 @container">
+    <ul class="space-y-3 @3xl:hidden">
+      <% @sites.each do |site| %>
+        <li class="data-card" id="<%= dom_id(site, :card) %>">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="font-medium"><%= site.name %></p>
+              <p class="text-xs text-ink-muted"><%= t("sales.processing_sites.owners.#{site.own? ? "own" : "others"}") %> · <%= t(".processes_count", count: site.processes_count) %></p>
+            </div>
+            <%= detail_button sales_processing_site_path(site) %>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+    <div class="hidden overflow-x-auto panel @3xl:block">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <%= sort_th ProcessingSite.human_attribute_name(:name), :name, sorting %>
+            <%= sort_th t(".owner"), :own, sorting %>
+            <%= sort_th t(".processes"), :processes, sorting, class: "text-right" %>
+            <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @sites.each do |site| %>
+            <tr id="<%= dom_id(site) %>">
+              <td class="font-medium">
+                <%= site.name %>
+                <% unless site.active? %><span class="badge badge-neutral ml-1"><%= t("sales.buyers.index.statuses.inactive") %></span><% end %>
+              </td>
+              <td><%= t("sales.processing_sites.owners.#{site.own? ? "own" : "others"}") %></td>
+              <td class="text-right tabular-nums"><%= site.processes_count %></td>
+              <td class="cell-actions"><%= detail_button sales_processing_site_path(site) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "processing-sites-list" %>
+<% else %>
+  <p class="empty-state mt-6"><%= t(".empty") %></p>
+<% end %>
+<% end %>
+</div>

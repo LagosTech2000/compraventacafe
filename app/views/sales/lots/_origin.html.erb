@@ -1,0 +1,12 @@
+<%# Where a lot came from: its purchase (and producer) or its conversion's
+    result; a link only for who can open it. %>
+<% source = lot.source %>
+<% if lot.purchase? %>
+  <% label = t("sales.lots.purchase", producer: source.producer.full_name) %>
+  <%= policy(Purchase).show? ? modal_link_to(label, trading_purchase_path(source), class: "link") : label %>
+<% else %>
+  <%= modal_link_to t("sales.lots.conversion", number: source.display_number, from: source.human_from_state), sales_coffee_conversion_path(source), class: "link" %>
+<% end %>
+<% if lot.transfer %>
+  <span class="block text-xs text-ink-muted"><%= t("sales.lots.transferred", number: lot.transfer.display_number) %></span>
+<% end %>

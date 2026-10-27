@@ -20,7 +20,7 @@ export default class extends Controller {
   static targets = ["coffeeState", "gross", "sacks", "humidity", "damage", "yield", "parchmentField", "cherryField",
                     "tare", "net", "quintals", "difference", "differenceBox", "stockNotice",
                     "weightMode", "weighingsSection", "weighings", "weighingTemplate", "weighing",
-                    "weighingGross", "weighingSacks", "weighingDestroy", "sumHelp"]
+                    "weighingGross", "weighingSacks", "weighingDestroy", "sumHelp", "warehouse"]
   static values = { tarePerSack: Number, quintalWeight: Number, defaults: Object, coffeeState: String,
                     originNet: Number, tolerance: Number, stock: Object, stockMessage: String }
 
@@ -129,10 +129,16 @@ export default class extends Controller {
     this.differenceBoxTarget.dataset.overTolerance = over ? "true" : "false"
   }
 
-  // Leaving with more than the stock of that state: a notice, not a block.
+  checkStock() {
+    this.update()
+  }
+
+  // Leaving with more than the stock of that state (in the chosen
+  // warehouse, when there is one to choose): a notice, not a block.
   showStock(net) {
     if (!this.hasStockNoticeTarget) return
-    const available = this.stockValue[this.state()]
+    const stock = this.hasWarehouseTarget ? (this.stockValue[this.warehouseTarget.value] || {}) : this.stockValue
+    const available = stock[this.state()]
     const over = net !== null && available !== undefined && net > available
     this.stockNoticeTarget.hidden = !over
     if (over) this.stockNoticeTarget.textContent = this.stockMessageValue.replace("%{stock}", this.pounds.format(available))

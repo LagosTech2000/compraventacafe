@@ -71,6 +71,19 @@ RSpec.describe "Sales flow" do
     end
   end
 
+  it "sells by a quintal of other pounds when the sale says so, and shows them" do
+    shipment = create(:shipment, :received, buyer:)
+    post sales_sales_path(buyer_id: buyer.id), params: { sale: { shipment_ids: [ shipment.id ], sold_on: Time.zone.today, price_unit: "quintal",
+                                                                   quintal_pounds: "100", unit_price: "6000", payment_status: "pending" } }
+    sale = Sale.last
+    expect(sale).to have_attributes(quintal_pounds: 100, total: BigDecimal("28929.60"))
+
+    get sales_sale_path(sale)
+    expect(response.body).to include("Por quintal de 100 lb", "4.82 QQ de 100 lb")
+    get sales_sales_path
+    expect(response.body).to include("quintal de 100 lb")
+  end
+
   it "marks the shipments over the site's tolerance and filters them" do
     SiteSetting.instance.update!(weight_tolerance_percent: 1)
     over = create(:shipment, :received, buyer:, destination_gross_weight: 900)   # about −9 %

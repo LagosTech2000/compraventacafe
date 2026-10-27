@@ -26,10 +26,12 @@ RSpec.describe "Sorting every list" do
     PayrollTask.create!(payroll: task_payroll, name: "Chapia", amount: 1_000)
     create(:sale, buyer:)
     create(:shipment, buyer:)
+    create(:warehouse_transfer, net_weight: 1)
     create(:expense)
     create(:other_income)
     create(:staff_member)
     create(:shipment, buyer:, carrier: create(:carrier), truck: create(:truck))
+    create(:coffee_conversion, :finished)
     sign_in admin
   end
 
@@ -61,11 +63,15 @@ RSpec.describe "Sorting every list" do
     BuyerSaleFilter => -> { sales_buyer_path(buyer, tab: "sales") },
     BuyerShipmentFilter => -> { sales_buyer_path(buyer, tab: "shipments") },
     StockLedgerFilter => -> { sales_stock_path },
+    CoffeeConversionFilter => -> { sales_coffee_conversions_path },
     MovementFilter => -> { finance_movements_path(from: "", to: "") },
     IncomeFilter => -> { finance_incomes_path(from: "", to: "") },
     StaffMemberFilter => -> { finance_staff_members_path },
     CarrierFilter => -> { sales_carriers_path },
     TruckFilter => -> { sales_trucks_path },
+    WarehouseFilter => -> { sales_warehouses_path },
+    ProcessingSiteFilter => -> { sales_processing_sites_path },
+    WarehouseTransferFilter => -> { sales_warehouse_transfers_path },
     StaffRoleFilter => -> { finance_staff_roles_path },
     ExpenseFilter => -> { finance_expenses_path(from: "", to: "") },
     FinanceCategoryFilter => -> { finance_categories_path },

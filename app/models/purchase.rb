@@ -21,6 +21,8 @@ class Purchase < ApplicationRecord
   belongs_to :zone, optional: true
   # Optional: one of its producer's farms.
   belongs_to :farm, optional: true
+  # Where it is kept (client, 2026-10-26): the default warehouse unless chosen.
+  belongs_to :warehouse
   # Optional: the carrero who hauled it (Hauler). Their commission is
   # calculated with their price per pound of that moment, kept here.
   belongs_to :hauler, optional: true
@@ -52,10 +54,12 @@ class Purchase < ApplicationRecord
   validate :farm_belongs_to_producer
   validate :voided_not_invoiced
   validate :hauler_active, if: :will_save_change_to_hauler_id?
+  validate :warehouse_active, if: :will_save_change_to_warehouse_id?
   validate :hauler_commission_not_paid_out
   validate :damage_types_chosen, if: -> { new_record? || will_save_change_to_damage_percent? || will_save_change_to_damage_types? }
 
   # First: by weighings, the gross weight and sacks come from them.
+  before_validation { self.warehouse ||= Warehouse.main! if new_record? }
   before_validation :sum_weighings
   before_validation :clear_unused_inputs, if: :recalculate?
   before_validation :calculate, if: :recalculate?
@@ -72,6 +76,13 @@ class Purchase < ApplicationRecord
 
   # Purchases of a day (or a range of days), in Tegucigalpa time.
   scope :on, ->(dates) { where(purchased_at: day_range(dates)) }
+
+  # The day's average price per net pound of each coffee state, of active
+  # purchases: {"wet_parchment" => 60.1, ...}. What the form compares against.
+  def self.average_prices_on(date)
+    active.on(date).group(:coffee_state).having("SUM(net_weight) > 0")
+          .pluck(:coffee_state, Arel.sql("SUM(total) / SUM(net_weight)")).to_h { |state, price| [ state, price.round(2).to_f ] }
+  end
   scope :active, -> { where(voided_at: nil) }
   scope :voided, -> { where.not(voided_at: nil) }
   # Waiting to be invoiced: neither invoiced nor voided.
@@ -288,6 +299,10 @@ class Purchase < ApplicationRecord
       person.zone = zone
       person.save!(validate: false)
       @zone_given_to_producer = zone
+    end
+
+    def warehouse_active
+      errors.add(:warehouse, :inactive) if warehouse && !warehouse.active?
     end
 
     def farm_belongs_to_producer

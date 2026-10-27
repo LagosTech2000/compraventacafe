@@ -44,6 +44,6 @@ class Buyer < ApplicationRecord
 
   # What its active sales still owe.
   def balance_due
-    sales.active.sum(:total) - SalePayment.joins(:sale).merge(Sale.active).where(sales: { buyer_id: id }).sum(:amount)
+    sales.active.sum("COALESCE(sales.buyer_total, sales.total)") - SalePayment.joins(:sale).merge(Sale.active).where(sales: { buyer_id: id }).sum(:amount)
   end
 end
