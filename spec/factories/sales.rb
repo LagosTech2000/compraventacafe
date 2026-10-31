@@ -60,6 +60,7 @@ FactoryBot.define do
   # what came out (sacks, humidity, damage).
   factory :processing_site do
     sequence(:name) { |n| "Máquina ecológica #{n}" }
+    from_states { %w[cherry wet_parchment] }
   end
 
   factory :coffee_conversion do
@@ -69,6 +70,17 @@ FactoryBot.define do
     weighed_at { Time.current }
     input_gross_weight { 1_000 }
     association :created_by, factory: :user
+
+    # A process needs coffee of its state in its warehouse (client,
+    # 2026-10-30): with none, a purchase of what goes in arrives first.
+    # A spec that sets up its own stock keeps it as it is.
+    before(:create) do |conversion|
+      warehouse = conversion.warehouse || Warehouse.main!
+      unless CoffeeStock.new(conversion.weighed_at.to_date, warehouse:).row(conversion.from_state).gross_stock.positive?
+        FactoryBot.create(:purchase, coffee_state: conversion.from_state, warehouse:, gross_weight: conversion.input_gross_weight,
+                                     purchased_at: conversion.weighed_at - 1.hour)
+      end
+    end
 
     trait :finished do
       finished_at { weighed_at + 1.hour }
@@ -90,7 +102,7 @@ FactoryBot.define do
     association :created_by, factory: :user
     transferred_at { Time.current }
     coffee_state { "wet_parchment" }
-    net_weight { 100 }
+    gross_weight { 100 }
   end
 
   # L 500 of freight, paid in cash.

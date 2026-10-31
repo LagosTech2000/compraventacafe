@@ -8,6 +8,7 @@
   <div>
     <h1 class="text-2xl font-bold"><%= @site.name %></h1>
     <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
+      <span><%= @site.human_processes %></span>
       <span class="badge badge-neutral"><%= t("sales.processing_sites.owners.#{@site.own? ? "own" : "others"}") %></span>
       <span class="<%= @site.active? ? "badge badge-success" : "badge badge-neutral" %>"><%= t("sales.buyers.index.statuses.#{@site.active? ? "active" : "inactive"}") %></span>
     </p>

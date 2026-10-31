@@ -1,10 +1,10 @@
 # Coffee moved from one warehouse to another (client, 2026-10-26: «café que
-# se mueve de una bodega a otra»), with its history. It is written in net
-# pounds of one coffee state (decision of implementation, pending to
-# confirm); the oldest lots of that state in the warehouse go first and
-# keep their date (CoffeeLots). Its gross pounds are the net ones at the
-# warehouse's net/gross proportion of that state that day, kept so the
-# kardex does not change afterwards.
+# se mueve de una bodega a otra»), with its history. It is written in gross
+# pounds of one coffee state (client, 2026-10-30: «que pida libras brutas no
+# netas»); the oldest lots of that state in the warehouse go first and keep
+# their date (CoffeeLots, in net pounds). Its net pounds are the gross ones
+# at the warehouse's net/gross proportion of that state that day, kept so
+# the kardex does not change afterwards.
 #
 # Taking more than the warehouse has warns, it does not stop it (as the
 # shipments). Voided, never deleted: the coffee goes back.
@@ -25,12 +25,12 @@ class WarehouseTransfer < ApplicationRecord
 
   validates :transferred_at, presence: true
   validates :coffee_state, inclusion: { in: Purchase::COFFEE_STATES }
-  validates :net_weight, numericality: { greater_than: 0, less_than: MAX_WEIGHT }
+  validates :gross_weight, numericality: { greater_than: 0, less_than: MAX_WEIGHT }
   validates :observations, length: { maximum: 500 }
   validate :different_warehouses
   validate :warehouses_active, on: :create
 
-  before_validation :weigh, if: -> { new_record? || will_save_change_to_net_weight? || will_save_change_to_transferred_at? }
+  before_validation :weigh, if: -> { new_record? || will_save_change_to_gross_weight? || will_save_change_to_transferred_at? }
   before_create :assign_number
 
   scope :active, -> { where(voided_at: nil) }
@@ -59,10 +59,10 @@ class WarehouseTransfer < ApplicationRecord
 
   private
     def weigh
-      return unless from_warehouse && coffee_state.in?(Purchase::COFFEE_STATES) && transferred_at && net_weight.to_d.positive?
+      return unless from_warehouse && coffee_state.in?(Purchase::COFFEE_STATES) && transferred_at && gross_weight.to_d.positive?
 
       ratio = self.class.ratio_for(coffee_state, from_warehouse, transferred_at.to_date)
-      self.gross_weight = ratio.positive? ? (net_weight / ratio).round(2) : net_weight
+      self.net_weight = (gross_weight * ratio).round(2)
     end
 
     def different_warehouses

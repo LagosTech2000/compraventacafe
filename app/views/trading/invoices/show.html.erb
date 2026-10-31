@@ -40,7 +40,7 @@
   <% unless modal_request? %>
     <%# Printed on its own sheet(s): no cutting needed. %>
     <div class="print:break-before-page">
-      <%= render "receipt", invoice: @invoice, label: t(".copy") %>
+      <%= render "receipt", invoice: @invoice, label: t(".copy"), copy: true %>
     </div>
   <% end %>
 </div>

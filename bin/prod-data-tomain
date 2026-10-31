@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# Replaces the database of the Render service built from `main` with a copy
+# of production's data (Fernando, 2026-10-27: «poner la data de production a
+# main»), to try what is in `main` with real data before it reaches
+# `production`. Then it applies `main`'s migrations to that copy, as its
+# deploy would.
+#
+# Both addresses are secrets: they never go in the repository. They are read
+# from $PROD_DATABASE_URL and $MAIN_DATABASE_URL or, without them, from
+# ~/.config/compraventacafe/production_database_url and main_database_url
+# (owner-only files).
+#
+# Production is only read (pg_dump). Before replacing main's database, a copy
+# of it is left in tmp/main-before-prod.dump, in case it is needed back:
+#   pg_restore --clean --if-exists --no-owner --no-acl -d "$MAIN_DATABASE_URL" tmp/main-before-prod.dump
+#
+# Usage: bin/prod-data-tomain        (asks before replacing anything)
+#        bin/prod-data-tomain --yes  (does not ask)
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+CONFIG="${HOME}/.config/compraventacafe"
+
+read_url() {
+  local value="$1" file="$2"
+  if [[ -z "$value" && -f "$file" ]]; then
+    value="$(tr -d '[:space:]' < "$file")"
+  fi
+  if [[ -n "$value" && "$value" != *"sslmode="* ]]; then
+    value="${value}$([[ "$value" == *"?"* ]] && echo "&" || echo "?")sslmode=require"
+  fi
+  printf '%s' "$value"
+}
+
+PROD_URL="$(read_url "${PROD_DATABASE_URL:-}" "$CONFIG/production_database_url")"
+MAIN_URL="$(read_url "${MAIN_DATABASE_URL:-}" "$CONFIG/main_database_url")"
+[[ -n "$PROD_URL" ]] || { echo "Falta la dirección de producción: $CONFIG/production_database_url (chmod 600) o PROD_DATABASE_URL." >&2; exit 1; }
+[[ -n "$MAIN_URL" ]] || { echo "Falta la dirección de main: $CONFIG/main_database_url (chmod 600) o MAIN_DATABASE_URL." >&2; exit 1; }
+
+# Server and database of an address, without its password.
+target() { sed -E 's#^[a-z]+://[^@]*@([^/?]+)/([^?]+).*$#\1/\2#' <<< "$1"; }
+if [[ "$(target "$PROD_URL")" == "$(target "$MAIN_URL")" ]]; then
+  echo "Las dos direcciones apuntan a la misma base: no se copia nada (se borraría producción)." >&2
+  exit 1
+fi
+
+count() { psql "$1" -XAtc "SELECT COUNT(*) FROM purchases" 2>/dev/null || echo "?"; }
+echo "Producción: $(count "$PROD_URL") compras. Main: $(count "$MAIN_URL") compras."
+if [[ "${1:-}" != "--yes" ]]; then
+  read -r -p "Se borrará la base de main y quedará con los datos de producción. Escribe «si» para seguir: " answer
+  [[ "$answer" == "si" || "$answer" == "sí" ]] || { echo "No se hizo nada."; exit 1; }
+fi
+
+mkdir -p tmp
+DUMP="$(mktemp tmp/prod-XXXXXX.dump)"
+trap 'rm -f "$DUMP"' EXIT
+
+echo "1/4 Copiando la base de producción (solo lectura)…"
+# Sessions and visited pages stay out: they are of production's browsers.
+pg_dump --format=custom --no-owner --no-acl \
+  --exclude-table-data=sessions --exclude-table-data=page_visits \
+  --dbname="$PROD_URL" --file="$DUMP"
+
+echo "2/4 Guardando la base actual de main en tmp/main-before-prod.dump…"
+pg_dump --format=custom --no-owner --no-acl --dbname="$MAIN_URL" --file=tmp/main-before-prod.dump
+
+echo "3/4 Reemplazando la base de main con la copia de producción…"
+# Render does not let the database be dropped: its schema is emptied
+# instead, so tables that only main has (newer migrations) go too.
+psql "$MAIN_URL" -X -v ON_ERROR_STOP=1 -q -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+pg_restore --no-owner --no-acl --exit-on-error --dbname="$MAIN_URL" "$DUMP"
+
+echo "4/4 Aplicando las migraciones de main…"
+# As main's deploy does (bin/render-build.sh), without a query limit and
+# without rewriting the local db/schema.rb.
+DATABASE_URL="$MAIN_URL" DB_STATEMENT_TIMEOUT=0 bin/rails runner '
+  ActiveRecord::Tasks::DatabaseTasks.migrate
+  counts = { "Usuarios" => User, "Personas" => Person, "Compras" => Purchase, "Facturas" => Invoice,
+             "Préstamos" => Loan, "Bodegas" => Warehouse, "Cuentas" => MoneyAccount }
+  puts "Listo. " + counts.map { |label, model| "#{label}: #{model.count}" }.join(" · ")
+'

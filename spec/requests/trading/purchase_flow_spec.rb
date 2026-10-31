@@ -167,6 +167,11 @@ RSpec.describe "Trading purchase flow" do
                                      "Firma del cliente (productor)", "Firma del comprador de café")
     expect(response.body).to include("L 8,241.80")
     expect(response.body).to include("Facturado por: #{user.name}")
+    # The client signs only the copy (Fernando, 2026-10-30); the buyer, both.
+    original, copy = Nokogiri::HTML(response.body).css("article").to_a
+    expect(original.text).to include("ORIGINAL", "Firma del comprador de café")
+    expect(original.text).not_to include("Firma del cliente")
+    expect(copy.text).to include("COPIA", "Firma del cliente (productor)", producer.full_name, "Firma del comprador de café")
 
     post trading_invoice_payments_path(invoice), params: { invoice_payment: { amount: "8241.80", payment_method: "cash", paid_on: Time.zone.today } }
     expect(invoice.reload).to be_paid
@@ -268,19 +273,28 @@ RSpec.describe "Trading purchase flow" do
     end
   end
 
-  it "shows on the invoice what damage took off in pounds, not in lempiras" do
+  # Fernando, 2026-10-30: the pounds damage took off leave the invoice (only
+  # its % and kinds stay); the purchase, «Facturar compras» and the reports keep them.
+  it "leaves the damage pounds off the invoice and keeps them for the users and the reports" do
     producer = create(:producer, zone:)
-    purchase = create(:purchase, producer:, gross_weight: 146, humidity_percent: 51, damage_percent: 2.5, price_per_pound: 58)
+    purchase = create(:purchase, producer:, gross_weight: 146, humidity_percent: 51, damage_percent: 2.5, damage_types: %w[borer], price_per_pound: 58)
     get new_trading_invoice_path(producer_id: producer.id)
     expect(response.body).to include("Daño (lb)", "1.78", "L 103.24")
+    get trading_purchase_path(purchase)
+    expect(response.body).to include("1.78")
 
     post trading_invoices_path, params: { producer_id: producer.id, invoice: { purchase_ids: [ purchase.id ], payment_status: "pending" } }
     get trading_invoice_path(Invoice.last)
     receipt = Nokogiri::HTML(response.body).at_css("article")
-    expect(receipt.at_css("thead").text).to include("Daño (lb)")
-    expect(receipt.at_css("thead").text).not_to include("Daño (L)")
-    expect(receipt.at_css("tbody tr").text.squish).to include("1.78 2.50 %")
-    expect(receipt.text).not_to include("L 103.24")
+    expect(receipt.at_css("thead").text).to include("Daño (%)")
+    expect(receipt.at_css("thead").text).not_to include("Daño (lb)", "Daño (L)")
+    expect(receipt.at_css("tbody tr").text.squish).to include("2.50 Broca")
+    expect(receipt.text).not_to include("1.78", "L 103.24")
+
+    report = PurchasesReport.new({ period: "all" }, user: create(:user, :admin))
+    expect(report.kpis.find { it.key == :damage_weight }.value).to eq(purchase.damage_weight)
+    expect(report.table_columns.map(&:key)).to include(:damage_percent, :damage_weight)
+    expect(report.page.first.map(&:damage_weight)).to eq([ purchase.damage_weight ])
   end
 
   it "shows the QQ of each purchase and of the whole invoice, also in the list" do

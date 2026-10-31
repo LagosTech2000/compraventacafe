@@ -17,20 +17,22 @@ RSpec.describe "Warehouses", type: :system do
     sign_in_as(user)
   end
 
-  it "warns while typing a transfer over what the warehouse has, and saves it" do
+  # In gross pounds (client, 2026-10-30), with the net ones as a preview.
+  it "warns while typing a transfer over what the warehouse has, previews its net, and saves it" do
     visit new_sales_warehouse_transfer_path
     select "Bodega 1", from: "warehouse_transfer_from_warehouse_id"
     select "Bodega 2", from: "warehouse_transfer_to_warehouse_id"
-    expect(page).to have_css("[data-transfer-preview-target='available']", text: "973.63 lb")
+    expect(page).to have_css("[data-transfer-preview-target='available']", text: "2,000.00 lb")
 
-    fill_in "warehouse_transfer_net_weight", with: "1000"
+    fill_in "warehouse_transfer_gross_weight", with: "2500"
     expect(page).to have_css("[data-transfer-preview-target='overStock']", visible: true)
-    fill_in "warehouse_transfer_net_weight", with: "500"
+    fill_in "warehouse_transfer_gross_weight", with: "1000"
     expect(page).to have_no_css("[data-transfer-preview-target='overStock']", visible: true)
+    expect(page).to have_css("[data-transfer-preview-target='net']", text: "486.82 lb") # 973.63 net ÷ 2,000 gross
 
     click_button "Trasladar"
     expect(page).to have_text("Traslado 0001")
-    expect(WarehouseTransfer.sole).to have_attributes(from_warehouse: main, to_warehouse: other, net_weight: 500)
+    expect(WarehouseTransfer.sole).to have_attributes(from_warehouse: main, to_warehouse: other, gross_weight: 1_000, net_weight: BigDecimal("486.82"))
   end
 
   it "warns on a shipment with the stock of the warehouse chosen" do

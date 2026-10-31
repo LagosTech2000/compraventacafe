@@ -240,25 +240,16 @@ class Purchase < ApplicationRecord
     end
 
     # Chosen (or changed), the hauler's price per pound of now is kept; the
-    # commission follows the net weight with it. A purchase from before
-    # 2026-10-24 keeps its cans, can price and percent. Without a hauler,
-    # nothing.
+    # commission follows the net weight with it. Without a hauler, nothing.
     def apply_hauler_commission
       if hauler.nil?
-        self.hauler_price_per_pound = self.hauler_commission_percent = self.hauler_can_price = self.hauler_cans = self.hauler_commission = nil
+        self.hauler_price_per_pound = self.hauler_commission = nil
         return
       end
-      if new_record? || will_save_change_to_hauler_id?
-        self.hauler_price_per_pound = hauler.price_per_pound
-        self.hauler_commission_percent = self.hauler_can_price = self.hauler_cans = nil
-      end
+      self.hauler_price_per_pound = hauler.price_per_pound if new_record? || will_save_change_to_hauler_id? || hauler_price_per_pound.nil?
       return unless net_weight && (new_record? || will_save_change_to_hauler_id? || will_save_change_to_net_weight? || hauler_commission.nil?)
 
-      if hauler_price_per_pound
-        self.hauler_commission = Hauler.commission(net_weight:, price_per_pound: hauler_price_per_pound)
-      else
-        self.hauler_cans, self.hauler_commission = Hauler.can_commission(net_weight:, percent: hauler_commission_percent, can_price: hauler_can_price)
-      end
+      self.hauler_commission = Hauler.commission(net_weight:, price_per_pound: hauler_price_per_pound)
     end
 
     def hauler_active

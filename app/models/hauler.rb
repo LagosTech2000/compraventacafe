@@ -4,9 +4,9 @@
 # they earn a commission, paid by the business apart from the producer.
 #
 # Commission = net pounds × their price per pound, nothing else (Fernando,
-# 2026-10-24; before, cans of CAN_POUNDS × can price × percent, which the
-# purchases of then keep). The price is required and editable; each purchase
-# keeps the one of its day (Purchase#hauler_price_per_pound). What they are
+# 2026-10-24; the purchases calculated by cans before took L 1 per pound on
+# 2026-10-28). The price is required and editable; each purchase keeps the
+# one of its day (Purchase#hauler_price_per_pound). What they are
 # owed (commissions of their active purchases − payments) is paid in
 # HaulerPayment, each with its receipt.
 class Hauler < ApplicationRecord
@@ -14,8 +14,6 @@ class Hauler < ApplicationRecord
   include LiveUpdates
   live_updates :trading
 
-  # Only for the purchases calculated with cans, before 2026-10-24.
-  CAN_POUNDS = BigDecimal("16.5")
   MAX_PRICE_PER_POUND = 1_000
 
   belongs_to :person, inverse_of: :hauler
@@ -41,12 +39,6 @@ class Hauler < ApplicationRecord
   # Commission of a net weight at a price per pound.
   def self.commission(net_weight:, price_per_pound:)
     (net_weight.to_d * price_per_pound.to_d).round(2)
-  end
-
-  # Cans and commission as purchases were calculated before 2026-10-24.
-  def self.can_commission(net_weight:, percent:, can_price:)
-    cans = net_weight.to_d / CAN_POUNDS
-    [ cans.round(2), (cans * can_price.to_d * percent.to_d / 100).round(2) ]
   end
 
   def audit_label = person.full_name

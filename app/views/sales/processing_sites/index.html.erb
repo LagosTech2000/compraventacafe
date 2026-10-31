@@ -15,14 +15,16 @@
 </div>
 
 <% statuses = ProcessingSiteFilter::STATUSES.map { [ t("sales.buyers.index.statuses.#{it}"), it ] } %>
+<% processes = CoffeeConversion::NEXT_STATE.keys.map { [ CoffeeConversion.human_process(it), it ] } %>
 <div data-controller="live-filter">
 <%= render layout: "shared/filters", locals: { filter: @filter, url: sales_processing_sites_path, frame: "processing-sites-list", live: true } do |form| %>
   <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("sales.processing_sites.index.search_placeholder") %>
+  <%= filter_select form, :process, ProcessingSite.human_attribute_name(:from_states), processes, selected: @filter.process %>
   <%= filter_select form, :status, t("sales.buyers.index.status"), statuses, selected: @filter.status %>
 <% end %>
 
 <%= list_frame "processing-sites-list" do %>
-<%= live_list_status @filter, status: statuses %>
+<%= live_list_status @filter, status: statuses, process: processes %>
 <% sorting = { filter: @filter, frame: "processing-sites-list" } %>
 <% if @sites.any? %>
   <div class="mt-6 @container">
@@ -32,6 +34,7 @@
           <div class="flex items-start justify-between gap-3">
             <div class="min-w-0">
               <p class="font-medium"><%= site.name %></p>
+              <p class="text-xs text-ink-muted"><%= site.human_processes %></p>
               <p class="text-xs text-ink-muted"><%= t("sales.processing_sites.owners.#{site.own? ? "own" : "others"}") %> · <%= t(".processes_count", count: site.processes_count) %></p>
             </div>
             <%= detail_button sales_processing_site_path(site) %>
@@ -44,6 +47,7 @@
         <thead>
           <tr>
             <%= sort_th ProcessingSite.human_attribute_name(:name), :name, sorting %>
+            <%= sort_th ProcessingSite.human_attribute_name(:from_states), :from_states, sorting %>
             <%= sort_th t(".owner"), :own, sorting %>
             <%= sort_th t(".processes"), :processes, sorting, class: "text-right" %>
             <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
@@ -56,6 +60,7 @@
                 <%= site.name %>
                 <% unless site.active? %><span class="badge badge-neutral ml-1"><%= t("sales.buyers.index.statuses.inactive") %></span><% end %>
               </td>
+              <td><%= site.human_processes %></td>
               <td><%= t("sales.processing_sites.owners.#{site.own? ? "own" : "others"}") %></td>
               <td class="text-right tabular-nums"><%= site.processes_count %></td>
               <td class="cell-actions"><%= detail_button sales_processing_site_path(site) %></td>

@@ -34,6 +34,8 @@ class Shipment < ApplicationRecord
   belongs_to :warehouse
   # Who hauled it and in what truck (catalogs apart), and who drove it: an
   # employee of the Planilla interna, or a name typed (Fernando, 2026-10-25).
+  # A carrier or a driver, one or the other (client, 2026-10-30); with a
+  # carrier, optionally what it is paid for the trip (#trip_price).
   belongs_to :carrier, optional: true
   belongs_to :truck, optional: true
   belongs_to :driver, class_name: "StaffMember", optional: true
@@ -54,6 +56,8 @@ class Shipment < ApplicationRecord
   validate :weighings_present, if: :by_weighings?
   validates :remission_number, :weight_note_number, length: { maximum: 60 }
   validates :driver_name, length: { maximum: 120 }
+  validates :trip_price, numericality: { greater_than: 0, less_than: 100_000_000 }, allow_nil: true
+  validate :carrier_or_driver, if: -> { will_save_change_to_carrier_id? || will_save_change_to_driver_id? || will_save_change_to_driver_name? }
   validate :carrier_and_truck_active
   validate :warehouse_active, if: :will_save_change_to_warehouse_id?
   validates :observations, length: { maximum: 500 }
@@ -74,10 +78,24 @@ class Shipment < ApplicationRecord
   before_validation :assign_season
   # The employee chosen as driver wins over a name typed.
   before_validation { self.driver_name = nil if driver_id }
+  # Only when the form chose (an arrival or a void leaves the old ones as they are).
+  before_validation :keep_one_transport, if: -> { @transport_mode.present? }
   before_create :assign_number
 
   # Set when the destination weighing is saved: then it is required.
   attr_accessor :receiving
+
+  TRANSPORT_MODES = %w[carrier driver].freeze
+  # What the form chose: a carrier or a driver. The other one is cleared.
+  attr_writer :transport_mode
+
+  def transport_mode
+    @transport_mode.presence_in(TRANSPORT_MODES) || (driver_id || driver_name.present? ? "driver" : "carrier")
+  end
+
+  # The number the next shipment takes (shown in «Nueva salida»; the real
+  # one is given when saving, so two at once still get their own).
+  def self.next_number = (maximum(:number) || 0) + 1
 
   scope :active, -> { where(voided_at: nil) }
   scope :voided, -> { where.not(voided_at: nil) }
@@ -265,12 +283,28 @@ class Shipment < ApplicationRecord
     def not_sold
       return unless sold?
 
-      changed_inputs = (changed - %w[updated_at lock_version observations remission_number carrier_id truck_id driver_id driver_name weight_note_number])
+      changed_inputs = (changed - %w[updated_at lock_version observations remission_number carrier_id truck_id driver_id driver_name trip_price weight_note_number])
       errors.add(:base, :sold) if changed_inputs.any?
     end
 
     def assign_season
       self.season_year = Season.for(departed_at.in_time_zone.to_date).year if departed_at
+    end
+
+    # A carrier or a driver, never both (client, 2026-10-30); the trip price
+    # goes with the carrier.
+    def keep_one_transport
+      if transport_mode == "driver"
+        self.carrier = nil
+      else
+        self.driver = nil
+        self.driver_name = nil
+      end
+      self.trip_price = nil unless carrier
+    end
+
+    def carrier_or_driver
+      errors.add(:base, :carrier_and_driver) if carrier_id && (driver_id || driver_name.present?)
     end
 
     def assign_number

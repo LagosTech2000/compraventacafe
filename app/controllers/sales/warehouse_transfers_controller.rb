@@ -49,7 +49,7 @@ module Sales
       end
 
       def transfer_params
-        params.expect(warehouse_transfer: [ :transferred_at, :from_warehouse_id, :to_warehouse_id, :coffee_state, :net_weight, :observations ])
+        params.expect(warehouse_transfer: [ :transferred_at, :from_warehouse_id, :to_warehouse_id, :coffee_state, :gross_weight, :observations ])
       end
   end
 end

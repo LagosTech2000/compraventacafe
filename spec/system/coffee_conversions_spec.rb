@@ -12,6 +12,27 @@ RSpec.describe "Coffee conversions screens", type: :system do
     sign_in_as(user)
   end
 
+  # Each process has its own places, and with no coffee it is not saved (client, 2026-10-30).
+  it "shows only the places of the process chosen and blocks saving with no coffee of that state" do
+    create(:processing_site, name: "Máquina La Esperanza", from_states: %w[cherry])
+    create(:processing_site, name: "Secadora El Pino", from_states: %w[wet_parchment])
+    visit new_sales_coffee_conversion_path(from_state: "cherry")
+
+    expect(page).to have_select("coffee_conversion_processing_site_id", with_options: [ "Máquina La Esperanza", "Patio" ])
+    expect(page).to have_no_css("#coffee_conversion_processing_site_id option:not([hidden])", text: "Secadora El Pino")
+    expect(page).to have_css("[data-conversion-preview-target=noStock]", visible: true, text: "No hay café de este estado")
+    expect(page).to have_button("Pesar y mandar a procesar", disabled: true)
+    select "Máquina La Esperanza", from: "coffee_conversion_processing_site_id"
+
+    choose "Pergamino húmedo → Pergamino seco"
+    expect(page).to have_no_css("#coffee_conversion_processing_site_id option:not([hidden])", text: "Máquina La Esperanza")
+    expect(page).to have_css("#coffee_conversion_processing_site_id option:not([hidden])", text: "Secadora El Pino")
+    expect(page).to have_select("coffee_conversion_processing_site_id", selected: "Selecciona el lugar")
+    expect(page).to have_css("[data-conversion-preview-target=noStock]", visible: :hidden)
+    expect(page).to have_button("Pesar y mandar a procesar", disabled: false)
+    expect(find("a[data-conversion-preview-target=newSite]")[:href]).to include("from_state=wet_parchment")
+  end
+
   it "previews what leaves the stock, warns past it, and enters what came out" do
     visit sales_coffee_conversions_path
     click_link "Procesar café"

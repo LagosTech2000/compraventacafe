@@ -268,7 +268,9 @@ class DemoData
         buyer = buyers[i % buyers.size]
         departed_at = moment_of(Time.zone.today - days_ago)
         shipment = Shipment.create!(buyer:, created_by: @user, departed_at:, coffee_state: "wet_parchment", remission_number: (330 + i).to_s,
-                                    carrier:, truck:, driver_name: "Mario Demo", origin_gross_weight: gross, origin_sacks: sacks,
+                                    # A carrier (with its trip price) or a driver, one or the other.
+                                    **(i.even? ? { carrier:, trip_price: 3_500 } : { driver_name: "Mario Demo" }),
+                                    truck:, origin_gross_weight: gross, origin_sacks: sacks,
                                     origin_humidity_percent: 51, origin_damage_percent: 0)
         next if loss.nil?
 

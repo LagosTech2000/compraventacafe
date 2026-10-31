@@ -14,7 +14,6 @@ RSpec.describe Hauler do
 
   it "earns net pounds × price per pound: 1,650 lb × L 0.303 = L 499.95" do
     expect(Hauler.commission(net_weight: 1_650, price_per_pound: "0.303")).to eq(BigDecimal("499.95"))
-    expect(Hauler.can_commission(net_weight: 1_650, percent: 10, can_price: 50)).to eq([ 100, 500 ])
   end
 
   it "requires its price per pound" do
@@ -39,7 +38,7 @@ RSpec.describe Hauler do
   describe "on a purchase" do
     it "keeps the hauler's price per pound of its day" do
       purchase = hauled(1_650)
-      expect(purchase).to have_attributes(hauler_price_per_pound: BigDecimal("0.303"), hauler_cans: nil, hauler_commission: BigDecimal("499.95"))
+      expect(purchase).to have_attributes(hauler_price_per_pound: BigDecimal("0.303"), hauler_commission: BigDecimal("499.95"))
 
       hauler.update!(price_per_pound: "0.5")
       purchase.reload.update!(observations: "Sin cambios")
@@ -49,20 +48,11 @@ RSpec.describe Hauler do
       expect(purchase.reload).to have_attributes(net_weight: 826, hauler_price_per_pound: BigDecimal("0.303"), hauler_commission: BigDecimal("250.28"))
     end
 
-    it "keeps the cans, can price and percent of a purchase from before the change" do
-      purchase = hauled(1_650)
-      purchase.update_columns(hauler_price_per_pound: nil, hauler_commission_percent: 10, hauler_can_price: 50, hauler_cans: 100, hauler_commission: 500)
-      purchase.reload.update!(gross_weight: 832)
-      expect(purchase.reload).to have_attributes(hauler_price_per_pound: nil, hauler_cans: BigDecimal("50.06"), hauler_commission: BigDecimal("250.30"))
-    end
-
     it "takes the new hauler's price when the hauler changes, and drops it without one" do
       purchase = hauled(1_650)
-      purchase.update_columns(hauler_price_per_pound: nil, hauler_commission_percent: 10, hauler_can_price: 50, hauler_cans: 100)
       other = create(:hauler, price_per_pound: "0.2")
       purchase.reload.update!(hauler: other)
-      expect(purchase.reload).to have_attributes(hauler_price_per_pound: BigDecimal("0.2"), hauler_commission_percent: nil, hauler_can_price: nil,
-                                                 hauler_cans: nil, hauler_commission: 330)
+      expect(purchase.reload).to have_attributes(hauler_price_per_pound: BigDecimal("0.2"), hauler_commission: 330)
 
       purchase.update!(hauler: nil)
       expect(purchase.reload).to have_attributes(hauler_price_per_pound: nil, hauler_commission: nil)

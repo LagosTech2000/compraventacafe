@@ -67,6 +67,7 @@
     <% { warehouse: @shipment.warehouse.name, remission_number: @shipment.remission_number,
          carrier: (@shipment.carrier && (policy(@shipment.carrier).show? ? link_to(@shipment.carrier.name, sales_carrier_path(@shipment.carrier), class: "link") : @shipment.carrier.name)),
          truck: (@shipment.truck && (policy(@shipment.truck).show? ? link_to(@shipment.truck.label, sales_truck_path(@shipment.truck), class: "link") : @shipment.truck.label)),
+         trip_price: (format_money(@shipment.trip_price) if @shipment.trip_price),
          driver: @shipment.driver_label,
          season_year: format_season(@shipment.season), created_by: @shipment.created_by.name }.each do |key, value| %>
       <div><dt class="text-xs text-ink-muted"><%= Shipment.human_attribute_name(key) %></dt><dd><%= value.presence || "—" %></dd></div>
