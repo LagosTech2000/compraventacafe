@@ -5,7 +5,11 @@ import { Controller } from "@hotwired/stimulus"
 //
 // In «Procesar café» (what goes in) the net is the gross typed × the
 // net/gross proportion of the state chosen; its gross in stock (of the
-// warehouse chosen) is shown, and typing more warns without stopping it.
+// warehouse chosen) is shown, and typing more warns without stopping it;
+// with none at all, it says so and the form is not sent (client,
+// 2026-10-30: the server checks it too). Each process has its own places
+// (client, 2026-10-30): the list shows the ones of the state chosen, and
+// «Nuevo lugar» opens with that process checked.
 // The estimate says how many gross pounds should come out (gross × the
 // estimated %), and below it, what the processes of that state really gave.
 // Changing the state puts its starting estimate and hides the humidity of
@@ -17,7 +21,8 @@ import { Controller } from "@hotwired/stimulus"
 // from the estimate.
 export default class extends Controller {
   static targets = ["state", "gross", "net", "quintals", "toState", "available", "overStock", "sacks", "humidity", "damage", "difference", "warehouse",
-                    "estimate", "estimatedOutput", "average", "humidityField", "realYield", "estimateDifference"]
+                    "estimate", "estimatedOutput", "average", "humidityField", "realYield", "estimateDifference",
+                    "site", "noSites", "newSite", "noStock", "submit"]
   static values = { ratios: Object, stock: Object, toStates: Object, state: String, quintalWeight: Number, inputNet: Number,
                     defaults: Object, averages: Object, inputGross: Number, estimatedGross: Number }
 
@@ -35,7 +40,39 @@ export default class extends Controller {
       this.humidityFieldTarget.hidden = cherry
       this.humidityFieldTarget.querySelectorAll("input").forEach((input) => { input.disabled = cherry })
     }
+    this.filterSites()
     this.update()
+  }
+
+  // Only the places of the process chosen; a place of the other one is unselected.
+  filterSites() {
+    if (!this.hasSiteTarget) return
+    const state = this.currentState()
+    let any = false
+    for (const option of this.siteTarget.options) {
+      if (!option.value) continue
+      const fits = (option.dataset.fromStates || "").split(" ").includes(state)
+      option.hidden = !fits
+      option.disabled = !fits
+      any ||= fits
+    }
+    if (this.siteTarget.selectedOptions[0]?.disabled) this.siteTarget.value = ""
+    if (this.hasNoSitesTarget) this.noSitesTarget.hidden = any
+    if (this.hasNewSiteTarget) {
+      const url = new URL(this.newSiteTarget.href, window.location.origin)
+      url.searchParams.set("from_state", state)
+      this.newSiteTarget.href = url.pathname + url.search
+    }
+  }
+
+  // A place created in the modal: shown only if it does this process.
+  siteTargetConnected() {
+    this.siteObserver = new MutationObserver(() => this.filterSites())
+    this.siteObserver.observe(this.siteTarget, { childList: true })
+  }
+
+  siteTargetDisconnected() {
+    this.siteObserver?.disconnect()
   }
 
   currentState() {
@@ -59,7 +96,10 @@ export default class extends Controller {
       const stock = this.hasWarehouseTarget ? (this.stockValue[this.warehouseTarget.value] || {}) : this.stockValue
       const available = parseFloat(stock[state] ?? 0)
       this.availableTarget.textContent = `${this.pounds.format(available)} lb`
-      this.overStockTarget.hidden = !(gross > available)
+      const empty = !(available > 0)
+      this.overStockTarget.hidden = empty || !(gross > available)
+      if (this.hasNoStockTarget) this.noStockTarget.hidden = !empty
+      if (this.hasSubmitTarget) this.submitTarget.disabled = empty
     }
   }
 

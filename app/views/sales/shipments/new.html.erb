@@ -2,7 +2,11 @@
 <%= render "sales/nav" %>
 
 <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-  <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <%# The number it will take (client, 2026-10-30); given for real on saving. %>
+    <p class="mt-1 text-sm text-ink-muted" id="next-shipment-number"><%= t(".number", number: format("%04d", Shipment.next_number)) %></p>
+  </div>
   <%= help_guide_button HelpGuide.process(:sales_flow), label: true %>
 </div>
 <%= render "form", shipment: @shipment, stock: @stock %>

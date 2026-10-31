@@ -38,6 +38,11 @@ class PurchasesReport < Report
   column(:coffee_state, :text, sort: "purchases.coffee_state", priority: 2, &:human_coffee_state)
   column(:gross_weight, :pounds, sort: "purchases.gross_weight", priority: 3)
   column(:humidity_percent, :percent, sort: "purchases.humidity_percent", priority: 3) { |purchase| purchase.humidity_percent unless purchase.cherry? }
+  # What damage took off (parchment only): off the invoice since 2026-10-30,
+  # kept here and in the purchase (Fernando: «para los usuarios y reportes
+  # debería estar accesible esa data»).
+  column(:damage_percent, :percent, sort: "purchases.damage_percent", priority: 3) { |purchase| purchase.damage_percent unless purchase.cherry? }
+  column(:damage_weight, :pounds, sort: "purchases.damage_weight", priority: 3)
   column(:net_weight, :pounds, sort: "purchases.net_weight", priority: 2)
   column(:quintals, :quintals, sort: "purchases.net_weight")
   column(:price_per_pound, :money, sort: "purchases.price_per_pound", priority: 2)
@@ -60,6 +65,7 @@ class PurchasesReport < Report
   measure :average_price, :money, AVERAGE_PRICE
   measure :gross_weight, :pounds, "SUM(purchases.gross_weight)"
   measure :net_weight, :pounds, "SUM(purchases.net_weight)"
+  measure :damage_weight, :pounds, "SUM(purchases.damage_weight)"
   measure :producers, :integer, "COUNT(DISTINCT purchases.producer_id)"
 
   group :day, unit: "day"
@@ -77,6 +83,7 @@ class PurchasesReport < Report
   kpi :quintals, :quintals, QUINTALS, good: :up
   kpi :net_weight, :pounds, "SUM(purchases.net_weight)", good: :up
   kpi :total, :money, "SUM(purchases.total)"
+  kpi :damage_weight, :pounds, "COALESCE(SUM(purchases.damage_weight), 0)"
   kpi :average_price, :money, AVERAGE_PRICE
   kpi :producers, :integer, "COUNT(DISTINCT purchases.producer_id)", good: :up
   kpi :uninvoiced, :money, "SUM(purchases.total) FILTER (WHERE purchases.invoice_id IS NULL)", compare: false

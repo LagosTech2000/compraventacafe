@@ -60,26 +60,34 @@ RSpec.describe "Sales warehouses and lots" do
     expect(page.at_css("#shipment-details").parent.text.squish).to include("BodegaBodega 2")
   end
 
-  it "transfers coffee between warehouses, shows its lots and voids it" do
+  it "transfers coffee between warehouses in gross pounds, shows its lots and voids it" do
     other = create(:warehouse, name: "Bodega 2")
     purchase = create(:purchase, gross_weight: 2_000, purchased_at: 1.day.ago)
 
+    get new_sales_warehouse_transfer_path
+    expect(page.at_css("label[for='warehouse_transfer_gross_weight']").text).to eq("Libras brutas")
+    expect(page.at_css("#warehouse_transfer_net_weight")).to be_nil
+
+    # Written in gross pounds (client, 2026-10-30); the net ones come from
+    # the warehouse's net/gross proportion of that state.
     post sales_warehouse_transfers_path, params: { warehouse_transfer: { from_warehouse_id: main.id, to_warehouse_id: other.id, coffee_state: "wet_parchment",
-                                                                         net_weight: "500", transferred_at: Time.current.strftime("%Y-%m-%dT%H:%M") } }
+                                                                         gross_weight: "1000", net_weight: "1", transferred_at: Time.current.strftime("%Y-%m-%dT%H:%M") } }
     transfer = WarehouseTransfer.sole
-    expect(transfer).to have_attributes(number: 1, net_weight: 500, gross_weight: (500 / (purchase.net_weight / 2_000).round(6)).round(2))
+    net = (1_000 * (purchase.net_weight / 2_000).round(6)).round(2)
+    expect(transfer).to have_attributes(number: 1, gross_weight: 1_000, net_weight: net)
     expect(AuditEvent.where(auditable: transfer, action: "create")).to exist
+    shown = ActiveSupport::NumberHelper.number_to_delimited(format("%.2f", net))
 
     get sales_warehouse_transfer_path(transfer)
-    expect(page.at_css("#transfer-lots").parent.text.squish).to include("Compra de #{purchase.producer.full_name}", "500.00")
+    expect(page.at_css("#transfer-lots").parent.text.squish).to include("Compra de #{purchase.producer.full_name}", shown)
     get sales_warehouse_transfers_path(warehouse_id: other.id)
-    expect(page.at_css("#warehouse_transfer_#{transfer.id}").text.squish).to include("Bodega 1", "Bodega 2", "500.00")
+    expect(page.at_css("#warehouse_transfer_#{transfer.id}").text.squish).to include("Bodega 1", "Bodega 2", shown)
     get sales_stock_path(warehouse_id: other.id)
-    expect(page.at_css("[data-coffee-state='wet_parchment']").text.squish).to include("500.00 lb")
+    expect(page.at_css("[data-coffee-state='wet_parchment']").text.squish).to include("#{shown} lb")
     expect(response.body).to include("Llegó por traslado")
 
     post sales_warehouse_transfers_path, params: { warehouse_transfer: { from_warehouse_id: main.id, to_warehouse_id: main.id, coffee_state: "wet_parchment",
-                                                                         net_weight: "1", transferred_at: Time.current.strftime("%Y-%m-%dT%H:%M") } }
+                                                                         gross_weight: "1", transferred_at: Time.current.strftime("%Y-%m-%dT%H:%M") } }
     expect(response.body).to include("debe ser otra bodega")
 
     patch void_sales_warehouse_transfer_path(transfer)

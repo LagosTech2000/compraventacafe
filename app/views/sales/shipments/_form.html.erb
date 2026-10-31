@@ -50,20 +50,51 @@
         </div>
       </section>
 
-      <%# Who hauls it: the carrier and the truck from their catalogs (each
-          with «Nuevo» in a modal), and the driver: an employee of the
-          Planilla interna, or a name typed. %>
-      <section aria-labelledby="shipment-transport" class="space-y-3">
+      <%# Who hauls it: a carrier (with what it is paid for the trip) or a
+          driver, one or the other (client, 2026-10-30); the truck with
+          either. Carrier and truck come from their catalogs (each with
+          «Nuevo» in a modal); the driver is an employee of the Planilla
+          interna, or a name typed. %>
+      <% mode = shipment.transport_mode %>
+      <section aria-labelledby="shipment-transport" class="space-y-3" data-controller="transport-choice">
         <h2 id="shipment-transport" class="font-semibold"><%= t(".transport") %></h2>
+        <fieldset>
+          <legend class="field-label"><%= t(".transport_mode") %></legend>
+          <div class="flex flex-wrap gap-x-6 gap-y-2">
+            <% Shipment::TRANSPORT_MODES.each do |option| %>
+              <label class="flex min-h-11 cursor-pointer items-center gap-2 text-sm font-medium">
+                <%= form.radio_button :transport_mode, option, checked: mode == option, class: "size-4 accent-primary",
+                      data: { transport_choice_target: "mode", action: "transport-choice#update" } %>
+                <%= t(".transport_modes.#{option}") %>
+              </label>
+            <% end %>
+          </div>
+        </fieldset>
         <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          <div data-controller="option-picker" data-action="carrier:created@window->option-picker#add">
+          <div data-controller="option-picker" data-action="carrier:created@window->option-picker#add"
+               data-transport-choice-target="panel" data-mode="carrier" <%= "hidden" unless mode == "carrier" %>>
             <%= form.label :carrier_id, class: "field-label" %>
             <% carriers = Carrier.active.or(Carrier.where(id: shipment.carrier_id)).alphabetical %>
             <%= form.collection_select :carrier_id, carriers, :id, :name, { include_blank: t("shared.select.no_carrier") },
-                  class: "field-input", data: { option_picker_target: "select" } %>
+                  class: "field-input", disabled: mode != "carrier", data: { option_picker_target: "select" } %>
             <% if policy(Carrier).create? %>
               <%= modal_link_to t(".new_carrier"), new_sales_carrier_path(picker: 1), class: "btn btn-sm mt-2" %>
             <% end %>
+          </div>
+          <div data-transport-choice-target="panel" data-mode="carrier" <%= "hidden" unless mode == "carrier" %>>
+            <%= form.label :trip_price, class: "field-label" %>
+            <%= form.number_field :trip_price, min: 0.01, max: 99_999_999.99, step: 0.01, inputmode: "decimal", class: "field-input",
+                  disabled: mode != "carrier" %>
+            <p class="mt-1 text-xs text-ink-muted"><%= t(".trip_price_help") %></p>
+          </div>
+          <div data-transport-choice-target="panel" data-mode="driver" <%= "hidden" unless mode == "driver" %>>
+            <%= form.label :driver_id, class: "field-label" %>
+            <% drivers = StaffMember.active.or(StaffMember.where(id: shipment.driver_id)).includes(:person, :role).newest_first %>
+            <%= form.select :driver_id, drivers.map { [ "#{it.full_name} · #{it.role.name}", it.id ] },
+                  { include_blank: t(".driver_typed") }, class: "field-input", disabled: mode != "driver" %>
+            <%= form.text_field :driver_name, maxlength: 120, class: "field-input mt-2", placeholder: t(".driver_name_placeholder"),
+                  disabled: mode != "driver", aria: { label: Shipment.human_attribute_name(:driver_name) } %>
+            <p class="mt-1 text-xs text-ink-muted"><%= t(".driver_help") %></p>
           </div>
           <div data-controller="option-picker" data-action="truck:created@window->option-picker#add">
             <%= form.label :truck_id, class: "field-label" %>
@@ -73,15 +104,6 @@
             <% if policy(Truck).create? %>
               <%= modal_link_to t(".new_truck"), new_sales_truck_path(picker: 1), class: "btn btn-sm mt-2" %>
             <% end %>
-          </div>
-          <div>
-            <%= form.label :driver_id, class: "field-label" %>
-            <% drivers = StaffMember.active.or(StaffMember.where(id: shipment.driver_id)).includes(:person, :role).newest_first %>
-            <%= form.select :driver_id, drivers.map { [ "#{it.full_name} · #{it.role.name}", it.id ] },
-                  { include_blank: t(".driver_typed") }, class: "field-input" %>
-            <%= form.text_field :driver_name, maxlength: 120, class: "field-input mt-2", placeholder: t(".driver_name_placeholder"),
-                  aria: { label: Shipment.human_attribute_name(:driver_name) } %>
-            <p class="mt-1 text-xs text-ink-muted"><%= t(".driver_help") %></p>
           </div>
         </div>
       </section>

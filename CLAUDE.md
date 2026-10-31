@@ -76,7 +76,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Reportería | `reports` |
 | Productor / intermediario / finca propia | `Producer` (`kind`: `producer` / `intermediary` / `own_farm`) |
 | Carrero (rol de persona: trae el café con los carros del negocio y gana comisión) / pago a carrero | `Hauler` / `HaulerPayment` (`trading/hauler_payments#show` = recibo) |
-| Precio por libra neta del carrero / comisión del carrero | `Hauler#price_per_pound`; en la compra `hauler_price_per_pound`, `hauler_commission` (las de antes del 2026-10-24: `hauler_cans`, `hauler_can_price`, `hauler_commission_percent`, `Hauler::CAN_POUNDS`) |
+| Precio por libra neta del carrero / comisión del carrero | `Hauler#price_per_pound`; en la compra `hauler_price_per_pound`, `hauler_commission` |
 | Tipo de daño (amarillo, broca, verde, pulpa, pelado) | `Purchase#damage_types` (`Purchase::DAMAGE_TYPES`: `yellow` / `borer` / `green` / `pulp` / `peeled`) |
 | Préstamo tipo intermediario (10 días sin interés, para cualquiera) | `Loan#interest_grace` (`Loan::GRACE_DAYS`, `Loan#interest_starts_on`) |
 | Tarea por monto fijo / por manzana / por barril / por abono | `PayrollTask#pricing`: `fixed` / `per_manzana` / `per_barrel` / `per_fertilizer` (`quantity`, `unit_price`, `barrel_liters`, `quantity_unit`) |
@@ -1047,12 +1047,14 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   el detalle se ven de todas o de una (pestañas, frame `stock-page` /
   `stock-state`); el kárdex de una bodega incluye sus traslados. **Traslados**
   (`WarehouseTransfer`, `sales/warehouse_transfers`): estado del café y
-  libras netas, de una bodega a otra; se anulan. Lo ya registrado pasó a
+  **libras brutas** (cliente, 2026-10-30: «que pida libras brutas no
+  netas»), de una bodega a otra; las netas salen de la proporción
+  neto/bruto de ese estado en esa bodega (`WarehouseTransfer.ratio_for`) y
+  el formulario las muestra como vista previa; se anulan. Lo ya registrado pasó a
   «Bodega 1» (migración `CreateWarehouses`); en una base nueva,
   `Warehouse.main!` crea «Bodega 1» con la primera compra. Decisiones de
-  implementación, **pendientes de confirmar**: el traslado se escribe en
-  libras netas (sus brutas salen de la proporción de esa bodega) y pasar
-  de lo que hay avisa sin bloquear; una bodega usada se desactiva (no se
+  implementación, **pendientes de confirmar**: pasar de lo que hay en un
+  traslado avisa sin bloquear; una bodega usada se desactiva (no se
   borra) y solo sin café adentro y si no es la de por defecto.
 - **Lotes** (`CoffeeLots`, cliente, 2026-10-26) [CONFIRMADO: «se priorizan
   las compras más viejas»]: cada compra (y cada resultado de conversión)
@@ -1104,7 +1106,9 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   (`conversion_preview_controller.js`). Reglas **confirmadas** (Fernando, 2026-10-25): sin inventario de ese estado, la proporción
   sale de sus compras y, sin compras, del valor inicial de las compras
   (rendimiento de la uva, 1 − humedad del pergamino); pesar más de lo que
-  hay avisa y no bloquea; una conversión en conversión se anula (el café
+  hay avisa y no bloquea, pero **sin nada de ese estado en la bodega no se
+  guarda** (cliente, 2026-10-30: el formulario avisa y apaga el botón;
+  `CoffeeConversion#coffee_in_stock`, brutas a la fecha del pesaje); una conversión en conversión se anula (el café
   vuelve) y a una terminada se le quita el resultado; la vista previa usa
   la proporción de hoy aunque la fecha sea otra (el servidor usa la de la
   fecha). A una fecha (fin
@@ -1113,7 +1117,17 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   conversiones se llaman **procesos** («Procesar café», Comercialización →
   Procesos; solo cambiaron los textos). Cada proceso nuevo lleva su
   **lugar** (`ProcessingSite`: máquinas ecológicas de otros, el patio, la
-  secadora; catálogo con «Es del negocio», se desactiva) y su **rendimiento
+  secadora; catálogo con «Es del negocio», se desactiva). **Cada tipo de
+  proceso tiene su propia lista de lugares** (cliente, 2026-10-30): el
+  lugar marca sus procesos (`ProcessingSite#from_states`: uva → húmedo,
+  húmedo → seco, o los dos), «Procesar café» solo muestra los del proceso
+  elegido (`conversion_preview_controller.js`), «Nuevo lugar» abre con ese
+  proceso marcado, el servidor rechaza un lugar de otro proceso y la lista
+  de lugares filtra por proceso. Decisión de implementación, **pendiente
+  de confirmar**: un mismo lugar puede hacer los dos; los ya registrados
+  quedaron con los procesos en que se usaron, y los nunca usados con los
+  dos (migración `AddFromStatesToProcessingSites`). El campo del peso dice
+  «lb brutas a procesar». Y su **rendimiento
   estimado**: libras brutas del estado nuevo por cada 100 que entran,
   **37.95 % de uva a húmedo y 50 % al secar** (respuestas 2 y 21–22),
   editable en cada proceso y en Configuración del sitio
@@ -1152,7 +1166,16 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   catálogos sueltos, Fernando, 2026-10-25; Comercialización →
   Transportistas y Camiones, con su ficha y sus salidas, «Nuevo» desde la
   salida) y **motorista**: un empleado de la planilla interna o un nombre
-  escrito (`driver`, `driver_name`). Lo que las salidas tenían escrito
+  escrito (`driver`, `driver_name`). **Transportista o motorista, uno o el
+  otro** (cliente, 2026-10-30): «¿Quién lo lleva?» (`Shipment#transport_mode`,
+  no se guarda; `transport_choice_controller.js`) muestra uno y vacía el
+  otro; el camión va con cualquiera. Con transportista, opcional, el
+  **precio del viaje** (`trip_price`, lo que se le paga por ese viaje), en
+  el detalle y sumado en su ficha. Las salidas de antes con los dos se
+  quedan así. «Nueva salida» dice el número que tendrá
+  (`Shipment.next_number`; el real se da al guardar). Pendiente de
+  preguntar: si el precio del viaje se paga desde una cuenta (hoy solo se
+  anota, no mueve dinero) y si se suma al costo del café. Lo que las salidas tenían escrito
   (transportista, placa) pasó a los catálogos en la migración. Se pesa en la **báscula local** (`origin_*`) y, al
   llegar, en la **del comprador** (`destination_*`, con nota de peso y
   fecha; `ArrivalsController`). Cada neto usa **el mismo cálculo de la
@@ -1395,9 +1418,11 @@ textos; la clave y el código siguen siendo `trading`.
     (1 − humedad%) × daño%, y `damage_amount` = esas libras × precio por
     libra. Se guardan en la compra y se muestran en el formulario, el
     detalle y «Facturar compras» (Fernando, 2026-10-12). En uva quedan
-    vacíos. **La factura solo lleva las libras**, no los lempiras
-    (Fernando, 2026-10-24: «quitar restado en lempiras por daño en las
-    facturas»).
+    vacíos. **La factura no lleva lo restado por daño** (Fernando:
+    los lempiras salieron el 2026-10-24 y las libras el 2026-10-30), solo
+    el % y los tipos de daño; las libras siguen en la compra, en
+    «Facturar compras» y en el reporte de Compras (columnas «Daño» y
+    «Restado por daño (lb)», su suma y su cifra).
   - **Tipo de daño** (Fernando, 2026-10-24) [CONFIRMADO]: con daño mayor
     a 0, «Nueva compra» pide **al menos uno** de amarillo, broca, verde,
     pulpa o pelado (`Purchase#damage_types`, casillas que salen al
@@ -1483,6 +1508,8 @@ textos; la clave y el código siguen siendo `trading`.
   módulo Fincas aparecen con su dueño («Finca X · Ana Zelaya»).
 - La factura lleva al pie **dos firmas**: la del cliente (el productor,
   con su nombre debajo) y la del comprador de café (Fernando, 2026-10-16).
+  **La del cliente va solo en la copia** (Fernando, 2026-10-30: «la copia
+  lleva firma del cliente, y la original no»); la del comprador, en las dos.
 - La factura muestra los **QQ** de cada compra y del total
   (`Invoice#quintals` = neto ÷ 125), también en su lista (Fernando,
   2026-10-13).
@@ -1546,11 +1573,11 @@ textos; la clave y el código siguen siendo `trading`.
   para compras nuevas; otro carrero en la compra toma el del nuevo).
   **Comisión = libras netas × precio por libra** (`Hauler.commission`),
   redondeada al centavo; `hauler_commission_controller.js` la muestra como
-  vista previa en «Nueva compra». Las compras de antes del cambio
-  **conservan su comisión** y su cálculo por latas (libras netas ÷ 16.5 ×
-  precio de la lata × %, `Hauler.can_commission`) [CONFIRMADO: solo
-  compras nuevas]; cada carrero empezó con el precio equivalente (lata ×
-  % ÷ 16.5). **La paga
+  vista previa en «Nueva compra». **Ya no hay cálculo por latas**
+  (Fernando, 2026-10-28: «todo será por el precio establecido por libra
+  neta»): las carreadas que todavía iban por latas pasaron a **L 1 por
+  libra neta** (migración `PriceOldCarreadasPerPound`, cada una auditada
+  como cambio del sistema) y se quitaron sus columnas. **La paga
   el negocio, aparte**: no cambia la factura ni lo que se le paga al
   productor. Se le paga **por saldo acumulado** (comisiones de sus compras
   activas − pagos): cada pago (`HaulerPayment`, pide editar en `trading`)
@@ -1920,9 +1947,10 @@ sistema ya guarda**; no agregan reglas de negocio.
 | Si la factura siempre agrupa hasta 4 compras | Hoy no hay límite | Cliente |
 | Cómo calcula el dueño la ganancia | Reporte de ganancias | Cliente |
 | Combustible, personal y mantenimiento del vehículo en el valor del café: ¿por lote o repartidos por libra? (pregunta 23) | Sumarlos a los costos acumulados del inventario | Cliente |
-| Decisiones de implementación de inventario por lotes y bodegas (2026-10-26): libras netas, reparto en proporción, lotes recalculados, traslado en netas, cuándo se desactiva una bodega; gastos de procesamiento: forma de cobrar del último gasto del lugar, procesos con gastos no se anulan | Ajustes a lotes, bodegas y gastos | Fernando / Cliente |
+| Decisiones de implementación de inventario por lotes y bodegas (2026-10-26): libras netas, reparto en proporción, lotes recalculados, cuándo se desactiva una bodega; un lugar de procesamiento puede hacer los dos procesos; gastos de procesamiento: forma de cobrar del último gasto del lugar, procesos con gastos no se anulan | Ajustes a lotes, bodegas y gastos | Fernando / Cliente |
 | Calidad por bodega | Depende de las categorías de calidad | Cliente |
 | Decisiones nuevas, por confirmar (2026-10-25): la liquidación del comprador pasa a ser lo que se cobra de la venta; los avisos de «Nueva compra» salen cuando la humedad, el rendimiento o el precio se alejan más de 30 % de lo normal (`PurchaseDefaults::UNUSUAL_PERCENT`) | Ajustes a la venta y a los avisos de la compra | Fernando / Cliente |
+| Precio del viaje del transportista: ¿se paga desde una cuenta (movimiento de dinero) y se suma al costo del café? | Pago al transportista y costo del café | Cliente |
 | Contratos: moneda, cobro, aplicar libras a contratos | Ventas / contratos | Cliente |
 | Reporte exacto que piden el contador y el SAR | Reportería | Cliente |
 | `pg_dump` en Render (versión ≥ 18) | Que el respaldo incluya `base.dump` en producción | Fernando + Render |

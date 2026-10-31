@@ -15,7 +15,8 @@ module Sales
     end
 
     def new
-      @site = authorize ProcessingSite.new
+      # From «Procesar café», the process being registered comes checked.
+      @site = authorize ProcessingSite.new(from_states: Array(params[:from_state]))
     end
 
     def create
@@ -23,7 +24,7 @@ module Sales
 
       if @site.save
         close_modal_with notice: t(".success"), fallback: sales_processing_site_path(@site),
-                         event: "processing-site:created", detail: { id: @site.id, label: @site.name, name: @site.name }
+                         event: "processing-site:created", detail: { id: @site.id, label: @site.name, name: @site.name, data: { fromStates: @site.from_states.join(" ") } }
       else
         render :new, status: :unprocessable_content
       end
@@ -46,7 +47,7 @@ module Sales
       end
 
       def site_params
-        params.expect(processing_site: [ :name, :own, :observations, :active ])
+        params.expect(processing_site: [ :name, :own, :observations, :active, from_states: [] ])
       end
   end
 end

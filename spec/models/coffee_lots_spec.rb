@@ -50,7 +50,10 @@ RSpec.describe CoffeeLots do
   end
 
   it "moves the oldest lots to the other warehouse, keeping their date" do
-    transfer = create(:warehouse_transfer, from_warehouse: main, to_warehouse: other, net_weight: 1_000)
+    # Written in gross pounds (client, 2026-10-30): 2,054.52 × 0.486733 (the
+    # warehouse's 1,460.20 net ÷ 3,000 gross) = 1,000 net.
+    transfer = create(:warehouse_transfer, from_warehouse: main, to_warehouse: other, gross_weight: 2_054.52)
+    expect(transfer.net_weight).to eq(1_000)
 
     expect(lots(warehouse_id: other.id).map { [ it.source, it.entered_at.to_i, it.net, it.transfer ] })
       .to eq([ [ older, older.purchased_at.to_i, older.net_weight, transfer ], [ newer, newer.purchased_at.to_i, BigDecimal("26.37"), transfer ] ])

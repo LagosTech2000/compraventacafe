@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_26_080000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_30_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -671,6 +671,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_080000) do
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "from_states", default: [], null: false, array: true
     t.index "lower((name)::text)", name: "index_processing_sites_on_lower_name", unique: true
   end
 
@@ -732,9 +733,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_080000) do
     t.bigint "farm_id"
     t.integer "lock_version", default: 0, null: false
     t.bigint "hauler_id"
-    t.decimal "hauler_commission_percent", precision: 5, scale: 2
-    t.decimal "hauler_can_price", precision: 12, scale: 2
-    t.decimal "hauler_cans", precision: 12, scale: 2
     t.decimal "hauler_commission", precision: 12, scale: 2
     t.string "damage_types", default: [], null: false, array: true
     t.decimal "hauler_price_per_pound", precision: 12, scale: 4
@@ -884,6 +882,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_080000) do
     t.bigint "driver_id"
     t.string "driver_name"
     t.bigint "warehouse_id", null: false
+    t.decimal "trip_price", precision: 12, scale: 2
     t.index ["buyer_id"], name: "index_shipments_on_buyer_id"
     t.index ["carrier_id"], name: "index_shipments_on_carrier_id"
     t.index ["created_by_id"], name: "index_shipments_on_created_by_id"

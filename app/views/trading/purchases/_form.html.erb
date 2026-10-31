@@ -18,8 +18,6 @@
       data: { controller: "form-validation hauler-commission purchase-calculator unusual-values unsaved-changes",
               action: "purchase-calculator:calculated->hauler-commission#calculated #{unsaved_changes_actions}",
               unsaved_changes_message_value: t("shared.unsaved_changes.leave"),
-              hauler_commission_can_pounds_value: Hauler::CAN_POUNDS.to_f,
-              hauler_commission_legacy_label_value: t(".hauler_terms_by_cans"),
               hauler_commission_terms_label_value: t(".hauler_terms"),
               purchase_calculator_sack_weight_value: PurchaseCalculation::SACK_WEIGHT,
               purchase_calculator_tare_per_sack_value: PurchaseCalculation::TARE_PER_SACK,
@@ -116,14 +114,10 @@
       <%= form.label :hauler_id, class: "field-label" %>
       <%= form.select :hauler_id,
             haulers.map { |hauler|
-              # The hauler already on the purchase keeps the terms it was calculated with.
+              # The hauler already on the purchase keeps the price of its day.
               kept = purchase.persisted? && hauler.id == purchase.hauler_id_in_database
-              data = if kept && purchase.hauler_price_per_pound.nil? && purchase.hauler_can_price
-                       { percent: purchase.hauler_commission_percent.to_s, can_price: purchase.hauler_can_price.to_s }
-                     else
-                       { price_per_pound: (kept && purchase.hauler_price_per_pound || hauler.price_per_pound).to_s }
-                     end
-              [ hauler.full_name, hauler.id, { data: } ]
+              price = kept && purchase.hauler_price_per_pound || hauler.price_per_pound
+              [ hauler.full_name, hauler.id, { data: { price_per_pound: price.to_s } } ]
             },
             { include_blank: t("shared.select.no_hauler") }, class: "field-input",
             data: { hauler_commission_target: "select", option_picker_target: "select", action: "hauler-commission#update" } %>

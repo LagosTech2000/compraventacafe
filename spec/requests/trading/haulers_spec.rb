@@ -57,11 +57,6 @@ RSpec.describe "Trading haulers" do
     get trading_purchase_path(purchase)
     expect(response.body).to include("Carreada por #{hauler.full_name}", "Comisión: L 0.30 por libra neta =", "L 495.00")
 
-    # One from before the change keeps saying how it was calculated.
-    purchase.update_columns(hauler_price_per_pound: nil, hauler_commission_percent: 10, hauler_can_price: 50, hauler_cans: 100, hauler_commission: 500)
-    get trading_purchase_path(purchase)
-    expect(response.body).to include("100.00 latas × L 50.00 × 10 % =", "L 500.00")
-
     get new_trading_purchase_path
     option = page.at_css("select#purchase_hauler_id option[value='#{hauler.id}']")
     expect(option.to_h).to include("data-price-per-pound" => "0.3")

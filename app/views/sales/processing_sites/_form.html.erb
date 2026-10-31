@@ -9,6 +9,21 @@
       <%= form.text_field :name, autofocus: true, required: true, maxlength: 120, class: "field-input", placeholder: t("sales.processing_sites.form.name_placeholder"),
             data: { missing_message: "#{ProcessingSite.human_attribute_name(:name)} #{t("errors.messages.blank")}" } %>
     </div>
+    <%# Which processes are done here: each one has its own list of places. %>
+    <fieldset>
+      <legend class="field-label"><%= ProcessingSite.human_attribute_name(:from_states) %></legend>
+      <p class="mb-2 text-xs text-ink-muted"><%= t("sales.processing_sites.form.from_states_help") %></p>
+      <%= hidden_field_tag "processing_site[from_states][]", "", id: nil %>
+      <div class="grid gap-2 sm:grid-cols-2">
+        <% CoffeeConversion::NEXT_STATE.each_key do |state| %>
+          <label class="flex cursor-pointer items-center gap-3 rounded-xl bg-surface p-3 text-sm ring-1 ring-line has-checked:bg-primary-soft has-checked:ring-primary">
+            <%= check_box_tag "processing_site[from_states][]", state, site.from_states.include?(state), id: "processing_site_from_states_#{state}",
+                  class: "size-4 accent-primary" %>
+            <span class="font-medium"><%= CoffeeConversion.human_process(state) %></span>
+          </label>
+        <% end %>
+      </div>
+    </fieldset>
     <label class="flex items-center gap-2 text-sm font-medium">
       <%= form.check_box :own, class: "size-4 accent-primary" %> <%= ProcessingSite.human_attribute_name(:own) %>
     </label>

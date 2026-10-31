@@ -50,14 +50,21 @@
                 { selected: @conversion.warehouse_id || Warehouse.main&.id, include_blank: (t("shared.select.main_warehouse") unless Warehouse.main) },
                 class: "field-input", data: { conversion_preview_target: "warehouse", action: "conversion-preview#update" } %>
         </div>
-        <%# Where it is processed: a catalog, with «Nuevo lugar» right here. %>
+        <%# Where it is processed: each process has its own places (client,
+            2026-10-30); the list shows the ones of the process chosen. %>
+        <% sites = ProcessingSite.options_for(@conversion.processing_site_id) %>
         <div data-controller="option-picker" data-action="processing-site:created@window->option-picker#add">
           <%= form.label :processing_site_id, class: "field-label" %>
-          <%= form.collection_select :processing_site_id, ProcessingSite.options_for(@conversion.processing_site_id), :id, :name,
+          <%= form.select :processing_site_id,
+                options_for_select(sites.map { [ it.name, it.id, { data: { from_states: it.from_states.join(" ") }, hidden: !it.processes?(@conversion.from_state), disabled: !it.processes?(@conversion.from_state) } ] },
+                                   (@conversion.processing_site_id if @conversion.processing_site&.processes?(@conversion.from_state))),
                 { prompt: t("shared.select.pick_processing_site") }, required: true, class: "field-input",
-                data: { option_picker_target: "select", missing_message: "#{CoffeeConversion.human_attribute_name(:processing_site)} #{t("errors.messages.blank")}" } %>
+                data: { option_picker_target: "select", conversion_preview_target: "site",
+                        missing_message: "#{CoffeeConversion.human_attribute_name(:processing_site)} #{t("errors.messages.blank")}" } %>
+          <p class="mt-1 text-xs text-ink-muted" data-conversion-preview-target="noSites" <%= "hidden" if sites.any? { it.processes?(@conversion.from_state) } %>><%= t(".no_sites") %></p>
           <% if policy(ProcessingSite).create? %>
-            <%= modal_link_to t(".new_site"), new_sales_processing_site_path(picker: 1), class: "btn btn-sm mt-2" %>
+            <%= modal_link_to t(".new_site"), new_sales_processing_site_path(picker: 1, from_state: @conversion.from_state), class: "btn btn-sm mt-2",
+                  data: { conversion_preview_target: "newSite" } %>
           <% end %>
         </div>
         <div>
@@ -66,10 +73,10 @@
                 data: { missing_message: "#{CoffeeConversion.human_attribute_name(:weighed_at)} #{t("errors.messages.blank")}" } %>
         </div>
         <div>
-          <%= form.label :input_gross_weight, class: "field-label" %>
+          <%= form.label :input_gross_weight, t(".input_gross_weight"), class: "field-label" %>
           <%= form.number_field :input_gross_weight, required: true, min: 0.01, step: 0.01, inputmode: "decimal", class: "field-input text-lg",
                 autofocus: true, data: { conversion_preview_target: "gross", action: "conversion-preview#update",
-                                         missing_message: "#{CoffeeConversion.human_attribute_name(:input_gross_weight)} #{t("errors.messages.blank")}" } %>
+                                         missing_message: "#{t(".input_gross_weight")} #{t("errors.messages.blank")}" } %>
           <p class="mt-1 text-xs text-ink-muted"><%= t(".available") %> <span class="tabular-nums" data-conversion-preview-target="available"></span></p>
         </div>
         <div>
@@ -105,9 +112,11 @@
           <div><dt class="text-xs text-ink-muted"><%= t("sales.stock.quintals_label") %></dt><dd class="font-semibold tabular-nums" data-conversion-preview-target="quintals">—</dd></div>
         </dl>
         <p class="flash-alert mt-3" role="status" hidden data-conversion-preview-target="overStock"><%= t(".over_stock") %></p>
+        <%# With no coffee of that state in the warehouse it is not saved (client, 2026-10-30). %>
+        <p class="flash-alert mt-3" role="alert" hidden data-conversion-preview-target="noStock"><%= t(".no_stock") %></p>
       </div>
       <div class="flex flex-wrap gap-3">
-        <%= form.submit t(".submit"), class: "btn btn-primary" %>
+        <%= form.submit t(".submit"), class: "btn btn-primary", data: { conversion_preview_target: "submit" } %>
         <%= cancel_button sales_coffee_conversions_path %>
       </div>
     </aside>

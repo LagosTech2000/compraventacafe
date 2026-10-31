@@ -65,7 +65,7 @@ module Sales
       end
 
       def shipment_params
-        params.expect(shipment: [ :departed_at, :buyer_id, :warehouse_id, :coffee_state, :remission_number, :carrier_id, :truck_id, :driver_id, :driver_name, :observations,
+        params.expect(shipment: [ :departed_at, :buyer_id, :warehouse_id, :coffee_state, :remission_number, :transport_mode, :carrier_id, :trip_price, :truck_id, :driver_id, :driver_name, :observations,
                                   :origin_gross_weight, :origin_sacks, :origin_humidity_percent, :origin_damage_percent,
                                   :origin_yield_factor, :origin_weight_mode, :lock_version,
                                   weighings_attributes: [ [ :id, :gross_weight, :sacks, :_destroy ] ] ])

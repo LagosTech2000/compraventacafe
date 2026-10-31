@@ -1,4 +1,6 @@
-<%# One printed copy of an invoice. `label` is ORIGINAL or COPIA. %>
+<%# One printed copy of an invoice. `label` is ORIGINAL or COPIA; `copy`
+    true for the copy, the one the client signs. %>
+<% copy = local_assigns.fetch(:copy, false) %>
 <article class="rounded-2xl border border-line bg-white p-5 shadow-[0_1px_2px_rgb(29_21_18/0.04)] print:p-3 print:shadow-none print:rounded-none print:border-ink">
   <%= render "shared/print_letterhead", title: t("trading.invoices.show.invoice"), number: invoice.display_number, label:,
         badge: payment_status_badge(invoice), rtn: true %>
@@ -29,8 +31,9 @@
         <th><%= Purchase.human_attribute_name(:coffee_state) %></th>
         <th class="text-right"><%= Purchase.human_attribute_name(:gross_weight) %></th>
         <th class="text-right"><%= Purchase.human_attribute_name(:humidity_percent) %></th>
-        <%# What damage took off (parchment only): pounds with the % under them. %>
-        <th class="text-right"><%= t("trading.invoices.show.damage_weight") %></th>
+        <%# Damage (parchment only): its % and kinds. Not the pounds it took off
+            (Fernando, 2026-10-30): those stay in the purchase and the reports. %>
+        <th class="text-right"><%= Purchase.human_attribute_name(:damage_percent) %></th>
         <th class="text-right"><%= Purchase.human_attribute_name(:net_weight) %></th>
         <th class="text-right"><%= t("trading.purchases.table.quintals") %></th>
         <th class="text-right"><%= Purchase.human_attribute_name(:price_per_pound) %></th>
@@ -46,8 +49,7 @@
           <td class="text-right tabular-nums"><%= format_pounds(purchase.humidity_percent) %></td>
           <td class="text-right tabular-nums">
             <% if purchase.damage_weight %>
-              <%= format_pounds(purchase.damage_weight) %>
-              <span class="block whitespace-nowrap text-xs text-ink-muted"><%= format_pounds(purchase.damage_percent) %> %</span>
+              <%= format_pounds(purchase.damage_percent) %>
               <% if purchase.human_damage_types %><span class="block text-xs text-ink-muted"><%= purchase.human_damage_types %></span><% end %>
             <% else %>
               —
@@ -65,7 +67,7 @@
         <td colspan="2"><%= t("trading.invoices.show.totals") %></td>
         <td class="text-right tabular-nums"><%= format_pounds(invoice.gross_weight) %></td>
         <td></td>
-        <td class="text-right tabular-nums"><%= format_pounds(invoice.damage_weight) %></td>
+        <td></td>
         <td class="text-right tabular-nums"><%= format_pounds(invoice.net_weight) %></td>
         <td class="text-right tabular-nums"><%= format_pounds(invoice.quintals) %></td>
         <td></td>
@@ -114,14 +116,18 @@
     <p class="mt-3 text-sm"><span class="font-semibold"><%= Purchase.human_attribute_name(:observations) %>:</span> <%= observations.join("; ") %></p>
   <% end %>
 
-  <%# Two signatures (Fernando, 2026-10-16): the client (the producer, named
-      under the line) and the coffee buyer, for the business. %>
+  <%# Signatures (Fernando, 2026-10-16): the coffee buyer, for the
+      business, on both; the client (the producer, named under the line)
+      only on the copy (Fernando, 2026-10-30: «la copia lleva firma del
+      cliente, y la original no»). %>
   <footer class="mt-10 print:mt-6 print:break-inside-avoid flex flex-wrap items-end justify-between gap-6 text-sm">
-    <div class="w-64 border-t border-ink pt-1 text-center">
-      <%= t("trading.invoices.show.client_signature") %>
-      <span class="block text-xs text-ink-muted"><%= invoice.producer.full_name %></span>
-    </div>
-    <div class="w-64 border-t border-ink pt-1 text-center"><%= t("trading.invoices.show.buyer_signature") %></div>
+    <% if copy %>
+      <div class="w-64 border-t border-ink pt-1 text-center" data-signature="client">
+        <%= t("trading.invoices.show.client_signature") %>
+        <span class="block text-xs text-ink-muted"><%= invoice.producer.full_name %></span>
+      </div>
+    <% end %>
+    <div class="<%= "ml-auto" unless copy %> w-64 border-t border-ink pt-1 text-center"><%= t("trading.invoices.show.buyer_signature") %></div>
     <p class="w-full text-xs text-ink-muted"><%= t("trading.invoices.show.issued_by", name: invoice.created_by.name) %></p>
   </footer>
 </article>

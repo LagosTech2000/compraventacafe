@@ -71,6 +71,7 @@ class CoffeeConversion < ApplicationRecord
   end
   validate :finished_after_weighed, if: :finishing
   validate :warehouses_active
+  validate :coffee_in_stock, on: :create
 
   before_create :assign_number
 
@@ -127,6 +128,8 @@ class CoffeeConversion < ApplicationRecord
   end
 
   def self.human_state(state) = Purchase.human_attribute_name("coffee_state/#{state}")
+  # «Uva → Pergamino húmedo»
+  def self.human_process(from_state) = "#{human_state(from_state)} → #{human_state(NEXT_STATE[from_state])}"
 
   def display_number = format("%04d", number)
   def audit_label = "#{display_number} · #{human_from_state} → #{human_to_state}"
@@ -234,6 +237,20 @@ class CoffeeConversion < ApplicationRecord
       errors.add(:warehouse, :inactive) if will_save_change_to_warehouse_id? && warehouse && !warehouse.active?
       errors.add(:output_warehouse, :inactive) if will_save_change_to_output_warehouse_id? && output_warehouse && !output_warehouse.active?
       errors.add(:processing_site, :inactive) if will_save_change_to_processing_site_id? && processing_site && !processing_site.active?
+      # Each kind of process has its own places (client, 2026-10-30).
+      if will_save_change_to_processing_site_id? && processing_site && from_state && !processing_site.processes?(from_state)
+        errors.add(:processing_site, :other_process)
+      end
+    end
+
+    # With no coffee of that state in the warehouse, nothing goes to be
+    # processed (client, 2026-10-30). Weighing more than there is still
+    # only warns (Fernando, 2026-10-25).
+    def coffee_in_stock
+      return unless warehouse && from_state.in?(NEXT_STATE.keys) && weighed_at
+
+      available = CoffeeStock.new(weighed_at.to_date, warehouse:).row(from_state).gross_stock
+      errors.add(:base, :no_stock, state: human_from_state, warehouse: warehouse.name) unless available.positive?
     end
 
     def assign_number

@@ -110,8 +110,7 @@
                   <td class="whitespace-nowrap"><%= l(purchase.purchased_at, format: :default) %></td>
                   <td><%= purchase.producer.full_name %></td>
                   <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(purchase.net_weight) %></td>
-                  <%# Before 2026-10-24 the commission went by cans: those purchases say how. %>
-                  <td class="text-right tabular-nums"><%= purchase.hauler_price_per_pound ? format_price_per_pound(purchase.hauler_price_per_pound) : hauler_terms(purchase) %></td>
+                  <td class="text-right tabular-nums"><%= format_price_per_pound(purchase.hauler_price_per_pound) %></td>
                   <td class="whitespace-nowrap text-right font-semibold tabular-nums"><%= format_money(purchase.hauler_commission) %></td>
                   <td class="cell-actions"><%= detail_button trading_purchase_path(purchase) %></td>
                 </tr>

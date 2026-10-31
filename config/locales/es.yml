@@ -862,7 +862,6 @@ es:
         new_hauler: "Nuevo carrero"
         hauler_help: "Si la trajo un carrero, gana su comisión por esta compra."
         hauler_terms: "%{price} por libra neta"
-        hauler_terms_by_cans: "Calculada por latas (antes del cambio): comisión %{percent} · lata a %{price}"
         hauler_commission: "Comisión del carrero"
         hauler_paid_apart: "La paga el negocio aparte: no cambia lo que se le paga al productor."
         calculation: "Cálculo"
@@ -1035,7 +1034,6 @@ es:
         success: "Abono quitado."
     haulers:
       terms_per_pound: "%{price} por libra neta"
-      terms_by_cans: "%{cans} latas × %{price} × %{percent}"
       index:
         title: "Carreros"
         help: "Traen el café de los productores con los carros del negocio y ganan por compra: libras netas × su precio por libra. La paga el negocio, aparte del productor."
@@ -1176,6 +1174,11 @@ es:
       show:
         edit: "Editar transportista"
         record: "Ficha del transportista"
+        trip_prices: "Precio de sus viajes"
+        trip_prices_value:
+          zero: "Sin precio registrado"
+          one: "%{amount} en 1 viaje"
+          other: "%{amount} en %{count} viajes"
       new:
         title: "Nuevo transportista"
       edit:
@@ -1262,6 +1265,7 @@ es:
         empty: "No hay lugares con esos filtros."
       form:
         name_placeholder: "Por ejemplo: Máquina ecológica La Esperanza, Patio, Secadora El Pino"
+        from_states_help: "Qué procesos se hacen aquí: cada proceso tiene su propia lista de lugares. Marca al menos uno."
       show:
         edit: "Editar lugar"
         processes: "Procesos en este lugar"
@@ -1324,8 +1328,9 @@ es:
         empty: "No hay traslados con esos filtros."
       new:
         title: "Trasladar café"
-        help: "Pasa café de una bodega a otra, en libras netas de un estado del café."
-        available: "En la bodega de salida hay"
+        help: "Pasa café de una bodega a otra, en libras brutas de un estado del café."
+        available: "En la bodega de salida hay (brutas)"
+        net_preview: "Libras netas que se trasladan"
         oldest_first: "Salen primero los lotes más viejos de ese café en la bodega de salida, y cada uno conserva su fecha."
         over_stock: "Es más de lo que hay de ese café en la bodega de salida. Se puede guardar igual."
         submit: "Trasladar"
@@ -1509,7 +1514,12 @@ es:
         new_truck: "Nuevo camión"
         driver_typed: "Escribirlo abajo"
         driver_name_placeholder: "Nombre del motorista"
-        driver_help: "Un chofer de la planilla interna, o escribe el nombre del motorista del transportista."
+        driver_help: "Un chofer de la planilla interna, o escribe su nombre."
+        transport_mode: "¿Quién lo lleva?"
+        transport_modes:
+          carrier: "Un transportista"
+          driver: "Un motorista"
+        trip_price_help: "Opcional. Lo que se le paga al transportista por este viaje."
         origin: "Báscula local"
         origin_help: "El peso del camión antes de salir."
         calculation: "Cálculo de la salida"
@@ -1524,6 +1534,7 @@ es:
         over_stock: "Sale más de lo que hay en inventario de este estado del café (%{stock} lb). Se puede guardar igual."
       new:
         title: "Nueva salida de camión"
+        number: "Salida No. %{number}"
       edit:
         title: "Editar la salida %{number}"
       create:
@@ -1873,12 +1884,15 @@ es:
         preview: "Lo que sale del inventario"
         becomes: "Sale como"
         new_site: "Nuevo lugar"
+        no_sites: "Todavía no hay lugares para este proceso: registra uno con «Nuevo lugar»."
+        input_gross_weight: "lb brutas a procesar"
         estimate: "Debería salir"
         estimate_help: "Libras brutas, según el rendimiento estimado, de"
         average: "En promedio, tus procesos de este café han dado %{percent} %."
         no_average: "Todavía no hay procesos terminados de este café para comparar."
         humidity_help: "Opcional. La humedad del pergamino que entra a secar."
         over_stock: "Es más de lo que hay en inventario de este estado. Revisa el peso o registra primero las compras."
+        no_stock: "No hay café de este estado en esta bodega. Registra primero las compras o elige otra bodega: así no se puede guardar."
         submit: "Pesar y mandar a procesar"
       create:
         success: "Proceso %{number} pesado: el café quedó en proceso."
@@ -3704,6 +3718,8 @@ es:
           coffee_state: "Estado"
           gross_weight: "Bruto (lb)"
           humidity_percent: "Humedad"
+          damage_percent: "Daño"
+          damage_weight: "Restado por daño (lb)"
           quintals: "QQ"
           price_per_pound: "Precio/lb"
           total: "Total"
@@ -3718,6 +3734,7 @@ es:
           count: "Compras"
           quintals: "Quintales (QQ)"
           total: "Total comprado"
+          damage_weight: "Restado por daño (lb)"
           average_price: "Precio promedio/lb"
           producers: "Productores"
           uninvoiced: "Sin facturar"
@@ -4431,7 +4448,7 @@ es:
         summary: "Pasar café de uva a pergamino húmedo, o de húmedo a pergamino seco, en dos pasos: pesar lo que entra y registrar lo que salió."
         steps:
           - "En Comercialización → Procesos (o en Inventario), toca «Procesar café»."
-          - "Elige qué se procesa, la bodega, el lugar y las libras brutas que entran. Ese café sale de su estado y queda «En proceso»."
+          - "Elige qué se procesa, la bodega, el lugar (cada proceso tiene su propia lista de lugares) y las lb brutas a procesar. Ese café sale de su estado y queda «En proceso»."
           - "Cuando salga, abre el proceso y toca «Registrar resultado»: pesa lo que salió como una compra (libras brutas, sacos, humedad y daño). Se suma a su inventario."
           - "Al mandar a procesar se ve cuánto debería salir según el rendimiento estimado (37.95 % de la uva, 50 % al secar, o el que escribas)."
           - "El detalle compara lo estimado con lo que salió, la merma y las libras netas que entraron con las que salieron."
@@ -5259,7 +5276,8 @@ es:
             summary: "El camión que sale: comprador, papeles y el peso en la báscula local. El sistema calcula la tara, el peso neto y los QQ mientras escribes."
             steps:
               - "Elige el comprador (o «Nuevo comprador»), la fecha y hora y el estado del café."
-              - "Escribe la remisión, el transportista y la placa si los tienes."
+              - "Arriba sale el número que tendrá la salida."
+              - "Escribe la remisión si la tienes. En «¿Quién lo lleva?», elige un transportista (con el precio del viaje, lo que se le paga) o un motorista: uno o el otro. El camión va con cualquiera."
               - "Escribe el peso bruto y los sacos contados. En pergamino, revisa la humedad y el daño; en uva, el rendimiento."
               - "Revisa el cálculo y guarda."
             tips:
@@ -5365,6 +5383,7 @@ es:
             summary: "Sus datos y las salidas que ha llevado, por temporada y estado."
             steps:
               - "Filtra sus salidas por temporada o estado; cada una abre su detalle."
+              - "«Precio de sus viajes» suma lo que se anotó como precio del viaje en sus salidas no anuladas."
           form:
             title: "Registrar o editar un transportista"
             summary: "Nombre o razón social, RTN, teléfono y contacto."
@@ -5442,7 +5461,7 @@ es:
             title: "Lugares de procesamiento"
             summary: "Dónde se procesa el café, con cuántos procesos ha tenido cada uno."
             steps:
-              - "Busca por nombre o mira los desactivados."
+              - "Busca por nombre, filtra por proceso o mira los desactivados."
               - "Toca una fila para ver sus procesos."
               - "«Nuevo lugar» registra uno; también se puede desde «Procesar café»."
           show:
@@ -5452,9 +5471,10 @@ es:
               - "Toca un proceso para ver lo estimado contra lo real y su merma."
           form:
             title: "Registrar o editar un lugar"
-            summary: "El nombre del lugar y si es del negocio."
+            summary: "El nombre del lugar, qué procesos se hacen ahí y si es del negocio."
             steps:
               - "Escribe el nombre; marca «Es del negocio» si es propio (el patio, por ejemplo)."
+              - "Marca sus procesos: de uva a pergamino húmedo, de húmedo a seco, o los dos. Solo sale en la lista de los procesos marcados."
             tips:
               - "Uno con procesos no se borra: se desactiva y deja de salir en los procesos nuevos."
         warehouse_transfers:
@@ -5476,7 +5496,7 @@ es:
             summary: "Pasar café de una bodega a otra."
             steps:
               - "Elige la bodega de donde sale y a la que entra, y el estado del café."
-              - "Escribe las libras netas que se trasladan."
+              - "Escribe las libras brutas que se trasladan; a la derecha se ven las netas que equivalen en esa bodega."
             tips:
               - "Si es más de lo que hay en la bodega de salida, el sistema avisa pero deja guardar."
         stock_states:
@@ -5524,10 +5544,12 @@ es:
             summary: "Pesa el café que se manda a procesar."
             steps:
               - "Elige qué se procesa: uva a pergamino húmedo o húmedo a seco."
-              - "Escribe la fecha y hora y las libras brutas que entran; a la derecha se ven sus libras netas y quintales."
+              - "Elige el lugar: solo salen los que hacen ese proceso. «Nuevo lugar» registra uno para ese proceso."
+              - "Escribe la fecha y hora y las lb brutas a procesar; a la derecha se ven sus libras netas y quintales."
               - "Toca «Pesar y mandar a procesar»: sale de su estado y queda en proceso."
             tips:
               - "Si es más de lo que hay en inventario, avisa sin impedirlo."
+              - "Si en esa bodega no hay nada de ese café, avisa y no deja guardar."
         conversion_results:
           form:
             title: "Resultado del proceso"
@@ -7076,6 +7098,7 @@ es:
         driver: "Motorista"
         driver_id: "Motorista"
         driver_name: "Motorista (escrito)"
+        trip_price: "Precio del viaje (L)"
         observations: "Observaciones"
         origin_gross_weight: "Peso bruto local (lb)"
         origin_weight_mode: "Forma de pesar"
@@ -7239,6 +7262,7 @@ es:
         created_by_id: "Registró"
       processing_site:
         name: "Nombre"
+        from_states: "Procesos"
         own: "Es del negocio"
         observations: "Observaciones"
         active: "Activo"
@@ -7357,6 +7381,7 @@ es:
         farm_id: "Finca"
         hauler: "Carrero"
         hauler_id: "Carrero (opcional)"
+        # Columns gone on 2026-10-28; their names stay for the audit history.
         hauler_commission_percent: "Comisión del carrero (%)"
         hauler_can_price: "Precio de la lata del carrero (L)"
         hauler_cans: "Latas"
@@ -7675,6 +7700,7 @@ es:
               not_finished: "El proceso todavía no tiene resultado."
               has_costs: "El proceso tiene gastos registrados: quítalos primero para anularlo."
               output_costs: "El proceso tiene gastos cobrados sobre lo que salió: quítalos primero para quitar el resultado."
+              no_stock: "No hay %{state} en %{warehouse}: no se puede mandar a procesar. Registra primero las compras o elige otra bodega."
             finished_at:
               before_weighed: "no puede ser antes de cuando se pesó lo que entró"
             warehouse:
@@ -7683,6 +7709,7 @@ es:
               inactive: "está desactivada: elige otra"
             processing_site:
               inactive: "está desactivado: elige otro"
+              other_process: "no hace este proceso: elige uno de su lista"
         warehouse:
           attributes:
             base:
@@ -7797,6 +7824,7 @@ es:
               blank: "faltan: agrega al menos una pesada"
             base:
               sold: "La salida ya está en una venta: no se cambian su comprador, estado ni pesos. Anula la venta primero."
+              carrier_and_driver: "Lleva un transportista o un motorista, no los dos."
             buyer:
               inactive: "está desactivado"
             warehouse:

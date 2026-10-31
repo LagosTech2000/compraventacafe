@@ -20,20 +20,9 @@ module TradingHelper
     number_to_currency(value, precision: decimals)
   end
 
-  # How a purchase's carrero commission was calculated: "L 0.30 por libra
-  # neta", or, before 2026-10-24, "12.50 latas × L 50.00 × 10 %".
+  # How a purchase's carrero commission was calculated: "L 0.30 por libra neta".
   def hauler_terms(purchase)
-    if purchase.hauler_price_per_pound
-      t("trading.haulers.terms_per_pound", price: format_price_per_pound(purchase.hauler_price_per_pound))
-    elsif purchase.hauler_can_price
-      t("trading.haulers.terms_by_cans", cans: format_cans(purchase.hauler_cans), price: format_money(purchase.hauler_can_price),
-                                         percent: format_percent(purchase.hauler_commission_percent))
-    end
-  end
-
-  # "100.25": cans of a hauler's commission (Hauler::CAN_POUNDS).
-  def format_cans(value)
-    number_with_precision(value, precision: 2, delimiter: ",") if value
+    t("trading.haulers.terms_per_pound", price: format_price_per_pound(purchase.hauler_price_per_pound)) if purchase.hauler_price_per_pound
   end
 
   # "Temporada 2026-2027"

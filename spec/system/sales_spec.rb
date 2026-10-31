@@ -30,6 +30,24 @@ RSpec.describe "Sales screens", type: :system do
     expect(page).to have_select("shipment_truck_id", selected: "HBB 4321")
   end
 
+  # Client, 2026-10-30: a carrier (with its trip price) or a driver, one or the other.
+  it "shows the carrier and its trip price or the driver, never both" do
+    visit new_sales_shipment_path
+    expect(page).to have_checked_field("Un transportista")
+    expect(page).to have_field("shipment_trip_price")
+    expect(page).to have_no_field("shipment_driver_name")
+
+    choose "Un motorista"
+    expect(page).to have_field("shipment_driver_name")
+    expect(page).to have_no_field("shipment_carrier_id")
+    expect(page).to have_no_field("shipment_trip_price")
+    expect(page).to have_field("shipment_truck_id")
+
+    choose "Un transportista"
+    expect(page).to have_field("shipment_carrier_id")
+    expect(page).to have_no_field("shipment_driver_name")
+  end
+
   it "calculates a shipment while typing, warns over the stock and saves it" do
     create(:purchase, gross_weight: 500) # (500 − 4) × 0.49 = 243.04 lb in stock
     visit new_sales_shipment_path

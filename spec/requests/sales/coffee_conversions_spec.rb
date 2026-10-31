@@ -76,12 +76,16 @@ RSpec.describe "Coffee conversions" do
   end
 
   it "registers processing sites and requires one in a new process" do
-    post sales_processing_sites_path, params: { processing_site: { name: "  Patio  ", own: "1" } }
+    post sales_processing_sites_path, params: { processing_site: { name: "Patio", from_states: [ "" ] } }
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("Procesos no puede estar en blanco")
+
+    post sales_processing_sites_path, params: { processing_site: { name: "  Patio  ", own: "1", from_states: [ "", "wet_parchment", "bogus" ] } }
     site = ProcessingSite.sole
-    expect(site).to have_attributes(name: "Patio", own: true)
+    expect(site).to have_attributes(name: "Patio", own: true, from_states: [ "wet_parchment" ])
     expect(AuditEvent.where(auditable: site, action: "create")).to exist
     get sales_processing_sites_path
-    expect(page.at_css("#processing_site_#{site.id}").text.squish).to include("Patio", "Del negocio", "0")
+    expect(page.at_css("#processing_site_#{site.id}").text.squish).to include("Patio", "Pergamino húmedo → Pergamino seco", "Del negocio", "0")
 
     post sales_coffee_conversions_path, params: { coffee_conversion: { from_state: "cherry", weighed_at: Time.current, input_gross_weight: "100", estimated_yield_percent: "" } }
     expect(response).to have_http_status(:unprocessable_content)
@@ -93,6 +97,49 @@ RSpec.describe "Coffee conversions" do
     SiteSetting.create!(business_name: "Rey David", cherry_yield_percent: 40)
     get new_sales_coffee_conversion_path(from_state: "cherry")
     expect(page.at_css("#coffee_conversion_estimated_yield_percent")["value"]).to eq("40.0")
+  end
+
+  # Each process has its own places (client, 2026-10-30).
+  it "lists only the places of the process chosen and refuses one of the other process" do
+    pulper = create(:processing_site, name: "Máquina La Esperanza", from_states: %w[cherry])
+    dryer = create(:processing_site, name: "Secadora El Pino", from_states: %w[wet_parchment])
+    patio = create(:processing_site, name: "Patio", from_states: %w[cherry wet_parchment])
+
+    get new_sales_coffee_conversion_path(from_state: "wet_parchment")
+    options = page.css("#coffee_conversion_processing_site_id option[value!='']").to_h { [ it.text, it ] }
+    expect(options.keys).to contain_exactly("Máquina La Esperanza", "Secadora El Pino", "Patio")
+    expect(options["Máquina La Esperanza"]).to have_attributes(attributes: include("hidden", "disabled"))
+    expect(options["Secadora El Pino"].attributes.keys).not_to include("hidden", "disabled")
+    expect(options["Patio"]["data-from-states"]).to eq("cherry wet_parchment")
+    expect(page.at_css("a[data-conversion-preview-target=newSite]")["href"]).to include("from_state=wet_parchment")
+    expect(page.at_css("label[for='coffee_conversion_input_gross_weight']").text).to eq("lb brutas a procesar")
+
+    get new_sales_processing_site_path(picker: 1, from_state: "cherry")
+    expect(page.at_css("#processing_site_from_states_cherry")["checked"]).to be_present
+    expect(page.at_css("#processing_site_from_states_wet_parchment")["checked"]).to be_nil
+
+    params = { from_state: "wet_parchment", weighed_at: Time.current.change(sec: 0), estimated_yield_percent: "50", input_gross_weight: "100" }
+    post sales_coffee_conversions_path, params: { coffee_conversion: params.merge(processing_site_id: pulper.id) }
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("Lugar no hace este proceso")
+    post sales_coffee_conversions_path, params: { coffee_conversion: params.merge(processing_site_id: dryer.id) }
+    expect(CoffeeConversion.sole.processing_site).to eq(dryer)
+
+    get sales_processing_sites_path(process: "cherry")
+    expect(page.css("tbody tr").map { it.at_css("td").text.squish }).to contain_exactly("Máquina La Esperanza", "Patio")
+  end
+
+  # With no coffee of that state in the warehouse it is not saved (client, 2026-10-30).
+  it "warns and refuses to process a state with no coffee in the warehouse" do
+    site = create(:processing_site)
+    get new_sales_coffee_conversion_path(from_state: "cherry")
+    expect(page.at_css("[data-conversion-preview-target=noStock]").text).to include("No hay café de este estado en esta bodega")
+
+    post sales_coffee_conversions_path, params: { coffee_conversion: { from_state: "cherry", weighed_at: Time.current.change(sec: 0), processing_site_id: site.id,
+                                                                         estimated_yield_percent: "37.95", input_gross_weight: "100" } }
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("No hay Uva en Bodega 1: no se puede mandar a procesar")
+    expect(CoffeeConversion.count).to eq(0)
   end
 
   it "says in Spanish what is missing" do
