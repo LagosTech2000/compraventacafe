@@ -9,6 +9,7 @@
       <div><dt class="inline font-semibold"><%= Person.human_attribute_name(:dni) %>:</dt> <dd class="inline"><%= person.dni %></dd></div>
     <% end %>
     <div><dt class="inline font-semibold"><%= t("loans.payments.receipt.loan") %>:</dt> <dd class="inline"><%= payment.loan_id %></dd></div>
+    <div><dt class="inline font-semibold"><%= Loan.human_attribute_name(:disbursed_on) %>:</dt> <dd class="inline"><%= l(payment.loan.disbursed_on, format: :long) %></dd></div>
     <div><dt class="inline font-semibold"><%= LoanPayment.human_attribute_name(:paid_on) %>:</dt> <dd class="inline"><%= l(payment.paid_on, format: :long) %></dd></div>
     <div><dt class="inline font-semibold"><%= LoanPayment.human_attribute_name(:payment_method) %>:</dt> <dd class="inline"><%= payment_method_label(payment) %></dd></div>
     <% if payment.money_account %>
