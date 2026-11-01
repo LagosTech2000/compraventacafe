@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_30_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_01_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -396,6 +396,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_30_130000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "bank_key"
+    t.index "(true)", name: "index_money_accounts_one_for_loans", unique: true, where: "('loans'::text = ANY ((default_for)::text[]))"
     t.index "lower((name)::text)", name: "index_money_accounts_on_lower_name", unique: true
   end
 

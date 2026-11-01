@@ -2435,7 +2435,7 @@ es:
       form:
         name_placeholder: "Por ejemplo: Caja de la bodega, Banco Atlántida"
         opening_help: "El saldo con que empieza la cuenta en el sistema, a esa fecha."
-        default_for_help: "Al registrar un pago con esa forma, se sugiere esta cuenta."
+        default_for_help: "Al registrar un pago con esa forma, se sugiere esta cuenta. «Préstamos» va sola: los préstamos y sus abonos empiezan con esta cuenta, y solo una cuenta la puede tener."
         pick_bank: "Selecciona el banco"
         other_bank: "Otro banco (escribirlo)"
         bank_name: "Nombre del banco"
@@ -5757,6 +5757,8 @@ es:
               - "Escribe el nombre y elige si es caja o banco."
               - "Escribe el saldo con que empieza en el sistema y su fecha."
               - "Marca las formas de pago para las que se sugiere al registrar un pago."
+            tips:
+              - "«Préstamos» hace de esta la cuenta de los préstamos: un préstamo nuevo y sus abonos empiezan con ella. Va sola (quita las formas de pago) y solo una cuenta la tiene."
         account_transfers:
           form:
             title: "Transferir entre cuentas"
@@ -6963,6 +6965,7 @@ es:
         opening_balance: "Saldo inicial"
         opening_on: "Fecha del saldo inicial"
         default_for: "Se sugiere para"
+        default_for/loans: "Préstamos"
         observations: "Observaciones"
         active: "Activa"
       finance_category:
@@ -7780,6 +7783,8 @@ es:
           attributes:
             default_for:
               inclusion: "tiene una forma de pago que no existe"
+            base:
+              one_for_loans: "Solo una cuenta puede ser la de préstamos, y ya lo es %{account}: quítaselo ahí primero."
         finance_category:
           attributes:
             parent:

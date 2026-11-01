@@ -164,6 +164,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Cierre de comercialización | `SalesDailyClose` |
 | Control financiero | `finance` |
 | Cuenta (caja / banco) / saldo de la cuenta | `MoneyAccount` (`kind`: `cash` / `bank`, `default_for`) / `AccountBalance` |
+| Cuenta de préstamos («Se sugiere para: Préstamos») | `MoneyAccount::LOANS` (`MoneyAccount.for_loans`, `#for_loans?`) |
 | Banco de la cuenta / tarjeta de la cuenta | `MoneyAccount#bank_key` (`HondurasBank`, `db/data/honduras_banks.yml`, `other`) / `finance/money_accounts/_card` (arte en `_card_art`, SVG; `BankCardHelper`), `.bank-card-*` |
 | Gasto / inversión / comprobante | `Expense` (`kind`: `expense` / `investment`) / `ExpenseReceipt` |
 | Categoría financiera (dos niveles) | `FinanceCategory` (`parent`) |
@@ -1271,6 +1272,12 @@ salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
 
 - **Cuentas** (`MoneyAccount`): caja o banco, con saldo inicial y su
   fecha; cada una dice para qué formas de pago se sugiere (`default_for`).
+  **«Préstamos»** (Fernando, 2026-11-01) la hace la cuenta de los
+  préstamos: **va sola** (quita las formas de pago; en el formulario,
+  `exclusive_choice_controller.js`), **solo una cuenta** la tiene
+  (validación + índice único parcial) y Nuevo préstamo y el abono a
+  préstamo empiezan con ella (`MoneyAccount.for_loans`; cambiar la forma
+  de pago no la mueve). Sin ella, el préstamo sigue con la de efectivo.
   Saldo = inicial + entradas − salidas (`AccountBalance`, sumas en SQL de
   todas las fuentes). Se desactivan; no se borran. Estado de cuenta
   imprimible con el saldo después de cada movimiento. **La lista son

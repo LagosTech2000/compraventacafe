@@ -8,12 +8,19 @@
 # A bank account's bank is one of Honduras' main banks (HondurasBank) or
 # typed by hand ("other"); each shows as a card with its bank's colors
 # (Fernando, 2026-10-25).
+#
+# One account can be the loans' one (Fernando, 2026-11-01): «Préstamos» in
+# its suggestions, alone (it takes off the payment methods), in one account
+# only; the Préstamos module's forms start with it.
 class MoneyAccount < ApplicationRecord
   include Auditable
   include LiveUpdates
   live_updates :finance
 
   KINDS = %w[cash bank].freeze
+  LOANS = "loans"
+  # What an account can be suggested for: the payment methods, or the loans.
+  SUGGESTIONS = (Invoice::PAYMENT_METHODS + [ LOANS ]).freeze
 
   has_many :cash_counts, -> { newest_first }, dependent: :restrict_with_error, inverse_of: :money_account
 
@@ -29,12 +36,15 @@ class MoneyAccount < ApplicationRecord
   validates :opening_on, presence: true
   validates :observations, length: { maximum: 500 }
   validate :known_methods
+  validate :one_for_loans
 
   scope :active, -> { where(active: true) }
   scope :alphabetical, -> { order(:name) }
   scope :newest_first, -> { order(:name) }
 
   before_validation { self.default_for = Array(default_for).compact_blank.uniq }
+  # The loans' account is for the loans alone.
+  before_validation { self.default_for = [ LOANS ] if default_for.include?(LOANS) }
   before_validation :settle_bank
 
   def audit_label = name
@@ -65,6 +75,17 @@ class MoneyAccount < ApplicationRecord
     active.where("? = ANY(default_for)", method.to_s).order(:id).first
   end
 
+  # The active account the Préstamos module starts with, if one is.
+  def self.for_loans
+    active.where("? = ANY(default_for)", LOANS).first
+  end
+
+  def self.human_suggestion(key)
+    key == LOANS ? human_attribute_name("default_for/#{LOANS}") : Invoice.human_attribute_name("payment_method/#{key}")
+  end
+
+  def for_loans? = default_for.include?(LOANS)
+
   # { "cash" => id, "transfer" => id, ... } for the forms' suggestion.
   def self.defaults_by_method
     Invoice::PAYMENT_METHODS.index_with { |method| default_for(method)&.id }.compact
@@ -84,6 +105,13 @@ class MoneyAccount < ApplicationRecord
     end
 
     def known_methods
-      errors.add(:default_for, :inclusion) if (default_for - Invoice::PAYMENT_METHODS).any?
+      errors.add(:default_for, :inclusion) if (default_for - SUGGESTIONS).any?
+    end
+
+    def one_for_loans
+      return unless for_loans?
+
+      other = MoneyAccount.where.not(id:).where("? = ANY(default_for)", LOANS).first
+      errors.add(:base, :one_for_loans, account: other.name) if other
     end
 end
