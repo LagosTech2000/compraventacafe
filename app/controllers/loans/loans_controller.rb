@@ -16,7 +16,7 @@ module Loans
 
     def new
       @loan = authorize Loan.new(disbursed_on: Time.zone.today, person: Person.find_by(id: params[:person_id]),
-                                 money_account: MoneyAccount.default_for("cash"))
+                                 money_account: MoneyAccount.for_loans || MoneyAccount.default_for("cash"))
     end
 
     def create

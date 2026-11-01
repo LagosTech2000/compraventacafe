@@ -41,14 +41,15 @@
       <%= form.date_field :opening_on, required: true, class: "field-input" %>
       <p class="mt-1 text-xs text-ink-muted"><%= t("finance.money_accounts.form.opening_help") %></p>
     </div>
-    <fieldset class="sm:col-span-2">
+    <fieldset class="sm:col-span-2" data-controller="exclusive-choice">
       <legend class="field-label"><%= MoneyAccount.human_attribute_name(:default_for) %></legend>
       <%= hidden_field_tag "money_account[default_for][]", "", id: nil %>
       <div class="flex flex-wrap gap-x-6 gap-y-2">
-        <% Invoice::PAYMENT_METHODS.each do |method| %>
+        <% MoneyAccount::SUGGESTIONS.each do |method| %>
           <label class="flex min-h-11 items-center gap-2 text-sm font-medium">
-            <%= check_box_tag "money_account[default_for][]", method, account.default_for.include?(method), id: "default_for_#{method}", class: "size-4 accent-primary" %>
-            <%= Invoice.human_attribute_name("payment_method/#{method}") %>
+            <%= check_box_tag "money_account[default_for][]", method, account.default_for.include?(method), id: "default_for_#{method}", class: "size-4 accent-primary",
+                  data: { exclusive_choice_target: method == MoneyAccount::LOANS ? "alone" : "option", action: "exclusive-choice#pick" } %>
+            <%= MoneyAccount.human_suggestion(method) %>
           </label>
         <% end %>
       </div>

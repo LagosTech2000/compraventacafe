@@ -40,6 +40,7 @@ RSpec.describe "Loans flow" do
     expect(response.body).not_to include("border-dashed")
     expect(page.text).to include("ORIGINAL", "COPIA", "Recibo de abono #{first.display_number}", person.full_name,
                                  "L 300.00", "L 700.00") # what was owed right after it, not today
+    expect(copy.text).to include("Fecha del préstamo: #{I18n.l(loan.disbursed_on, format: :long)}")
 
     get loans_loan_payment_path(loan, first), headers: { "Turbo-Frame" => "modal" }
     expect(Nokogiri::HTML(response.body).css("article").size).to eq(1)
@@ -148,6 +149,16 @@ RSpec.describe "Loans flow" do
 
       get loans_loan_path(loan)
       expect(response.body).to include("Mixto", "Insumos prestados", "Abono 18-46-0", "3 saco", "L 3,600.00", "L 5,600.00")
+    end
+
+    it "starts a new loan with the loans' account, or the cash one when there is none" do
+      create(:money_account, name: "Caja", default_for: %w[cash])
+      get new_loans_loan_path
+      expect(Nokogiri::HTML(response.body).at_css("#loan_money_account_id option[selected]").text).to eq("Caja")
+
+      create(:money_account, name: "Cuenta de préstamos", default_for: %w[loans])
+      get new_loans_loan_path
+      expect(Nokogiri::HTML(response.body).at_css("#loan_money_account_id option[selected]").text).to eq("Cuenta de préstamos")
     end
 
     it "offers active supplies with their default price to the form, and filters loans by kind" do

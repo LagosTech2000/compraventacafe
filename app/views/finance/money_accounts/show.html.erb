@@ -44,7 +44,7 @@
              ([ MoneyAccount.human_attribute_name(:bank_name), @account.bank_name ] if @account.bank?),
              [ MoneyAccount.human_attribute_name(:account_number), @account.account_number ],
              [ MoneyAccount.human_attribute_name(:opening_balance), "#{signed_money(@account.opening_balance)} · #{t(".since", date: l(@account.opening_on))}" ],
-             [ MoneyAccount.human_attribute_name(:default_for), @account.default_for.map { Invoice.human_attribute_name("payment_method/#{it}") }.to_sentence ],
+             [ MoneyAccount.human_attribute_name(:default_for), @account.default_for.map { MoneyAccount.human_suggestion(it) }.to_sentence ],
              [ MoneyAccount.human_attribute_name(:active), t(@account.active? ? ".yes" : ".no") ] ].compact.each do |label, value| %>
           <div><dt class="text-xs text-ink-muted"><%= label %></dt><dd><%= value.presence || "—" %></dd></div>
         <% end %>

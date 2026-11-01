@@ -28,6 +28,29 @@ RSpec.describe "Finance screens", type: :system do
     expect(Expense.last).to have_attributes(money_account: box, payment_method: "check")
   end
 
+  it "makes «Préstamos» go alone on the account, and starts the loans and their payments with that account" do
+    visit new_finance_money_account_path
+    fill_in "money_account_name", with: "Cuenta de préstamos"
+    fill_in "money_account_opening_balance", with: "0"
+    check "default_for_cash"
+    check "default_for_loans"
+    expect(page).to have_unchecked_field("default_for_cash")
+    check "default_for_transfer"
+    expect(page).to have_unchecked_field("default_for_loans")
+    check "default_for_loans"
+    click_button "Crear Cuenta"
+    expect(page).to have_text("Cuenta de préstamos")
+    account = MoneyAccount.find_by!(name: "Cuenta de préstamos")
+    expect(account.default_for).to eq(%w[loans])
+
+    create(:permission, user:, module_key: "loans", can_read: true, can_create: true)
+    loan = create(:loan, cash_amount: 500)
+    visit new_loans_loan_payment_path(loan)
+    expect(page).to have_select("loan_payment_money_account_id", selected: "Cuenta de préstamos")
+    select "Efectivo", from: "loan_payment_payment_method"
+    expect(page).to have_select("loan_payment_money_account_id", selected: "Cuenta de préstamos")
+  end
+
   it "filters what is without an account by an amount as it is typed, and gives a category only where it applies" do
     small = create(:loan, cash_amount: 300)
     create(:loan, cash_amount: 900)

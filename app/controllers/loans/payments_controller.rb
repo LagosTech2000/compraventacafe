@@ -4,7 +4,8 @@ module Loans
     before_action :set_payroll, only: %i[ new create ]
 
     def new
-      @payment = authorize @loan.payments.build(paid_on: Time.zone.today)
+      # The loans' account first; changing the method does not move it.
+      @payment = authorize @loan.payments.build(paid_on: Time.zone.today, money_account: MoneyAccount.for_loans)
       @balance = @loan.balance
     end
 
