@@ -109,6 +109,9 @@ RSpec.describe "Printable documents" do
     get trading_daily_close_path
     expect_letterhead("Cierre diario")
 
+    get loans_daily_close_path
+    expect_letterhead("Cierre diario de préstamos")
+
     get loans_credit_account_path(producer.person)
     expect_letterhead("Estado de cuenta")
     expect(Nokogiri::HTML(response.body).at("main").text).not_to include("%>", "tabs:")

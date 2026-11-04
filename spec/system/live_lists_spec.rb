@@ -20,6 +20,8 @@ RSpec.describe "Live lists", type: :system do
     create(:hauler, person: luis.person)
     create(:loan, person: ana.person)
     create(:loan, person: luis.person)
+    create(:purchase, producer: ana)
+    create(:purchase, producer: luis)
     create(:supply, name: "Zelaya urea")
     create(:supply, name: "Mejía abono")
     create(:expense_category, name: "Zelaya combustible")
@@ -54,7 +56,8 @@ RSpec.describe "Live lists", type: :system do
     "/sales/shipments" => "shipments-list", "/sales/sales" => "sales-list", "/sales/buyers" => "buyers-list", "/sales/carriers" => "carriers-list", "/sales/trucks" => "trucks-list", "/sales/warehouses" => "warehouses-list", "/sales/sites" => "processing-sites-list", "/sales/conversions" => "conversions-list",
     "/finance/movements" => "movements-list", "/finance/incomes" => "incomes-list",
     "/finance/staff" => "staff-list", "/finance/staff/roles" => "staff-roles-list", "/finance/expenses" => "expenses-list", "/finance/money_accounts" => "accounts-list",
-    "/finance/categories" => "categories-list", "/finance/consolidation" => "consolidation-list"
+    "/finance/categories" => "categories-list", "/finance/consolidation" => "consolidation-list",
+    "/loans/coffee_collection" => "coffee-collection-list"
   }.each do |path, frame|
     it "filters #{path} as the user types, in its frame" do
       visit path

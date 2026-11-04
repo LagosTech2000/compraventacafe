@@ -138,9 +138,9 @@ class MoneyMovements
     end
 
     def payroll_expenses
-      narrowed(PayrollExpense.joins(:category, payroll: :farm), "payroll_expenses.spent_on", "payroll_expenses.money_account_id")
+      narrowed(PayrollExpense.joins(:category, payroll: :farm).left_joins(category: :parent), "payroll_expenses.spent_on", "payroll_expenses.money_account_id")
         .pluck("payroll_expenses.id", "payroll_expenses.spent_on", "payroll_expenses.amount", "payroll_expenses.description",
-               "expense_categories.name", "farms.name", "payroll_expenses.payroll_id", "payroll_expenses.money_account_id", "payroll_expenses.created_at")
+               Arel.sql(ExpenseCategory::FULL_NAME_SQL), "farms.name", "payroll_expenses.payroll_id", "payroll_expenses.money_account_id", "payroll_expenses.created_at")
         .map do |id, date, amount, description, category, farm, payroll_id, account_id, created_at|
           movement(id:, date:, created_at:, source: "payroll_expenses", description: I18n.t("money_movements.payroll_expense", description:, farm:),
                    category:, amount_out: amount, account_id:, route: [ :farms_payroll_path, payroll_id, { tab: "expenses" } ])

@@ -7,6 +7,13 @@
           placeholder: t("farms.expense_categories.form.name_placeholder"),
           data: { missing_message: "#{ExpenseCategory.human_attribute_name(:name)} #{t("errors.messages.blank")}" } %>
   </div>
+  <div>
+    <%= form.label :parent_id, class: "field-label" %>
+    <% parents = ExpenseCategory.top_level.active.alphabetical.where.not(id: category.id).pluck(:name, :id) %>
+    <%= form.select :parent_id, parents, { include_blank: t("farms.expense_categories.form.no_parent") }, class: "field-input",
+          disabled: category.persisted? && category.children.any? %>
+    <p class="mt-1 text-xs text-ink-muted"><%= t(category.persisted? && category.children.any? ? "farms.expense_categories.form.has_children_help" : "farms.expense_categories.form.parent_help") %></p>
+  </div>
   <% if category.persisted? %>
     <label class="flex items-center gap-2 text-sm font-medium">
       <%= form.check_box :active, class: "size-4 accent-primary" %>

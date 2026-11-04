@@ -1,0 +1,9 @@
+<%# The nearest due date of the person's unpaid loans, and how many are late. %>
+<% overdue = row.account.overdue_loans.size %>
+<p class="text-sm">
+  <% if (due = row.next_due_on) %><span class="whitespace-nowrap"><%= l(due) %></span><% end %>
+  <% if overdue.positive? %>
+    <span class="badge badge-danger ml-1"><%= t("loans.coffee_collections.show.overdue", count: overdue) %></span>
+  <% end %>
+</p>
+<p class="text-xs text-ink-muted"><%= t("loans.coffee_collections.show.open_loans", count: row.account.open_loans.size) %></p>

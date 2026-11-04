@@ -1,0 +1,96 @@
+<% content_for :title, t(".title") %>
+<%# Live list: back and forward ask the server again (the frame changed the page). %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= live_updates_from :loans, :trading %>
+<%= render "loans/nav" %>
+
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <%= help_guide_button HelpGuide.process(:coffee_payment), label: true %>
+</div>
+
+<dl class="mt-5 flex flex-wrap gap-3">
+  <% { people: @summary[:people], available: format_money(@summary[:available]), owed: format_money(@summary[:owed]) }.each do |key, value| %>
+    <div class="stat min-w-0 flex-1 basis-48">
+      <dt><%= t(".stats.#{key}") %></dt>
+      <dd data-live-value><%= value %></dd>
+    </div>
+  <% end %>
+</dl>
+
+<% periods = CoffeeCollectionFilter::PERIODS.map { [ t(".periods.#{it}"), it ] } %>
+<%# Filters apply as they change and only the results reload (live_filter_controller.js). %>
+<div class="mt-6" data-controller="live-filter">
+<%= render layout: "shared/filters", locals: { filter: @filter, url: loans_coffee_collection_path, frame: "coffee-collection-list", live: true } do |form| %>
+  <%= filter_text_field form, :q, Loan.human_attribute_name(:person), value: @filter.q, placeholder: t("loans.loans.index.search_placeholder") %>
+  <%= filter_select form, :period, t("loans.coffee_collections.show.period"), periods, selected: @filter.period, all: t("loans.coffee_collections.show.periods.all") %>
+<% end %>
+
+<%= list_frame "coffee-collection-list" do %>
+<%= live_list_status @filter, period: periods %>
+<% sorting = { filter: @filter, frame: "coffee-collection-list" } %>
+<% can_settle = policy([ :loans, :coffee_collection ]).settle? %>
+<div class="mt-6">
+  <% if @rows.any? %>
+    <div class="@container">
+      <ul class="space-y-3 @4xl:hidden">
+        <% @rows.each do |row| %>
+          <li class="data-card" id="<%= dom_id(row.person, :coffee_collection_card) %>">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="font-medium"><%= with_avatar(row.person) %></p>
+                <p class="text-xs text-ink-muted"><%= [ row.person.zone&.name, format_phone(row.person.phone).presence ].compact.join(" · ") %></p>
+              </div>
+              <%= modal_link_to t(".account"), loans_credit_account_path(row.person), class: "btn btn-sm", data: { row_link: true } %>
+            </div>
+            <dl class="mt-3 grid grid-cols-2 gap-2 text-sm">
+              <div><dt class="text-xs text-ink-muted"><%= t(".columns.owed") %></dt><dd class="font-semibold tabular-nums"><%= format_money(row.account.total_owed) %></dd></div>
+              <div><dt class="text-xs text-ink-muted"><%= t(".columns.available") %></dt><dd class="font-semibold tabular-nums text-success"><%= format_money(row.available) %></dd></div>
+            </dl>
+            <%= render "loans/coffee_collections/standing", row: %>
+            <%= render "loans/coffee_collections/purchases", row:, can_settle: %>
+          </li>
+        <% end %>
+      </ul>
+      <div class="hidden overflow-x-auto panel @4xl:block">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <%= sort_th Loan.human_attribute_name(:person), :person, sorting %>
+              <%= sort_th t(".columns.owed"), :owed, sorting, class: "text-right" %>
+              <%= sort_th t(".columns.due_on"), :due_on, sorting %>
+              <%= sort_th t(".columns.last_purchase"), :last_purchase, sorting %>
+              <%= sort_th t(".columns.available"), :available, sorting %>
+              <th class="cell-actions"><span class="sr-only"><%= t("loans.payments.table.actions") %></span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @rows.each do |row| %>
+              <tr id="<%= dom_id(row.person, :coffee_collection) %>" class="align-top">
+                <td>
+                  <p class="font-medium"><%= with_avatar(row.person) %></p>
+                  <p class="text-xs text-ink-muted"><%= [ row.person.zone&.name, format_phone(row.person.phone).presence ].compact.join(" · ") %></p>
+                </td>
+                <td class="whitespace-nowrap text-right font-semibold tabular-nums"><%= format_money(row.account.total_owed) %></td>
+                <td><%= render "loans/coffee_collections/standing", row: %></td>
+                <td class="whitespace-nowrap"><%= l(row.last_purchased_at, format: :short) %></td>
+                <td class="min-w-80"><%= render "loans/coffee_collections/purchases", row:, can_settle: %></td>
+                <td class="cell-actions">
+                  <%= modal_link_to t(".account"), loans_credit_account_path(row.person), class: "btn btn-sm", data: { row_link: true } %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "coffee-collection-list" %>
+  <% else %>
+    <p class="empty-state"><%= t(".empty") %></p>
+  <% end %>
+</div>
+<% end %>
+</div>

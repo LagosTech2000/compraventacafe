@@ -1,0 +1,43 @@
+<% result = simulation.result %>
+<section aria-labelledby="simulation-total" class="space-y-5">
+  <div class="panel p-5">
+    <p id="simulation-total" class="text-sm text-ink-muted"><%= t("loans.simulations.show.total_on", date: l(simulation.paid_on, format: :long)) %></p>
+    <p class="mt-1 text-3xl font-bold tabular-nums text-primary" data-live-value><%= format_money(result.total) %></p>
+    <dl class="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+      <div><dt class="text-xs text-ink-muted"><%= Loan.human_attribute_name(:principal) %></dt><dd class="font-semibold tabular-nums"><%= format_money(simulation.amount) %></dd></div>
+      <div><dt class="text-xs text-ink-muted"><%= t("loans.simulations.show.interest") %></dt><dd class="font-semibold tabular-nums"><%= format_money(result.interest) %></dd></div>
+      <div><dt class="text-xs text-ink-muted"><%= t("loans.simulations.show.days") %></dt><dd class="font-semibold tabular-nums"><%= result.days %></dd></div>
+      <div><dt class="text-xs text-ink-muted"><%= t("loans.simulations.show.per_day") %></dt><dd class="font-semibold tabular-nums"><%= format_money(simulation.interest_per_day) %></dd></div>
+    </dl>
+    <% if simulation.interest_grace %>
+      <p class="mt-3 text-xs text-ink-muted"><%= t("loans.simulations.show.grace_note", days: Loan::GRACE_DAYS) %></p>
+    <% end %>
+    <p class="mt-3 text-xs text-ink-muted"><%= t("loans.simulations.show.not_saved") %></p>
+  </div>
+
+  <div>
+    <h2 class="mb-2 text-base font-semibold"><%= t("loans.simulations.show.by_month") %></h2>
+    <div class="overflow-x-auto panel">
+      <table class="data-table data-table-compact" data-controller="table-sort">
+        <thead>
+          <tr>
+            <th><%= t("loans.simulations.show.columns.date") %></th>
+            <th class="text-right"><%= t("loans.simulations.show.columns.days") %></th>
+            <th class="text-right"><%= t("loans.simulations.show.columns.interest") %></th>
+            <th class="text-right"><%= t("loans.simulations.show.columns.total") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% simulation.by_month.each do |point| %>
+            <tr>
+              <td class="whitespace-nowrap"><%= l(point.date) %></td>
+              <td class="text-right tabular-nums"><%= point.days %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(point.interest) %></td>
+              <td class="whitespace-nowrap text-right font-semibold tabular-nums"><%= format_money(point.total) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>

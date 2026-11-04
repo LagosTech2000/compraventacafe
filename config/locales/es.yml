@@ -325,6 +325,10 @@ es:
             one: "Venció el %{date} · 1 día de atraso"
             other: "Venció el %{date} · %{count} días de atraso"
           action: "Registrar abono"
+        due_soon_loans:
+          title: "Vencen pronto"
+          help: "Préstamos que vencen en los próximos %{days} días, lo más cercano primero, con lo que deben hoy."
+          due: "Vence el %{date} · %{distance}"
         periods_to_pay:
           title: "Períodos de planilla por pagar"
           help: "Períodos que ya llegaron a su día de pago y no se han pagado."
@@ -499,6 +503,9 @@ es:
         overdue_loans:
           one: "1 préstamo vencido, deben"
           other: "%{count} préstamos vencidos, deben"
+        due_soon_loans:
+          one: "1 préstamo vence en los próximos 7 días, deben"
+          other: "%{count} préstamos vencen en los próximos 7 días, deben"
         periods_to_pay:
           one: "1 período de planilla por pagar"
           other: "%{count} períodos de planilla por pagar"
@@ -527,6 +534,7 @@ es:
           unsold_shipments: "Vender"
           unpaid_sales: "Ver ventas"
           overdue_loans: "Ver préstamos"
+          due_soon_loans: "Ver préstamos"
           periods_to_pay: "Pagar"
           members_without_wage: "Asignar salario"
           over_budget: "Ver presupuesto"
@@ -685,6 +693,9 @@ es:
           unpaid: "Facturas por pagarle"
         loans: "Préstamos"
         owed_today: "Debe hoy (capital más interés)"
+        owes_hint:
+          one: "Debe 1 préstamo (vence el %{date}). Al guardar la compra puedes abonar con este café."
+          other: "Debe %{count} préstamos (el primero vence el %{date}). Al guardar la compra puedes abonar con este café."
         overdue:
           one: "1 préstamo vencido"
           other: "%{count} préstamos vencidos"
@@ -885,6 +896,7 @@ es:
       create:
         success: "Compra de %{producer} registrada."
         zone_given: "%{producer} no tenía zona: quedó en %{zone}."
+        owes: "Debe %{amount} en préstamos: en la compra, «Abonar con esta compra» lo descuenta de este café."
       update:
         success: "Compra actualizada."
       destroy:
@@ -969,6 +981,8 @@ es:
         nothing_to_invoice: "No hay compras sin facturar."
         pick_purchases: "Compras de %{producer} sin facturar"
         owes_html: "%{person} debe %{amount} en préstamos. Para descontarlo, abre el «Detalle» de una compra y toca «Abonar con esta compra»."
+        owes_settle: " También puedes tocar «Abonar con esta compra» en cada compra de la lista."
+        settle: "Abonar con esta compra"
         to_loans: "%{amount} a préstamos"
         new_purchase: "Nueva compra para este productor"
         no_purchases: "Este productor no tiene compras sin facturar."
@@ -2649,6 +2663,12 @@ es:
       loans: "Préstamos"
       credit_accounts: "Estados de cuenta"
       supplies: "Insumos"
+      coffee_collection: "Cobrar con café"
+      collection_calendar: "Calendario de cobro"
+      portfolio: "Cartera"
+      seasons: "Por cosecha"
+      daily_close: "Cierre diario"
+      simulation: "Simulador"
     score:
       label: "Score de pago"
       categories:
@@ -2691,6 +2711,14 @@ es:
         title: "Préstamos"
         search_placeholder: "Nombre, apellido, DNI o RTN"
         empty: "No hay préstamos que coincidan con los filtros."
+        season: "Cosecha"
+        season_option: "Temporada %{season}"
+        due_from: "Vence desde"
+        due_to: "Vence hasta"
+        chips:
+          season: "Cosecha: %{season}"
+          due_from: "Vence desde el %{date}"
+          due_to: "Vence hasta el %{date}"
       show:
         title: "Préstamo %{number}"
         edit: "Editar"
@@ -2707,6 +2735,7 @@ es:
         supplies_amount: "Valor de los insumos"
         rate: "Tasa de interés mensual"
         term: "Plazo"
+        season: "Cosecha"
         term_days:
           one: "%{count} día"
           other: "%{count} días"
@@ -2748,6 +2777,182 @@ es:
         success: "Préstamo actualizado."
       destroy:
         success: "Préstamo borrado."
+    due_distance:
+      today: "vence hoy"
+      ahead:
+        one: "en 1 día"
+        other: "en %{count} días"
+      late:
+        one: "hace 1 día"
+        other: "hace %{count} días"
+    coffee_collections:
+      show:
+        title: "Cobrar con café"
+        help: "Las personas que deben préstamos y tienen compras de café cuyo dinero todavía puede ir a sus préstamos. Toca «Abonar con café» en una compra para descontar de ella; cuánto se descuenta lo decides ahí."
+        stats:
+          people: "Personas con café para abonar"
+          available: "Café que se puede abonar"
+          owed: "Lo que deben hoy"
+        period: "Compras"
+        periods:
+          all: "Todas las que tienen dinero disponible"
+          today: "De hoy"
+          week: "De los últimos 7 días"
+          month: "De los últimos 30 días"
+        columns:
+          owed: "Debe hoy"
+          due_on: "Vence"
+          last_purchase: "Última compra"
+          available: "Café para abonar"
+        overdue:
+          one: "1 vencido"
+          other: "%{count} vencidos"
+        open_loans:
+          one: "1 préstamo por cobrar"
+          other: "%{count} préstamos por cobrar"
+        purchase: "Compra %{number}"
+        available_html: "Disponible para abonar: %{amount}"
+        settle: "Abonar con café"
+        account: "Estado de cuenta"
+        empty: "Nadie que deba tiene compras con dinero disponible para abonar."
+    collection_calendars:
+      show:
+        title: "Calendario de cobro"
+        help: "Lo que deben hoy los préstamos por cobrar, según la semana en que vencen (de lunes a domingo). Toca una semana para ver sus préstamos."
+        weeks: "Semanas"
+        late: "Vencidos"
+        this_week: "Esta semana"
+        week_of: "Semana del %{date}"
+        week_long: "%{label}: del %{from} al %{to}"
+        later: "Más adelante"
+        later_long: "Más adelante: desde el %{date}"
+        loans:
+          zero: "Sin préstamos"
+          one: "1 préstamo"
+          other: "%{count} préstamos"
+        people:
+          one: "1 persona"
+          other: "%{count} personas"
+        bucket_summary:
+          zero: "Sin préstamos"
+          one: "1 préstamo de %{people} · deben %{amount}"
+          other: "%{count} préstamos de %{people} · deben %{amount}"
+        empty: "No hay préstamos que venzan en esta semana."
+    portfolios:
+      show:
+        title: "Cartera"
+        help: "Todo lo que deben hoy los préstamos por cobrar, según qué tan cerca o tan atrasada está su fecha límite, y por la zona de cada persona. Es lo que el sistema ya calcula: capital pendiente más interés a hoy."
+        stats:
+          owed: "Por cobrar hoy"
+          late: "Vencido"
+          late_share: "Parte vencida"
+          loans: "Préstamos por cobrar"
+          people: "Personas"
+        bar_label: "Cartera por tramos"
+        by_bucket: "Por tramo"
+        by_zone: "Por zona"
+        by_zone_help: "Lo que debe hoy cada zona en cada tramo. La zona es la de la persona."
+        buckets:
+          current: "Al día: vence en más de 30 días"
+          due_soon: "Vence en los próximos 30 días"
+          late_30: "Vencido de 1 a 30 días"
+          late_60: "Vencido de 31 a 60 días"
+          late_90: "Vencido de 61 a 90 días"
+          late_more: "Vencido hace más de 90 días"
+        buckets_short:
+          current: "Al día"
+          due_soon: "Vence ≤ 30 d"
+          late_30: "1–30 d"
+          late_60: "31–60 d"
+          late_90: "61–90 d"
+          late_more: "+90 d"
+        columns:
+          bucket: "Tramo"
+          loans: "Préstamos"
+          people: "Personas"
+          principal: "Capital"
+          interest: "Interés"
+          total: "Debe hoy"
+          share: "% del total"
+          late: "Vencido"
+        see_loans: "Ver préstamos"
+        no_zone: "Sin zona"
+        empty: "No hay préstamos por cobrar."
+    simulations:
+      show:
+        title: "Simulador de préstamo"
+        help: "Cuánto debería un préstamo en una fecha, con la misma regla de interés de todos los préstamos: interés simple por día sobre el capital. No guarda nada."
+        days: "Días"
+        interest_grace: "Tipo intermediario: los primeros %{days} días no generan interés"
+        calculate: "Calcular"
+        empty: "Escribe el monto, la tasa y las fechas para ver cuánto debería."
+        total_on: "Debería el %{date}"
+        interest: "Interés"
+        per_day: "Interés por día"
+        grace_note: "Los primeros %{days} días no cuentan interés (tipo intermediario)."
+        not_saved: "Es solo una simulación: no se guarda nada y no cambia ningún préstamo."
+        by_month: "Mes por mes, sin abonos"
+        columns:
+          date: "Fecha"
+          days: "Días"
+          interest: "Interés"
+          total: "Debería"
+    daily_closes:
+      show:
+        title: "Cierre diario de préstamos · %{date}"
+        print_title: "Cierre diario de préstamos"
+        help: "Lo que se prestó ese día (efectivo e insumos) y lo que se cobró, por forma de pago y por cuenta. Los abonos con café o por planilla no mueven dinero: no entran a ninguna cuenta."
+        date: "Fecha del cierre"
+        print: "Imprimir"
+        stats:
+          lent: "Prestado"
+          lent_cash: "Prestado en efectivo"
+          lent_supplies: "Prestado en insumos"
+          collected: "Cobrado"
+          interest_collected: "Cobrado de interés"
+          collected_money: "Cobrado en dinero"
+        by_method: "Cobrado por forma de pago"
+        by_account: "Dinero por cuenta"
+        by_account_help: "Salió: el efectivo prestado. Entró: los abonos en efectivo, transferencia o cheque."
+        columns:
+          count: "Abonos"
+          lent: "Salió"
+          collected: "Entró"
+          net: "Diferencia"
+        no_account: "Sin cuenta"
+        loans:
+          zero: "Préstamos del día"
+          one: "1 préstamo del día"
+          other: "%{count} préstamos del día"
+        payments:
+          zero: "Abonos del día"
+          one: "1 abono del día"
+          other: "%{count} abonos del día"
+        no_loans: "Ese día no se prestó."
+        no_payments: "Ese día no hubo abonos."
+        no_money: "Ese día no salió ni entró dinero de préstamos."
+        empty: "Ese día no hubo préstamos ni abonos."
+    seasons:
+      index:
+        title: "Préstamos por cosecha"
+        help: "Cada cosecha contra las otras. Un préstamo es de la cosecha de su fecha: cada temporada empieza el 1 de septiembre. Lo cobrado son los abonos de esos préstamos, en cualquier fecha."
+        season: "Temporada %{season}"
+        current: "Actual"
+        chart_label: "Prestado y recuperado por cosecha"
+        bar_text: "Prestado %{lent} · recuperado de capital %{back} (%{percent})"
+        columns:
+          season: "Cosecha"
+          loans: "Préstamos"
+          people: "Personas"
+          lent: "Prestado"
+          collected: "Cobrado"
+          interest_collected: "De eso, interés"
+          recovered: "Capital recuperado"
+          owed: "Debe hoy"
+          paid_off: "Pagados"
+          overdue: "Vencidos"
+        see_loans: "Ver préstamos"
+        empty: "Todavía no hay préstamos."
     payments:
       table:
         split: "Interés %{interest} · Capital %{principal}"
@@ -2778,6 +2983,11 @@ es:
         settled: "Préstamo saldado"
         payer_signature: "Firma de quien paga"
         receiver_signature: "Firma de quien recibe"
+        coffee:
+          title: "Café entregado: compra %{number} del %{date}"
+          quintals: "QQ"
+          value: "Valor del café"
+          credited: "Abonado a este préstamo"
         registered_by: "Registrado por: %{name}"
       new:
         title: "Registrar abono"
@@ -3434,8 +3644,12 @@ es:
       index:
         title: "Categorías de gastos"
         new: "Nueva categoría"
-        help: "Sirven para agrupar los gastos de las planillas (transporte, herramientas, alimentación...)."
+        help: "Sirven para agrupar los gastos de las planillas (transporte, herramientas, alimentación...), en dos niveles: una categoría y sus subcategorías (Transporte › Combustible)."
         edit: "Editar"
+        group: "Categoría"
+        first_level: "(primer nivel)"
+        add_child: "Agregar subcategoría"
+        actions: "Acciones"
         empty: "No hay categorías con esos filtros."
       new:
         title: "Nueva categoría de gasto"
@@ -3443,6 +3657,9 @@ es:
         title: "Editar categoría de gasto"
       form:
         name_placeholder: "Por ejemplo: Transporte"
+        no_parent: "Ninguna: es de primer nivel"
+        parent_help: "Para una subcategoría (Transporte › Combustible), elige su categoría de primer nivel."
+        has_children_help: "Tiene subcategorías: se queda en el primer nivel."
         active_help: "Una categoría inactiva ya no aparece al registrar gastos; los gastos que la usan se conservan."
       create:
         success: "Categoría registrada."
@@ -4562,13 +4779,14 @@ es:
         title: "Pagar préstamos con café"
         summary: "Con el dinero de una compra se abonan o saldan los préstamos de la persona del productor."
         steps:
-          - "En el detalle de la compra, toca «Abonar con esta compra»."
+          - "En el detalle de la compra, toca «Abonar con esta compra». También sale en «Facturar compras», junto a cada compra, y en Préstamos → «Cobrar con café», que lista a todos los que deben y tienen café para abonar."
           - "Escribe cuánto va a cada préstamo y la fecha del abono (hoy por defecto)."
           - "Cada abono paga primero el interés y luego el capital, y salda el préstamo si cubre todo."
           - "La factura muestra el total de compras, cada abono restado y el total a pagar al productor."
         tips:
           - "La suma de los abonos no pasa del total de la compra."
           - "Una compra con abonos no se edita, anula ni borra: para cambiarla se quita el abono."
+          - "El recibo del abono dice el café entregado: compra, estado, libras netas, QQ, precio por libra y cuánto fue a ese préstamo."
       payroll_payment:
         title: "Pagar un período de planilla"
         summary: "Desde su día de pago, cada período se paga con lo que el sistema calcula de lo anotado."
@@ -5989,17 +6207,24 @@ es:
         expense_categories:
           index:
             title: "Categorías de gastos"
-            summary: "Las categorías para agrupar los gastos de las planillas."
+            summary: "Las categorías para agrupar los gastos de las planillas, en dos niveles: una categoría y sus subcategorías."
             steps:
-              - "Busca por nombre o filtra por activas e inactivas."
+              - "Busca por nombre (también encuentra las subcategorías de una categoría) o filtra por activas e inactivas."
               - "Toca «Nueva categoría» para crear una."
+              - "Toca «Agregar subcategoría» en una categoría de primer nivel para crear una debajo de ella (Transporte › Combustible)."
             tips:
+              - "Un gasto puede llevar la categoría de primer nivel o una de sus subcategorías."
+              - "Al filtrar los gastos o el reporte por una categoría de primer nivel, también salen los de sus subcategorías."
               - "Una categoría no se borra: se desactiva."
           form:
             title: "Crear o editar una categoría de gasto"
-            summary: "El nombre de la categoría."
+            summary: "El nombre de la categoría y, si es una subcategoría, su categoría de primer nivel."
             steps:
-              - "Escribe el nombre y toca el botón de guardar."
+              - "Escribe el nombre."
+              - "Para una subcategoría, elige su categoría de primer nivel; si no, deja «Ninguna: es de primer nivel»."
+              - "Toca el botón de guardar."
+            tips:
+              - "Una categoría que ya tiene subcategorías se queda en el primer nivel."
       loans:
         document_prints:
           form:
@@ -6018,6 +6243,68 @@ es:
               - "Revisa el documento; la ventana de impresión se abre sola al llegar aquí."
               - "«Imprimir de nuevo» lo vuelve a imprimir (y cuenta otra vez)."
               - "«Volver al préstamo» regresa al préstamo."
+        coffee_collections:
+          show:
+            title: "Cobrar con café"
+            summary: "Quién debe préstamos y tiene compras de café cuyo dinero todavía puede ir a ellos."
+            steps:
+              - "Revisa a cada persona: lo que debe hoy, cuándo vence y sus compras con dinero disponible."
+              - "Filtra por nombre o por las compras de hoy, de los últimos 7 o 30 días."
+              - "Toca «Abonar con café» en una compra: se abre el pago con café de esa compra y ahí eliges cuánto va a cada préstamo."
+            tips:
+              - "Una compra sale aquí mientras no esté anulada ni su factura pagada, y le quede dinero."
+              - "Al guardar el abono, la lista se actualiza sola."
+        collection_calendars:
+          show:
+            title: "Calendario de cobro"
+            summary: "Lo que hay que cobrar semana por semana, según la fecha límite de cada préstamo."
+            steps:
+              - "Mira las semanas: cuántos préstamos vencen y cuánto deben hoy. «Vencidos» son los que ya pasaron su fecha."
+              - "Toca una semana para ver sus préstamos, con el teléfono de cada persona."
+              - "Toca «Registrar abono» cuando alguien pague, o «Estado de cuenta» para ver todo lo que debe."
+            tips:
+              - "Las semanas van de lunes a domingo. Lo que vence después de 12 semanas está en «Más adelante»."
+        portfolios:
+          show:
+            title: "Cartera"
+            summary: "Todo lo que deben hoy los préstamos por cobrar, por tramo de vencimiento y por zona."
+            steps:
+              - "Revisa las cifras: lo que hay por cobrar hoy y cuánto ya está vencido."
+              - "En «Por tramo», toca «Ver préstamos» para abrir la lista de ese tramo."
+              - "En «Por zona», compara qué zona debe más y cuánto de eso está vencido."
+            tips:
+              - "Lo que debe cada préstamo es su capital pendiente más el interés a hoy."
+        simulations:
+          show:
+            title: "Simulador de préstamo"
+            summary: "Cuánto debería un préstamo en una fecha, antes de prestar. No guarda nada."
+            steps:
+              - "Escribe el monto, la tasa mensual y la fecha del préstamo."
+              - "Escribe los días o la fecha en que pagaría: el resultado se calcula solo."
+              - "Revisa cuánto debería ese día, el interés por día y la tabla mes por mes."
+            tips:
+              - "Marca «Tipo intermediario» si los primeros 10 días no generan interés."
+              - "La cuenta es la misma de todos los préstamos: interés simple por día sobre el capital, sin abonos."
+        daily_closes:
+          show:
+            title: "Cierre diario de préstamos"
+            summary: "Lo que se prestó y lo que se cobró en un día, por forma de pago y por cuenta."
+            steps:
+              - "Elige la fecha (empieza en hoy)."
+              - "Revisa lo prestado en efectivo e insumos y lo cobrado, con lo que fue a interés."
+              - "En «Dinero por cuenta», compara lo que salió y lo que entró de cada cuenta."
+              - "Toca «Imprimir» para sacarlo en papel."
+            tips:
+              - "Los abonos con café o por planilla cuentan como cobrados, pero no entran a ninguna cuenta: no movieron dinero."
+        seasons:
+          index:
+            title: "Préstamos por cosecha"
+            summary: "Lo prestado, lo cobrado y lo que deben hoy los préstamos de cada cosecha."
+            steps:
+              - "Compara las cosechas: cuánto se prestó, cuánto capital ya volvió y cuánto deben hoy."
+              - "Toca «Ver préstamos» para abrir la lista de los préstamos de esa cosecha."
+            tips:
+              - "Un préstamo es de la cosecha de su fecha: cada temporada empieza el 1 de septiembre."
         home:
           index:
             title: "Resumen de préstamos"
@@ -7551,6 +7838,9 @@ es:
         expenses: "Gastos"
         name: "Nombre"
         active: "Activa"
+        parent: "Categoría de primer nivel"
+        parent_id: "Categoría de primer nivel"
+        children: "Subcategorías"
       payroll:
         expenses: "Gastos"
         farm: "Finca"
@@ -7785,6 +8075,11 @@ es:
               inclusion: "tiene una forma de pago que no existe"
             base:
               one_for_loans: "Solo una cuenta puede ser la de préstamos, y ya lo es %{account}: quítaselo ahí primero."
+        expense_category:
+          attributes:
+            parent:
+              not_first_level: "debe ser una categoría de primer nivel"
+              has_children: "no se puede poner: esta categoría tiene subcategorías"
         finance_category:
           attributes:
             parent:
@@ -8036,8 +8331,18 @@ es:
       purchase_loan_settlement:
         paid_on: "Fecha del abono"
         observations: "Observaciones"
+      loan_simulation:
+        amount: "Monto a prestar"
+        monthly_interest_rate: "Tasa de interés mensual (%)"
+        disbursed_on: "Fecha del préstamo"
+        paid_on: "Fecha en que pagaría"
+        interest_grace: "Tipo intermediario"
     errors:
       models:
+        loan_simulation:
+          attributes:
+            paid_on:
+              before_disbursement: "no puede ser antes de la fecha del préstamo"
         payroll_payment_issuer:
           already_paid: "Este período ya se pagó."
           nothing_to_pay: "No hay nada que pagar en este período."

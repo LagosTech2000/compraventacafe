@@ -177,6 +177,13 @@ Rails.application.routes.draw do
     # The card beside the loan form with the person picked.
     resources :borrowers, only: :show
     resources :supplies, only: %i[ index new create edit update ]
+    # Collection and follow-up screens (Fernando, 2026-11-03).
+    resource :coffee_collection, only: :show
+    resource :collection_calendar, only: :show
+    resource :portfolio, only: :show
+    resource :simulation, only: :show
+    resource :daily_close, only: :show
+    resources :seasons, only: :index
   end
 
   # One screen for every report: /reports/purchases?period=this_month...

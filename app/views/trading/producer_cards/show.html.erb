@@ -51,6 +51,12 @@
           <h3 class="text-[0.7rem] font-semibold tracking-wide text-ink-muted uppercase"><%= t(".loans") %></h3>
           <%= payer_score_badge(@account.score) %>
         </div>
+        <% if @account.open_loans.any? %>
+          <%# Hard to miss while buying (Fernando, 2026-11-03): the coffee can pay it. %>
+          <p class="mt-2 rounded-xl bg-warning-soft px-3 py-2 text-xs text-warning" role="status" data-producer-owes>
+            <%= t(".owes_hint", count: @account.open_loans.size, date: l(@account.open_loans.map(&:due_on).min)) %>
+          </p>
+        <% end %>
         <p class="mt-1 text-xs text-ink-muted"><%= t(".owed_today") %></p>
         <p class="text-lg font-bold tabular-nums <%= @account.overdue_loans.any? ? "text-danger" : "text-primary" %>"><%= format_money(@account.total_owed) %></p>
         <% if @account.overdue_loans.any? %>

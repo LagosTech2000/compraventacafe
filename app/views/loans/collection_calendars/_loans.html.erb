@@ -1,0 +1,65 @@
+<%# The loans of a week (all of them: the browser sorts), with what to do
+    with each: register a payment or open the person's account. %>
+<% can_pay = policy(LoanPayment).create?
+   today = calendar.today %>
+<div class="@container mt-3">
+  <ul class="space-y-3 @3xl:hidden">
+    <% loans.each do |loan| %>
+      <% balance = calendar.balance(loan) %>
+      <li class="data-card" id="<%= dom_id(loan, :calendar_card) %>">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="font-medium"><%= with_avatar(loan.person) %></p>
+            <p class="text-xs text-ink-muted"><%= [ loan.person.zone&.name, format_phone(loan.person.phone).presence ].compact.join(" · ") %></p>
+          </div>
+          <%= detail_button loans_loan_path(loan) %>
+        </div>
+        <dl class="mt-3 grid grid-cols-2 gap-2 text-sm">
+          <div><dt class="text-xs text-ink-muted"><%= Loan.human_attribute_name(:due_on) %></dt><dd><%= l(loan.due_on) %> <span class="text-xs text-ink-muted"><%= due_distance(loan, today) %></span></dd></div>
+          <div><dt class="text-xs text-ink-muted"><%= t("loans.loans.table.owed") %></dt><dd class="font-semibold tabular-nums"><%= format_money(balance.total_owed) %></dd></div>
+        </dl>
+        <div class="mt-3 flex flex-wrap gap-2">
+          <% if can_pay %><%= modal_link_to t("loans.loans.show.new_payment"), new_loans_loan_payment_path(loan), class: "btn btn-sm btn-primary" %><% end %>
+          <%= modal_link_to t("loans.loans.show.credit_account"), loans_credit_account_path(loan.person), class: "btn btn-sm" %>
+        </div>
+      </li>
+    <% end %>
+  </ul>
+  <div class="hidden overflow-x-auto panel @3xl:block">
+    <table class="data-table data-table-compact" data-controller="table-sort">
+      <thead>
+        <tr>
+          <th><%= Loan.human_attribute_name(:person) %></th>
+          <th><%= Person.human_attribute_name(:phone) %></th>
+          <th class="hidden @5xl:table-cell"><%= Person.human_attribute_name(:zone) %></th>
+          <th><%= Loan.human_attribute_name(:due_on) %></th>
+          <th class="text-right"><%= Loan.human_attribute_name(:principal) %></th>
+          <th class="text-right"><%= t("loans.loans.table.owed") %></th>
+          <th class="cell-actions" data-sort="false"><span class="sr-only"><%= t("loans.payments.table.actions") %></span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% loans.each do |loan| %>
+          <% balance = calendar.balance(loan) %>
+          <tr id="<%= dom_id(loan, :calendar) %>">
+            <td class="font-medium"><%= with_avatar(loan.person) %></td>
+            <td class="whitespace-nowrap tabular-nums"><%= format_phone(loan.person.phone) %></td>
+            <td class="hidden @5xl:table-cell"><%= loan.person.zone&.name %></td>
+            <td class="whitespace-nowrap" data-sort-value="<%= loan.due_on.iso8601 %>">
+              <%= l(loan.due_on) %> <span class="block text-xs <%= loan.overdue?(today) ? "text-danger" : "text-ink-muted" %>"><%= due_distance(loan, today) %></span>
+            </td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(loan.principal) %></td>
+            <td class="whitespace-nowrap text-right font-semibold tabular-nums"><%= format_money(balance.total_owed) %></td>
+            <td class="cell-actions">
+              <div class="flex justify-end gap-2">
+                <% if can_pay %><%= modal_link_to t("loans.loans.show.new_payment"), new_loans_loan_payment_path(loan), class: "btn btn-sm btn-primary" %><% end %>
+                <%= modal_link_to t("loans.loans.show.credit_account"), loans_credit_account_path(loan.person), class: "btn btn-sm" %>
+                <%= detail_button loans_loan_path(loan) %>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

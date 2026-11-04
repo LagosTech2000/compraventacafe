@@ -4,6 +4,11 @@ class LoanFilter < ListFilter
   field :q, :text
   field :status, :choice, in: Loan::STATUSES
   field :kind, :choice, in: Loan::KINDS
+  # By due date (Cartera, Calendario de cobro) and by season of the loan's
+  # date (Préstamos por cosecha).
+  field :due_from, :date
+  field :due_to, :date
+  field :season_year, :id
 
   # Status in the order of Loan::STATUSES (active, overdue, paid off); kind
   # and what is owed today are computed: sorted in Ruby.
@@ -21,6 +26,9 @@ class LoanFilter < ListFilter
     scope = scope.where(person_id: Person.search(q).select(:id)) if q
     scope = scope.with_status(status) if status
     scope = scope.of_kind(kind) if kind
+    scope = scope.where(due_on: due_from..) if due_from
+    scope = scope.where(due_on: ..due_to) if due_to
+    scope = scope.where(disbursed_on: Season.new(season_year).dates) if season_year
     scope.includes(:payments, :supply_items, person: :photo_info).newest_first
   end
 end

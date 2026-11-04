@@ -1,6 +1,9 @@
-# Expenses of the farms' payrolls in the period, by category, farm and
-# payroll.
+# Expenses of the farms' payrolls in the period, by category (first level
+# and subcategory), farm and payroll.
 class PayrollExpensesReport < Report
+  TOP_CATEGORY = "COALESCE(parents_expense_categories.id, expense_categories.id)".freeze
+  TOP_CATEGORY_NAME = "MIN(COALESCE(parents_expense_categories.name, expense_categories.name))".freeze
+
   self.module_key = "farms"
   self.date_column = "payroll_expenses.spent_on"
   self.default_period = "this_month"
@@ -15,7 +18,7 @@ class PayrollExpensesReport < Report
   column(:spent_on, :date, sort: "payroll_expenses.spent_on")
   column(:farm, :text, sort: "farms.name", priority: 2) { |expense| expense.payroll.farm.name }
   column(:payroll, :text, sort: "payrolls.name", priority: 3) { |expense| expense.payroll.name }
-  column(:category, :text, sort: "expense_categories.name") { |expense| expense.category.name }
+  column(:category, :text, sort: ExpenseCategory::FULL_NAME_SQL) { |expense| expense.category.full_name }
   column(:description, :text, sort: "payroll_expenses.description", priority: 2)
   column(:amount, :money, sort: "payroll_expenses.amount")
   column(:created_by, :text, sort: "users.name", priority: 3) { |expense| expense.created_by.name }
@@ -26,32 +29,32 @@ class PayrollExpensesReport < Report
 
   group :week, unit: "week"
   group :month, unit: "month"
-  group :category, sql: "payroll_expenses.expense_category_id", label_sql: "MIN(expense_categories.name)"
+  group :category, sql: TOP_CATEGORY, label_sql: TOP_CATEGORY_NAME
+  group :subcategory, sql: "payroll_expenses.expense_category_id", label_sql: "MIN(#{ExpenseCategory::FULL_NAME_SQL})"
   group :farm, sql: "payrolls.farm_id", label_sql: "MIN(farms.name)"
   group :payroll, sql: "payroll_expenses.payroll_id", label_sql: "MIN(payrolls.name || ' · ' || farms.name)"
 
   kpi :amount, :money, "SUM(payroll_expenses.amount)", good: :down
   kpi :count, :integer, "COUNT(*)"
   kpi :average, :money, "AVG(payroll_expenses.amount)", good: :down
-  kpi :categories, :integer, "COUNT(DISTINCT payroll_expenses.expense_category_id)"
+  kpi :categories, :integer, "COUNT(DISTINCT #{TOP_CATEGORY})"
 
   def scope
-    PayrollExpense.joins(:category, :created_by, payroll: :farm)
+    PayrollExpense.joins(:category, :created_by, payroll: :farm).left_joins(category: :parent)
   end
 
   def apply_filters(relation)
     relation = relation.where("payroll_expenses.description ILIKE ?", like(filter.q)) if filter.q
     relation = relation.where(payrolls: { farm_id: filter.farm_id }) if filter.farm_id
     relation = relation.where(payroll_id: filter.payroll_id) if filter.payroll_id
-    relation = relation.where(expense_category_id: filter.category_id) if filter.category_id
+    relation = relation.where("#{TOP_CATEGORY} = :id OR payroll_expenses.expense_category_id = :id", id: filter.category_id) if filter.category_id
     relation
   end
 
   def charts
     relation = records
-    categories = breakdown(relation, "payroll_expenses.expense_category_id", "SUM(payroll_expenses.amount)", label_sql: "MIN(expense_categories.name)")
-    labels, by_category = over_time_by(relation, "payroll_expenses.expense_category_id", "SUM(payroll_expenses.amount)",
-                                       label_sql: "MIN(expense_categories.name)")
+    categories = breakdown(relation, TOP_CATEGORY, "SUM(payroll_expenses.amount)", label_sql: TOP_CATEGORY_NAME)
+    labels, by_category = over_time_by(relation, TOP_CATEGORY, "SUM(payroll_expenses.amount)", label_sql: TOP_CATEGORY_NAME)
     farms = breakdown(relation, "payrolls.farm_id", "SUM(payroll_expenses.amount)", label_sql: "MIN(farms.name)")
     payrolls = breakdown(relation, "payroll_expenses.payroll_id", "SUM(payroll_expenses.amount)",
                          label_sql: "MIN(payrolls.name || ' · ' || farms.name)", limit: 10, others: false)
@@ -67,5 +70,5 @@ class PayrollExpensesReport < Report
   end
 
   private
-    def preload(relation) = relation.includes(:category, :created_by, payroll: :farm)
+    def preload(relation) = relation.includes({ category: :parent }, :created_by, payroll: :farm)
 end

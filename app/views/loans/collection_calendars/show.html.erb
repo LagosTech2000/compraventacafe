@@ -1,0 +1,45 @@
+<% content_for :title, t(".title") %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= live_updates_from :loans %>
+<%= render "loans/nav" %>
+
+<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+<p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t(".help") %></p>
+
+<%# Picking a week only reloads the calendar (its frame); the URL follows. %>
+<%= turbo_frame_tag "collection-calendar", class: "query-frame mt-5 block", data: { turbo_action: "advance", controller: "frame-scroll" } do %>
+  <% buckets = @calendar.buckets
+     max = buckets.map(&:owed).max.to_d %>
+  <ol class="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7" aria-label="<%= t(".weeks") %>">
+    <% buckets.each do |bucket| %>
+      <% current = bucket.key == @bucket.key %>
+      <li>
+        <%= link_to loans_collection_calendar_path(week: bucket.key), id: "calendar-bucket-#{bucket.key}",
+              aria: { current: (current ? "true" : nil) },
+              class: "block h-full rounded-2xl border p-3 text-sm transition #{current ? "border-primary bg-primary-soft" : "border-line bg-surface hover:border-primary/40"}" do %>
+          <span class="block font-semibold <%= "text-danger" if bucket.key == "late" && bucket.count.positive? %>"><%= calendar_bucket_label(bucket) %></span>
+          <span class="block text-xs text-ink-muted"><%= t(".loans", count: bucket.count) %></span>
+          <span class="mt-1 block font-semibold tabular-nums" data-live-value><%= format_money(bucket.owed) %></span>
+          <span class="mt-2 block h-1.5 overflow-hidden rounded-full bg-line" aria-hidden="true">
+            <span class="block h-full rounded-full <%= bucket.key == "late" ? "bg-danger" : "bg-primary" %>"
+                  style="width: <%= max.positive? ? (bucket.owed / max * 100).round(1) : 0 %>%"></span>
+          </span>
+        <% end %>
+      </li>
+    <% end %>
+  </ol>
+
+  <section class="mt-6" aria-labelledby="calendar-week-title">
+    <div class="flex flex-wrap items-baseline justify-between gap-3">
+      <h2 id="calendar-week-title" class="text-lg font-semibold"><%= calendar_bucket_label(@bucket, long: true) %></h2>
+      <p class="text-sm text-ink-muted">
+        <%= t(".bucket_summary", count: @bucket.count, people: t(".people", count: @bucket.people_count), amount: format_money(@bucket.owed)) %>
+      </p>
+    </div>
+    <% if @bucket.loans.any? %>
+      <%= render "loans/collection_calendars/loans", loans: @bucket.loans, calendar: @calendar %>
+    <% else %>
+      <p class="empty-state mt-3"><%= t(".empty") %></p>
+    <% end %>
+  </section>
+<% end %>

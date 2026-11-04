@@ -49,6 +49,7 @@ module DashboardHelper
     when :unsold_shipments then dashboard.unsold_shipments.size
     when :unpaid_sales then dashboard.unpaid_sales.size
     when :overdue_loans then dashboard.overdue_loans.size
+    when :due_soon_loans then dashboard.due_soon_loans.size
     when :periods_to_pay then dashboard.periods_to_pay.size
     when :members_without_wage then dashboard.members_without_wage.size
     when :over_budget then dashboard.over_budget.size

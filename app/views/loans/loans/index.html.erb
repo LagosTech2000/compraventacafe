@@ -15,10 +15,16 @@
   <%= filter_text_field form, :q, Loan.human_attribute_name(:person), value: @filter.q, placeholder: t("loans.loans.index.search_placeholder") %>
   <%= filter_select form, :status, Loan.human_attribute_name(:status), enum_options(Loan, :status, Loan::STATUSES), selected: @filter.status %>
   <%= filter_select form, :kind, Loan.human_attribute_name(:kind), enum_options(Loan, :kind, Loan::KINDS), selected: @filter.kind %>
+  <%= filter_select form, :season_year, t("loans.loans.index.season"), loan_season_options, selected: @filter.season_year %>
+  <%= filter_date_field form, :due_from, t("loans.loans.index.due_from"), value: @filter.due_from %>
+  <%= filter_date_field form, :due_to, t("loans.loans.index.due_to"), value: @filter.due_to %>
 <% end %>
 
 <%= list_frame "loans-list" do %>
-<%= live_list_status @filter, status: enum_options(Loan, :status, Loan::STATUSES), kind: enum_options(Loan, :kind, Loan::KINDS) %>
+<%= live_list_status @filter, status: enum_options(Loan, :status, Loan::STATUSES), kind: enum_options(Loan, :kind, Loan::KINDS),
+      season_year: ->(year) { t("loans.loans.index.chips.season", season: Season.new(year).label) },
+      due_from: ->(date) { t("loans.loans.index.chips.due_from", date: l(date)) },
+      due_to: ->(date) { t("loans.loans.index.chips.due_to", date: l(date)) } %>
 <div class="mt-6">
   <% if @loans.any? %>
     <%= render "table", loans: @loans, balances: @loans.to_h { |loan| [ loan, loan.balance ] }, sorting: { filter: @filter, frame: "loans-list" } %>

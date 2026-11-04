@@ -44,6 +44,43 @@ module LoansHelper
     "#{number_with_precision(quantity, precision: 2, strip_insignificant_zeros: true, delimiter: ",")} #{unit}"
   end
 
+  # [["Temporada 2026-2027", 2026], ...]: the seasons that have loans, the
+  # newest first (Season of each loan's date).
+  def loan_season_options
+    first, last = Loan.pick(Arel.sql("MIN(disbursed_on)"), Arel.sql("MAX(disbursed_on)"))
+    return [] unless first
+
+    [ Season.current.year, Season.for(last).year ].max.downto(Season.for(first).year).map { [ t("loans.loans.index.season_option", season: Season.new(it).label), it ] }
+  end
+
+  # A bucket of the collection calendar: "Vencidos", "Esta semana",
+  # "Semana del 9 nov" or "Más adelante"; long: with its dates.
+  def calendar_bucket_label(bucket, long: false)
+    case bucket.key
+    when "late" then t("loans.collection_calendars.show.late")
+    when "later" then long ? t("loans.collection_calendars.show.later_long", date: l(bucket.starts_on)) : t("loans.collection_calendars.show.later")
+    else
+      monday = Date.iso8601(bucket.key)
+      label = monday == Time.zone.today.beginning_of_week ? t("loans.collection_calendars.show.this_week") : t("loans.collection_calendars.show.week_of", date: l(monday, format: :short))
+      long ? t("loans.collection_calendars.show.week_long", label:, from: l(bucket.starts_on), to: l(bucket.ends_on)) : label
+    end
+  end
+
+  PORTFOLIO_COLORS = { "current" => "bg-success", "due_soon" => "bg-accent", "late_30" => "bg-warning",
+                       "late_60" => "bg-danger/70", "late_90" => "bg-danger/85", "late_more" => "bg-danger" }.freeze
+
+  # The color of a tramo of the portfolio (LoanAging), from on time to very late.
+  def portfolio_bucket_color(key) = PORTFOLIO_COLORS.fetch(key)
+
+  # "en 5 días", "hoy", "hace 3 días" from the due date of a loan.
+  def due_distance(loan, today = Time.zone.today)
+    days = (loan.due_on - today).to_i
+    if days.zero? then t("loans.due_distance.today")
+    elsif days.positive? then t("loans.due_distance.ahead", count: days)
+    else t("loans.due_distance.late", count: -days)
+    end
+  end
+
   def format_rate(value)
     "#{number_with_precision(value, precision: 2, strip_insignificant_zeros: true)} %"
   end
