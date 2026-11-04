@@ -9,7 +9,7 @@ module Farms
     end
 
     def new
-      @category = authorize ExpenseCategory.new
+      @category = authorize ExpenseCategory.new(parent_id: params[:parent_id])
     end
 
     def create
@@ -17,7 +17,7 @@ module Farms
 
       if @category.save
         close_modal_with notice: t(".success"), fallback: farms_expense_categories_path,
-                         event: "expense_category:created", detail: { id: @category.id, name: @category.name }
+                         event: "expense_category:created", detail: { id: @category.id, name: @category.full_name }
       else
         render :new, status: :unprocessable_content
       end
@@ -40,7 +40,7 @@ module Farms
       end
 
       def category_params
-        params.expect(expense_category: [ :name, :active ])
+        params.expect(expense_category: [ :name, :parent_id, :active ])
       end
   end
 end

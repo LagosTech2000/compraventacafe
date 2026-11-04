@@ -30,7 +30,7 @@ module Finance
         parts = []
         parts << t(".success", count: result.assigned) if account
         parts << t(".skipped", count: result.skipped) if result.skipped.positive?
-        parts << t(".categorized", count: result.categorized, category: category.name) if category
+        parts << t(".categorized", count: result.categorized, category: category.full_name) if category
         parts << t(".uncategorized", count: result.uncategorized) if category && result.uncategorized.positive?
         parts.join(" ")
       end

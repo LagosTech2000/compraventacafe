@@ -18,6 +18,7 @@
   <% groups << :negative_stock if dashboard.negative_stock.any? %>
 <% end %>
 <% groups << :overdue_loans if dashboard.can?("loans") && dashboard.overdue_loans.any? %>
+<% groups << :due_soon_loans if dashboard.can?("loans") && dashboard.due_soon_loans.any? %>
 <% if dashboard.can?("farms") %>
   <% groups << :periods_to_pay if dashboard.periods_to_pay.any? %>
   <% groups << :members_without_wage if dashboard.members_without_wage.any? %>
@@ -260,6 +261,29 @@
               <span class="block text-xs text-ink-muted">
                 <%= t(".groups.overdue_loans.late", date: l(loan.due_on, format: :short), count: (today - loan.due_on).to_i) %>
               </span>
+            </span>
+            <span class="flex items-center gap-2">
+              <span class="font-semibold tabular-nums"><%= format_money(loan.balance(as_of: today).total_owed) %></span>
+              <%= modal_link_to t("shared.detail"), loans_loan_path(loan), class: "btn btn-sm" %>
+              <% if policy(LoanPayment.new(loan:)).create? %>
+                <%= modal_link_to t(".groups.overdue_loans.action"), new_loans_loan_payment_path(loan), class: "btn btn-sm btn-primary" %>
+              <% end %>
+            </span>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
+  <% if groups.include?(:due_soon_loans) %>
+    <section id="pending-due_soon_loans" role="tabpanel" aria-labelledby="pending-tab-due_soon_loans" data-tabs-target="panel" <%= "hidden" unless groups.first == :due_soon_loans %>>
+      <p class="text-xs text-ink-muted"><%= t(".groups.due_soon_loans.help", days: Dashboard::DUE_SOON_DAYS) %></p>
+      <ul class="mt-2 divide-y divide-line">
+        <% dashboard.due_soon_loans.each do |loan| %>
+          <li class="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm" id="<%= dom_id(loan, :pending_soon) %>">
+            <span class="min-w-0">
+              <span class="block font-medium"><%= t(".groups.overdue_loans.name", number: loan.id, person: loan.person.full_name) %></span>
+              <span class="block text-xs text-ink-muted"><%= t(".groups.due_soon_loans.due", date: l(loan.due_on, format: :short), distance: due_distance(loan, today)) %></span>
             </span>
             <span class="flex items-center gap-2">
               <span class="font-semibold tabular-nums"><%= format_money(loan.balance(as_of: today).total_owed) %></span>

@@ -9,8 +9,7 @@
     </div>
     <div data-controller="option-picker" data-action="expense_category:created@window->option-picker#add">
       <%= form.label :expense_category_id, class: "field-label" %>
-      <% categories = ExpenseCategory.active.ordered.to_a | [ expense.category ].compact %>
-      <%= form.collection_select :expense_category_id, categories, :id, :name, { prompt: t("shared.select.pick_category") }, required: true,
+      <%= form.select :expense_category_id, ExpenseCategory.options(including: expense.expense_category_id), { prompt: t("shared.select.pick_category") }, required: true,
             class: "field-input", data: { option_picker_target: "select",
                                           missing_message: "#{PayrollExpense.human_attribute_name(:category)} #{t("errors.messages.blank")}" } %>
       <% if policy(ExpenseCategory).create? %>

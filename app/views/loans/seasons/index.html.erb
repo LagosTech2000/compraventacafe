@@ -1,0 +1,71 @@
+<% content_for :title, t(".title") %>
+<%= live_updates_from :loans %>
+<%= render "loans/nav" %>
+
+<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+<p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t(".help") %></p>
+
+<% rows = @seasons.rows
+   current = Season.current
+   max = @seasons.max_lent.to_d %>
+<% if rows.any? %>
+  <%# Lent and what came back of it, season against season. %>
+  <ul class="mt-6 space-y-3" aria-label="<%= t(".chart_label") %>">
+    <% rows.each do |row| %>
+      <li class="grid gap-1 sm:grid-cols-[10rem_minmax(0,1fr)] sm:items-center sm:gap-4">
+        <span class="text-sm font-semibold">
+          <%= t(".season", season: row.season.label) %>
+          <% if row.season == current %><span class="badge badge-success ml-1"><%= t(".current") %></span><% end %>
+        </span>
+        <span class="block">
+          <span class="flex h-3 overflow-hidden rounded-full bg-line" aria-hidden="true">
+            <span class="block h-full bg-primary" style="width: <%= max.positive? ? (row.principal_collected / max * 100).round(2) : 0 %>%"></span>
+            <span class="block h-full bg-primary/30" style="width: <%= max.positive? ? ((row.lent - row.principal_collected).clamp(0, row.lent) / max * 100).round(2) : 0 %>%"></span>
+          </span>
+          <span class="mt-0.5 block text-xs text-ink-muted"><%= t(".bar_text", lent: format_money(row.lent), back: format_money(row.principal_collected), percent: number_to_percentage(row.recovered_percent, precision: 1)) %></span>
+        </span>
+      </li>
+    <% end %>
+  </ul>
+
+  <div class="mt-6 overflow-x-auto panel">
+    <table class="data-table" data-controller="table-sort">
+      <thead>
+        <tr>
+          <th><%= t(".columns.season") %></th>
+          <th class="text-right"><%= t(".columns.loans") %></th>
+          <th class="text-right"><%= t(".columns.people") %></th>
+          <th class="text-right"><%= t(".columns.lent") %></th>
+          <th class="text-right"><%= t(".columns.collected") %></th>
+          <th class="text-right"><%= t(".columns.interest_collected") %></th>
+          <th class="text-right"><%= t(".columns.recovered") %></th>
+          <th class="text-right"><%= t(".columns.owed") %></th>
+          <th class="text-right"><%= t(".columns.paid_off") %></th>
+          <th class="text-right"><%= t(".columns.overdue") %></th>
+          <th class="cell-actions" data-sort="false"><span class="sr-only"><%= t("loans.payments.table.actions") %></span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% rows.each do |row| %>
+          <tr id="loan-season-<%= row.season.year %>">
+            <td class="whitespace-nowrap font-medium" data-sort-value="<%= row.season.year %>"><%= row.season.label %></td>
+            <td class="text-right tabular-nums"><%= row.loans_count %></td>
+            <td class="text-right tabular-nums"><%= row.people_count %></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(row.lent) %></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(row.collected) %></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(row.interest_collected) %></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= number_to_percentage(row.recovered_percent, precision: 1) %></td>
+            <td class="whitespace-nowrap text-right font-semibold tabular-nums"><%= format_money(row.owed) %></td>
+            <td class="text-right tabular-nums"><%= row.paid_off_count %></td>
+            <td class="text-right tabular-nums <%= "text-danger" if row.overdue_count.positive? %>"><%= row.overdue_count %></td>
+            <td class="cell-actions">
+              <%= link_to t(".see_loans"), loans_loans_path(season_year: row.season.year), class: "btn btn-sm", data: { row_link: true } %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <p class="empty-state mt-6"><%= t(".empty") %></p>
+<% end %>

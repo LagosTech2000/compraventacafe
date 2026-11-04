@@ -63,6 +63,12 @@ class Loan < ApplicationRecord
     interest_grace? ? disbursed_on + GRACE_DAYS : disbursed_on
   end
 
+  # The coffee season of the loan: the one of its date (Fernando,
+  # 2026-11-03: every season starts on September 1).
+  def season
+    Season.for(disbursed_on) if disbursed_on
+  end
+
   # Days from the loan's date to its due date.
   def term_days
     (due_on - disbursed_on).to_i if due_on && disbursed_on

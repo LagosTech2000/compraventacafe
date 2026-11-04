@@ -115,7 +115,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Semanal / quincenal / mensual | `pay_frequency`: `weekly` / `biweekly` / `monthly` (`PayPeriod`) |
 | Pago de planilla / planilla de pago | `PayrollPayment` + `PayrollPaymentLine` (`PayrollPaymentIssuer`) |
 | Descuento de planilla (abono a préstamo) | `LoanPayment` con `payment_method: "payroll"` |
-| Gasto de planilla / categoría de gasto | `PayrollExpense` / `ExpenseCategory` |
+| Gasto de planilla / categoría de gasto (dos niveles) | `PayrollExpense` / `ExpenseCategory` (`parent`) |
 | Reporte / reporte sugerido / filtro guardado ("Mis filtros") | `Report` (`app/reports/`) / `ReportPreset` / `SavedReport` |
 | Período del reporte (hoy, este mes, temporada…) | `ReportPeriod` |
 | Cifras del reporte / agrupar por | `Report.kpi` / `Report.group` |
@@ -124,6 +124,11 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Buscador al escribir (productor, persona, colaborador) | `PickerSearch` (`picker_searches#show`, `record_picker_controller.js`) |
 | Ficha del productor en «Nueva compra» | `trading/producer_cards#show` |
 | Etapas del préstamo (entregado, con abonos, pagado) | `LoanLifecycle` (`LifecycleSteps`, `shared/_lifecycle`) |
+| Cobrar con café (quién debe y tiene café para abonar) | `CoffeeCollectionFilter` (`loans/coffee_collections#show`), `Purchase#available_for_loans_loaded` |
+| Calendario de cobro / cartera por tramo y zona | `LoanCalendar` (`loans/collection_calendars#show`) / `LoanAging` (`loans/portfolios#show`) |
+| Préstamos por cosecha / cosecha del préstamo | `LoanSeasons` (`loans/seasons#index`) / `Loan#season` (la de su fecha) |
+| Cierre diario de préstamos / simulador de préstamo | `LoanDailyClose` (`loans/daily_closes#show`) / `LoanSimulation` (`loans/simulations#show`) |
+| Préstamos que vencen pronto | `Dashboard#due_soon_loans` (`Dashboard::DUE_SOON_DAYS`) |
 | Versión de los datos (caché de reportes) | `DataVersion` |
 | Límite de solicitudes (auditoría) | acción `rate_limited` (`RateLimitAudit`) |
 | Mi configuración (datos, foto, contraseña, ventana o panel lateral, menú arriba o a la izquierda, huellas) | `UserSettingsController`; `User#window_style` (`modal` / `drawer`), `User#nav_position` (`top` / `left`) |
@@ -704,7 +709,7 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 | `finance` | Control financiero: cuentas (caja y bancos) con saldo y estado de cuenta, ingresos, gastos e inversiones con categoría de dos niveles y comprobante, otros ingresos, transferencias, presupuesto mensual, la planilla interna del negocio (roles, anticipos, horas extra, metas y bonos) y el libro único de movimientos de todos los módulos |
 | `trading` | Demo: zonas, productores (con pestañas y QQ por temporada), carreros con su comisión y pagos con recibo, compras con cálculo por estado del café y anulación, facturas imprimibles (original y copia) con estado de pago, cierre diario |
 | `farms` | Fincas, planillas por día, por obra y de corte por lata, con roles y salarios, asistencia o latas por día, pagos por período (semanal, quincenal, mensual) con descuento a préstamos, planilla de pago imprimible y gastos por planilla |
-| `loans` | Préstamos en efectivo, insumos o mixtos a cualquier persona con interés simple, catálogo de insumos, abonos (también con café desde una compra o descontados en planilla) con recibo imprimible, estados de cuenta con historial crediticio y score de pago |
+| `loans` | Préstamos en efectivo, insumos o mixtos a cualquier persona con interés simple, catálogo de insumos, abonos (también con café desde una compra o descontados en planilla) con recibo imprimible, estados de cuenta con historial crediticio y score de pago; cobrar con café, calendario de cobro, cartera por tramo y zona, préstamos por cosecha, cierre diario y simulador |
 | `reports` | Una pantalla para todos los reportes del sistema (compras, facturas, productores, préstamos, abonos, insumos, planillas, pagos por empleado, latas, gastos, rendimiento de fincas, personas y entradas/salidas de dinero) con filtros, cifras comparadas, gráficos, tabla con carga continua, reportes sugeridos, filtros guardados por usuario y exportación CSV |
 
 ## Seguridad y carga (Fernando, 2026-10-12)
@@ -781,7 +786,8 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 
 - Las páginas de Inicio, Compra de café (Resumen, Compras, detalle de
   compra, Facturas, detalle de factura, Cierre diario, Productores y su
-  detalle) y Préstamos (Resumen, Préstamos, detalle, Estados de cuenta) se
+  detalle) y Préstamos (Resumen, Préstamos, detalle, Estados de cuenta y las
+  pantallas de cobro, salvo el Simulador) se
   **actualizan solas** cuando otra persona cambia los datos. Fincas y
   Reportería no, por ahora.
 - Cómo: el modelo incluye `LiveUpdates` y declara `live_updates :trading`
@@ -1691,6 +1697,57 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
   no solo a los productores intermediarios (Fernando, el mismo día). Los
   días 1–10 nunca cobran; desde el día 11 corre normal (`LoanBalance`
   cuenta desde `Loan#interest_starts_on`).
+- **Pantallas de cobro** (Fernando, 2026-11-03; en la barra del módulo).
+  Solo leen y suman lo que el sistema ya guarda; ninguna cambia una regla:
+  - **Cobrar con café** (`CoffeeCollectionFilter`, pide ver Préstamos **y**
+    Compra de café, `Loans::CoffeeCollectionPolicy`): cada persona que debe
+    y tiene compras cuyo dinero todavía puede ir a sus préstamos (no
+    anuladas, factura sin pagar, con algo disponible: la misma cuenta de
+    `Purchase#available_for_loans`, con lo precargado en
+    `#available_for_loans_loaded`). Lo que debe hoy, cuándo vence, sus
+    compras y «Abonar con café» en cada una: el pago con café de siempre en
+    el modal, que decide cuánto (pide crear en `loans`, `#settle?`). Filtro
+    por las compras de hoy, de 7 o de 30 días. Lista en vivo, ordena en
+    el servidor.
+  - **Calendario de cobro** (`LoanCalendar`): lo que deben hoy los
+    préstamos por cobrar por la semana en que vencen (lunes a domingo):
+    «Vencidos», esta semana desde hoy, las 12 siguientes y «Más adelante».
+    Tocar una semana cambia solo su frame (`?week=`); su lista trae
+    teléfono, «Registrar abono» y «Estado de cuenta». Sin semana, abre
+    esta semana, o los vencidos si esta semana no tiene nada.
+  - **Cartera** (`LoanAging`): lo que deben hoy por tramo (al día: vence en
+    más de 30 días; vence en 30 días; vencido 1–30, 31–60, 61–90 y más de
+    90) y por la zona de la persona. «Ver préstamos» abre la lista con
+    `due_from`/`due_to` (filtros nuevos de `LoanFilter`, «Vence desde /
+    hasta»).
+  - **Por cosecha** (`LoanSeasons`): **un préstamo es de la cosecha de su
+    fecha** (Fernando, 2026-11-03: «el 1 de septiembre inicia cada
+    temporada nueva»; `Loan#season`, sale en el detalle). Por cosecha:
+    prestado, cobrado (abonos de esos préstamos, en cualquier fecha) y de
+    eso interés, capital recuperado (%), lo que deben hoy, pagados y
+    vencidos. «Ver préstamos» filtra por `season_year` (nuevo en
+    `LoanFilter`, «Cosecha»).
+  - **Cierre diario** (`LoanDailyClose`, imprimible con membrete): lo
+    prestado ese día (efectivo e insumos) y lo cobrado por forma de pago;
+    por cuenta, lo que salió (efectivo prestado) y entró (abonos en dinero).
+    Con café o por planilla cuentan como cobrado, no como dinero.
+  - **Simulador** (`LoanSimulation`, nada se guarda): monto, tasa, fecha,
+    días o fecha de pago y tipo intermediario → cuánto debería con
+    `LoanBalance` (sin abonos), el interés por día y mes por mes. Calcula
+    al cambiar un campo, dentro de su frame.
+- **Lo que debe el productor, al comprar** (Fernando, 2026-11-03): la
+  ficha de «Nueva compra» lo resalta («… al guardar la compra puedes
+  abonar con este café»), el aviso al guardar dice cuánto debe y la
+  sección de préstamos del detalle de la compra se resalta cuando su café
+  puede pagar; en «Facturar compras», «Abonar con esta compra» junto a cada
+  compra. Solo para quien puede hacer el pago con café.
+- **Vencen pronto** (Fernando, 2026-11-03): el Inicio y Tareas pendientes
+  («Vencen pronto») traen los préstamos que vencen de hoy a 7 días
+  (`Dashboard::DUE_SOON_DAYS`), con «Registrar abono».
+- **Recibo del pago con café** (Fernando, 2026-11-03, como pide la
+  cláusula cuarta del contrato): el café entregado (compra, fecha, estado,
+  libras netas, QQ, precio por libra, valor) y lo abonado a ese préstamo,
+  además del saldo que ya traía. La calidad espera sus categorías.
 - **Plazo en días** (Fernando, 2026-10-12): el formulario tiene «Plazo
   (días)» entre la fecha del préstamo y la fecha límite. Escribir los días
   llena la fecha límite y elegir la fecha muestra los días
@@ -1798,7 +1855,14 @@ Reglas decididas por Fernando el 2026-10-10 [CONFIRMADO]:
 - **Sin séptimo día, décimo, IHSS ni otras deducciones o bonos** por ahora
   (las horas y días extra sí, ver abajo).
 - **Gastos** por planilla con fecha, categoría (catálogo `ExpenseCategory`,
-  se desactiva, no se borra), descripción y monto. Costo total de la
+  se desactiva, no se borra), descripción y monto. **Categorías en dos
+  niveles** (Fernando, 2026-11-03), como las de Control financiero:
+  «Agregar subcategoría» en una de primer nivel (Transporte › Combustible,
+  `ExpenseCategory#parent`, `#full_name`); el nombre es único entre sus
+  hermanas. El gasto lleva la de primer nivel o una subcategoría; filtrar
+  (pestaña Gastos, reporte) por una de primer nivel trae también sus
+  subcategorías (`ExpenseCategory.family_ids`), y el reporte agrupa por
+  categoría (primer nivel) o subcategoría. Costo total de la
   planilla = pagado (bruto) + gastos.
 - El Resumen del módulo muestra los períodos terminados sin pagar y una
   tarjeta por planilla activa o por iniciar (período de hoy, día de pago,
@@ -1956,6 +2020,7 @@ sistema ya guarda**; no agregan reglas de negocio.
 | Combustible, personal y mantenimiento del vehículo en el valor del café: ¿por lote o repartidos por libra? (pregunta 23) | Sumarlos a los costos acumulados del inventario | Cliente |
 | Decisiones de implementación de inventario por lotes y bodegas (2026-10-26): libras netas, reparto en proporción, lotes recalculados, cuándo se desactiva una bodega; un lugar de procesamiento puede hacer los dos procesos; gastos de procesamiento: forma de cobrar del último gasto del lugar, procesos con gastos no se anulan | Ajustes a lotes, bodegas y gastos | Fernando / Cliente |
 | Calidad por bodega | Depende de las categorías de calidad | Cliente |
+| Decisiones de implementación de las pantallas de cobro (2026-11-03): tramos de la cartera (30/60/90 días), «vencen pronto» a 7 días, semanas del calendario de lunes a domingo y 12 hacia adelante | Ajustes a Cartera, Calendario y el Inicio | Fernando |
 | Decisiones nuevas, por confirmar (2026-10-25): la liquidación del comprador pasa a ser lo que se cobra de la venta; los avisos de «Nueva compra» salen cuando la humedad, el rendimiento o el precio se alejan más de 30 % de lo normal (`PurchaseDefaults::UNUSUAL_PERCENT`) | Ajustes a la venta y a los avisos de la compra | Fernando / Cliente |
 | Precio del viaje del transportista: ¿se paga desde una cuenta (movimiento de dinero) y se suma al costo del café? | Pago al transportista y costo del café | Cliente |
 | Contratos: moneda, cobro, aplicar libras a contratos | Ventas / contratos | Cliente |

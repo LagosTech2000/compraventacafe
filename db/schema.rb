@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_01_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_03_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -190,7 +190,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_01_120000) do
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index "lower((name)::text)", name: "index_expense_categories_on_lower_name", unique: true
+    t.bigint "parent_id"
+    t.index "COALESCE(parent_id, (0)::bigint), lower((name)::text)", name: "index_expense_categories_on_name_in_parent", unique: true
+    t.index ["parent_id"], name: "index_expense_categories_on_parent_id"
   end
 
   create_table "expense_receipts", force: :cascade do |t|
@@ -1121,6 +1123,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_01_120000) do
   add_foreign_key "coffee_conversions", "warehouses"
   add_foreign_key "coffee_conversions", "warehouses", column: "output_warehouse_id"
   add_foreign_key "collaborators", "people"
+  add_foreign_key "expense_categories", "expense_categories", column: "parent_id"
   add_foreign_key "expense_receipts", "expenses"
   add_foreign_key "expenses", "finance_categories"
   add_foreign_key "expenses", "money_accounts"

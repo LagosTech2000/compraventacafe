@@ -109,6 +109,10 @@
 <% if loans && (overdue_loans = dashboard.overdue_loans).any? %>
   <% pending << [ :overdue_loans, overdue_loans.size, overdue_loans.sum { |loan| loan.balance(as_of: dashboard.today).total_owed }, loans_loans_path(status: "overdue") ] %>
 <% end %>
+<% if loans && (due_soon = dashboard.due_soon_loans).any? %>
+  <% pending << [ :due_soon_loans, due_soon.size, due_soon.sum { |loan| loan.balance(as_of: dashboard.today).total_owed },
+                  loans_loans_path(status: "active", due_from: dashboard.today.iso8601, due_to: (dashboard.today + Dashboard::DUE_SOON_DAYS).iso8601) ] %>
+<% end %>
 <% if farms %>
   <% periods = dashboard.periods_to_pay %>
   <% pending << [ :periods_to_pay, periods.size, periods.sum { |payroll, period| payroll.calculation(period).gross_total }, farms_root_path ] if periods.any? %>

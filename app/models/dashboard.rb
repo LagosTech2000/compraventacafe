@@ -34,6 +34,13 @@ class Dashboard
   def loans_owed = @loans_owed ||= open_loans.sum { |loan| loan.balance(as_of: today).total_owed }
   def overdue_loans = @overdue_loans ||= open_loans.select { |loan| loan.overdue?(today) }
 
+  # Not late yet, but due within DUE_SOON_DAYS (Fernando, 2026-11-03): from
+  # today to that day, the nearest first. The window is pending confirmation.
+  DUE_SOON_DAYS = 7
+  def due_soon_loans
+    @due_soon_loans ||= open_loans.select { |loan| loan.due_on.between?(today, today + DUE_SOON_DAYS) }.sort_by { [ it.due_on, it.id ] }
+  end
+
   # Comercialización: the coffee in stock and what the buyers owe.
   def coffee_stock = @coffee_stock ||= CoffeeStock.new(today)
   def unpaid_sales = @unpaid_sales ||= Sale.unpaid.includes(:buyer, :payments).to_a

@@ -166,6 +166,16 @@ class Purchase < ApplicationRecord
     [ left, invoice.amount_to_pay - paid ].min
   end
 
+  # The same as #available_for_loans, from the records a list already
+  # loaded (loan_payments and invoice: [:payments, { purchases: :loan_payments }]):
+  # no query per purchase ("Cobrar con café").
+  def available_for_loans_loaded
+    left = total - loan_payments_total
+    return left unless invoice
+
+    [ left, invoice.amount_to_pay - invoice.paid_total ].min
+  end
+
   # Its money can still go to a loan: not voided, not yet paid out, and
   # something left.
   def accepts_loan_payments?

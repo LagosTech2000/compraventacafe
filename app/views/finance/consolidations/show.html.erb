@@ -14,7 +14,7 @@
 <% sources = @filter.sources.map { [ t("reports.types.cash_movements.sources.#{it}"), it ] } %>
 <% editable = policy([ :finance, :consolidation ]).update? %>
 <% accounts = MoneyAccount.active.alphabetical %>
-<% categories = ExpenseCategory.active.order(:name) %>
+<% categories = ExpenseCategory.options %>
 <% methods = enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS) %>
 <% directions = MovementFilter::DIRECTIONS.map { [ t("reports.types.cash_movements.directions.#{it}"), it ] } %>
 <%# The bar that gives the account stays outside the list (its marks join it
@@ -44,7 +44,7 @@
       <%# Only the records that have a category take it (the payroll expenses). %>
       <div class="min-w-56">
         <%= label_tag :category_id, t(".category"), class: "field-label" %>
-        <%= select_tag :category_id, options_from_collection_for_select(categories, :id, :name), include_blank: t("finance.consolidations.show.keep_category"), class: "field-input" %>
+        <%= select_tag :category_id, options_for_select(categories), include_blank: t("finance.consolidations.show.keep_category"), class: "field-input" %>
       </div>
       <%= form.button t(".assign"), class: "btn btn-primary", data: { check_all_target: "submit", turbo_confirm: t(".confirm") } %>
       <%= form.button t(".by_method"), name: "by_method", value: "1", class: "btn", data: { check_all_target: "submit" } %>

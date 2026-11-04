@@ -1,7 +1,9 @@
 <%# Loans of the producer's person and what this purchase paid to them
     ("pago con café"). Only for users who can see loans. %>
 <% if policy(Loan).index? && (loan_payments.any? || settlement.open_loans.any?) %>
-  <section class="panel mt-4 p-4" aria-labelledby="purchase-loans">
+  <% can_settle = policy(settlement).create? %>
+  <%# Owed and payable with this coffee: it stands out (Fernando, 2026-11-03). %>
+  <section class="panel mt-4 p-4 <%= "border-accent bg-warning-soft/40" if can_settle %>" aria-labelledby="purchase-loans" <%= "data-coffee-can-pay" if can_settle %>>
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div>
         <h2 id="purchase-loans" class="font-semibold"><%= t("trading.purchases.loans.title") %></h2>
@@ -15,7 +17,7 @@
         </p>
       </div>
       <div class="flex flex-wrap gap-2">
-        <% if policy(settlement).create? %>
+        <% if can_settle %>
           <%= modal_link_to t("trading.purchases.loans.settle"), new_trading_purchase_loan_settlement_path(purchase), class: "btn btn-primary" %>
         <% end %>
         <% if policy([ :loans, :credit_account ]).show? %>

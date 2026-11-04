@@ -1,0 +1,107 @@
+<% content_for :title, t(".title") %>
+<%= live_updates_from :loans %>
+<%= render "loans/nav" %>
+
+<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+<p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t(".help") %></p>
+
+<% aging = @aging
+   total = aging.total %>
+<dl class="mt-5 flex flex-wrap gap-3">
+  <% { owed: format_money(total), late: format_money(aging.late_total),
+       late_share: number_to_percentage(total.positive? ? aging.late_total / total * 100 : 0, precision: 1),
+       loans: aging.loans_count, people: aging.people_count }.each do |key, value| %>
+    <div class="stat min-w-0 flex-1 basis-40">
+      <dt><%= t(".stats.#{key}") %></dt>
+      <dd data-live-value><%= value %></dd>
+    </div>
+  <% end %>
+</dl>
+
+<%# The whole portfolio as one bar: each tramo its share of what is owed. %>
+<% if total.positive? %>
+  <div class="mt-6 flex h-4 overflow-hidden rounded-full bg-line" role="img" aria-label="<%= t(".bar_label") %>">
+    <% aging.rows.each do |row| %>
+      <% next unless row.total.positive? %>
+      <span class="block h-full <%= portfolio_bucket_color(row.key) %>" style="width: <%= (row.total / total * 100).round(2) %>%"
+            title="<%= t(".buckets.#{row.key}") %>: <%= format_money(row.total) %>"></span>
+    <% end %>
+  </div>
+<% end %>
+
+<section class="mt-6" aria-labelledby="portfolio-buckets">
+  <h2 id="portfolio-buckets" class="mb-3 text-lg font-semibold"><%= t(".by_bucket") %></h2>
+  <div class="overflow-x-auto panel">
+    <table class="data-table" data-controller="table-sort">
+      <thead>
+        <tr>
+          <th data-sort="false"><%= t(".columns.bucket") %></th>
+          <th class="text-right"><%= t(".columns.loans") %></th>
+          <th class="text-right"><%= t(".columns.people") %></th>
+          <th class="text-right"><%= t(".columns.principal") %></th>
+          <th class="text-right"><%= t(".columns.interest") %></th>
+          <th class="text-right"><%= t(".columns.total") %></th>
+          <th class="text-right"><%= t(".columns.share") %></th>
+          <th class="cell-actions" data-sort="false"><span class="sr-only"><%= t("loans.payments.table.actions") %></span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% aging.rows.each do |row| %>
+          <% from, to = aging.due_range(row.key) %>
+          <tr id="portfolio-bucket-<%= row.key %>">
+            <td class="font-medium">
+              <span class="mr-2 inline-block size-2.5 rounded-full <%= portfolio_bucket_color(row.key) %>" aria-hidden="true"></span><%= t(".buckets.#{row.key}") %>
+            </td>
+            <td class="text-right tabular-nums"><%= row.loans_count %></td>
+            <td class="text-right tabular-nums"><%= row.people_count %></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(row.principal) %></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(row.interest) %></td>
+            <td class="whitespace-nowrap text-right font-semibold tabular-nums <%= "text-danger" if row.late? && row.total.positive? %>"><%= format_money(row.total) %></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= number_to_percentage(total.positive? ? row.total / total * 100 : 0, precision: 1) %></td>
+            <td class="cell-actions">
+              <% if row.loans_count.positive? %>
+                <%= link_to t(".see_loans"), loans_loans_path(status: row.late? ? "overdue" : "active", due_from: from&.iso8601, due_to: to&.iso8601),
+                      class: "btn btn-sm", data: { row_link: true } %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="mt-8" aria-labelledby="portfolio-zones">
+  <h2 id="portfolio-zones" class="text-lg font-semibold"><%= t(".by_zone") %></h2>
+  <p class="mb-3 text-sm text-ink-muted"><%= t(".by_zone_help") %></p>
+  <% if aging.zones.any? %>
+    <div class="overflow-x-auto panel">
+      <table class="data-table data-table-compact" data-controller="table-sort">
+        <thead>
+          <tr>
+            <th><%= Person.human_attribute_name(:zone) %></th>
+            <% LoanAging::BUCKETS.each do |key| %>
+              <th class="text-right"><%= t(".buckets_short.#{key}") %></th>
+            <% end %>
+            <th class="text-right"><%= t(".columns.late") %></th>
+            <th class="text-right"><%= t(".columns.total") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% aging.zones.each do |row| %>
+            <tr id="portfolio-zone-<%= row.zone&.id || "none" %>">
+              <td class="font-medium"><%= row.zone&.name || t(".no_zone") %></td>
+              <% LoanAging::BUCKETS.each do |key| %>
+                <td class="whitespace-nowrap text-right tabular-nums <%= "text-ink-muted" if row.by_bucket[key].zero? %>"><%= format_money(row.by_bucket[key]) %></td>
+              <% end %>
+              <td class="whitespace-nowrap text-right tabular-nums <%= "text-danger" if row.late.positive? %>"><%= format_money(row.late) %></td>
+              <td class="whitespace-nowrap text-right font-semibold tabular-nums"><%= format_money(row.total) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p class="empty-state"><%= t(".empty") %></p>
+  <% end %>
+</section>

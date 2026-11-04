@@ -33,9 +33,12 @@
           <%= modal_link_to t(".new_purchase"), new_trading_purchase_path(producer_id: @producer.id), class: "btn btn-sm" %>
         <% end %>
       </div>
-      <% if @settlement && policy(Loan).index? && @settlement.open_loans.any? %>
+      <% owes = @settlement && policy(Loan).index? && @settlement.open_loans.any?
+         can_settle = owes && policy([ :loans, :coffee_collection ]).settle? %>
+      <% if owes %>
         <p class="mb-3 flash-alert" role="status">
           <%= t(".owes_html", person: @producer.full_name, amount: tag.strong(format_money(@settlement.total_owed), class: "tabular-nums")) %>
+          <% if can_settle %><%= t(".owes_settle") %><% end %>
         </p>
       <% end %>
       <% if @purchases.any? %>
@@ -79,6 +82,9 @@
                   </td>
                   <td class="cell-actions">
                     <div class="flex justify-end gap-2">
+                      <% if can_settle && purchase.available_for_loans_loaded.positive? %>
+                        <%= modal_link_to t(".settle"), new_trading_purchase_loan_settlement_path(purchase), class: "btn btn-sm btn-primary" %>
+                      <% end %>
                       <%= detail_button trading_purchase_path(purchase) %>
                       <%# Forms can't nest: the button submits its own form, outside this one. %>
                       <% if policy(purchase).void? %>

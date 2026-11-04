@@ -4,12 +4,18 @@
     <%= render "shared/module_title", module_key: "loans" %>
     <%= link_to t("loans.nav.home"), loans_root_path, class: nav_link_class(loans_root_path, exact: true),
           aria: { current: (current_page?(loans_root_path) ? "page" : nil) } %>
-    <% { loans: loans_loans_path, credit_accounts: loans_credit_accounts_path }.each do |key, path| %>
+    <%# Collection screens (Fernando, 2026-11-03); «Cobrar con café» also reads Compra de café. %>
+    <% tabs = { loans: loans_loans_path, credit_accounts: loans_credit_accounts_path }
+       tabs[:coffee_collection] = loans_coffee_collection_path if policy([ :loans, :coffee_collection ]).show?
+       tabs.merge!(collection_calendar: loans_collection_calendar_path, portfolio: loans_portfolio_path,
+                   seasons: loans_seasons_path, daily_close: loans_daily_close_path) %>
+    <% tabs.each do |key, path| %>
       <%= link_to t("loans.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>
     <% end %>
     <span class="mx-1 h-6 w-px shrink-0 self-center bg-primary/20" aria-hidden="true"></span>
-    <%= link_to t("loans.nav.supplies"), loans_supplies_path, class: nav_link_class(loans_supplies_path),
-          aria: { current: (current_page?(loans_supplies_path) ? "page" : nil) } %>
+    <% { simulation: loans_simulation_path, supplies: loans_supplies_path }.each do |key, path| %>
+      <%= link_to t("loans.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>
+    <% end %>
     <% if policy(Loan).create? %>
       <span class="subnav-action"><%= link_to t("loans.nav.new_loan"), new_loans_loan_path, class: "btn btn-primary btn-sm" %></span>
     <% end %>

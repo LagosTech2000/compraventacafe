@@ -33,6 +33,9 @@ module Trading
         if (zone = @purchase.zone_given_to_producer)
           notice = "#{notice} #{t(".zone_given", zone: zone.name, producer: @purchase.producer.full_name)}"
         end
+        if (owed = owed_with_coffee(@purchase))
+          notice = "#{notice} #{t(".owes", amount: helpers.format_money(owed))}"
+        end
         close_modal_with notice:,
                          fallback: new_trading_purchase_path(detail: @purchase.id)
       else
@@ -68,6 +71,15 @@ module Trading
     end
 
     private
+      # What the producer owes in loans when this purchase's coffee can pay
+      # it and the user can do it (pago con café); nil otherwise.
+      def owed_with_coffee(purchase)
+        return unless policy([ :loans, :coffee_collection ]).settle?
+
+        loans = purchase.producer.person.loans.unpaid.includes(:payments)
+        loans.sum { it.balance.total_owed }.then { it.positive? ? it : nil }
+      end
+
       def set_purchase
         @purchase = authorize Purchase.find(params[:id])
       end
