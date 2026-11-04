@@ -1,6 +1,6 @@
 require "rails_helper"
 
-# Comercialización on screen: the truck's weighing calculated while typing
+# Comercialización on screen: the vehicle's weighing calculated while typing
 # (weighing_calculator_controller.js), the difference with the buyer's scale
 # and «Nueva venta» adding up the chosen shipments (sale_builder_controller.js).
 RSpec.describe "Sales screens", type: :system do
@@ -11,7 +11,8 @@ RSpec.describe "Sales screens", type: :system do
 
   before { sign_in_as(user) }
 
-  it "registers a carrier and a truck from the shipment form and picks them" do
+  it "registers a carrier, a vehicle and its type from the shipment form and picks them" do
+    create(:vehicle_type, name: "Camión")
     visit new_sales_shipment_path
     click_link "Nuevo transportista"
     within("dialog[open]") do
@@ -21,13 +22,20 @@ RSpec.describe "Sales screens", type: :system do
     expect(page).to have_no_css("dialog[open]")
     expect(page).to have_select("shipment_carrier_id", selected: "Fletes del Norte")
 
-    click_link "Nuevo camión"
+    click_link "Nuevo vehículo"
     within("dialog[open]") do
-      fill_in "truck_plate", with: "hbb 4321"
+      fill_in "vehicle_plate", with: "hbb 4321"
+      click_link "Nuevo tipo"
+    end
+    within("dialog[open]", text: "Nuevo tipo de vehículo") do
+      fill_in "vehicle_type_name", with: "Pick-up"
       find("[type=submit]").click
     end
+    expect(page).to have_select("vehicle_vehicle_type_id", selected: "Pick-up")
+    expect(page).to have_field("vehicle_plate", with: "hbb 4321")
+    within("dialog[open]") { find("[type=submit]").click }
     expect(page).to have_no_css("dialog[open]")
-    expect(page).to have_select("shipment_truck_id", selected: "HBB 4321")
+    expect(page).to have_select("shipment_vehicle_id", selected: "HBB 4321 · Pick-up")
   end
 
   # Client, 2026-10-30: a carrier (with its trip price) or a driver, one or the other.
@@ -41,7 +49,7 @@ RSpec.describe "Sales screens", type: :system do
     expect(page).to have_field("shipment_driver_name")
     expect(page).to have_no_field("shipment_carrier_id")
     expect(page).to have_no_field("shipment_trip_price")
-    expect(page).to have_field("shipment_truck_id")
+    expect(page).to have_field("shipment_vehicle_id")
 
     choose "Un transportista"
     expect(page).to have_field("shipment_carrier_id")
@@ -71,7 +79,7 @@ RSpec.describe "Sales screens", type: :system do
     expect(Shipment.last).to have_attributes(coffee_state: "cherry", origin_net_weight: BigDecimal("184.88"))
   end
 
-  it "weighs the truck by weighings, as a purchase" do
+  it "weighs the vehicle by weighings, as a purchase" do
     visit new_sales_shipment_path
     select "Beneficio Henola", from: "shipment_buyer_id"
     choose "Por pesadas"

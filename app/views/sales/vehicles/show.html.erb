@@ -1,0 +1,40 @@
+<% content_for :title, @vehicle.plate %>
+<%= live_updates_from :sales %>
+<%= render "sales/nav" %>
+<%= render "shared/breadcrumbs", crumbs: [ [ t("sales.nav.vehicles"), sales_vehicles_path ], [ @vehicle.plate ] ] %>
+
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= @vehicle.plate %></h1>
+    <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
+      <span class="badge badge-neutral"><%= @vehicle.vehicle_type.name %></span>
+      <span class="badge badge-neutral"><%= t("sales.vehicles.owners.#{@vehicle.own ? "own" : "others"}") %></span>
+      <span class="<%= @vehicle.active? ? "badge badge-success" : "badge badge-neutral" %>"><%= t("sales.buyers.index.statuses.#{@vehicle.active? ? "active" : "inactive"}") %></span>
+      <% if @vehicle.brand_model %><span><%= @vehicle.brand_model %></span><% end %>
+    </p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <% if policy(@vehicle).update? %>
+      <%= modal_link_to t("sales.vehicles.show.edit"), edit_sales_vehicle_path(@vehicle), class: "btn" %>
+    <% end %>
+    <% if modal_request? %>
+      <%= page_link_to t("sales.buyers.show.full_page"), sales_vehicle_path(@vehicle), class: "btn" %>
+    <% end %>
+  </div>
+</div>
+
+<div class="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+  <aside class="panel p-4 lg:order-last" aria-labelledby="vehicle-record">
+    <h2 id="vehicle-record" class="font-semibold"><%= t("sales.vehicles.show.record") %></h2>
+    <dl class="mt-3 grid grid-cols-1 gap-y-3 text-sm">
+      <% [ [ Vehicle.human_attribute_name(:brand_model), @vehicle.brand_model ], [ Vehicle.human_attribute_name(:color), @vehicle.color ],
+           [ Vehicle.human_attribute_name(:capacity_quintals), (format_pounds(@vehicle.capacity_quintals) if @vehicle.capacity_quintals) ] ].each do |label, value| %>
+        <div><dt class="text-xs text-ink-muted"><%= label %></dt><dd><%= value.presence || "—" %></dd></div>
+      <% end %>
+    </dl>
+    <% if @vehicle.observations %><p class="mt-3 text-sm"><%= @vehicle.observations %></p><% end %>
+  </aside>
+
+  <%= render "sales/shipments/of_record", path: sales_vehicle_path(@vehicle), filter: @filter, shipments: @shipments, next_page: @next_page,
+        frame: "vehicle-shipments-list", seasons_scope: @vehicle.shipments %>
+</div>

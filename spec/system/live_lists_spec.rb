@@ -33,8 +33,8 @@ RSpec.describe "Live lists", type: :system do
     create(:other_income, concept: "Aporte Zelaya")
     create(:carrier, name: "Fletes Zelaya")
     create(:carrier, name: "Fletes Mejía")
-    create(:truck, plate: "ZEL 0001", brand_model: "Zelaya")
-    create(:truck, plate: "MEJ 0001", brand_model: "Mejía")
+    create(:vehicle, plate: "ZEL 0001", brand_model: "Zelaya", vehicle_type: create(:vehicle_type, name: "Pick-up Zelaya"))
+    create(:vehicle, plate: "MEJ 0001", brand_model: "Mejía", vehicle_type: create(:vehicle_type, name: "Camión Mejía"))
     create(:warehouse, name: "Bodega Zelaya")
     create(:warehouse, name: "Bodega Mejía")
     create(:processing_site, name: "Patio Zelaya")
@@ -53,7 +53,7 @@ RSpec.describe "Live lists", type: :system do
     "/trading/producers" => "producers-list", "/trading/zones" => "zones-list", "/loans/loans" => "loans-list",
     "/loans/credit_accounts" => "credit-accounts-list", "/loans/supplies" => "supplies-list",
     "/farms/farms" => "farms-list", "/farms/expense_categories" => "expense-categories-list",
-    "/sales/shipments" => "shipments-list", "/sales/sales" => "sales-list", "/sales/buyers" => "buyers-list", "/sales/carriers" => "carriers-list", "/sales/trucks" => "trucks-list", "/sales/warehouses" => "warehouses-list", "/sales/sites" => "processing-sites-list", "/sales/conversions" => "conversions-list",
+    "/sales/shipments" => "shipments-list", "/sales/sales" => "sales-list", "/sales/buyers" => "buyers-list", "/sales/carriers" => "carriers-list", "/sales/vehicles" => "vehicles-list", "/sales/vehicle_types" => "vehicle-types-list", "/sales/warehouses" => "warehouses-list", "/sales/sites" => "processing-sites-list", "/sales/conversions" => "conversions-list",
     "/finance/movements" => "movements-list", "/finance/incomes" => "incomes-list",
     "/finance/staff" => "staff-list", "/finance/staff/roles" => "staff-roles-list", "/finance/expenses" => "expenses-list", "/finance/money_accounts" => "accounts-list",
     "/finance/categories" => "categories-list", "/finance/consolidation" => "consolidation-list",

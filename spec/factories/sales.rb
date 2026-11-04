@@ -4,7 +4,7 @@ FactoryBot.define do
     kind { "exporter" }
   end
 
-  # A truck that left with wet parchment: 1,000 lb gross, 6 sacks, 51 %
+  # A vehicle that left with wet parchment: 1,000 lb gross, 6 sacks, 51 %
   # humidity → (1,000 − 6) × 0.49 = 487.06 lb net. `received` weighs it at
   # the buyer's too.
   factory :shipment do
@@ -120,7 +120,12 @@ FactoryBot.define do
     sequence(:name) { |n| "Transportes #{n}" }
   end
 
-  factory :truck do
+  factory :vehicle_type do
+    sequence(:name) { |n| "Tipo #{n}" }
+  end
+
+  factory :vehicle do
+    vehicle_type
     sequence(:plate) { |n| format("HAA %04d", n) }
     brand_model { "Isuzu NPR" }
   end

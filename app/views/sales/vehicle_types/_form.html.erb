@@ -1,0 +1,21 @@
+<%# A vehicle type: its name (camión, pick-up…). Opened from a vehicle's
+    form (picker=1), saving adds it there and chooses it. %>
+<%= form_with model: [ :sales, vehicle_type ], class: form_surface_class("max-w-md space-y-5"), data: { controller: "form-validation" } do |form| %>
+  <%= hidden_field_tag :picker, "1" if picker_request? %>
+  <%= render "shared/form_errors", record: vehicle_type %>
+  <div>
+    <%= form.label :name, class: "field-label" %>
+    <%= form.text_field :name, autofocus: true, required: true, maxlength: 60, class: "field-input", placeholder: t("sales.vehicle_types.form.name_placeholder"),
+          data: { missing_message: "#{VehicleType.human_attribute_name(:name)} #{t("errors.messages.blank")}" } %>
+  </div>
+  <% if vehicle_type.persisted? %>
+    <label class="flex items-center gap-2 text-sm font-medium">
+      <%= form.check_box :active, class: "size-4 accent-primary" %> <%= VehicleType.human_attribute_name(:active) %>
+    </label>
+    <p class="text-xs text-ink-muted"><%= t("sales.vehicle_types.form.active_help") %></p>
+  <% end %>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= cancel_button sales_vehicle_types_path %>
+  </div>
+<% end %>
