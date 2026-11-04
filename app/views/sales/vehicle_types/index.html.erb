@@ -1,0 +1,60 @@
+<% content_for :title, t(".title") %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= live_updates_from :sales %>
+<%= render "sales/nav" %>
+<%= render "shared/breadcrumbs", crumbs: [ [ t("sales.nav.vehicles"), sales_vehicles_path ], [ t(".title") ] ] %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <% if policy(VehicleType).create? %>
+    <%= modal_link_to t(".new"), new_sales_vehicle_type_path, class: "btn btn-primary" %>
+  <% end %>
+</div>
+
+<% statuses = VehicleTypeFilter::STATUSES.map { [ t("sales.buyers.index.statuses.#{it}"), it ] } %>
+<div data-controller="live-filter">
+<%= render layout: "shared/filters", locals: { filter: @filter, url: sales_vehicle_types_path, frame: "vehicle-types-list", live: true } do |form| %>
+  <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: VehicleType.human_attribute_name(:name) %>
+  <%= filter_select form, :status, t("sales.buyers.index.status"), statuses, selected: @filter.status %>
+<% end %>
+
+<%= list_frame "vehicle-types-list" do %>
+<%= live_list_status @filter, status: statuses %>
+<% sorting = { filter: @filter, frame: "vehicle-types-list" } %>
+<% if @vehicle_types.any? %>
+  <div class="mt-6 overflow-x-auto panel">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <%= sort_th VehicleType.human_attribute_name(:name), :name, sorting %>
+          <%= sort_th t(".vehicles"), :vehicles, sorting, class: "text-right" %>
+          <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @vehicle_types.each do |vehicle_type| %>
+          <tr id="<%= dom_id(vehicle_type) %>">
+            <td class="font-medium">
+              <%= vehicle_type.name %>
+              <% unless vehicle_type.active? %><span class="badge badge-neutral ml-1"><%= t("sales.buyers.index.statuses.inactive") %></span><% end %>
+            </td>
+            <td class="text-right tabular-nums"><%= vehicle_type.vehicles_count %></td>
+            <td class="cell-actions">
+              <% if policy(vehicle_type).update? %>
+                <%= modal_link_to t(".edit"), edit_sales_vehicle_type_path(vehicle_type), class: "btn btn-sm" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "vehicle-types-list" %>
+<% else %>
+  <p class="empty-state mt-6"><%= t(".empty") %></p>
+<% end %>
+<% end %>
+</div>

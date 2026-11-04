@@ -156,7 +156,8 @@ es:
       pick_concept: "Selecciona el concepto"
       main_warehouse: "Bodega 1"
       no_carrier: "Sin transportista asignado"
-      no_truck: "Sin camión asignado"
+      no_vehicle: "Sin vehículo asignado"
+      pick_vehicle_type: "Selecciona el tipo de vehículo"
       pick_account: "Selecciona la cuenta"
       no_account: "Sin cuenta"
       no_hauler: "Sin carrero"
@@ -294,7 +295,7 @@ es:
           action: "Registrar abono"
         shipments_in_transit:
           title: "Salidas en camino"
-          help: "Camiones que salieron y todavía no tienen el peso de la báscula del comprador."
+          help: "Vehículos que salieron y todavía no tienen el peso de la báscula del comprador."
           name: "Salida %{number} · %{buyer}"
           days:
             zero: "salió hoy"
@@ -426,7 +427,7 @@ es:
         new_purchase: "Registrar compra"
         invoice: "Facturar compras"
         producers: "Productores"
-        new_shipment: "Nueva salida de camión"
+        new_shipment: "Nueva salida de vehículo"
         new_sale: "Nueva venta"
         farms: "Fincas y planillas"
         new_expense: "Registrar gasto"
@@ -549,7 +550,7 @@ es:
           purchase: "Compra"
           producer: "Productor nuevo"
           invoice: "Factura"
-          shipment: "Salida de camión"
+          shipment: "Salida de vehículo"
           sale: "Venta"
           loan: "Préstamo"
           loan_payment: "Abono"
@@ -1170,7 +1171,7 @@ es:
       daily_close: "Cierre diario"
       buyers: "Compradores"
       carriers: "Transportistas"
-      trucks: "Camiones"
+      vehicles: "Vehículos"
       warehouses: "Bodegas"
       new_shipment: "Nueva salida"
     carriers:
@@ -1201,33 +1202,54 @@ es:
         success: "Transportista registrado."
       update:
         success: "Transportista actualizado."
-    trucks:
+    vehicles:
       owners:
         own: "Del negocio"
         others: "De terceros"
       index:
-        title: "Camiones"
-        help: "Los camiones que llevan el café al comprador: los del negocio y los de terceros."
-        new: "Nuevo camión"
+        title: "Vehículos"
+        help: "Los vehículos que llevan el café al comprador: los del negocio y los de terceros."
+        new: "Nuevo vehículo"
+        types: "Tipos de vehículo"
         search_placeholder: "Placa, marca o color"
         owner: "De quién"
         capacity: "%{quintals} QQ"
         shipments: "Salidas"
-        empty: "No hay camiones con esos filtros."
+        empty: "No hay vehículos con esos filtros."
       form:
         brand_model_placeholder: "Por ejemplo: Isuzu NPR"
         own: "Es del negocio"
+        new_type: "Nuevo tipo"
       show:
-        edit: "Editar camión"
-        record: "Ficha del camión"
+        edit: "Editar vehículo"
+        record: "Ficha del vehículo"
       new:
-        title: "Nuevo camión"
+        title: "Nuevo vehículo"
       edit:
         title: "Editar %{plate}"
       create:
-        success: "Camión registrado."
+        success: "Vehículo registrado."
       update:
-        success: "Camión actualizado."
+        success: "Vehículo actualizado."
+    vehicle_types:
+      index:
+        title: "Tipos de vehículo"
+        help: "Camión, pick-up… cada vehículo lleva uno. Agrega los que necesites; uno desactivado ya no se elige."
+        new: "Nuevo tipo"
+        vehicles: "Vehículos"
+        edit: "Editar"
+        empty: "No hay tipos de vehículo con esos filtros."
+      form:
+        name_placeholder: "Por ejemplo: Pick-up"
+        active_help: "Desactivado ya no sale al registrar un vehículo; los que lo tienen lo conservan."
+      new:
+        title: "Nuevo tipo de vehículo"
+      edit:
+        title: "Editar %{name}"
+      create:
+        success: "Tipo de vehículo registrado."
+      update:
+        success: "Tipo de vehículo actualizado."
     departures:
       new:
         title: "Nueva salida"
@@ -1235,7 +1257,7 @@ es:
         kinds:
           sale:
             title: "Venta"
-            description: "Un camión que sale con café para un comprador, pesado en la báscula local."
+            description: "Un vehículo que sale con café para un comprador, pesado en la báscula local."
           processing:
             title: "Procesamiento"
             description: "Café que sale a procesar: de uva a pergamino húmedo o de húmedo a seco. Queda en proceso hasta registrar lo que salió."
@@ -1444,7 +1466,7 @@ es:
       label: "Etapas de la salida"
       next_badge: "Sigue"
       stages:
-        shipped: "Salió el camión"
+        shipped: "Salió el vehículo"
         received: "Pesada en destino"
         sold: "Vendida"
         paid: "Cobrada"
@@ -1466,14 +1488,14 @@ es:
           ship:
             title: "Registrar salidas"
             status_html:
-              zero: "Hoy no ha salido ningún camión."
-              one: "Hoy salió 1 camión con %{pounds} lb netas."
-              other: "Hoy salieron %{count} camiones con %{pounds} lb netas."
+              zero: "Hoy no ha salido ningún vehículo."
+              one: "Hoy salió 1 vehículo con %{pounds} lb netas."
+              other: "Hoy salieron %{count} vehículos con %{pounds} lb netas."
             action: "Nueva salida"
           receive:
             title: "Pesar en destino"
             status_html:
-              zero: "No hay camiones en camino."
+              zero: "No hay vehículos en camino."
               one: "1 salida espera su peso en destino (%{pounds} lb al salir)."
               other: "%{count} salidas esperan su peso en destino (%{pounds} lb al salir)."
             action: "Ver salidas en camino"
@@ -1501,8 +1523,8 @@ es:
         status: "Estado"
         actions: "Acciones"
       index:
-        title: "Salidas de camiones"
-        help: "Cada camión que sale con café: su peso en la báscula local y, al llegar, en la del comprador."
+        title: "Salidas de vehículos"
+        help: "Cada vehículo que sale con café: su peso en la báscula local y, al llegar, en la del comprador."
         new: "Nueva salida"
         search_placeholder: "Comprador, número, remisión, nota de peso o transportista"
         all_active: "Todas (sin anuladas)"
@@ -1525,7 +1547,7 @@ es:
         new_buyer: "Nuevo comprador"
         transport: "Transporte"
         new_carrier: "Nuevo transportista"
-        new_truck: "Nuevo camión"
+        new_vehicle: "Nuevo vehículo"
         driver_typed: "Escribirlo abajo"
         driver_name_placeholder: "Nombre del motorista"
         driver_help: "Un chofer de la planilla interna, o escribe su nombre."
@@ -1535,7 +1557,7 @@ es:
           driver: "Un motorista"
         trip_price_help: "Opcional. Lo que se le paga al transportista por este viaje."
         origin: "Báscula local"
-        origin_help: "El peso del camión antes de salir."
+        origin_help: "El peso del vehículo antes de salir."
         calculation: "Cálculo de la salida"
         sacks_help: "Los sacos contados: se descuenta 1 lb por saco."
         from_weighings: "Suma de las pesadas."
@@ -1547,7 +1569,7 @@ es:
         submit: "Registrar salida"
         over_stock: "Sale más de lo que hay en inventario de este estado del café (%{stock} lb). Se puede guardar igual."
       new:
-        title: "Nueva salida de camión"
+        title: "Nueva salida de vehículo"
         number: "Salida No. %{number}"
       edit:
         title: "Editar la salida %{number}"
@@ -1976,7 +1998,7 @@ es:
         date: "Fecha del cierre"
         print: "Imprimir"
         figures:
-          departed: "Camiones que salieron"
+          departed: "Vehículos que salieron"
           departed_net: "Neto que salió (lb)"
           received: "Pesados en destino"
           received_net: "Neto del comprador (lb)"
@@ -1987,7 +2009,7 @@ es:
           zero: "Salidas del día"
           one: "Salidas del día (1)"
           other: "Salidas del día (%{count})"
-        departed_empty: "Ese día no salió ningún camión."
+        departed_empty: "Ese día no salió ningún vehículo."
         received_title:
           zero: "Pesadas en destino ese día"
           one: "Pesadas en destino ese día (1)"
@@ -4069,8 +4091,8 @@ es:
             title: "De qué cuenta salió"
             help: "Lo pagado desde cada cuenta."
       shipments:
-        title: "Salidas de camiones"
-        description: "Cada camión que salió con café (sin los anulados): lo que pesó en la báscula local, lo que pesó donde el comprador y la diferencia entre las dos."
+        title: "Salidas de vehículos"
+        description: "Cada vehículo que salió con café (sin los anulados): lo que pesó en la báscula local, lo que pesó donde el comprador y la diferencia entre las dos."
         columns:
           number: "Salida"
           departed_at: "Salió"
@@ -4159,7 +4181,7 @@ es:
             help: "Lo cobrado en estas ventas, por forma de pago de cada cobro."
       coffee_stock:
         title: "Inventario de café"
-        description: "Cada compra que entró al inventario (su peso neto) y cada salida de camión que se fue (su neto local), por estado del café, con el inventario al empezar y al terminar el período."
+        description: "Cada compra que entró al inventario (su peso neto) y cada salida de vehículo que se fue (su neto local), por estado del café, con el inventario al empezar y al terminar el período."
         purchase: "Compra %{number} · %{name}"
         shipment: "Salida %{number} · %{name}"
         conversion_out: "Proceso %{number} · %{from} → %{to}"
@@ -4191,7 +4213,7 @@ es:
         charts:
           flow:
             title: "Entradas, salidas e inventario"
-            help: "Barras: libras netas que entraron con las compras y que salieron en camiones. Línea: el inventario al final de cada día, semana o mes."
+            help: "Barras: libras netas que entraron con las compras y que salieron en vehículos. Línea: el inventario al final de cada día, semana o mes."
           by_state:
             title: "Inventario por estado del café"
             help: "Libras netas en inventario al final del período, por estado."
@@ -4702,10 +4724,10 @@ es:
           - "El presupuesto va por categoría de primer nivel y mes, contra los gastos e inversiones de Control financiero."
       sales_flow:
         title: "Salida, peso en destino, venta y cobro"
-        summary: "El café sale del inventario en camiones, se pesa otra vez donde el comprador, se vende con el peso del comprador y se cobra por abonos."
+        summary: "El café sale del inventario en vehículos, se pesa otra vez donde el comprador, se vende con el peso del comprador y se cobra por abonos."
         steps:
           - "Nueva salida: elige el comprador, el estado del café y escribe el peso bruto y los sacos de la báscula local (con la humedad y el daño, o el rendimiento en uva). El inventario baja con su peso neto."
-          - "Cuando el camión llega, en la salida toca «Registrar peso en destino» y copia la nota de peso del comprador. El sistema muestra la diferencia entre las dos básculas."
+          - "Cuando el vehículo llega, en la salida toca «Registrar peso en destino» y copia la nota de peso del comprador. El sistema muestra la diferencia entre las dos básculas."
           - "Nueva venta: elige el comprador y marca sus salidas ya pesadas en destino (todas del mismo estado del café). Escribe el precio por quintal (de 120 lb, o las libras que diga esa venta) o por libra y el número de documento del comprador."
           - "Elige cómo se cobra: de contado (cobrada completa), con un cobro parcial o a crédito."
           - "Después, en la venta, «Registrar cobro» por cada pago del comprador. Cada cobro tiene su recibo, original y copia en hojas separadas."
@@ -5462,7 +5484,7 @@ es:
             title: "Resumen de comercialización"
             summary: "La venta del café en cuatro pasos, el café en inventario y cómo van el día y la temporada."
             steps:
-              - "Registrar salidas: cada camión que sale con café para un comprador."
+              - "Registrar salidas: cada vehículo que sale con café para un comprador."
               - "Pesar en destino: el peso que da la báscula del comprador."
               - "Vender: agrupa las salidas pesadas de un comprador en una venta."
               - "Cobrar: registra lo que paga el comprador."
@@ -5471,12 +5493,12 @@ es:
               - "Si hay salidas con una diferencia de peso mayor a la tolerancia, sale un aviso con el enlace a ellas."
         shipments:
           index:
-            title: "Salidas de camiones"
-            summary: "Cada camión que salió con café, con su peso local, su peso en destino y la diferencia."
+            title: "Salidas de vehículos"
+            summary: "Cada vehículo que salió con café, con su peso local, su peso en destino y la diferencia."
             steps:
               - "Los filtros se aplican solos: busca por comprador, número, remisión, nota de peso o transportista, o elige fechas, temporada, comprador, estado del café o estado de la salida."
               - "Toca una fila para ver la salida y registrar su peso en destino."
-              - "Toca «Nueva salida» para registrar un camión."
+              - "Toca «Nueva salida» para registrar un vehículo."
             tips:
               - "Las salidas anuladas no aparecen; elige el estado «Anulada» para verlas."
               - "Con tolerancia configurada, «Solo con diferencia mayor…» deja las que se pasaron."
@@ -5491,11 +5513,11 @@ es:
               - "Anular una salida devuelve su café al inventario."
           form:
             title: "Registrar o editar una salida"
-            summary: "El camión que sale: comprador, papeles y el peso en la báscula local. El sistema calcula la tara, el peso neto y los QQ mientras escribes."
+            summary: "El vehículo que sale: comprador, papeles y el peso en la báscula local. El sistema calcula la tara, el peso neto y los QQ mientras escribes."
             steps:
               - "Elige el comprador (o «Nuevo comprador»), la fecha y hora y el estado del café."
               - "Arriba sale el número que tendrá la salida."
-              - "Escribe la remisión si la tienes. En «¿Quién lo lleva?», elige un transportista (con el precio del viaje, lo que se le paga) o un motorista: uno o el otro. El camión va con cualquiera."
+              - "Escribe la remisión si la tienes. En «¿Quién lo lleva?», elige un transportista (con el precio del viaje, lo que se le paga) o un motorista: uno o el otro. El vehículo va con cualquiera."
               - "Escribe el peso bruto y los sacos contados. En pergamino, revisa la humedad y el daño; en uva, el rendimiento."
               - "Revisa el cálculo y guarda."
             tips:
@@ -5609,26 +5631,41 @@ es:
               - "Escribe el nombre; lo demás es opcional."
             tips:
               - "Uno con salidas no se borra: se desactiva y deja de salir en las salidas nuevas."
-        trucks:
+        vehicles:
           index:
-            title: "Camiones"
-            summary: "Los camiones que llevan el café: los del negocio y los de terceros."
+            title: "Vehículos"
+            summary: "Los vehículos que llevan el café: los del negocio y los de terceros."
             steps:
-              - "Busca por placa, marca o color; filtra los del negocio o los de terceros."
+              - "Busca por placa, marca o color; filtra por tipo (camión, pick-up…), los del negocio o los de terceros."
               - "Toca una fila para ver su ficha y sus salidas."
-              - "Toca «Nuevo camión» para registrar uno; también se puede desde «Nueva salida»."
+              - "Toca «Nuevo vehículo» para registrar uno; también se puede desde «Nueva salida»."
           show:
-            title: "Ficha del camión"
+            title: "Ficha del vehículo"
             summary: "Sus datos y las salidas en que ha ido, por temporada y estado."
             steps:
               - "Filtra sus salidas por temporada o estado; cada una abre su detalle."
           form:
-            title: "Registrar o editar un camión"
-            summary: "Placa, marca y modelo, color, capacidad en QQ y si es del negocio."
+            title: "Registrar o editar un vehículo"
+            summary: "Tipo, placa, marca y modelo, color, capacidad en QQ y si es del negocio."
             steps:
+              - "Elige el tipo (camión, pick-up…); si no está, toca «Nuevo tipo»."
               - "Escribe la placa (se guarda en mayúsculas); lo demás es opcional."
             tips:
               - "Uno con salidas no se borra: se desactiva y deja de salir en las salidas nuevas."
+        vehicle_types:
+          index:
+            title: "Tipos de vehículo"
+            summary: "Los tipos que puede tener un vehículo: camión, pick-up…"
+            steps:
+              - "Toca «Nuevo tipo» para agregar uno; también se puede desde el formulario del vehículo."
+              - "«Editar» cambia el nombre o lo desactiva."
+            tips:
+              - "Un tipo no se borra: desactivado deja de salir al registrar un vehículo, y los vehículos que lo tienen lo conservan."
+          form:
+            title: "Registrar o editar un tipo de vehículo"
+            summary: "Su nombre, por ejemplo «Pick-up»."
+            steps:
+              - "Escribe el nombre; no se repite."
         warehouses:
           index:
             title: "Bodegas"
@@ -5657,7 +5694,7 @@ es:
             title: "Nueva salida"
             summary: "El café no siempre sale para venderse: primero se elige para qué sale."
             steps:
-              - "Venta: un camión con café para un comprador (la salida de camión de siempre)."
+              - "Venta: un vehículo con café para un comprador (la salida de vehículo de siempre)."
               - "Procesamiento: café que sale a procesar; se descuenta de su inventario y queda en proceso."
               - "Traslado: café que pasa de una bodega a otra."
             tips:
@@ -6638,8 +6675,9 @@ es:
         processing_cost: "el gasto de procesamiento"
         warehouse_transfer: "el traslado entre bodegas"
         carrier: "el transportista"
-        truck: "el camión"
-        shipment: "la salida de camión"
+        vehicle: "el vehículo"
+        vehicle_type: "el tipo de vehículo"
+        shipment: "la salida de vehículo"
         shipment_weighing: "la pesada de la salida"
         sale: "la venta"
         sale_line: "la salida vendida"
@@ -6988,15 +7026,18 @@ es:
       carrier:
         one: "Transportista"
         other: "Transportistas"
-      truck:
-        one: "Camión"
-        other: "Camiones"
+      vehicle:
+        one: "Vehículo"
+        other: "Vehículos"
+      vehicle_type:
+        one: "Tipo de vehículo"
+        other: "Tipos de vehículo"
       buyer:
         one: "Comprador"
         other: "Compradores"
       shipment:
-        one: "Salida de camión"
-        other: "Salidas de camiones"
+        one: "Salida de vehículo"
+        other: "Salidas de vehículos"
       sale:
         one: "Venta"
         other: "Ventas"
@@ -7335,7 +7376,12 @@ es:
         contact_name: "Contacto"
         observations: "Observaciones"
         active: "Activo"
-      truck:
+      vehicle_type:
+        name: "Nombre"
+        active: "Activo"
+      vehicle:
+        vehicle_type: "Tipo"
+        vehicle_type_id: "Tipo"
         plate: "Placa"
         brand_model: "Marca y modelo"
         color: "Color"
@@ -7383,8 +7429,8 @@ es:
         remission_number: "Remisión"
         carrier: "Transportista"
         carrier_id: "Transportista"
-        truck: "Camión"
-        truck_id: "Camión"
+        vehicle: "Vehículo"
+        vehicle_id: "Vehículo"
         driver: "Motorista"
         driver_id: "Motorista"
         driver_name: "Motorista (escrito)"
@@ -8131,10 +8177,14 @@ es:
               inactive: "está desactivada: elige otra"
             carrier:
               inactive: "está desactivado"
-            truck:
+            vehicle:
               inactive: "está desactivado"
             received_on:
               before_departure: "no puede ser antes de la salida"
+        vehicle:
+          attributes:
+            vehicle_type:
+              inactive: "está desactivado: elige otro"
         sale:
           attributes:
             base:

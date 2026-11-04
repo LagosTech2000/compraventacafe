@@ -144,9 +144,10 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Comercialización | `sales` |
 | Comprador (exportador / beneficio / otro) | `Buyer` (`kind`: `exporter` / `processor` / `other`) |
 | Nueva salida (venta / procesamiento / traslado) | `sales/departures#new` (elige el tipo y abre su formulario) |
-| Salida de camión / báscula local / báscula del comprador | `Shipment` / `origin_*` / `destination_*` (`ArrivalsController`, `shipments/:id/arrival`) |
+| Salida de vehículo (antes «de camión») / báscula local / báscula del comprador | `Shipment` / `origin_*` / `destination_*` (`ArrivalsController`, `shipments/:id/arrival`) |
 | Nota de peso / remisión | `Shipment#weight_note_number` / `remission_number` |
-| Transportista / camión / motorista de la salida | `Carrier` / `Truck` (`own`: del negocio) / `Shipment#driver` (un `StaffMember`) o `driver_name` |
+| Transportista / vehículo / motorista de la salida | `Carrier` / `Vehicle` (`own`: del negocio; antes `Truck`) / `Shipment#driver` (un `StaffMember`) o `driver_name` |
+| Tipo de vehículo (camión, pick-up…) | `VehicleType` (`sales/vehicle_types`, `Vehicle#vehicle_type`) |
 | Pesadas de la salida (báscula local) | `ShipmentWeighing` (`Shipment#origin_weight_mode`: `single` / `weighings`) |
 | En camino / pesada sin vender / vendida | `Shipment#status`: `in_transit` / `received` / `sold` (+ `voided`) |
 | Venta / salida vendida / cobro de venta | `Sale` / `SaleLine` / `SalePayment` (`SaleIssuer`) |
@@ -705,7 +706,7 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
 | Clave | Estado |
 | --- | --- |
 | `administration` | Usuarios y permisos, auditoría, configuración del sitio y documentos privados (solo administradores); respaldo de datos (solo el usuario con id 1); personas, clientes y colaboradores, con su ficha de productor; fincas y zonas (permisos del módulo); fusionar personas (solo administradores) |
-| `sales` | Comercialización: salidas de camiones con báscula local y del comprador, ventas por libra o por quintal (120 lb por defecto, ajustable por venta) con cobros por abonos, compradores, inventario por estado del café con kárdex y cierre diario |
+| `sales` | Comercialización: salidas de vehículos con báscula local y del comprador, ventas por libra o por quintal (120 lb por defecto, ajustable por venta) con cobros por abonos, compradores, inventario por estado del café con kárdex y cierre diario |
 | `finance` | Control financiero: cuentas (caja y bancos) con saldo y estado de cuenta, ingresos, gastos e inversiones con categoría de dos niveles y comprobante, otros ingresos, transferencias, presupuesto mensual, la planilla interna del negocio (roles, anticipos, horas extra, metas y bonos) y el libro único de movimientos de todos los módulos |
 | `trading` | Demo: zonas, productores (con pestañas y QQ por temporada), carreros con su comisión y pagos con recibo, compras con cálculo por estado del café y anulación, facturas imprimibles (original y copia) con estado de pago, cierre diario |
 | `farms` | Fincas, planillas por día, por obra y de corte por lata, con roles y salarios, asistencia o latas por día, pagos por período (semanal, quincenal, mensual) con descuento a préstamos, planilla de pago imprimible y gastos por planilla |
@@ -1147,7 +1148,7 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   procesar. La lista filtra por lugar y tiene el rendimiento real.
 - **Nueva salida** (cliente, 2026-10-26) [CONFIRMADO]: el botón principal
   del módulo primero pregunta para qué sale el café: **venta** (la salida
-  de camión), **procesamiento** («Procesar café») o **traslado** entre
+  de vehículo), **procesamiento** («Procesar café») o **traslado** entre
   bodegas (`sales/departures#new`); cada uno abre su formulario. Las dos
   últimas no son ventas.
 - **Gastos de procesamiento** (`ProcessingCost`, cliente, 2026-10-26)
@@ -1168,15 +1169,22 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   (quitarlos primero). El kárdex
   (`StockLedger`, `sales/stock#show`) lista cada compra y salida con el
   saldo después de cada una.
-- **Salida de camión** (`Shipment`): comprador, estado del café, remisión,
-  transportista y camión **de sus catálogos** (`Carrier`, `Truck`: dos
+- **Salida de vehículo** (`Shipment`): comprador, estado del café, remisión,
+  transportista y vehículo **de sus catálogos** (`Carrier`, `Vehicle`: dos
   catálogos sueltos, Fernando, 2026-10-25; Comercialización →
-  Transportistas y Camiones, con su ficha y sus salidas, «Nuevo» desde la
-  salida) y **motorista**: un empleado de la planilla interna o un nombre
+  Transportistas y Vehículos, con su ficha y sus salidas, «Nuevo» desde la
+  salida) y **motorista**. **«Camiones» pasó a «Vehículos»** (Fernando,
+  2026-11-04): cada vehículo lleva **su tipo, obligatorio**, de un catálogo
+  editable, `VehicleType`, Vehículos → «Tipos de vehículo»: se agregan,
+  renombran y desactivan, nunca se borran; uno desactivado no se elige y
+  quien lo tiene lo conserva; «Nuevo tipo» desde el formulario del
+  vehículo. La migración `RenameTrucksToVehicles` creó «Camión» y
+  «Pick-up» y dejó como «Camión» los que había; la auditoría vieja pasó a
+  `Vehicle`. El motorista es un empleado de la planilla interna o un nombre
   escrito (`driver`, `driver_name`). **Transportista o motorista, uno o el
   otro** (cliente, 2026-10-30): «¿Quién lo lleva?» (`Shipment#transport_mode`,
   no se guarda; `transport_choice_controller.js`) muestra uno y vacía el
-  otro; el camión va con cualquiera. Con transportista, opcional, el
+  otro; el vehículo va con cualquiera. Con transportista, opcional, el
   **precio del viaje** (`trip_price`, lo que se le paga por ese viaje), en
   el detalle y sumado en su ficha. Las salidas de antes con los dos se
   quedan así. «Nueva salida» dice el número que tendrá

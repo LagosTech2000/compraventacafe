@@ -7,7 +7,7 @@
 #            few days later; some paid with coffee to the producer's loans
 #   loans    lent mostly before the harvest (cash, supplies or both), paid
 #            with coffee, in cash or from payrolls; some fall overdue
-#   sales    trucks of parchment leave for the buyers when there is enough
+#   sales    vehicles of parchment leave for the buyers when there is enough
 #            in stock, are weighed there a day or two later, sold on the
 #            buyer's weight and collected some days after
 #   farms    three farms with year-round maintenance (by day), coffee
@@ -54,7 +54,7 @@ class ReportDemoData
                         "Servicios" => { "Energía" => 1_400, "Teléfono e internet" => 900, "Agua" => 300 },
                         "Administración" => { "Papelería" => 400, "Contador" => 3_500 } }.freeze
   INVESTMENTS = [ [ "Vehículos", "Camión usado", 450_000 ], [ "Equipo", "Báscula de plataforma", 28_000 ], [ "Equipo", "Secadora de café", 180_000 ] ].freeze
-  # A truck leaves once this many net pounds of a state are in stock.
+  # A vehicle leaves once this many net pounds of a state are in stock.
   TRUCK_POUNDS = 1_500
 
   ProducerPlan = Struct.new(:producer, :weight, :from, :until, keyword_init: true)
@@ -111,10 +111,12 @@ class ReportDemoData
         [ parent, children.to_h { |child, cost| [ FinanceCategory.find_or_create_by!(name: child, kind: "expense", parent:), cost ] } ]
       end
       @buyers = BUYERS.map { |name, kind| Buyer.find_or_create_by!(name:) { |buyer| buyer.kind = kind } }
-      # Who carries the trucks: a carrier with its truck, or the business's own.
+      # Who carries the coffee: a carrier with its truck, or the business's own.
+      truck_type = VehicleType.find_or_create_by!(name: "Camión")
       @transport = {
-        "Transporte Demo" => [ Carrier.find_or_create_by!(name: "Transporte Demo"), Truck.find_or_create_by!(plate: "HDM 0002") { it.brand_model = "Hino 500 (demo)" } ],
-        "Camión propio" => [ nil, Truck.find_or_create_by!(plate: "HDM 0003") { it.assign_attributes(brand_model: "Isuzu NPR (demo)", own: true) } ]
+        "Transporte Demo" => [ Carrier.find_or_create_by!(name: "Transporte Demo"),
+                               Vehicle.find_or_create_by!(plate: "HDM 0002") { it.assign_attributes(vehicle_type: truck_type, brand_model: "Hino 500 (demo)") } ],
+        "Camión propio" => [ nil, Vehicle.find_or_create_by!(plate: "HDM 0003") { it.assign_attributes(vehicle_type: truck_type, brand_model: "Isuzu NPR (demo)", own: true) } ]
       }
     end
 
@@ -307,7 +309,7 @@ class ReportDemoData
       end
     end
 
-    # A truck of a parchment state leaves when its stock is enough, now and then.
+    # A vehicle of a parchment state leaves when its stock is enough, now and then.
     def ship(date)
       return if date.sunday?
 
@@ -322,7 +324,7 @@ class ReportDemoData
         sacks = (gross / PurchaseCalculation::SACK_WEIGHT.to_f).ceil
         shipment = Shipment.create!(buyer: pick(@buyers), created_by: pick(@clerks), departed_at: moment(date), coffee_state: state,
                                     remission_number: (400 + @counts[:shipments]).to_s,
-                                    **[ :carrier, :truck ].zip(@transport.fetch(pick([ "Transporte Demo", "Camión propio" ]))).to_h,
+                                    **[ :carrier, :vehicle ].zip(@transport.fetch(pick([ "Transporte Demo", "Camión propio" ]))).to_h,
                                     origin_gross_weight: gross + sacks, origin_sacks: sacks, origin_humidity_percent: humidity, origin_damage_percent: 0)
         @in_transit << [ shipment, date + @random.rand(0..2) ]
         @counts[:shipments] += 1

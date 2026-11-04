@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_03_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_04_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -881,7 +881,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_03_120000) do
     t.datetime "updated_at", null: false
     t.string "origin_weight_mode", default: "single", null: false
     t.bigint "carrier_id"
-    t.bigint "truck_id"
+    t.bigint "vehicle_id"
     t.bigint "driver_id"
     t.string "driver_name"
     t.bigint "warehouse_id", null: false
@@ -893,7 +893,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_03_120000) do
     t.index ["driver_id"], name: "index_shipments_on_driver_id"
     t.index ["number"], name: "index_shipments_on_number", unique: true
     t.index ["season_year"], name: "index_shipments_on_season_year"
-    t.index ["truck_id"], name: "index_shipments_on_truck_id"
+    t.index ["vehicle_id"], name: "index_shipments_on_vehicle_id"
     t.index ["voided_by_id"], name: "index_shipments_on_voided_by_id"
     t.index ["warehouse_id"], name: "index_shipments_on_warehouse_id"
   end
@@ -1022,19 +1022,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_03_120000) do
     t.index "lower((name)::text)", name: "index_supplies_on_lower_name", unique: true
   end
 
-  create_table "trucks", force: :cascade do |t|
-    t.string "plate", null: false
-    t.string "brand_model"
-    t.string "color"
-    t.decimal "capacity_quintals", precision: 8, scale: 2
-    t.boolean "own", default: false, null: false
-    t.text "observations"
-    t.boolean "active", default: true, null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["plate"], name: "index_trucks_on_plate", unique: true
-  end
-
   create_table "users", force: :cascade do |t|
     t.string "email_address", null: false
     t.string "password_digest", null: false
@@ -1048,6 +1035,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_03_120000) do
     t.string "webauthn_id"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
     t.index ["webauthn_id"], name: "index_users_on_webauthn_id", unique: true
+  end
+
+  create_table "vehicle_types", force: :cascade do |t|
+    t.string "name", null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((name)::text)", name: "index_vehicle_types_on_lower_name", unique: true
+  end
+
+  create_table "vehicles", force: :cascade do |t|
+    t.string "plate", null: false
+    t.string "brand_model"
+    t.string "color"
+    t.decimal "capacity_quintals", precision: 8, scale: 2
+    t.boolean "own", default: false, null: false
+    t.text "observations"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "vehicle_type_id", null: false
+    t.index ["plate"], name: "index_vehicles_on_plate", unique: true
+    t.index ["vehicle_type_id"], name: "index_vehicles_on_vehicle_type_id"
   end
 
   create_table "warehouse_transfers", force: :cascade do |t|
@@ -1212,9 +1222,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_03_120000) do
   add_foreign_key "shipments", "buyers"
   add_foreign_key "shipments", "carriers"
   add_foreign_key "shipments", "staff_members", column: "driver_id"
-  add_foreign_key "shipments", "trucks"
   add_foreign_key "shipments", "users", column: "created_by_id"
   add_foreign_key "shipments", "users", column: "voided_by_id"
+  add_foreign_key "shipments", "vehicles"
   add_foreign_key "shipments", "warehouses"
   add_foreign_key "staff_advances", "money_accounts"
   add_foreign_key "staff_advances", "staff_members"
@@ -1230,6 +1240,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_03_120000) do
   add_foreign_key "staff_payments", "staff_members"
   add_foreign_key "staff_payments", "staff_roles"
   add_foreign_key "staff_payments", "users", column: "created_by_id"
+  add_foreign_key "vehicles", "vehicle_types"
   add_foreign_key "warehouse_transfers", "users", column: "created_by_id"
   add_foreign_key "warehouse_transfers", "users", column: "voided_by_id"
   add_foreign_key "warehouse_transfers", "warehouses", column: "from_warehouse_id"

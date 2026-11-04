@@ -70,7 +70,7 @@ Rails.application.routes.draw do
     resource :daily_close, only: :show
   end
 
-  # Comercialización (Fernando, 2026-10-23): trucks leave with coffee for a
+  # Comercialización (Fernando, 2026-10-23): vehicles leave with coffee for a
   # buyer, are weighed again there, and are sold and collected.
   namespace :sales do
     root "home#index"
@@ -93,7 +93,9 @@ Rails.application.routes.draw do
       resources :buyer_advances, path: "advances", only: %i[ new create show destroy ]
     end
     resources :carriers, except: :destroy
-    resources :trucks, except: :destroy
+    resources :vehicles, except: :destroy
+    # Camión, pick-up…: the kinds of vehicle.
+    resources :vehicle_types, only: %i[ index new create edit update ]
     resources :warehouses
     # Where coffee is processed.
     resources :processing_sites, path: "sites", except: :destroy

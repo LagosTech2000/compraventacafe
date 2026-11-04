@@ -1,4 +1,4 @@
-# A truck that leaves with coffee for a buyer ("salida de camión",
+# A vehicle that leaves with coffee for a buyer ("salida de camión",
 # Fernando, 2026-10-23). It is weighed on the local scale before leaving
 # (origin) and again on the buyer's scale (destination). Each net weight
 # uses the purchase calculation (PurchaseCalculation) with the sacks
@@ -32,12 +32,12 @@ class Shipment < ApplicationRecord
   belongs_to :buyer
   # The warehouse it leaves from (client, 2026-10-26).
   belongs_to :warehouse
-  # Who hauled it and in what truck (catalogs apart), and who drove it: an
+  # Who hauled it and in what vehicle (catalogs apart), and who drove it: an
   # employee of the Planilla interna, or a name typed (Fernando, 2026-10-25).
   # A carrier or a driver, one or the other (client, 2026-10-30); with a
   # carrier, optionally what it is paid for the trip (#trip_price).
   belongs_to :carrier, optional: true
-  belongs_to :truck, optional: true
+  belongs_to :vehicle, optional: true
   belongs_to :driver, class_name: "StaffMember", optional: true
   belongs_to :created_by, class_name: "User"
   belongs_to :voided_by, class_name: "User", optional: true
@@ -58,7 +58,7 @@ class Shipment < ApplicationRecord
   validates :driver_name, length: { maximum: 120 }
   validates :trip_price, numericality: { greater_than: 0, less_than: 100_000_000 }, allow_nil: true
   validate :carrier_or_driver, if: -> { will_save_change_to_carrier_id? || will_save_change_to_driver_id? || will_save_change_to_driver_name? }
-  validate :carrier_and_truck_active
+  validate :carrier_and_vehicle_active
   validate :warehouse_active, if: :will_save_change_to_warehouse_id?
   validates :observations, length: { maximum: 500 }
   validates :origin_gross_weight, numericality: { greater_than: 0, less_than: MAX_WEIGHT }
@@ -274,16 +274,16 @@ class Shipment < ApplicationRecord
       errors.add(:buyer, :inactive) if buyer && !buyer.active?
     end
 
-    def carrier_and_truck_active
+    def carrier_and_vehicle_active
       errors.add(:carrier, :inactive) if will_save_change_to_carrier_id? && carrier && !carrier.active?
-      errors.add(:truck, :inactive) if will_save_change_to_truck_id? && truck && !truck.active?
+      errors.add(:vehicle, :inactive) if will_save_change_to_vehicle_id? && vehicle && !vehicle.active?
     end
 
     # In a sale its weights and buyer are what was charged.
     def not_sold
       return unless sold?
 
-      changed_inputs = (changed - %w[updated_at lock_version observations remission_number carrier_id truck_id driver_id driver_name trip_price weight_note_number])
+      changed_inputs = (changed - %w[updated_at lock_version observations remission_number carrier_id vehicle_id driver_id driver_name trip_price weight_note_number])
       errors.add(:base, :sold) if changed_inputs.any?
     end
 

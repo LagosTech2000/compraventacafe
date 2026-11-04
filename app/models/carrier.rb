@@ -1,5 +1,5 @@
 # Who hauls the coffee to the buyer (Fernando, 2026-10-25): a company or a
-# person, a catalog of its own, chosen in a shipment. Trucks are a separate
+# person, a catalog of its own, chosen in a shipment. Vehicles are a separate
 # catalog. Deactivated, never deleted once it has shipments.
 class Carrier < ApplicationRecord
   include Auditable
