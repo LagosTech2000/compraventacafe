@@ -16,6 +16,7 @@ class SalesReport < Report
   STATUS_TONES = InvoicesReport::STATUS_TONES
 
   self.module_key = "sales"
+  def self.permission_keys = %w[sales.sales]
   self.date_column = "sales.sold_on"
   self.default_period = "this_month"
   self.default_sort = :number

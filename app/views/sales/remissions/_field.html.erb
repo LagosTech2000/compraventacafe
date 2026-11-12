@@ -1,0 +1,6 @@
+<%# A field of the remission: its label and the value on a line, or the line
+    empty to fill by hand. wide: the whole row. %>
+<div class="flex items-end gap-2 <%= "sm:col-span-full print:col-span-full" if local_assigns[:wide] %>">
+  <dt class="shrink-0 font-semibold"><%= label %>:</dt>
+  <dd class="min-h-6 min-w-0 flex-1 border-b border-ink/60 px-1"><%= value.presence %></dd>
+</div>

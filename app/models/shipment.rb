@@ -9,6 +9,10 @@
 # between both scales is shown, and stands out when it passes the
 # tolerance of the site settings. A sale (Sale) charges the destination net.
 #
+# Administrators may leave the local scale empty (Fernando, 2026-11-12):
+# then it takes no coffee out of the stock and has no difference between
+# scales until someone completes it (#origin_missing?), even once sold.
+#
 # Stages: in transit → received (weighed at destination) → sold; or voided.
 # Weights are kept as calculated: they change only when an input does.
 # A shipment in a sale is not changed nor voided; voided, its coffee is
@@ -25,6 +29,7 @@ class Shipment < ApplicationRecord
   MAX_SACKS = 10_000
   # What each side's calculation reads.
   INPUTS = %w[gross_weight sacks humidity_percent damage_percent yield_factor].freeze
+  ORIGIN_COLUMNS = (INPUTS + %w[tare net_weight]).map { "origin_#{it}" }.freeze
   # The local scale: the gross weight and sacks typed, or the sums of
   # weighings (ShipmentWeighing), as in the purchases.
   WEIGHT_MODES = Purchase::WEIGHT_MODES
@@ -45,6 +50,13 @@ class Shipment < ApplicationRecord
   has_one :active_sale_line, -> { where(active: true) }, class_name: "SaleLine", inverse_of: :shipment
   has_one :sale, through: :active_sale_line
   has_many :weighings, -> { order(:id) }, class_name: "ShipmentWeighing", dependent: :destroy, inverse_of: :shipment
+  # Its cost (Fernando, 2026-11-12, ShipmentCostSummary): the purchase
+  # invoices of its coffee, the costs registered from it and the expenses
+  # of Control financiero assigned to it.
+  has_many :shipment_invoices, dependent: :restrict_with_error
+  has_many :invoices, -> { order(:number) }, through: :shipment_invoices
+  has_many :costs, -> { chronological }, class_name: "ShipmentCost", dependent: :restrict_with_error, inverse_of: :shipment
+  has_many :expenses, dependent: :restrict_with_error
   accepts_nested_attributes_for :weighings, allow_destroy: true, reject_if: :blank_weighing?
 
   normalizes :remission_number, :weight_note_number, :driver_name, with: ->(value) { value.squish.presence }
@@ -57,13 +69,16 @@ class Shipment < ApplicationRecord
   validates :remission_number, :weight_note_number, length: { maximum: 60 }
   validates :driver_name, length: { maximum: 120 }
   validates :trip_price, numericality: { greater_than: 0, less_than: 100_000_000 }, allow_nil: true
+  validate :keeps_invoices_state, if: -> { will_save_change_to_coffee_state? && persisted? }
   validate :carrier_or_driver, if: -> { will_save_change_to_carrier_id? || will_save_change_to_driver_id? || will_save_change_to_driver_name? }
   validate :carrier_and_vehicle_active
   validate :warehouse_active, if: :will_save_change_to_warehouse_id?
   validates :observations, length: { maximum: 500 }
-  validates :origin_gross_weight, numericality: { greater_than: 0, less_than: MAX_WEIGHT }
-  validates :origin_sacks, numericality: { only_integer: true, greater_than: 0, less_than: MAX_SACKS }
-  validate :inputs_of_origin
+  with_options unless: :origin_left_empty? do
+    validates :origin_gross_weight, numericality: { greater_than: 0, less_than: MAX_WEIGHT }
+    validates :origin_sacks, numericality: { only_integer: true, greater_than: 0, less_than: MAX_SACKS }
+    validate :inputs_of_origin
+  end
   validate :destination_complete, if: -> { receiving || destination_entered? }
   validate :received_after_departure
   validate :buyer_active, if: :will_save_change_to_buyer_id?
@@ -71,9 +86,10 @@ class Shipment < ApplicationRecord
 
   # First: by weighings, the local gross weight and sacks come from them.
   before_validation { self.warehouse ||= Warehouse.main! if new_record? }
-  before_validation :sum_weighings
+  before_validation :clear_origin, if: :skipping_origin?
+  before_validation :sum_weighings, unless: :origin_left_empty?
   before_validation :clear_unused_inputs
-  before_validation -> { calculate("origin") }, if: -> { recalculate?("origin") }
+  before_validation -> { calculate("origin") }, if: -> { !origin_left_empty? && recalculate?("origin") }
   before_validation -> { calculate("destination") }, if: -> { recalculate?("destination") }
   before_validation :assign_season
   # The employee chosen as driver wins over a name typed.
@@ -84,6 +100,12 @@ class Shipment < ApplicationRecord
 
   # Set when the destination weighing is saved: then it is required.
   attr_accessor :receiving
+  # The form's «Sin báscula local», and whether whoever saves may use it
+  # (administrators, set by the controller).
+  attr_accessor :skip_origin, :origin_skippable
+
+  # Completed after it was sold: its sale's local net follows.
+  after_update :refresh_sale_origin, if: -> { saved_change_to_origin_net_weight? && sold? }
 
   TRANSPORT_MODES = %w[carrier driver].freeze
   # What the form chose: a carrier or a driver. The other one is cleared.
@@ -147,13 +169,16 @@ class Shipment < ApplicationRecord
 
   def season = Season.new(season_year)
 
+  # Registered without the local scale, not completed yet.
+  def origin_missing? = origin_net_weight.nil?
+
   # QQ of 125 lb, as the purchases count them.
-  def origin_quintals = PurchaseCalculation.quintals(origin_net_weight)
+  def origin_quintals = origin_net_weight && PurchaseCalculation.quintals(origin_net_weight)
   def destination_quintals = destination_net_weight && PurchaseCalculation.quintals(destination_net_weight)
 
   # Destination net − origin net: negative when the buyer's scale gave less.
   def net_difference
-    destination_net_weight - origin_net_weight if destination_net_weight
+    destination_net_weight - origin_net_weight if destination_net_weight && origin_net_weight
   end
 
   def difference_percent
@@ -169,11 +194,17 @@ class Shipment < ApplicationRecord
 
   # Takes its coffee out of the shipments and back to stock. Only while it
   # is in no sale.
+  # Voided, its invoices and assigned expenses are free for another shipment.
   def void!(user)
-    update!(voided_at: Time.current, voided_by: user)
+    transaction do
+      shipment_invoices.each(&:destroy!)
+      expenses.each { it.update!(shipment: nil) }
+      update!(voided_at: Time.current, voided_by: user)
+    end
   end
 
-  def voidable? = !voided? && !sold?
+  # Not with costs registered from it: remove them first (as a process).
+  def voidable? = !voided? && !sold? && costs.none?
 
   def destination_entered?
     received_on.present? || INPUTS.any? { |input| public_send("destination_#{input}").present? }
@@ -211,6 +242,7 @@ class Shipment < ApplicationRecord
     def clear_unused_inputs
       SIDES.each do |side|
         next if side == "destination" && !destination_entered?
+        next if side == "origin" && origin_left_empty?
 
         if cherry?
           self["#{side}_humidity_percent"] = self["#{side}_damage_percent"] = nil
@@ -279,12 +311,38 @@ class Shipment < ApplicationRecord
       errors.add(:vehicle, :inactive) if will_save_change_to_vehicle_id? && vehicle && !vehicle.active?
     end
 
-    # In a sale its weights and buyer are what was charged.
+    # In a sale its weights and buyer are what was charged. A local scale left
+    # empty can still be completed.
     def not_sold
       return unless sold?
 
-      changed_inputs = (changed - %w[updated_at lock_version observations remission_number carrier_id vehicle_id driver_id driver_name trip_price weight_note_number])
+      free = %w[updated_at lock_version observations remission_number carrier_id vehicle_id driver_id driver_name trip_price weight_note_number]
+      free += ORIGIN_COLUMNS + %w[origin_weight_mode] if origin_net_weight_in_database.nil?
+      changed_inputs = (changed - free)
       errors.add(:base, :sold) if changed_inputs.any?
+    end
+
+    def skipping_origin? = ActiveModel::Type::Boolean.new.cast(skip_origin) && origin_skippable.present?
+
+    # Empty and staying so: an administrator chose it, or it was saved empty
+    # and nothing of the local scale comes now (an arrival, another edit).
+    def origin_left_empty?
+      return true if skipping_origin?
+      return false if new_record? || !origin_net_weight_in_database.nil?
+
+      origin_gross_weight.blank? && origin_sacks.blank? && kept_weighings.empty?
+    end
+
+    # Without the local scale: nothing of it is kept.
+    def clear_origin
+      ORIGIN_COLUMNS.each { self[it] = nil }
+      self.origin_weight_mode = "single"
+      weighings.each(&:mark_for_destruction)
+    end
+
+    def refresh_sale_origin
+      active_sale_line.update!(origin_net_weight:)
+      sale.refresh_origin!
     end
 
     def assign_season
@@ -314,5 +372,10 @@ class Shipment < ApplicationRecord
 
     def warehouse_active
       errors.add(:warehouse, :inactive) if warehouse && !warehouse.active?
+    end
+
+    # Its invoices are of its coffee state: it does not change with them.
+    def keeps_invoices_state
+      errors.add(:coffee_state, :has_invoices) if shipment_invoices.exists?
     end
 end

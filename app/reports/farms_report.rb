@@ -27,6 +27,7 @@ class FarmsReport < Report
   filter :activity, :choice, in: %w[with_activity], default: "with_activity"
 
   def self.module_keys = %w[farms trading]
+  def self.permission_keys = %w[farms.farms trading.purchases]
 
   detail { |farm| farms_farm_path(farm) }
 

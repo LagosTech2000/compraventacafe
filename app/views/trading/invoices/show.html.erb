@@ -10,16 +10,34 @@
 
 <div class="mb-6 flex flex-wrap items-start justify-between gap-4 print:hidden">
   <h1 class="text-2xl font-bold"><%= t(".title", number: @invoice.display_number) %></h1>
-  <% if modal_request? %>
-    <%# Printing needs the full page: it holds the original and the copy. %>
-    <%= page_link_to t(".print"), trading_invoice_path(@invoice), class: "btn" %>
-  <% else %>
-    <div data-controller="print">
-      <button type="button" class="btn" data-action="print#print"><%= t(".print") %></button>
-    </div>
-  <% end %>
+  <div class="flex flex-wrap gap-2">
+    <%# Administrators edit or void it, even paid (Fernando, 2026-11-12). %>
+    <% if policy(@invoice).update? %>
+      <%= page_link_to t(".edit"), edit_trading_invoice_path(@invoice), class: "btn" %>
+    <% end %>
+    <% if policy(@invoice).void? %>
+      <%= modal_link_to t(".void"), new_trading_invoice_void_path(@invoice), class: "btn" %>
+    <% end %>
+    <% if modal_request? %>
+      <%# Printing needs the full page: it holds the original and the copy. %>
+      <%= page_link_to t(".print"), trading_invoice_path(@invoice), class: "btn" %>
+    <% else %>
+      <div data-controller="print">
+        <button type="button" class="btn" data-action="print#print"><%= t(".print") %></button>
+      </div>
+    <% end %>
+  </div>
 </div>
 
+<% if @invoice.voided? %>
+  <p class="flash-alert mb-6" role="status" data-invoice-voided>
+    <%= t(".voided", date: l(@invoice.voided_at), name: @invoice.voided_by.name, reason: @invoice.void_reason) %>
+  </p>
+<% elsif @invoice.overpaid? %>
+  <p class="flash-alert mb-6 print:hidden" role="status" data-invoice-overpaid><%= t(".overpaid", amount: format_money(@invoice.overpaid_amount)) %></p>
+<% end %>
+
+<% unless @invoice.voided? %>
 <div class="mb-6 print:hidden">
   <%= render layout: "trading/lifecycle", locals: { lifecycle: TradingLifecycle.for_invoice(@invoice) } do %>
     <% if policy(InvoicePayment.new(invoice: @invoice)).create? %>
@@ -34,6 +52,7 @@
   <% end %>
   <%= render "trading/invoices/payments", invoice: @invoice %>
 </div>
+<% end %>
 
 <div class="space-y-6 print:space-y-4">
   <%= render "receipt", invoice: @invoice, label: t(".original") %>

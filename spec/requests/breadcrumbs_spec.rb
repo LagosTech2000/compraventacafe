@@ -50,11 +50,11 @@ RSpec.describe "Breadcrumbs" do
     payment = create(:sale_payment, sale:, amount: 1)
 
     get sales_shipment_path(sale.shipments.first)
-    expect(crumbs).to eq([ "Compradores", "Beneficio Henola", "Salida #{sale.shipments.first.display_number}" ])
+    expect(crumbs).to eq([ "Clientes comerciales", "Beneficio Henola", "Salida #{sale.shipments.first.display_number}" ])
     get sales_sale_path(sale)
-    expect(crumbs).to eq([ "Compradores", "Beneficio Henola", "Venta #{sale.display_number}" ])
+    expect(crumbs).to eq([ "Clientes comerciales", "Beneficio Henola", "Venta #{sale.display_number}" ])
     get sales_sale_payment_path(sale, payment)
-    expect(crumbs.first(3)).to eq([ "Compradores", "Beneficio Henola", "Venta #{sale.display_number}" ])
+    expect(crumbs.first(3)).to eq([ "Clientes comerciales", "Beneficio Henola", "Venta #{sale.display_number}" ])
   end
 
   it "goes up through its list from an expense, an investment and an account" do

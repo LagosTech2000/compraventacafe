@@ -3,5 +3,6 @@ module Administration
   # (Fernando, 2026-10-14), with the Administración permissions.
   class ProducerPolicy < ApplicationPolicy
     self.module_key = "administration"
+    self.submodule_key = "people"
   end
 end

@@ -132,6 +132,14 @@
       <%= form.select :coffee_state, enum_options(Purchase, :coffee_state, Purchase::COFFEE_STATES), {}, required: true, class: "field-input",
             data: { purchase_calculator_target: "coffeeState", unusual_values_target: "state",
                     action: "purchase-calculator#changeCoffeeState unusual-values#check" } %>
+      <%# «Café corriente»: only wet parchment (Fernando, 2026-11-12). %>
+      <label class="mt-2 flex cursor-pointer items-start gap-2 text-sm" data-purchase-calculator-target="wetField"
+             <%= "hidden" unless purchase.coffee_state == "wet_parchment" %>>
+        <%= form.hidden_field :common_coffee, value: "0", id: nil, disabled: purchase.coffee_state != "wet_parchment" %>
+        <%= form.check_box :common_coffee, { class: "mt-0.5 size-4 accent-primary", disabled: purchase.coffee_state != "wet_parchment" }, "1", nil %>
+        <span><span class="font-medium"><%= Purchase.human_attribute_name(:common_coffee) %></span>
+          <span class="block text-xs text-ink-muted"><%= t(".common_coffee_help") %></span></span>
+      </label>
     </div>
 
     <%# Where it is kept: the default warehouse unless chosen (client, 2026-10-26). %>

@@ -53,10 +53,29 @@ RSpec.describe User do
       expect(user.reload.can?(:trading, :read)).to be(false)
     end
 
+    # Permissions per submodule (Fernando, 2026-11-12).
+    it "decides by submodule, and the module alone means any of its submodules" do
+      user = create(:user)
+      create(:permission, user:, module_key: "trading", submodule_key: "invoices", can_read: true, can_create: true)
+      user.reload
+      expect(user.can?("trading.invoices", :read)).to be(true)
+      expect(user.can?("trading.invoices", :create)).to be(true)
+      expect(user.can?("trading.purchases", :read)).to be(false)
+      expect(user.can?("trading", :read)).to be(true)
+      expect(user.can?("trading", :destroy)).to be(false)
+      expect(user.can?("sales", :read)).to be(false)
+    end
+
+    it "builds a row per submodule for the permissions form" do
+      user = build(:user)
+      expect(user.build_missing_permissions.map(&:permission_key)).to eq(AppModule::PERMISSION_KEYS)
+    end
+
     it "rejects unknown modules and actions" do
       user = create(:user)
       expect { user.can?(:payroll, :read) }.to raise_error(ArgumentError)
       expect { user.can?(:trading, :approve) }.to raise_error(ArgumentError)
+      expect { user.can?("trading.payrolls", :read) }.to raise_error(ArgumentError)
     end
   end
 

@@ -17,13 +17,15 @@
 # 2026-10-25: «fechas con hora»), newest last.
 class MoneyMovements
   SOURCES = %w[invoices hauler_payments loans loan_payments payroll_payments payroll_expenses
-               sale_payments buyer_advances processing_costs expenses investments staff_payments staff_advances other_incomes transfers].freeze
-  # Which module each source's records belong to (who may read it).
+               sale_payments buyer_advances processing_costs shipment_costs expenses investments staff_payments staff_advances other_incomes transfers].freeze
+  # Which submodule each source's records belong to (who may read it).
   MODULES = {
-    "invoices" => "trading", "hauler_payments" => "trading", "loans" => "loans", "loan_payments" => "loans",
-    "payroll_payments" => "farms", "payroll_expenses" => "farms", "sale_payments" => "sales", "buyer_advances" => "sales", "processing_costs" => "sales",
-    "expenses" => "finance", "investments" => "finance", "staff_payments" => "finance", "staff_advances" => "finance",
-    "other_incomes" => "finance", "transfers" => "finance"
+    "invoices" => "trading.invoices", "hauler_payments" => "trading.haulers", "loans" => "loans.loans", "loan_payments" => "loans.loans",
+    "payroll_payments" => "farms.payrolls", "payroll_expenses" => "farms.payrolls", "sale_payments" => "sales.sales",
+    "buyer_advances" => "sales.buyers", "processing_costs" => "sales.coffee_conversions",
+    "shipment_costs" => "sales.shipments",
+    "expenses" => "finance.expenses", "investments" => "finance.investments", "staff_payments" => "finance.staff",
+    "staff_advances" => "finance.staff", "other_incomes" => "finance.incomes", "transfers" => "finance.accounts"
   }.freeze
   NAME = "people.first_names || ' ' || people.last_names".freeze
 
@@ -180,6 +182,21 @@ class MoneyMovements
                    description: I18n.t("money_movements.processing_cost", concept: concept_label, number: format("%04d", number)),
                    payment_method: method_label(Invoice, method), amount_out: amount, account_id:,
                    route: [ :sales_coffee_conversion_path, conversion_id ])
+        end
+    end
+
+    # Costs registered from a shipment (Fernando, 2026-11-12).
+    def shipment_costs
+      narrowed(ShipmentCost.joins(:shipment), "shipment_costs.paid_on", "shipment_costs.money_account_id")
+        .pluck("shipment_costs.id", "shipment_costs.paid_on", "shipment_costs.payment_method", "shipment_costs.concept",
+               "shipment_costs.description", "shipment_costs.amount", "shipments.id", "shipments.number",
+               "shipment_costs.money_account_id", "shipment_costs.created_at")
+        .map do |id, date, method, concept, description, amount, shipment_id, number, account_id, created_at|
+          concept_label = [ ShipmentCost.human_attribute_name("concept/#{concept}"), description ].compact.join(" · ")
+          movement(id:, date:, created_at:, source: "shipment_costs",
+                   description: I18n.t("money_movements.shipment_cost", concept: concept_label, number: format("%04d", number)),
+                   payment_method: method_label(Invoice, method), amount_out: amount, account_id:,
+                   route: [ :sales_shipment_path, shipment_id ])
         end
     end
 

@@ -38,9 +38,9 @@
             <td><%= l(shipment.departed_at, format: :short) %></td>
             <td><%= shipment.remission_number || "—" %></td>
             <td><%= shipment.weight_note_number || "—" %></td>
-            <td class="text-right tabular-nums"><%= format_pounds(line.origin_net_weight) %></td>
+            <td class="text-right tabular-nums"><%= line.origin_net_weight ? format_pounds(line.origin_net_weight) : "—" %></td>
             <td class="text-right tabular-nums"><%= format_pounds(line.net_weight) %></td>
-            <td class="text-right tabular-nums"><%= format_pounds(line.net_weight - line.origin_net_weight) %></td>
+            <td class="text-right tabular-nums"><%= line.origin_net_weight ? format_pounds(line.net_weight - line.origin_net_weight) : "—" %></td>
             <td class="text-right tabular-nums"><%= format_money(line.amount) %></td>
           </tr>
         <% end %>
@@ -48,9 +48,9 @@
       <tfoot>
         <tr class="font-bold">
           <td colspan="4"><%= t("trading.invoices.show.totals") %></td>
-          <td class="text-right tabular-nums"><%= format_pounds(sale.origin_net_weight) %></td>
+          <td class="text-right tabular-nums"><%= sale.origin_net_weight ? format_pounds(sale.origin_net_weight) : "—" %></td>
           <td class="text-right tabular-nums"><%= format_pounds(sale.net_weight) %></td>
-          <td class="text-right tabular-nums"><%= format_pounds(sale.net_difference) %></td>
+          <td class="text-right tabular-nums"><%= sale.net_difference ? format_pounds(sale.net_difference) : "—" %></td>
           <td class="text-right tabular-nums"><%= format_money(sale.total) %></td>
         </tr>
       </tfoot>

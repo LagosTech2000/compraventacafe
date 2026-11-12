@@ -1,0 +1,59 @@
+<%# One printed copy of a shipment's remission, with the fields of the
+    client's booklet in its order. What the system does not keep (latas,
+    quintal oro) or is empty goes as a line to fill by hand. `label` is
+    ORIGINAL or COPIA. %>
+<% scope = "sales.remissions.remission" %>
+<% driver = shipment.driver&.person %>
+<% vehicle = shipment.vehicle %>
+<article class="rounded-2xl border border-line bg-white p-5 shadow-[0_1px_2px_rgb(29_21_18/0.04)] break-inside-avoid print:p-3 print:shadow-none print:rounded-none print:border-ink"
+         data-remission>
+  <%= render "shared/print_letterhead", title: t("#{scope}.title"), number: shipment.remission_number.presence || "________",
+        label:, rtn: true, contact: true, subtitle: t("#{scope}.shipment", number: shipment.display_number),
+        badge: (shipment.voided? ? render("sales/shipments/status", shipment:) : nil) %>
+
+  <p class="mt-3 text-right text-sm" data-place-date>
+    <%= t("#{scope}.place_date", place: business_location, date: l(shipment.departed_at.to_date, format: :long)) %>
+  </p>
+
+  <div class="mt-3 space-y-4 text-sm print:mt-2 print:space-y-3">
+    <section class="rounded-xl border border-ink/40 p-3 print:rounded-none">
+      <dl class="grid gap-x-6 gap-y-2 sm:grid-cols-2 print:grid-cols-2">
+        <%= render "sales/remissions/field", label: t("#{scope}.destination"), value: format_address(buyer), wide: true %>
+        <%= render "sales/remissions/field", label: t("#{scope}.to"), value: buyer.name, wide: true %>
+      </dl>
+      <p class="mt-3 font-semibold"><%= t("#{scope}.quantity") %></p>
+      <dl class="mt-1 grid gap-x-6 gap-y-2 sm:grid-cols-3 print:grid-cols-3">
+        <%= render "sales/remissions/field", label: t("#{scope}.sacks"), value: shipment.origin_sacks.to_s %>
+        <%= render "sales/remissions/field", label: t("#{scope}.cans"), value: nil %>
+        <%= render "sales/remissions/field", label: t("#{scope}.gold_quintals"), value: nil %>
+      </dl>
+      <dl class="mt-2 grid gap-x-6 gap-y-2 sm:grid-cols-2 print:grid-cols-2">
+        <%= render "sales/remissions/field", label: t("#{scope}.sent_by"), value: business_owner, wide: true %>
+        <%= render "sales/remissions/field", label: t("#{scope}.address"), value: business_location, wide: true %>
+      </dl>
+    </section>
+
+    <section class="rounded-xl border border-ink/40 p-3 print:rounded-none">
+      <dl class="grid gap-x-6 gap-y-2 sm:grid-cols-2 print:grid-cols-2">
+        <%= render "sales/remissions/field", label: t("#{scope}.driver"), value: shipment.driver_label %>
+        <%= render "sales/remissions/field", label: t("#{scope}.phone"), value: driver && format_phone(driver.phone) %>
+        <%= render "sales/remissions/field", label: t("#{scope}.identity"), value: driver&.dni, wide: true %>
+        <%= render "sales/remissions/field", label: t("#{scope}.vehicle"), value: vehicle&.vehicle_type&.name %>
+        <%= render "sales/remissions/field", label: t("#{scope}.brand"), value: vehicle&.brand_model %>
+        <%= render "sales/remissions/field", label: t("#{scope}.color"), value: vehicle&.color %>
+        <%= render "sales/remissions/field", label: t("#{scope}.plate"), value: vehicle&.plate %>
+      </dl>
+    </section>
+
+    <div>
+      <p class="font-semibold"><%= t("#{scope}.observations") %>:</p>
+      <p class="mt-1 min-h-16 border-b border-ink/60 whitespace-pre-line"><%= shipment.observations %></p>
+    </div>
+  </div>
+
+  <footer class="mt-12 grid grid-cols-3 gap-6 text-center text-sm print:mt-10">
+    <div class="border-t border-ink pt-1"><%= t("#{scope}.sender_signature") %></div>
+    <div class="border-t border-ink pt-1"><%= t("#{scope}.received_signature") %></div>
+    <div class="border-t border-ink pt-1"><%= t("#{scope}.driver_signature") %></div>
+  </footer>
+</article>

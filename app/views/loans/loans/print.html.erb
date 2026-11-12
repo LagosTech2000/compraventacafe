@@ -1,0 +1,71 @@
+<% content_for :title, t(".page_title") %>
+<%# The filtered loans on paper, with the totals (Fernando, 2026-11-12). %>
+<div class="mb-6 flex flex-wrap items-start justify-between gap-4 print:hidden">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".page_title") %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <div class="flex flex-wrap gap-2" data-controller="print" data-print-auto-value="<%= params[:print].present? %>">
+    <button type="button" class="btn btn-primary" data-action="print#print" autofocus><%= t(".print") %></button>
+    <%= link_to t(".back"), loans_loans_path(@filter.to_params), class: "btn" %>
+  </div>
+</div>
+
+<article class="rounded-2xl border border-line bg-white p-5 print:rounded-none print:border-0 print:p-0">
+  <%= render "shared/print_letterhead", title: t(".title"), subtitle: t(".printed_on", date: l(Time.zone.today, format: :long)) %>
+
+  <% filters = loan_filter_summary(@filter) %>
+  <p class="mt-3 text-sm" data-print-filters>
+    <span class="font-semibold"><%= t(".filters") %>:</span>
+    <%= filters.any? ? filters.join(" · ") : t(".no_filters") %>
+  </p>
+
+  <div class="mt-3"><%= render "totals", totals: @totals %></div>
+
+  <% if @more %>
+    <p class="mt-3 text-sm text-ink-muted"><%= t(".truncated", count: Loans::LoansController::PRINT_LIMIT) %></p>
+  <% end %>
+
+  <table class="data-table data-table-compact mt-4 w-full" data-print-loans>
+    <thead>
+      <tr>
+        <th><%= t("loans.loans.table.number") %></th>
+        <th><%= Loan.human_attribute_name(:person) %></th>
+        <th><%= Person.human_attribute_name(:zone) %></th>
+        <th><%= Loan.human_attribute_name(:disbursed_on) %></th>
+        <th><%= Loan.human_attribute_name(:due_on) %></th>
+        <th class="text-right"><%= t("loans.loans.table.rate") %></th>
+        <th class="text-right"><%= Loan.human_attribute_name(:principal) %></th>
+        <th class="text-right"><%= t("loans.loans.totals.paid") %></th>
+        <th class="text-right"><%= t("loans.loans.table.owed") %></th>
+        <th><%= Loan.human_attribute_name(:status) %></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @loans.each do |loan| %>
+        <% balance = @totals.balance(loan) %>
+        <tr>
+          <td class="tabular-nums"><%= loan.id %></td>
+          <td><%= loan.person.full_name %></td>
+          <td><%= loan.person.zone&.name %></td>
+          <td class="whitespace-nowrap"><%= l(loan.disbursed_on) %></td>
+          <td class="whitespace-nowrap"><%= l(loan.due_on) %></td>
+          <td class="whitespace-nowrap text-right tabular-nums"><%= format_rate(loan.monthly_interest_rate) %></td>
+          <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(loan.principal) %></td>
+          <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(balance.principal_paid + balance.interest_paid) %></td>
+          <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(balance.total_owed) %></td>
+          <td><%= loan_status_badge(loan) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+    <tfoot>
+      <tr class="font-semibold">
+        <td colspan="6"><%= t("loans.loans.totals.count", count: @totals.count) %></td>
+        <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(@totals.principal) %></td>
+        <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(@totals.principal_paid + @totals.interest_paid) %></td>
+        <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(@totals.total_owed) %></td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+</article>

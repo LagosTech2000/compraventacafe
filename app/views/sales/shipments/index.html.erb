@@ -52,7 +52,7 @@
 
     <dl class="mt-4 flex flex-wrap gap-3">
       <% compared = @totals[:compared_origin] %>
-      <% difference = @totals[:destination_net] - compared %>
+      <% difference = @totals[:compared_destination] - compared %>
       <% { sacks: format_pounds(@totals[:sacks]).delete_suffix(".00"), origin_net: format_pounds(@totals[:origin_net]),
            destination_net: format_pounds(@totals[:destination_net]),
            difference: "#{format_pounds(difference)} (#{compared.positive? ? format_percent((difference * 100 / compared).round(2)) : "—"})" }.each do |key, value| %>

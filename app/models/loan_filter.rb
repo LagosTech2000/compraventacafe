@@ -1,8 +1,19 @@
 class LoanFilter < ListFilter
+  # «Por cobrar»: active and overdue together (what Cartera counts).
+  STATUSES = [ *Loan::STATUSES, "unpaid" ].freeze
+  # A zone's id, or "none": people without a zone (Fernando, 2026-11-12;
+  # Cartera por zona opens it).
+  NO_ZONE = "none".freeze
+
   field :from, :date
   field :to, :date
   field :q, :text
-  field :status, :choice, in: Loan::STATUSES
+  field :status, :choice, in: STATUSES
+  field :zone_id, :text
+  # With cash (cash only or mixed) or with supplies (supplies only or
+  # mixed): the cash and supplies figures open the list with it (Fernando, 2026-11-12).
+  COMPOSITIONS = %w[with_cash with_supplies].freeze
+  field :composition, :choice, in: COMPOSITIONS
   field :kind, :choice, in: Loan::KINDS
   # By due date (Cartera, Calendario de cobro) and by season of the loan's
   # date (Préstamos por cosecha).
@@ -20,12 +31,21 @@ class LoanFilter < ListFilter
         owed: { ruby: ->(loan) { loan.balance.total_owed } },
         status: -> { "CASE WHEN loans.paid_off_on IS NOT NULL THEN 2 WHEN loans.due_on < #{ActiveRecord::Base.connection.quote(Time.zone.today)} THEN 1 ELSE 0 END" }
 
+  # The zone asked for: an id, NO_ZONE, or nil (any).
+  def zone
+    return unless zone_id
+
+    zone_id == NO_ZONE || zone_id.match?(/\A\d+\z/) ? zone_id : nil
+  end
+
   def apply(scope)
     scope = scope.where(disbursed_on: from..) if from
     scope = scope.where(disbursed_on: ..to) if to
     scope = scope.where(person_id: Person.search(q).select(:id)) if q
-    scope = scope.with_status(status) if status
+    scope = status == "unpaid" ? scope.unpaid : scope.with_status(status) if status
+    scope = scope.where(person_id: Person.where(zone_id: zone_id == NO_ZONE ? nil : zone_id).select(:id)) if zone
     scope = scope.of_kind(kind) if kind
+    scope = composition == "with_cash" ? scope.where("loans.cash_amount > 0") : scope.with_supplies if composition
     scope = scope.where(due_on: due_from..) if due_from
     scope = scope.where(due_on: ..due_to) if due_to
     scope = scope.where(disbursed_on: Season.new(season_year).dates) if season_year

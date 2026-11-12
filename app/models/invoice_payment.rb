@@ -1,7 +1,9 @@
 # A payment of an invoice to its producer ("abono"). An invoice is paid in
 # one or more of them: while they do not cover what it has to pay it is
 # "partial", and once they do it is "paid" (Invoice#refresh_payment_status!).
-# Payments are never edited; only the latest one can be removed.
+# Payments are not edited and only the latest one can be removed, except by
+# an administrator (Fernando, 2026-11-12): any one, its amount (never over
+# what the invoice has to pay with the others), date, method or account.
 class InvoicePayment < ApplicationRecord
   include Auditable
   include HasMoneyAccount
@@ -16,8 +18,10 @@ class InvoicePayment < ApplicationRecord
   validates :payment_method, inclusion: { in: Invoice::PAYMENT_METHODS }
   validate :within_balance, on: :create
   validate :not_before_invoice, :not_before_last_payment, on: :create
+  validate :within_amount_to_pay, :not_before_invoice, on: :update
 
   after_create :refresh_invoice
+  after_update :refresh_invoice
   after_destroy :refresh_invoice
 
   scope :in_order, -> { order(:paid_on, :id) }
@@ -52,6 +56,14 @@ class InvoicePayment < ApplicationRecord
       errors.add(:amount, :over_balance, balance: ActiveSupport::NumberHelper.number_to_currency(balance)) if amount > balance
     end
 
+    # Edited: with the others, never over what the invoice has to pay.
+    def within_amount_to_pay
+      return unless invoice && amount.to_d.positive? && will_save_change_to_amount?
+
+      room = invoice.amount_to_pay - invoice.payments.where.not(id:).sum(:amount)
+      errors.add(:amount, :over_balance, balance: ActiveSupport::NumberHelper.number_to_currency([ room, 0 ].max)) if amount > room
+    end
+
     def not_before_invoice
       errors.add(:paid_on, :before_invoice) if invoice && paid_on && paid_on < invoice.issued_on
     end
@@ -63,6 +75,6 @@ class InvoicePayment < ApplicationRecord
     end
 
     def refresh_invoice
-      invoice.refresh_payment_status!
+      invoice.refresh_payment_status! unless invoice.voided?
     end
 end

@@ -29,6 +29,14 @@
         <dd class="mt-1 tabular-nums"><%= setting.rtn.presence || "—" %></dd>
       </div>
       <div>
+        <dt class="text-xs font-semibold tracking-wide text-ink-muted uppercase"><%= SiteSetting.human_attribute_name(:owner_name) %></dt>
+        <dd class="mt-1"><%= setting.owner_name.presence || "—" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs font-semibold tracking-wide text-ink-muted uppercase"><%= t(".phones") %></dt>
+        <dd class="mt-1 tabular-nums"><%= [ setting.phone, setting.secondary_phone ].compact_blank.map { format_phone(it) }.join(" / ").presence || "—" %></dd>
+      </div>
+      <div>
         <dt class="text-xs font-semibold tracking-wide text-ink-muted uppercase"><%= SiteSetting.human_attribute_name(:weight_tolerance_percent) %></dt>
         <dd class="mt-1 tabular-nums"><%= setting.weight_tolerance_percent ? format_percent(setting.weight_tolerance_percent) : "—" %></dd>
       </div>

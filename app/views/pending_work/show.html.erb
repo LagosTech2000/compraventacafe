@@ -3,28 +3,14 @@
 <% today = dashboard.today %>
 <%# Each kind of pending work the Inicio counts, with its records and the
     button that solves each one; only what exists, only what the user reads. %>
-<% groups = [] %>
-<% if dashboard.can?("trading") %>
-  <% groups << :uninvoiced if dashboard.uninvoiced_by_producer.any? %>
-  <% groups << :unpaid_invoices if dashboard.unpaid_invoices.any? %>
-  <% groups << :haulers_to_pay if dashboard.haulers_to_pay.any? %>
-<% end %>
-<% if dashboard.can?("sales") %>
-  <% groups << :shipments_in_transit if dashboard.shipments_in_transit.any? %>
-  <% groups << :unsold_shipments if dashboard.unsold_shipments.any? %>
-  <% groups << :unpaid_sales if dashboard.unpaid_sales.any? %>
-  <% groups << :cherry_waiting if dashboard.cherry_waiting.any? %>
-  <% groups << :open_conversions if dashboard.open_conversions.any? %>
-  <% groups << :negative_stock if dashboard.negative_stock.any? %>
-<% end %>
-<% groups << :overdue_loans if dashboard.can?("loans") && dashboard.overdue_loans.any? %>
-<% groups << :due_soon_loans if dashboard.can?("loans") && dashboard.due_soon_loans.any? %>
-<% if dashboard.can?("farms") %>
-  <% groups << :periods_to_pay if dashboard.periods_to_pay.any? %>
-  <% groups << :members_without_wage if dashboard.members_without_wage.any? %>
-<% end %>
-
-<% groups << :over_budget if dashboard.can?("finance") && dashboard.over_budget.any? %>
+<% present = { uninvoiced: -> { dashboard.uninvoiced_by_producer.any? }, unpaid_invoices: -> { dashboard.unpaid_invoices.any? },
+                haulers_to_pay: -> { dashboard.haulers_to_pay.any? }, shipments_in_transit: -> { dashboard.shipments_in_transit.any? },
+                unsold_shipments: -> { dashboard.unsold_shipments.any? }, unpaid_sales: -> { dashboard.unpaid_sales.any? },
+                cherry_waiting: -> { dashboard.cherry_waiting.any? }, open_conversions: -> { dashboard.open_conversions.any? },
+                negative_stock: -> { dashboard.negative_stock.any? }, overdue_loans: -> { dashboard.overdue_loans.any? },
+                due_soon_loans: -> { dashboard.due_soon_loans.any? }, periods_to_pay: -> { dashboard.periods_to_pay.any? },
+                members_without_wage: -> { dashboard.members_without_wage.any? }, over_budget: -> { dashboard.over_budget.any? } } %>
+<% groups = dashboard.pending_kinds.select { |key| present.fetch(key).call } %>
 
 <h1 class="text-xl font-bold"><%= t(".title") %></h1>
 <p class="mt-1 text-sm text-ink-muted"><%= t(".summary") %></p>
@@ -193,7 +179,7 @@
               <span class="block text-xs text-ink-muted"><%= t(".groups.shipments_in_transit.days", count: (today - shipment.departed_at.to_date).to_i) %></span>
             </span>
             <span class="flex items-center gap-2">
-              <span class="font-semibold tabular-nums"><%= format_pounds(shipment.origin_net_weight) %> lb</span>
+              <span class="font-semibold tabular-nums"><%= shipment.origin_missing? ? t("sales.difference.no_origin") : "#{format_pounds(shipment.origin_net_weight)} lb" %></span>
               <%= modal_link_to t("shared.detail"), sales_shipment_path(shipment), class: "btn btn-sm" %>
               <% if policy(shipment).receive? %>
                 <%= modal_link_to t(".groups.shipments_in_transit.action"), edit_sales_shipment_arrival_path(shipment), class: "btn btn-sm btn-primary" %>

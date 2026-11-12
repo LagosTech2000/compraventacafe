@@ -34,6 +34,7 @@ class ProducersReport < Report
   NAME = "people.first_names || ' ' || people.last_names".freeze
 
   self.module_key = "trading"
+  def self.permission_keys = %w[trading.producers]
   self.date_column = "purchases.purchased_at"
   self.date_type = :datetime
   self.default_period = "this_season"
@@ -53,9 +54,12 @@ class ProducersReport < Report
   column(:purchases_count, :integer, sort: "stats.purchases_count", priority: 2) { |producer| producer.purchases_count.to_i }
   column(:net_weight, :pounds, sort: "stats.net_weight", priority: 2) { |producer| producer.net_weight.to_d }
   column(:quintals, :quintals, sort: "stats.net_weight") { |producer| producer.net_weight.to_d / QUINTAL }
+  # Café corriente apart: it does not add to the producer's quintals (Fernando, 2026-11-12).
+  column(:common_quintals, :quintals, sort: "stats.common_net", priority: 2) { |producer| producer.common_net.to_d / QUINTAL }
   column(:total, :money, sort: "stats.total", priority: 2) { |producer| producer.total.to_d }
-  column(:average_price, :money, sort: "stats.total / NULLIF(stats.net_weight, 0)", priority: 3) do |producer|
-    producer.total.to_d / producer.net_weight.to_d if producer.net_weight.to_d.positive?
+  column(:average_price, :money, sort: "stats.total / NULLIF(stats.net_weight + stats.common_net, 0)", priority: 3) do |producer|
+    pounds = producer.net_weight.to_d + producer.common_net.to_d
+    producer.total.to_d / pounds if pounds.positive?
   end
   column(:last_purchase_on, :date, sort: LAST_DATE, priority: 2, &:last_purchase_on)
   column(:days_since, :integer, sort: "CURRENT_DATE - #{LAST_DATE}") do |producer|
@@ -89,7 +93,9 @@ class ProducersReport < Report
   def records(in_period = period)
     stats = within(Purchase.active, in_period).group(:producer_id)
                                               .select(:producer_id, "COUNT(*) AS purchases_count",
-                                                      "SUM(purchases.net_weight) AS net_weight", "SUM(purchases.total) AS total")
+                                                      "COALESCE(SUM(purchases.net_weight) FILTER (WHERE NOT purchases.common_coffee), 0) AS net_weight",
+                                                      "COALESCE(SUM(purchases.net_weight) FILTER (WHERE purchases.common_coffee), 0) AS common_net",
+                                                      "SUM(purchases.total) AS total")
     apply_filters(Producer.joins(:person).joins("LEFT JOIN zones ON zones.id = people.zone_id").joins(PENDING)
                           .joins("LEFT JOIN (#{stats.to_sql}) stats ON stats.producer_id = producers.id"))
   end
@@ -128,7 +134,7 @@ class ProducersReport < Report
   private
     def preload(relation)
       relation.includes(:zone, person: :zone)
-              .select("producers.*", "stats.purchases_count", "stats.net_weight", "stats.total",
+              .select("producers.*", "stats.purchases_count", "stats.net_weight", "stats.common_net", "stats.total",
                       "pending.amount AS pending_amount", "#{LAST_DATE} AS last_purchase_on")
     end
 

@@ -5,6 +5,8 @@ module Finance
   class HomeController < ApplicationController
     def index
       authorize [ :finance, :home ]
+      return unless module_home_or_first_tab("finance")
+
       @today = Time.zone.today
       @balance = AccountBalance.new(as_of: @today)
       @accounts = MoneyAccount.active.alphabetical.to_a

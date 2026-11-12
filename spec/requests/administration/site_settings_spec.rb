@@ -51,6 +51,21 @@ RSpec.describe "Site settings" do
     expect(response.body).not_to include("data-business-rtn")
   end
 
+  # The shipments' remission (Fernando, 2026-11-12).
+  it "keeps the owner and two phones (optional, validated) and shows them" do
+    sign_in admin
+    patch administration_site_setting_path, params: { site_setting: { business_name: "Rey David", owner_name: "  Emanuel   Espinal Bonilla ",
+                                                                      phone: "+504 9785-8796", secondary_phone: "" } }
+    expect(response).to redirect_to(administration_site_setting_path)
+    expect(SiteSetting.sole).to have_attributes(owner_name: "Emanuel Espinal Bonilla", phone: "97858796", secondary_phone: nil)
+
+    get administration_site_setting_path
+    expect(response.body).to include("Emanuel Espinal Bonilla", "9785-8796")
+
+    patch administration_site_setting_path, params: { site_setting: { business_name: "Rey David", phone: "123" } }
+    expect(response).to have_http_status(:unprocessable_content)
+  end
+
   it "takes a logo, shows it in the navigation bar and serves it to anyone, cached by version" do
     sign_in admin
     patch administration_site_setting_path, params: { site_setting: { business_name: "Rey David", logo: logo("logo.png", "image/png") } }

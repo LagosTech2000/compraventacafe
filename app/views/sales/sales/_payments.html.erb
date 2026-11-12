@@ -5,10 +5,11 @@
   <div class="flex flex-wrap items-baseline justify-between gap-3">
     <h2 id="sale-payments" class="font-semibold"><%= t("sales.sales.payments.title") %></h2>
     <dl class="flex flex-wrap gap-x-6 gap-y-1 text-sm">
-      <% { total: sale.total, buyer_total: sale.buyer_total, paid_total: sale.paid_total, balance_due: sale.balance_due }.compact.each do |key, value| %>
+      <% { total: sale.total, buyer_total: sale.buyer_total, paid_total: sale.paid_total, balance_due: sale.balance_due,
+           overpaid: (sale.overpaid_amount if sale.overpaid?) }.compact.each do |key, value| %>
         <div class="flex gap-2">
           <dt class="text-ink-muted"><%= t("sales.sales.payments.#{key}") %>:</dt>
-          <dd class="font-semibold tabular-nums <%= "text-danger" if key == :balance_due && value.positive? %>"><%= format_money(value) %></dd>
+          <dd class="font-semibold tabular-nums <%= "text-danger" if key.in?(%i[balance_due overpaid]) && value.positive? %>"><%= format_money(value) %></dd>
         </div>
       <% end %>
     </dl>
@@ -38,6 +39,9 @@
               <td class="cell-actions">
                 <div class="flex justify-end gap-2">
                   <%= modal_link_to t("sales.sales.payments.receipt"), sales_sale_payment_path(sale, payment), class: "btn btn-sm", data: { row_link: true } %>
+                  <% if policy(payment).update? %>
+                    <%= modal_link_to t("sales.sales.payments.edit"), edit_sales_sale_payment_path(sale, payment), class: "btn btn-sm" %>
+                  <% end %>
                   <% if policy(payment).destroy? %>
                     <%= button_to t("sales.sales.payments.destroy"), sales_sale_payment_path(sale, payment), method: :delete,
                           class: "btn btn-sm", form: { data: { turbo_confirm: t("sales.sales.payments.confirm_destroy") } } %>

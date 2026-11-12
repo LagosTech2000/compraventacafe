@@ -5,15 +5,22 @@
       label:    ORIGINAL / COPIA
       subtitle: one more line (the payroll and farm, a date…)
       badge:    a status shown under it (payment status…)
-      rtn:      true to add the business's RTN under its name (invoices) %>
+      rtn:      true to add the business's RTN under its name (invoices)
+      contact:  true to add the owner («De: …») and the phones (remission) %>
 <header class="flex items-start justify-between gap-4 border-b-2 border-ink pb-3">
   <div class="flex min-w-0 items-center gap-3">
     <%= business_logo(:print) %>
     <div class="min-w-0">
       <p class="text-lg leading-tight font-bold"><%= business_name %></p>
+      <% if local_assigns[:contact] && business_owner.present? %>
+        <p class="text-xs font-semibold" data-business-owner><%= t("shared.print_letterhead.owner", name: business_owner) %></p>
+      <% end %>
       <% if business_location.present? %><p class="text-xs text-ink-muted"><%= business_location %></p><% end %>
       <% if local_assigns[:rtn] && business_rtn.present? %>
         <p class="text-xs text-ink-muted" data-business-rtn><%= t("shared.print_letterhead.rtn", rtn: business_rtn) %></p>
+      <% end %>
+      <% if local_assigns[:contact] && business_phones %>
+        <p class="text-xs text-ink-muted" data-business-phones><%= t("shared.print_letterhead.phones", phones: business_phones) %></p>
       <% end %>
     </div>
   </div>

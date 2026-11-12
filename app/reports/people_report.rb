@@ -1,7 +1,7 @@
 # Each person and everything they have with the business in the period,
 # across modules: coffee they sold (trading), what they earned in payrolls
 # (farms), what they paid on loans and what they owe today (loans). Needs
-# the read permission of the three modules.
+# the read permission of purchases, accounts and payrolls.
 class PeopleReport < Report
   ROLES = %w[producer client collaborator borrower employee].freeze
   ACTIVITIES = %w[with_activity].freeze
@@ -36,6 +36,7 @@ class PeopleReport < Report
   filter :activity, :choice, in: ACTIVITIES, default: "with_activity"
 
   def self.module_keys = %w[trading loans farms]
+  def self.permission_keys = %w[trading.purchases loans.credit_accounts farms.payrolls]
 
   detail { |person| loans_credit_account_path(person) }
 

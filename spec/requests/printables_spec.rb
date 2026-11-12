@@ -53,6 +53,14 @@ RSpec.describe "Printable documents" do
     expect_letterhead("Recibo de cobro", count: 2)
     expect_copy_on_its_own_page
 
+    get print_loans_loans_path
+    expect_letterhead("Préstamos")
+
+    shipment = create(:shipment, remission_number: "452")
+    get sales_shipment_remission_path(shipment)
+    expect_letterhead("Remisión 452", count: 2)
+    expect_copy_on_its_own_page
+
     advance = create(:buyer_advance, buyer: sale.buyer)
     get sales_buyer_buyer_advance_path(sale.buyer, advance)
     expect_letterhead("Recibo de anticipo", count: 2)

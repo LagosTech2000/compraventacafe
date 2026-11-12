@@ -3,6 +3,7 @@
 # It is voided (never deleted) with the delete permission, while in no sale.
 class ShipmentPolicy < ApplicationPolicy
   self.module_key = "sales"
+  self.submodule_key = "shipments"
 
   def update?
     super && open?
@@ -21,7 +22,9 @@ class ShipmentPolicy < ApplicationPolicy
   end
 
   private
+    # Sold, it is not changed, except to complete a local scale left empty
+    # (Fernando, 2026-11-12).
     def open?
-      !record.is_a?(Shipment) || !(record.voided? || record.sold?)
+      !record.is_a?(Shipment) || !(record.voided? || (record.sold? && !record.origin_missing?))
     end
 end

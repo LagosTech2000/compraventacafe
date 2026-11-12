@@ -2,6 +2,7 @@
 # and only sees and removes their own.
 class SavedReportPolicy < ApplicationPolicy
   self.module_key = "reports"
+  self.submodule_key = "reports"
 
   def index? = can?(:read)
   def create? = can?(:read)

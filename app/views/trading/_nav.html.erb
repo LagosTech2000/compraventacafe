@@ -5,13 +5,17 @@
 <nav class="mb-5 print:hidden" aria-label="<%= AppModule.human_name("trading") %>">
   <div class="subnav" data-controller="scroll-to-current">
     <%= render "shared/module_title", module_key: "trading" %>
-    <%= link_to t("trading.nav.home"), trading_root_path, class: nav_link_class(trading_root_path, exact: true),
-          aria: { current: (current_page?(trading_root_path) ? "page" : nil) } %>
+    <% if module_home_readable?("trading") %>
+      <%= link_to t("trading.nav.home"), trading_root_path, class: nav_link_class(trading_root_path, exact: true),
+            aria: { current: (current_page?(trading_root_path) ? "page" : nil) } %>
+    <% end %>
     <% { purchases: trading_purchases_path, invoices: trading_invoices_path, daily_close: trading_daily_close_path }.each do |key, path| %>
+      <% next unless can_read?("trading.#{key}") %>
       <%= link_to t("trading.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>
     <% end %>
     <span class="mx-1 h-6 w-px shrink-0 self-center bg-primary/20" aria-hidden="true"></span>
     <% { producers: trading_producers_path, haulers: trading_haulers_path, zones: trading_zones_path }.each do |key, path| %>
+      <% next unless can_read?("trading.#{key}") %>
       <%= link_to t("trading.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>
     <% end %>
     <% if policy(Purchase).create? %>

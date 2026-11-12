@@ -12,6 +12,7 @@ class ShipmentsReport < Report
   STATUSES = %w[in_transit received sold].freeze
 
   self.module_key = "sales"
+  def self.permission_keys = %w[sales.shipments]
   self.date_column = "shipments.departed_at"
   self.date_type = :datetime
   self.default_period = "this_month"

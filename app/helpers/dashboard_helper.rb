@@ -14,7 +14,7 @@ module DashboardHelper
     when :purchase then t("dashboard.show.activity.details.purchase", number: detail[:number], quintals: format_pounds(detail[:quintals]), total: format_money(detail[:total]))
     when :producer then detail[:kind]
     when :invoice then t("dashboard.show.activity.details.invoice", number: detail[:number], status: detail[:status], total: format_money(detail[:total]))
-    when :shipment then t("dashboard.show.activity.details.shipment", number: detail[:number], pounds: format_pounds(detail[:pounds]))
+    when :shipment then t("dashboard.show.activity.details.shipment", number: detail[:number], pounds: detail[:pounds] ? format_pounds(detail[:pounds]) : "—")
     when :sale then t("dashboard.show.activity.details.sale", number: detail[:number], status: detail[:status], total: format_money(detail[:total]))
     when :expense, :investment then t("dashboard.show.activity.details.expense", category: detail[:category], amount: format_money(detail[:amount]))
     when :loan then t("dashboard.show.activity.details.loan", number: detail[:number], amount: format_money(detail[:amount]))

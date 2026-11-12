@@ -19,7 +19,12 @@ module LoansHelper
     @active_supplies ||= Supply.active.ordered.to_a
     supplies = @active_supplies
     supplies += [ item.supply ] if item.supply && !item.supply.active?
-    supplies.map { |supply| [ supply.name, supply.id ] }
+    # With what the inventory has (Fernando, 2026-11-12): no more is lent.
+    @supply_stock ||= SupplyStock.new.rows.to_h { [ it.supply.id, it.stock ] }
+    supplies.map do |supply|
+      stock = number_with_precision(@supply_stock.fetch(supply.id, 0), precision: 2, delimiter: ",", strip_insignificant_zeros: true)
+      [ t("loans.loans.form.supply_option", name: supply.name, stock:, unit: supply.unit), supply.id ]
+    end
   end
 
   # "Efectivo", "Con café · compra 72" for a payment made with a purchase, or
@@ -46,6 +51,48 @@ module LoansHelper
 
   # [["Temporada 2026-2027", 2026], ...]: the seasons that have loans, the
   # newest first (Season of each loan's date).
+  # An amount of principal; on a mixed loan, also its cash and supplies
+  # parts (in the loan's proportion, Fernando, 2026-11-12).
+  def loan_principal_split(loan, total, cash, supplies)
+    return format_money(total) unless loan.cash_amount.to_d.positive? && loan.supplies_value.positive?
+
+    safe_join([ format_money(total), tag.span(t("loans.loans.show.split", cash: format_money(cash), supplies: format_money(supplies)),
+                                              class: "block text-xs text-ink-muted", data: { principal_split: true }) ])
+  end
+
+  # The loans list's statuses: each loan's, plus «Por cobrar» (active and overdue).
+  def loan_filter_status_options
+    enum_options(Loan, :status, Loan::STATUSES) + [ [ t("loans.loans.index.unpaid"), "unpaid" ] ]
+  end
+
+  # With cash (cash only or mixed) or with supplies (supplies only or mixed).
+  def loan_filter_composition_options
+    LoanFilter::COMPOSITIONS.map { [ t("loans.loans.index.compositions.#{it}"), it ] }
+  end
+
+  # Zones to filter the loans by their person's, and «Sin zona».
+  def loan_filter_zone_options
+    Zone.ordered.pluck(:name, :id).map { |name, id| [ name, id.to_s ] } + [ [ t("loans.loans.index.no_zone"), LoanFilter::NO_ZONE ] ]
+  end
+
+  # How each active filter of the loans list reads (its chips, and the
+  # printout's header).
+  def loan_filter_labels
+    { status: loan_filter_status_options, kind: enum_options(Loan, :kind, Loan::KINDS), composition: loan_filter_composition_options,
+      zone_id: ->(value) { (option = loan_filter_zone_options.find { it.last == value }) && t("loans.loans.index.chips.zone", name: option.first) },
+      season_year: ->(year) { t("loans.loans.index.chips.season", season: Season.new(year).label) },
+      due_from: ->(date) { t("loans.loans.index.chips.due_from", date: l(date)) },
+      due_to: ->(date) { t("loans.loans.index.chips.due_to", date: l(date)) } }
+  end
+
+  # The active filters in words, for the printout.
+  def loan_filter_summary(filter)
+    labels = loan_filter_labels.transform_values do |label|
+      label.is_a?(Array) ? ->(value) { label.find { |_, option| option.to_s == value.to_s }&.first } : label
+    end
+    filter_chips(filter, q: ->(text) { t("shared.filters.chips.q", text:) }, **labels).map(&:first)
+  end
+
   def loan_season_options
     first, last = Loan.pick(Arel.sql("MIN(disbursed_on)"), Arel.sql("MAX(disbursed_on)"))
     return [] unless first

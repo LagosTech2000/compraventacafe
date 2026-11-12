@@ -19,11 +19,24 @@
       <%= button_to t(".void"), void_sales_shipment_path(@shipment), method: :patch, class: "btn",
             form: { data: { turbo_confirm: t(".confirm_void") } } %>
     <% end %>
+    <% unless @shipment.voided? %>
+      <%= page_link_to t(".remission"), sales_shipment_remission_path(@shipment), class: "btn" %>
+    <% end %>
     <% if modal_request? %>
       <%= page_link_to t(".full_page"), sales_shipment_path(@shipment), class: "btn" %>
     <% end %>
   </div>
 </div>
+
+<%# Registered without the local scale (Fernando, 2026-11-12): to complete. %>
+<% if @shipment.origin_missing? && !@shipment.voided? %>
+  <div class="flash-alert mb-4 flex flex-wrap items-center justify-between gap-3" role="status" data-origin-missing>
+    <p><%= t(".origin_missing") %></p>
+    <% if policy(@shipment).update? %>
+      <%= modal_link_to t(".complete_origin"), edit_sales_shipment_path(@shipment), class: "btn btn-sm" %>
+    <% end %>
+  </div>
+<% end %>
 
 <% unless @shipment.voided? %>
   <div class="mb-6">
@@ -77,3 +90,6 @@
     <p class="mt-3 text-sm"><span class="font-semibold"><%= Shipment.human_attribute_name(:observations) %>:</span> <%= @shipment.observations %></p>
   <% end %>
 </section>
+
+<%# What it cost (Fernando, 2026-11-12): its purchase invoices, its costs and the expenses assigned to it. %>
+<%= render "sales/shipments/cost", shipment: @shipment %>

@@ -52,9 +52,16 @@
        lent: @account.lent, principal_paid: @account.principal_paid, interest_paid: @account.interest_paid,
        principal_owed: @account.principal_owed, interest_owed: @account.interest_owed, total_owed: @account.total_owed
      }.each do |key, value| %>
-    <div class="stat">
+    <% split = { lent: [ @account.lent_cash, @account.lent_supplies ], principal_paid: [ @account.cash_paid, @account.supplies_paid ],
+                 principal_owed: [ @account.cash_owed, @account.supplies_owed ] }[key] %>
+    <div class="stat" data-account-total="<%= key %>">
       <dt><%= t(".totals.#{key}") %></dt>
       <dd><%= format_money(value) %></dd>
+      <% if split %>
+        <p class="mt-1 text-xs text-ink-muted" data-total-split>
+          <%= t("loans.loans.totals.cash", amount: format_money(split.first)) %> · <%= t("loans.loans.totals.supplies", amount: format_money(split.last)) %>
+        </p>
+      <% end %>
     </div>
   <% end %>
 </dl>

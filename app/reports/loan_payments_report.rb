@@ -6,6 +6,7 @@ class LoanPaymentsReport < Report
   NAME = "people.first_names || ' ' || people.last_names".freeze
 
   self.module_key = "loans"
+  def self.permission_keys = %w[loans.loans]
   self.date_column = "loan_payments.paid_on"
   self.default_period = "this_month"
   self.default_sort = :paid_on

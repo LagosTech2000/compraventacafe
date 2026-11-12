@@ -45,7 +45,9 @@ export default class extends Controller {
     this.quintalFieldTarget.hidden = !byQuintal
     // Hidden by the pound: it keeps its value (120 by default) but asks nothing.
     this.quintalPoundsTarget.required = byQuintal
-    const origin = this.round(chosen.reduce((sum, box) => sum + parseFloat(box.dataset.originNet), 0))
+    // A shipment without the local scale has no origin net: no difference then.
+    const complete = chosen.every((box) => box.dataset.originNet !== undefined && box.dataset.originNet !== "")
+    const origin = complete ? this.round(chosen.reduce((sum, box) => sum + parseFloat(box.dataset.originNet), 0)) : 0
     const states = new Set(chosen.map((box) => box.dataset.coffeeState))
 
     this.countTarget.textContent = (chosen.length === 1 ? this.countOneValue : this.countOtherValue).replace("%{count}", chosen.length)
@@ -74,7 +76,7 @@ export default class extends Controller {
     } else {
       this.totalTarget.textContent = "—"
     }
-    this.showDifferenceMoney(chosen.length ? this.round(net - origin) : 0, pricePerPound)
+    this.showDifferenceMoney(chosen.length && complete ? this.round(net - origin) : 0, pricePerPound)
     this.showAdvancePounds(pricePerPound, net, gross)
   }
 

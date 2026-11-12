@@ -45,15 +45,16 @@
   <h2 id="producer-figures" class="mb-3 text-sm font-semibold text-ink-muted"><%= format_season_dates(season) %></h2>
   <% previous = @profile.previous_season_summary %>
   <% figures = [
-       [ :season_quintals, format_pounds(@profile.season_summary.quintals),
-         (t(".figures.previous_season", value: format_pounds(previous.quintals)) if previous.purchases_count.positive?) ],
+       [ :season_quintals, format_pounds(@profile.season_quintals),
+         (t(".figures.previous_season", value: format_pounds(@profile.previous_season_quintals)) if previous.purchases_count.positive?) ],
+       [ :season_common_quintals, format_pounds(@profile.season_common_quintals), t(".figures.common_hint") ],
        [ :season_purchases, @profile.season_summary.purchases_count, nil ],
        [ :season_total, format_money(@profile.season_summary.total), nil ],
        [ :season_average_price, (@profile.season_average_price ? format_money(@profile.season_average_price) : "—"), t(".figures.average_price_hint") ],
-       [ :all_time_quintals, format_pounds(@profile.all_time_summary.quintals), nil ]
+       [ :all_time_quintals, format_pounds(@profile.all_time_quintals), nil ]
      ] %>
   <% figures << [ :loans_owed, format_money(@credit_account.total_owed), nil ] if @credit_account %>
-  <dl class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+  <dl class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
     <% figures.each do |key, value, hint| %>
       <div class="stat">
         <dt><%= t(".figures.#{key}") %></dt>
@@ -184,7 +185,7 @@
       <%= render layout: "shared/filters", locals: { filter: @filter, url: trading_producer_path(@producer, tab: "invoices") } do |form| %>
         <%= hidden_field_tag :tab, "invoices", id: nil %>
         <%= filter_select form, :payment_status, Invoice.human_attribute_name(:payment_status),
-              enum_options(Invoice, :payment_status, Invoice::FILTER_STATUSES), selected: @filter.payment_status %>
+              enum_options(Invoice, :payment_status, Invoice::LIST_STATUSES), selected: @filter.payment_status %>
       <% end %>
       <%= list_frame "producer-invoices-list" do %>
       <div class="mt-4">

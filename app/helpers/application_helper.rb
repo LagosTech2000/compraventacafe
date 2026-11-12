@@ -5,6 +5,10 @@ module ApplicationHelper
     AppModule::KEYS.select { |key| Current.user.can?(key, :read) }
   end
 
+  # Whether the user sees a module ("trading": any of its tabs) or one of
+  # its submodules ("trading.invoices"). The tabs of each module's bar.
+  def can_read?(permission_key) = Current.user.present? && Current.user.can?(permission_key, :read)
+
   def module_root_path(key)
     public_send("#{key}_root_path")
   end

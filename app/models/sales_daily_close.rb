@@ -27,11 +27,14 @@ class SalesDailyClose
   def summary = @summary ||= SaleSummary.new(Sale.where(sold_on: date))
   def stock = @stock ||= CoffeeStock.new(date)
 
-  def departed_net = departed.sum(&:origin_net_weight)
-  def departed_sacks = departed.sum(&:origin_sacks)
-  def received_origin_net = received.sum(&:origin_net_weight)
+  # Shipments without the local scale count nothing here (Fernando, 2026-11-12).
+  def departed_net = departed.sum { it.origin_net_weight.to_d }
+  def departed_sacks = departed.sum { it.origin_sacks.to_i }
+  # The difference compares only the ones with both scales.
+  def received_origin_net = compared.sum(&:origin_net_weight)
   def received_net = received.sum(&:destination_net_weight)
-  def received_difference = received_net - received_origin_net
+  def compared = received.reject(&:origin_missing?)
+  def received_difference = compared.sum(&:destination_net_weight) - received_origin_net
   def collected = payments.sum(&:amount)
 
   def received_difference_percent

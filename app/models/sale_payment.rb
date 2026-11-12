@@ -1,6 +1,9 @@
 # A payment the buyer makes on a sale ("cobro", Fernando, 2026-10-23), like
 # an invoice's payments: never over what is owed, in date order, never
-# before the sale; never edited and only the latest one can be removed.
+# before the sale; not edited and only the latest one can be removed,
+# except by an administrator (Fernando, 2026-11-12): any one, its amount
+# (never over what the sale is due with the others, nor an advance over
+# the buyer's balance), date, method, account or observations.
 # Each has its printable receipt (original and copy).
 #
 # A collection «con anticipo» (ADVANCE, Fernando, 2026-10-25) takes off
@@ -27,11 +30,14 @@ class SalePayment < ApplicationRecord
   validates :observations, length: { maximum: 500 }
   validate :sale_active, :within_balance, :not_before_sale, :not_before_last_payment, on: :create
   validate :within_advances, on: :create, if: :advance?
+  validate :within_amount_due, :not_before_sale, on: :update
+  validate :advances_still_cover, on: :update, if: :advance?
 
   # An advance moves no money: no account.
   before_validation { self.money_account_id = nil if advance? }
 
   after_create :refresh_sale
+  after_update :refresh_sale
   after_destroy :refresh_sale
 
   scope :in_order, -> { order(:paid_on, :id) }
@@ -68,6 +74,23 @@ class SalePayment < ApplicationRecord
       errors.add(:amount, :over_balance, balance: ActiveSupport::NumberHelper.number_to_currency(balance)) if amount > balance
     end
 
+    # Edited: with the others, never over what the sale is due.
+    def within_amount_due
+      return unless sale && amount.to_d.positive? && will_save_change_to_amount?
+
+      room = sale.amount_due - sale.payments.where.not(id:).sum(:amount)
+      errors.add(:amount, :over_balance, balance: ActiveSupport::NumberHelper.number_to_currency([ room, 0 ].max)) if amount > room
+    end
+
+    # An advance raised or newly taken: the buyer's balance must cover it.
+    def advances_still_cover
+      return unless sale && amount.to_d.positive? && (will_save_change_to_amount? || will_save_change_to_payment_method?)
+
+      before = payment_method_in_database == ADVANCE ? amount_in_database.to_d : 0
+      balance = sale.buyer.advance_balance + before
+      errors.add(:amount, :over_advances, balance: ActiveSupport::NumberHelper.number_to_currency(balance)) if amount > balance
+    end
+
     def within_advances
       return unless sale && amount.to_d.positive?
 
@@ -85,6 +108,6 @@ class SalePayment < ApplicationRecord
     end
 
     def refresh_sale
-      sale.refresh_payment_status!
+      sale.refresh_payment_status! unless sale.voided?
     end
 end

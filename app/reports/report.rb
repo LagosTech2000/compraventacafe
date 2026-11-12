@@ -87,6 +87,11 @@ class Report
   # Modules whose read permission the report needs. Cross-module reports
   # override it.
   def self.module_keys = [ module_key ]
+  # The submodules whose read permission it needs ("trading.purchases",
+  # Fernando, 2026-11-12: a report goes with the tab its data comes from); a
+  # module alone means any of its tabs. Each report says its own.
+  def self.permission_keys = module_keys
+  def self.readable_by?(user) = permission_keys.all? { |key| user.can?(key, :read) }
 
   # --- Declarations ---------------------------------------------------------
 
@@ -229,7 +234,7 @@ class Report
   private
     def cache_key(name)
       query = filter.to_params.except("sort", "dir", "page").sort.to_h.to_query
-      modules = user && (user.admin? ? "admin" : AppModule::KEYS.select { |key| user.can?(key, :read) }.join(","))
+      modules = user && (user.admin? ? "admin" : AppModule::PERMISSION_KEYS.select { |key| user.can?(key, :read) }.join(","))
       [ "report", key, name, DataVersion.current, today.iso8601, modules, Digest::SHA256.hexdigest(query) ].join("/")
     end
 

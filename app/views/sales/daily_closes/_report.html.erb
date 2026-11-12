@@ -71,7 +71,7 @@
             <td class="py-0.5 pr-1"><%= shipment.human_coffee_state %></td>
             <td class="py-0.5 pr-1"><%= shipment.remission_number %></td>
             <td class="py-0.5 pl-1 text-right tabular-nums"><%= shipment.origin_sacks %></td>
-            <td class="py-0.5 pl-1 text-right tabular-nums"><%= format_pounds(shipment.origin_net_weight) %></td>
+            <td class="py-0.5 pl-1 text-right tabular-nums"><%= shipment.origin_missing? ? "—" : format_pounds(shipment.origin_net_weight) %></td>
             <td class="py-0.5 pl-1 text-right tabular-nums"><%= shipment.destination_net_weight ? format_pounds(shipment.destination_net_weight) : "—" %></td>
             <td class="py-0.5 pl-1 text-right tabular-nums"><%= shipment.net_difference ? format_pounds(shipment.net_difference) : "—" %></td>
           </tr>

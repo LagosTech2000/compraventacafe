@@ -1,0 +1,71 @@
+<% content_for :title, t(".title", number: @invoice.display_number) %>
+<%= render "trading/nav" %>
+<%= render "shared/breadcrumbs", crumbs: producer_crumbs(@invoice.producer, [ invoice_label(@invoice), trading_invoice_path(@invoice) ], [ t(".title", number: @invoice.display_number) ]) %>
+
+<h1 class="text-2xl font-bold"><%= t(".title", number: @invoice.display_number) %></h1>
+<p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t(".help") %></p>
+
+<%= form_with model: @invoice, url: trading_invoice_path(@invoice), method: :patch, class: form_surface_class("mt-6 max-w-none space-y-6"),
+      data: { controller: "form-validation" } do |form| %>
+  <%= render "shared/form_errors", record: @invoice %>
+  <div class="grid gap-5 sm:grid-cols-[14rem_minmax(0,1fr)]">
+    <div>
+      <%= form.label :issued_on, class: "field-label" %>
+      <%= form.date_field :issued_on, required: true, class: "field-input" %>
+    </div>
+    <div>
+      <%= form.label :observations, class: "field-label" %>
+      <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+    </div>
+  </div>
+
+  <section aria-labelledby="invoice-purchases">
+    <h2 id="invoice-purchases" class="font-semibold"><%= t(".purchases") %></h2>
+    <p class="text-xs text-ink-muted"><%= t(".purchases_help", producer: @invoice.producer.full_name) %></p>
+    <%= hidden_field_tag "invoice[purchase_ids][]", "" %>
+    <div class="mt-3 overflow-x-auto panel">
+      <table class="data-table data-table-compact" data-invoice-purchases>
+        <thead>
+          <tr>
+            <th class="w-10"><span class="sr-only"><%= t(".purchases") %></span></th>
+            <th><%= t("trading.purchases.table.number") %></th>
+            <th><%= Purchase.human_attribute_name(:purchased_at) %></th>
+            <th><%= Purchase.human_attribute_name(:coffee_state) %></th>
+            <th class="text-right"><%= t("trading.purchases.table.net") %></th>
+            <th class="text-right"><%= Purchase.human_attribute_name(:price_per_pound) %></th>
+            <th class="text-right"><%= Purchase.human_attribute_name(:total) %></th>
+            <th class="cell-actions"><span class="sr-only"><%= t("trading.purchases.table.actions") %></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% chosen = Array(params.dig(:invoice, :purchase_ids)).compact_blank.map(&:to_i).presence %>
+          <% @purchases.each do |purchase| %>
+            <% checked = chosen ? chosen.include?(purchase.id) : purchase.invoice_id == @invoice.id %>
+            <tr id="<%= dom_id(purchase, :invoice) %>">
+              <td>
+                <input type="checkbox" name="invoice[purchase_ids][]" value="<%= purchase.id %>" class="size-4 accent-primary" <%= "checked" if checked %>
+                       aria-label="<%= t("trading.purchases.table.number") %> <%= purchase.id %>">
+              </td>
+              <td class="tabular-nums"><%= purchase.id %><% unless purchase.invoice_id %> <span class="badge badge-neutral"><%= t(".uninvoiced") %></span><% end %></td>
+              <td class="whitespace-nowrap"><%= l(purchase.purchased_at) %></td>
+              <td><%= purchase.human_coffee_state %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(purchase.net_weight) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_price_per_pound(purchase.price_per_pound) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(purchase.total) %></td>
+              <td class="cell-actions">
+                <% if policy(purchase).update? %>
+                  <%= modal_link_to t(".edit_purchase"), edit_trading_purchase_path(purchase), class: "btn btn-sm" %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit t(".submit"), class: "btn btn-primary" %>
+    <%= cancel_button trading_invoice_path(@invoice) %>
+  </div>
+<% end %>

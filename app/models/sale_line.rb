@@ -7,7 +7,8 @@ class SaleLine < ApplicationRecord
   belongs_to :sale, inverse_of: :lines
   belongs_to :shipment, inverse_of: :sale_lines
 
-  validates :net_weight, :origin_net_weight, :amount, numericality: { greater_than_or_equal_to: 0 }
+  validates :net_weight, :amount, numericality: { greater_than_or_equal_to: 0 }
+  validates :origin_net_weight, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
   scope :active, -> { where(active: true) }
 

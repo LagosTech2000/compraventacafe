@@ -191,4 +191,23 @@ RSpec.describe "Sales screens", type: :system do
   end
 
   def dom_id(record, prefix) = ActionView::RecordIdentifier.dom_id(record, prefix)
+
+  # Administrators may leave the local scale empty (Fernando, 2026-11-12).
+  it "hides the local scale with «Sin báscula local» and saves the shipment without it" do
+    visit new_sales_shipment_path
+    select "Beneficio Henola", from: "shipment_buyer_id"
+    choose "Un motorista"
+    fill_in "shipment_driver_name", with: "Pedro Lara"
+    check "Sin báscula local (solo administradores)"
+    expect(page).to have_no_field("shipment_origin_gross_weight")
+    select "Uva", from: "shipment_coffee_state"
+    expect(page).to have_no_field("shipment_origin_yield_factor")
+    uncheck "Sin báscula local (solo administradores)"
+    expect(page).to have_field("shipment_origin_yield_factor")
+    check "Sin báscula local (solo administradores)"
+
+    click_button "Registrar salida"
+    expect(page).to have_text("Salida 0001 registrada para Beneficio Henola")
+    expect(Shipment.last).to be_origin_missing
+  end
 end

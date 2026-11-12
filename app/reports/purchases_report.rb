@@ -19,6 +19,7 @@ class PurchasesReport < Report
   }.freeze
 
   self.module_key = "trading"
+  def self.permission_keys = %w[trading.purchases]
   self.date_column = "purchases.purchased_at"
   self.date_type = :datetime
   self.default_period = "this_month"

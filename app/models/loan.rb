@@ -34,6 +34,9 @@ class Loan < ApplicationRecord
   validates :disbursed_on, :due_on, presence: true
   validates :observations, length: { maximum: 500 }
   validate :due_on_not_before_disbursement
+  # Never more of a supply than the inventory has (Fernando, 2026-11-12),
+  # for the loans from the day the inventory started.
+  validate :supplies_in_stock
 
   before_validation :compute_principal
 
@@ -87,6 +90,20 @@ class Loan < ApplicationRecord
     kept_supply_items.sum { |item| LoanSupply.total_for(item.quantity, item.unit_price) || 0 }
   end
 
+  # The value of its supplies as kept (principal − cash), without loading its lines.
+  def supplies_value = principal.to_d - cash_amount.to_d
+
+  # The cash and supplies parts of `amount` of principal (Fernando,
+  # 2026-11-12: «en proporción»): as the loan was lent, the cash share
+  # rounded to the cent and the supplies the rest.
+  def self.split_principal(amount, cash:, principal:)
+    amount = amount.to_d
+    cash_part = principal.to_d.positive? ? (amount * cash.to_d / principal.to_d).round(2) : 0.to_d
+    [ cash_part, amount - cash_part ]
+  end
+
+  def split_principal(amount) = self.class.split_principal(amount, cash: cash_amount, principal:)
+
   # Cash only, supplies only, or both.
   def kind
     return "cash" if kept_supply_items.empty?
@@ -123,6 +140,21 @@ class Loan < ApplicationRecord
   end
 
   private
+    def supplies_in_stock
+      return unless disbursed_on && disbursed_on >= SupplyStock.starts_on
+
+      kept_supply_items.group_by(&:supply_id).each do |supply_id, items|
+        wanted = items.sum { it.quantity.to_d }
+        available = SupplyStock.available(supply_id, except_loan: (id if persisted?))
+        next if wanted <= available
+
+        supply = items.first.supply
+        errors.add(:base, :supplies_out_of_stock, supply: supply&.name,
+                                                 available: ActiveSupport::NumberHelper.number_to_rounded(available, precision: 2, strip_insignificant_zeros: true),
+                                                 unit: supply&.unit)
+      end
+    end
+
     def blank_supply_item?(attributes)
       attributes["id"].blank? && attributes.values_at("supply_id", "quantity").all?(&:blank?)
     end

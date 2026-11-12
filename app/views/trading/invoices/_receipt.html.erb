@@ -111,6 +111,9 @@
     </dl>
   <% end %>
 
+  <% if invoice.observations %>
+    <p class="mt-3 text-sm" data-invoice-observations><span class="font-semibold"><%= t("trading.invoices.show.observations") %>:</span> <%= invoice.observations %></p>
+  <% end %>
   <% observations = invoice.purchases.filter_map(&:observations) %>
   <% if observations.any? %>
     <p class="mt-3 text-sm"><span class="font-semibold"><%= Purchase.human_attribute_name(:observations) %>:</span> <%= observations.join("; ") %></p>

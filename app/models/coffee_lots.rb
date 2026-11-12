@@ -182,7 +182,8 @@ class CoffeeLots
     end
 
     def shipment_events
-      Shipment.active.where(departed_at: ..at).select(:id, :departed_at, :coffee_state, :warehouse_id, :origin_net_weight).map do |shipment|
+      # Without the local scale it takes nothing yet (Fernando, 2026-11-12).
+      Shipment.active.where(departed_at: ..at).where.not(origin_net_weight: nil).select(:id, :departed_at, :coffee_state, :warehouse_id, :origin_net_weight).map do |shipment|
         [ shipment.departed_at, ORDER[:shipment], shipment.id, -> { take(shipment, shipment.coffee_state, shipment.warehouse_id, shipment.origin_net_weight) } ]
       end
     end

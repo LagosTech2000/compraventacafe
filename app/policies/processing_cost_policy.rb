@@ -3,6 +3,7 @@
 # Never edited.
 class ProcessingCostPolicy < ApplicationPolicy
   self.module_key = "sales"
+  self.submodule_key = "coffee_conversions"
 
   def create?
     super && (!record.is_a?(ProcessingCost) || !record.coffee_conversion&.voided?)

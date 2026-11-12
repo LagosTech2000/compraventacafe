@@ -2,6 +2,7 @@
 # financiero. One with payments or advances is deactivated, not deleted.
 class StaffMemberPolicy < ApplicationPolicy
   self.module_key = "finance"
+  self.submodule_key = "staff"
 
   def destroy?
     super && record.is_a?(StaffMember) && record.payments.none? && record.advances.none? && record.goals.none?

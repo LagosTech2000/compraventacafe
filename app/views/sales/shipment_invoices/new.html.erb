@@ -1,0 +1,80 @@
+<% content_for :title, t(".title", number: @shipment.display_number) %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= render "sales/nav" %>
+<%= render "shared/breadcrumbs", crumbs: buyer_crumbs(@shipment.buyer, [ shipment_label(@shipment), sales_shipment_path(@shipment) ], [ t(".crumb") ]) %>
+
+<h1 class="text-2xl font-bold"><%= t(".title", number: @shipment.display_number) %></h1>
+<p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t(".help", state: @shipment.human_coffee_state.downcase) %></p>
+
+<%# The invoices of its coffee state on no shipment, with the invoices' filters
+    (they apply as they change); the marked ones are linked at once. %>
+<% frame = "shipment-invoices-list" %>
+<div data-controller="live-filter">
+  <%= render layout: "shared/filters", locals: { filter: @filter, url: new_sales_shipment_invoice_path(@shipment), frame:, live: true } do |form| %>
+    <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("trading.invoices.index.search_placeholder") %>
+    <%= filter_select form, :payment_status, Invoice.human_attribute_name(:payment_status),
+          enum_options(Invoice, :payment_status, Invoice::FILTER_STATUSES), selected: @filter.payment_status %>
+    <%= filter_date_field form, :from, t("shared.filters.from"), value: @filter.from %>
+    <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
+    <%= filter_select form, :season_year, Purchase.human_attribute_name(:season_year),
+          season_options(Purchase.where(coffee_state: @shipment.coffee_state)), selected: @filter.season_year, all: t("shared.filters.all_seasons") %>
+    <%= filter_select form, :zone_id, Purchase.human_attribute_name(:zone), Zone.ordered.pluck(:name, :id), selected: @filter.zone_id, all: t("shared.filters.all_zones") %>
+  <% end %>
+
+  <%= list_frame frame do %>
+    <%= live_list_status @filter, payment_status: enum_options(Invoice, :payment_status, Invoice::FILTER_STATUSES),
+          season_year: ->(year) { Season.new(year).label },
+          zone_id: ->(id) { (name = Zone.find_by(id:)&.name) && t("trading.purchases.index.chips.zone", name:) } %>
+    <% if @invoices.any? %>
+      <%= form_with url: sales_shipment_invoices_path(@shipment), method: :post, class: "mt-4",
+            data: { turbo_frame: "_top", controller: "check-all", check_all_label_value: t(".marked", count: "%{count}"),
+                    check_all_none_value: t(".none_marked") } do %>
+        <div class="overflow-x-auto panel">
+          <table class="data-table data-table-compact" data-shipment-invoice-choices>
+            <thead>
+              <tr>
+                <th class="w-10"><input type="checkbox" class="size-4 accent-primary" data-check-all-target="all" data-action="check-all#toggleAll"
+                                        aria-label="<%= t(".mark_all") %>"></th>
+                <th><%= t("trading.invoices.index.number") %></th>
+                <th><%= t("trading.invoices.index.date") %></th>
+                <th><%= t("trading.invoices.index.producer") %></th>
+                <th class="text-right"><%= t("trading.purchases.table.net") %></th>
+                <th class="text-right"><%= Invoice.human_attribute_name(:total) %></th>
+                <th><%= t("trading.invoices.index.status") %></th>
+                <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @invoices.each do |invoice| %>
+                <tr id="<%= dom_id(invoice, :choice) %>">
+                  <td>
+                    <input type="checkbox" name="invoice_ids[]" value="<%= invoice.id %>" class="size-4 accent-primary"
+                           data-check-all-target="item" data-action="check-all#update"
+                           aria-label="<%= t(".mark", number: invoice.display_number) %>">
+                  </td>
+                  <td class="tabular-nums"><%= invoice.display_number %></td>
+                  <td class="whitespace-nowrap"><%= l(invoice.issued_on) %></td>
+                  <td><%= invoice.producer.full_name %></td>
+                  <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(invoice.net_weight) %></td>
+                  <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(invoice.total) %></td>
+                  <td><%= payment_status_badge(invoice) %></td>
+                  <td class="cell-actions"><%= modal_link_to t("shared.detail"), trading_invoice_path(invoice), class: "btn btn-sm" %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+        <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: %>
+        <div class="sticky bottom-4 mt-4 flex flex-wrap items-center justify-between gap-3 clay p-3">
+          <p class="text-sm" data-check-all-target="count" aria-live="polite"></p>
+          <div class="flex flex-wrap gap-2">
+            <button type="submit" class="btn btn-primary" data-check-all-target="submit" disabled><%= t(".submit") %></button>
+            <%= link_to t("shared.cancel"), sales_shipment_path(@shipment), class: "btn" %>
+          </div>
+        </div>
+      <% end %>
+    <% else %>
+      <p class="empty-state mt-4"><%= t(".empty") %></p>
+    <% end %>
+  <% end %>
+</div>

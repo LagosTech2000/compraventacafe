@@ -23,4 +23,16 @@ FactoryBot.define do
     unit { "saco" }
     default_price { 1_000 }
   end
+
+  # A purchase of a supply into the inventory, with its investment (Fernando, 2026-11-12).
+  factory :supply_entry do
+    supply
+    quantity { 10 }
+    amount { 1_000 }
+    received_on { Time.zone.today }
+    association :created_by, factory: :user
+    finance_category_id { create(:finance_category, kind: "investment").id }
+    money_account_id { create(:money_account).id }
+    payment_method { "cash" }
+  end
 end

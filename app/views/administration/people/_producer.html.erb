@@ -24,7 +24,7 @@
          t("administration.people.producer.season_quintals", season: season.label) => format_pounds(PurchaseCalculation.quintals(purchases.in_season(season).sum(:net_weight))),
          t("administration.people.producer.purchases") => number_with_delimiter(purchases.count),
          t("administration.people.producer.total") => format_money(purchases.sum(:total)),
-         t("administration.people.producer.invoices") => number_with_delimiter(producer.invoices.count),
+         t("administration.people.producer.invoices") => number_with_delimiter(producer.invoices.active.count),
          t("administration.people.producer.unpaid") => number_with_delimiter(producer.invoices.unpaid.count) }.each do |label, value| %>
       <div class="border-b border-line px-4 py-3" data-producer-figure>
         <dt class="text-xs font-medium text-ink-muted"><%= label %></dt>

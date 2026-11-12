@@ -3,7 +3,7 @@
 
 <h1 class="text-2xl font-bold"><%= t(".title", number: @shipment.display_number) %></h1>
 <p class="mt-1 text-sm text-ink-muted">
-  <%= t(".subtitle", buyer: @shipment.buyer.name, state: @shipment.human_coffee_state, net: format_pounds(@shipment.origin_net_weight)) %>
+  <%= t(".subtitle", buyer: @shipment.buyer.name, state: @shipment.human_coffee_state, net: (@shipment.origin_missing? ? t("sales.difference.no_origin") : format_pounds(@shipment.origin_net_weight))) %>
 </p>
 
 <%= form_with model: @shipment, url: sales_shipment_arrival_path(@shipment), method: :patch,
@@ -42,7 +42,7 @@
       <div class="panel p-4 data-[over-tolerance=true]:ring-2 data-[over-tolerance=true]:ring-danger" data-weighing-calculator-target="differenceBox">
         <p class="text-sm font-semibold"><%= t(".difference") %></p>
         <p class="mt-1 text-xl font-bold tabular-nums" data-weighing-calculator-target="difference">—</p>
-        <p class="mt-1 text-xs text-ink-muted"><%= t(".origin_net", net: format_pounds(@shipment.origin_net_weight)) %></p>
+        <p class="mt-1 text-xs text-ink-muted"><%= t(".origin_net", net: (@shipment.origin_missing? ? t("sales.difference.no_origin") : format_pounds(@shipment.origin_net_weight))) %></p>
         <p class="mt-1 text-xs text-ink-muted">
           <%= WeightTolerance.percent ? t("sales.shipments.show.tolerance", tolerance: format_percent(WeightTolerance.percent)) : t("sales.shipments.show.no_tolerance") %>
         </p>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_04_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_12_180000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -221,10 +221,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_04_120000) do
     t.integer "lock_version", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "shipment_id"
     t.index ["created_by_id"], name: "index_expenses_on_created_by_id"
     t.index ["finance_category_id"], name: "index_expenses_on_finance_category_id"
     t.index ["kind"], name: "index_expenses_on_kind"
     t.index ["money_account_id"], name: "index_expenses_on_money_account_id"
+    t.index ["shipment_id"], name: "index_expenses_on_shipment_id"
     t.index ["spent_on"], name: "index_expenses_on_spent_on"
   end
 
@@ -322,11 +324,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_04_120000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "lock_version", default: 0, null: false
+    t.datetime "voided_at"
+    t.bigint "voided_by_id"
+    t.string "void_reason"
+    t.text "observations"
     t.index ["created_by_id"], name: "index_invoices_on_created_by_id"
     t.index ["issued_on"], name: "index_invoices_on_issued_on"
     t.index ["number"], name: "index_invoices_on_number", unique: true
     t.index ["payment_status"], name: "index_invoices_on_payment_status"
     t.index ["producer_id"], name: "index_invoices_on_producer_id"
+    t.index ["voided_by_id"], name: "index_invoices_on_voided_by_id"
   end
 
   create_table "loan_payments", force: :cascade do |t|
@@ -615,7 +622,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_04_120000) do
     t.boolean "can_destroy", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["user_id", "module_key"], name: "index_permissions_on_user_id_and_module_key", unique: true
+    t.string "submodule_key", null: false
+    t.index ["user_id", "module_key", "submodule_key"], name: "index_permissions_on_user_id_and_module_key_and_submodule_key", unique: true
   end
 
   create_table "private_document_prints", force: :cascade do |t|
@@ -740,6 +748,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_04_120000) do
     t.string "damage_types", default: [], null: false, array: true
     t.decimal "hauler_price_per_pound", precision: 12, scale: 4
     t.bigint "warehouse_id", null: false
+    t.boolean "common_coffee", default: false, null: false
     t.index ["created_by_id"], name: "index_purchases_on_created_by_id"
     t.index ["farm_id"], name: "index_purchases_on_farm_id"
     t.index ["hauler_id"], name: "index_purchases_on_hauler_id"
@@ -756,7 +765,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_04_120000) do
   create_table "sale_lines", force: :cascade do |t|
     t.bigint "sale_id", null: false
     t.bigint "shipment_id", null: false
-    t.decimal "origin_net_weight", precision: 12, scale: 2, null: false
+    t.decimal "origin_net_weight", precision: 12, scale: 2
     t.decimal "net_weight", precision: 12, scale: 2, null: false
     t.decimal "amount", precision: 14, scale: 2, null: false
     t.boolean "active", default: true, null: false
@@ -793,7 +802,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_04_120000) do
     t.decimal "unit_price", precision: 12, scale: 2, null: false
     t.string "buyer_document_number"
     t.text "observations"
-    t.decimal "origin_net_weight", precision: 14, scale: 2, null: false
+    t.decimal "origin_net_weight", precision: 14, scale: 2
     t.decimal "net_weight", precision: 14, scale: 2, null: false
     t.decimal "total", precision: 14, scale: 2, null: false
     t.string "payment_status", null: false
@@ -840,6 +849,41 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_04_120000) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "shipment_costs", force: :cascade do |t|
+    t.bigint "shipment_id", null: false
+    t.string "concept", null: false
+    t.string "description"
+    t.string "pricing", null: false
+    t.string "weight_side"
+    t.string "weight_kind"
+    t.integer "quintal_pounds"
+    t.decimal "base_pounds", precision: 12, scale: 2
+    t.decimal "quantity", precision: 14, scale: 4
+    t.decimal "unit_price", precision: 12, scale: 4
+    t.decimal "amount", precision: 14, scale: 2, null: false
+    t.date "paid_on", null: false
+    t.string "payment_method", null: false
+    t.bigint "money_account_id"
+    t.bigint "created_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_shipment_costs_on_created_by_id"
+    t.index ["money_account_id"], name: "index_shipment_costs_on_money_account_id"
+    t.index ["paid_on"], name: "index_shipment_costs_on_paid_on"
+    t.index ["shipment_id"], name: "index_shipment_costs_on_shipment_id"
+  end
+
+  create_table "shipment_invoices", force: :cascade do |t|
+    t.bigint "shipment_id", null: false
+    t.bigint "invoice_id", null: false
+    t.bigint "created_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_shipment_invoices_on_created_by_id"
+    t.index ["invoice_id"], name: "index_shipment_invoices_on_invoice_id", unique: true
+    t.index ["shipment_id"], name: "index_shipment_invoices_on_shipment_id"
+  end
+
   create_table "shipment_weighings", force: :cascade do |t|
     t.bigint "shipment_id", null: false
     t.decimal "gross_weight", precision: 12, scale: 2, null: false
@@ -858,13 +902,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_04_120000) do
     t.string "coffee_state", null: false
     t.string "remission_number"
     t.text "observations"
-    t.decimal "origin_gross_weight", precision: 12, scale: 2, null: false
-    t.integer "origin_sacks", null: false
+    t.decimal "origin_gross_weight", precision: 12, scale: 2
+    t.integer "origin_sacks"
     t.decimal "origin_humidity_percent", precision: 5, scale: 2
     t.decimal "origin_damage_percent", precision: 5, scale: 2
     t.decimal "origin_yield_factor", precision: 6, scale: 4
-    t.decimal "origin_tare", precision: 12, scale: 2, null: false
-    t.decimal "origin_net_weight", precision: 12, scale: 2, null: false
+    t.decimal "origin_tare", precision: 12, scale: 2
+    t.decimal "origin_net_weight", precision: 12, scale: 2
     t.date "received_on"
     t.string "weight_note_number"
     t.decimal "destination_gross_weight", precision: 12, scale: 2
@@ -913,6 +957,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_04_120000) do
     t.integer "cherry_critical_hours", default: 24, null: false
     t.decimal "cherry_yield_percent", precision: 5, scale: 2, default: "37.95", null: false
     t.decimal "drying_yield_percent", precision: 5, scale: 2, default: "50.0", null: false
+    t.string "owner_name"
+    t.string "phone"
+    t.string "secondary_phone"
+    t.date "supply_stock_starts_on"
   end
 
   create_table "staff_advances", force: :cascade do |t|
@@ -1020,6 +1068,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_04_120000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index "lower((name)::text)", name: "index_supplies_on_lower_name", unique: true
+  end
+
+  create_table "supply_entries", force: :cascade do |t|
+    t.bigint "supply_id", null: false
+    t.decimal "quantity", precision: 10, scale: 2, null: false
+    t.decimal "amount", precision: 14, scale: 2, null: false
+    t.date "received_on", null: false
+    t.string "payee"
+    t.string "receipt_number"
+    t.text "observations"
+    t.bigint "expense_id", null: false
+    t.bigint "created_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_supply_entries_on_created_by_id"
+    t.index ["expense_id"], name: "index_supply_entries_on_expense_id", unique: true
+    t.index ["received_on"], name: "index_supply_entries_on_received_on"
+    t.index ["supply_id"], name: "index_supply_entries_on_supply_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -1137,6 +1203,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_04_120000) do
   add_foreign_key "expense_receipts", "expenses"
   add_foreign_key "expenses", "finance_categories"
   add_foreign_key "expenses", "money_accounts"
+  add_foreign_key "expenses", "shipments"
   add_foreign_key "expenses", "users", column: "created_by_id"
   add_foreign_key "farms", "departments"
   add_foreign_key "farms", "municipalities"
@@ -1152,6 +1219,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_04_120000) do
   add_foreign_key "invoice_payments", "users", column: "created_by_id"
   add_foreign_key "invoices", "producers"
   add_foreign_key "invoices", "users", column: "created_by_id"
+  add_foreign_key "invoices", "users", column: "voided_by_id"
   add_foreign_key "loan_payments", "loans"
   add_foreign_key "loan_payments", "money_accounts"
   add_foreign_key "loan_payments", "payroll_payment_lines"
@@ -1218,6 +1286,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_04_120000) do
   add_foreign_key "sales", "users", column: "voided_by_id"
   add_foreign_key "saved_reports", "users"
   add_foreign_key "sessions", "users"
+  add_foreign_key "shipment_costs", "money_accounts"
+  add_foreign_key "shipment_costs", "shipments"
+  add_foreign_key "shipment_costs", "users", column: "created_by_id"
+  add_foreign_key "shipment_invoices", "invoices"
+  add_foreign_key "shipment_invoices", "shipments"
+  add_foreign_key "shipment_invoices", "users", column: "created_by_id"
   add_foreign_key "shipment_weighings", "shipments"
   add_foreign_key "shipments", "buyers"
   add_foreign_key "shipments", "carriers"
@@ -1240,6 +1314,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_04_120000) do
   add_foreign_key "staff_payments", "staff_members"
   add_foreign_key "staff_payments", "staff_roles"
   add_foreign_key "staff_payments", "users", column: "created_by_id"
+  add_foreign_key "supply_entries", "expenses"
+  add_foreign_key "supply_entries", "supplies"
+  add_foreign_key "supply_entries", "users", column: "created_by_id"
   add_foreign_key "vehicles", "vehicle_types"
   add_foreign_key "warehouse_transfers", "users", column: "created_by_id"
   add_foreign_key "warehouse_transfers", "users", column: "voided_by_id"

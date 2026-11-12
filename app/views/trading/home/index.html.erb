@@ -11,15 +11,15 @@
 <%# The daily flow, in order. Each card says what is pending and links to do it. %>
 <ol class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
   <% [
-       { key: "register", count: @daily_close.purchases_count, amount: nil,
+       { key: "register", read: "purchases", count: @daily_close.purchases_count, amount: nil,
          path: new_trading_purchase_path, allowed: policy(Purchase).create?, pending: false },
-       { key: "invoice", count: @uninvoiced.purchases_count, amount: @uninvoiced.total,
+       { key: "invoice", read: "purchases", count: @uninvoiced.purchases_count, amount: @uninvoiced.total,
          path: new_trading_invoice_path, allowed: policy(Invoice).create?, pending: @uninvoiced.purchases_count.positive? },
-       { key: "pay", count: @pending_invoices.size, amount: @pending_total,
+       { key: "pay", read: "invoices", count: @pending_invoices.size, amount: @pending_total,
          path: trading_invoices_path(payment_status: "unpaid"), allowed: policy(Invoice).index?, pending: @pending_invoices.any? },
-       { key: "close", count: nil, amount: @daily_close.total,
+       { key: "close", read: "daily_close", count: nil, amount: @daily_close.total,
          path: trading_daily_close_path, allowed: policy([ :trading, :daily_close ]).show?, pending: false }
-     ].each_with_index do |step, index| %>
+     ].select { |step| can_read?("trading.#{step[:read]}") }.each_with_index do |step, index| %>
     <li class="clay flex flex-col p-5 <%= step[:pending] ? "ring-2 ring-primary" : "ring-1 ring-line/60" %>">
       <p class="flex items-center gap-2 text-[0.7rem] font-semibold uppercase tracking-wide text-primary">
         <span class="grid size-6 place-items-center rounded-full <%= step[:pending] ? "bg-primary text-on-primary" : "bg-primary-soft" %>"><%= index + 1 %></span>
@@ -37,8 +37,11 @@
   <% end %>
 </ol>
 
-<h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".today", date: l(@daily_close.date, format: :long)) %></h2>
-<%= render "trading/summary", daily_close: @daily_close %>
+<%# The figures of the day and the season are the purchases'. %>
+<% if can_read?("trading.purchases") %>
+  <h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".today", date: l(@daily_close.date, format: :long)) %></h2>
+  <%= render "trading/summary", daily_close: @daily_close %>
 
-<h2 class="mt-8 mb-3 text-lg font-semibold"><%= format_season_dates(@season) %></h2>
-<%= render "trading/summary", daily_close: @season_summary %>
+  <h2 class="mt-8 mb-3 text-lg font-semibold"><%= format_season_dates(@season) %></h2>
+  <%= render "trading/summary", daily_close: @season_summary %>
+<% end %>

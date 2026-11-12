@@ -4,6 +4,7 @@
 # (Fernando, 2026-10-22).
 class PrivateDocumentPrintPolicy < ApplicationPolicy
   self.module_key = "loans"
+  self.submodule_key = "loans"
 
   def new? = create?
   def create? = can?(:create)

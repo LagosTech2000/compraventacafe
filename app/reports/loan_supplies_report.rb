@@ -4,6 +4,7 @@ class LoanSuppliesReport < Report
   NAME = "people.first_names || ' ' || people.last_names".freeze
 
   self.module_key = "loans"
+  def self.permission_keys = %w[loans.loans]
   self.date_column = "loans.disbursed_on"
   self.default_period = "this_season"
   self.default_sort = :disbursed_on

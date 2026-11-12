@@ -57,7 +57,8 @@ class SaleIssuer
         sale.lines.build(shipment:, net_weight: shipment.destination_net_weight, origin_net_weight: shipment.origin_net_weight, amount:)
       end
       sale.net_weight = shipments.sum(&:destination_net_weight)
-      sale.origin_net_weight = shipments.sum(&:origin_net_weight)
+      # Without the local scale of one of them, no local net (Fernando, 2026-11-12).
+      sale.origin_net_weight = (shipments.sum(&:origin_net_weight) if shipments.all?(&:origin_net_weight))
       # On the whole weight, so rounding per line never moves a cent.
       sale.total = price_ok ? Sale.amount_for(sale.net_weight, **sale_price(sale)) : 0
     end

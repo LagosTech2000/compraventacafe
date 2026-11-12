@@ -1,11 +1,25 @@
 module Loans
   class LoansController < ApplicationController
+    # More than this does not fit a printout; the totals still count them all.
+    PRINT_LIMIT = 2_000
+
     before_action :set_loan, only: %i[ show edit update destroy ]
 
+    # With filters, the totals of every loan they match (Fernando, 2026-11-12).
     def index
       authorize Loan
       @filter = LoanFilter.new(params)
       @loans, @next_page = @filter.results(policy_scope(Loan))
+      @totals = LoanTotals.new(@filter.apply(policy_scope(Loan))) if @filter.active?
+    end
+
+    # Every loan the filters match, in the list's order, with the totals, to
+    # print (?print=1 opens the print dialog by itself).
+    def print
+      authorize Loan, :index?
+      @filter = LoanFilter.new(params.except(:page))
+      @loans, @more = @filter.results(policy_scope(Loan).includes(person: :zone), per_page: PRINT_LIMIT)
+      @totals = LoanTotals.new(@filter.apply(policy_scope(Loan)))
     end
 
     def show

@@ -93,7 +93,7 @@ class StockLedger
         transfers_out = transfers_out.where(coffee_state:)
       end
       purchases.map { |purchase| move("purchase", purchase, purchase.purchased_at, purchase.coffee_state, net_in: purchase.net_weight, gross_in: purchase.gross_weight) } +
-        shipments.map { |shipment| move("shipment", shipment, shipment.departed_at, shipment.coffee_state, net_out: shipment.origin_net_weight, gross_out: shipment.origin_gross_weight) } +
+        shipments.where.not(origin_net_weight: nil).map { |shipment| move("shipment", shipment, shipment.departed_at, shipment.coffee_state, net_out: shipment.origin_net_weight, gross_out: shipment.origin_gross_weight) } +
         weighed.map { |conversion| move("conversion_out", conversion, conversion.weighed_at, conversion.from_state, net_out: conversion.input_net_weight, gross_out: conversion.input_gross_weight) } +
         came_out.map { |conversion| move("conversion_in", conversion, conversion.finished_at, conversion.to_state, net_in: conversion.output_net_weight, gross_in: conversion.output_gross_weight) } +
         transfers_in.map { |transfer| move("transfer_in", transfer, transfer.transferred_at, transfer.coffee_state, net_in: transfer.net_weight, gross_in: transfer.gross_weight) } +

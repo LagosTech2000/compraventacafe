@@ -18,6 +18,7 @@ class LoanBalance
   attr_reader :as_of, :principal_owed, :interest_owed, :principal_paid, :interest_paid
 
   def initialize(loan, as_of: Time.zone.today, payments: loan.payments.chronological)
+    @loan = loan
     @rate = loan.monthly_interest_rate.to_d / 100
     @interest_starts_on = loan.interest_starts_on
     @principal_owed = loan.principal.to_d
@@ -40,6 +41,13 @@ class LoanBalance
   def total_owed
     principal_owed + interest_owed
   end
+
+  # The principal paid and owed in cash and in supplies, in the loan's
+  # proportion (Fernando, 2026-11-12). Interest is not split.
+  def cash_paid = @loan.split_principal(principal_paid).first
+  def supplies_paid = principal_paid - cash_paid
+  def cash_owed = @loan.cash_amount.to_d - cash_paid
+  def supplies_owed = @loan.supplies_value - supplies_paid
 
   def settled?
     total_owed.zero?

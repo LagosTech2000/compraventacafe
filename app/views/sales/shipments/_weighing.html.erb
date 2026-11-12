@@ -2,7 +2,9 @@
 <% gross = shipment["#{side}_gross_weight"] %>
 <section class="panel p-4" aria-labelledby="shipment-<%= side %>">
   <h2 id="shipment-<%= side %>" class="font-semibold"><%= t("sales.shipments.show.#{side}") %></h2>
-  <% if gross.nil? %>
+  <% if gross.nil? && side == "origin" %>
+    <p class="mt-2 text-sm text-ink-muted"><%= t("sales.difference.no_origin") %></p>
+  <% elsif gross.nil? %>
     <p class="mt-2 text-sm text-ink-muted"><%= t("sales.shipments.show.not_weighed") %></p>
   <% else %>
     <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-3">

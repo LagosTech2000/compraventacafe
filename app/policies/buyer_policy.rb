@@ -2,6 +2,7 @@
 # deactivated, never deleted.
 class BuyerPolicy < ApplicationPolicy
   self.module_key = "sales"
+  self.submodule_key = "buyers"
 
   def destroy?
     super && (!record.is_a?(Buyer) || (record.shipments.none? && record.sales.none?))

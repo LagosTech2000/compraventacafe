@@ -16,6 +16,7 @@ class CoffeeStockReport < Report
   end
 
   self.module_key = "sales"
+  def self.permission_keys = %w[sales.stock]
   self.date_column = "date"
   self.default_period = "this_month"
   self.default_sort = :at

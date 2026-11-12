@@ -5,7 +5,7 @@ module Loans
   class BorrowersController < ApplicationController
     def show
       person = authorize Person.includes(:zone, :department, :municipality, :photo_info, :client, :collaborator, producer: :farms).find(params[:id]),
-                         policy_class: CreditAccountPolicy
+                         :card?, policy_class: CreditAccountPolicy
       @account = CreditAccount.new(person)
       @producer_profile = ProducerProfile.new(person.producer) if person.producer? && policy(Producer).show?
     end

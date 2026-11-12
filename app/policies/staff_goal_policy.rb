@@ -2,6 +2,7 @@
 # paid), never edited.
 class StaffGoalPolicy < ApplicationPolicy
   self.module_key = "finance"
+  self.submodule_key = "staff"
 
   def update?
     false

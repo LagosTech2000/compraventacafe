@@ -23,7 +23,9 @@
 
 <dl class="mt-5 flex flex-wrap gap-3">
   <% { lent: close.lent, lent_cash: close.lent_cash, lent_supplies: close.lent_supplies,
-       collected: close.collected, interest_collected: close.interest_collected, collected_money: close.collected_money }.each do |key, value| %>
+       collected: close.collected, principal_collected: close.principal_collected, cash_collected: close.cash_collected,
+       supplies_collected: close.supplies_collected, interest_collected: close.interest_collected,
+       collected_money: close.collected_money }.each do |key, value| %>
     <div class="stat min-w-0 flex-1 basis-40">
       <dt><%= t(".stats.#{key}") %></dt>
       <dd data-live-value><%= format_money(value) %></dd>

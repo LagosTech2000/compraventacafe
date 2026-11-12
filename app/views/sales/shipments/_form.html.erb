@@ -108,11 +108,26 @@
         </div>
       </section>
 
-      <section aria-labelledby="shipment-origin" class="space-y-3">
+      <% skippable = Current.user.admin? %>
+      <section aria-labelledby="shipment-origin" class="space-y-3" <%= tag.attributes(data: { controller: ("skip-origin" if skippable) }) %>>
         <div>
           <h2 id="shipment-origin" class="font-semibold"><%= t(".origin") %></h2>
           <p class="text-sm text-ink-muted"><%= t(".origin_help") %></p>
         </div>
+        <%# Administrators may leave it empty (Fernando, 2026-11-12): completed later. %>
+        <% if skippable %>
+          <% skipping = ActiveModel::Type::Boolean.new.cast(shipment.skip_origin) || (shipment.persisted? && shipment.origin_missing? && shipment.skip_origin.nil?) %>
+          <label class="flex min-h-11 cursor-pointer items-start gap-2 text-sm">
+            <%= form.hidden_field :skip_origin, value: "0", id: nil %>
+            <%= form.check_box :skip_origin, { checked: skipping, class: "mt-0.5 size-4 accent-primary",
+                  data: { skip_origin_target: "toggle", action: "skip-origin#update" } }, "1", nil %>
+            <span><span class="font-medium"><%= t(".skip_origin") %></span>
+              <span class="block text-xs text-ink-muted"><%= t(".skip_origin_help") %></span></span>
+          </label>
+        <% elsif shipment.persisted? && shipment.origin_missing? %>
+          <p class="flash-notice" role="status"><%= t(".complete_origin") %></p>
+        <% end %>
+        <fieldset class="m-0 min-w-0 space-y-3 border-0 p-0" <%= tag.attributes(data: { skip_origin_target: ("fields" if skippable) }) %>>
         <%# In one figure, or by weighings (as in the purchases): then the
             gross weight and the sacks are their sums. %>
         <fieldset>
@@ -148,6 +163,7 @@
           </template>
         </section>
         <%= render "sales/shipments/weighing_fields", form:, shipment:, side: "origin" %>
+        </fieldset>
       </section>
 
       <div>

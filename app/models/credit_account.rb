@@ -26,6 +26,13 @@ class CreditAccount
   end
 
   def lent = loans.sum(&:principal)
+  # Principal lent, paid and owed in cash and in supplies (Fernando, 2026-11-12).
+  def lent_cash = loans.sum { it.cash_amount.to_d }
+  def lent_supplies = lent - lent_cash
+  def cash_paid = balances.values.sum(&:cash_paid)
+  def supplies_paid = principal_paid - cash_paid
+  def cash_owed = balances.values.sum(&:cash_owed)
+  def supplies_owed = principal_owed - cash_owed
   def principal_paid = balances.values.sum(&:principal_paid)
   def interest_paid = balances.values.sum(&:interest_paid)
   def principal_owed = balances.values.sum(&:principal_owed)

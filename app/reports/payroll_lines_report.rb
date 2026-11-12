@@ -5,6 +5,7 @@ class PayrollLinesReport < Report
   NAME = "people.first_names || ' ' || people.last_names".freeze
 
   self.module_key = "farms"
+  def self.permission_keys = %w[farms.payrolls]
   self.date_column = "payroll_payments.paid_on"
   self.default_period = "this_month"
   self.default_sort = :paid_on

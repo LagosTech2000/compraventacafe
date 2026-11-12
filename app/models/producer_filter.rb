@@ -10,7 +10,11 @@ class ProducerFilter < ListFilter
         farms: { ruby: ->(producer) { producer.farm_names } },
         phone: { sql: "people.phone", joins: :person },
         season_quintals: { sql: -> { "(SELECT SUM(net_weight) FROM purchases WHERE purchases.producer_id = producers.id " \
-                                     "AND purchases.voided_at IS NULL AND purchases.season_year = #{Season.current.year.to_i})" } },
+                                     "AND purchases.voided_at IS NULL AND NOT purchases.common_coffee " \
+                                     "AND purchases.season_year = #{Season.current.year.to_i})" } },
+        common_quintals: { sql: -> { "(SELECT SUM(net_weight) FROM purchases WHERE purchases.producer_id = producers.id " \
+                                     "AND purchases.voided_at IS NULL AND purchases.common_coffee " \
+                                     "AND purchases.season_year = #{Season.current.year.to_i})" } },
         last_purchase: "(SELECT MAX(purchased_at) FROM purchases WHERE purchases.producer_id = producers.id AND purchases.voided_at IS NULL)"
 
   def apply(scope)

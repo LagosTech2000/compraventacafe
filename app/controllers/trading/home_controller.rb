@@ -2,6 +2,8 @@ module Trading
   class HomeController < ApplicationController
     def index
       authorize [ :trading, :home ]
+      return unless module_home_or_first_tab("trading")
+
       @daily_close = DailyClose.new(Time.zone.today)
       @uninvoiced = PurchaseSummary.new(policy_scope(Purchase).uninvoiced)
       @pending_invoices = policy_scope(Invoice).unpaid.includes(:payments, purchases: :loan_payments)

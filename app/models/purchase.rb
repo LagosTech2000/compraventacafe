@@ -53,6 +53,10 @@ class Purchase < ApplicationRecord
   validate :invoice_belongs_to_same_producer
   validate :farm_belongs_to_producer
   validate :voided_not_invoiced
+  # «Café corriente» (Fernando, 2026-11-12): only wet parchment; it will not
+  # count in the end-of-season retention (an open point, not built yet).
+  before_validation { self.common_coffee = false unless coffee_state == "wet_parchment" }
+  after_update :refresh_invoice, if: -> { saved_change_to_total? && invoice_id && invoice_id_before_last_save == invoice_id }
   validate :hauler_active, if: :will_save_change_to_hauler_id?
   validate :warehouse_active, if: :will_save_change_to_warehouse_id?
   validate :hauler_commission_not_paid_out
@@ -104,6 +108,9 @@ class Purchase < ApplicationRecord
   def audit_label
     producer.full_name
   end
+
+  # «Pergamino húmedo · Café corriente» when it is (Fernando, 2026-11-12).
+  def coffee_label = [ human_coffee_state, (self.class.human_attribute_name(:common_coffee) if common_coffee?) ].compact.join(" · ")
 
   def invoiced?
     invoice_id.present?
@@ -316,7 +323,15 @@ class Purchase < ApplicationRecord
       errors.add(:invoice, :other_producer)
     end
 
+    # Only voiding its invoice voids an invoiced purchase (administrators,
+    # Fernando, 2026-11-12).
     def voided_not_invoiced
-      errors.add(:base, :voided_invoiced) if voided? && invoiced?
+      errors.add(:base, :voided_invoiced) if voided? && invoiced? && !invoice.voided?
+    end
+
+    # An administrator edited an invoiced purchase: its invoice's status
+    # follows its new total.
+    def refresh_invoice
+      invoice.refresh_payment_status! if invoice && !invoice.voided?
     end
 end

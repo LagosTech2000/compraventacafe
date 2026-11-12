@@ -26,6 +26,7 @@ class InvoicesReport < Report
   DAYS_TO_PAY = "(invoices.paid_on - invoices.issued_on)".freeze
 
   self.module_key = "trading"
+  def self.permission_keys = %w[trading.invoices]
   self.date_column = "invoices.issued_on"
   self.default_period = "this_month"
   self.default_sort = :number
@@ -88,7 +89,7 @@ class InvoicesReport < Report
   kpi :average_days, :number, "AVG(#{DAYS_TO_PAY})", good: :down
 
   def scope
-    Invoice.joins(producer: :person).joins(TOTALS)
+    Invoice.active.joins(producer: :person).joins(TOTALS)
   end
 
   def apply_filters(relation)

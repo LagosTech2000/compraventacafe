@@ -6,24 +6,31 @@
 <% out_now = @month.sum(0.to_d, &:amount_out) %>
 <% out_before = @previous.sum(0.to_d, &:amount_out) %>
 <% in_now = @month.sum(0.to_d, &:amount_in) %>
-<% over_budget = @budget_lines.select(&:over?) %>
+<%# Each part only for who reads its tab. %>
+<% accounts = can_read?("finance.accounts") %>
+<% movements = can_read?("finance.movements") %>
+<% budget = can_read?("finance.budget") %>
+<% over_budget = budget ? @budget_lines.select(&:over?) : [] %>
+<% no_accounts = accounts && @accounts.empty? %>
+<% without_account = can_read?("finance.consolidation") && @without_account.positive? %>
+<% staff_due = can_read?("finance.staff") && @staff_due.any? %>
 
 <%# What needs attention first. %>
-<% if @accounts.empty? || @without_account.positive? || over_budget.any? || @staff_due.any? %>
+<% if no_accounts || without_account || over_budget.any? || staff_due %>
   <ul class="mb-6 space-y-2">
-    <% if @accounts.empty? %>
+    <% if no_accounts %>
       <li class="flash-notice flex flex-wrap items-center justify-between gap-3">
         <span><%= t(".no_accounts") %></span>
         <% if policy(MoneyAccount).create? %><%= modal_link_to t(".new_account"), new_finance_money_account_path, class: "btn btn-sm btn-primary" %><% end %>
       </li>
     <% end %>
-    <% if @without_account.positive? %>
+    <% if without_account %>
       <li class="flash-notice flex flex-wrap items-center justify-between gap-3">
         <span><%= t(".without_account", count: @without_account) %></span>
         <%= link_to t(".consolidate"), finance_consolidation_path, class: "btn btn-sm" %>
       </li>
     <% end %>
-    <% if @staff_due.any? %>
+    <% if staff_due %>
       <li class="flash-notice flex flex-wrap items-center justify-between gap-3">
         <span><%= t(".staff_due", count: @staff_due.size) %></span>
         <%= link_to t(".see"), finance_staff_members_path, class: "btn btn-sm" %>
@@ -39,7 +46,8 @@
 <% end %>
 
 <%# Where the money is. %>
-<section aria-labelledby="finance-accounts">
+<% if accounts %>
+<section class="mb-8" aria-labelledby="finance-accounts">
   <div class="mb-3 flex flex-wrap items-baseline justify-between gap-3">
     <h2 id="finance-accounts" class="text-lg font-semibold"><%= t(".accounts") %></h2>
     <div class="flex flex-wrap gap-2">
@@ -62,9 +70,11 @@
     <% end %>
   </dl>
 </section>
+<% end %>
 
-<%# This month against the same days of the last. %>
-<section class="mt-8" aria-labelledby="finance-month">
+<%# This month against the same days of the last (the ledger's). %>
+<% if movements %>
+<section class="mb-8" aria-labelledby="finance-month">
   <h2 id="finance-month" class="mb-3 text-lg font-semibold"><%= t(".month", month: l(@today, format: :month_year)) %></h2>
   <dl class="flex flex-wrap gap-3">
     <div class="stat min-w-0 flex-1 basis-48">
@@ -103,8 +113,10 @@
     </section>
   </div>
 </section>
+<% end %>
 
-<div class="mt-8 grid gap-4 lg:grid-cols-2">
+<div class="grid gap-4 lg:grid-cols-2">
+  <% if budget %>
   <section class="panel p-4" aria-labelledby="finance-budget">
     <div class="flex flex-wrap items-baseline justify-between gap-3">
       <h2 id="finance-budget" class="font-semibold"><%= t(".budget") %></h2>
@@ -135,7 +147,9 @@
       <p class="mt-3 text-sm text-ink-muted"><%= t(".no_budget_yet") %></p>
     <% end %>
   </section>
+  <% end %>
 
+  <% if movements %>
   <section class="panel p-4" aria-labelledby="finance-latest">
     <div class="flex flex-wrap items-baseline justify-between gap-3">
       <h2 id="finance-latest" class="font-semibold"><%= t(".latest") %></h2>
@@ -159,4 +173,5 @@
       <p class="mt-3 text-sm text-ink-muted"><%= t(".nothing") %></p>
     <% end %>
   </section>
+  <% end %>
 </div>

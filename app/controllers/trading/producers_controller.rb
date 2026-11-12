@@ -7,8 +7,11 @@ module Trading
       @filter = ProducerFilter.new(params)
       @producers, @next_page = @filter.results(policy_scope(Producer))
       @season = Season.current
-      @stats = Purchase.active.in_season(@season).where(producer_id: @producers.map(&:id)).group(:producer_id)
-        .pluck(:producer_id, Arel.sql("SUM(net_weight)")).to_h
+      # The season's net without café corriente (the retention's base) and
+      # the café corriente apart (Fernando, 2026-11-12).
+      season_purchases = Purchase.active.in_season(@season).where(producer_id: @producers.map(&:id)).group(:producer_id)
+      @stats = season_purchases.where(common_coffee: false).sum(:net_weight)
+      @common_stats = season_purchases.where(common_coffee: true).sum(:net_weight)
       @last_purchased = Purchase.active.where(producer_id: @producers.map(&:id)).group(:producer_id).maximum(:purchased_at)
     end
 

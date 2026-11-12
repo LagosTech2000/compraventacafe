@@ -5,7 +5,7 @@ module Finance
     before_action :set_expense, only: %i[ show edit update destroy ]
 
     def index
-      authorize Expense
+      authorize Expense.new(kind: @kind), :index?
       @filter = ExpenseFilter.new(params)
       scope = policy_scope(Expense).where(kind: @kind)
       @expenses, @next_page = @filter.results(scope)
@@ -33,8 +33,15 @@ module Finance
     def edit
     end
 
+    # It can change from expense to investment and back when edited
+    # (Fernando, 2026-11-12): that takes creating in the other tab too.
     def update
+      new_kind = params.dig(:expense, :kind).presence_in(Expense::KINDS)
+      authorize Expense.new(kind: new_kind), :create? if new_kind && new_kind != @expense.kind
+      @expense.kind = new_kind if new_kind
+
       if @expense.update(expense_params)
+        @kind = @expense.kind
         close_modal_with notice: t(".success"), fallback: expense_path(@expense)
       else
         render :edit, status: :unprocessable_content

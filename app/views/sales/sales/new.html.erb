@@ -56,7 +56,7 @@
                       class: "mt-1 size-4 shrink-0 accent-primary",
                       data: { sale_builder_target: "shipment", action: "sale-builder#update", net: shipment.destination_net_weight.to_f,
                               gross: shipment.destination_gross_weight.to_f,
-                              origin_net: shipment.origin_net_weight.to_f, coffee_state: shipment.coffee_state } %>
+                              origin_net: shipment.origin_net_weight&.to_f, coffee_state: shipment.coffee_state } %>
                 <span class="min-w-0 flex-1">
                   <span class="flex flex-wrap items-baseline justify-between gap-2">
                     <span class="font-semibold"><%= t("sales.shipments.show.title", number: shipment.display_number) %></span>
@@ -66,7 +66,7 @@
                     <%= [ l(shipment.departed_at, format: :short), (t(".received", date: l(shipment.received_on)) if shipment.received_on), shipment.weight_note_number ].compact.join(" · ") %>
                   </span>
                   <span class="mt-2 grid grid-cols-2 gap-x-3 gap-y-1">
-                    <span><span class="block text-xs text-ink-muted"><%= t("sales.shipments.table.origin_net") %></span><span class="tabular-nums"><%= format_pounds(shipment.origin_net_weight) %></span></span>
+                    <span><span class="block text-xs text-ink-muted"><%= t("sales.shipments.table.origin_net") %></span><span class="tabular-nums"><%= shipment.origin_missing? ? t("sales.difference.no_origin") : format_pounds(shipment.origin_net_weight) %></span></span>
                     <span><span class="block text-xs text-ink-muted"><%= t("sales.shipments.table.destination_net") %></span><span class="font-semibold tabular-nums"><%= format_pounds(shipment.destination_net_weight) %></span></span>
                     <span class="col-span-2"><span class="text-xs text-ink-muted"><%= t("sales.shipments.table.difference") %>:</span> <%= weight_difference(shipment) %></span>
                   </span>

@@ -25,6 +25,9 @@ class CashMovementsReport < Report
   filter :account, :text
 
   def self.module_keys = %w[trading loans farms]
+  # Any tab of the three modules; each source shows only for who reads its
+  # submodule (MoneyMovements.sources_for).
+  def self.readable_by?(user) = super && MoneyMovements.sources_for(user).any?
 
   detail { |movement| movement.route && public_send(*movement.route) }
 

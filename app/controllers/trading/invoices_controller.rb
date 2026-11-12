@@ -1,6 +1,6 @@
 module Trading
   class InvoicesController < ApplicationController
-    before_action :set_invoice, only: :show
+    before_action :set_invoice, only: %i[ show edit update ]
 
     def index
       authorize Invoice
@@ -43,7 +43,27 @@ module Trading
       end
     end
 
+    # An administrator's edit (Fernando, 2026-11-12): date, observations and
+    # which purchases it has; each purchase is edited from its own form.
+    def edit
+      @purchases = editable_purchases
+    end
+
+    def update
+      permitted = params.expect(invoice: [ :issued_on, :observations, purchase_ids: [] ])
+      @invoice.revise!(issued_on: permitted[:issued_on], observations: permitted[:observations], purchase_ids: permitted[:purchase_ids])
+      redirect_to trading_invoice_path(@invoice), notice: t(".success")
+    rescue ActiveRecord::RecordInvalid
+      @purchases = editable_purchases
+      render :edit, status: :unprocessable_content
+    end
+
     private
+      # Its purchases and the producer's still uninvoiced, the newest first.
+      def editable_purchases
+        @invoice.producer.purchases.active.where(invoice_id: [ nil, @invoice.id ]).includes(:loan_payments, :farm).newest_first
+      end
+
       def set_invoice
         @invoice = authorize Invoice.includes(:created_by, payments: :created_by, purchases: [ :zone, :loan_payments ],
                                             producer: [ :person, :zone ]).find(params[:id])

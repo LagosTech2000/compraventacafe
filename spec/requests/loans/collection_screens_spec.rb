@@ -54,12 +54,17 @@ RSpec.describe "Loans collection screens" do
 
     it "takes seeing Compra de café too, and creating in Préstamos to pay" do
       reader = create(:user)
-      reader.permissions.create!(module_key: "loans", can_read: true)
+      create(:permission, user: reader, module_key: "loans", can_read: true)
       sign_in reader
       get loans_coffee_collection_path
       expect(response).to redirect_to(root_path)
 
-      reader.permissions.create!(module_key: "trading", can_read: true)
+      # Its purchases, not any tab of Compra de café (permissions per submodule).
+      create(:permission, user: reader, module_key: "trading", submodule_key: "zones", can_read: true)
+      get loans_coffee_collection_path
+      expect(response).to redirect_to(root_path)
+
+      create(:permission, user: reader, module_key: "trading", submodule_key: "purchases", can_read: true)
       create(:loan, person: producer.person)
       create(:purchase, producer:)
       get loans_coffee_collection_path

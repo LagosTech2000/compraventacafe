@@ -3,6 +3,7 @@
 # result off is deleting. Nothing else is edited.
 class CoffeeConversionPolicy < ApplicationPolicy
   self.module_key = "sales"
+  self.submodule_key = "coffee_conversions"
 
   def update? = false
   def destroy? = false

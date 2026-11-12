@@ -5,6 +5,7 @@ class HarvestReport < Report
   VALUE = "harvest_entries.cans * payrolls.can_price".freeze
 
   self.module_key = "farms"
+  def self.permission_keys = %w[farms.payrolls]
   self.date_column = "harvest_entries.worked_on"
   self.default_period = "this_week"
   self.default_sort = :worked_on

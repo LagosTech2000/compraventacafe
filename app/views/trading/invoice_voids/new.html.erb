@@ -1,0 +1,32 @@
+<% content_for :title, t(".title", number: @invoice.display_number) %>
+<%= render "trading/nav" %>
+
+<h1 class="text-2xl font-bold"><%= t(".title", number: @invoice.display_number) %></h1>
+<p class="mt-1 text-sm text-ink-muted"><%= @invoice.producer.full_name %> · <%= l(@invoice.issued_on) %> · <%= format_money(@invoice.total) %></p>
+
+<%# What voiding does, before doing it (Fernando, 2026-11-12). %>
+<div class="flash-alert mt-4" role="status">
+  <p class="font-semibold"><%= t(".warning") %></p>
+  <ul class="mt-1 list-disc pl-5 text-sm">
+    <li><%= t(".purchases", count: @invoice.purchases.size) %></li>
+    <% if (payments = @invoice.payments.reject(&:new_record?)).any? %>
+      <li><%= t(".payments", count: payments.size, amount: format_money(payments.sum(&:amount))) %></li>
+    <% end %>
+    <% if @invoice.shipment_invoice %><li><%= t(".shipment", number: @invoice.shipment.display_number) %></li><% end %>
+    <li><%= t(".record") %></li>
+  </ul>
+</div>
+
+<%= form_with model: @invoice, url: trading_invoice_void_path(@invoice), method: :post, class: form_surface_class("mt-6 space-y-6"),
+      data: { controller: "form-validation" } do |form| %>
+  <%= render "shared/form_errors", record: @invoice %>
+  <div>
+    <%= form.label :void_reason, class: "field-label" %>
+    <%= form.text_field :void_reason, required: true, maxlength: 200, autofocus: true, class: "field-input",
+          data: { missing_message: "#{Invoice.human_attribute_name(:void_reason)} #{t("errors.messages.blank")}" } %>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit t(".submit"), class: "btn btn-primary" %>
+    <%= cancel_button trading_invoice_path(@invoice) %>
+  </div>
+<% end %>

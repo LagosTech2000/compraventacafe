@@ -4,6 +4,8 @@ module Sales
   class HomeController < ApplicationController
     def index
       authorize [ :sales, :home ]
+      return unless module_home_or_first_tab("sales")
+
       @stock = CoffeeStock.new
       @alert = CherryAlert.new
       shipments = policy_scope(Shipment)

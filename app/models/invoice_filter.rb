@@ -4,7 +4,7 @@ class InvoiceFilter < ListFilter
   field :season_year, :id
   field :q, :text
   field :zone_id, :id
-  field :payment_status, :choice, in: Invoice::FILTER_STATUSES
+  field :payment_status, :choice, in: Invoice::LIST_STATUSES
   field :payment_method, :choice, in: Invoice::PAYMENT_METHODS
 
   # Every column of the invoices table (also on a producer's page).
@@ -26,7 +26,8 @@ class InvoiceFilter < ListFilter
     # The season of its purchases (an invoice groups purchases of one producer).
     scope = scope.where(id: Purchase.where(season_year:).select(:invoice_id)) if season_year
     scope = scope.where(id: Purchase.where(zone_id:).select(:invoice_id)) if zone_id
-    scope = scope.with_payment_status(payment_status) if payment_status
+    # Voided invoices only when asked for (Fernando, 2026-11-12).
+    scope = payment_status ? scope.with_payment_status(payment_status) : scope.active
     # Paid (at least in part) that way.
     scope = scope.where(id: InvoicePayment.where(payment_method:).select(:invoice_id)) if payment_method
     scope.includes(:purchases, :payments, producer: :person).newest_first
