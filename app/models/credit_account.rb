@@ -10,10 +10,12 @@ class CreditAccount
     @person = person
     @today = today
     # Loaded once per list (preloaded loans, payments and supplies) or here.
+    # Only the user's own when they see only theirs (OwnedRecord).
+    owner = Current.owner if OwnedRecord.restricted?(Current.owner)
     @loans = if person.association(:loans).loaded?
-      person.loans.sort_by { |loan| [ loan.disbursed_on, loan.id ] }.reverse
+      person.loans.select { owner.nil? || it.created_by_id == owner.id }.sort_by { |loan| [ loan.disbursed_on, loan.id ] }.reverse
     else
-      person.loans.includes(:payments, :supply_items).newest_first.to_a
+      person.loans.owned.includes(:payments, :supply_items).newest_first.to_a
     end
   end
 

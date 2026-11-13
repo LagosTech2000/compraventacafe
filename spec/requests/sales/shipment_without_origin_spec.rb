@@ -17,7 +17,7 @@ RSpec.describe "Shipments without the local scale" do
 
   before { create(:purchase, gross_weight: 2_000) }
 
-  it "lets an administrator save it empty; it takes nothing from the stock until completed" do
+  it "lets an administrator save it empty; it takes nothing from the stock until completed", :all_records do
     stock_before = CoffeeStock.new.rows.find { it.coffee_state == "wet_parchment" }.stock
     sign_in admin
     post sales_shipments_path, params: params(skip_origin: "1", origin_gross_weight: "900", origin_sacks: "5")

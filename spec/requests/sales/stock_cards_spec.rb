@@ -1,8 +1,9 @@
 require "rails_helper"
 
-# «Café en inventario» (client, 2026-10-26): each card shows its net pounds,
-# always; a click opens the rest: gross pounds, quintals, sacks, damage
-# applied and the value of the coffee left.
+# «Café en inventario» (client, 2026-10-26): each card shows its gross
+# pounds first and its net beside (Fernando, 2026-11-13; before, only the
+# net); a click opens the rest: quintals, sacks, damage applied and the
+# value of the coffee left.
 RSpec.describe "Coffee in stock cards" do
   def page = Nokogiri::HTML(response.body)
 
@@ -11,16 +12,17 @@ RSpec.describe "Coffee in stock cards" do
     sign_in create(:user, :admin)
   end
 
-  it "shows only the net pounds on each card" do
+  it "shows the gross pounds first and the net beside on each card" do
     get sales_stock_path
 
     %w[total cherry wet_parchment dry_parchment].each do |key|
       card = page.at_css("[data-coffee-state=#{key}]")
-      expect(card.at_css("[data-live-value]")).to be_present, key
-      expect(card.text).to include("Libras netas"), key
-      expect(card.text).not_to include("Libras brutas"), key
+      expect(card.at_css("[data-live-value$='-gross']")).to be_present, key
+      expect(card.text).to include("Libras brutas"), key
     end
-    expect(page.at_css("[data-coffee-state=wet_parchment] [data-live-value]").text.squish).to eq("954.16 lb")
+    card = page.at_css("[data-coffee-state=wet_parchment]")
+    expect(card.at_css("[data-live-value$='-gross']").text.squish).to eq("2,000.00 lb")
+    expect(card.at_css("[data-live-value$='-net']").text.squish).to eq("954.16 lb netas")
   end
 
   it "shows the rest in the card's detail" do

@@ -49,6 +49,10 @@ Rails.application.routes.draw do
   end
 
   namespace :trading do
+    # Producers that stopped selling (Fernando, 2026-11-13): the Inicio's card and the whole list.
+    resources :idle_producers, only: :index do
+      get :card, on: :collection
+    end
     root "home#index"
     resources :purchases do
       patch :void, on: :member
@@ -78,15 +82,22 @@ Rails.application.routes.draw do
     root "home#index"
     # «Nueva salida»: to sell, to process or to another warehouse.
     resource :departure, only: :new
+    # The driver's card beside the shipment form (Fernando, 2026-11-13).
+    resources :driver_cards, only: :show
+    # Lots of purchased coffee (Fernando, 2026-11-13): shares of purchase
+    # invoices that go on the shipments. Before the shipments: "lots" is no id.
+    resources :coffee_batches, path: "shipments/lots" do
+      resources :invoices, only: %i[ new create destroy ], controller: "coffee_batch_invoices"
+    end
     resources :shipments, except: :destroy do
       patch :void, on: :member
       # Weighed on the buyer's scale.
       resource :arrival, only: %i[ edit update ]
       # Its remission, to print (as the client's booklet).
       resource :remission, only: :show
-      # What it cost (Fernando, 2026-11-12): its purchase invoices, costs
+      # What it cost (Fernando, 2026-11-12): its lots (2026-11-13), costs
       # registered from it and expenses of Control financiero assigned to it.
-      resources :invoices, only: %i[ new create destroy ], controller: "shipment_invoices"
+      resources :batches, only: %i[ new create destroy ], controller: "shipment_batches"
       resources :costs, only: %i[ new create destroy ], controller: "shipment_costs"
       resources :expenses, only: %i[ new create destroy ], controller: "shipment_expenses"
     end
@@ -113,10 +124,15 @@ Rails.application.routes.draw do
       patch :void, on: :member
     end
     resource :stock, only: :show
-    # The supplies' inventory (Fernando, 2026-11-12): what came in, what the
-    # loans took, and each entry with its investment.
-    resource :supply_stock, only: :show
-    resources :supply_entries, only: %i[ new create show destroy ]
+    # Insumos (Fernando, 2026-11-12/13): the inventory (what came in, what the
+    # loans took and what was delivered), each entry with its investment,
+    # what is still to deliver and the catalog (from Préstamos).
+    scope "supplies" do
+      get "/", to: "supply_stocks#show", as: :supply_stock
+      resources :supply_entries, path: "entries", only: %i[ new create show destroy ]
+      resources :supply_deliveries, path: "deliveries", only: %i[ index update destroy ]
+      resources :supplies, path: "catalog", only: %i[ index new create edit update ]
+    end
     # One coffee state of the stock (or all: "total"), lot by lot.
     get "stock/:coffee_state", to: "stock_states#show", as: :stock_state,
                                constraints: { coffee_state: /cherry|wet_parchment|dry_parchment|total/ }
@@ -193,7 +209,6 @@ Rails.application.routes.draw do
     end
     # The card beside the loan form with the person picked.
     resources :borrowers, only: :show
-    resources :supplies, only: %i[ index new create edit update ]
     # Collection and follow-up screens (Fernando, 2026-11-03).
     resource :coffee_collection, only: :show
     resource :collection_calendar, only: :show

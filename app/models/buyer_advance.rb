@@ -6,6 +6,7 @@
 # taken off any sale yet.
 class BuyerAdvance < ApplicationRecord
   include Auditable
+  include OwnedRecord
   include LiveUpdates
   live_updates :sales
 

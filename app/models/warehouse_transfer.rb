@@ -10,6 +10,7 @@
 # shipments). Voided, never deleted: the coffee goes back.
 class WarehouseTransfer < ApplicationRecord
   include Auditable
+  include OwnedRecord
   include LiveUpdates
   live_updates :sales
 

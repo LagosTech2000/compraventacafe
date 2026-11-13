@@ -16,7 +16,7 @@ RSpec.describe "Sales flow" do
     create(:purchase, gross_weight: 2_000, humidity_percent: 51) # in stock: (2,000 − 13) × 0.49 = 973.63 lb
 
     post sales_shipments_path, params: { shipment: {
-      buyer_id: buyer.id, departed_at: Time.current, coffee_state: "wet_parchment", remission_number: "329",
+      buyer_id: buyer.id, departed_at: Time.current, coffee_state: "wet_parchment",
       origin_gross_weight: "1000", origin_sacks: "6", origin_humidity_percent: "51", origin_damage_percent: ""
     } }
     shipment = Shipment.last
@@ -25,7 +25,7 @@ RSpec.describe "Sales flow" do
     expect(CoffeeStock.new.row("wet_parchment").stock).to eq(BigDecimal("973.63") - BigDecimal("487.06"))
 
     get sales_shipment_path(shipment)
-    expect(response.body).to include("Salida 0001", "Registrar peso en destino")
+    expect(response.body).to include("Remisión 0001", "Registrar peso en destino")
 
     get edit_sales_shipment_arrival_path(shipment)
     expect(response).to have_http_status(:ok)
@@ -42,7 +42,7 @@ RSpec.describe "Sales flow" do
     get new_sales_sale_path
     expect(response.body).to include("Beneficio Henola")
     get new_sales_sale_path(buyer_id: buyer.id)
-    expect(response.body).to include("Salida 0001")
+    expect(response.body).to include("Remisión 0001")
 
     post sales_sales_path, params: { buyer_id: buyer.id, sale: {
       shipment_ids: [ shipment.id ], sold_on: Time.zone.today, price_unit: "quintal", unit_price: "6000",
@@ -101,7 +101,7 @@ RSpec.describe "Sales flow" do
     expect(response).to have_http_status(:ok)
   end
 
-  it "voids a sale without payments and frees its shipments for another sale" do
+  it "voids a sale without payments and frees its shipments for another sale", :all_records do
     sale = create(:sale, buyer:)
     shipment = sale.shipments.first
     patch void_sales_sale_path(sale), params: { sale: { void_reason: "Diferencia de peso" } }

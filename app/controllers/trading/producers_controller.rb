@@ -9,10 +9,10 @@ module Trading
       @season = Season.current
       # The season's net without café corriente (the retention's base) and
       # the café corriente apart (Fernando, 2026-11-12).
-      season_purchases = Purchase.active.in_season(@season).where(producer_id: @producers.map(&:id)).group(:producer_id)
+      season_purchases = Purchase.owned.active.in_season(@season).where(producer_id: @producers.map(&:id)).group(:producer_id)
       @stats = season_purchases.where(common_coffee: false).sum(:net_weight)
       @common_stats = season_purchases.where(common_coffee: true).sum(:net_weight)
-      @last_purchased = Purchase.active.where(producer_id: @producers.map(&:id)).group(:producer_id).maximum(:purchased_at)
+      @last_purchased = Purchase.owned.active.where(producer_id: @producers.map(&:id)).group(:producer_id).maximum(:purchased_at)
     end
 
     TABS = %w[summary purchases invoices].freeze
@@ -28,10 +28,10 @@ module Trading
       case @tab
       when "purchases"
         @filter = ProducerPurchaseFilter.new(params)
-        @purchases, @next_page = @filter.results(@producer.purchases)
+        @purchases, @next_page = @filter.results(@producer.purchases.owned)
       when "invoices"
         @filter = ProducerInvoiceFilter.new(params)
-        @invoices, @next_page = @filter.results(@producer.invoices)
+        @invoices, @next_page = @filter.results(@producer.invoices.owned)
       end
     end
 

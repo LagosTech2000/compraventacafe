@@ -1,4 +1,15 @@
 module SalesHelper
+  # A shipment's shrink in pounds (Fernando, 2026-11-13): "+12.50 lb" lost,
+  # "−3.00 lb" when it weighed more.
+  def format_shrink(pounds)
+    return "—" if pounds.nil?
+
+    sign = pounds.positive? ? "+" : (pounds.negative? ? "−" : "")
+    t("sales.shipments.shrink.pounds", value: "#{sign}#{format_pounds(pounds.abs)}")
+  end
+
+  def shrink_class(pounds) = pounds.to_d.positive? ? "text-danger" : (pounds.to_d.negative? ? "text-success" : "")
+
   SHIPMENT_STATUS_BADGES = { "in_transit" => "badge-warning", "received" => "badge-neutral", "sold" => "badge-success", "voided" => "badge-neutral" }.freeze
   SALE_STATE_BADGES = TradingHelper::PAYMENT_STATUS_BADGES.merge("voided" => "badge-neutral").freeze
 

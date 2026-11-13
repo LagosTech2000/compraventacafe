@@ -15,9 +15,6 @@
 <% if @shipment.voided? %>
   <p class="flash-alert mb-4 print:hidden" role="status"><%= t(".voided") %></p>
 <% end %>
-<% if @shipment.remission_number.blank? %>
-  <p class="flash-notice mb-4 print:hidden" role="status"><%= t(".no_number") %></p>
-<% end %>
 
 <%# Original and copy, each on its own sheet. %>
 <div class="space-y-6 print:space-y-0">

@@ -19,6 +19,7 @@
 # back in stock.
 class Shipment < ApplicationRecord
   include Auditable
+  include OwnedRecord
   include LiveUpdates
   live_updates :sales
 
@@ -50,26 +51,27 @@ class Shipment < ApplicationRecord
   has_one :active_sale_line, -> { where(active: true) }, class_name: "SaleLine", inverse_of: :shipment
   has_one :sale, through: :active_sale_line
   has_many :weighings, -> { order(:id) }, class_name: "ShipmentWeighing", dependent: :destroy, inverse_of: :shipment
-  # Its cost (Fernando, 2026-11-12, ShipmentCostSummary): the purchase
-  # invoices of its coffee, the costs registered from it and the expenses
-  # of Control financiero assigned to it.
-  has_many :shipment_invoices, dependent: :restrict_with_error
-  has_many :invoices, -> { order(:number) }, through: :shipment_invoices
+  # Its lots of purchased coffee (Fernando, 2026-11-13; before, its purchase
+  # invoices): what it takes from the stock, its cost and its shrink.
+  has_many :coffee_batches, -> { order(:number) }, dependent: :restrict_with_error, inverse_of: :shipment
+  # Its cost (Fernando, 2026-11-12, ShipmentCostSummary): its lots, the costs
+  # registered from it and the expenses of Control financiero assigned to it.
   has_many :costs, -> { chronological }, class_name: "ShipmentCost", dependent: :restrict_with_error, inverse_of: :shipment
   has_many :expenses, dependent: :restrict_with_error
   accepts_nested_attributes_for :weighings, allow_destroy: true, reject_if: :blank_weighing?
 
-  normalizes :remission_number, :weight_note_number, :driver_name, with: ->(value) { value.squish.presence }
+  normalizes :weight_note_number, :driver_name, with: ->(value) { value.squish.presence }
   normalizes :observations, with: FieldFormats::STRIP
 
   validates :departed_at, presence: true
   validates :coffee_state, inclusion: { in: Purchase::COFFEE_STATES }
   validates :origin_weight_mode, inclusion: { in: WEIGHT_MODES }
   validate :weighings_present, if: :by_weighings?
-  validates :remission_number, :weight_note_number, length: { maximum: 60 }
+  validates :weight_note_number, length: { maximum: 60 }
   validates :driver_name, length: { maximum: 120 }
   validates :trip_price, numericality: { greater_than: 0, less_than: 100_000_000 }, allow_nil: true
-  validate :keeps_invoices_state, if: -> { will_save_change_to_coffee_state? && persisted? }
+  validate :keeps_its_batches, if: -> { persisted? && (will_save_change_to_coffee_state? || will_save_change_to_warehouse_id?) }
+  validate :batches_fit, if: -> { @batch_ids }
   validate :carrier_or_driver, if: -> { will_save_change_to_carrier_id? || will_save_change_to_driver_id? || will_save_change_to_driver_name? }
   validate :carrier_and_vehicle_active
   validate :warehouse_active, if: :will_save_change_to_warehouse_id?
@@ -106,6 +108,19 @@ class Shipment < ApplicationRecord
 
   # Completed after it was sold: its sale's local net follows.
   after_update :refresh_sale_origin, if: -> { saved_change_to_origin_net_weight? && sold? }
+  # The lots the form chose (Nueva salida, Fernando, 2026-11-13).
+  after_save :take_batches, if: -> { @batch_ids }
+
+  # What left the stock (Fernando, 2026-11-13), in SQL: its lots' pounds
+  # (that share of each purchase), or without lots its local net (nothing
+  # without the local scale).
+  def self.batches_sql(column) = "(SELECT SUM(#{CoffeeBatch.share_sql(column, batches: "batches")}) FROM coffee_batches batches WHERE batches.shipment_id = shipments.id)"
+  STOCK_NET_SQL = "COALESCE(#{batches_sql(:net_weight)}, shipments.origin_net_weight)".freeze
+  STOCK_GROSS_SQL = "COALESCE(#{batches_sql(:gross_weight)}, shipments.origin_gross_weight)".freeze
+  # Shrink (merma, Fernando, 2026-11-13): what its lots' purchases say − what
+  # its local scale gave. Positive: weight was lost. Only with lots and the local scale.
+  SHRINK_GROSS_SQL = "(#{batches_sql(:gross_weight)} - shipments.origin_gross_weight)".freeze
+  SHRINK_NET_SQL = "(#{batches_sql(:net_weight)} - shipments.origin_net_weight)".freeze
 
   TRANSPORT_MODES = %w[carrier driver].freeze
   # What the form chose: a carrier or a driver. The other one is cleared.
@@ -192,12 +207,63 @@ class Shipment < ApplicationRecord
     tolerance.present? && difference_percent.present? && difference_percent.abs > tolerance
   end
 
+  # What left the stock of some shipments, in one query: { id => [net, gross] }.
+  def self.stock_weights(ids)
+    return {} if ids.empty?
+
+    where(id: ids).pluck(:id, Arel.sql(STOCK_NET_SQL), Arel.sql(STOCK_GROSS_SQL)).to_h { |id, net, gross| [ id, [ net&.to_d&.round(2), gross&.to_d&.round(2) ] ] }
+  end
+
+  # Shrink of some shipments, in one query: { id => [gross, net] } (nil without lots or local scale).
+  def self.shrinks(ids)
+    return {} if ids.empty?
+
+    where(id: ids).pluck(:id, Arel.sql(SHRINK_GROSS_SQL), Arel.sql(SHRINK_NET_SQL)).to_h { |id, gross, net| [ id, [ gross&.to_d&.round(2), net&.to_d&.round(2) ] ] }
+  end
+
+  # The lots chosen in the form: ids of free lots (or already its own).
+  def batch_ids = @batch_ids || coffee_batch_ids
+
+  def batch_ids=(ids)
+    @batch_ids = Array(ids).compact_blank.map(&:to_i).uniq
+  end
+
+  # Its lots' pounds and value together (nil without lots).
+  def batch_totals
+    return @batch_totals if defined?(@batch_totals)
+
+    ids = coffee_batches.map(&:id)
+    @batch_totals = ids.any? ? CoffeeBatch::Totals.by_batch(ids).values.reduce(CoffeeBatch::Totals.zero, :+) : nil
+  end
+
+  def batches? = batch_totals.present?
+
+  def reload(*)
+    remove_instance_variable(:@batch_totals) if defined?(@batch_totals)
+    super
+  end
+
+  # What left the stock: its lots' pounds, or its local scale without lots.
+  def stock_net_weight = batches? ? batch_totals.net : origin_net_weight
+  def stock_gross_weight = batches? ? batch_totals.gross : origin_gross_weight
+
+  # Shrink (merma): its lots' purchases − its local scale; positive, weight
+  # was lost. Nil without lots or without the local scale.
+  def shrink_gross = (batch_totals.gross - origin_gross_weight.to_d if batches? && origin_gross_weight)
+  def shrink_net = (batch_totals.net - origin_net_weight.to_d if batches? && origin_net_weight)
+
+  def shrink_percent
+    return unless shrink_net && batch_totals.net.positive?
+
+    (shrink_net * 100 / batch_totals.net).round(2)
+  end
+
   # Takes its coffee out of the shipments and back to stock. Only while it
   # is in no sale.
-  # Voided, its invoices and assigned expenses are free for another shipment.
+  # Voided, its lots and assigned expenses are free for another shipment.
   def void!(user)
     transaction do
-      shipment_invoices.each(&:destroy!)
+      coffee_batches.each { it.update!(shipment: nil) }
       expenses.each { it.update!(shipment: nil) }
       update!(voided_at: Time.current, voided_by: user)
     end
@@ -316,7 +382,7 @@ class Shipment < ApplicationRecord
     def not_sold
       return unless sold?
 
-      free = %w[updated_at lock_version observations remission_number carrier_id vehicle_id driver_id driver_name trip_price weight_note_number]
+      free = %w[updated_at lock_version observations carrier_id vehicle_id driver_id driver_name trip_price weight_note_number]
       free += ORIGIN_COLUMNS + %w[origin_weight_mode] if origin_net_weight_in_database.nil?
       changed_inputs = (changed - free)
       errors.add(:base, :sold) if changed_inputs.any?
@@ -374,8 +440,31 @@ class Shipment < ApplicationRecord
       errors.add(:warehouse, :inactive) if warehouse && !warehouse.active?
     end
 
-    # Its invoices are of its coffee state: it does not change with them.
-    def keeps_invoices_state
-      errors.add(:coffee_state, :has_invoices) if shipment_invoices.exists?
+    # Its lots are of its coffee state and warehouse: they do not change with them.
+    def keeps_its_batches
+      return if @batch_ids&.empty?
+
+      errors.add(:base, :has_batches) if coffee_batches.exists?
+    end
+
+    def batches_fit
+      chosen = CoffeeBatch.where(id: @batch_ids).to_a
+      errors.add(:base, :batches_gone) if chosen.size != @batch_ids.size
+      chosen.each do |batch|
+        if batch.shipment_id && batch.shipment_id != id
+          errors.add(:base, :batch_taken, batch: batch.label)
+        elsif batch.coffee_state != coffee_state || batch.warehouse_id != warehouse_id
+          errors.add(:base, :batch_other_coffee, batch: batch.label)
+        end
+      end
+    end
+
+    # The lots chosen join it; the ones left out are free again.
+    def take_batches
+      coffee_batches.where.not(id: @batch_ids).find_each { it.update!(shipment: nil) }
+      CoffeeBatch.where(id: @batch_ids).where(shipment_id: nil).find_each { it.update!(shipment: self) }
+      coffee_batches.reset
+      remove_instance_variable(:@batch_totals) if defined?(@batch_totals)
+      @batch_ids = nil
     end
 end

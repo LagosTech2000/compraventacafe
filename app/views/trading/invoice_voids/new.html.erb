@@ -12,7 +12,7 @@
     <% if (payments = @invoice.payments.reject(&:new_record?)).any? %>
       <li><%= t(".payments", count: payments.size, amount: format_money(payments.sum(&:amount))) %></li>
     <% end %>
-    <% if @invoice.shipment_invoice %><li><%= t(".shipment", number: @invoice.shipment.display_number) %></li><% end %>
+    <% if (batches = @invoice.coffee_batches.to_a).any? %><li><%= t(".batches", batches: batches.map(&:label).to_sentence) %></li><% end %>
     <li><%= t(".record") %></li>
   </ul>
 </div>

@@ -18,7 +18,7 @@ class ExpensePolicy < ApplicationPolicy
   class Scope < ApplicationPolicy::Scope
     def resolve
       kinds = SUBMODULES.keys.select { |kind| user&.can?(ExpensePolicy.permission_key_for(kind), :read) }
-      kinds.any? ? scope.where(kind: kinds) : scope.none
+      kinds.any? ? owned(scope.where(kind: kinds)) : scope.none
     end
   end
 

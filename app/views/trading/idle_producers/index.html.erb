@@ -1,0 +1,62 @@
+<% content_for :title, t(".title") %>
+<%# The whole list of producers that stopped selling (Fernando, 2026-11-13). %>
+<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+<p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+
+<div data-controller="live-filter">
+  <%= render layout: "shared/filters", locals: { filter: @filter, url: trading_idle_producers_path, frame: "idle-producers-list", live: true } do |form| %>
+    <%= filter_select form, :days, t("trading.idle_producers.index.days"), IdleProducers::DAYS.map { [ t("trading.idle_producers.days.#{it}"), it ] },
+          selected: @filter.days, all: nil %>
+    <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("trading.idle_producers.index.search_placeholder") %>
+    <%= filter_select form, :zone_id, Person.human_attribute_name(:zone), Zone.ordered.pluck(:name, :id), selected: @filter.zone_id, all: t("shared.filters.all_zones") %>
+  <% end %>
+
+  <%= list_frame "idle-producers-list" do %>
+    <%= live_list_status(@filter,
+                         days: ->(days) { t("trading.idle_producers.days.#{days}") },
+                         zone_id: ->(id) { Zone.find_by(id:)&.name }) %>
+    <div class="mt-4">
+      <% if @producers.any? %>
+        <div class="@container">
+          <ul class="space-y-2 @3xl:hidden">
+            <% @producers.each do |producer| %>
+              <li class="data-card" id="<%= dom_id(producer, :idle_card) %>">
+                <p class="font-medium"><%= with_avatar(producer.person) %></p>
+                <p class="text-xs text-ink-muted"><%= [ producer.person.zone&.name, l(producer.last_purchased_at.to_date) ].compact.join(" · ") %></p>
+                <p class="text-sm"><%= t("trading.idle_producers.card.days_ago", count: IdleProducers.days_since(producer)) %></p>
+                <%= page_link_to t(".open"), trading_producer_path(producer), class: "btn btn-sm mt-2", data: { row_link: true } %>
+              </li>
+            <% end %>
+          </ul>
+          <div class="hidden overflow-x-auto panel @3xl:block">
+            <table class="data-table" <%= tag.attributes(data: table_sort_data(filter: @filter, frame: "idle-producers-list")) %>>
+              <thead>
+                <tr>
+                  <%= sort_th Purchase.human_attribute_name(:producer), :producer, { filter: @filter, frame: "idle-producers-list" } %>
+                  <%= sort_th Person.human_attribute_name(:zone), :zone, { filter: @filter, frame: "idle-producers-list" } %>
+                  <%= sort_th t(".last_purchase"), :last_purchase, { filter: @filter, frame: "idle-producers-list" } %>
+                  <%= sort_th t(".days_ago"), :days, { filter: @filter, frame: "idle-producers-list" }, class: "text-right" %>
+                  <th class="cell-actions"><span class="sr-only"><%= t(".actions") %></span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @producers.each do |producer| %>
+                  <tr id="<%= dom_id(producer, :idle) %>">
+                    <td><%= with_avatar(producer.person) %></td>
+                    <td><%= producer.person.zone&.name || "—" %></td>
+                    <td class="whitespace-nowrap"><%= l(producer.last_purchased_at.to_date) %></td>
+                    <td class="text-right tabular-nums"><%= IdleProducers.days_since(producer) %></td>
+                    <td class="cell-actions"><%= page_link_to t(".open"), trading_producer_path(producer), class: "btn btn-sm", data: { row_link: true } %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "idle-producers-list" %>
+      <% else %>
+        <p class="empty-state"><%= t(".empty") %></p>
+      <% end %>
+    </div>
+  <% end %>
+</div>

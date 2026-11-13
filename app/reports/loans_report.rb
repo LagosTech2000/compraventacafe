@@ -75,7 +75,7 @@ class LoansReport < Report
       compare: false
 
   def scope
-    Loan.joins(:person).joins(PAYMENTS)
+    Loan.visible_to(user).joins(:person).joins(PAYMENTS)
   end
 
   def apply_filters(relation)

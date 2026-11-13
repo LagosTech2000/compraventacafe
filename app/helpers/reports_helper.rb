@@ -101,7 +101,7 @@ module ReportsHelper
     case column.type
     when :badge then value&.first
     when :date then value&.to_date&.iso8601
-    when :datetime then value && l(value)
+    when :datetime then value && l(value, format: :plain)
     when :money, :pounds, :quintals, :number, :percent then value&.to_d&.round(2)&.to_s("F")
     else value
     end

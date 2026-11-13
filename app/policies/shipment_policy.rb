@@ -5,6 +5,9 @@ class ShipmentPolicy < ApplicationPolicy
   self.module_key = "sales"
   self.submodule_key = "shipments"
 
+  # The driver's card beside the shipment form: whoever can fill the form.
+  def driver_card? = create? || can?(:update)
+
   def update?
     super && open?
   end

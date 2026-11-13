@@ -49,7 +49,7 @@ class LoanPaymentsReport < Report
   kpi :payroll, :money, "COALESCE(SUM(loan_payments.amount) FILTER (WHERE loan_payments.payment_method = 'payroll'), 0)"
 
   def scope
-    LoanPayment.joins(loan: :person).joins(:created_by)
+    LoanPayment.visible_to(user).joins(loan: :person).joins(:created_by)
   end
 
   def apply_filters(relation)

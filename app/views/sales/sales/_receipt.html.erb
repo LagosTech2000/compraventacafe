@@ -22,7 +22,6 @@
         <tr>
           <th><%= t("sales.sales.receipt.shipment") %></th>
           <th><%= Shipment.human_attribute_name(:departed_at) %></th>
-          <th><%= Shipment.human_attribute_name(:remission_number) %></th>
           <th><%= Shipment.human_attribute_name(:weight_note_number) %></th>
           <th class="text-right"><%= t("sales.shipments.table.origin_net") %></th>
           <th class="text-right"><%= t("sales.shipments.table.destination_net") %></th>
@@ -36,10 +35,10 @@
           <tr class="break-inside-avoid">
             <td class="tabular-nums"><%= shipment.display_number %></td>
             <td><%= l(shipment.departed_at, format: :short) %></td>
-            <td><%= shipment.remission_number || "—" %></td>
             <td><%= shipment.weight_note_number || "—" %></td>
-            <td class="text-right tabular-nums"><%= line.origin_net_weight ? format_pounds(line.origin_net_weight) : "—" %></td>
-            <td class="text-right tabular-nums"><%= format_pounds(line.net_weight) %></td>
+            <%# Gross first, net beside (Fernando, 2026-11-13). %>
+            <td class="text-right tabular-nums"><%= line.origin_net_weight ? "#{format_pounds(shipment.origin_gross_weight)} / #{format_pounds(line.origin_net_weight)}" : "—" %></td>
+            <td class="text-right tabular-nums"><%= format_pounds(shipment.destination_gross_weight) %> / <%= format_pounds(line.net_weight) %></td>
             <td class="text-right tabular-nums"><%= line.origin_net_weight ? format_pounds(line.net_weight - line.origin_net_weight) : "—" %></td>
             <td class="text-right tabular-nums"><%= format_money(line.amount) %></td>
           </tr>
@@ -47,9 +46,9 @@
       </tbody>
       <tfoot>
         <tr class="font-bold">
-          <td colspan="4"><%= t("trading.invoices.show.totals") %></td>
-          <td class="text-right tabular-nums"><%= sale.origin_net_weight ? format_pounds(sale.origin_net_weight) : "—" %></td>
-          <td class="text-right tabular-nums"><%= format_pounds(sale.net_weight) %></td>
+          <td colspan="3"><%= t("trading.invoices.show.totals") %></td>
+          <td class="text-right tabular-nums"><%= sale.origin_net_weight ? "#{format_pounds(sale.lines.sum { it.shipment.origin_gross_weight.to_d })} / #{format_pounds(sale.origin_net_weight)}" : "—" %></td>
+          <td class="text-right tabular-nums"><%= format_pounds(sale.lines.sum { it.shipment.destination_gross_weight.to_d }) %> / <%= format_pounds(sale.net_weight) %></td>
           <td class="text-right tabular-nums"><%= sale.net_difference ? format_pounds(sale.net_difference) : "—" %></td>
           <td class="text-right tabular-nums"><%= format_money(sale.total) %></td>
         </tr>

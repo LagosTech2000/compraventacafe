@@ -5,7 +5,10 @@
 # Every move is replayed in the order it happened, up to a moment (now by
 # default). Coffee leaves the oldest lots first (client: «se priorizan las
 # compras más viejas»), counted in net pounds: shipments by their local
-# net, conversions by the net that went in, transfers by their net. What a
+# net, conversions by the net that went in, transfers by their net. A
+# shipment with lots of purchased coffee (CoffeeBatch, Fernando,
+# 2026-11-13) takes instead that share of each of their purchases; what is
+# no longer there of one comes from the oldest. What a
 # lot loses of its sacks, damage and value goes with the share of net
 # pounds taken (decision of implementation, pending to confirm). A transfer
 # moves parts of lots to the other warehouse; each part keeps where it came
@@ -26,15 +29,18 @@ class CoffeeLots
   ORDER = { purchase: 0, result: 1, transfer: 2, input: 3, shipment: 4, late_result: 5 }.freeze
 
   class Lot
-    attr_reader :source, :coffee_state, :warehouse_id, :entered_at, :net_in, :transfer
-    attr_accessor :net, :sacks, :damage, :purchase_value, :costs
+    attr_reader :source, :coffee_state, :warehouse_id, :entered_at, :net_in, :gross_in, :transfer
+    attr_accessor :net, :gross, :sacks, :damage, :purchase_value, :costs
 
-    def initialize(source:, coffee_state:, warehouse_id:, entered_at:, net:, sacks:, damage:, purchase_value:, costs:, transfer: nil)
+    # gross: its gross pounds (Fernando, 2026-11-13: gross first), which go
+    # with the net taken, in the same share.
+    def initialize(source:, coffee_state:, warehouse_id:, entered_at:, net:, sacks:, damage:, purchase_value:, costs:, gross: 0, transfer: nil)
       @source = source
       @coffee_state = coffee_state
       @warehouse_id = warehouse_id
       @entered_at = entered_at
       @net_in = @net = net.to_d
+      @gross_in = @gross = gross.to_d
       @sacks = sacks.to_d
       @damage = damage.to_d
       @purchase_value = purchase_value.to_d
@@ -58,9 +64,10 @@ class CoffeeLots
     def take(amount)
       taken = [ amount, net ].min
       share = net.positive? ? taken / net : 0
-      portion = Portion.new(lot: self, net: taken, sacks: (sacks * share).round(4), damage: (damage * share).round(2),
+      portion = Portion.new(lot: self, net: taken, gross: (gross * share).round(2), sacks: (sacks * share).round(4), damage: (damage * share).round(2),
                             purchase_value: (purchase_value * share).round(2), costs: (costs * share).round(2))
       self.net -= taken
+      self.gross -= portion.gross
       self.sacks -= portion.sacks
       self.damage -= portion.damage
       self.purchase_value -= portion.purchase_value
@@ -70,12 +77,12 @@ class CoffeeLots
   end
 
   # What a move took from one lot (lot nil: taken with no lot to take from).
-  Portion = Data.define(:lot, :net, :sacks, :damage, :purchase_value, :costs) do
+  Portion = Data.define(:lot, :net, :gross, :sacks, :damage, :purchase_value, :costs) do
     def value = purchase_value + costs
     def shortfall? = lot.nil?
   end
 
-  Totals = Data.define(:net, :sacks, :damage, :purchase_value, :costs, :count) do
+  Totals = Data.define(:net, :gross, :sacks, :damage, :purchase_value, :costs, :count) do
     def value = purchase_value + costs
     def quintals = PurchaseCalculation.quintals(net)
     # Lempiras per net pound; nil without coffee.
@@ -103,7 +110,7 @@ class CoffeeLots
            .sort_by { [ it.entered_at, it.source.id ] }
   end
 
-  def totals(lots) = Totals.new(net: lots.sum(0.to_d, &:net), sacks: lots.sum(0.to_d, &:sacks), damage: lots.sum(0.to_d, &:damage),
+  def totals(lots) = Totals.new(net: lots.sum(0.to_d, &:net), gross: lots.sum(0.to_d, &:gross), sacks: lots.sum(0.to_d, &:sacks), damage: lots.sum(0.to_d, &:damage),
                                 purchase_value: lots.sum(0.to_d, &:purchase_value), costs: lots.sum(0.to_d, &:costs), count: lots.size)
 
   # What a shipment, a conversion (what went in) or a transfer took, lot by lot.
@@ -135,11 +142,11 @@ class CoffeeLots
 
     def purchase_events
       Purchase.active.where(purchased_at: ..at)
-              .select(:id, :purchased_at, :coffee_state, :warehouse_id, :net_weight, :sacks, :damage_weight, :total, :hauler_commission, :producer_id)
+              .select(:id, :purchased_at, :coffee_state, :warehouse_id, :net_weight, :gross_weight, :sacks, :damage_weight, :total, :hauler_commission, :producer_id)
               .map do |purchase|
         [ purchase.purchased_at, ORDER[:purchase], purchase.id, lambda {
           add(Lot.new(source: purchase, coffee_state: purchase.coffee_state, warehouse_id: purchase.warehouse_id, entered_at: purchase.purchased_at,
-                      net: purchase.net_weight, sacks: purchase.sacks, damage: purchase.damage_weight, purchase_value: purchase.total,
+                      net: purchase.net_weight, gross: purchase.gross_weight, sacks: purchase.sacks, damage: purchase.damage_weight, purchase_value: purchase.total,
                       costs: purchase.hauler_commission))
         } ]
       end
@@ -159,7 +166,7 @@ class CoffeeLots
         result = [ late ? conversion.weighed_at : conversion.finished_at, ORDER[late ? :late_result : :result], conversion.id, lambda {
           taken = portions_for(conversion)
           add(Lot.new(source: conversion, coffee_state: conversion.to_state, warehouse_id: conversion.output_warehouse_id || conversion.warehouse_id,
-                      entered_at: conversion.finished_at, net: conversion.output_net_weight, sacks: conversion.output_sacks.to_i,
+                      entered_at: conversion.finished_at, net: conversion.output_net_weight, gross: conversion.output_gross_weight, sacks: conversion.output_sacks.to_i,
                       damage: conversion.output_damage_weight, purchase_value: taken.sum(0.to_d, &:purchase_value),
                       costs: taken.sum(0.to_d, &:costs) + costs.fetch(conversion.id, 0)))
         } ]
@@ -174,7 +181,7 @@ class CoffeeLots
             next if portion.shortfall?
 
             add(Lot.new(source: portion.lot.source, coffee_state: transfer.coffee_state, warehouse_id: transfer.to_warehouse_id,
-                        entered_at: portion.lot.entered_at, net: portion.net, sacks: portion.sacks, damage: portion.damage,
+                        entered_at: portion.lot.entered_at, net: portion.net, gross: portion.gross, sacks: portion.sacks, damage: portion.damage,
                         purchase_value: portion.purchase_value, costs: portion.costs, transfer:))
           end
         } ]
@@ -182,10 +189,54 @@ class CoffeeLots
     end
 
     def shipment_events
-      # Without the local scale it takes nothing yet (Fernando, 2026-11-12).
-      Shipment.active.where(departed_at: ..at).where.not(origin_net_weight: nil).select(:id, :departed_at, :coffee_state, :warehouse_id, :origin_net_weight).map do |shipment|
-        [ shipment.departed_at, ORDER[:shipment], shipment.id, -> { take(shipment, shipment.coffee_state, shipment.warehouse_id, shipment.origin_net_weight) } ]
+      shares = batch_shares
+      with_batches = shares.keys.map(&:first).uniq
+      # Without the local scale (and without lots) it takes nothing yet (Fernando, 2026-11-12).
+      Shipment.active.where(departed_at: ..at).where.not(origin_net_weight: nil).or(Shipment.active.where(departed_at: ..at, id: with_batches))
+              .select(:id, :departed_at, :coffee_state, :warehouse_id, :origin_net_weight).map do |shipment|
+        own = shares.select { |(shipment_id, _), _| shipment_id == shipment.id }.to_h { |(_, purchase_id), net| [ purchase_id, net ] }
+        apply = if own.any?
+          -> { take_from_purchases(shipment, shipment.coffee_state, shipment.warehouse_id, own) }
+        else
+          -> { take(shipment, shipment.coffee_state, shipment.warehouse_id, shipment.origin_net_weight) }
+        end
+        [ shipment.departed_at, ORDER[:shipment], shipment.id, apply ]
       end
+    end
+
+    # { [shipment id, purchase id] => net pounds } of the shipments' lots.
+    def batch_shares
+      CoffeeBatchInvoice.joins(:coffee_batch)
+                        .joins("JOIN purchases ON purchases.invoice_id = coffee_batch_invoices.invoice_id AND purchases.voided_at IS NULL")
+                        .where.not(coffee_batches: { shipment_id: nil })
+                        .group("coffee_batches.shipment_id", "purchases.id")
+                        .sum(Arel.sql("COALESCE(purchases.net_weight * #{CoffeeBatchInvoice::NET_SHARE_SQL}, 0)"))
+                        .transform_values { it.to_d.round(2) }
+    end
+
+    # What a shipment with lots takes: from each purchase, its share; what is
+    # no longer there of one, from the oldest lots.
+    def take_from_purchases(record, coffee_state, warehouse_id, shares)
+      queue = @queues[[ coffee_state, warehouse_id ]]
+      portions = []
+      rest = 0.to_d
+      shares.each do |purchase_id, amount|
+        wanted = amount.to_d
+        queue.each do |lot|
+          break unless wanted > EPSILON
+          next unless lot.left? && lot.purchase? && lot.source.id == purchase_id
+
+          portion = lot.take(wanted)
+          wanted -= portion.net
+          portions << portion
+        end
+        rest += wanted
+      end
+      @portions[[ record.class.name, record.id ]] = portions
+      return unless rest > EPSILON
+
+      take(record, coffee_state, warehouse_id, rest)
+      @portions[[ record.class.name, record.id ]] = portions + @portions[[ record.class.name, record.id ]]
     end
 
     # Keeps each warehouse's queue oldest first (a transferred part keeps its date).
@@ -206,7 +257,7 @@ class CoffeeLots
         rest -= portion.net
         portions << portion
       end
-      portions << Portion.new(lot: nil, net: rest, sacks: 0, damage: 0, purchase_value: 0, costs: 0) if rest > EPSILON
+      portions << Portion.new(lot: nil, net: rest, gross: 0, sacks: 0, damage: 0, purchase_value: 0, costs: 0) if rest > EPSILON
       @portions[[ record.class.name, record.id ]] = portions
     end
 end

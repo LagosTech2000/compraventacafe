@@ -54,7 +54,7 @@ class MovementFilter < ListFilter
 
   def movements
     @movements ||= begin
-      list = MoneyMovements.new(range: from || to ? (from..to) : nil, account: account_id,
+      list = MoneyMovements.new(range: from || to ? (from..to) : nil, account: account_id, owner: Current.owner,
                                 sources: MoneyMovements.sources_for(@user)).all
       list = list.reject(&:transfer?) if account_id.nil?
       list = list.select { |movement| movement.source == source } if source

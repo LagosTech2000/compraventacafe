@@ -26,7 +26,8 @@ class ProducerProfile
   def initialize(producer, season: Season.current)
     @producer = producer
     @season = season
-    @purchases = producer.purchases.active
+    # Only the user's own when they see only theirs (OwnedRecord).
+    @purchases = producer.purchases.owned.active
   end
 
   def season_summary = @season_summary ||= PurchaseSummary.new(@purchases.in_season(season))
@@ -66,8 +67,8 @@ class ProducerProfile
   def first_purchased_at = dates.first
   def last_purchased_at = dates.last
 
-  def uninvoiced = @uninvoiced ||= PurchaseSummary.new(producer.purchases.uninvoiced)
-  def unpaid_invoices = @unpaid_invoices ||= producer.invoices.unpaid.includes(:payments, purchases: :loan_payments).to_a
+  def uninvoiced = @uninvoiced ||= PurchaseSummary.new(producer.purchases.owned.uninvoiced)
+  def unpaid_invoices = @unpaid_invoices ||= producer.invoices.owned.unpaid.includes(:payments, purchases: :loan_payments).to_a
   # What is left to pay on them: what they have to pay less what was paid.
   def unpaid_balance = unpaid_invoices.sum(&:balance_due)
 

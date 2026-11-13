@@ -101,6 +101,14 @@ export default class extends Controller {
       item.setAttribute("aria-selected", "false")
       item.className = "picker-option"
       item.textContent = record.label
+      // What helps to tell two apart (a producer's zone, Fernando,
+      // 2026-11-13): only in the list, never in the box once chosen.
+      if (record.hint) {
+        const hint = document.createElement("span")
+        hint.className = "picker-option-hint"
+        hint.textContent = ` — ${record.hint}`
+        item.append(hint)
+      }
       item.dataset.index = index
       return item
     })

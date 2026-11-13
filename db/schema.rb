@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_12_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_13_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -126,6 +126,39 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_12_180000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["person_id"], name: "index_clients_on_person_id", unique: true
+  end
+
+  create_table "coffee_batch_invoices", force: :cascade do |t|
+    t.bigint "coffee_batch_id", null: false
+    t.bigint "invoice_id", null: false
+    t.decimal "percent", precision: 9, scale: 4, null: false
+    t.bigint "created_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.decimal "gross_weight", precision: 16, scale: 6, default: "0.0", null: false
+    t.decimal "net_weight", precision: 16, scale: 6, default: "0.0", null: false
+    t.index ["coffee_batch_id", "invoice_id"], name: "index_coffee_batch_invoices_on_coffee_batch_id_and_invoice_id", unique: true
+    t.index ["coffee_batch_id"], name: "index_coffee_batch_invoices_on_coffee_batch_id"
+    t.index ["created_by_id"], name: "index_coffee_batch_invoices_on_created_by_id"
+    t.index ["invoice_id"], name: "index_coffee_batch_invoices_on_invoice_id"
+  end
+
+  create_table "coffee_batches", force: :cascade do |t|
+    t.integer "number", null: false
+    t.bigint "warehouse_id", null: false
+    t.string "coffee_state", null: false
+    t.decimal "gross_limit", precision: 12, scale: 2, null: false
+    t.date "batched_on", null: false
+    t.text "observations"
+    t.bigint "shipment_id"
+    t.bigint "created_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["batched_on"], name: "index_coffee_batches_on_batched_on"
+    t.index ["created_by_id"], name: "index_coffee_batches_on_created_by_id"
+    t.index ["number"], name: "index_coffee_batches_on_number", unique: true
+    t.index ["shipment_id"], name: "index_coffee_batches_on_shipment_id"
+    t.index ["warehouse_id"], name: "index_coffee_batches_on_warehouse_id"
   end
 
   create_table "coffee_conversions", force: :cascade do |t|
@@ -366,6 +399,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_12_180000) do
     t.decimal "total", precision: 14, scale: 2, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.date "delivered_on"
+    t.bigint "delivered_by_id"
+    t.index ["delivered_by_id"], name: "index_loan_supplies_on_delivered_by_id"
     t.index ["loan_id"], name: "index_loan_supplies_on_loan_id"
     t.index ["supply_id"], name: "index_loan_supplies_on_supply_id"
   end
@@ -873,17 +909,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_12_180000) do
     t.index ["shipment_id"], name: "index_shipment_costs_on_shipment_id"
   end
 
-  create_table "shipment_invoices", force: :cascade do |t|
-    t.bigint "shipment_id", null: false
-    t.bigint "invoice_id", null: false
-    t.bigint "created_by_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["created_by_id"], name: "index_shipment_invoices_on_created_by_id"
-    t.index ["invoice_id"], name: "index_shipment_invoices_on_invoice_id", unique: true
-    t.index ["shipment_id"], name: "index_shipment_invoices_on_shipment_id"
-  end
-
   create_table "shipment_weighings", force: :cascade do |t|
     t.bigint "shipment_id", null: false
     t.decimal "gross_weight", precision: 12, scale: 2, null: false
@@ -900,7 +925,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_12_180000) do
     t.datetime "departed_at", null: false
     t.integer "season_year", null: false
     t.string "coffee_state", null: false
-    t.string "remission_number"
     t.text "observations"
     t.decimal "origin_gross_weight", precision: 12, scale: 2
     t.integer "origin_sacks"
@@ -1071,8 +1095,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_12_180000) do
   end
 
   create_table "supply_entries", force: :cascade do |t|
-    t.bigint "supply_id", null: false
-    t.decimal "quantity", precision: 10, scale: 2, null: false
     t.decimal "amount", precision: 14, scale: 2, null: false
     t.date "received_on", null: false
     t.string "payee"
@@ -1085,7 +1107,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_12_180000) do
     t.index ["created_by_id"], name: "index_supply_entries_on_created_by_id"
     t.index ["expense_id"], name: "index_supply_entries_on_expense_id", unique: true
     t.index ["received_on"], name: "index_supply_entries_on_received_on"
-    t.index ["supply_id"], name: "index_supply_entries_on_supply_id"
+  end
+
+  create_table "supply_entry_lines", force: :cascade do |t|
+    t.bigint "supply_entry_id", null: false
+    t.bigint "supply_id", null: false
+    t.decimal "quantity", precision: 10, scale: 2, null: false
+    t.decimal "amount", precision: 14, scale: 2, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["supply_entry_id"], name: "index_supply_entry_lines_on_supply_entry_id"
+    t.index ["supply_id"], name: "index_supply_entry_lines_on_supply_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -1192,6 +1224,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_12_180000) do
   add_foreign_key "cash_counts", "money_accounts"
   add_foreign_key "cash_counts", "users", column: "created_by_id"
   add_foreign_key "clients", "people"
+  add_foreign_key "coffee_batch_invoices", "coffee_batches"
+  add_foreign_key "coffee_batch_invoices", "invoices"
+  add_foreign_key "coffee_batch_invoices", "users", column: "created_by_id"
+  add_foreign_key "coffee_batches", "shipments"
+  add_foreign_key "coffee_batches", "users", column: "created_by_id"
+  add_foreign_key "coffee_batches", "warehouses"
   add_foreign_key "coffee_conversions", "processing_sites"
   add_foreign_key "coffee_conversions", "users", column: "created_by_id"
   add_foreign_key "coffee_conversions", "users", column: "finished_by_id"
@@ -1227,6 +1265,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_12_180000) do
   add_foreign_key "loan_payments", "users", column: "created_by_id"
   add_foreign_key "loan_supplies", "loans"
   add_foreign_key "loan_supplies", "supplies"
+  add_foreign_key "loan_supplies", "users", column: "delivered_by_id"
   add_foreign_key "loans", "money_accounts"
   add_foreign_key "loans", "people"
   add_foreign_key "loans", "users", column: "created_by_id"
@@ -1289,9 +1328,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_12_180000) do
   add_foreign_key "shipment_costs", "money_accounts"
   add_foreign_key "shipment_costs", "shipments"
   add_foreign_key "shipment_costs", "users", column: "created_by_id"
-  add_foreign_key "shipment_invoices", "invoices"
-  add_foreign_key "shipment_invoices", "shipments"
-  add_foreign_key "shipment_invoices", "users", column: "created_by_id"
   add_foreign_key "shipment_weighings", "shipments"
   add_foreign_key "shipments", "buyers"
   add_foreign_key "shipments", "carriers"
@@ -1315,8 +1351,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_12_180000) do
   add_foreign_key "staff_payments", "staff_roles"
   add_foreign_key "staff_payments", "users", column: "created_by_id"
   add_foreign_key "supply_entries", "expenses"
-  add_foreign_key "supply_entries", "supplies"
   add_foreign_key "supply_entries", "users", column: "created_by_id"
+  add_foreign_key "supply_entry_lines", "supplies"
+  add_foreign_key "supply_entry_lines", "supply_entries"
   add_foreign_key "vehicles", "vehicle_types"
   add_foreign_key "warehouse_transfers", "users", column: "created_by_id"
   add_foreign_key "warehouse_transfers", "users", column: "voided_by_id"

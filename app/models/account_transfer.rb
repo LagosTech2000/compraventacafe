@@ -3,6 +3,7 @@
 # expense nor an income of the business.
 class AccountTransfer < ApplicationRecord
   include Auditable
+  include OwnedRecord
   include LiveUpdates
   live_updates :finance
 

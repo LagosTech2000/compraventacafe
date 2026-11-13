@@ -34,9 +34,9 @@ RSpec.describe "Sales carriers and vehicles" do
     get sales_vehicles_path(vehicle_type_id: create(:vehicle_type).id)
     expect(page.at_css("#vehicle_#{vehicle.id}")).to be_nil
     get sales_carrier_path(carrier)
-    expect(response.body).to include("Salida #{shipment.display_number}")
+    expect(response.body).to include("Remisión #{shipment.display_number}")
     get sales_vehicle_path(vehicle)
-    expect(response.body).to include("Salida #{shipment.display_number}", "Pick-up")
+    expect(response.body).to include("Remisión #{shipment.display_number}", "Pick-up")
 
     patch sales_carrier_path(carrier), params: { carrier: { active: "0" } }
     expect(carrier.reload).not_to be_active
@@ -64,10 +64,10 @@ RSpec.describe "Sales carriers and vehicles" do
     expect(page.at_css("#shipment-details").parent.text.squish).to include("MotoristaDavid Cruz")
 
     get sales_shipments_path(q: "HBB")
-    expect(response.body).to include("Salida #{shipment.display_number}")
-    expect(response.body).not_to include("Salida #{typed.display_number}")
+    expect(response.body).to include("Remisión #{shipment.display_number}")
+    expect(response.body).not_to include("Remisión #{typed.display_number}")
     get sales_shipments_path(carrier_id: carrier.id)
-    expect(response.body).to include("Salida #{shipment.display_number}")
+    expect(response.body).to include("Remisión #{shipment.display_number}")
   end
 
   describe "vehicle types" do
@@ -155,7 +155,7 @@ RSpec.describe "Sales carriers and vehicles" do
     it "shows the number the new shipment will take" do
       create(:shipment)
       get new_sales_shipment_path
-      expect(page.at_css("#next-shipment-number").text).to eq("Salida No. #{format("%04d", Shipment.maximum(:number) + 1)}")
+      expect(page.at_css("#next-shipment-number").text).to eq("Remisión No. #{format("%04d", Shipment.maximum(:number) + 1)}")
     end
   end
 end

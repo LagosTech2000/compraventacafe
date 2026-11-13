@@ -47,6 +47,6 @@ RSpec.describe "Changing an expense into an investment" do
     sign_in admin
     patch_kind(expense, "investment", investment_category)
     expect(response).to have_http_status(:unprocessable_content)
-    expect(response.body).to include("está asignado a la salida")
+    expect(response.body).to include("está asignado a la remisión")
   end
 end

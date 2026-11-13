@@ -40,7 +40,7 @@ class LoanSuppliesReport < Report
   kpi :people, :integer, "COUNT(DISTINCT loans.person_id)"
 
   def scope
-    LoanSupply.joins(:supply, loan: :person)
+    LoanSupply.joins(:supply, loan: :person).merge(Loan.visible_to(user))
   end
 
   def apply_filters(relation)

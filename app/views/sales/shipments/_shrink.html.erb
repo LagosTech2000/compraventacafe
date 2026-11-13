@@ -1,0 +1,29 @@
+<%# A shipment's shrink (merma, Fernando, 2026-11-13): what its lots'
+    purchases say − what its local scale gave, gross first. Positive: weight
+    was lost; negative: it weighed more. %>
+<% scope = "sales.shipments.shrink" %>
+<div class="mt-3 rounded-xl bg-surface-2 p-3 text-sm" data-shrink>
+  <% if shipment.shrink_gross %>
+    <p class="font-semibold"><%= t("#{scope}.title") %></p>
+    <dl class="mt-1 grid gap-x-6 gap-y-1 sm:grid-cols-3">
+      <div>
+        <dt class="text-xs text-ink-muted"><%= t("#{scope}.gross") %></dt>
+        <dd class="tabular-nums <%= shrink_class(shipment.shrink_gross) %>" data-shrink-gross><%= format_shrink(shipment.shrink_gross) %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-ink-muted"><%= t("#{scope}.net") %></dt>
+        <dd class="tabular-nums <%= shrink_class(shipment.shrink_net) %>" data-shrink-net><%= format_shrink(shipment.shrink_net) %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-ink-muted"><%= t("#{scope}.percent") %></dt>
+        <dd class="tabular-nums"><%= shipment.shrink_percent ? number_to_percentage(shipment.shrink_percent, precision: 2) : "—" %></dd>
+      </div>
+    </dl>
+    <p class="mt-1 text-xs text-ink-muted">
+      <%= t("#{scope}.detail", batches_gross: format_pounds(shipment.batch_totals.gross), origin_gross: format_pounds(shipment.origin_gross_weight),
+                                batches_net: format_pounds(shipment.batch_totals.net), origin_net: format_pounds(shipment.origin_net_weight)) %>
+    </p>
+  <% else %>
+    <p class="text-ink-muted"><%= t("#{scope}.no_origin") %></p>
+  <% end %>
+</div>

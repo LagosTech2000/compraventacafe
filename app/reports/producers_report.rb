@@ -91,7 +91,7 @@ class ProducersReport < Report
 
   # Producers with what they sold in the period.
   def records(in_period = period)
-    stats = within(Purchase.active, in_period).group(:producer_id)
+    stats = within(Purchase.visible_to(user).active, in_period).group(:producer_id)
                                               .select(:producer_id, "COUNT(*) AS purchases_count",
                                                       "COALESCE(SUM(purchases.net_weight) FILTER (WHERE NOT purchases.common_coffee), 0) AS net_weight",
                                                       "COALESCE(SUM(purchases.net_weight) FILTER (WHERE purchases.common_coffee), 0) AS common_net",

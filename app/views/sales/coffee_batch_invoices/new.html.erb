@@ -1,0 +1,102 @@
+<% content_for :title, t(".title", batch: @batch.label) %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= render "sales/nav" %>
+<% scope = "sales.coffee_batch_invoices.new" %>
+
+<h1 class="text-2xl font-bold"><%= t(".title", batch: @batch.label) %></h1>
+<p class="mt-1 max-w-3xl text-sm text-ink-muted">
+  <%= t(".help", state: @batch.human_coffee_state.downcase, warehouse: @batch.warehouse.name) %>
+</p>
+<p class="mt-2 text-sm" data-batch-room>
+  <%= t(".room", limit: format_pounds(@batch.gross_limit), gross: format_pounds(@batch.gross_weight), room: format_pounds(@batch.room)) %>
+</p>
+
+<%# The invoices that may go (its coffee state, in its warehouse, with a
+    share left), with the invoices' filters; each marked one with its percent. %>
+<% frame = "batch-invoices-list" %>
+<% picker = picker_request? ? "1" : nil %>
+<%# Inside a window (from «Nueva salida»), the form answers in that window,
+    also once the list reloaded in its own frame. %>
+<% window = params[:modal_frame].presence_in(ModalSupport::MODAL_FRAMES) || modal_frame_id %>
+<div data-controller="live-filter">
+  <%= render layout: "shared/filters", locals: { filter: @filter, url: new_sales_coffee_batch_invoice_path(@batch), frame:, live: true } do |form| %>
+    <%= hidden_field_tag :picker, picker, id: nil if picker %>
+    <%= hidden_field_tag :modal_frame, window, id: nil if window %>
+    <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("trading.invoices.index.search_placeholder") %>
+    <%= filter_date_field form, :from, t("shared.filters.from"), value: @filter.from %>
+    <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
+    <%= filter_select form, :season_year, Purchase.human_attribute_name(:season_year),
+          season_options(Purchase.where(coffee_state: @batch.coffee_state)), selected: @filter.season_year, all: t("shared.filters.all_seasons") %>
+    <%= filter_select form, :zone_id, Purchase.human_attribute_name(:zone), Zone.ordered.pluck(:name, :id), selected: @filter.zone_id, all: t("shared.filters.all_zones") %>
+  <% end %>
+
+  <%= list_frame frame do %>
+    <%= live_list_status @filter, season_year: ->(year) { Season.new(year).label },
+          zone_id: ->(id) { (name = Zone.find_by(id:)&.name) && t("trading.purchases.index.chips.zone", name:) } %>
+    <% if @invoices.any? %>
+      <%= form_with url: sales_coffee_batch_invoices_path(@batch), method: :post, class: "mt-4",
+            data: { turbo_frame: window || "_top", controller: "batch-shares",
+                    batch_shares_room_value: @batch.room.to_s, batch_shares_texts_value: { chosen: t(".chosen"), over: t(".over"), gross: t(".takes_gross"), net: t(".takes_net") }.to_json } do %>
+        <%= hidden_field_tag :picker, picker, id: nil if picker %>
+        <div class="overflow-x-auto panel">
+          <table class="data-table data-table-compact" data-batch-invoice-choices>
+            <thead>
+              <tr>
+                <th class="cell-select w-10"><span class="sr-only"><%= t(".mark_column") %></span></th>
+                <th><%= t("trading.invoices.index.number") %></th>
+                <th><%= t("trading.invoices.index.date") %></th>
+                <th><%= t("trading.invoices.index.producer") %></th>
+                <th class="text-right"><%= t(".gross") %></th>
+                <th class="text-right"><%= t(".net") %></th>
+                <th class="text-right"><%= t(".left") %></th>
+                <th class="text-right"><%= t(".percent") %></th>
+                <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @invoices.each do |invoice| %>
+                <% left = 100 - @used.fetch(invoice.id, 0).to_d %>
+                <tr id="<%= dom_id(invoice, :choice) %>" data-batch-shares-target="row" data-gross="<%= invoice.gross_weight %>" data-net="<%= invoice.net_weight %>">
+                  <td class="cell-select">
+                    <input type="checkbox" name="shares[<%= invoice.id %>][chosen]" value="1" class="size-4 accent-primary"
+                           data-action="batch-shares#update" aria-label="<%= t(".mark", number: invoice.display_number) %>">
+                  </td>
+                  <td class="tabular-nums"><%= invoice.display_number %></td>
+                  <td class="whitespace-nowrap"><%= l(invoice.issued_on) %></td>
+                  <td><%= invoice.producer.full_name %></td>
+                  <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(invoice.gross_weight) %></td>
+                  <td class="whitespace-nowrap text-right tabular-nums text-ink-muted"><%= format_pounds(invoice.net_weight) %></td>
+                  <td class="whitespace-nowrap text-right tabular-nums"><%= number_to_percentage(left, precision: 2, strip_insignificant_zeros: true) %></td>
+                  <%# The percent and, beside it, what it comes to in gross
+                      pounds and, below, net (Fernando, 2026-11-13). %>
+                  <td>
+                    <div class="flex items-center justify-end gap-3">
+                      <input type="number" name="shares[<%= invoice.id %>][percent]" value="<%= left.to_s("F").sub(/\.0\z/, "") %>" min="0.01" max="<%= left %>" step="0.0001"
+                             inputmode="decimal" class="field-input min-h-0 w-24 py-1 text-right tabular-nums" data-action="batch-shares#update"
+                             aria-label="<%= t(".percent_of", number: invoice.display_number) %>">
+                      <output class="block w-36 text-right leading-tight tabular-nums whitespace-nowrap" data-takes aria-live="polite">
+                        <span class="block" data-takes-gross>—</span>
+                        <span class="block text-xs text-ink-muted" data-takes-net></span>
+                      </output>
+                    </div>
+                  </td>
+                  <td class="cell-actions"><%= modal_link_to t("shared.detail"), trading_invoice_path(invoice), class: "btn btn-sm" %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+        <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame:, extra_params: { picker:, modal_frame: window }.compact %>
+        <div class="sticky bottom-4 mt-4 flex flex-wrap items-center justify-between gap-3 clay p-3">
+          <p class="text-sm" data-batch-shares-target="summary" aria-live="polite"><%= t(".none_marked") %></p>
+          <div class="flex flex-wrap gap-2">
+            <button type="submit" class="btn btn-primary" data-batch-shares-target="submit" disabled><%= t(".submit") %></button>
+            <%= picker ? cancel_button(sales_coffee_batch_path(@batch)) : link_to(t("shared.cancel"), sales_coffee_batch_path(@batch), class: "btn") %>
+          </div>
+        </div>
+      <% end %>
+    <% else %>
+      <p class="empty-state mt-4"><%= t(".empty") %></p>
+    <% end %>
+  <% end %>
+</div>

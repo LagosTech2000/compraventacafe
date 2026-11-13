@@ -2,6 +2,7 @@
 # accounts with the pay.
 class PayrollExpense < ApplicationRecord
   include Auditable
+  include OwnedRecord
   include HasMoneyAccount
 
   belongs_to :payroll

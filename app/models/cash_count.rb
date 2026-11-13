@@ -5,6 +5,7 @@
 # removed, never edited.
 class CashCount < ApplicationRecord
   include Auditable
+  include OwnedRecord
   include LiveUpdates
   live_updates :finance
 

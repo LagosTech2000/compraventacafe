@@ -104,17 +104,17 @@ class PeopleReport < Report
     def join(name, relation) = "LEFT JOIN (#{relation.to_sql}) #{name} ON #{name}.person_id = people.id"
 
     def sales(in_period)
-      within(Purchase.active.joins(:producer), in_period, column: "purchases.purchased_at", type: :datetime)
+      within(Purchase.visible_to(user).active.joins(:producer), in_period, column: "purchases.purchased_at", type: :datetime)
         .group("producers.person_id").select("producers.person_id", "SUM(purchases.net_weight) AS net_weight", "SUM(purchases.total) AS total")
     end
 
     def earned(in_period)
-      within(PayrollPaymentLine.joins(:payment, :member), in_period, column: "payroll_payments.paid_on")
+      within(PayrollPaymentLine.joins(:payment, :member).merge(PayrollPayment.visible_to(user)), in_period, column: "payroll_payments.paid_on")
         .group("payroll_members.person_id").select("payroll_members.person_id", "SUM(payroll_payment_lines.gross_amount) AS amount")
     end
 
     def repaid(in_period)
-      within(LoanPayment.joins(:loan), in_period, column: "loan_payments.paid_on")
+      within(LoanPayment.visible_to(user).joins(:loan), in_period, column: "loan_payments.paid_on")
         .group("loans.person_id").select("loans.person_id", "SUM(loan_payments.amount) AS amount")
     end
 end

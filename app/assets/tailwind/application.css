@@ -171,8 +171,12 @@
   }
 
   /* Summary figures. */
+  /* Its figure never breaks («−L» on one line, the amount on the next,
+     Fernando 2026-11-13): it stays on one line and its size follows the
+     card's width (container units), up to text-xl. */
   .stat {
     @apply clay p-4 ring-1 ring-line/60;
+    container-type: inline-size;
   }
 
   .stat dt {
@@ -180,7 +184,9 @@
   }
 
   .stat dd {
-    @apply mt-1 text-xl font-bold tracking-tight tabular-nums;
+    @apply mt-1 font-bold tracking-tight whitespace-nowrap tabular-nums;
+    font-size: clamp(0.8rem, 10.5cqi, 1.25rem);
+    line-height: 1.75rem;
   }
 
   /* Flat container for data: tables, details, filters. */
@@ -288,6 +294,10 @@
 
   .picker-option {
     @apply cursor-pointer px-3.5 py-2 text-sm text-ink hover:bg-surface-2 aria-selected:bg-primary-soft aria-selected:text-ink;
+  }
+
+  .picker-option-hint {
+    @apply text-ink-muted;
   }
 
   .picker-note {

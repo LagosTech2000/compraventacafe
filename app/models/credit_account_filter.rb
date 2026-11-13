@@ -13,9 +13,9 @@ class CreditAccountFilter < ListFilter
         score: { ruby: ->(person) { CreditAccount.new(person).score.value } }
 
   def apply(scope)
-    scope = scope.where(id: Loan.select(:person_id))
-    scope = scope.where(id: Loan.unpaid.select(:person_id)) if standing == "owing"
-    scope = scope.where(id: Loan.overdue.select(:person_id)) if standing == "overdue"
+    scope = scope.where(id: Loan.owned.select(:person_id))
+    scope = scope.where(id: Loan.owned.unpaid.select(:person_id)) if standing == "owing"
+    scope = scope.where(id: Loan.owned.overdue.select(:person_id)) if standing == "overdue"
     scope = scope.search(q) if q
     # Each row's account (CreditAccount) reads them: loaded at once.
     scope.includes(:photo_info, loans: %i[payments supply_items]).newest_first

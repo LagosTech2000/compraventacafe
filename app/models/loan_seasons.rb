@@ -37,5 +37,5 @@ class LoanSeasons
   def max_lent = rows.map(&:lent).max || 0
 
   private
-    def loans = @loans ||= Loan.includes(:payments, :supply_items).to_a
+    def loans = @loans ||= Loan.owned.includes(:payments, :supply_items).to_a
 end

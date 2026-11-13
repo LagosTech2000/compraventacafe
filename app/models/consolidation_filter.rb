@@ -28,7 +28,7 @@ class ConsolidationFilter < ListFilter
 
   def movements
     @movements ||= begin
-      list = MoneyMovements.new(range: from || to ? (from..to) : nil, account: :none, sources: source ? [ source ] & sources : sources).all
+      list = MoneyMovements.new(range: from || to ? (from..to) : nil, account: :none, owner: Current.owner, sources: source ? [ source ] & sources : sources).all
       if q
         text = I18n.transliterate(q).downcase
         list = list.select { |movement| [ movement.description, movement.person ].compact.any? { I18n.transliterate(it).downcase.include?(text) } }

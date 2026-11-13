@@ -37,9 +37,18 @@ RSpec.describe "Picker searches" do
 
     result = search(:producers, "Zelaya")["results"].first
 
-    expect(result).to include("id" => producer.id, "label" => "Ana Zelaya", "zone_id" => zone.id)
+    expect(result).to include("id" => producer.id, "label" => "Ana Zelaya", "hint" => "El Rosario", "zone_id" => zone.id)
     expect(result["missing"]).to include("DNI", "Clave IHCAFE")
     expect(result["farms"]).to eq([ [ producer.farms.find_by(name: "La Loma").id, "La Loma", [ "Dirección", "Ubicación en el mapa" ] ] ])
+  end
+
+  it "brings a person's zone after their DNI in Nuevo préstamo, when they have one (Fernando, 2026-11-13)" do
+    create(:person, first_names: "Rosa", last_names: "Zelaya", zone: create(:zone, name: "El Rosario"))
+    create(:person, first_names: "Luis", last_names: "Zelaya")
+    sign_in admin
+
+    results = search(:people, "Zelaya")["results"]
+    expect(results.to_h { [ it["label"].split.first, it["hint"] ] }).to eq("Luis" => nil, "Rosa" => "El Rosario")
   end
 
   it "answers nothing under 3 characters, and at most 20 with a note that there are more" do

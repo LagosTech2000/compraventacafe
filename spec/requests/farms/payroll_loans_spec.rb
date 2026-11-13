@@ -74,7 +74,7 @@ RSpec.describe "Payroll loans tab" do
     expect(response).to redirect_to(loans_loan_path(loan, receipt: loan.payments.last.id))
   end
 
-  it "shows the tab only to who sees the loans module, and the payment only to who creates loans" do
+  it "shows the tab only to who sees the loans module, and the payment only to who creates loans", :all_records do
     sign_in user_with([ "farms", %w[read] ])
     get farms_payroll_path(payroll)
     expect(response.body).not_to include(farms_payroll_path(payroll, tab: "loans"))

@@ -6,6 +6,7 @@
 # what the invoice has to pay with the others), date, method or account.
 class InvoicePayment < ApplicationRecord
   include Auditable
+  include OwnedRecord
   include HasMoneyAccount
   include LiveUpdates
   live_updates :trading

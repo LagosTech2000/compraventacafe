@@ -41,11 +41,15 @@ RSpec.describe "Purchase invoices, administrators" do
     expect(response.body).not_to include("id=\"invoice_#{invoice.id}\"")
     get trading_invoices_path(payment_status: "voided")
     expect(page.css("[id$='invoice_#{invoice.id}']")).to be_present
+    # Every state, voided too (Fernando, 2026-11-13).
+    get trading_invoices_path(payment_status: "all")
+    expect(page.css("[id$='invoice_#{invoice.id}']")).to be_present
+    expect(page.at_css("select#payment_status option[value='']").text).to eq("Todas, sin las anuladas")
     get trading_invoice_path(invoice)
     expect(page.at_css("[data-invoice-voided]").text).to include("Se facturó a otro productor")
   end
 
-  it "does not void while a purchase paid a loan, and takes the invoice off its shipment" do
+  it "does not void while a purchase paid a loan, and takes the invoice off its lots" do
     loan = create(:loan, person: producer.person, cash_amount: 100, monthly_interest_rate: 0)
     pending = InvoiceIssuer.new(producer:, user: admin, purchase_ids: purchases.map(&:id), payment_status: "pending").call.invoice
     create(:loan_payment, loan:, purchase: purchases.first, amount: 50, payment_method: "coffee")
@@ -55,11 +59,11 @@ RSpec.describe "Purchase invoices, administrators" do
     expect(response.body).to include("pago con café")
 
     LoanPayment.delete_all
-    shipment = create(:shipment)
-    shipment.shipment_invoices.create!(invoice: pending, created_by: admin)
+    batch = create(:coffee_batch, coffee_state: purchases.first.coffee_state)
+    batch.batch_invoices.create!(invoice: pending, percent: 100, created_by: admin)
     post trading_invoice_void_path(pending), params: { invoice: { void_reason: "Error" } }
     expect(pending.reload).to be_voided
-    expect(shipment.invoices.reload).to be_empty
+    expect(batch.batch_invoices.reload).to be_empty
   end
 
   it "edits the date, observations and purchases of a paid invoice; a lower total shows as overpaid" do

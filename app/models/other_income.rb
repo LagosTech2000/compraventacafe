@@ -3,6 +3,7 @@
 # that is not coffee… So an account's balance is complete.
 class OtherIncome < ApplicationRecord
   include Auditable
+  include OwnedRecord
   include LiveUpdates
   live_updates :finance
 

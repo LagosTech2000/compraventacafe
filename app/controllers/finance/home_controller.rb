@@ -18,10 +18,10 @@ module Finance
       @budget_lines = @budget.month_lines(@today.beginning_of_month)
       @without_account = @month.count { |movement| movement.account_id.nil? }
       @staff_due = StaffOverview.new(today: @today).due
-      @latest = MoneyMovements.new(range: (@today - 30)..@today, sources:).all.reject(&:transfer?).last(8).reverse
+      @latest = MoneyMovements.new(range: (@today - 30)..@today, sources:, owner: Current.owner).all.reject(&:transfer?).last(8).reverse
     end
 
     private
-      def month_movements(range, sources) = MoneyMovements.new(range:, sources:).all.reject(&:transfer?)
+      def month_movements(range, sources) = MoneyMovements.new(range:, sources:, owner: Current.owner).all.reject(&:transfer?)
   end
 end

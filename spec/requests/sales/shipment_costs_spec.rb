@@ -1,9 +1,9 @@
 require "rails_helper"
 
-# What a shipment cost (Fernando, 2026-11-12): its purchase invoices (same
-# coffee state, each whole to one shipment), the haulers' commission of
-# those purchases, costs registered from it, expenses of Control financiero
-# assigned to it and the trip price. Only its cost: the lots do not change.
+# What a shipment cost (Fernando, 2026-11-12): its lots (2026-11-13; their
+# share of each purchase), the haulers' commission of those purchases,
+# costs registered from it, expenses of Control financiero assigned to it
+# and the trip price.
 RSpec.describe "Shipment costs" do
   let(:admin) { create(:user, :admin) }
   let(:producer) { create(:producer, person: create(:person, first_names: "Ana", last_names: "Zelaya")) }
@@ -18,35 +18,23 @@ RSpec.describe "Shipment costs" do
 
   before { sign_in admin }
 
-  it "lists only free invoices of its coffee state to choose, links the marked ones and adds their cost" do
+  it "adds the coffee of its lots and their haulers' commission" do
     hauler = create(:hauler)
-    wet = invoice_of(create(:purchase, producer:, hauler:, gross_weight: 146, price_per_pound: 58))
-    cherry = invoice_of(create(:purchase, producer:, coffee_state: "cherry"))
-    taken = invoice_of(create(:purchase, producer:))
-    create(:shipment).shipment_invoices.create!(invoice: taken, created_by: admin)
-
-    get new_sales_shipment_invoice_path(shipment)
-    expect(response).to have_http_status(:ok)
-    rows = page.css("[data-shipment-invoice-choices] tbody tr").map { it["id"] }
-    expect(rows).to eq([ "choice_invoice_#{wet.id}" ])
-
-    post sales_shipment_invoices_path(shipment), params: { invoice_ids: [ wet.id, cherry.id, taken.id ] }
-    expect(response).to redirect_to(sales_shipment_path(shipment, anchor: "shipment-cost"))
-    expect(shipment.reload.invoices).to eq([ wet ])
+    invoice = invoice_of(create(:purchase, producer:, hauler:, gross_weight: 146, price_per_pound: 58))
+    batch = create(:coffee_batch, warehouse: shipment.warehouse, coffee_state: "wet_parchment", gross_limit: 1_000)
+    batch.batch_invoices.create!(invoice:, percent: 50, created_by: admin)
+    shipment.update!(batch_ids: [ batch.id ])
 
     get sales_shipment_path(shipment)
     expect(page.at_css("[data-cost-missing]")).to be_nil
     summary = ShipmentCostSummary.new(shipment)
-    expect(figure("coffee")).to eq(ActiveSupport::NumberHelper.number_to_currency(wet.total, unit: "L ", precision: 2))
-    expect(summary.hauler_commission).to eq(wet.purchases.first.hauler_commission)
-    expect(summary.total).to eq(wet.total + summary.hauler_commission)
-    expect(page.css("[data-shipment-invoices] a").map { it["href"] }).to include(trading_invoice_path(wet))
-
-    delete sales_shipment_invoice_path(shipment, wet)
-    expect(shipment.reload.invoices).to be_empty
+    expect(summary.coffee).to eq((invoice.total / 2).round(2))
+    expect(summary.hauler_commission).to eq((invoice.purchases.first.hauler_commission / 2).round(2))
+    expect(figure("coffee")).to eq(ActiveSupport::NumberHelper.number_to_currency(summary.coffee, unit: "L ", precision: 2))
+    expect(page.css("[data-shipment-batches] tbody tr").size).to eq(1)
   end
 
-  it "says the coffee's cost is missing without invoices" do
+  it "says the coffee's cost is missing without lots" do
     get sales_shipment_path(shipment)
     expect(page.at_css("[data-cost-missing]")).to be_present
     expect(figure("total")).to eq("—")
@@ -99,32 +87,20 @@ RSpec.describe "Shipment costs" do
     expect(free.reload.shipment).to be_nil
   end
 
-  it "voiding the shipment lets its invoices and expenses go, and its coffee state stays while it has invoices" do
+  it "voiding the shipment lets its lots and expenses go, and its coffee state stays while it has lots" do
     invoice = invoice_of(create(:purchase, producer:))
-    shipment.shipment_invoices.create!(invoice:, created_by: admin)
+    batch = create(:coffee_batch, warehouse: shipment.warehouse, coffee_state: "wet_parchment", gross_limit: 1_000)
+    batch.batch_invoices.create!(invoice:, percent: 100, created_by: admin)
+    shipment.update!(batch_ids: [ batch.id ])
     expense = create(:expense, shipment:)
 
-    expect(shipment.update(coffee_state: "dry_parchment")).to be(false)
-    expect(shipment.errors[:coffee_state]).to be_present
+    expect(shipment.reload.update(coffee_state: "dry_parchment")).to be(false)
+    expect(shipment.errors[:base].join).to include("tiene lotes")
 
     patch void_sales_shipment_path(shipment)
     expect(shipment.reload).to be_voided
-    expect(shipment.invoices).to be_empty
+    expect(shipment.coffee_batches).to be_empty
+    expect(batch.reload.shipment).to be_nil
     expect(expense.reload.shipment).to be_nil
-  end
-
-  it "shows the invoices to who reads them, and lets link them to who edits shipments" do
-    reader = create(:user).tap { create(:permission, user: it, module_key: "sales", submodule_key: "shipments", can_read: true) }
-    sign_in reader
-    get sales_shipment_path(shipment)
-    expect(page.at_css("[data-shipment-cost]")).to be_present
-    expect(response.body).not_to include(I18n.t("sales.shipments.cost.invoices.title"))
-    get new_sales_shipment_invoice_path(shipment)
-    expect(response).to redirect_to(root_path)
-
-    create(:permission, user: reader, module_key: "trading", submodule_key: "invoices", can_read: true)
-    get sales_shipment_path(shipment)
-    expect(response.body).to include(I18n.t("sales.shipments.cost.invoices.title"))
-    expect(response.body).not_to include(I18n.t("sales.shipments.cost.invoices.choose"))
   end
 end

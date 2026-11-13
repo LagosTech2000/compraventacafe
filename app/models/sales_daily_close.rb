@@ -9,30 +9,32 @@ class SalesDailyClose
   end
 
   def departed
-    @departed ||= Shipment.active.on(date).includes(:buyer, :active_sale_line, :sale).newest_first.to_a
+    @departed ||= Shipment.owned.active.on(date).includes(:buyer, :active_sale_line, :sale).newest_first.to_a
   end
 
   def received
-    @received ||= Shipment.active.received_on_day(date).includes(:buyer, :active_sale_line, :sale).newest_first.to_a
+    @received ||= Shipment.owned.active.received_on_day(date).includes(:buyer, :active_sale_line, :sale).newest_first.to_a
   end
 
   def sales
-    @sales ||= Sale.active.where(sold_on: date).includes(:buyer, :payments).newest_first.to_a
+    @sales ||= Sale.owned.active.where(sold_on: date).includes(:buyer, :payments).newest_first.to_a
   end
 
   def payments
-    @payments ||= SalePayment.where(paid_on: date).includes(sale: :buyer).joins(:sale).merge(Sale.active).in_order.to_a
+    @payments ||= SalePayment.where(paid_on: date).includes(sale: :buyer).joins(:sale).merge(Sale.owned.active).in_order.to_a
   end
 
-  def summary = @summary ||= SaleSummary.new(Sale.where(sold_on: date))
+  def summary = @summary ||= SaleSummary.new(Sale.owned.where(sold_on: date))
   def stock = @stock ||= CoffeeStock.new(date)
 
   # Shipments without the local scale count nothing here (Fernando, 2026-11-12).
   def departed_net = departed.sum { it.origin_net_weight.to_d }
+  def departed_gross = departed.sum { it.origin_gross_weight.to_d }
   def departed_sacks = departed.sum { it.origin_sacks.to_i }
   # The difference compares only the ones with both scales.
   def received_origin_net = compared.sum(&:origin_net_weight)
   def received_net = received.sum(&:destination_net_weight)
+  def received_gross = received.sum(&:destination_gross_weight)
   def compared = received.reject(&:origin_missing?)
   def received_difference = compared.sum(&:destination_net_weight) - received_origin_net
   def collected = payments.sum(&:amount)

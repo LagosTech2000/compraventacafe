@@ -17,6 +17,8 @@ module Sales
       @daily_close = SalesDailyClose.new(Time.zone.today)
       @season = Season.current
       @season_summary = SaleSummary.new(policy_scope(Sale).in_season(@season))
+      # The season's shrink (Fernando, 2026-11-13).
+      @shrink = ShrinkSummary.new(shipments.active.where(season_year: @season.year))
     end
 
     private

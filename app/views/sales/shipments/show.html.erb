@@ -77,7 +77,7 @@
 <section class="mt-4 panel p-4" aria-labelledby="shipment-details">
   <h2 id="shipment-details" class="font-semibold"><%= t(".details") %></h2>
   <dl class="mt-3 grid grid-cols-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
-    <% { warehouse: @shipment.warehouse.name, remission_number: @shipment.remission_number,
+    <% { warehouse: @shipment.warehouse.name,
          carrier: (@shipment.carrier && (policy(@shipment.carrier).show? ? link_to(@shipment.carrier.name, sales_carrier_path(@shipment.carrier), class: "link") : @shipment.carrier.name)),
          vehicle: (@shipment.vehicle && (policy(@shipment.vehicle).show? ? link_to(@shipment.vehicle.label, sales_vehicle_path(@shipment.vehicle), class: "link") : @shipment.vehicle.label)),
          trip_price: (format_money(@shipment.trip_price) if @shipment.trip_price),

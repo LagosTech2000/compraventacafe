@@ -7,7 +7,7 @@ RSpec.describe "Coffee conversions" do
 
   def page = Nokogiri::HTML(response.body)
   def card(key) = page.at_css("[data-coffee-state=#{key}]")
-  def card_net(key) = card(key).at_css("[data-live-value]").text.squish
+  def card_net(key) = card(key).at_css("[data-live-value$='-net']").text.squish.sub(" netas", "")
 
   before do
     create(:purchase, gross_weight: 2_000) # 973.63 lb net of wet parchment

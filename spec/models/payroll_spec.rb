@@ -117,7 +117,7 @@ RSpec.describe "Farm payrolls" do
     it "keeps the kind once paid, and dates that cover what was recorded, in Spanish" do
       create_attendance(create(:payroll_member, payroll:, role: worker), 3)
       expect(payroll.update(starts_on: Date.new(2026, 9, 4))).to be(false)
-      expect(payroll.errors.full_messages).to include("Fecha de inicio no puede ser después del 03/09/2026: ese día ya hay trabajo o un pago registrado")
+      expect(payroll.errors.full_messages).to include("Fecha de inicio no puede ser después del Jue 03/09/2026: ese día ya hay trabajo o un pago registrado")
       expect(payroll.reload.update(ends_on: Date.new(2026, 9, 2))).to be(false)
 
       payroll.reload

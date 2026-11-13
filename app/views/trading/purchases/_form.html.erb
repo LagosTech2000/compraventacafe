@@ -109,18 +109,21 @@
       </div>
     </div>
 
-    <%# Optional: the carrero who hauled it earns a commission (Hauler). %>
+    <%# The carrero who hauled it earns a commission (Hauler). Chosen on
+        purpose (Fernando, 2026-11-13): a hauler or «Sin carrero». %>
     <div data-controller="option-picker" data-action="hauler:created@window->option-picker#add">
-      <%= form.label :hauler_id, class: "field-label" %>
-      <%= form.select :hauler_id,
+      <%= form.label :hauler_choice, class: "field-label" %>
+      <%= form.select :hauler_choice,
+            [ [ t("shared.select.no_hauler"), Purchase::NO_HAULER ] ] +
             haulers.map { |hauler|
               # The hauler already on the purchase keeps the price of its day.
               kept = purchase.persisted? && hauler.id == purchase.hauler_id_in_database
               price = kept && purchase.hauler_price_per_pound || hauler.price_per_pound
-              [ hauler.full_name, hauler.id, { data: { price_per_pound: price.to_s } } ]
+              [ hauler.full_name, hauler.id.to_s, { data: { price_per_pound: price.to_s } } ]
             },
-            { include_blank: t("shared.select.no_hauler") }, class: "field-input",
-            data: { hauler_commission_target: "select", option_picker_target: "select", action: "hauler-commission#update" } %>
+            { prompt: t("shared.select.pick_hauler"), selected: purchase.hauler_choice }, required: true, class: "field-input",
+            data: { hauler_commission_target: "select", option_picker_target: "select", action: "hauler-commission#update",
+                    missing_message: t(".hauler_missing") } %>
       <p class="mt-1 text-xs text-ink-muted"><%= t(".hauler_help") %></p>
       <% if can_create_hauler %>
         <%= modal_link_to t(".new_hauler"), new_trading_hauler_path(picker: 1), class: "btn btn-sm mt-2" %>

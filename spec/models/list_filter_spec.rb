@@ -88,7 +88,7 @@ RSpec.describe ListFilter do
       create(:purchase, zone:, coffee_state: "cherry")
       create(:invoice, producer: ana, purchases: [ create(:purchase, producer: ana, zone:, coffee_state: "cherry") ])
 
-      result = PurchaseFilter.new(params(q: "ana", zone_id: zone.id.to_s, coffee_state: "cherry", invoiced: "no")).apply(Purchase.all)
+      result = PurchaseFilter.new(params(q: "ana", zone_id: zone.id.to_s, coffee_state: "cherry", status: "uninvoiced")).apply(Purchase.all)
       expect(result).to eq([ target ])
     end
   end
@@ -134,8 +134,8 @@ RSpec.describe ListFilter do
     end
 
     it "lists what changed from the defaults and puts fields back to them" do
-      filter = purchases(zone_id: "3", invoiced: "no", from: "")
-      expect(filter.active_fields).to eq(%i[from zone_id invoiced])
+      filter = purchases(zone_id: "3", status: "uninvoiced", from: "")
+      expect(filter.active_fields).to eq(%i[from zone_id status])
       expect(filter.params_without(:zone_id)).not_to include("zone_id")
       expect(filter.default_values(:from, :zone_id)).to eq("from" => Time.zone.today.iso8601, "zone_id" => "")
     end

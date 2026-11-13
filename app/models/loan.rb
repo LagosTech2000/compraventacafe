@@ -10,6 +10,7 @@
 # can get one, not only intermediaries (Fernando, the same day).
 class Loan < ApplicationRecord
   include Auditable
+  include OwnedRecord
   include HasMoneyAccount
   include LiveUpdates
   live_updates :loans
@@ -36,7 +37,6 @@ class Loan < ApplicationRecord
   validate :due_on_not_before_disbursement
   # Never more of a supply than the inventory has (Fernando, 2026-11-12),
   # for the loans from the day the inventory started.
-  validate :supplies_in_stock
 
   before_validation :compute_principal
 
@@ -140,21 +140,6 @@ class Loan < ApplicationRecord
   end
 
   private
-    def supplies_in_stock
-      return unless disbursed_on && disbursed_on >= SupplyStock.starts_on
-
-      kept_supply_items.group_by(&:supply_id).each do |supply_id, items|
-        wanted = items.sum { it.quantity.to_d }
-        available = SupplyStock.available(supply_id, except_loan: (id if persisted?))
-        next if wanted <= available
-
-        supply = items.first.supply
-        errors.add(:base, :supplies_out_of_stock, supply: supply&.name,
-                                                 available: ActiveSupport::NumberHelper.number_to_rounded(available, precision: 2, strip_insignificant_zeros: true),
-                                                 unit: supply&.unit)
-      end
-    end
-
     def blank_supply_item?(attributes)
       attributes["id"].blank? && attributes.values_at("supply_id", "quantity").all?(&:blank?)
     end

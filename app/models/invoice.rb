@@ -12,6 +12,7 @@
 # (#overpaid_amount).
 class Invoice < ApplicationRecord
   include Auditable
+  include OwnedRecord
   include LiveUpdates
   live_updates :trading
 
@@ -19,8 +20,9 @@ class Invoice < ApplicationRecord
   UNPAID_STATUSES = %w[pending partial].freeze
   # Lists filter by a status, or by "unpaid": pending or partial.
   FILTER_STATUSES = [ "unpaid", *PAYMENT_STATUSES ].freeze
-  # The invoices' lists also show the voided ones, when asked for (Fernando, 2026-11-12).
-  LIST_STATUSES = [ *FILTER_STATUSES, "voided" ].freeze
+  # The invoices' lists also show the voided ones, when asked for (Fernando,
+  # 2026-11-12), or every state, voided too («all», Fernando, 2026-11-13).
+  LIST_STATUSES = [ *FILTER_STATUSES, "voided", "all" ].freeze
   PAYMENT_METHODS = %w[cash transfer check].freeze
   # Fixed key for the advisory lock that serializes invoice numbering.
   NUMBERING_LOCK_KEY = 7_301_001
@@ -29,9 +31,9 @@ class Invoice < ApplicationRecord
   belongs_to :created_by, class_name: "User"
   belongs_to :voided_by, class_name: "User", optional: true
   has_many :purchases, dependent: :restrict_with_error
-  # The shipment its coffee went on (Fernando, 2026-11-12), for that shipment's cost.
-  has_one :shipment_invoice, dependent: :restrict_with_error
-  has_one :shipment, through: :shipment_invoice
+  # The lots that took a share of its coffee (Fernando, 2026-11-13).
+  has_many :batch_invoices, class_name: "CoffeeBatchInvoice", dependent: :restrict_with_error
+  has_many :coffee_batches, through: :batch_invoices
   has_many :loan_payments, through: :purchases
   has_many :payments, -> { in_order }, class_name: "InvoicePayment", dependent: :restrict_with_error, inverse_of: :invoice
 
@@ -61,7 +63,8 @@ class Invoice < ApplicationRecord
     when "unpaid" then unpaid
     when "voided" then voided
     when *PAYMENT_STATUSES then active.where(payment_status: status)
-    else all
+    when "all" then all
+    else active
     end
   end
   # Every purchase of the invoice in that coffee state (a shipment's invoices).
@@ -69,8 +72,6 @@ class Invoice < ApplicationRecord
     where(id: Purchase.select(:invoice_id).where(coffee_state: state))
       .where.not(id: Purchase.select(:invoice_id).where.not(coffee_state: state).where.not(invoice_id: nil))
   }
-  # Not on any shipment yet.
-  scope :without_shipment, -> { where.not(id: ShipmentInvoice.select(:invoice_id)) }
 
   def paid?
     payment_status == "paid"
@@ -149,7 +150,7 @@ class Invoice < ApplicationRecord
       raise ActiveRecord::RecordInvalid, self if errors.any?
 
       payments.each(&:destroy!)
-      shipment_invoice&.destroy!
+      batch_invoices.each(&:destroy!)
       update!(voided_at: Time.current, voided_by: user, void_reason: reason)
       purchases.each do |purchase|
         purchase.invoice = self
@@ -171,6 +172,8 @@ class Invoice < ApplicationRecord
       chosen = Purchase.active.where(producer_id:, id: ids).where(invoice_id: [ nil, id ]).lock.includes(:hauler, :farm, :producer, :invoice).to_a
       errors.add(:purchases, :unavailable) if chosen.size != ids.uniq.size
       errors.add(:purchases, :blank) if ids.empty?
+      shortfall = CoffeeBatchInvoice.shortfall(id, chosen.sum { it.gross_weight.to_d }, chosen.sum { it.net_weight.to_d })
+      errors.add(:base, shortfall) if shortfall
       raise ActiveRecord::RecordInvalid, self if errors.any?
 
       purchases.where.not(id: ids).includes(:hauler, :farm, :producer, :invoice).each { it.update!(invoice: nil) }

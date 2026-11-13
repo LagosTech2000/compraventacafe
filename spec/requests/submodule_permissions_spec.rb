@@ -55,11 +55,11 @@ RSpec.describe "Permissions per submodule" do
   end
 
   it "opens the module on the first tab the user reads when its Resumen has nothing for them" do
-    sign_in user_with("trading.zones", "loans.supplies")
+    sign_in user_with("trading.zones", "loans.simulation")
     get trading_root_path
     expect(response).to redirect_to(trading_zones_path)
     get loans_root_path
-    expect(response).to redirect_to(loans_supplies_path)
+    expect(response).to redirect_to(loans_simulation_path)
 
     get trading_zones_path
     expect(subnav_tabs).not_to include("Resumen")
@@ -77,7 +77,7 @@ RSpec.describe "Permissions per submodule" do
     expect(response).to redirect_to(root_path)
   end
 
-  it "shows in the Inicio only the figures, pending work and debts of the tabs the user reads" do
+  it "shows in the Inicio only the figures, pending work and debts of the tabs the user reads", :all_records do
     admin = create(:user, :admin)
     producer = create(:producer)
     create(:purchase, producer:)
@@ -128,7 +128,7 @@ RSpec.describe "Permissions per submodule" do
     get loans_borrower_path(producer.person)
     expect(response).to have_http_status(:ok)
 
-    sign_in user_with("trading.zones", "loans.supplies")
+    sign_in user_with("trading.zones", "loans.simulation")
     get trading_producer_card_path(producer)
     expect(response).not_to have_http_status(:ok)
     get loans_borrower_path(producer.person)

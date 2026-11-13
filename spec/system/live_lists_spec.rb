@@ -51,7 +51,7 @@ RSpec.describe "Live lists", type: :system do
     "/administration/people" => "people-list", "/administration/zones" => "admin-zones-list",
     "/administration/farms" => "admin-farms-list", "/trading/haulers" => "haulers-list",
     "/trading/producers" => "producers-list", "/trading/zones" => "zones-list", "/loans/loans" => "loans-list",
-    "/loans/credit_accounts" => "credit-accounts-list", "/loans/supplies" => "supplies-list",
+    "/loans/credit_accounts" => "credit-accounts-list", "/sales/supplies/catalog" => "supplies-list",
     "/farms/farms" => "farms-list", "/farms/expense_categories" => "expense-categories-list",
     "/sales/shipments" => "shipments-list", "/sales/sales" => "sales-list", "/sales/buyers" => "buyers-list", "/sales/carriers" => "carriers-list", "/sales/vehicles" => "vehicles-list", "/sales/vehicle_types" => "vehicle-types-list", "/sales/warehouses" => "warehouses-list", "/sales/sites" => "processing-sites-list", "/sales/conversions" => "conversions-list",
     "/finance/movements" => "movements-list", "/finance/incomes" => "incomes-list",

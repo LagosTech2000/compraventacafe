@@ -31,7 +31,8 @@
   <%# What is lent: cash, supplies or both. The principal is their sum. %>
   <section class="space-y-4" aria-labelledby="loan-composition"
            data-controller="loan-composition"
-           data-loan-composition-supplies-value="<%= Supply.ordered.to_h { |supply| [ supply.id, supply.picker_data ] }.to_json %>"
+           data-loan-composition-supplies-value="<%= loan_supplies_data.to_json %>"
+           data-loan-composition-no-stock-value="<%= t(".no_stock") %>"
            data-action="supply:created@window->loan-composition#addSupply">
     <div>
       <h2 id="loan-composition" class="text-lg font-semibold"><%= t(".what_is_lent") %></h2>
@@ -55,7 +56,7 @@
         <h3 class="font-semibold"><%= t(".supplies") %></h3>
         <div class="flex flex-wrap gap-2">
           <% if policy(Supply).create? %>
-            <%= modal_link_to t(".new_supply"), new_loans_supply_path(picker: 1), class: "btn btn-sm" %>
+            <%= modal_link_to t(".new_supply"), new_sales_supply_path(picker: 1), class: "btn btn-sm" %>
           <% end %>
           <button type="button" class="btn btn-sm btn-primary" data-action="loan-composition#add"><%= t(".add_supply") %></button>
         </div>

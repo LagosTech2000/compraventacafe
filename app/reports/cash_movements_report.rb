@@ -96,7 +96,8 @@ class CashMovementsReport < Report
   private
     def load(in_period)
       range = in_period&.range
-      MoneyMovements.new(range: range && (range.begin..range.end), account: account_id, sources: MoneyMovements.sources_for(user)).all
+      owner = user if OwnedRecord.restricted?(user)
+      MoneyMovements.new(range: range && (range.begin..range.end), account: account_id, sources: MoneyMovements.sources_for(user), owner:).all
     end
 
     # The account chosen: its id, :none, or nil.

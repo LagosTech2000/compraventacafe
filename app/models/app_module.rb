@@ -16,7 +16,7 @@ class AppModule
     "trading" => %w[purchases invoices daily_close producers haulers zones],
     "sales" => %w[shipments sales stock coffee_conversions daily_close buyers carriers vehicles supplies],
     "farms" => %w[payrolls farms expense_categories],
-    "loans" => %w[loans credit_accounts coffee_collection collection_calendar portfolio seasons daily_close simulation supplies],
+    "loans" => %w[loans credit_accounts coffee_collection collection_calendar portfolio seasons daily_close simulation],
     "finance" => %w[movements incomes expenses investments accounts consolidation budget staff categories],
     "reports" => %w[reports],
     "administration" => %w[people farms zones]

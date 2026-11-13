@@ -66,7 +66,7 @@ module Sales
       end
 
       def shipment_params
-        params.expect(shipment: [ :skip_origin, :departed_at, :buyer_id, :warehouse_id, :coffee_state, :remission_number, :transport_mode, :carrier_id, :trip_price, :vehicle_id, :driver_id, :driver_name, :observations,
+        params.expect(shipment: [ :skip_origin, :departed_at, :buyer_id, :warehouse_id, :coffee_state, :transport_mode, :carrier_id, :trip_price, :vehicle_id, :driver_id, :driver_name, :observations, { batch_ids: [] },
                                   :origin_gross_weight, :origin_sacks, :origin_humidity_percent, :origin_damage_percent,
                                   :origin_yield_factor, :origin_weight_mode, :lock_version,
                                   weighings_attributes: [ [ :id, :gross_weight, :sacks, :_destroy ] ] ])
@@ -74,8 +74,9 @@ module Sales
 
       def shipment_totals(scope)
         scope = scope.unscope(:order, :includes)
-        { count: scope.count, sacks: scope.sum(:origin_sacks), origin_net: scope.sum(:origin_net_weight),
+        { count: scope.count, sacks: scope.sum(:origin_sacks), origin_net: scope.sum(:origin_net_weight), origin_gross: scope.sum(:origin_gross_weight),
           destination_net: scope.where.not(destination_net_weight: nil).sum(:destination_net_weight),
+          destination_gross: scope.where.not(destination_net_weight: nil).sum(:destination_gross_weight),
           compared_origin: scope.where.not(destination_net_weight: nil).sum(:origin_net_weight),
           # Only the ones with both scales (Fernando, 2026-11-12).
           compared_destination: scope.where.not(destination_net_weight: nil).where.not(origin_net_weight: nil).sum(:destination_net_weight) }

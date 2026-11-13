@@ -41,7 +41,7 @@ class PayrollExpensesReport < Report
   kpi :categories, :integer, "COUNT(DISTINCT #{TOP_CATEGORY})"
 
   def scope
-    PayrollExpense.joins(:category, :created_by, payroll: :farm).left_joins(category: :parent)
+    PayrollExpense.visible_to(user).joins(:category, :created_by, payroll: :farm).left_joins(category: :parent)
   end
 
   def apply_filters(relation)

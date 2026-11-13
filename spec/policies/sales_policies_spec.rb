@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe "Sales policies" do
+RSpec.describe "Sales policies", :all_records do
   def seller(**flags)
     create(:user).tap { |u| create(:permission, user: u, module_key: "sales", **flags) }.reload
   end

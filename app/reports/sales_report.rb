@@ -71,7 +71,7 @@ class SalesReport < Report
   kpi :average_days, :number, "AVG(#{DAYS_TO_PAY})", good: :down
 
   def scope
-    Sale.active.joins(:buyer).joins(PAID_JOIN)
+    Sale.visible_to(user).active.joins(:buyer).joins(PAID_JOIN)
   end
 
   def apply_filters(relation)

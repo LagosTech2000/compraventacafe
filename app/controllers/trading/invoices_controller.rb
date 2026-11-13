@@ -18,11 +18,11 @@ module Trading
 
       if @producer
         @invoice = @producer.invoices.build(payment_status: "pending")
-        @purchases = @producer.purchases.uninvoiced.includes(:loan_payments).newest_first
+        @purchases = @producer.purchases.owned.uninvoiced.includes(:loan_payments).newest_first
         @settlement = PurchaseLoanSettlement.new(purchase: @purchases.first, user: Current.user) if @purchases.any?
       else
         # Producers whose latest uninvoiced purchase is most recent come first.
-        @producers_to_invoice = Producer.joins(:purchases).merge(Purchase.uninvoiced).group(:id)
+        @producers_to_invoice = Producer.joins(:purchases).merge(Purchase.owned.uninvoiced).group(:id)
                                         .order(Arel.sql("MAX(purchases.purchased_at) DESC, MAX(purchases.id) DESC"))
                                         .includes(:person)
       end

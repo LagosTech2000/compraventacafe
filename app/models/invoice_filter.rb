@@ -11,6 +11,7 @@ class InvoiceFilter < ListFilter
   SORTS = {
     number: "invoices.number", date: "invoices.issued_on",
     producer: { sql: text("people.first_names", "people.last_names"), joins: { producer: :person } },
+    gross: "(SELECT SUM(purchases.gross_weight) FROM purchases WHERE purchases.invoice_id = invoices.id)",
     net: "(SELECT SUM(purchases.net_weight) FROM purchases WHERE purchases.invoice_id = invoices.id)",
     # QQ = net ÷ 125: the same order as the net weight.
     quintals: "(SELECT SUM(purchases.net_weight) FROM purchases WHERE purchases.invoice_id = invoices.id)",

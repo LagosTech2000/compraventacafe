@@ -126,7 +126,7 @@ class FarmsReport < Report
 
     # The coffee bought from each farm (purchases that name it).
     def sales(in_period)
-      within(Purchase.active.where.not(farm_id: nil), in_period, column: "purchases.purchased_at", type: :datetime)
+      within(Purchase.visible_to(user).active.where.not(farm_id: nil), in_period, column: "purchases.purchased_at", type: :datetime)
         .group(:farm_id).select(:farm_id, "COUNT(*) AS purchases_count", "SUM(purchases.net_weight) AS net_weight",
                                 "SUM(purchases.total) AS total")
     end
@@ -141,12 +141,12 @@ class FarmsReport < Report
 
     # What its payrolls paid (gross, before loan discounts).
     def paid(in_period)
-      within(PayrollPayment.joins(:payroll), in_period, column: "payroll_payments.paid_on")
+      within(PayrollPayment.visible_to(user).joins(:payroll), in_period, column: "payroll_payments.paid_on")
         .group("payrolls.farm_id").select("payrolls.farm_id", "SUM(payroll_payments.gross_total) AS amount")
     end
 
     def spent(in_period)
-      within(PayrollExpense.joins(:payroll), in_period, column: "payroll_expenses.spent_on")
+      within(PayrollExpense.visible_to(user).joins(:payroll), in_period, column: "payroll_expenses.spent_on")
         .group("payrolls.farm_id").select("payrolls.farm_id", "SUM(payroll_expenses.amount) AS amount")
     end
 end

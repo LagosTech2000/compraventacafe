@@ -26,7 +26,7 @@ RSpec.describe Shipment do
   it "keeps its weights when nothing they come from changes" do
     shipment = create(:shipment)
     shipment.update_columns(origin_net_weight: 1)
-    shipment.update!(remission_number: "330")
+    shipment.update!(observations: "Sale tarde")
     expect(shipment.reload.origin_net_weight).to eq(1)
   end
 
@@ -61,6 +61,6 @@ RSpec.describe Shipment do
     expect(shipment.reload.status).to eq("sold")
     expect(Shipment.unsold).not_to include(shipment)
     expect(shipment.update(origin_gross_weight: 1_200)).to be(false)
-    expect(shipment.reload.update(remission_number: "331")).to be(true)
+    expect(shipment.reload.update(observations: "Llegó bien")).to be(true)
   end
 end

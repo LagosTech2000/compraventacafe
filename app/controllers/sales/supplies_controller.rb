@@ -1,4 +1,4 @@
-module Loans
+module Sales
   class SuppliesController < ApplicationController
     before_action :set_supply, only: %i[ edit update ]
 
@@ -16,7 +16,7 @@ module Loans
       @supply = authorize Supply.new(supply_params)
 
       if @supply.save
-        close_modal_with notice: t(".success"), fallback: loans_supplies_path,
+        close_modal_with notice: t(".success"), fallback: sales_supplies_path,
                          event: "supply:created", detail: { id: @supply.id, **@supply.picker_data }
       else
         render :new, status: :unprocessable_content
@@ -28,7 +28,7 @@ module Loans
 
     def update
       if @supply.update(supply_params)
-        close_modal_with notice: t(".success"), fallback: loans_supplies_path
+        close_modal_with notice: t(".success"), fallback: sales_supplies_path
       else
         render :edit, status: :unprocessable_content
       end

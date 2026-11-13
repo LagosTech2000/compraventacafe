@@ -25,7 +25,7 @@ RSpec.describe "Loans summary" do
     expect(stat(:overdue_loans)["href"]).to eq(loans_loans_path(status: "overdue"))
   end
 
-  it "shows the collected figures without a link to who does not see Reportería" do
+  it "shows the collected figures without a link to who does not see Reportería", :all_records do
     user = create(:user).tap { create(:permission, user: it, module_key: "loans", can_read: true) }
     sign_in user
     get loans_root_path

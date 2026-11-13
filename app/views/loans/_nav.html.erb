@@ -16,7 +16,7 @@
       <%= link_to t("loans.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>
     <% end %>
     <span class="mx-1 h-6 w-px shrink-0 self-center bg-primary/20" aria-hidden="true"></span>
-    <% { simulation: loans_simulation_path, supplies: loans_supplies_path }.each do |key, path| %>
+    <% { simulation: loans_simulation_path }.each do |key, path| %>
       <% next unless can_read?("loans.#{key}") %>
       <%= link_to t("loans.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>
     <% end %>

@@ -14,8 +14,8 @@ class LoanDailyClose
     @date = date
   end
 
-  def loans = @loans ||= Loan.where(disbursed_on: date).includes(:money_account, :created_by, person: :photo_info, supply_items: :supply).order(:id).to_a
-  def payments = @payments ||= LoanPayment.where(paid_on: date).includes(:money_account, :created_by, :purchase, { payroll_payment_line: { payment: :payroll } }, loan: :person).order(:id).to_a
+  def loans = @loans ||= Loan.owned.where(disbursed_on: date).includes(:money_account, :created_by, person: :photo_info, supply_items: :supply).order(:id).to_a
+  def payments = @payments ||= LoanPayment.owned.where(paid_on: date).includes(:money_account, :created_by, :purchase, { payroll_payment_line: { payment: :payroll } }, loan: :person).order(:id).to_a
 
   def lent = loans.sum(0.to_d, &:principal)
   def lent_cash = loans.sum(0.to_d, &:cash_amount)

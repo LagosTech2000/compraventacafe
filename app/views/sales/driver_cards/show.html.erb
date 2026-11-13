@@ -1,0 +1,21 @@
+<% person = @driver.person %>
+<% content_for :title, person.full_name %>
+<%# What the remission prints of the driver, from their person. %>
+<%= turbo_frame_tag "driver-card" do %>
+  <div class="mt-2 rounded-xl bg-surface-2 px-3 py-2 text-sm" data-driver-card="<%= @driver.id %>">
+    <dl class="grid grid-cols-2 gap-x-4 gap-y-1">
+      <div>
+        <dt class="text-xs text-ink-muted"><%= t(".identity") %></dt>
+        <dd class="tabular-nums" data-driver-identity><%= person.dni.presence || "—" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-ink-muted"><%= Person.human_attribute_name(:phone) %></dt>
+        <dd class="tabular-nums" data-driver-phone><%= person.phone.present? ? format_phone(person.phone) : "—" %></dd>
+      </div>
+    </dl>
+    <% missing = [ (t(".identity") if person.dni.blank?), (Person.human_attribute_name(:phone) if person.phone.blank?) ].compact %>
+    <% if missing.any? %>
+      <p class="mt-1 text-xs text-warning"><%= t(".missing", fields: missing.to_sentence) %></p>
+    <% end %>
+  </div>
+<% end %>

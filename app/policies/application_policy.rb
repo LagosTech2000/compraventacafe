@@ -56,8 +56,10 @@ class ApplicationPolicy
     # like voiding or editing a paid invoice or sale (Fernando, 2026-11-12).
     def admin? = user.present? && user.active? && user.admin?
 
+    # The permission, and the record theirs when the user sees only what
+    # they registered (OwnedRecord, Fernando, 2026-11-13).
     def can?(action)
-      user.present? && user.can?(permission_key, action)
+      user.present? && user.can?(permission_key, action) && OwnedRecord.visible?(record, user)
     end
 
     # The submodule can depend on the record (an expense or an investment).
@@ -81,11 +83,16 @@ class ApplicationPolicy
 
     def resolve
       policy = self.class.module_parent
-      policy.module_key && user&.can?(policy.permission_key, :read) ? scope.all : scope.none
+      return scope.none unless policy.module_key && user&.can?(policy.permission_key, :read)
+
+      owned(scope.all)
     end
 
     private
 
     attr_reader :user, :scope
+
+    # Only what the user registered, when they see only that (OwnedRecord).
+    def owned(relation) = relation.klass.include?(OwnedRecord) ? relation.visible_to(user) : relation
   end
 end

@@ -13,7 +13,11 @@
   <% end %>
 </div>
 
-<%# What there is of each supply: entered − lent (loans since the start). %>
+<%= render "sales/supply_stocks/tabs" %>
+
+<%# Of each supply (Fernando, 2026-11-13): in the warehouse (entered −
+    delivered), still to deliver and available to lend (entered − lent, it
+    may be below zero: who is owed opens with a click). %>
 <section class="mt-6" aria-labelledby="supply-stock-title">
   <h2 id="supply-stock-title" class="mb-3 text-lg font-semibold"><%= t(".stock") %></h2>
   <% if @stock.rows.any? %>
@@ -24,19 +28,38 @@
             <th><%= t(".columns.supply") %></th>
             <th class="text-right"><%= t(".columns.entered") %></th>
             <th class="text-right"><%= t(".columns.lent") %></th>
-            <th class="text-right"><%= t(".columns.stock") %></th>
+            <th class="text-right"><%= t(".columns.delivered") %></th>
+            <th class="text-right"><%= t(".columns.to_deliver") %></th>
+            <th class="text-right"><%= t(".columns.in_warehouse") %></th>
+            <th class="text-right"><%= t(".columns.available") %></th>
             <th class="text-right"><%= t(".columns.invested") %></th>
             <th class="cell-actions" data-sort="false"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
           </tr>
         </thead>
         <tbody>
+          <% owed_path = ->(supply) { sales_supply_deliveries_path(supply_id: supply.id) } %>
           <% @stock.rows.each do |row| %>
             <% quantity = ->(value) { "#{number_with_precision(value, precision: 2, delimiter: ",", strip_insignificant_zeros: true)} #{row.supply.unit}" } %>
             <tr id="<%= dom_id(row.supply, :stock) %>">
               <td class="font-medium"><%= row.supply.name %><% unless row.supply.active? %> <span class="badge badge-neutral"><%= t(".inactive") %></span><% end %></td>
               <td class="whitespace-nowrap text-right tabular-nums" data-sort-value="<%= row.entered %>"><%= quantity.call(row.entered) %></td>
               <td class="whitespace-nowrap text-right tabular-nums" data-sort-value="<%= row.lent %>"><%= quantity.call(row.lent) %></td>
-              <td class="whitespace-nowrap text-right font-semibold tabular-nums <%= "text-danger" unless row.stock.positive? %>" data-sort-value="<%= row.stock %>" data-stock><%= quantity.call(row.stock) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums" data-sort-value="<%= row.delivered %>"><%= quantity.call(row.delivered) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums" data-sort-value="<%= row.to_deliver %>" data-to-deliver>
+                <% if row.to_deliver.positive? %>
+                  <%= link_to quantity.call(row.to_deliver), owed_path.call(row.supply), class: "link font-semibold text-warning" %>
+                <% else %>
+                  <%= quantity.call(row.to_deliver) %>
+                <% end %>
+              </td>
+              <td class="whitespace-nowrap text-right tabular-nums" data-sort-value="<%= row.in_warehouse %>" data-in-warehouse><%= quantity.call(row.in_warehouse) %></td>
+              <td class="whitespace-nowrap text-right font-semibold tabular-nums <%= "text-danger" if row.available.negative? %>" data-sort-value="<%= row.available %>" data-available>
+                <% if row.available.negative? %>
+                  <%= link_to quantity.call(row.available), owed_path.call(row.supply), class: "link text-danger", title: t(".owed_hint") %>
+                <% else %>
+                  <%= quantity.call(row.available) %>
+                <% end %>
+              </td>
               <td class="whitespace-nowrap text-right tabular-nums" data-sort-value="<%= row.invested %>"><%= format_money(row.invested) %></td>
               <td class="cell-actions">
                 <% if policy(SupplyEntry).create? && row.supply.active? %>
@@ -48,6 +71,7 @@
         </tbody>
       </table>
     </div>
+    <p class="mt-2 text-xs text-ink-muted"><%= t(".legend") %></p>
   <% else %>
     <p class="empty-state"><%= t(".no_supplies") %></p>
   <% end %>
@@ -74,11 +98,10 @@
             <thead>
               <tr>
                 <%= sort_th t(".columns.received_on"), :received_on, sorting %>
-                <%= sort_th t(".columns.supply"), :supply, sorting %>
-                <%= sort_th t(".columns.quantity"), :quantity, sorting, class: "text-right" %>
+                <%= sort_th t(".columns.lines"), :lines, sorting %>
                 <%= sort_th t(".columns.amount"), :amount, sorting, class: "text-right" %>
-                <%= sort_th t(".columns.unit_cost"), :unit_cost, sorting, class: "text-right" %>
                 <%= sort_th t(".columns.payee"), :payee, sorting %>
+                <%= sort_th t(".columns.receipt_number"), :receipt_number, sorting %>
                 <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
               </tr>
             </thead>
@@ -86,11 +109,10 @@
               <% @entries.each do |entry| %>
                 <tr id="<%= dom_id(entry) %>">
                   <td class="whitespace-nowrap"><%= l(entry.received_on) %></td>
-                  <td><%= entry.supply.name %></td>
-                  <td class="whitespace-nowrap text-right tabular-nums"><%= number_with_precision(entry.quantity, precision: 2, delimiter: ",", strip_insignificant_zeros: true) %> <%= entry.supply.unit %></td>
+                  <td><%= entry.summary %></td>
                   <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(entry.amount) %></td>
-                  <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(entry.unit_cost) %></td>
                   <td><%= entry.payee || "—" %></td>
+                  <td><%= entry.receipt_number || "—" %></td>
                   <td class="cell-actions"><%= detail_button sales_supply_entry_path(entry) %></td>
                 </tr>
               <% end %>

@@ -23,7 +23,7 @@
                 <td><%= render "sales/lots/origin", lot: portion.lot %></td>
                 <td class="whitespace-nowrap" data-sort-value="<%= portion.lot.entered_at.to_i %>"><%= l(portion.lot.entered_at) %></td>
               <% end %>
-              <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(portion.net) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(portion.gross) %> / <%= format_pounds(portion.net) %></td>
             </tr>
           <% end %>
         </tbody>

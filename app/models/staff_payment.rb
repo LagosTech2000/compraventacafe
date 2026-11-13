@@ -10,6 +10,7 @@
 # is removed, which frees its advances and goals again.
 class StaffPayment < ApplicationRecord
   include Auditable
+  include OwnedRecord
   include LiveUpdates
   live_updates :finance
 

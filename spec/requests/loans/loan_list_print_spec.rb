@@ -78,7 +78,7 @@ RSpec.describe "Loans list: zone, totals and printing" do
   end
 
   it "takes seeing the loans" do
-    sign_in create(:user).tap { create(:permission, user: it, module_key: "loans", submodule_key: "supplies", can_read: true) }
+    sign_in create(:user).tap { create(:permission, user: it, module_key: "loans", submodule_key: "simulation", can_read: true) }
     get print_loans_loans_path
     expect(response).to redirect_to(root_path)
   end

@@ -33,7 +33,7 @@ class IncomeFilter < ListFilter
 
   def incomes
     @incomes ||= begin
-      list = MoneyMovements.new(range: from || to ? (from..to) : nil, account: account_id,
+      list = MoneyMovements.new(range: from || to ? (from..to) : nil, account: account_id, owner: Current.owner,
                                 sources: source ? sources & [ source ] : sources).all
       if q
         text = I18n.transliterate(q).downcase

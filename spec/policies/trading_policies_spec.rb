@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe "Trading policies" do
+RSpec.describe "Trading policies", :all_records do
   def trader(**flags)
     create(:user).tap { |u| create(:permission, user: u, module_key: "trading", **flags) }.reload
   end

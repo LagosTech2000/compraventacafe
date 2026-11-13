@@ -1,39 +1,16 @@
 require "rails_helper"
 
-# What a shipment cost (Fernando, 2026-11-12), on screen: the invoices are
-# filtered in place, marked and linked; a cost shows its amount as it is typed.
+# What a shipment cost (Fernando, 2026-11-12), on screen: a cost shows its
+# amount as it is typed. (Its lots, from 2026-11-13: coffee_batches_spec.)
 RSpec.describe "Shipment cost", type: :system do
   let(:admin) { create(:user, :admin) }
 
-  def invoice_for(name)
-    producer = create(:producer, person: create(:person, first_names: name, last_names: "Zelaya"))
-    purchase = create(:purchase, producer:)
-    InvoiceIssuer.new(producer:, user: admin, purchase_ids: [ purchase.id ], payment_status: "pending").call.invoice
-  end
-
-  it "filters, marks and links invoices, then registers a cost per quintal" do
-    ana = invoice_for("Ana")
-    invoice_for("Bruno")
+  it "registers a cost per quintal, showing its amount as it is typed" do
     shipment = create(:shipment)
     sign_in_as(admin)
 
     visit sales_shipment_path(shipment)
     expect(page).to have_css("[data-cost-missing]")
-    click_link "Elegir facturas"
-    expect(page).to have_css("[data-shipment-invoice-choices] tbody tr", count: 2)
-    page.execute_script("document.body.dataset.pageMarker = 'still here'")
-
-    fill_in "Buscar", with: "Ana"
-    expect(page).to have_css("[data-shipment-invoice-choices] tbody tr", count: 1)
-    expect(page.evaluate_script("document.body.dataset.pageMarker")).to eq("still here")
-    expect(page).to have_button("Ligar a la salida", disabled: true)
-    check "Marcar la factura #{ana.display_number}"
-    expect(page).to have_text("Facturas marcadas: 1")
-    click_button "Ligar a la salida"
-
-    expect(page).to have_css(".toast", text: "1 factura ligada a la salida.")
-    expect(page).to have_no_css("[data-cost-missing]")
-    within("[data-shipment-invoices]") { expect(page).to have_text("Ana Zelaya") }
 
     click_link "Registrar gasto"
     within("dialog[open]") do

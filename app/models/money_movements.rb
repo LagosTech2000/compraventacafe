@@ -45,11 +45,14 @@ class MoneyMovements
   end
 
   # range: dates (open ends allowed; nil for all). account: an account id,
-  # :none (without an account) or nil (any).
-  def initialize(range: nil, account: nil, sources: SOURCES)
+  # :none (without an account) or nil (any). owner: a user who sees only
+  # what they registered (OwnedRecord, Fernando, 2026-11-13); an account's
+  # statement is of the whole business and goes without one.
+  def initialize(range: nil, account: nil, sources: SOURCES, owner: nil)
     @range = range
     @account = account
     @sources = sources
+    @owner = owner
   end
 
   def all
@@ -77,6 +80,7 @@ class MoneyMovements
 
     # A relation narrowed to the dates and the account.
     def narrowed(relation, date, account_column)
+      relation = relation.where(relation.klass.table_name => { created_by_id: @owner.id }) if @owner && OwnedRecord.restricted?(@owner)
       relation = relation.where(date => @range) if @range
       case @account
       when nil then relation

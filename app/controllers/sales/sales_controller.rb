@@ -24,7 +24,7 @@ module Sales
         @shipments = @buyer.shipments.unsold.newest_first
       else
         # Buyers whose latest shipment ready to sell is most recent come first.
-        @buyers_to_sell = Buyer.joins(:shipments).merge(Shipment.unsold).group(:id)
+        @buyers_to_sell = Buyer.joins(:shipments).merge(Shipment.owned.unsold).group(:id)
                                .order(Arel.sql("MAX(shipments.departed_at) DESC, buyers.id DESC"))
                                .select("buyers.*", "COUNT(shipments.id) AS shipments_count",
                                        "SUM(shipments.destination_net_weight) AS net_total")
@@ -71,7 +71,7 @@ module Sales
       # Its shipments and the buyer's free ones of its coffee state.
       def editable_shipments
         ids = @sale.lines.select { it.active? }.map(&:shipment_id)
-        Shipment.where(id: ids).or(@sale.buyer.shipments.unsold.where(coffee_state: @sale.coffee_state)).order(:number)
+        Shipment.where(id: ids).or(@sale.buyer.shipments.owned.unsold.where(coffee_state: @sale.coffee_state)).order(:number)
       end
 
       def set_sale

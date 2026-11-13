@@ -6,5 +6,6 @@ module AuthenticationHelpers
   def sign_in(user)
     delete session_path if cookies[:session_id].present?
     post session_path, params: { email_address: user.email_address, password: PASSWORD }
+    SpecOwner.user = user
   end
 end

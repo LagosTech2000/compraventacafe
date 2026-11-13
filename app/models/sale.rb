@@ -18,6 +18,7 @@
 # below what was collected is saved and shows as overpaid.
 class Sale < ApplicationRecord
   include Auditable
+  include OwnedRecord
   include LiveUpdates
   live_updates :sales
 

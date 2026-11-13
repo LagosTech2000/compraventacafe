@@ -267,7 +267,7 @@ class DemoData
       [ [ 5, 900, 6, 0, :paid ], [ 3, 800, 5, 1, :partial ], [ 2, 700, 5, -1.5, nil ], [ 0, 600, 4, nil, nil ] ].each_with_index do |(days_ago, gross, sacks, loss, sale), i|
         buyer = buyers[i % buyers.size]
         departed_at = moment_of(Time.zone.today - days_ago)
-        shipment = Shipment.create!(buyer:, created_by: @user, departed_at:, coffee_state: "wet_parchment", remission_number: (330 + i).to_s,
+        shipment = Shipment.create!(buyer:, created_by: @user, departed_at:, coffee_state: "wet_parchment",
                                     # A carrier (with its trip price) or a driver, one or the other.
                                     **(i.even? ? { carrier:, trip_price: 3_500 } : { driver_name: "Mario Demo" }),
                                     vehicle:, origin_gross_weight: gross, origin_sacks: sacks,

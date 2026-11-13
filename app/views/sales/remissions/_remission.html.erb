@@ -7,8 +7,8 @@
 <% vehicle = shipment.vehicle %>
 <article class="rounded-2xl border border-line bg-white p-5 shadow-[0_1px_2px_rgb(29_21_18/0.04)] break-inside-avoid print:p-3 print:shadow-none print:rounded-none print:border-ink"
          data-remission>
-  <%= render "shared/print_letterhead", title: t("#{scope}.title"), number: shipment.remission_number.presence || "________",
-        label:, rtn: true, contact: true, subtitle: t("#{scope}.shipment", number: shipment.display_number),
+  <%= render "shared/print_letterhead", title: t("#{scope}.title"), number: shipment.display_number,
+        label:, rtn: true, contact: true,
         badge: (shipment.voided? ? render("sales/shipments/status", shipment:) : nil) %>
 
   <p class="mt-3 text-right text-sm" data-place-date>

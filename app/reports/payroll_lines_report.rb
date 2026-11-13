@@ -54,7 +54,7 @@ class PayrollLinesReport < Report
   kpi :days, :number, "COALESCE(SUM(payroll_payment_lines.quantity) FILTER (WHERE payroll_payment_lines.basis = 'daily'), 0)"
 
   def scope
-    PayrollPaymentLine.joins(payment: { payroll: :farm }).joins(member: :person)
+    PayrollPaymentLine.joins(payment: { payroll: :farm }).joins(member: :person).merge(PayrollPayment.visible_to(user))
   end
 
   def apply_filters(relation)

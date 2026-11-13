@@ -1,0 +1,39 @@
+<%# A lot's header: where it is, which coffee, how many gross pounds at most
+    (Fernando, 2026-11-13). Its invoices come after (or from its page). %>
+<% locked = batch.persisted? && batch.batch_invoices.exists? %>
+<%= form_with model: [ :sales, batch ], class: form_surface_class("max-w-2xl space-y-5"), data: { controller: "form-validation" } do |form| %>
+  <%= render "shared/form_errors", record: batch %>
+  <%= hidden_field_tag :picker, "1", id: nil if picker_request? %>
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div>
+      <%= form.label :batched_on, class: "field-label" %>
+      <%= form.date_field :batched_on, required: true, class: "field-input" %>
+    </div>
+    <div>
+      <%= form.label :gross_limit, class: "field-label" %>
+      <%= form.number_field :gross_limit, required: true, min: 0.01, max: CoffeeBatch::MAX_POUNDS - 0.01, step: 0.01, inputmode: "decimal", class: "field-input text-lg" %>
+      <p class="mt-1 text-xs text-ink-muted"><%= t("sales.coffee_batches.form.limit_help") %></p>
+    </div>
+    <div>
+      <%= form.label :coffee_state, class: "field-label" %>
+      <%= form.select :coffee_state, enum_options(Purchase, :coffee_state, Purchase::COFFEE_STATES), { prompt: t("sales.coffee_batches.form.pick_state") },
+            required: true, disabled: locked, class: "field-input" %>
+    </div>
+    <div>
+      <%= form.label :warehouse_id, class: "field-label" %>
+      <%= form.collection_select :warehouse_id, Warehouse.active.or(Warehouse.where(id: batch.warehouse_id)).order(:name), :id, :name,
+            { prompt: t("shared.select.pick_warehouse") }, required: true, disabled: locked, class: "field-input" %>
+    </div>
+    <% if locked %>
+      <p class="text-xs text-ink-muted sm:col-span-2"><%= t("sales.coffee_batches.form.locked") %></p>
+    <% end %>
+    <div class="sm:col-span-2">
+      <%= form.label :observations, class: "field-label" %>
+      <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+    </div>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit batch.persisted? ? t("sales.coffee_batches.form.update") : t("sales.coffee_batches.form.create"), class: "btn btn-primary" %>
+    <%= cancel_button batch.persisted? ? sales_coffee_batch_path(batch) : sales_coffee_batches_path %>
+  </div>
+<% end %>

@@ -5,6 +5,7 @@
 # it again).
 class StaffAdvance < ApplicationRecord
   include Auditable
+  include OwnedRecord
   include LiveUpdates
   live_updates :finance
 

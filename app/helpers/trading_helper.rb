@@ -3,6 +3,13 @@ module TradingHelper
     number_with_precision(value, precision: 2, delimiter: ",")
   end
 
+  # Gross pounds first and net beside (Fernando, 2026-11-13: «en toda parte
+  # que se muestren las libras netas, mostrar las brutas primero y a la par
+  # las netas»): "1,000.00 lb brutas · 487.06 lb netas".
+  def format_gross_net(gross, net)
+    t("shared.pounds.gross_net", gross: gross ? format_pounds(gross) : "—", net: net ? format_pounds(net) : "—")
+  end
+
   def format_money(value)
     number_to_currency(value)
   end

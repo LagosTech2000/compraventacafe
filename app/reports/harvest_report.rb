@@ -44,7 +44,7 @@ class HarvestReport < Report
   kpi(:best_day, :number) { |relation, _| relation.group(:worked_on).sum(:cans).values.max }
 
   def scope
-    HarvestEntry.joins(member: [ :person, { payroll: :farm } ])
+    HarvestEntry.joins(member: [ :person, { payroll: :farm } ]).merge(Payroll.visible_to(user))
   end
 
   def apply_filters(relation)

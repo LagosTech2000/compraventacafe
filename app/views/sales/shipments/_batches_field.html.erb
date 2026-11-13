@@ -1,0 +1,40 @@
+<%# The lots the shipment takes (Fernando, 2026-11-13): the free lots of its
+    coffee state and warehouse (batch_picker_controller.js shows only those
+    as they change), and «Nuevo lote», made in a window with its invoices,
+    that comes back marked. %>
+<% batches = CoffeeBatch.owned.free.or(CoffeeBatch.where(id: shipment.coffee_batch_ids)).includes(:warehouse).order(batched_on: :desc, id: :desc).to_a %>
+<% totals = CoffeeBatch::Totals.by_batch(batches.map(&:id)) %>
+<% chosen = shipment.batch_ids %>
+<section class="space-y-3" aria-labelledby="shipment-batches-title" data-controller="batch-picker"
+         data-action="coffee_batch:created@window->batch-picker#add"
+         data-batch-picker-new-url-value="<%= new_sales_coffee_batch_path(picker: 1) %>"
+         data-pounds-label="<%= t("sales.shipments.form.batch_pounds", gross: "%{gross}", net: "%{net}") %>">
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <div>
+      <h2 id="shipment-batches-title" class="text-lg font-semibold"><%= t("sales.shipments.form.batches") %></h2>
+      <p class="text-xs text-ink-muted"><%= t("sales.shipments.form.batches_help") %></p>
+    </div>
+    <% if policy(CoffeeBatch).create? %>
+      <%= modal_link_to t("sales.shipments.form.new_batch"), new_sales_coffee_batch_path(picker: 1, coffee_state: shipment.coffee_state, warehouse_id: shipment.warehouse_id),
+            class: "btn btn-sm btn-primary", data: { batch_picker_target: "newLink" } %>
+    <% end %>
+  </div>
+  <%= hidden_field_tag "shipment[batch_ids][]", "", id: nil %>
+  <ul class="grid gap-2 sm:grid-cols-2" data-batch-picker-target="list">
+    <% batches.each do |batch| %>
+      <% sums = totals.fetch(batch.id, CoffeeBatch::Totals.zero) %>
+      <li data-batch-picker-target="item" data-coffee-state="<%= batch.coffee_state %>" data-warehouse-id="<%= batch.warehouse_id %>">
+        <label class="data-card flex cursor-pointer items-start gap-3">
+          <input type="checkbox" name="shipment[batch_ids][]" value="<%= batch.id %>" class="mt-1 size-4 accent-primary" <%= "checked" if chosen.include?(batch.id) %>>
+          <span class="min-w-0 text-sm">
+            <span class="block font-medium"><%= batch.label %> · <%= l(batch.batched_on) %></span>
+            <span class="block text-xs text-ink-muted">
+              <%= t("sales.shipments.form.batch_pounds", gross: format_pounds(sums.gross), net: format_pounds(sums.net)) %>
+            </span>
+          </span>
+        </label>
+      </li>
+    <% end %>
+  </ul>
+  <p class="empty-state" data-batch-picker-target="empty" hidden><%= t("sales.shipments.form.no_batches") %></p>
+</section>

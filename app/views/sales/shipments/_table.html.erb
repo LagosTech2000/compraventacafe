@@ -3,6 +3,8 @@
     show_buyer: false on a buyer's own page. sorting: as trading/purchases/_table. %>
 <% show_buyer = local_assigns.fetch(:show_buyer, true) %>
 <% sorting = local_assigns[:sorting] %>
+<%# Shrink of each one (Fernando, 2026-11-13), in one query. %>
+<% shrinks = Shipment.shrinks(shipments.map(&:id)) %>
 <div class="@container">
   <ul class="space-y-3 @3xl:hidden">
     <% shipments.each do |shipment| %>
@@ -10,7 +12,7 @@
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0">
             <p class="font-medium"><%= t("sales.shipments.show.title", number: shipment.display_number) %><% if show_buyer %> · <%= shipment.buyer.name %><% end %></p>
-            <p class="text-xs text-ink-muted"><%= [ l(shipment.departed_at), shipment.human_coffee_state, shipment.remission_number ].compact.join(" · ") %></p>
+            <p class="text-xs text-ink-muted"><%= [ l(shipment.departed_at), shipment.human_coffee_state ].compact.join(" · ") %></p>
           </div>
           <div class="flex shrink-0 flex-wrap justify-end gap-2">
             <% unless shipment.voided? %><%= page_link_to t("sales.shipments.table.remission"), sales_shipment_remission_path(shipment), class: "btn btn-sm" %><% end %>
@@ -18,9 +20,12 @@
           </div>
         </div>
         <dl class="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
-          <div><dt class="text-xs text-ink-muted"><%= t("sales.shipments.table.origin_net") %></dt><dd class="tabular-nums"><%= shipment.origin_missing? ? t("sales.difference.no_origin") : format_pounds(shipment.origin_net_weight) %></dd></div>
-          <div><dt class="text-xs text-ink-muted"><%= t("sales.shipments.table.destination_net") %></dt><dd class="tabular-nums"><%= shipment.destination_net_weight ? format_pounds(shipment.destination_net_weight) : "—" %></dd></div>
+          <div class="col-span-2"><dt class="text-xs text-ink-muted"><%= t("sales.shipments.table.origin_net") %></dt><dd class="tabular-nums"><%= shipment.origin_missing? ? t("sales.difference.no_origin") : format_gross_net(shipment.origin_gross_weight, shipment.origin_net_weight) %></dd></div>
+          <div class="col-span-2"><dt class="text-xs text-ink-muted"><%= t("sales.shipments.table.destination_net") %></dt><dd class="tabular-nums"><%= shipment.destination_net_weight ? format_gross_net(shipment.destination_gross_weight, shipment.destination_net_weight) : "—" %></dd></div>
           <div class="col-span-2"><dt class="text-xs text-ink-muted"><%= t("sales.shipments.table.difference") %></dt><dd><%= weight_difference(shipment) %></dd></div>
+          <% shrink_gross, shrink_net = shrinks[shipment.id] %>
+          <div class="col-span-2"><dt class="text-xs text-ink-muted"><%= t("sales.shipments.table.shrink") %></dt>
+            <dd class="tabular-nums"><span class="<%= shrink_class(shrink_gross) %>"><%= format_shrink(shrink_gross) %></span><% if shrink_net %> <span class="text-xs text-ink-muted"><%= t("sales.shipments.table.shrink_net", value: format_shrink(shrink_net)) %></span><% end %></dd></div>
         </dl>
         <p class="mt-2 text-sm"><%= render "sales/shipments/status", shipment: shipment %></p>
       </li>
@@ -34,11 +39,11 @@
           <%= sort_th t("sales.shipments.table.number"), :number, sorting %>
           <%= sort_th Shipment.human_attribute_name(:departed_at), :departed_at, sorting %>
           <%= show_buyer ? sort_th(Shipment.human_attribute_name(:buyer), :buyer, sorting) : sort_th(Shipment.human_attribute_name(:coffee_state), :coffee_state, sorting) %>
-          <%= sort_th Shipment.human_attribute_name(:remission_number), :remission, sorting, class: "hidden @5xl:table-cell" %>
           <%= sort_th t("sales.shipments.table.sacks"), :sacks, sorting, class: "hidden text-right @5xl:table-cell" %>
           <%= sort_th t("sales.shipments.table.origin_net"), :origin_net, sorting, class: "text-right" %>
           <%= sort_th t("sales.shipments.table.destination_net"), :destination_net, sorting, class: "text-right" %>
           <%= sort_th t("sales.shipments.table.difference"), :difference_percent, sorting, class: "text-right" %>
+          <%= sort_th t("sales.shipments.table.shrink"), :shrink, sorting, class: "text-right" %>
           <%= sort_th t("sales.shipments.table.status"), :status, sorting %>
           <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
         </tr>
@@ -56,13 +61,27 @@
                 <%= shipment.human_coffee_state %>
               <% end %>
             </td>
-            <td class="hidden @5xl:table-cell"><%= shipment.remission_number || "—" %></td>
             <td class="hidden text-right tabular-nums @5xl:table-cell"><%= shipment.origin_sacks %></td>
             <td class="whitespace-nowrap text-right tabular-nums">
-              <% if shipment.origin_missing? %><span class="badge badge-warning" data-no-origin><%= t("sales.difference.no_origin") %></span><% else %><%= format_pounds(shipment.origin_net_weight) %><% end %>
+              <% if shipment.origin_missing? %>
+                <span class="badge badge-warning" data-no-origin><%= t("sales.difference.no_origin") %></span>
+              <% else %>
+                <%= format_pounds(shipment.origin_gross_weight) %>
+                <span class="block text-xs text-ink-muted"><%= t("sales.shipments.table.net_line", net: format_pounds(shipment.origin_net_weight)) %></span>
+              <% end %>
             </td>
-            <td class="whitespace-nowrap text-right tabular-nums"><%= shipment.destination_net_weight ? format_pounds(shipment.destination_net_weight) : "—" %></td>
+            <td class="whitespace-nowrap text-right tabular-nums">
+              <% if shipment.destination_net_weight %>
+                <%= format_pounds(shipment.destination_gross_weight) %>
+                <span class="block text-xs text-ink-muted"><%= t("sales.shipments.table.net_line", net: format_pounds(shipment.destination_net_weight)) %></span>
+              <% else %>—<% end %>
+            </td>
             <td class="text-right" data-sort-value="<%= shipment.difference_percent %>"><%= weight_difference(shipment) %></td>
+            <% shrink_gross, shrink_net = shrinks[shipment.id] %>
+            <td class="whitespace-nowrap text-right tabular-nums" data-sort-value="<%= shrink_gross %>" data-shrink>
+              <span class="<%= shrink_class(shrink_gross) %>"><%= format_shrink(shrink_gross) %></span>
+              <% if shrink_net %><span class="block text-xs text-ink-muted"><%= t("sales.shipments.table.shrink_net", value: format_shrink(shrink_net)) %></span><% end %>
+            </td>
             <td><%= render "sales/shipments/status", shipment: shipment %></td>
             <td class="cell-actions">
               <div class="flex justify-end gap-2">

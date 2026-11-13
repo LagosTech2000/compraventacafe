@@ -1,4 +1,4 @@
-<%= form_with model: [ :loans, supply ], class: form_surface_class("max-w-xl space-y-5"), data: { controller: "form-validation" } do |form| %>
+<%= form_with model: [ :sales, supply ], class: form_surface_class("max-w-xl space-y-5"), data: { controller: "form-validation" } do |form| %>
   <%= hidden_field_tag :picker, "1" if picker_request? %>
   <%= render "shared/form_errors", record: supply %>
   <div>
@@ -34,6 +34,6 @@
   <% end %>
   <div class="flex flex-wrap gap-3">
     <%= form.submit class: "btn btn-primary" %>
-    <%= cancel_button loans_supplies_path %>
+    <%= cancel_button sales_supplies_path %>
   </div>
 <% end %>

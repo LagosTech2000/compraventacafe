@@ -12,6 +12,7 @@
 # account and stays out of the ledger and the balances.
 class SalePayment < ApplicationRecord
   include Auditable
+  include OwnedRecord
   include HasMoneyAccount
   include LiveUpdates
   live_updates :sales

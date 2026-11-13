@@ -1,0 +1,4 @@
+<% content_for :title, t(".title", batch: @batch.label) %>
+<%= render "sales/nav" %>
+<h1 class="mb-6 text-2xl font-bold"><%= t(".title", batch: @batch.label) %></h1>
+<%= render "form", batch: @batch %>

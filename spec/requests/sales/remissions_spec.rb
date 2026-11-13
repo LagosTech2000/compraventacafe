@@ -19,7 +19,7 @@ RSpec.describe "Sales remissions" do
     driver = create(:staff_member, person: create(:person, :collaborator, first_names: "Roberto", last_names: "Gallardo",
                                                                           phone: "99887766", dni: "0801199012345"))
     vehicle = create(:vehicle, vehicle_type: create(:vehicle_type, name: "Camión"), brand_model: "Isuzu NQR", color: "Blanco", plate: "JDE 6299")
-    shipment = create(:shipment, buyer:, driver:, vehicle:, remission_number: "00000452", origin_sacks: 7,
+    shipment = create(:shipment, buyer:, driver:, vehicle:, origin_sacks: 7,
                                  departed_at: Time.zone.local(2026, 11, 6, 8), observations: "Café de la bodega 1")
     sign_in admin
 
@@ -28,8 +28,10 @@ RSpec.describe "Sales remissions" do
     expect(page.css("[data-remission]").size).to eq(2)
     header = page.at_css("[data-remission] header").text.squish
     expect(header).to include("Compra de Café El Rey David", "De: Emanuel Espinal Bonilla", "Teléfonos: 9785-8796 / 9586-7270",
-                              "RTN 07041970002943", "Remisión 00000452", "ORIGINAL")
-    expect(page.at_css("[data-place-date]").text.squish).to eq("Mata de Plátano, Morocelí, 6 de noviembre de 2026")
+                              "RTN 07041970002943", "Remisión #{shipment.display_number}", "ORIGINAL")
+    # Its number is the shipment's, and nothing calls it «salida N.º» (Fernando, 2026-11-13).
+    expect(response.body).not_to match(/Salida \d/)
+    expect(page.at_css("[data-place-date]").text.squish).to eq("Mata de Plátano, Morocelí, Vie 6 de noviembre de 2026")
 
     expect(field("Destino")).to include("El Paraíso")
     expect(field("Para")).to eq("Beneficio Betafe")
@@ -48,12 +50,11 @@ RSpec.describe "Sales remissions" do
     expect(response.body).to include("Café de la bodega 1", "Remisor", "Recibí conforme", "Motorista")
   end
 
-  it "leaves the number and what it does not know as lines to fill by hand" do
+  it "leaves what it does not know as lines to fill by hand" do
     shipment = create(:shipment, driver_name: "Pedro Lara")
     sign_in admin
     get sales_shipment_remission_path(shipment)
-    expect(page.at_css("[data-remission] header").text).to include("Remisión ________")
-    expect(response.body).to include(I18n.t("sales.remissions.show.no_number"))
+    expect(page.at_css("[data-remission] header").text).to include("Remisión #{shipment.display_number}")
     expect(field("Nombre de motorista")).to eq("Pedro Lara")
     expect(field("Teléfono")).to eq("")
     expect(field("Placa No.")).to eq("")

@@ -39,10 +39,11 @@ class CoffeeStock
       purchased = purchases.sum(:net_weight)
       gross_purchased = purchases.sum(:gross_weight)
       shipments = in_warehouse(Shipment.active.where(departed_at: ..until_moment))
-      shipped = shipments.group(:coffee_state).sum(:origin_net_weight)
-      gross_shipped = shipments.group(:coffee_state).sum(:origin_gross_weight)
+      # What left: its lots' share of each purchase, or its local scale (Fernando, 2026-11-13).
+      shipped = shipments.group(:coffee_state).sum(Arel.sql(Shipment::STOCK_NET_SQL))
+      gross_shipped = shipments.group(:coffee_state).sum(Arel.sql(Shipment::STOCK_GROSS_SQL))
       in_transit = shipments.where("shipments.received_on IS NULL OR shipments.received_on > ?", date)
-                            .group(:coffee_state).sum(:origin_net_weight)
+                            .group(:coffee_state).sum(Arel.sql(Shipment::STOCK_NET_SQL))
       unsold = shipments.where(received_on: ..date).where.not(id: SaleLine.active.select(:shipment_id))
                         .group(:coffee_state).sum(:destination_net_weight)
       weighed = conversions.group(:from_state)
@@ -79,7 +80,7 @@ class CoffeeStock
     totals = Hash.new(0.to_d)
     add = ->(sums, sign) { sums.each { |key, net| totals[key] += sign * net.to_d } }
     add.call(Purchase.active.where(purchased_at: ..until_moment).group(:warehouse_id, :coffee_state).sum(:net_weight), 1)
-    add.call(Shipment.active.where(departed_at: ..until_moment).group(:warehouse_id, :coffee_state).sum(:origin_net_weight), -1)
+    add.call(Shipment.active.where(departed_at: ..until_moment).group(:warehouse_id, :coffee_state).sum(Arel.sql(Shipment::STOCK_NET_SQL)), -1)
     add.call(CoffeeConversion.active.where(weighed_at: ..until_moment).group(:warehouse_id, :from_state).sum(:input_net_weight), -1)
     add.call(CoffeeConversion.active.where(finished_at: ..until_moment).group(:output_warehouse_id, :to_state).sum(:output_net_weight), 1)
     moved = WarehouseTransfer.active.where(transferred_at: ..until_moment)

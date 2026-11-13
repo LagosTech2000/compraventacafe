@@ -1,0 +1,100 @@
+<% content_for :title, @batch.label %>
+<%= live_updates_from :sales %>
+<%= render "sales/nav" %>
+<% scope = "sales.coffee_batches.show" %>
+<% line_policy = policy(CoffeeBatchInvoice.new(coffee_batch: @batch)) %>
+
+<div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= @batch.label %></h1>
+    <p class="mt-1 text-sm text-ink-muted">
+      <%= [ l(@batch.batched_on, format: :long), @batch.human_coffee_state, @batch.warehouse.name ].join(" · ") %>
+    </p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <% if policy(@batch).update? %>
+      <%= modal_link_to t("#{scope}.edit"), edit_sales_coffee_batch_path(@batch), class: "btn" %>
+    <% end %>
+    <% if policy(@batch).destroy? %>
+      <%= button_to t("#{scope}.destroy"), sales_coffee_batch_path(@batch), method: :delete, class: "btn",
+            form: { data: { turbo_confirm: t("#{scope}.confirm_destroy") } } %>
+    <% end %>
+  </div>
+</div>
+
+<%# Its pounds against its limit, gross first (Fernando, 2026-11-13). %>
+<dl class="flex flex-wrap gap-3" data-batch-figures>
+  <% { gross: format_pounds(@batch.gross_weight), net: format_pounds(@batch.net_weight), gross_limit: format_pounds(@batch.gross_limit),
+       room: format_pounds(@batch.room), value: format_money(@batch.value) }.each do |key, value| %>
+    <div class="stat min-w-0 flex-1 basis-36" data-batch="<%= key %>">
+      <dt><%= t("#{scope}.figures.#{key}") %></dt>
+      <dd data-live-value><%= value %></dd>
+    </div>
+  <% end %>
+</dl>
+
+<p class="mt-3 text-sm" data-batch-shipment>
+  <% if @batch.shipment %>
+    <%= t("#{scope}.on_shipment") %> <%= link_to shipment_label(@batch.shipment), sales_shipment_path(@batch.shipment), class: "link", data: { turbo_frame: "_top" } %>
+  <% else %>
+    <span class="badge badge-neutral"><%= t("sales.coffee_batches.table.free") %></span> <%= t("#{scope}.free_help") %>
+  <% end %>
+</p>
+<% if @batch.observations.present? %>
+  <p class="mt-2 text-sm text-ink-muted"><%= @batch.observations %></p>
+<% end %>
+
+<%# Its invoices, each with the share it takes. %>
+<section class="mt-6" aria-labelledby="batch-invoices-title">
+  <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+    <h2 id="batch-invoices-title" class="text-lg font-semibold"><%= t("#{scope}.invoices") %></h2>
+    <% if line_policy.create? && @batch.room.positive? %>
+      <%= page_link_to t("#{scope}.add_invoices"), new_sales_coffee_batch_invoice_path(@batch), class: "btn btn-sm btn-primary" %>
+    <% end %>
+  </div>
+  <% if !line_policy.index? %>
+    <p class="text-sm text-ink-muted"><%= t("#{scope}.invoices_hidden") %></p>
+  <% elsif @batch_invoices.any? %>
+    <div class="overflow-x-auto panel">
+      <table class="data-table data-table-compact" data-controller="table-sort" data-batch-invoices>
+        <thead>
+          <tr>
+            <th><%= t("trading.invoices.index.number") %></th>
+            <th><%= t("trading.invoices.index.date") %></th>
+            <th><%= t("trading.invoices.index.producer") %></th>
+            <th class="text-right"><%= t("#{scope}.percent") %></th>
+            <th class="text-right"><%= t("#{scope}.gross") %></th>
+            <th class="text-right"><%= t("#{scope}.net") %></th>
+            <th class="text-right"><%= t("#{scope}.value") %></th>
+            <th class="cell-actions" data-sort="false"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @batch_invoices.each do |line| %>
+            <% invoice = line.invoice %>
+            <tr id="<%= dom_id(line) %>">
+              <td class="tabular-nums"><%= invoice.display_number %></td>
+              <td class="whitespace-nowrap"><%= l(invoice.issued_on) %></td>
+              <td><%= invoice.producer.full_name %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= number_to_percentage(line.percent, precision: 2, strip_insignificant_zeros: true) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(line.gross_weight) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums text-ink-muted"><%= format_pounds(line.net_weight) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(line.value) %></td>
+              <td class="cell-actions">
+                <div class="flex justify-end gap-2">
+                  <%= detail_button trading_invoice_path(invoice) %>
+                  <% if policy(line).destroy? %>
+                    <%= button_to t("#{scope}.remove"), sales_coffee_batch_invoice_path(@batch, invoice), method: :delete, class: "btn btn-sm",
+                          form: { data: { turbo_confirm: t("#{scope}.confirm_remove", number: invoice.display_number) } } %>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p class="empty-state"><%= t("#{scope}.no_invoices") %></p>
+  <% end %>
+</section>

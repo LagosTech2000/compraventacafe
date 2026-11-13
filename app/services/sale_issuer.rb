@@ -31,7 +31,7 @@ class SaleIssuer
 
     Sale.transaction(requires_new: true) do
       # Locking the rows keeps two people from selling the same shipment.
-      shipments = @buyer.shipments.unsold.where(id: @shipment_ids).lock.to_a
+      shipments = @buyer.shipments.owned.unsold.where(id: @shipment_ids).lock.to_a
 
       if @shipment_ids.empty?
         sale.errors.add(:lines, :blank)

@@ -1,7 +1,7 @@
 FactoryBot.define do
   factory :loan do
     person
-    association :created_by, factory: :user
+    created_by { SpecOwner.user || association(:user) }
     cash_amount { 10_000 }
     monthly_interest_rate { 3 }
     disbursed_on { Time.zone.today - 60 }
@@ -10,7 +10,7 @@ FactoryBot.define do
 
   factory :loan_payment do
     loan
-    association :created_by, factory: :user
+    created_by { SpecOwner.user || association(:user) }
     paid_on { Time.zone.today }
     amount { 1_000 }
     payment_method { "cash" }
@@ -24,15 +24,26 @@ FactoryBot.define do
     default_price { 1_000 }
   end
 
-  # A purchase of a supply into the inventory, with its investment (Fernando, 2026-11-12).
+  # A purchase of supplies into the inventory, with its investment (Fernando,
+  # 2026-11-12): one line by default (supply, quantity, amount), as many as
+  # `lines` brings (2026-11-13).
   factory :supply_entry do
-    supply
-    quantity { 10 }
-    amount { 1_000 }
+    transient do
+      supply { association :supply }
+      quantity { 10 }
+      amount { 1_000 }
+    end
+    lines { [ build(:supply_entry_line, supply_entry: instance, supply:, quantity:, amount:) ] }
     received_on { Time.zone.today }
-    association :created_by, factory: :user
+    created_by { SpecOwner.user || association(:user) }
     finance_category_id { create(:finance_category, kind: "investment").id }
     money_account_id { create(:money_account).id }
     payment_method { "cash" }
+  end
+
+  factory :supply_entry_line do
+    supply
+    quantity { 10 }
+    amount { 1_000 }
   end
 end

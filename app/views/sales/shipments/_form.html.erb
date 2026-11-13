@@ -6,7 +6,7 @@
 <% by_warehouse = CoffeeStock.net_by_warehouse %>
 <% available = Warehouse.active.or(Warehouse.where(id: shipment.warehouse_id)).to_h { |warehouse| [ warehouse.id, Purchase::COFFEE_STATES.index_with { by_warehouse[[ warehouse.id, it ]].to_f } ] } %>
 <% if shipment.persisted? && shipment.coffee_state_in_database && available[shipment.warehouse_id_in_database] %>
-  <% available[shipment.warehouse_id_in_database][shipment.coffee_state_in_database] += shipment.origin_net_weight_in_database.to_f %>
+  <% available[shipment.warehouse_id_in_database][shipment.coffee_state_in_database] += shipment.stock_net_weight.to_f %>
 <% end %>
 <%= form_with model: [ :sales, shipment ], class: form_surface_class("@container max-w-none"),
       data: { controller: "form-validation weighing-calculator unsaved-changes", action: unsaved_changes_actions,
@@ -44,11 +44,11 @@
                 { selected: shipment.warehouse_id || Warehouse.main&.id, include_blank: (t("shared.select.main_warehouse") unless Warehouse.main) },
                 class: "field-input", data: { weighing_calculator_target: "warehouse", action: "weighing-calculator#checkStock" } %>
         </div>
-        <div>
-          <%= form.label :remission_number, class: "field-label" %>
-          <%= form.text_field :remission_number, maxlength: 60, class: "field-input" %>
-        </div>
       </section>
+
+      <% unless shipment.sold? %>
+        <%= render "sales/shipments/batches_field", shipment: %>
+      <% end %>
 
       <%# Who hauls it: a carrier (with what it is paid for the trip) or a
           driver, one or the other (client, 2026-10-30); the vehicle with
@@ -90,8 +90,27 @@
           <div data-transport-choice-target="panel" data-mode="driver" <%= "hidden" unless mode == "driver" %>>
             <%= form.label :driver_id, class: "field-label" %>
             <% drivers = StaffMember.active.or(StaffMember.where(id: shipment.driver_id)).includes(:person, :role).newest_first %>
-            <%= form.select :driver_id, drivers.map { [ "#{it.full_name} · #{it.role.name}", it.id ] },
-                  { include_blank: t(".driver_typed") }, class: "field-input", disabled: mode != "driver" %>
+            <%# «Editar» to the right opens the driver's person; their identity
+                and phone show below (Fernando, 2026-11-13). %>
+            <% can_edit_people = policy(Person).update? %>
+            <div data-controller="driver-card" data-driver-card-url-value="<%= sales_driver_card_path("__id__") %>"
+                 data-action="person:updated@window->driver-card#reload">
+              <div class="flex items-center gap-2">
+                <%= form.select :driver_id,
+                      drivers.map { |driver|
+                        [ "#{driver.full_name} · #{driver.role.name}", driver.id,
+                          { data: { person_id: driver.person_id, edit_url: (edit_administration_person_path(driver.person_id, picker: 1) if can_edit_people) } } ]
+                      },
+                      { include_blank: t(".driver_typed") }, class: "field-input min-w-0 flex-1", disabled: mode != "driver",
+                      data: { driver_card_target: "select", action: "driver-card#show" } %>
+                <% if can_edit_people %>
+                  <%# The href follows the driver chosen; this one only says it stacks a window (picker=1). %>
+                  <%= modal_link_to t(".edit_driver"), edit_administration_person_path(shipment.driver&.person_id || 0, picker: 1),
+                        class: "btn btn-sm shrink-0", hidden: true, data: { driver_card_target: "edit" } %>
+                <% end %>
+              </div>
+              <%= turbo_frame_tag "driver-card", hidden: true, data: { driver_card_target: "frame" } %>
+            </div>
             <%= form.text_field :driver_name, maxlength: 120, class: "field-input mt-2", placeholder: t(".driver_name_placeholder"),
                   disabled: mode != "driver", aria: { label: Shipment.human_attribute_name(:driver_name) } %>
             <p class="mt-1 text-xs text-ink-muted"><%= t(".driver_help") %></p>

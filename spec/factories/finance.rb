@@ -17,7 +17,7 @@ FactoryBot.define do
     kind { "expense" }
     category { association(:finance_category, kind:) }
     money_account
-    association :created_by, factory: :user
+    created_by { SpecOwner.user || association(:user) }
     spent_on { Time.zone.today }
     description { "Diésel del camión" }
     amount { 500 }
@@ -26,14 +26,14 @@ FactoryBot.define do
 
   factory :cash_count do
     money_account
-    association :created_by, factory: :user
+    created_by { SpecOwner.user || association(:user) }
     counted_on { Time.zone.today }
     counted_amount { 1_000 }
   end
 
   factory :other_income do
     money_account
-    association :created_by, factory: :user
+    created_by { SpecOwner.user || association(:user) }
     received_on { Time.zone.today }
     concept { "Aporte del dueño" }
     amount { 1_000 }
@@ -43,7 +43,7 @@ FactoryBot.define do
   factory :account_transfer do
     from_account { association(:money_account) }
     to_account { association(:money_account, kind: "bank") }
-    association :created_by, factory: :user
+    created_by { SpecOwner.user || association(:user) }
     transferred_on { Time.zone.today }
     amount { 300 }
   end
@@ -70,7 +70,7 @@ FactoryBot.define do
   factory :staff_advance do
     member { association(:staff_member) }
     money_account
-    association :created_by, factory: :user
+    created_by { SpecOwner.user || association(:user) }
     given_on { Time.zone.today }
     amount { 500 }
     payment_method { "cash" }
@@ -78,7 +78,7 @@ FactoryBot.define do
 
   factory :staff_goal do
     member { association(:staff_member) }
-    association :created_by, factory: :user
+    created_by { SpecOwner.user || association(:user) }
     period_starts_on { member.period_to_pay&.starts_on || Time.zone.today }
     description { "Ordenar la bodega" }
     bonus_amount { 300 }

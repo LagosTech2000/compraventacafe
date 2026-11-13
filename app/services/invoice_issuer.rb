@@ -25,7 +25,8 @@ class InvoiceIssuer
     # runs inside another transaction (a bare Rollback there is ignored).
     Invoice.transaction(requires_new: true) do
       # Locking the rows keeps two people from invoicing the same purchase.
-      purchases = @producer.purchases.uninvoiced.where(id: @purchase_ids).lock.includes(:hauler, :farm).to_a
+      # Only the user's own when they see only theirs (OwnedRecord).
+      purchases = @producer.purchases.owned.uninvoiced.where(id: @purchase_ids).lock.includes(:hauler, :farm).to_a
 
       if purchases.size != @purchase_ids.uniq.size
         invoice.errors.add(:purchases, :unavailable)

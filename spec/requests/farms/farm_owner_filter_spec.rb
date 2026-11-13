@@ -30,4 +30,17 @@ RSpec.describe "Farm owner filter" do
     expect(response.body).to include("Finca del negocio")
     expect(response.body).not_to include("Finca de Ana")
   end
+
+  it "finds farms by their producer's name, every word and without accents (Fernando, 2026-11-13)" do
+    create(:farm, name: "La Cumbre", producer: create(:producer, person: create(:person, first_names: "José Ángel", last_names: "Martínez")))
+
+    get farms_farms_path(q: "jose martinez")
+    expect(names).to eq([ "La Cumbre · José Ángel Martínez" ])
+    get administration_farms_path(q: "Martínez")
+    expect(response.body).to include("La Cumbre")
+    expect(response.body).not_to include("Finca del negocio")
+
+    get farms_farms_path(q: "negocio")
+    expect(names).to eq([ "Finca del negocio" ])
+  end
 end

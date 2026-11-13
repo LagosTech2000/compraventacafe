@@ -5,6 +5,7 @@
 # or PDF of the receipt (ExpenseReceipt).
 class Expense < ApplicationRecord
   include Auditable
+  include OwnedRecord
   include LiveUpdates
   live_updates :finance
 

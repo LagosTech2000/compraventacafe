@@ -16,7 +16,7 @@ RSpec.describe "Carreros", type: :system do
     select "Uva", from: "purchase_coffee_state"
     fill_in "purchase_gross_weight", with: "1661"
     fill_in "purchase_yield_factor", with: "1"
-    select "Rubén Ordóñez", from: "purchase_hauler_id"
+    select "Rubén Ordóñez", from: "purchase_hauler_choice"
 
     within("[data-hauler-commission-target='box']") do
       expect(page).to have_text("L 0.30 por libra neta")
@@ -26,7 +26,7 @@ RSpec.describe "Carreros", type: :system do
     fill_in "purchase_gross_weight", with: "836" # 830 lb net
     expect(page).to have_css("[data-hauler-commission-target='amount']", text: "L 249.00")
 
-    select "Sin carrero", from: "purchase_hauler_id"
+    select "Sin carrero", from: "purchase_hauler_choice"
     expect(page).to have_no_text("Comisión del carrero")
   end
 

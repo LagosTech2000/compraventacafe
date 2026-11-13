@@ -2,6 +2,7 @@
 # the calculation from it and where it is in its lifecycle.
 class Purchase < ApplicationRecord
   include Auditable
+  include OwnedRecord
   include LiveUpdates
   live_updates :trading, :sales
 
@@ -58,8 +59,11 @@ class Purchase < ApplicationRecord
   before_validation { self.common_coffee = false unless coffee_state == "wet_parchment" }
   after_update :refresh_invoice, if: -> { saved_change_to_total? && invoice_id && invoice_id_before_last_save == invoice_id }
   validate :hauler_active, if: :will_save_change_to_hauler_id?
+  validate :hauler_chosen, unless: -> { @hauler_choice.nil? }
   validate :warehouse_active, if: :will_save_change_to_warehouse_id?
   validate :hauler_commission_not_paid_out
+  validate :keeps_its_lots, if: :lot_pounds_change?
+  after_update :rebase_lots, if: -> { saved_change_to_gross_weight? || saved_change_to_net_weight? || saved_change_to_voided_at? || saved_change_to_invoice_id? }
   validate :damage_types_chosen, if: -> { new_record? || will_save_change_to_damage_percent? || will_save_change_to_damage_types? }
 
   # First: by weighings, the gross weight and sacks come from them.
@@ -92,6 +96,20 @@ class Purchase < ApplicationRecord
   # Waiting to be invoiced: neither invoiced nor voided.
   scope :uninvoiced, -> { active.where(invoice_id: nil) }
   scope :in_season, ->(season) { where(season_year: season.year) }
+
+  # The lists' «Estado» (Fernando, 2026-11-13): not invoiced yet, by its
+  # invoice's payment, voided, or every one. Without one, the active ones.
+  STATUSES = %w[uninvoiced pending partial paid voided all].freeze
+
+  def self.with_status(status)
+    case status
+    when "uninvoiced" then uninvoiced
+    when *Invoice::PAYMENT_STATUSES then active.where(invoice_id: Invoice.active.where(payment_status: status).select(:id))
+    when "voided" then voided
+    when "all" then all
+    else active
+    end
+  end
   # Most recent purchase first; same moment, last registered first.
   scope :newest_first, -> { order(purchased_at: :desc, id: :desc) }
 
@@ -194,6 +212,19 @@ class Purchase < ApplicationRecord
     update!(voided_at: Time.current, voided_by: user)
   end
 
+
+  # The form's «Carrero» (Fernando, 2026-11-13): it must be chosen, a hauler
+  # or «Sin carrero» (NO_HAULER); it starts unchosen. Only the form sends
+  # it, so a purchase saved any other way is not asked.
+  NO_HAULER = "none"
+
+  def hauler_choice = @hauler_choice || (persisted? ? (hauler_id || NO_HAULER).to_s : "")
+
+  def hauler_choice=(value)
+    @hauler_choice = value.to_s
+    self.hauler_id = @hauler_choice == NO_HAULER ? nil : @hauler_choice.presence
+  end
+
   private
     def recalculate?
       inputs = by_weighings? ? CALCULATION_INPUTS + %w[sacks] : CALCULATION_INPUTS
@@ -269,6 +300,10 @@ class Purchase < ApplicationRecord
       self.hauler_commission = Hauler.commission(net_weight:, price_per_pound: hauler_price_per_pound)
     end
 
+    def hauler_chosen
+      errors.add(:hauler_choice, :blank) if @hauler_choice.blank?
+    end
+
     def hauler_active
       errors.add(:hauler, :inactive) if hauler && !hauler.active?
     end
@@ -331,6 +366,25 @@ class Purchase < ApplicationRecord
 
     # An administrator edited an invoiced purchase: its invoice's status
     # follows its new total.
+    def lot_pounds_change?
+      persisted? && invoice_id_in_database.present? &&
+        (will_save_change_to_gross_weight? || will_save_change_to_net_weight? || will_save_change_to_voided_at? || will_save_change_to_invoice_id?)
+    end
+
+    # Lots keep the pounds they took of its invoice (Fernando, 2026-11-13):
+    # a purchase that leaves the invoice without them is not saved.
+    def keeps_its_lots
+      invoice_id = invoice_id_in_database
+      gross, net = CoffeeBatchInvoice.invoice_pounds(invoice_id, without: id, with: (self if self.invoice_id == invoice_id))
+      message = CoffeeBatchInvoice.shortfall(invoice_id, gross, net)
+      errors.add(:base, message) if message
+    end
+
+    # What it adds to its invoice stays out of every lot.
+    def rebase_lots
+      [ invoice_id_before_last_save, invoice_id ].compact.uniq.each { CoffeeBatchInvoice.rebase!(it) }
+    end
+
     def refresh_invoice
       invoice.refresh_payment_status! if invoice && !invoice.voided?
     end

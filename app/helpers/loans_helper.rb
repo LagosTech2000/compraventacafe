@@ -19,12 +19,23 @@ module LoansHelper
     @active_supplies ||= Supply.active.ordered.to_a
     supplies = @active_supplies
     supplies += [ item.supply ] if item.supply && !item.supply.active?
-    # With what the inventory has (Fernando, 2026-11-12): no more is lent.
-    @supply_stock ||= SupplyStock.new.rows.to_h { [ it.supply.id, it.stock ] }
+    # With what is left to lend (Fernando, 2026-11-12); it may be below zero:
+    # what is lent without stock is owed (Fernando, 2026-11-13).
     supplies.map do |supply|
-      stock = number_with_precision(@supply_stock.fetch(supply.id, 0), precision: 2, delimiter: ",", strip_insignificant_zeros: true)
+      stock = number_with_precision(supply_available.fetch(supply.id, 0), precision: 2, delimiter: ",", strip_insignificant_zeros: true)
       [ t("loans.loans.form.supply_option", name: supply.name, stock:, unit: supply.unit), supply.id ]
     end
+  end
+
+  # { supply id => what is left to lend }: it may be below zero.
+  def supply_available
+    @supply_available ||= SupplyStock.new.rows.to_h { [ it.supply.id, it.available ] }
+  end
+
+  # The supplies the loan form uses, each with what is left to lend, which
+  # warns a line that lends more than there is (Fernando, 2026-11-13).
+  def loan_supplies_data
+    Supply.ordered.to_h { |supply| [ supply.id, supply.picker_data.merge(available: supply_available.fetch(supply.id, 0).to_f) ] }
   end
 
   # "Efectivo", "Con café · compra 72" for a payment made with a purchase, or

@@ -76,9 +76,9 @@ class PrivateDocumentVariables
       when "interest_rate" then number_with_precision(loan.monthly_interest_rate, precision: 2, strip_insignificant_zeros: true)
       when "interest_rate_in_words" then NumberWords.decimal(loan.monthly_interest_rate)
       when "kind" then loan.human_kind
-      when "disbursed_on" then I18n.l(loan.disbursed_on)
-      when "due_on" then I18n.l(loan.due_on)
-      when "due_on_long" then I18n.l(loan.due_on, format: :long)
+      when "disbursed_on" then I18n.l(loan.disbursed_on, format: :plain)
+      when "due_on" then I18n.l(loan.due_on, format: :plain)
+      when "due_on_long" then I18n.l(loan.due_on, format: :long_plain)
       when "due_day", "due_month", "due_year" then date_value(loan.due_on, name.delete_prefix("due_"))
       when "term" then I18n.t("private_documents.term_days", count: loan.term_days)
       end
@@ -86,7 +86,7 @@ class PrivateDocumentVariables
 
     def date_value(date, name)
       case name
-      when "date" then I18n.l(date, format: :long)
+      when "date" then I18n.l(date, format: :long_plain)
       when "day" then date.day.to_s
       when "month" then I18n.t("date.month_names")[date.month]
       when "year" then date.year.to_s

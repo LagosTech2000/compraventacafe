@@ -122,7 +122,7 @@ class CoffeeStockReport < Report
 
     def shipments(in_period)
       within(Shipment.active.joins(:buyer), in_period, column: "shipments.departed_at", type: :datetime)
-        .pluck("shipments.id", "shipments.number", "shipments.departed_at", "shipments.coffee_state", "shipments.origin_net_weight", "buyers.name")
+        .pluck("shipments.id", "shipments.number", "shipments.departed_at", "shipments.coffee_state", Arel.sql(Shipment::STOCK_NET_SQL), "buyers.name")
         .map do |id, number, at, state, net, name|
           Entry.new(id: "shipment-#{id}", date: at.in_time_zone.to_date, at:, kind: "shipment",
                     description: I18n.t("reports.types.coffee_stock.shipment", number: format("%04d", number), name:),

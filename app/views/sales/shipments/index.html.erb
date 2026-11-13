@@ -10,6 +10,9 @@
   </div>
   <div class="flex flex-wrap gap-2">
     <%= help_guide_button HelpGuide.process(:sales_flow), label: true %>
+    <% if policy(CoffeeBatch).index? %>
+      <%= link_to t(".batches"), sales_coffee_batches_path, class: "btn" %>
+    <% end %>
     <% if policy(Shipment).create? %>
       <%= modal_link_to t(".new"), new_sales_shipment_path, class: "btn btn-primary" %>
     <% end %>
@@ -32,6 +35,8 @@
           enum_options(Purchase, :coffee_state, Purchase::COFFEE_STATES), selected: @filter.coffee_state %>
     <%= filter_select form, :status, t("sales.shipments.table.status"), status_labels, selected: @filter.status,
           all: t("sales.shipments.index.all_active") %>
+    <%= filter_select form, :shrink, t("sales.shipments.index.shrink"),
+          ShipmentFilter::SHRINKS.map { [ t("sales.shipments.index.shrinks.#{it}"), it ] }, selected: @filter.shrink %>
     <% if WeightTolerance.percent %>
       <%= filter_check_box form, :over_tolerance, t("sales.shipments.index.over_tolerance", tolerance: format_percent(WeightTolerance.percent)), checked: @filter.over_tolerance.present? %>
     <% end %>
@@ -48,13 +53,14 @@
                               vehicle_id: ->(id) { Vehicle.find_by(id:)&.plate },
                               coffee_state: ->(state) { Purchase.human_attribute_name("coffee_state/#{state}") },
                               status: ->(value) { Shipment.human_attribute_name("status/#{value}") },
-                              over_tolerance: ->(_) { t(".over_tolerance_chip") }) %>
+                              over_tolerance: ->(_) { t(".over_tolerance_chip") },
+                              shrink: ->(value) { t("sales.shipments.index.shrinks.#{value}") }) %>
 
     <dl class="mt-4 flex flex-wrap gap-3">
       <% compared = @totals[:compared_origin] %>
       <% difference = @totals[:compared_destination] - compared %>
-      <% { sacks: format_pounds(@totals[:sacks]).delete_suffix(".00"), origin_net: format_pounds(@totals[:origin_net]),
-           destination_net: format_pounds(@totals[:destination_net]),
+      <% { sacks: format_pounds(@totals[:sacks]).delete_suffix(".00"), origin_net: format_gross_net(@totals[:origin_gross], @totals[:origin_net]),
+           destination_net: format_gross_net(@totals[:destination_gross], @totals[:destination_net]),
            difference: "#{format_pounds(difference)} (#{compared.positive? ? format_percent((difference * 100 / compared).round(2)) : "—"})" }.each do |key, value| %>
         <div class="stat min-w-0 flex-1 basis-40">
           <dt><%= t(".totals.#{key}") %></dt>
