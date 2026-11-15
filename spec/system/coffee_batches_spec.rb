@@ -49,4 +49,37 @@ RSpec.describe "Lots in the shipment form", type: :system do
     expect(item.find("input[type=checkbox]")).to be_checked
     expect(CoffeeBatch.find_by!(number: 2).batch_invoices.sole).to have_attributes(invoice:, percent: 50)
   end
+
+  it "marks many invoices at once: all, a range with Shift, or filling the lot (Fernando, 2026-11-15)" do
+    producer = create(:producer)
+    invoices = Array.new(3) do
+      purchase = create(:purchase, producer:, gross_weight: 500)
+      InvoiceIssuer.new(producer:, user: admin, purchase_ids: [ purchase.id ], payment_status: "pending").call.invoice
+    end
+    batch = create(:coffee_batch, gross_limit: 1_200)
+    sign_in_as(admin)
+    visit new_sales_coffee_batch_invoice_path(batch)
+    boxes = -> { all("[data-batch-shares-target=row] input[type=checkbox]") }
+
+    find("#batch_invoices_all").check
+    expect(boxes.call.map(&:checked?)).to eq([ true, true, true ])
+    expect(page).to have_text("3 marcadas: 1,500.00 lb brutas, más de las 1,200.00 que caben.")
+    expect(page).to have_button("Agregar al lote", disabled: true)
+    find("#batch_invoices_all").uncheck
+    expect(boxes.call.map(&:checked?)).to eq([ false, false, false ])
+
+    boxes.call.first.click
+    boxes.call.last.click(:shift)
+    expect(boxes.call.map(&:checked?)).to eq([ true, true, true ])
+    find("#batch_invoices_all").uncheck
+
+    click_button "Llenar el lote"
+    expect(page).to have_text("3 marcadas: 1,200.00 lb brutas de 1,200.00 que caben.")
+    expect(all("[data-batch-shares-target=row] input[name$='[percent]']").map(&:value)).to eq(%w[100 100 40])
+    click_button "Agregar al lote"
+    expect(page).to have_text("3 facturas en el lote.")
+    expect(batch.batch_invoices.sum(:percent)).to eq(240)
+    expect(batch.reload.gross_weight).to eq(1_200)
+    expect(invoices.map { it.batch_invoices.sole.percent }.sort).to eq([ 40, 100, 100 ])
+  end
 end

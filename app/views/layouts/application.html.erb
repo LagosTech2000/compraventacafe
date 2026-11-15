@@ -33,7 +33,7 @@
   </head>
 
   <% side_nav = authenticated? && Current.user.side_nav? %>
-  <body class="min-h-screen font-sans text-ink print:min-h-0 <%= "sidebar-collapsed" if side_nav && sidebar_collapsed? %>" data-controller="row-link live-refresh">
+  <body class="min-h-screen font-sans text-ink print:min-h-0 <%= "sidebar-collapsed" if side_nav && sidebar_collapsed? %> <%= "christmas" if christmas? %>" data-controller="row-link live-refresh">
     <%# Each user's display settings (UserSettingsController): navigation at
         the top or on the left, pages over the page in a modal or a drawer. %>
     <% drawer = authenticated? && Current.user.drawer? %>

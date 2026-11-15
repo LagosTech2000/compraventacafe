@@ -20,7 +20,7 @@ class SupplyExitFilter < ListFilter
     scope = scope.where(supply_id:) if supply_id
     scope = scope.where(kind:) if kind
     if q
-      people = Person.where("people.first_names || ' ' || people.last_names ILIKE :q", q: like(q)).select(:id)
+      people = Person.search(q).select(:id)
       scope = scope.where(person_id: people).or(scope.where("supply_exits.observations ILIKE ?", like(q)))
     end
     scope.includes(:supply, :person, :money_account).newest_first

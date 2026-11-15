@@ -32,6 +32,10 @@
     <%= render "shared/tile", path: administration_fingerprint_stations_path, icon_name: :fingerprint,
           title: t("administration.nav.fingerprint_stations"), description: t(".fingerprint_stations_description") %>
   <% end %>
+  <% if policy(:maintenance).index? %>
+    <%= render "shared/tile", path: administration_maintenance_tasks_path, icon_name: :check,
+          title: t("administration.nav.maintenance"), description: t(".maintenance_description") %>
+  <% end %>
   <% if policy(:backup).show? %>
     <%= render "shared/tile", path: administration_backup_path, icon_name: :history,
           title: t("administration.backups.show.title"), description: t(".backup_description") %>

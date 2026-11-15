@@ -37,6 +37,7 @@
 </dl>
 
 <%= render "farms/farms/profile", farm: @farm, profile: @profile %>
+<%= render "farms/farms/plots", farm: @farm %>
 
 <% if @farm.observations.present? %>
   <p class="mt-4 text-sm"><span class="font-semibold"><%= Farm.human_attribute_name(:observations) %>:</span> <%= @farm.observations %></p>

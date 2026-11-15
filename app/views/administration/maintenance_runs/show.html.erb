@@ -1,0 +1,64 @@
+<% content_for :title, t(".title", task: @task&.title || @run.task_key) %>
+<%= render "administration/nav" %>
+<p class="mb-3 text-sm">
+  <%= link_to "← #{t("administration.maintenance_tasks.index.title")}", administration_maintenance_tasks_path, class: "link" %>
+  <% if @task %> · <%= link_to @task.title, administration_maintenance_task_path(@task.slug), class: "link" %><% end %>
+</p>
+
+<div class="flex flex-wrap items-start justify-between gap-3">
+  <div>
+    <h1 class="text-2xl font-bold"><%= @task&.title || @run.task_key %></h1>
+    <p class="mt-1 text-sm text-ink-muted">
+      <%= t(".meta", mode: @run.mode_label, when: l(@run.created_at, format: :long), who: @run.who, ms: @run.duration_ms, id: @run.id) %>
+    </p>
+    <% if @task %><p class="mt-1 text-sm"><%= maintenance_params_text(@task, @run.params) %></p><% end %>
+  </div>
+  <%= maintenance_status_badge(@run.status) %>
+</div>
+
+<% if @run.failed? %>
+  <p class="mt-4 flash-alert" role="alert"><%= t(".failed") %> <span class="font-mono text-xs"><%= @run.error %></span></p>
+<% end %>
+<% if @run.reverted_run %>
+  <p class="mt-4 flash-notice"><%= t(".undid_html", link: link_to(t(".run_number", id: @run.reverted_run_id), administration_maintenance_run_path(@run.reverted_run), class: "link")) %></p>
+<% end %>
+<% if @run.reverted? %>
+  <p class="mt-4 flash-notice"><%= t(".was_reverted", when: l(@run.reverted_at, format: :short)) %></p>
+<% end %>
+
+<%# Applying, only from a preview, with the backup downloaded first. %>
+<% if @run.appliable? %>
+  <%= form_with url: administration_maintenance_runs_path, method: :post, class: "mt-4 panel grid gap-3 border-2 border-warning p-4", data: { maintenance_apply: true } do |form| %>
+    <%= hidden_field_tag :from_run_id, @run.id %>
+    <h2 class="font-semibold"><%= t(".apply_title") %></h2>
+    <p class="text-sm"><%= t(".apply_help") %></p>
+    <p class="text-sm"><%= link_to t(".download_backup"), administration_backup_path, class: "link" %></p>
+    <label class="flex items-start gap-2 text-sm font-medium">
+      <%= check_box_tag :backup_confirmed, "1", false, required: true, class: "mt-0.5 size-4 accent-primary" %>
+      <span><%= t(".backup_confirmed") %></span>
+    </label>
+    <div><%= form.button t(".apply"), class: "btn btn-primary", data: { turbo_confirm: t(".apply_confirm"), turbo_submits_with: t("administration.maintenance_tasks.show.running") } %></div>
+    <p class="text-xs text-ink-muted"><%= t(".shell_apply", command: maintenance_command(@task, @run.params, apply: true)) %></p>
+  <% end %>
+<% end %>
+
+<% if @run.revertible? %>
+  <div class="mt-4 flex flex-wrap items-center gap-3 panel p-4">
+    <p class="text-sm"><%= t(".revert_help") %></p>
+    <%= button_to t(".revert"), revert_administration_maintenance_run_path(@run), class: "btn", form: { data: { turbo_confirm: t(".revert_confirm") } } %>
+  </div>
+<% end %>
+
+<div class="mt-6 grid gap-4" data-maintenance-sections>
+  <% @run.section_list.each do |section| %>
+    <section class="panel p-4">
+      <div class="flex flex-wrap items-start justify-between gap-2">
+        <h2 class="font-semibold"><%= section.title %></h2>
+        <%= maintenance_status_badge(section.status) %>
+      </div>
+      <ul class="mt-3 max-h-96 space-y-1 overflow-y-auto text-sm">
+        <% section.lines.each do |line| %><li><%= line %></li><% end %>
+      </ul>
+    </section>
+  <% end %>
+</div>

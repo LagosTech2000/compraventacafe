@@ -17,6 +17,7 @@
       <%= t(".purpose", business: business_name) %> · <span class="first-letter:uppercase"><%= l(dashboard.today, format: :weekday_long) %></span>
       <% if trading %> · <%= format_season(dashboard.season) %><% end %>
     </p>
+    <%= holiday_greeting("mt-1") %>
   </div>
   <div class="shrink-0 pt-1">
     <%# The watchers (user id 1) also see each user's activity and page. %>

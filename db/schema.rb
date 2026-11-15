@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -203,6 +203,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_120000) do
     t.index ["weighed_at"], name: "index_coffee_conversions_on_weighed_at"
   end
 
+  create_table "coffee_varieties", force: :cascade do |t|
+    t.string "name", null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((name)::text)", name: "index_coffee_varieties_on_lower_name", unique: true
+  end
+
   create_table "collaborators", force: :cascade do |t|
     t.bigint "person_id", null: false
     t.datetime "created_at", null: false
@@ -263,6 +271,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_120000) do
     t.index ["spent_on"], name: "index_expenses_on_spent_on"
   end
 
+  create_table "farm_plots", force: :cascade do |t|
+    t.bigint "farm_id", null: false
+    t.string "name", null: false
+    t.decimal "area_value", precision: 14, scale: 4
+    t.string "area_unit"
+    t.bigint "variety_ids", default: [], null: false, array: true
+    t.text "observations"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "farm_id, lower((name)::text)", name: "index_farm_plots_on_farm_and_lower_name", unique: true
+    t.index ["farm_id"], name: "index_farm_plots_on_farm_id"
+  end
+
   create_table "farms", force: :cascade do |t|
     t.string "name", null: false
     t.bigint "department_id"
@@ -277,6 +299,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_120000) do
     t.decimal "longitude", precision: 9, scale: 6
     t.decimal "area_value", precision: 14, scale: 4
     t.string "area_unit"
+    t.bigint "variety_ids", default: [], null: false, array: true
     t.index "lower((name)::text)", name: "index_farms_on_lower_name", unique: true, where: "(producer_id IS NULL)"
     t.index "producer_id, lower((name)::text)", name: "index_farms_on_producer_and_lower_name", unique: true, where: "(producer_id IS NOT NULL)"
     t.index ["department_id"], name: "index_farms_on_department_id"
@@ -455,6 +478,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_120000) do
     t.index ["due_on"], name: "index_loans_on_due_on"
     t.index ["money_account_id"], name: "index_loans_on_money_account_id"
     t.index ["person_id"], name: "index_loans_on_person_id"
+  end
+
+  create_table "maintenance_runs", force: :cascade do |t|
+    t.string "task_key", null: false
+    t.string "mode", null: false
+    t.jsonb "params", default: {}, null: false
+    t.string "status", null: false
+    t.jsonb "sections", default: [], null: false
+    t.jsonb "changes_made", default: {}, null: false
+    t.text "error"
+    t.integer "duration_ms"
+    t.string "request_id"
+    t.bigint "user_id"
+    t.bigint "reverted_run_id"
+    t.datetime "reverted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["reverted_run_id"], name: "index_maintenance_runs_on_reverted_run_id"
+    t.index ["task_key", "created_at"], name: "index_maintenance_runs_on_task_key_and_created_at"
+    t.index ["user_id"], name: "index_maintenance_runs_on_user_id"
   end
 
   create_table "money_accounts", force: :cascade do |t|
@@ -814,8 +857,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_120000) do
     t.decimal "hauler_price_per_pound", precision: 12, scale: 4
     t.bigint "warehouse_id", null: false
     t.boolean "common_coffee", default: false, null: false
+    t.bigint "farm_plot_id"
     t.index ["created_by_id"], name: "index_purchases_on_created_by_id"
     t.index ["farm_id"], name: "index_purchases_on_farm_id"
+    t.index ["farm_plot_id"], name: "index_purchases_on_farm_plot_id"
     t.index ["hauler_id"], name: "index_purchases_on_hauler_id"
     t.index ["invoice_id"], name: "index_purchases_on_invoice_id"
     t.index ["producer_id"], name: "index_purchases_on_producer_id"
@@ -1293,6 +1338,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_120000) do
   add_foreign_key "expenses", "money_accounts"
   add_foreign_key "expenses", "shipments"
   add_foreign_key "expenses", "users", column: "created_by_id"
+  add_foreign_key "farm_plots", "farms"
   add_foreign_key "farms", "departments"
   add_foreign_key "farms", "municipalities"
   add_foreign_key "farms", "producers"
@@ -1322,6 +1368,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_120000) do
   add_foreign_key "loans", "money_accounts"
   add_foreign_key "loans", "people"
   add_foreign_key "loans", "users", column: "created_by_id"
+  add_foreign_key "maintenance_runs", "maintenance_runs", column: "reverted_run_id"
+  add_foreign_key "maintenance_runs", "users"
   add_foreign_key "municipalities", "departments"
   add_foreign_key "other_incomes", "money_accounts"
   add_foreign_key "other_incomes", "users", column: "created_by_id"
@@ -1360,6 +1408,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_120000) do
   add_foreign_key "processing_costs", "users", column: "created_by_id"
   add_foreign_key "producers", "people"
   add_foreign_key "purchase_weighings", "purchases"
+  add_foreign_key "purchases", "farm_plots"
   add_foreign_key "purchases", "farms"
   add_foreign_key "purchases", "haulers"
   add_foreign_key "purchases", "invoices"

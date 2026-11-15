@@ -35,27 +35,28 @@ export default class extends Controller {
     if (String(id) === String(this.producerValue)) this.show({ detail: { id: String(id) } })
   }
 
-  add({ detail: { id, name, producer_id: producerId, missing } }) {
+  add({ detail: { id, name, producer_id: producerId, missing, plots } }) {
     if (String(producerId) !== String(this.producerValue)) return
     const farms = this.farmsValue
-    farms[this.producerValue] = [ ...(farms[this.producerValue] || []), [ id, name, missing || [] ] ]
+    farms[this.producerValue] = [ ...(farms[this.producerValue] || []), [ id, name, missing || [], plots || [] ] ]
     this.farmsValue = farms
-    this.selectTarget.append(this.option([ id, name, missing || [] ]))
+    this.selectTarget.append(this.option([ id, name, missing || [], plots || [] ]))
     this.selectTarget.value = String(id)
     this.changed()
   }
 
   // A farm completed in the modal: what it misses now.
-  updateFarm({ detail: { id, name, missing } }) {
+  updateFarm({ detail: { id, name, missing, plots } }) {
     const farms = this.farmsValue
     for (const list of Object.values(farms)) {
-      list.forEach((farm, index) => { if (String(farm[0]) === String(id)) list[index] = [ farm[0], name, missing || [] ] })
+      list.forEach((farm, index) => { if (String(farm[0]) === String(id)) list[index] = [ farm[0], name, missing || [], plots || [] ] })
     }
     this.farmsValue = farms
     const option = Array.from(this.selectTarget.options).find((candidate) => candidate.value === String(id))
     if (!option) return
     option.text = name
     option.dataset.missing = JSON.stringify(missing || [])
+    option.dataset.plots = JSON.stringify(plots || [])
     this.changed()
   }
 
@@ -70,9 +71,10 @@ export default class extends Controller {
     }
   }
 
-  option([ id, name, missing ]) {
+  option([ id, name, missing, plots ]) {
     const option = new Option(name, id)
     option.dataset.missing = JSON.stringify(missing || [])
+    option.dataset.plots = JSON.stringify(plots || [])
     return option
   }
 

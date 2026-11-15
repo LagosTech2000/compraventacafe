@@ -42,7 +42,10 @@
           <table class="data-table data-table-compact" data-batch-invoice-choices>
             <thead>
               <tr>
-                <th class="cell-select w-10"><span class="sr-only"><%= t(".mark_column") %></span></th>
+                <th class="cell-select w-10">
+                  <input type="checkbox" class="size-4 accent-primary" id="batch_invoices_all" data-batch-shares-target="all"
+                         data-action="batch-shares#toggleAll" aria-label="<%= t(".mark_all") %>" title="<%= t(".mark_all") %>">
+                </th>
                 <th><%= t("trading.invoices.index.number") %></th>
                 <th><%= t("trading.invoices.index.date") %></th>
                 <th><%= t("trading.invoices.index.producer") %></th>
@@ -59,7 +62,7 @@
                 <tr id="<%= dom_id(invoice, :choice) %>" data-batch-shares-target="row" data-gross="<%= invoice.gross_weight %>" data-net="<%= invoice.net_weight %>">
                   <td class="cell-select">
                     <input type="checkbox" name="shares[<%= invoice.id %>][chosen]" value="1" class="size-4 accent-primary"
-                           data-action="batch-shares#update" aria-label="<%= t(".mark", number: invoice.display_number) %>">
+                           data-action="click->batch-shares#pick" aria-label="<%= t(".mark", number: invoice.display_number) %>">
                   </td>
                   <td class="tabular-nums"><%= invoice.display_number %></td>
                   <td class="whitespace-nowrap"><%= l(invoice.issued_on) %></td>
@@ -88,8 +91,12 @@
         </div>
         <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame:, extra_params: { picker:, modal_frame: window }.compact %>
         <div class="sticky bottom-4 mt-4 flex flex-wrap items-center justify-between gap-3 clay p-3">
-          <p class="text-sm" data-batch-shares-target="summary" aria-live="polite"><%= t(".none_marked") %></p>
+          <div class="grid gap-1">
+            <p class="text-sm" data-batch-shares-target="summary" aria-live="polite"><%= t(".none_marked") %></p>
+            <p class="text-xs text-ink-muted"><%= t(".bulk_help") %></p>
+          </div>
           <div class="flex flex-wrap gap-2">
+            <button type="button" class="btn" data-action="batch-shares#fill" title="<%= t(".fill_help") %>"><%= t(".fill") %></button>
             <button type="submit" class="btn btn-primary" data-batch-shares-target="submit" disabled><%= t(".submit") %></button>
             <%= picker ? cancel_button(sales_coffee_batch_path(@batch)) : link_to(t("shared.cancel"), sales_coffee_batch_path(@batch), class: "btn") %>
           </div>

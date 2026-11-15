@@ -1,0 +1,17 @@
+<%# Coffee varieties of a farm or a plot (Fernando, 2026-11-15): one or more of the catalog. %>
+<% record = form.object %>
+<% options = CoffeeVariety.options(record.variety_ids) %>
+<fieldset>
+  <legend class="<%= local_assigns[:legend_class] || "field-label" %>"><%= t("farms.varieties.label") %></legend>
+  <% if options.any? %>
+    <div class="flex flex-wrap gap-2">
+      <%= form.collection_check_boxes :variety_ids, options, :id, :name do |box| %>
+        <label class="flex cursor-pointer items-center gap-2 rounded-full border border-line px-3 py-1 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary-soft">
+          <%= box.check_box class: "size-4 accent-primary" %> <%= box.text %>
+        </label>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="text-xs text-ink-muted"><%= t("farms.varieties.none") %></p>
+  <% end %>
+</fieldset>

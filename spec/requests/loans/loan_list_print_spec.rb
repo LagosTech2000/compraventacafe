@@ -23,6 +23,14 @@ RSpec.describe "Loans list: zone, totals and printing" do
     sign_in admin
   end
 
+  it "searches the person by full name, without minding accents (Fernando, 2026-11-14)" do
+    ana.person.update!(last_names: "Zelaya Mejía")
+    get loans_loans_path(q: "ana mejia")
+    expect(listed).to eq([ "loan_#{ana.id}" ])
+    get loans_loans_path(q: "Carla Paz")
+    expect(listed).to eq([ "loan_#{carla.id}" ])
+  end
+
   it "filters by the person's zone, or the people without one" do
     get loans_loans_path(zone_id: moroceli.id)
     expect(listed).to contain_exactly("loan_#{ana.id}", "loan_#{beto.id}")

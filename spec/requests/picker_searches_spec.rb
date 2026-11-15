@@ -39,7 +39,7 @@ RSpec.describe "Picker searches" do
 
     expect(result).to include("id" => producer.id, "label" => "Ana Zelaya", "hint" => "El Rosario", "zone_id" => zone.id)
     expect(result["missing"]).to include("DNI", "Clave IHCAFE")
-    expect(result["farms"]).to eq([ [ producer.farms.find_by(name: "La Loma").id, "La Loma", [ "Dirección", "Ubicación en el mapa" ] ] ])
+    expect(result["farms"]).to eq([ [ producer.farms.find_by(name: "La Loma").id, "La Loma", [ "Dirección", "Ubicación en el mapa" ], [] ] ])
   end
 
   it "brings a person's zone after their DNI in Nuevo préstamo, when they have one (Fernando, 2026-11-13)" do

@@ -1,0 +1,30 @@
+<%# One plot of the farm (Fernando, 2026-11-15): «Lote 1»… with its land and varieties. %>
+<% plot = form.object %>
+<div class="grid gap-3 rounded-xl border border-line p-3" data-farm-plots-form-target="row" data-persisted="<%= plot.persisted? %>">
+  <div class="grid gap-3 sm:grid-cols-[minmax(0,1fr)_8rem_9rem]">
+    <div>
+      <%= form.label :name, FarmPlot.human_attribute_name(:name), class: "text-sm font-medium" %>
+      <%= form.text_field :name, required: true, maxlength: 100, class: "field-input", placeholder: t("farms.plots.name_placeholder"),
+            data: { missing_message: "#{FarmPlot.human_attribute_name(:name)} #{t("errors.messages.blank")}" } %>
+    </div>
+    <div>
+      <%= form.label :area_value, FarmPlot.human_attribute_name(:area_value), class: "text-sm font-medium" %>
+      <%= form.number_field :area_value, value: plot.area_value && number_with_precision(plot.area_value, precision: 4, strip_insignificant_zeros: true, delimiter: "", separator: "."),
+            min: 0, step: "any", inputmode: "decimal", class: "field-input tabular-nums" %>
+    </div>
+    <div>
+      <%= form.label :area_unit, FarmPlot.human_attribute_name(:area_unit), class: "text-sm font-medium" %>
+      <%= form.select :area_unit, FarmArea::UNITS.map { [ t("farms.area.units.#{it}"), it ] }, { selected: plot.area_unit || "manzana" }, class: "field-input" %>
+    </div>
+  </div>
+  <%= render "farms/farms/varieties_field", form:, legend_class: "text-sm font-medium" %>
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <% if plot.persisted? %>
+      <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, class: "size-4 accent-primary" %> <%= FarmPlot.human_attribute_name(:active) %></label>
+    <% else %>
+      <span></span>
+    <% end %>
+    <%= form.hidden_field :_destroy, value: "0" %>
+    <button type="button" class="btn btn-sm" data-action="farm-plots-form#remove"><%= t("farms.plots.remove") %></button>
+  </div>
+</div>

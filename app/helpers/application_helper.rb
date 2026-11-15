@@ -43,7 +43,8 @@ module ApplicationHelper
   def form_surface_class(extra = "")
     # Wide screens: a form keeps a readable width unless it sets its own.
     width = "max-w-5xl" unless modal_request? || extra.include?("max-w-")
-    [ (modal_request? ? nil : "panel p-5 sm:p-6"), width, extra ].compact_blank.join(" ")
+    # In the Christmas season the panel wears a garland (HolidaySeason, .holiday-frame).
+    [ (modal_request? ? nil : "panel p-5 sm:p-6"), width, ("holiday-frame" if christmas? && !modal_request?), extra ].compact_blank.join(" ")
   end
 
   # "Cancelar": closes the modal when inside it, otherwise goes back to `path`.

@@ -194,10 +194,27 @@ class PersonMerge
 
       Purchase.where(farm_id: farm.id).update_all(farm_id: same.id)
       Payroll.where(farm_id: farm.id).update_all(farm_id: same.id)
+      move_plots(farm, same)
       fill = FARM_GROUPS.select { |group| group.all? { same.public_send(it).blank? } && group.any? { farm.public_send(it).present? } }
                         .flatten.index_with { farm.public_send(it) }
       same.update!(fill) if fill.any?
       Farm.find(farm.id).destroy!
+    end
+
+    # Its plots join the kept farm (one of the same name joins that one, its
+    # purchases with it) and its varieties are added (Fernando, 2026-11-15).
+    def move_plots(farm, same)
+      FarmPlot.where(farm_id: farm.id).find_each do |plot|
+        twin = same.plots.find_by("LOWER(name) = ?", plot.name.downcase)
+        if twin
+          Purchase.where(farm_plot_id: plot.id).update_all(farm_plot_id: twin.id)
+          twin.update!(variety_ids: twin.variety_ids | plot.variety_ids) if (plot.variety_ids - twin.variety_ids).any?
+          plot.reload.destroy!
+        else
+          plot.update_columns(farm_id: same.id)
+        end
+      end
+      same.update!(variety_ids: same.variety_ids | farm.variety_ids) if (farm.variety_ids - same.variety_ids).any?
     end
 
     # Carreros: both, the other's hauled purchases and payments go to the

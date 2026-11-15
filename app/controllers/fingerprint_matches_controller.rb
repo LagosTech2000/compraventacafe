@@ -4,7 +4,7 @@
 # picker would choose comes only for the kinds the user may search.
 class FingerprintMatchesController < ApplicationController
   def show
-    person = Person.includes(:zone, :hauler, :staff_member, producer: { farms: [], person: :zone }).find(params[:id])
+    person = Person.includes(:zone, :hauler, :staff_member, producer: { farms: :plots, person: :zone }).find(params[:id])
     authorize person, policy_class: PersonPanelPolicy
     searches = PickerSearchPolicy.new(Current.user, :picker_search)
     producer = person.producer

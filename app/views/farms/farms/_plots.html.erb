@@ -1,0 +1,35 @@
+<%# A farm's varieties and plots (Fernando, 2026-11-15), each plot with its
+    land, varieties and purchases. %>
+<% plots = farm.plots.to_a %>
+<% purchases = Purchase.active.where(farm_plot_id: plots.map(&:id)).group(:farm_plot_id).count %>
+<section class="mt-6" aria-labelledby="farm-plots" data-farm-plots>
+  <h2 id="farm-plots" class="mb-2 text-sm font-semibold tracking-wide text-ink-muted uppercase"><%= t("farms.plots.title") %></h2>
+  <p class="mb-3 text-sm"><span class="text-ink-muted"><%= t("farms.varieties.label") %>:</span>
+    <%= farm.variety_names.to_sentence.presence || t("farms.varieties.empty") %></p>
+  <% if plots.any? %>
+    <div class="overflow-x-auto panel">
+      <table class="data-table data-table-compact" data-controller="table-sort">
+        <thead>
+          <tr>
+            <th><%= FarmPlot.human_attribute_name(:name) %></th>
+            <th class="text-right"><%= t("farms.area.label") %></th>
+            <th><%= t("farms.varieties.label") %></th>
+            <th class="text-right"><%= t("farms.plots.purchases") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% plots.each do |plot| %>
+            <tr id="<%= dom_id(plot) %>">
+              <td class="font-medium"><%= plot.name %><% unless plot.active? %> <span class="badge badge-neutral"><%= t("farms.status_badges.farm.inactive") %></span><% end %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_farm_area(plot) || "—" %></td>
+              <td><%= plot.variety_names.to_sentence.presence || "—" %></td>
+              <td class="text-right tabular-nums"><%= purchases.fetch(plot.id, 0) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p class="text-sm text-ink-muted"><%= t("farms.plots.none_saved") %></p>
+  <% end %>
+</section>

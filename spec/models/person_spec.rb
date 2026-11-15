@@ -130,6 +130,17 @@ RSpec.describe Person do
       expect(Person.search("08011999123456")).to eq([ ana ])
     end
 
+    it "finds by every word typed, without minding accents (Fernando, 2026-11-14)" do
+      rosa = create(:person, first_names: "Rosa María", last_names: "Mejía Ávila", dni: "0801199912345")
+      create(:person, first_names: "Rosa", last_names: "Zelaya")
+      expect(Person.search("rosa mejia")).to eq([ rosa ])
+      expect(Person.search("ROSA  Ávila")).to eq([ rosa ])
+      expect(Person.search("maria avila")).to eq([ rosa ])
+      expect(Person.search("Mejía 0801")).to eq([ rosa ])
+      expect(Person.search("0801-1999")).to eq([ rosa ])
+      expect(Person.search("rosa perez")).to be_empty
+    end
+
     it "treats wildcards literally" do
       create(:person, first_names: "Ana")
       expect(Person.search("%")).to be_empty

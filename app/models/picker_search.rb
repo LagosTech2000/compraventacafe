@@ -18,8 +18,11 @@ class PickerSearch
   def self.data(record)
     case record
     when Producer
+      # Each farm with its plots (loaded at once when the search did not bring them).
+      farms = record.farms.to_a
+      ActiveRecord::Associations::Preloader.new(records: farms, associations: :plots).call
       { id: record.id, label: record.picker_label, hint: record.person.zone&.name, zone_id: record.zone_id, missing: record.missing_fields,
-        farms: record.farms.select(&:active?).sort_by(&:name).map { |farm| [ farm.id, farm.name, farm.missing_fields ] } }
+        farms: farms.select(&:active?).sort_by(&:name).map { |farm| [ farm.id, farm.name, farm.missing_fields, farm.plot_options ] } }
     when Person
       { id: record.id, label: record.picker_label, hint: record.zone&.name, missing: record.missing_fields }
     end
@@ -52,7 +55,7 @@ class PickerSearch
   private
     def scope
       case kind
-      when "producers" then Producer.picker_search(text).includes(:farms, person: :zone).alphabetical
+      when "producers" then Producer.picker_search(text).includes(farms: :plots, person: :zone).alphabetical
       when "people" then people(Person.all)
       when "collaborators" then people(Person.collaborators)
       end
