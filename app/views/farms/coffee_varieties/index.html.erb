@@ -1,0 +1,61 @@
+<% content_for :title, t(".title") %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= render "farms/nav" %>
+<%= render "shared/breadcrumbs", crumbs: [ [ t("farms.nav.farms"), farms_farms_path ], [ t(".title") ] ] %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <% if policy(CoffeeVariety).create? %>
+    <%= modal_link_to t(".new"), new_farms_coffee_variety_path, class: "btn btn-primary" %>
+  <% end %>
+</div>
+
+<% statuses = CoffeeVarietyFilter::STATUSES.map { [ t("sales.buyers.index.statuses.#{it}"), it ] } %>
+<div data-controller="live-filter">
+<%= render layout: "shared/filters", locals: { filter: @filter, url: farms_coffee_varieties_path, frame: "coffee-varieties-list", live: true } do |form| %>
+  <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: CoffeeVariety.human_attribute_name(:name) %>
+  <%= filter_select form, :status, t("sales.buyers.index.status"), statuses, selected: @filter.status %>
+<% end %>
+
+<%= list_frame "coffee-varieties-list" do %>
+<%= live_list_status @filter, status: statuses %>
+<% sorting = { filter: @filter, frame: "coffee-varieties-list" } %>
+<% if @varieties.any? %>
+  <div class="mt-6 overflow-x-auto panel">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <%= sort_th CoffeeVariety.human_attribute_name(:name), :name, sorting %>
+          <%= sort_th t(".farms"), :farms, sorting, class: "text-right" %>
+          <%= sort_th t(".plots"), :plots, sorting, class: "text-right" %>
+          <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @varieties.each do |variety| %>
+          <tr id="<%= dom_id(variety) %>">
+            <td class="font-medium">
+              <%= variety.name %>
+              <% unless variety.active? %><span class="badge badge-neutral ml-1"><%= t("sales.buyers.index.statuses.inactive") %></span><% end %>
+            </td>
+            <td class="text-right tabular-nums"><%= variety.farms_count %></td>
+            <td class="text-right tabular-nums"><%= variety.plots_count %></td>
+            <td class="cell-actions">
+              <% if policy(variety).update? %>
+                <%= modal_link_to t(".edit"), edit_farms_coffee_variety_path(variety), class: "btn btn-sm" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "coffee-varieties-list" %>
+<% else %>
+  <p class="empty-state mt-6"><%= t(".empty") %></p>
+<% end %>
+<% end %>
+</div>

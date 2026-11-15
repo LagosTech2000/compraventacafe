@@ -25,6 +25,28 @@
           data: { missing_message: "#{Farm.human_attribute_name(:name)} #{t("errors.messages.blank")}" } %>
   </div>
   <%= render "farms/farms/area_fields", form:, farm: %>
+  <%= render "farms/farms/varieties_field", form: %>
+  <%# Its plots («Lote 1»…), each with its land and varieties (Fernando, 2026-11-15). %>
+  <section class="grid gap-3" data-controller="farm-plots-form" aria-labelledby="farm-plots-title">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div>
+        <h2 id="farm-plots-title" class="field-label mb-0"><%= t("farms.plots.title") %></h2>
+        <p class="text-xs text-ink-muted"><%= t("farms.plots.help") %></p>
+      </div>
+      <button type="button" class="btn btn-sm" data-action="farm-plots-form#add"><%= t("farms.plots.add") %></button>
+    </div>
+    <div class="grid gap-3" data-farm-plots-form-target="list">
+      <%= form.fields_for :plots do |plot_form| %>
+        <%= render "farms/farms/plot_fields", form: plot_form %>
+      <% end %>
+    </div>
+    <p class="text-sm text-ink-muted" data-farm-plots-form-target="empty"><%= t("farms.plots.none") %></p>
+    <template data-farm-plots-form-target="template">
+      <%= form.fields_for :plots, FarmPlot.new, child_index: "NEW_PLOT" do |plot_form| %>
+        <%= render "farms/farms/plot_fields", form: plot_form %>
+      <% end %>
+    </template>
+  </section>
   <%= render "shared/address_fields", form: form %>
   <div>
     <%= form.label :observations, class: "field-label" %>

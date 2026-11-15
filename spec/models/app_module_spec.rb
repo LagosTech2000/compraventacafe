@@ -32,7 +32,7 @@ RSpec.describe AppModule, "submodules" do
     module_level = [ Administration::HomePolicy, Trading::HomePolicy, Sales::HomePolicy, Farms::HomePolicy, Loans::HomePolicy,
                      Finance::HomePolicy, Reports::HomePolicy, Sales::DeparturePolicy, BackupPolicy, AuditEventPolicy,
                      PrivateDocumentPolicy, SiteSettingPolicy, UserPolicy, Administration::PersonMergePolicy,
-                     FingerprintPolicy, FingerprintStationPolicy ]
+                     FingerprintPolicy, FingerprintStationPolicy, MaintenancePolicy ]
     ApplicationPolicy.descendants.select(&:module_key).each do |policy|
       next if module_level.include?(policy)
 

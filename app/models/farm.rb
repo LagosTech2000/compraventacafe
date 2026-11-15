@@ -3,13 +3,20 @@
 # business's farms and, apart, among each producer's own (two producers can
 # both have a "Finca El Paraíso"). The business's farm payrolls (Payroll)
 # pay the people who work it. A farm with payrolls is deactivated, never deleted.
+#
+# Its coffee varieties and its plots («Lote 1»…, each with its land and
+# varieties) since 2026-11-15 (Fernando): the plots are written in the
+# farm's own form.
 class Farm < ApplicationRecord
   include HasAddress
   include Auditable
+  include HasVarieties
 
   belongs_to :producer, optional: true
   has_many :payrolls, dependent: :restrict_with_error
   has_many :purchases, dependent: :restrict_with_error
+  has_many :plots, -> { order(:name) }, class_name: "FarmPlot", dependent: :destroy, inverse_of: :farm
+  accepts_nested_attributes_for :plots, allow_destroy: true, reject_if: :blank_plot?
 
   normalizes :name, with: ->(value) { value.squish.presence }
   normalizes :observations, with: FieldFormats::STRIP
@@ -22,6 +29,7 @@ class Farm < ApplicationRecord
   validates :area_unit, inclusion: { in: FarmArea::UNITS }, if: :area_value
   before_validation { self.area_unit = nil if area_value.nil? }
   validate :owner_kept_with_records, on: :update
+  validate :plots_in_use_kept
 
   scope :ordered, -> { order(:name) }
   scope :active, -> { where(active: true) }
@@ -58,7 +66,21 @@ class Farm < ApplicationRecord
   # Who it belongs to can change while nothing names it yet.
   def owner_locked? = persisted? && (purchases.exists? || payrolls.exists?)
 
+  # Its active plots for a form that picks one (a purchase): [id, name].
+  def plot_options = plots.select(&:active?).map { [ it.id, it.name ] }
+
   private
+    def blank_plot?(attributes)
+      attributes["id"].blank? && attributes.except("_destroy", "variety_ids").values.all?(&:blank?) && Array(attributes["variety_ids"]).compact_blank.empty?
+    end
+
+    # A plot a purchase names is deactivated, not removed.
+    def plots_in_use_kept
+      plots.select(&:marked_for_destruction?).each do |plot|
+        errors.add(:plots, :in_use, name: plot.name) if plot.persisted? && plot.purchases.exists?
+      end
+    end
+
     def owner_kept_with_records
       errors.add(:producer, :locked) if will_save_change_to_producer_id? && owner_locked?
     end

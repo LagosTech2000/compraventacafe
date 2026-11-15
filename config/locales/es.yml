@@ -201,6 +201,7 @@ es:
     select:
       no_zone: "Sin zona asignada"
       no_farm: "Sin finca asignada"
+      no_plot: "Sin parcela"
       no_department: "Sin departamento asignado"
       no_municipality: "Sin municipio asignado"
       pick_department_first: "Primero selecciona un departamento"
@@ -425,6 +426,218 @@ es:
           title: "Empleados sin salario"
           help: "En planillas por día: sin rol ni salario propio, sus días no se pueden pagar."
           action: "Asignar salario"
+  # Data maintenance tasks (Maintenance, Fernando, 2026-11-15).
+  # Christmas season (HolidaySeason, Fernando, 2026-11-15).
+  holiday:
+    greeting: "¡Felices fiestas!"
+  maintenance:
+    console: "Consola de Render"
+    tiers:
+      check: "Revisa · no cambia nada"
+      fill: "Completa con regla clara"
+      decision: "Necesita decisión del cliente"
+    areas:
+      sales: "Comercialización"
+      finance: "Control financiero"
+      general: "Todo el sistema"
+    statuses:
+      ok: "Cuadra"
+      warn: "Por revisar"
+      bad: "No cuadra"
+      failed: "Falló"
+    modes:
+      check: "Revisión"
+      preview: "Vista previa"
+      apply: "Aplicada"
+      revert: "Deshacer"
+    shared:
+      more_lines:
+        one: "… y 1 más."
+        other: "… y %{count} más."
+    revert:
+      title: "Deshacer"
+      done:
+        zero: "No había nada que deshacer: nadie cambió de nuevo esos registros."
+        one: "Se deshizo 1 cambio."
+        other: "Se deshicieron %{count} cambios."
+    tasks:
+      integrity_check:
+        title: "Revisión completa: ¿todo cuadra?"
+        what: "Corre todas las revisiones (inventario, salidas, dinero, arqueos y gastos) y además revisa facturas, carreros y lotes. Termina con un semáforo por parte."
+        after: "Nada cambia. Queda una lista con número de registro y qué corregir. Se puede correr cada semana."
+        risk: "Ninguno: solo lee."
+        overview_title: "Resumen"
+        overview:
+          bad:
+            one: "1 parte no cuadra."
+            other: "%{count} partes no cuadran."
+          warn:
+            one: "1 parte por revisar."
+            other: "%{count} partes por revisar."
+          ok:
+            one: "1 parte cuadra."
+            other: "%{count} partes cuadran."
+        invoices_title: "Facturas"
+        invoice_status: "Factura %{number}: dice «%{kept}» y por sus abonos debería decir «%{expected}»."
+        orphans:
+          one: "1 compra activa está en una factura anulada."
+          other: "%{count} compras activas están en facturas anuladas."
+        invoices_ok: "El estado de pago de cada factura coincide con sus abonos."
+        haulers_title: "Carreros"
+        hauler_owes: "Carrero #%{id}: se le pagó %{amount} más de lo que ganó en comisiones."
+        haulers_ok: "A ningún carrero se le pagó más de lo que ganó."
+        lots_title: "Lotes"
+        invoice_over: "Factura %{number}: entre todos sus lotes pasa del 100 %."
+        lot_over: "%{label}: tiene %{gross} lb brutas y su límite es %{limit}."
+        lots_ok: "Ninguna factura pasa del 100 % y ningún lote pasa su límite."
+      integrity_inventory:
+        title: "Cuadre del inventario de café"
+        what: "Por estado del café y por bodega compara tres cifras que deben ser iguales: el inventario, el saldo final del kárdex y lo que queda en los lotes. Avisa lo que está en negativo y la uva que lleva mucho tiempo sin procesar."
+        after: "Nada cambia. Si una cifra difiere, dice en qué estado y en qué bodega."
+        risk: "Ninguno: solo lee."
+        warehouse: "Bodega: %{name}"
+        figures: "%{state}: inventario %{stock} · kárdex %{ledger} · lotes %{lots} lb netas"
+        matches: "%{figures}. Cuadra."
+        differs: "%{figures}. No coinciden: revisa el kárdex de ese estado."
+        negative: "%{figures}. En negativo: salió más de lo que entró."
+        empty: "Sin café en esta bodega."
+        cherry_title: "Uva sin procesar"
+        cherry_none: "No hay uva esperando más de lo configurado."
+        cherry_waiting:
+          one: "1 lote de uva espera proceso (urgentes: %{critical}), %{pounds} lb netas."
+          other: "%{count} lotes de uva esperan proceso (urgentes: %{critical}), %{pounds} lb netas."
+      integrity_shipments:
+        title: "Salidas incompletas"
+        what: "Lista cada salida a la que le falta algo para tener costo, merma y diferencia de básculas: lotes, báscula local, báscula del comprador, gastos, venta o cobro."
+        after: "Nada cambia. Una lista de pendientes por salida para completarlas en pantalla."
+        risk: "Ninguno: solo lee."
+        summary: "Resumen"
+        list: "Salidas con pendientes"
+        total:
+          one: "1 salida activa."
+          other: "%{count} salidas activas."
+        count: "%{gap}: %{count}."
+        line: "Remisión %{number} · %{date} · %{state}: %{gaps}."
+        none: "Ninguna salida tiene pendientes."
+        gaps:
+          no_lots: "sin lotes (sin merma ni costo)"
+          no_origin: "sin báscula local (no bajó el inventario)"
+          not_received: "sin báscula del comprador"
+          no_costs: "sin gastos ni precio del viaje"
+          not_sold: "pesada y sin vender"
+          unpaid: "venta por cobrar"
+      integrity_shipment_expense_candidates:
+        title: "Gastos que parecen de un viaje"
+        what: "Busca gastos de Control financiero sin salida con fecha cerca de cada salida y los sugiere. No los asigna: alguien los confirma en «Asignar gastos» de la salida."
+        after: "Nada cambia. Una lista de sugerencias por salida."
+        risk: "Ninguno: solo lee. Elige las categorías que cuentan como gastos de viaje."
+        criteria: "Gastos (no inversiones) sin salida, hasta %{days} días antes o después de la salida. Categorías: %{categories}."
+        all_categories: "todas"
+        line: "Remisión %{number} · %{date}: %{expenses}."
+        expense: "#%{id} %{date} %{category} %{amount}"
+        none: "Ninguna salida tiene gastos sin asignar cerca de su fecha."
+      batches_backfill:
+        title: "Armar lotes para las salidas pasadas"
+        what: "A cada salida sin lote le arma uno con las facturas de su estado del café y su bodega, con todas sus compras hechas hasta el día en que salió, las compras más viejas primero, hasta el peso de su báscula local. Así esas salidas tienen costo."
+        after: "Esas salidas sacan del inventario el café de sus lotes en lugar del más viejo, y el inventario de cada estado puede moverse (la vista previa dice cuánto). Su merma no es real: el lote se llena hasta el peso de la báscula local."
+        risk: "Alto: es una aproximación (nadie anotó qué facturas iban en cada camión) y cambia cifras pasadas. Correr solo cuando el cliente decida la fecha de corte de los lotes."
+        observation: "Armado por la tarea «Armar lotes para las salidas pasadas»: aproximado, las facturas más viejas primero."
+        summary: "Resumen"
+        would_make:
+          one: "Se armaría 1 lote, de %{total} salidas sin lote con báscula local."
+          other: "Se armarían %{count} lotes, de %{total} salidas sin lote con báscula local."
+        made:
+          one: "Se armó 1 lote."
+          other: "Se armaron %{count} lotes."
+        range: "Salidas desde %{from} hasta %{to}."
+        start: "el inicio"
+        today: "hoy"
+        invoices:
+          one: "Usa 1 factura."
+          other: "Usa %{count} facturas."
+        stock_change: "%{state}: el inventario cambia en %{pounds} lb netas (positivo: queda más café)."
+        shrink_warning: "La merma de estas salidas no es real: el lote se llena hasta el peso de la báscula local."
+        skipped: "Salidas que se dejan fuera"
+        no_scale: "Sin báscula local: remisiones %{numbers}. Complétalas y corre la tarea otra vez."
+        none_skipped: "Ninguna."
+        shipment: "Remisión %{number} · %{date} · %{state} · %{warehouse}"
+        target: "Báscula local %{gross} lb brutas; el lote toma %{taken} lb brutas."
+        share: "Factura %{number}: %{percent} %, %{gross} lb brutas, %{net} lb netas."
+        missing: "Faltan %{gross} lb brutas: no hay más facturas libres de ese estado y bodega con compras hasta ese día."
+      integrity_money:
+        title: "Cuadre del dinero"
+        what: "Para cada cuenta comprueba que su saldo sea igual al saldo inicial más todo lo que entró menos todo lo que salió en Movimientos. Avisa los saldos iniciales en cero, los movimientos con fecha antes del saldo inicial y el dinero de algo anulado que siga contando."
+        after: "Nada cambia. Si algo difiere, dice en qué cuenta."
+        risk: "Ninguno: solo lee."
+        accounts: "Cuentas"
+        matches: "%{account}: saldo %{balance}. Cuadra con Movimientos."
+        differs: "%{account}: el saldo dice %{balance} y Movimientos da %{ledger}."
+        before_opening:
+          one: "1 movimiento es de antes del saldo inicial (%{date}): revisa que no esté contado dos veces."
+          other: "%{count} movimientos son de antes del saldo inicial (%{date}): revisa que no estén contados dos veces."
+        zero_opening: "Su saldo inicial es L 0: pon el dinero real con su fecha."
+        none_matches: "Sin cuenta: %{amount}. Cuadra con Consolidación."
+        none_differs: "Sin cuenta: los saldos dicen %{balance} y Movimientos da %{ledger}."
+        voided: "Dinero de algo anulado"
+        voided_none: "Nada anulado sigue contando en las cuentas."
+        voided_found:
+          sale_payments: "%{count} cobros de ventas anuladas siguen contando."
+          shipment_costs: "%{count} gastos de salidas anuladas siguen contando."
+          processing_costs: "%{count} gastos de procesos anulados siguen contando."
+          invoice_payments: "%{count} abonos de facturas anuladas siguen contando."
+      integrity_cash_counts:
+        title: "Arqueos que ya no cuadran"
+        what: "Calcula otra vez el saldo del sistema en la fecha de cada arqueo y lo compara con el que se guardó ese día. Si cambió, algo se registró después con fecha atrasada o se cambió de cuenta."
+        after: "Nada cambia. Dice qué arqueo se movió y cuánto."
+        risk: "Ninguno: solo lee."
+        none: "Todavía no hay arqueos."
+        holds: "Arqueo #%{id} · %{account} · %{date}: el sistema decía %{kept} y sigue igual."
+        moved: "Arqueo #%{id} · %{account} · %{date}: el sistema decía %{kept} y hoy dice %{now} (%{difference})."
+      integrity_expenses:
+        title: "Gastos por revisar"
+        what: "Lista gastos e inversiones sin comprobante, los que parecen registrados dos veces (mismo día, monto, categoría y beneficiario) y los que tienen fecha futura. Nunca borra nada."
+        after: "Nada cambia. Una lista para revisar con quien registró cada gasto."
+        risk: "Ninguno: solo lee."
+        receipts: "Sin comprobante"
+        without_receipt: "%{count} de %{total} sin foto ni PDF del comprobante. Los más recientes:"
+        duplicates: "Posibles duplicados"
+        twins: "%{ids}: %{first}"
+        no_twins: "Ninguno parece repetido."
+        future: "Con fecha futura"
+        no_future: "Ninguno."
+        line: "#%{id} %{kind} · %{date} · %{category} · %{amount}"
+      farms_plots_from_lots:
+        title: "Los «Lote» pasan a ser parcelas"
+        what: "Las fincas de productores llamadas «Lote 1», «Lote 2»… son parcelas. Las de cada productor pasan a ser parcelas de una finca con el nombre de su lugar: su dirección (la aldea), si no su municipio, si no la zona del productor. Cada parcela conserva su extensión y toma las variedades escritas en las observaciones."
+        after: "Cada productor queda con una finca con nombre de lugar y sus parcelas con variedades. Sus compras siguen en esa finca y dicen su parcela. Si tenía dos lotes, la finca del segundo queda desactivada y sus compras pasan a la primera."
+        risk: "Bajo, se puede deshacer. El nombre de la finca se puede corregir después en su formulario."
+        summary: "Resumen"
+        list: "Lo que cambia por productor"
+        skipped: "Se dejan fuera"
+        found: "%{lots} lotes de %{producers} productores pasan a ser parcelas."
+        line: "%{producer}: finca «%{name}» (%{source}) · parcelas: %{plots} · %{purchases} compras."
+        sources:
+          address: "de su dirección"
+          municipality: "de su municipio"
+          zone: "de la zona del productor"
+        none: "No hay fincas llamadas «Lote»."
+        no_place: "%{producer}: «%{lot}» no tiene dirección, municipio ni zona."
+        none_skipped: "Ninguno."
+        done: "Se crearon %{plots} parcelas; %{purchases} compras dicen ahora su parcela."
+      purchases_assign_single_farm:
+        title: "Finca de las compras de productores con una sola finca"
+        what: "A cada compra sin finca cuyo productor tiene una sola finca le pone esa finca. No cambia peso, monto ni factura."
+        after: "Esas compras cuentan en «Rendimiento de fincas» y en las cifras de su finca. Las de productores con varias fincas o ninguna siguen sin finca."
+        risk: "Bajo, se puede deshacer. Antes de aplicarla, el cliente acepta la regla «si tiene una sola finca, el café es de ahí»."
+        title_section: "Compras"
+        found: "%{count} compras se completarían (de %{without} sin finca)."
+        producers:
+          one: "De 1 productor."
+          other: "De %{count} productores."
+        line: "Compra #%{id} · %{date} → %{farm}"
+        done:
+          one: "Se puso la finca a 1 compra."
+          other: "Se puso la finca a %{count} compras."
   money_movements:
     invoice: "Factura %{number}"
     processing_cost: "%{concept} · proceso %{number}"
@@ -1804,6 +2017,10 @@ es:
         chosen: "%{count} marcadas: %{pounds} lb brutas de %{room} que caben."
         over: "%{count} marcadas: %{pounds} lb brutas, más de las %{room} que caben. Baja la parte de alguna."
         none_marked: "Ninguna marcada"
+        mark_all: "Marcar o desmarcar todas las facturas cargadas"
+        fill: "Llenar el lote"
+        fill_help: "Marca las facturas en el orden de la lista hasta llenar el lote; la última, con la parte que cabe."
+        bulk_help: "La casilla del encabezado marca todas; Shift + clic marca un rango; «Llenar el lote» marca hasta llenarlo."
         submit: "Agregar al lote"
         empty: "No hay facturas libres de ese estado del café en esa bodega con estos filtros."
       create:
@@ -3836,6 +4053,40 @@ es:
         back: "Volver a estados de cuenta"
 
   farms:
+    # Coffee varieties and plots (Fernando, 2026-11-15).
+    varieties:
+      label: "Variedades"
+      none: "Todavía no hay variedades: créalas en Fincas → Variedades."
+      empty: "Sin variedades anotadas"
+    plots:
+      title: "Parcelas"
+      help: "Los lotes de la finca: cada uno con su extensión y sus variedades. Una compra puede decir de qué parcela viene."
+      add: "Agregar parcela"
+      remove: "Quitar"
+      none: "Sin parcelas. Toca «Agregar parcela» para anotar los lotes de la finca."
+      none_saved: "Esta finca no tiene parcelas anotadas."
+      name_placeholder: "Ej.: Lote 1"
+      purchases: "Compras"
+    coffee_varieties:
+      index:
+        title: "Variedades"
+        help: "Las variedades del café (Lempira, IHCAFE 90…) que se eligen en cada finca y en cada parcela. Una desactivada ya no se elige."
+        new: "Nueva variedad"
+        farms: "Fincas"
+        plots: "Parcelas"
+        edit: "Editar"
+        empty: "No hay variedades con esos filtros."
+      form:
+        name_placeholder: "Ej.: Parainema"
+        active_help: "Desactivada ya no se elige; las fincas y parcelas que la tienen la conservan."
+      new:
+        title: "Nueva variedad"
+      edit:
+        title: "Editar %{name}"
+      create:
+        success: "Variedad registrada."
+      update:
+        success: "Variedad actualizada."
     overtime:
       hours: "+ %{hours} h extra × %{rate}"
       extra_days:
@@ -5800,6 +6051,34 @@ es:
               - "Una variable se borra entera, como una sola letra."
               - "«Código fuente» (</>) muestra el HTML: sirve para copiar el documento completo, con sus variables, de un sistema a otro."
               - "Si sales con cambios sin guardar, el sistema pregunta antes."
+        maintenance_tasks:
+          index:
+            title: "Mantenimiento de datos"
+            summary: "Tareas que revisan si las cifras cuadran y tareas que completan datos que faltan. Solo la ve el usuario a cargo de exportar los datos."
+            steps:
+              - "Lee en cada tarjeta qué hace, cómo deja el sistema y su riesgo."
+              - "Toca «Abrir» para correrla. Las que revisan no cambian nada."
+              - "Abajo están las últimas corridas: toca «Ver» para ver su resultado."
+            tips:
+              - "Cada tarea se puede correr también desde la Shell de Render con el comando que dice su tarjeta."
+              - "«Revisión completa» corre todas las revisiones juntas: conviene cada semana."
+          show:
+            title: "Correr una tarea"
+            summary: "Qué hace la tarea, sus opciones y sus corridas."
+            steps:
+              - "Elige las opciones, si las tiene."
+              - "Toca «Revisar ahora» o, en una tarea que cambia datos, «Ver qué cambiaría»: no cambia nada."
+              - "En el resultado, si todo está bien y ya descargaste el respaldo, «Aplicar»."
+        maintenance_runs:
+          show:
+            title: "Resultado de una corrida"
+            summary: "Lo que encontró la tarea, parte por parte, como quedó ese día."
+            steps:
+              - "Verde: cuadra. Amarillo: por revisar. Rojo: no cuadra."
+              - "En una vista previa: marca que descargaste el respaldo y toca «Aplicar»."
+              - "En una corrida aplicada: «Deshacer» devuelve lo que cambió."
+            tips:
+              - "Al aplicar se calcula otra vez: si alguien registró algo en medio, el resultado puede ser un poco distinto de la vista previa."
         backups:
           show:
             title: "Respaldo de datos"
@@ -6471,6 +6750,7 @@ es:
             steps:
               - "Filtra por productor o número, fechas, temporada o zona."
               - "Marca cada factura y escribe su parte; abajo ves cuántas libras brutas suman contra lo que cabe."
+              - "Para muchas a la vez: la casilla del encabezado marca todas las cargadas, Shift + clic marca un rango y «Llenar el lote» las marca en orden hasta llenarlo (la última con la parte que cabe)."
               - "Toca «Agregar al lote»."
             tips:
               - "Una factura puede repartirse en varios lotes, sin pasar del 100 % entre todos."
@@ -7094,8 +7374,10 @@ es:
             title: "Registrar o editar una finca"
             summary: "Nombre, dueño, extensión y ubicación de la finca."
             steps:
-              - "Escribe el nombre."
+              - "Escribe el nombre. Si el productor no lo dice, escribe el nombre del lugar o de la aldea (no «Lote 1»: los lotes son parcelas)."
               - "La extensión es opcional: escríbela en manzanas, hectáreas o metros cuadrados, la que prefieras, y las otras se calculan solas. Se guarda como la escribiste."
+              - "Marca las variedades del café de la finca; si falta una, se agrega en Fincas → Variedades."
+              - "En «Parcelas», toca «Agregar parcela» por cada lote (Lote 1, Lote 2…) con su extensión y sus variedades. «Quitar» la saca al guardar; una parcela con compras se desactiva en vez de quitarla."
               - "Si es la finca de un productor, búscalo en «Productor»; déjalo vacío si es una finca del negocio. El dueño ya no cambia cuando la finca tiene compras o planillas."
               - "Elige departamento y municipio y escribe la dirección."
               - "En «Ubicación en el mapa», toca el mapa donde está para poner el pin (se puede arrastrar), toca «Usar mi ubicación» si estás ahí, o pega las coordenadas de Google Maps en latitud y longitud. Es opcional."
@@ -7223,6 +7505,18 @@ es:
               - "Revisa la fecha y elige la categoría (o crea una con «Nueva categoría»)."
               - "Escribe la descripción y el monto."
               - "Toca el botón de guardar."
+        coffee_varieties:
+          index:
+            title: "Variedades"
+            summary: "El catálogo de variedades del café que se eligen en cada finca y en cada parcela."
+            steps:
+              - "Toca «Nueva variedad» para agregar una."
+              - "«Editar» cambia su nombre o la desactiva: una desactivada ya no se elige, y quien la tiene la conserva."
+          form:
+            title: "Variedad del café"
+            summary: "Su nombre, como lo dicen los productores."
+            steps:
+              - "Escribe el nombre (por ejemplo, Parainema) y guarda."
         expense_categories:
           index:
             title: "Categorías de gastos"
@@ -7582,6 +7876,74 @@ es:
       site_setting: "Configuración del sitio"
       backup: "Respaldo"
       fingerprint_stations: "Lectores de huella"
+      maintenance: "Mantenimiento de datos"
+    # Data maintenance tasks (Fernando, 2026-11-15; only User::DATA_EXPORTER_ID).
+    maintenance_tasks:
+      params:
+        from: "Salidas desde"
+        to: "Salidas hasta"
+        days: "Días antes o después de la salida"
+        category_ids: "Categorías de gastos de viaje"
+        none: "Sin opciones"
+      index:
+        title: "Mantenimiento de datos"
+        help: "Tareas que revisan si las cifras cuadran y tareas que completan datos que faltan. Las mismas se pueden correr desde la Shell de Render. Solo tú ves esta página."
+        safety: "Las tareas que revisan no cambian nada. Las que cambian datos primero muestran una vista previa; se aplican desde esa vista previa, con el respaldo descargado, todo o nada, quedan en la auditoría y se pueden deshacer."
+        backup: "Descargar respaldo"
+        after: "Cómo queda el sistema"
+        risk: "Riesgo"
+        command: "En la Shell de Render"
+        last_run: "Última vez: %{when}"
+        never: "Nunca se ha corrido."
+        open: "Abrir"
+        runs: "Últimas corridas"
+      show:
+        about: "Qué hace"
+        shell: "En la Shell de Render"
+        shell_apply: "Para aplicarla desde la Shell: %{command}"
+        check_title: "Revisar"
+        preview_title: "Vista previa"
+        check: "Revisar ahora"
+        preview: "Ver qué cambiaría"
+        running: "Corriendo…"
+        preview_help: "La vista previa no cambia nada. Desde ella, si todo está bien, se aplica."
+        categories_help: "Ctrl o Cmd para elegir varias. Sin elegir, todas."
+        runs: "Corridas de esta tarea"
+    maintenance_runs:
+      table:
+        when: "Fecha"
+        task: "Tarea"
+        mode: "Tipo"
+        status: "Resultado"
+        who: "Quién"
+        actions: "Acciones"
+        open: "Ver"
+        reverted: "Deshecha"
+        empty: "Todavía no se ha corrido ninguna tarea."
+      show:
+        title: "%{task}: resultado"
+        meta: "%{mode} · %{when} · %{who} · %{ms} ms · corrida %{id}"
+        failed: "La tarea falló y no cambió nada:"
+        undid_html: "Esta corrida deshizo la %{link}."
+        run_number: "corrida %{id}"
+        was_reverted: "Estos cambios se deshicieron el %{when}."
+        apply_title: "Aplicar estos cambios"
+        apply_help: "Se aplica con las mismas opciones de esta vista previa. Si los datos cambiaron desde que la hiciste, se calcula de nuevo al aplicar: revisa el resultado."
+        download_backup: "Descargar el respaldo de hoy"
+        backup_confirmed: "Ya descargué el respaldo de hoy."
+        apply: "Aplicar"
+        apply_confirm: "¿Aplicar estos cambios a los datos reales? Quedan en la auditoría y se pueden deshacer."
+        shell_apply: "O desde la Shell de Render: %{command}"
+        revert_help: "Esta corrida cambió datos. Deshacerla devuelve lo que cambió, salvo lo que alguien volvió a cambiar después."
+        revert: "Deshacer"
+        revert_confirm: "¿Deshacer los cambios de esta corrida?"
+      create:
+        applied: "Cambios aplicados."
+        not_appliable: "Solo se aplica desde una vista previa que no falló."
+        backup_first: "Primero descarga el respaldo y marca la casilla."
+      revert:
+        success: "Cambios deshechos."
+        not_revertible: "Esta corrida no cambió datos o ya se deshizo."
     backups:
       show:
         title: "Respaldo de datos"
@@ -7631,6 +7993,7 @@ es:
         farms_description: "Todas las fincas, del negocio y de los productores: crear, editar y borrar las que no se usan."
         zones_description: "Las zonas de donde vienen las personas: crear, editar y borrar las que no se usan."
         backup_description: "Descarga una copia de todos los datos (base de datos y CSV)."
+        maintenance_description: "Revisa si las cifras cuadran y completa datos que faltan, con vista previa y para deshacer."
         fingerprint_stations_description: "Las PC con lector de huella: agrégalas, empareja su programa y registra las huellas de las personas."
         users_description: "Crear usuarios, asignar permisos por pestaña de cada módulo y restablecer contraseñas."
         audit_description: "Quién creó, modificó o borró qué, y cuándo."
@@ -7700,6 +8063,7 @@ es:
         scanner_ban: "IP bloqueada por buscar direcciones de ataque (/wp-admin, .env, .php…)"
         sign_in: "Demasiados intentos de inicio de sesión"
         backup: "Demasiadas descargas del respaldo"
+        maintenance: "Demasiadas corridas de mantenimiento de datos"
         report_csv: "Demasiadas exportaciones CSV"
         report_charts: "Demasiadas cargas de gráficos"
       entities:
@@ -7724,6 +8088,8 @@ es:
         supply_entry: "la entrada de insumos"
         supply_entry_line: "el insumo de la entrada"
         supply_exit: "la salida de insumos"
+        farm_plot: "la parcela"
+        coffee_variety: "la variedad del café"
         shipment_cost: "el gasto de la salida"
         shipment_invoice: "la factura de la salida"
         coffee_batch: "el lote"
@@ -8244,6 +8610,12 @@ es:
       farm:
         one: "Finca"
         other: "Fincas"
+      farm_plot:
+        one: "Parcela"
+        other: "Parcelas"
+      coffee_variety:
+        one: "Variedad"
+        other: "Variedades"
       expense_category:
         one: "Categoría de gasto"
         other: "Categorías de gasto"
@@ -8930,6 +9302,8 @@ es:
         person_id: "Persona"
       purchase:
         common_coffee: "Café corriente"
+        farm_plot: "Parcela"
+        farm_plot_id: "Parcela"
         purchased_at: "Fecha y hora"
         warehouse: "Bodega"
         warehouse_id: "Bodega"
@@ -9096,8 +9470,22 @@ es:
         unit: "Unidad"
         default_price: "Precio predeterminado (L)"
         active: "Activo"
+      farm_plot:
+        farm: "Finca"
+        farm_id: "Finca"
+        name: "Nombre de la parcela"
+        area_value: "Extensión"
+        area_unit: "Unidad"
+        variety_ids: "Variedades"
+        observations: "Observaciones"
+        active: "Activa"
+      coffee_variety:
+        name: "Nombre"
+        active: "Activa"
       farm:
         name: "Nombre"
+        variety_ids: "Variedades"
+        plots: "Parcelas"
         producer: "Productor"
         producer_id: "Productor"
         department: "Departamento"
@@ -9534,6 +9922,8 @@ es:
           attributes:
             producer:
               locked: "no se puede cambiar: la finca ya tiene compras o planillas"
+            plots:
+              in_use: "«%{name}» tiene compras: desactívala en lugar de quitarla"
         hauler_payment:
           attributes:
             amount:
@@ -9643,6 +10033,8 @@ es:
               other_producer: "pertenece a otro productor"
             farm:
               other_producer: "no es una finca de este productor"
+            farm_plot:
+              other_farm: "no es una parcela de esa finca"
             weighings:
               blank: "faltan: agrega al menos una pesada"
         invoice:

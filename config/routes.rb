@@ -59,6 +59,11 @@ Rails.application.routes.draw do
     resources :private_documents, only: %i[ index show edit update ]
     # The data backup: a .zip with the database dump and a CSV per table.
     resource :backup, only: %i[ show create ]
+    # Data maintenance tasks (Maintenance, only User::DATA_EXPORTER_ID).
+    resources :maintenance_runs, path: "maintenance/runs", only: %i[ create show ] do
+      member { post :revert }
+    end
+    resources :maintenance_tasks, path: "maintenance", only: %i[ index show ], param: :slug
     resources :users, only: %i[ index show new create edit update ] do
       member do
         get :reset_password, action: :edit_password
@@ -214,6 +219,8 @@ Rails.application.routes.draw do
       resources :expenses, only: %i[ new create edit update destroy ]
     end
     resources :expense_categories, only: %i[ index new create edit update ]
+    # Coffee varieties (Fernando, 2026-11-15), for farms and plots.
+    resources :coffee_varieties, path: "varieties", only: %i[ index new create edit update ]
   end
 
   namespace :loans do

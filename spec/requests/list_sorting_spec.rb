@@ -21,6 +21,7 @@ RSpec.describe "Sorting every list" do
     create(:loan, person: producer.person)
     create(:supply_entry, supply: create(:supply))
     create(:supply_exit)
+    CoffeeVariety.create!(name: "Parainema")
     create(:loan, disbursed_on: Time.zone.today, due_on: Time.zone.today + 30, supply_items_attributes: [ { supply_id: Supply.first.id, quantity: 1, unit_price: 5 } ])
     create(:farm, producer:)
     create(:payroll_member, payroll: daily)
@@ -83,6 +84,7 @@ RSpec.describe "Sorting every list" do
     ExpenseCategoryFilter => -> { farms_expense_categories_path },
     ConsolidationFilter => -> { finance_consolidation_path(with_account: "1") },
     SupplyExitFilter => -> { sales_supply_exits_path },
+    CoffeeVarietyFilter => -> { farms_coffee_varieties_path },
     CoffeeCollectionFilter => -> { loans_coffee_collection_path },
     SupplyEntryFilter => -> { sales_supply_stock_path },
     IdleProducerFilter => -> { trading_idle_producers_path },

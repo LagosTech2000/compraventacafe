@@ -1,0 +1,30 @@
+<% if runs.any? %>
+  <div class="overflow-x-auto panel">
+    <table class="data-table data-table-compact" data-controller="table-sort" data-maintenance-runs>
+      <thead>
+        <tr>
+          <th><%= t("administration.maintenance_runs.table.when") %></th>
+          <th><%= t("administration.maintenance_runs.table.task") %></th>
+          <th><%= t("administration.maintenance_runs.table.mode") %></th>
+          <th><%= t("administration.maintenance_runs.table.status") %></th>
+          <th><%= t("administration.maintenance_runs.table.who") %></th>
+          <th class="cell-actions" data-sort="false"><span class="sr-only"><%= t("administration.maintenance_runs.table.actions") %></span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% runs.each do |run| %>
+          <tr id="<%= dom_id(run) %>">
+            <td class="whitespace-nowrap"><%= l(run.created_at, format: :short) %></td>
+            <td><%= run.task&.title || run.task_key %></td>
+            <td><%= run.mode_label %><% if run.reverted? %> <span class="badge badge-neutral"><%= t("administration.maintenance_runs.table.reverted") %></span><% end %></td>
+            <td><%= maintenance_status_badge(run.status) %></td>
+            <td><%= run.who %></td>
+            <td class="cell-actions"><%= link_to t("administration.maintenance_runs.table.open"), administration_maintenance_run_path(run), class: "btn btn-sm", data: { row_link: true } %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <p class="empty-state"><%= t("administration.maintenance_runs.table.empty") %></p>
+<% end %>

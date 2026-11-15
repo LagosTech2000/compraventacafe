@@ -51,21 +51,24 @@ class Person < ApplicationRecord
   validate :producer_removable, :hauler_removable, :collaborator_removable
 
   scope :alphabetical, -> { order(:last_names, :first_names) }
-  scope :search, ->(term) {
-    pattern = "%#{sanitize_sql_like(term.strip)}%"
-    where("first_names ILIKE :p OR last_names ILIKE :p OR dni ILIKE :p OR rtn ILIKE :p", p: pattern)
-  }
+  # The search box of the lists (Fernando, 2026-11-14: searching loans by
+  # person sometimes found nothing): like the picker, every word must be in
+  # the names, ignoring case and accents («ana mejia» finds Ana Mejía), and a
+  # number is also looked for in the DNI and RTN.
+  scope :search, ->(text) { matching_words(text, min_digits: 1) }
   # What a searchable picker types (PickerSearchesController): every word
   # must be in the names (ignoring case and accents), or, with digits, in
   # the DNI or RTN. "Ana Zelaya — 0801…" (a picker label) finds Ana.
-  scope :picker_search, ->(text) {
+  scope :picker_search, ->(text) { matching_words(text, min_digits: 3) }
+
+  def self.matching_words(text, min_digits:)
     words = text.to_s.tr("—", " ").split.first(6)
     words.reduce(all) do |scope, word|
       digits = word.delete("^0-9")
-      clause = digits.length >= 3 && digits == word.delete("-") ? NAMES_OR_NUMBERS_MATCH : NAMES_MATCH
+      clause = digits.length >= min_digits && digits == word.delete("-") ? NAMES_OR_NUMBERS_MATCH : NAMES_MATCH
       scope.where(clause, name: "%#{sanitize_sql_like(fold(word))}%", digits: "%#{digits}%")
     end
-  }
+  end
   scope :clients, -> { joins(:client) }
   scope :collaborators, -> { joins(:collaborator) }
   scope :producers, -> { joins(:producer) }

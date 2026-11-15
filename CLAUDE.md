@@ -110,6 +110,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Score de pago | `PayerScore` |
 | Recibo de abono | `loans/payments#show` (`LoanPayment#display_number`) |
 | Finca (del negocio o de un productor) | `Farm` (`producer_id` vacío = del negocio) |
+| Parcela de la finca (lo que el cliente llama «Lote 1») / variedad del café | `FarmPlot` (`Farm#plots`, `Purchase#farm_plot`) / `CoffeeVariety` (`variety_ids` en finca y parcela, `HasVarieties`) |
 | Extensión territorial (manzanas / hectáreas / m²) | `Farm#area_value` + `area_unit` (`manzana` / `hectare` / `square_meter`), `FarmArea` |
 | Cifras de la finca (café vendido, corte, rendimiento) | `FarmProfile`; reporte `FarmsReport` («Rendimiento de fincas») |
 | Horas extra / días extra / valor de la hora extra | `PayrollOvertime` (`hours`, `extra_days`, por período) / `Payroll#overtime_hour_rate` |
@@ -139,6 +140,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Cierre diario de préstamos / simulador de préstamo | `LoanDailyClose` (`loans/daily_closes#show`) / `LoanSimulation` (`loans/simulations#show`) |
 | Préstamos que vencen pronto | `Dashboard#due_soon_loans` (`Dashboard::DUE_SOON_DAYS`) |
 | Versión de los datos (caché de reportes) | `DataVersion` |
+| Mantenimiento de datos (revisiones y tareas que completan datos) / corrida | `Maintenance` (`Maintenance::Task`, `Maintenance::Runner`) / `MaintenanceRun` |
 | Límite de solicitudes (auditoría) | acción `rate_limited` (`RateLimitAudit`) |
 | Mi configuración (datos, foto, contraseña, ventana o panel lateral, menú arriba o a la izquierda, huellas) | `UserSettingsController`; `User#window_style` (`modal` / `drawer`), `User#nav_position` (`top` / `left`) |
 | Usuarios conectados / páginas recientes de un usuario | `Presence` + `PresenceChannel` / `PageVisit` |
@@ -623,7 +625,13 @@ los errores).
   sencillas ponen arriba de sus resultados `live_list_status(@filter,
   campo: opciones o lambda)`: cuántos hay (`ListFilter#total_count`, que
   cuenta lo filtrado tras `#results`) y una etiqueta por filtro activo (la
-  búsqueda `q` sale como «Búsqueda: «…»»). `spec/system/live_lists_spec.rb`
+  búsqueda `q` sale como «Búsqueda: «…»»). **La búsqueda por persona** de toda
+  lista (`Person.search`: préstamos, estados de cuenta, personas,
+  productores, compras, facturas, carreros, planillas, reportes) busca
+  **cada palabra** en nombres y apellidos **sin mayúsculas ni tildes**
+  («ana mejia» encuentra a Ana Mejía) y los números también en DNI y RTN,
+  como el buscador al escribir (Fernando, 2026-11-14: antes el nombre
+  completo o sin tilde no encontraba nada). `spec/system/live_lists_spec.rb`
   las recorre.
   `shared/filters` con `live: true` y `frame:`, dentro de un elemento con
   `live_filter_controller.js`. Sin botón «Filtrar»: listas, fechas y
@@ -723,6 +731,18 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
   Es el único lugar a editar cuando se defina la paleta real; la actual es
   provisional. Tipografía: Inter, alojada en la app (`app/assets/fonts`), sin
   servicios externos.
+- **Tema navideño** (Fernando, 2026-11-15: «muy gentil»), del **15 de
+  noviembre al 7 de enero** (`HolidaySeason.christmas?`): el `<body>` lleva
+  `christmas`; cuelga una línea de lucecitas de la navegación (arriba o del
+  panel lateral, `.holiday-garland`) y un arbolito con «¡Felices fiestas!»
+  sale bajo el saludo del Inicio y en el inicio de sesión
+  (`HolidayHelper#holiday_greeting`). Los formularios de página completa
+  (el recuadro de `form_surface_class`: Nueva compra, Nuevo préstamo,
+  Facturar compras…) se decoran como una puerta navideña (Fernando, con una
+  foto): guirnalda de pino con flores de Pascua arriba, un moño rojo en
+  cada esquina y lucecitas cálidas por los lados (`.holiday-frame`, dibujos
+  SVG en el CSS), por fuera del borde, nunca sobre un campo. Brillan suave, quietas con
+  `prefers-reduced-motion`, nunca en papel.
 - **Ícono del navegador** (provisional, un grano de café en el café de la
   paleta; Fernando 2026-10-14): `public/icon.svg` es el original y de él
   salen `icon.png` (512), `favicon.ico` (16/32/48) y
@@ -1126,6 +1146,33 @@ respaldo trae solo los CSV y lo explica; la pantalla muestra ambas
 versiones antes de descargar. **Verificar en Render** (`pg_dump --version`
 en el shell del servicio). Cada descarga se audita (`backup`).
 
+**Mantenimiento de datos** (`Maintenance`, Administración → Mantenimiento
+de datos, Fernando 2026-11-15; **solo el usuario con id 1**, como el
+respaldo: `MaintenancePolicy`): tareas para que las cifras cuadren, cada una
+una clase en `app/models/maintenance/` (`key`, `tier`, `area`, `param`;
+textos en `maintenance.tasks.<slug>` de `es.yml`) y la misma lista en
+`lib/tasks/maintenance.rake` (un spec revisa que coincidan), para correrlas
+también desde la Shell de Render. Tres tipos: **revisan** (`:check`, solo
+leen: `integrity:check` las corre todas y además facturas, carreros y
+lotes; `integrity:inventory`, `:shipments`,
+`:shipment_expense_candidates`, `:money`, `:cash_counts`, `:expenses`),
+**completan con regla clara** (`:fill`: `purchases:assign_single_farm`,
+`farms:plots_from_lots`) y
+**necesitan decisión del cliente** (`:decision`: `batches:backfill`, lotes
+aproximados para salidas pasadas, las facturas con compras hasta el día de
+la salida, las compras más viejas primero, hasta su báscula local; la
+merma de esas salidas no es real). Las que cambian datos: **vista previa
+primero**; se aplican solo desde esa vista previa, con la casilla «Ya
+descargué el respaldo», todo o nada (transacción), auditadas por sus
+modelos (en la Shell con `request_id` `maintenance-…`) y con **«Deshacer»**
+(`.revert!`, lo que nadie volvió a cambiar). En la Shell: sin `CONFIRM=1`
+no cambia nada; `bin/rails maintenance:runs` y
+`"maintenance:revert[ID]"`. Cada corrida queda en `MaintenanceRun` (lo que
+encontró, lo que cambió, quién; la consola sin usuario). Se corren dentro
+de la solicitud (hoy tardan menos de 1 s). Correr `batches:backfill` y
+`purchases:assign_single_farm` en producción espera la aprobación del
+cliente.
+
 **Inicio** (`Dashboard`, `dashboard/show`), **sin huecos** (Fernando,
 2026-10-12): cifras y módulos llenan cada fila (`flex-wrap` con
 `flex-1`), y en pantallas anchas «Actividad reciente» va a la derecha con
@@ -1410,7 +1457,10 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   todos los lotes una factura no pasa del 100 %** y el lote **no pasa de su
   límite** (brutas de las compras × %). Al elegir facturas, junto a la
   parte (%) de cada una sale lo que equivale en libras brutas y, debajo,
-  netas (`batch_shares_controller.js`, Fernando, 2026-11-13). **También
+  netas (`batch_shares_controller.js`, Fernando, 2026-11-13); **para muchas
+  a la vez** (Fernando, 2026-11-15): la casilla del encabezado marca todas
+  las cargadas, Shift + clic marca un rango y «Llenar el lote» las marca en
+  el orden de la lista hasta llenarlo (la última con la parte que cabe). **También
   desde «Facturar compras»** (Fernando, 2026-11-13): «Lote (opcional)» y la
   parte (%), 100 por defecto; solo se eligen los lotes del estado y la bodega
   de las compras marcadas, con espacio y no en una salida vendida (salvo
@@ -2330,6 +2380,27 @@ Reglas decididas por Fernando el 2026-10-10 [CONFIRMADO]:
   tarjeta por planilla activa o por iniciar (período de hoy, día de pago,
   lo que lleva, empleados y «Asistencia/Latas de hoy»), la que se paga
   primero arriba.
+- **Parcelas y variedades** (Fernando, 2026-11-15) [CONFIRMADO: «lote es
+  una parcela de la finca»; la variedad se registra por finca y por
+  parcela; si el productor no da el nombre de la finca, se escribe el del
+  lugar o la aldea]. Cada finca tiene **parcelas** (`FarmPlot`: nombre único
+  en la finca, extensión opcional en su unidad, variedades, se desactiva
+  si una compra la nombra), escritas en el mismo formulario de la finca
+  (`farm_plots_form_controller.js`, `farms/farms/_plot_fields`). Finca y
+  parcela llevan **una o varias variedades** del catálogo `CoffeeVariety`
+  (Fincas → Variedades, `farms/coffee_varieties`, permiso de Fincas; se
+  agregan, renombran y desactivan; la migración lo empezó con Lempira,
+  IHCAFE 90, Parainema, Catuaí y Catimor), guardadas como `variety_ids`
+  (se auditan como un campo). En «Nueva compra», después de la finca, la
+  **parcela opcional** de esa finca (`farm_plots_controller.js`; el servidor
+  la quita si no es de la finca). El detalle de la finca lista sus
+  parcelas con extensión, variedades y compras. Al fusionar personas, las
+  parcelas pasan con su finca (una del mismo nombre se junta). Las 29
+  fincas «Lote 1»… de antes se convierten con la tarea
+  `farms:plots_from_lots` de Mantenimiento de datos (nombre de la finca:
+  su dirección, si no su municipio, si no la zona del productor;
+  variedades leídas de las observaciones), pendiente de correr en
+  producción.
 - **Fincas propias** (Fernando, 2026-10-18): las listas de fincas (Fincas
   y Administración) filtran por dueño: todas, las del negocio («Fincas
   propias») o las de productores (`FarmFilter#owner`). La búsqueda encuentra

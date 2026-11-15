@@ -1,0 +1,19 @@
+<%# A coffee variety: its name (Lempira, IHCAFE 90…). %>
+<%= form_with model: [ :farms, variety ], class: form_surface_class("max-w-md space-y-5"), data: { controller: "form-validation" } do |form| %>
+  <%= render "shared/form_errors", record: variety %>
+  <div>
+    <%= form.label :name, class: "field-label" %>
+    <%= form.text_field :name, autofocus: true, required: true, maxlength: 60, class: "field-input", placeholder: t("farms.coffee_varieties.form.name_placeholder"),
+          data: { missing_message: "#{CoffeeVariety.human_attribute_name(:name)} #{t("errors.messages.blank")}" } %>
+  </div>
+  <% if variety.persisted? %>
+    <label class="flex items-center gap-2 text-sm font-medium">
+      <%= form.check_box :active, class: "size-4 accent-primary" %> <%= CoffeeVariety.human_attribute_name(:active) %>
+    </label>
+    <p class="text-xs text-ink-muted"><%= t("farms.coffee_varieties.form.active_help") %></p>
+  <% end %>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= cancel_button farms_coffee_varieties_path %>
+  </div>
+<% end %>

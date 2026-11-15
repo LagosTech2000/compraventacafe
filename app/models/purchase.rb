@@ -22,6 +22,8 @@ class Purchase < ApplicationRecord
   belongs_to :zone, optional: true
   # Optional: one of its producer's farms.
   belongs_to :farm, optional: true
+  # The plot of the farm its coffee came from, optional (Fernando, 2026-11-15).
+  belongs_to :farm_plot, optional: true
   # Where it is kept (client, 2026-10-26): the default warehouse unless chosen.
   belongs_to :warehouse
   # Optional: the carrero who hauled it (Hauler). Their commission is
@@ -53,10 +55,13 @@ class Purchase < ApplicationRecord
   validates :observations, length: { maximum: 500 }
   validate :invoice_belongs_to_same_producer
   validate :farm_belongs_to_producer
+  validate :plot_belongs_to_farm, if: -> { farm_plot_id && (will_save_change_to_farm_plot_id? || will_save_change_to_farm_id?) }
   validate :voided_not_invoiced
   # «Café corriente» (Fernando, 2026-11-12): only wet parchment; it will not
   # count in the end-of-season retention (an open point, not built yet).
   before_validation { self.common_coffee = false unless coffee_state == "wet_parchment" }
+  # No farm, no plot: a plot goes with its farm.
+  before_validation { self.farm_plot_id = nil if farm_id.nil? }
   after_update :refresh_invoice, if: -> { saved_change_to_total? && invoice_id && invoice_id_before_last_save == invoice_id }
   validate :hauler_active, if: :will_save_change_to_hauler_id?
   validate :hauler_chosen, unless: -> { @hauler_choice.nil? }
@@ -350,6 +355,10 @@ class Purchase < ApplicationRecord
 
     def farm_belongs_to_producer
       errors.add(:farm, :other_producer) if farm && farm.producer_id != producer_id
+    end
+
+    def plot_belongs_to_farm
+      errors.add(:farm_plot, :other_farm) unless FarmPlot.where(id: farm_plot_id, farm_id:).exists?
     end
 
     def invoice_belongs_to_same_producer

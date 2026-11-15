@@ -1,0 +1,193 @@
+require "rails_helper"
+
+# Data maintenance tasks (Fernando, 2026-11-15): checks that only read and
+# say what does not add up, and tasks that fill in what is missing, with a
+# preview, all or nothing, audited and undone.
+RSpec.describe Maintenance do
+  let(:admin) { create(:user, :admin) }
+
+  def run(task, apply: false, **params) = Maintenance::Runner.run(task, params:, apply:, user: admin)
+  def lines(run) = run.section_list.flat_map(&:lines)
+
+  def invoice_for(producer, gross:, at: 2.days.ago)
+    purchase = create(:purchase, producer:, gross_weight: gross, purchased_at: at)
+    InvoiceIssuer.new(producer:, user: admin, purchase_ids: [ purchase.id ], payment_status: "pending").call.invoice
+  end
+
+  it "lists the same tasks as the rake file" do
+    rake = File.read(Rails.root.join("lib/tasks/maintenance.rake")).scan(/^  "([a-z_]+:[a-z_]+)" =>/).flatten
+    expect(rake).to eq(described_class.tasks.map(&:key))
+    described_class.tasks.each do |task|
+      %i[title what after risk].each { expect(task.text(it)).to be_present }
+    end
+  end
+
+  it "keeps a failed run with its error, changing nothing" do
+    allow_any_instance_of(Maintenance::Expenses).to receive(:sections).and_raise(ArgumentError, "boom")
+    result = run(Maintenance::Expenses)
+    expect(result).to have_attributes(status: "failed", error: "ArgumentError: boom", mode: "preview", user: admin)
+  end
+
+  describe "integrity:inventory" do
+    it "says the stock, the kárdex and the lots match, and what is below zero" do
+      create(:purchase, gross_weight: 1_000)
+      result = run(Maintenance::Inventory)
+      expect(result.status).to eq("ok")
+      expect(lines(result).first).to match(/Pergamino húmedo: inventario 486.57 · kárdex 486.57 · lotes 486.57 lb netas\. Cuadra\./)
+
+      create(:shipment, origin_gross_weight: 2_000)
+      expect(lines(run(Maintenance::Inventory)).first).to include("En negativo")
+    end
+  end
+
+  describe "integrity:shipments" do
+    it "lists what each shipment is missing" do
+      shipment = create(:shipment)
+      result = run(Maintenance::Shipments)
+      expect(result.status).to eq("bad")
+      expect(lines(result)).to include("Remisión #{shipment.display_number} · #{I18n.l(shipment.departed_at.to_date)} · Pergamino húmedo: " \
+                                       "sin lotes (sin merma ni costo), sin báscula del comprador y sin gastos ni precio del viaje.")
+    end
+  end
+
+  describe "integrity:shipment_expense_candidates" do
+    it "suggests expenses without a shipment near its date, of the categories chosen" do
+      shipment = create(:shipment, departed_at: Time.current)
+      fuel = create(:finance_category, name: "Combustible", kind: "expense")
+      diesel = create(:finance_category, name: "Diésel", kind: "expense", parent: fuel)
+      near = create(:expense, category: diesel, spent_on: Time.zone.today - 1, amount: 900)
+      create(:expense, spent_on: Time.zone.today - 10)
+      create(:expense, category: create(:finance_category, kind: "expense"), spent_on: Time.zone.today)
+
+      result = run(Maintenance::ShipmentExpenseCandidates, days: "2", category_ids: [ fuel.id.to_s ])
+      expect(lines(result)).to include(a_string_including("Remisión #{shipment.display_number}", "##{near.id}", "Combustible › Diésel", "L 900.00"))
+      expect(lines(result).grep(/Remisión/).sole.scan(/#\d+/)).to eq([ "##{near.id}" ])
+    end
+  end
+
+  describe "integrity:money" do
+    it "checks every balance against the ledger and warns of a zero opening balance" do
+      account = create(:money_account, name: "Caja", opening_balance: 0)
+      create(:expense, money_account: account, amount: 300)
+      result = run(Maintenance::Money)
+      expect(result.status).to eq("warn")
+      expect(lines(result)).to include(a_string_including("Caja: saldo -L 300.00. Cuadra con Movimientos.", "Su saldo inicial es L 0"))
+    end
+  end
+
+  describe "integrity:cash_counts" do
+    it "says which cash count no longer matches the system" do
+      account = create(:money_account, name: "Caja", opening_balance: 1_000)
+      count = create(:cash_count, money_account: account)
+      expect(run(Maintenance::CashCounts).status).to eq("ok")
+
+      create(:expense, money_account: account, amount: 200, spent_on: count.counted_on - 1)
+      result = run(Maintenance::CashCounts)
+      expect(result.status).to eq("bad")
+      expect(lines(result).sole).to include("Arqueo ##{count.id}", "decía L 1,000.00 y hoy dice L 800.00")
+    end
+  end
+
+  describe "integrity:expenses" do
+    it "lists the ones without receipt, possible twins and future ones, removing nothing" do
+      category = create(:finance_category, kind: "expense")
+      twin = create(:expense, category:, amount: 250, payee: "Gasolinera")
+      create(:expense, category:, amount: 250, payee: "Gasolinera")
+      create(:expense, spent_on: Time.zone.today + 3)
+
+      result = run(Maintenance::Expenses)
+      expect(result.status).to eq("bad")
+      expect(lines(result)).to include("3 de 3 sin foto ni PDF del comprobante. Los más recientes:", a_string_starting_with("##{twin.id}, #"))
+      expect(Expense.count).to eq(3)
+    end
+  end
+
+  describe "purchases:assign_single_farm" do
+    it "gives the producer's only farm, audited, and is undone" do
+      producer = create(:producer)
+      farm = create(:farm, producer:)
+      purchase = create(:purchase, producer:)
+      other = create(:purchase, producer: create(:producer).tap { |many| create_list(:farm, 2, producer: many) })
+
+      preview = run(Maintenance::SingleFarm)
+      expect(lines(preview)).to include("1 compras se completarían (de 2 sin finca).")
+      expect(purchase.reload.farm).to be_nil
+
+      applied = run(Maintenance::SingleFarm, apply: true)
+      expect(applied).to have_attributes(mode: "apply", status: "ok", changes_made: { "purchases" => [ [ purchase.id, farm.id ] ] })
+      expect(purchase.reload.farm).to eq(farm)
+      expect(other.reload.farm).to be_nil
+      expect(AuditEvent.where(auditable: purchase, action: "update").last.changeset).to include("farm_id" => [ nil, farm.id ])
+
+      revert = Maintenance::Runner.revert(applied, user: admin)
+      expect(revert).to have_attributes(mode: "revert", reverted_run: applied)
+      expect(purchase.reload.farm).to be_nil
+      expect(applied.reload).to be_reverted
+      expect(applied).not_to be_revertible
+    end
+  end
+
+  describe "batches:backfill" do
+    it "fills a lot for a past shipment with the oldest invoices up to its local scale, and is undone" do
+      producer = create(:producer)
+      older = invoice_for(producer, gross: 1_000, at: 3.days.ago)
+      newer = invoice_for(producer, gross: 1_000, at: 2.days.ago)
+      later = invoice_for(producer, gross: 1_000, at: 1.hour.from_now)
+      shipment = create(:shipment, departed_at: Time.current.beginning_of_day + 1.hour, origin_gross_weight: 1_500)
+
+      preview = run(Maintenance::BatchesBackfill)
+      expect(lines(preview)).to include("Se armaría 1 lote, de 1 salidas sin lote con báscula local.",
+                                        a_string_starting_with("Factura #{older.display_number}: 100 %"),
+                                        a_string_starting_with("Factura #{newer.display_number}: 50 %"))
+      expect(CoffeeBatch.count).to eq(0)
+
+      applied = run(Maintenance::BatchesBackfill, apply: true)
+      batch = shipment.reload.coffee_batches.sole
+      expect(batch.batch_invoices.map { [ it.invoice, it.percent ] }).to eq([ [ older, 100 ], [ newer, 50 ] ])
+      expect(batch.gross_weight).to eq(1_500)
+      expect(batch.invoices).not_to include(later)
+
+      Maintenance::Runner.revert(applied, user: admin)
+      expect(shipment.reload.coffee_batches).to be_empty
+      expect(CoffeeBatchInvoice.count).to eq(0)
+    end
+  end
+
+  describe "integrity:check" do
+    it "runs every check and says when an invoice's status does not follow its payments" do
+      invoice = create(:invoice)
+      invoice.update_column(:payment_status, "paid")
+      result = run(Maintenance::IntegrityCheck)
+      expect(result.section_list.first.title).to eq("Resumen")
+      expect(lines(result)).to include("Factura #{invoice.display_number}: dice «Cancelada» y por sus abonos debería decir «Pendiente de pago».")
+      expect(result.section_list.map(&:title)).to include("Cuadre del dinero · Cuentas", "Salidas incompletas · Resumen")
+    end
+  end
+
+  describe "farms:plots_from_lots" do
+    it "turns each producer's «Lote» farms into plots of a farm named by its place, with its varieties, and is undone" do
+      parainema = CoffeeVariety.create!(name: "Parainema")
+      ihcafe = CoffeeVariety.create!(name: "IHCAFE 90")
+      producer = create(:producer)
+      first = create(:farm, producer:, name: "Lote 1", address_line: "Las Labranzas", area_value: 2, area_unit: "manzana", observations: "Variedad Parainema y 90")
+      second = create(:farm, producer:, name: "lote 2", area_value: 1, area_unit: "manzana", observations: "variedad parainema")
+      bought = create(:purchase, producer:, farm: second)
+      create(:farm, producer: create(:producer), name: "El Paraíso")
+
+      expect(lines(run(Maintenance::PlotsFromLots))).to include(a_string_including("finca «Las Labranzas» (de su dirección)", "Lote 1 2 manzanas (IHCAFE 90, Parainema)"))
+
+      applied = run(Maintenance::PlotsFromLots, apply: true)
+      expect(applied.status).to eq("ok")
+      expect(first.reload).to have_attributes(name: "Las Labranzas", area_value: 3, variety_ids: [ parainema.id, ihcafe.id ].sort)
+      expect(first.plots.map { [ it.name, it.area_value, it.variety_names ] }).to eq([ [ "Lote 1", 2, [ "IHCAFE 90", "Parainema" ] ], [ "lote 2", 1, [ "Parainema" ] ] ])
+      expect(second.reload).not_to be_active
+      expect(bought.reload).to have_attributes(farm: first, farm_plot: first.plots.find_by(name: "lote 2"))
+
+      Maintenance::Runner.revert(applied, user: admin)
+      expect(first.reload).to have_attributes(name: "Lote 1", area_value: 2, variety_ids: [])
+      expect(second.reload).to be_active
+      expect(bought.reload).to have_attributes(farm: second, farm_plot: nil)
+      expect(FarmPlot.count).to eq(0)
+    end
+  end
+end

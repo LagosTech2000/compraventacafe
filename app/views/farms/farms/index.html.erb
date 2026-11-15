@@ -5,9 +5,14 @@
 
 <div class="flex flex-wrap items-center justify-between gap-4">
   <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
-  <% if policy(Farm).create? %>
-    <%= modal_link_to t(".new"), new_farms_farm_path, class: "btn btn-primary" %>
-  <% end %>
+  <div class="flex flex-wrap gap-2">
+    <% if policy(CoffeeVariety).index? %>
+      <%= link_to t("farms.coffee_varieties.index.title"), farms_coffee_varieties_path, class: "btn" %>
+    <% end %>
+    <% if policy(Farm).create? %>
+      <%= modal_link_to t(".new"), new_farms_farm_path, class: "btn btn-primary" %>
+    <% end %>
+  </div>
 </div>
 
 <%# Filters apply as they change and only the results reload (live_filter_controller.js). %>

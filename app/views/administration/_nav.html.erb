@@ -13,6 +13,7 @@
          private_documents: [ administration_private_documents_path, policy(PrivateDocument).index? ],
          site_setting: [ administration_site_setting_path, policy(SiteSetting).show? ],
          fingerprint_stations: [ administration_fingerprint_stations_path, policy(FingerprintStation).index? ],
+         maintenance: [ administration_maintenance_tasks_path, policy(:maintenance).index? ],
          backup: [ administration_backup_path, policy(:backup).show? ] }.each do |key, (path, allowed)| %>
       <% next unless allowed %>
       <%= link_to t("administration.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>

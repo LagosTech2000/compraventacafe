@@ -5,13 +5,14 @@ module FarmParams
   private
     def farm_params
       params.expect(farm: [ :name, :producer_id, :department_id, :municipality_id, :address_line, :latitude, :longitude,
-                            :area_value, :area_unit, :observations, :active ])
+                            :area_value, :area_unit, :observations, :active, { variety_ids: [] },
+                            { plots_attributes: [ [ :id, :name, :area_value, :area_unit, :observations, :active, :_destroy, { variety_ids: [] } ] ] } ])
     end
 
     # What a form that picks the farm (a purchase) learns when it is saved in
     # the modal ("farm:created", "farm:updated"): its name and what it still
     # misses (Farm#missing_fields).
     def farm_picker_detail(farm)
-      { id: farm.id, name: farm.name, producer_id: farm.producer_id, missing: farm.missing_fields }
+      { id: farm.id, name: farm.name, producer_id: farm.producer_id, missing: farm.missing_fields, plots: farm.plot_options }
     end
 end
