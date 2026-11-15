@@ -40,7 +40,14 @@
             </td>
             <td class="whitespace-nowrap"><%= station.last_seen_at ? l(station.last_seen_at) : "—" %></td>
             <td><%= station.created_by.name %></td>
-            <td class="cell-actions"><%= detail_button administration_fingerprint_station_path(station) %></td>
+            <td class="cell-actions">
+              <%# Link this browser again in one click (Fernando, 2026-11-14: it stopped hearing the reader). %>
+              <% if station.id != @linked_id && policy(station).link? %>
+                <%= button_to t("administration.fingerprint_stations.show.link"), link_administration_fingerprint_station_path(station),
+                      method: :patch, class: "btn btn-sm btn-primary", form_class: "inline" %>
+              <% end %>
+              <%= detail_button administration_fingerprint_station_path(station) %>
+            </td>
           </tr>
         <% end %>
       </tbody>

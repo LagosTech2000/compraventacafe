@@ -41,6 +41,8 @@ RSpec.describe "Fingerprints" do
       expect(response.body).to include("data-pairing-code")
       expect(response.body).to include("este navegador no está enlazado")
 
+      get administration_fingerprint_stations_path
+      expect(response.body).to include(%(action="#{link_administration_fingerprint_station_path(station)}"))
       patch link_administration_fingerprint_station_path(station)
       follow_redirect!
       expect(response.body).to include("este navegador está enlazado")
