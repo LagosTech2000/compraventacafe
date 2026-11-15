@@ -64,7 +64,7 @@ export default class extends Controller {
   addWeighing() {
     const html = this.weighingTemplateTarget.innerHTML.replace(/NEW_RECORD/g, String(Date.now()))
     this.weighingsTarget.insertAdjacentHTML("beforeend", html)
-    this.weighingTargets[this.weighingTargets.length - 1].querySelector("input[type='number']")?.focus()
+    this.weighingTargets[this.weighingTargets.length - 1].querySelector("input[type='number'], input[data-thousands]")?.focus()
     this.update()
   }
 

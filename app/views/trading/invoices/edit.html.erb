@@ -6,7 +6,7 @@
 <p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t(".help") %></p>
 
 <%= form_with model: @invoice, url: trading_invoice_path(@invoice), method: :patch, class: form_surface_class("mt-6 max-w-none space-y-6"),
-      data: { controller: "form-validation" } do |form| %>
+      data: { controller: "form-validation invoice-batch" } do |form| %>
   <%= render "shared/form_errors", record: @invoice %>
   <div class="grid gap-5 sm:grid-cols-[14rem_minmax(0,1fr)]">
     <div>
@@ -41,7 +41,8 @@
           <% chosen = Array(params.dig(:invoice, :purchase_ids)).compact_blank.map(&:to_i).presence %>
           <% @purchases.each do |purchase| %>
             <% checked = chosen ? chosen.include?(purchase.id) : purchase.invoice_id == @invoice.id %>
-            <tr id="<%= dom_id(purchase, :invoice) %>">
+            <tr id="<%= dom_id(purchase, :invoice) %>" data-invoice-batch-target="purchase" data-gross="<%= purchase.gross_weight.to_d %>"
+                data-net="<%= purchase.net_weight.to_d %>" data-state="<%= purchase.coffee_state %>" data-warehouse="<%= purchase.warehouse_id %>">
               <td>
                 <input type="checkbox" name="invoice[purchase_ids][]" value="<%= purchase.id %>" class="size-4 accent-primary" <%= "checked" if checked %>
                        aria-label="<%= t("trading.purchases.table.number") %> <%= purchase.id %>">
@@ -63,6 +64,10 @@
       </table>
     </div>
   </section>
+
+  <div class="max-w-xl">
+    <%= render "lot_fields", batches: @batches, shares: @shares, lot_id: @lot_id, percent: @batch_percent, was: @lot_was %>
+  </div>
 
   <div class="flex flex-wrap gap-3">
     <%= form.submit t(".submit"), class: "btn btn-primary" %>

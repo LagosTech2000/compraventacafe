@@ -31,6 +31,7 @@
     <%= filter_select form, :direction, t("reports.filters.direction"), directions, selected: @filter.direction %>
     <%= filter_number_field form, :amount_min, t("finance.consolidations.show.amount_min"), value: @filter.amount_min, placeholder: "0.00" %>
     <%= filter_number_field form, :amount_max, t("finance.consolidations.show.amount_max"), value: @filter.amount_max, placeholder: "0.00" %>
+    <%= filter_check_box form, :with_account, t("finance.consolidations.show.with_account"), checked: @filter.with_account.present? %>
   <% end %>
 
   <% if editable %>
@@ -53,13 +54,14 @@
   <% end %>
 
   <%= list_frame "consolidation-list" do %>
-    <%= render "shared/filter_status", filter: @filter, count: t(".count", count: @filter.total_count), periods: quick_periods(@filter),
+    <%= render "shared/filter_status", filter: @filter, count: t(@filter.with_account ? ".count_all" : ".count", count: @filter.total_count), periods: quick_periods(@filter),
           chips: filter_chips(@filter, q: ->(text) { t("shared.filters.chips.q", text:) },
                                        source: ->(value) { t("reports.types.cash_movements.sources.#{value}") },
                                        payment_method: ->(value) { methods.find { it.last == value }&.first },
                                        direction: ->(value) { t("reports.types.cash_movements.directions.#{value}") },
                                        amount_min: ->(value) { t("finance.consolidations.show.chips.amount_min", amount: value) },
-                                       amount_max: ->(value) { t("finance.consolidations.show.chips.amount_max", amount: value) }) %>
+                                       amount_max: ->(value) { t("finance.consolidations.show.chips.amount_max", amount: value) },
+                                       with_account: ->(_) { t("finance.consolidations.show.with_account") }) %>
     <dl class="mt-4 flex flex-wrap gap-3">
       <div class="stat min-w-0 flex-1 basis-40"><dt><%= t("finance.movements.index.in") %></dt><dd class="text-success"><%= format_money(@filter.movements.sum(0.to_d, &:amount_in)) %></dd></div>
       <div class="stat min-w-0 flex-1 basis-40"><dt><%= t("finance.movements.index.out") %></dt><dd><%= format_money(@filter.movements.sum(0.to_d, &:amount_out)) %></dd></div>
@@ -82,6 +84,7 @@
                 <%= sort_th t("finance.movements.columns.person"), :person, sorting %>
                 <%= sort_th t(".payment_method"), :payment_method, sorting %>
                 <%= sort_th t(".category"), :category, sorting %>
+                <% if @filter.with_account %><%= sort_th t(".account"), :account, sorting %><% end %>
                 <%= sort_th t("finance.movements.columns.amount_in"), :amount_in, sorting, class: "text-right" %>
                 <%= sort_th t("finance.movements.columns.amount_out"), :amount_out, sorting, class: "text-right" %>
                 <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
@@ -101,6 +104,9 @@
                   <td><%= movement.person || "—" %></td>
                   <td><%= movement.payment_method || "—" %></td>
                   <td><%= movement.category || tag.span(t(".no_category"), class: "text-ink-muted") %></td>
+                  <% if @filter.with_account %>
+                    <td><%= movement.account_name || tag.span(t(".no_account"), class: "badge badge-danger") %></td>
+                  <% end %>
                   <td class="whitespace-nowrap text-right tabular-nums text-success"><%= format_money(movement.amount_in) if movement.amount_in.positive? %></td>
                   <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(movement.amount_out) if movement.amount_out.positive? %></td>
                   <td class="cell-actions">
@@ -114,7 +120,7 @@
       </div>
       <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "consolidation-list" %>
     <% else %>
-      <p class="empty-state mt-6"><%= t(".empty") %></p>
+      <p class="empty-state mt-6"><%= t(@filter.with_account ? ".empty_all" : ".empty") %></p>
     <% end %>
   <% end %>
 </div>

@@ -56,6 +56,31 @@
   <% end %>
 </div>
 
+<%# Its fingerprints (Fernando, 2026-11-14): administrators only. %>
+<% if policy(Fingerprint).index? %>
+  <section class="mt-6 panel p-4" aria-labelledby="person-fingerprints">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h2 id="person-fingerprints" class="font-semibold"><%= t(".fingerprints") %></h2>
+      <% if @person.fingerprints.size < Fingerprint::FINGERS.size %>
+        <%= page_link_to t(".add_fingerprint"), new_administration_person_fingerprint_path(@person), class: "btn btn-sm btn-primary" %>
+      <% end %>
+    </div>
+    <% if @person.fingerprints.any? %>
+      <ul class="mt-3 divide-y divide-line text-sm">
+        <% @person.fingerprints.each do |fingerprint| %>
+          <li id="<%= dom_id(fingerprint) %>" class="flex flex-wrap items-center justify-between gap-2 py-2">
+            <span><%= fingerprint.human_finger %> <span class="text-ink-muted">· <%= t(".fingerprint_consent", date: l(fingerprint.consented_at.to_date)) %></span></span>
+            <%= button_to t(".remove_fingerprint"), administration_person_fingerprint_path(@person, fingerprint), method: :delete, class: "btn btn-sm",
+                  form: { data: { turbo_confirm: t(".confirm_remove_fingerprint", finger: fingerprint.human_finger) } } %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="mt-2 text-sm text-ink-muted"><%= t(".no_fingerprints") %></p>
+    <% end %>
+  </section>
+<% end %>
+
 <% unless modal_request? %>
   <p class="mt-6"><%= link_to t(".back"), administration_people_path, class: "text-sm link" %></p>
 <% end %>

@@ -1,6 +1,9 @@
 # Groups a producer's uninvoiced purchases into a new invoice. It can be
 # paid on the spot: in full ("paid") or in part ("partial", with the amount
-# paid now), as a first payment (InvoicePayment). All of it is saved or none.
+# paid now), as a first payment (InvoicePayment), and go in a lot with a
+# percent (Fernando, 2026-11-13: «que se pueda asignar el lote desde
+# facturar o el porcentaje»; CoffeeBatchInvoice's rules). All of it is
+# saved or none.
 class InvoiceIssuer
   Result = Data.define(:invoice) do
     # After a rollback the record can still look saved: its errors tell.
@@ -9,8 +12,11 @@ class InvoiceIssuer
 
   PAYMENT_CHOICES = Invoice::PAYMENT_STATUSES
 
-  def initialize(producer:, purchase_ids:, user:, payment_status:, payment_method: nil, paid_on: nil, amount: nil, money_account_id: nil)
+  def initialize(producer:, purchase_ids:, user:, payment_status:, payment_method: nil, paid_on: nil, amount: nil, money_account_id: nil,
+                 coffee_batch: nil, batch_percent: nil)
     @producer = producer
+    @coffee_batch = coffee_batch
+    @batch_percent = batch_percent
     @purchase_ids = Array(purchase_ids).compact_blank
     @user = user
     @payment_status = payment_status.presence_in(PAYMENT_CHOICES) || "pending"
@@ -30,7 +36,7 @@ class InvoiceIssuer
 
       if purchases.size != @purchase_ids.uniq.size
         invoice.errors.add(:purchases, :unavailable)
-      elsif invoice.update(purchases:) && !pay(invoice)
+      elsif invoice.update(purchases:) && !(batch(invoice) && pay(invoice))
         raise ActiveRecord::Rollback
       end
     end
@@ -39,6 +45,16 @@ class InvoiceIssuer
   end
 
   private
+    # Its share in the lot, if one was chosen. Its errors go on the invoice.
+    def batch(invoice)
+      return true unless @coffee_batch
+
+      @coffee_batch.lock!
+      share = @coffee_batch.batch_invoices.create(invoice:, percent: @batch_percent.presence || 100, created_by: @user)
+      share.errors.each { |error| invoice.errors.add(:base, I18n.t("trading.invoices.lot_fields.error", batch: @coffee_batch.label, message: error.full_message)) }
+      share.persisted?
+    end
+
     # The payment made when invoicing, if any. Its errors go on the invoice,
     # so the form shows them.
     def pay(invoice)

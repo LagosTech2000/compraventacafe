@@ -1,4 +1,6 @@
 <% content_for :title, t(".title") %>
+<%# A finger on the reader (fingerprint.js): that record's page. %>
+<div hidden <%= tag.attributes(data: fingerprint_visit(loans_credit_account_path("__person_id__"))) %>></div>
 <%# Live list: back and forward ask the server again (the frame changed the page). %>
 <% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
 <%# Updates itself while open when the data changes (LiveUpdates). %>

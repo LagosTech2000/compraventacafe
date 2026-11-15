@@ -2,4 +2,6 @@
 import "@hotwired/turbo-rails"
 import "controllers"
 import "presence"
+import "fingerprint"
 import "instant_click"
+import "thousands"

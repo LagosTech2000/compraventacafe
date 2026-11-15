@@ -1,6 +1,8 @@
 # Gives an account to movements that were registered without one
 # (Control financiero → Consolidación, Fernando, 2026-10-25), so every
-# balance is complete. Only payments and collections of the other modules
+# balance is complete, or changes the one a movement has (Fernando,
+# 2026-11-14: «cambiar la cuenta de cualquier movimiento aunque ya esté
+# accionado»; the list shows those only with its check box). Only payments and collections of the other modules
 # can lack it (expenses, other income and transfers always have one).
 #
 # The account is the one chosen, or, with `by_method`, the one each
@@ -44,7 +46,7 @@ class AccountConsolidation
     counts = Hash.new(0)
     ActiveRecord::Base.transaction do
       @items.group_by(&:first).each do |source, pairs|
-        records = MODELS.fetch(source).constantize.where(id: pairs.map(&:last), money_account_id: nil)
+        records = MODELS.fetch(source).constantize.where(id: pairs.map(&:last))
         # A collection «con anticipo» moved no money: it takes no account.
         records = records.in_money if source == "sale_payments"
         records = records.lock.to_a

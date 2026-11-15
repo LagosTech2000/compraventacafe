@@ -1,0 +1,21 @@
+<% content_for :title, t(".title", name: @person.full_name) %>
+<%= render "administration/nav" %>
+<%= render "shared/breadcrumbs", crumbs: person_crumbs(@person, [ t(".title", name: @person.full_name) ]) %>
+
+<%# The bridge asks for the finger three times; the steps fill as it goes. %>
+<section class="panel mx-auto mt-6 max-w-xl space-y-5 p-6 text-center"
+         data-controller="fingerprint-enroll" data-fingerprint-enroll-request-id-value="<%= @request_id %>"
+         data-fingerprint-enroll-done-url-value="<%= administration_person_path(@person) %>"
+         data-fingerprint-enroll-texts-value="<%= t(".texts").to_json %>">
+  <h1 class="text-xl font-bold"><%= t(".title", name: @person.full_name) %></h1>
+  <p class="text-sm text-ink-muted"><%= t(".finger", finger: @finger) %></p>
+  <div class="flex justify-center gap-4" aria-hidden="true">
+    <% FingerprintEnrollment::CAPTURES.times do |index| %>
+      <span class="enroll-step" data-fingerprint-enroll-target="step"><%= index + 1 %></span>
+    <% end %>
+  </div>
+  <p class="text-base font-medium" role="status" aria-live="polite" data-fingerprint-enroll-target="message"></p>
+  <div data-fingerprint-enroll-target="retry" hidden>
+    <%= link_to t(".retry"), new_administration_person_fingerprint_path(@person), class: "btn btn-primary" %>
+  </div>
+</section>

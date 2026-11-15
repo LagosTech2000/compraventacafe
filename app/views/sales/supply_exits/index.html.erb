@@ -1,0 +1,65 @@
+<% content_for :title, t(".title") %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= live_updates_from :sales %>
+<%= render "sales/nav" %>
+
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <% if policy(SupplyExit).create? %>
+    <%= modal_link_to t(".new"), new_sales_supply_exit_path, class: "btn btn-primary" %>
+  <% end %>
+</div>
+<%= render "sales/supply_stocks/tabs" %>
+
+<% supplies = Supply.ordered.pluck(:name, :id) %>
+<% kinds = SupplyExit::KINDS.map { [ SupplyExit.human_attribute_name("kind/#{it}"), it ] } %>
+<div class="mt-4" data-controller="live-filter">
+  <%= render layout: "shared/filters", locals: { filter: @filter, url: sales_supply_exits_path, frame: "supply-exits-list", live: true } do |form| %>
+    <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("sales.supply_exits.index.search_placeholder") %>
+    <%= filter_select form, :kind, SupplyExit.human_attribute_name(:kind), kinds, selected: @filter.kind %>
+    <%= filter_select form, :supply_id, SupplyExit.human_attribute_name(:supply), supplies, selected: @filter.supply_id %>
+    <%= filter_date_field form, :from, t("shared.filters.from"), value: @filter.from %>
+    <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
+  <% end %>
+
+  <%= list_frame "supply-exits-list" do %>
+    <%= live_list_status @filter, kind: kinds, supply_id: supplies %>
+    <% if @exits.any? %>
+      <% sorting = { filter: @filter, frame: "supply-exits-list" } %>
+      <div class="mt-4 overflow-x-auto panel">
+        <table class="data-table data-table-compact" <%= tag.attributes(data: table_sort_data(sorting)) %> data-supply-exits>
+          <thead>
+            <tr>
+              <%= sort_th SupplyExit.human_attribute_name(:exited_on), :exited_on, sorting %>
+              <%= sort_th SupplyExit.human_attribute_name(:kind), :kind, sorting %>
+              <%= sort_th SupplyExit.human_attribute_name(:supply), :supply, sorting %>
+              <%= sort_th SupplyExit.human_attribute_name(:quantity), :quantity, sorting, class: "text-right" %>
+              <%= sort_th SupplyExit.human_attribute_name(:person), :person, sorting %>
+              <%= sort_th SupplyExit.human_attribute_name(:amount), :amount, sorting, class: "text-right" %>
+              <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @exits.each do |supply_exit| %>
+              <tr id="<%= dom_id(supply_exit) %>">
+                <td class="whitespace-nowrap"><%= l(supply_exit.exited_on) %></td>
+                <td><span class="badge <%= supply_exit.sale? ? "badge-success" : "badge-neutral" %>"><%= supply_exit.human_kind %></span></td>
+                <td><%= supply_exit.supply.name %></td>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= format_quantity(supply_exit.quantity, supply_exit.supply.unit) %></td>
+                <td><%= supply_exit.person ? with_avatar(supply_exit.person) : "—" %></td>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= supply_exit.amount ? format_money(supply_exit.amount) : "—" %></td>
+                <td class="cell-actions"><%= detail_button sales_supply_exit_path(supply_exit) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "supply-exits-list" %>
+    <% else %>
+      <p class="empty-state mt-4"><%= t(".empty") %></p>
+    <% end %>
+  <% end %>
+</div>

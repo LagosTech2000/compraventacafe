@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_13_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_14_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -293,6 +293,35 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_130000) do
     t.datetime "updated_at", null: false
     t.index "kind, COALESCE(parent_id, (0)::bigint), lower((name)::text)", name: "index_finance_categories_on_name_in_parent", unique: true
     t.index ["parent_id"], name: "index_finance_categories_on_parent_id"
+  end
+
+  create_table "fingerprint_stations", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "token_digest"
+    t.string "pairing_code_digest"
+    t.datetime "pairing_expires_at"
+    t.datetime "paired_at"
+    t.datetime "last_seen_at"
+    t.boolean "active", default: true, null: false
+    t.bigint "created_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_fingerprint_stations_on_created_by_id"
+    t.index ["pairing_code_digest"], name: "index_fingerprint_stations_on_pairing_code_digest", unique: true
+    t.index ["token_digest"], name: "index_fingerprint_stations_on_token_digest", unique: true
+  end
+
+  create_table "fingerprints", force: :cascade do |t|
+    t.bigint "person_id", null: false
+    t.string "finger", null: false
+    t.text "template_ciphertext", null: false
+    t.datetime "consented_at", null: false
+    t.bigint "created_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_fingerprints_on_created_by_id"
+    t.index ["person_id", "finger"], name: "index_fingerprints_on_person_id_and_finger", unique: true
+    t.index ["person_id"], name: "index_fingerprints_on_person_id"
   end
 
   create_table "harvest_entries", force: :cascade do |t|
@@ -1120,6 +1149,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_130000) do
     t.index ["supply_id"], name: "index_supply_entry_lines_on_supply_id"
   end
 
+  create_table "supply_exits", force: :cascade do |t|
+    t.bigint "supply_id", null: false
+    t.string "kind", null: false
+    t.date "exited_on", null: false
+    t.decimal "quantity", precision: 10, scale: 2, null: false
+    t.bigint "person_id"
+    t.decimal "unit_price", precision: 14, scale: 2
+    t.decimal "amount", precision: 14, scale: 2
+    t.string "payment_method"
+    t.bigint "money_account_id"
+    t.text "observations"
+    t.bigint "created_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_supply_exits_on_created_by_id"
+    t.index ["exited_on"], name: "index_supply_exits_on_exited_on"
+    t.index ["money_account_id"], name: "index_supply_exits_on_money_account_id"
+    t.index ["person_id"], name: "index_supply_exits_on_person_id"
+    t.index ["supply_id"], name: "index_supply_exits_on_supply_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email_address", null: false
     t.string "password_digest", null: false
@@ -1247,6 +1297,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_130000) do
   add_foreign_key "farms", "municipalities"
   add_foreign_key "farms", "producers"
   add_foreign_key "finance_categories", "finance_categories", column: "parent_id"
+  add_foreign_key "fingerprint_stations", "users", column: "created_by_id"
+  add_foreign_key "fingerprints", "people"
+  add_foreign_key "fingerprints", "users", column: "created_by_id"
   add_foreign_key "harvest_entries", "payroll_members"
   add_foreign_key "hauler_payments", "haulers"
   add_foreign_key "hauler_payments", "money_accounts"
@@ -1354,6 +1407,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_130000) do
   add_foreign_key "supply_entries", "users", column: "created_by_id"
   add_foreign_key "supply_entry_lines", "supplies"
   add_foreign_key "supply_entry_lines", "supply_entries"
+  add_foreign_key "supply_exits", "money_accounts"
+  add_foreign_key "supply_exits", "people"
+  add_foreign_key "supply_exits", "supplies"
+  add_foreign_key "supply_exits", "users", column: "created_by_id"
   add_foreign_key "vehicles", "vehicle_types"
   add_foreign_key "warehouse_transfers", "users", column: "created_by_id"
   add_foreign_key "warehouse_transfers", "users", column: "voided_by_id"

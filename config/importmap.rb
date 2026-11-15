@@ -9,7 +9,9 @@ pin_all_from "app/javascript/controllers", under: "controllers"
 # sets window.Chart. Downloaded from cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/.
 pin "chart.js", to: "chart.umd.min.js"
 pin "presence"
+pin "fingerprint"
 pin "instant_click"
+pin "thousands"
 # Leaflet 1.9.4 (BSD-2-Clause), the official minified build: importing it
 # sets window.L. Downloaded from cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/
 # (its stylesheet is app/assets/stylesheets/leaflet.css).

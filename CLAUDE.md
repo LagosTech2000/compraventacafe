@@ -97,7 +97,8 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Préstamo / abono | `Loan` / `LoanPayment` |
 | Insumo / insumo del préstamo / entrada de insumos (con sus líneas) / inventario de insumos | `Supply` / `LoanSupply` / `SupplyEntry` + `SupplyEntryLine` / `SupplyStock` |
 | Insumo entregado / por entregar (del préstamo) | `LoanSupply#delivered_on`, `delivered_by` (`sales/supply_deliveries`) |
-| En bodega / disponible (insumos) | `SupplyStock::Row#in_warehouse` (entró − entregado) / `#available` (entró − prestado, puede ser negativo) |
+| Salida de insumos (venta por aparte / uso del negocio) | `SupplyExit` (`kind`: `sale` / `business_use`, `sales/supply_exits`); en el libro, `supply_sales` |
+| En bodega / disponible (insumos) | `SupplyStock::Row#in_warehouse` (entró − entregado − salió) / `#available` (entró − prestado − salió, puede ser negativo) |
 | Lo propio (cada usuario ve lo que registró) | `OwnedRecord` (`owned`, `visible_to`, `OwnedRecord.visible?`), `Current.owner` |
 | Lote de café comprado / factura del lote (parte en %) | `CoffeeBatch` (`sales/coffee_batches`) / `CoffeeBatchInvoice` (`percent`) |
 | Merma de la salida (compras de sus lotes − báscula local) | `Shipment#shrink_gross` / `#shrink_net`, `ShrinkSummary`, `ShipmentFilter#shrink` |
@@ -145,6 +146,8 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Foto de perfil (persona o usuario) | `ProfilePhoto` (`HasPhoto`) |
 | Ubicación en el mapa | `latitude` / `longitude` (`HasAddress#located?`) |
 | Huella digital (passkey) / entrar con huella | `WebauthnCredential` / `PasskeySessionsController` |
+| Huella de una persona (lector ZK9500) / lector de huella (una PC) / programa del lector | `Fingerprint` / `FingerprintStation` / `tools/fingerprint_bridge` (FingerprintBridge) |
+| Panel de la persona (al poner el dedo) | `PersonPanel` (`person_panels#show`, `fingerprint.js`) |
 | Documentos privados (pagaré / contrato privado de préstamo) | `PrivateDocument` (`key`: `promissory_note` / `loan_contract`) |
 | Variable de un documento / impresión de un documento | `PrivateDocumentVariables` (`<span data-variable="person.full_name">`) / `PrivateDocumentPrint` |
 | Estado civil / nacionalidad | `Person#civil_status` / `Person#nationality` |
@@ -788,6 +791,18 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
   sus totales, tarjetas de inventario, café por compra o proceso del
   inventario, venta e impreso de venta, cierres, Resumen de
   Comercialización, Inicio y los reportes de facturas y salidas.
+  `format_gross_net` deja cada mitad en una línea y **pasa las netas abajo
+  donde no caben a la par** (`.gross-net`, Fernando, 2026-11-14: rompían
+  las tarjetas de Salidas).
+- **Montos con comas al escribir** (Fernando, 2026-11-14, `thousands.js`,
+  global): todo campo decimal que puede llegar a mil (`inputmode="decimal"`,
+  `step` distinto de `any`, sin `max` o con `max` ≥ 1,000: montos, precios,
+  libras; no porcentajes, rendimientos ni coordenadas) pasa a campo de texto
+  que muestra «12,345.67». Su `value` en JavaScript da el número sin comas
+  (los demás controladores y los specs no cambian), el formulario lo manda
+  sin comas (evento `formdata`) y el script revisa mínimo, máximo y
+  decimales (mensajes en `shared.thousands`). Para enfocar uno, busca
+  `input[type=number], input[data-thousands]`.
 
 ## Módulos
 
@@ -1010,6 +1025,67 @@ solo sirve en el dominio donde se registró (en Render, el de producción) y
 WebAuthn exige HTTPS o `localhost`. En los specs: `WebAuthn::FakeClient`
 en los de petición y el autenticador virtual de Chrome en el de pantalla
 (visitando `localhost`, no una IP).
+
+**Huella de las personas** (lector ZKTeco ZK9500, Fernando, 2026-11-14)
+[CONFIRMADO: solo administradores registran y borran, con consentimiento de
+la persona; el dedo llena el campo de persona de la página y, según la
+página, hace lo relacionado; un «cliente» es un productor o alguien que
+compra café; PCs con Windows 11]. Distinto de la «Huella digital» de los
+usuarios (passkeys): esta identifica a cualquier persona (productor,
+carrero, motorista…).
+- **Programa del lector** (`tools/fingerprint_bridge`, C# .NET 8, se compila
+  con `dotnet publish`; ver su README): en cada PC con lector, junto al reloj.
+  Llama al `libzkfp.dll` que instala el ZKFinger SDK 5.x (ningún archivo del
+  SDK va al repositorio, que es público). Carga todas las plantillas en la
+  memoria del lector y reconoce cada dedo **1:N en la PC** (el algoritmo del
+  SDK solo existe para Windows; el servidor nunca compara huellas). Habla con
+  el sistema por HTTPS (`fingerprint_bridge/pairing`, `/templates`) y por
+  Action Cable (`FingerprintBridgeChannel`, con `Authorization: Bearer` y
+  `Origin`), y se reconecta solo. Registro: 3 lecturas del mismo dedo
+  (`DBMatch`), si la primera ya es de otra persona lo dice (`duplicate_fid`)
+  y se junta con `DBMerge`.
+- **Lectores** (`FingerprintStation`, Administración → Lectores de huella,
+  solo administradores): se crean desde el navegador de esa PC, que queda
+  **enlazado** (cookie firmada `fingerprint_station_id`; otro navegador, con
+  «Usar en este navegador»); el programa se empareja con un código de 6
+  números que vence en 15 minutos y recibe una llave; solo se guardan sus
+  resúmenes (HMAC). Desactivar corta programa y navegadores. Si el programa y
+  el lector están conectados vive en la memoria del proceso (como
+  `Presence`) y sale abajo a la izquierda («Lector listo»,
+  `#fingerprint-status`).
+- **Huellas** (`Fingerprint`): una por dedo y persona, la plantilla (base64)
+  **cifrada** con una llave derivada de `secret_key_base` (nunca la imagen),
+  fuera de la auditoría (`[FILTERED]`); se registran desde el detalle de la
+  persona (`administration/fingerprints`, espera en vivo,
+  `fingerprint_enroll_controller.js`; `FingerprintEnrollment` guarda el
+  pedido en memoria 3 minutos y crea la huella como el administrador que
+  pidió). Se borran con la persona y **pasan a la principal al fusionar**
+  (un dedo que tienen las dos se queda el de la principal). Cada cambio avisa
+  a los programas que recarguen.
+- **Al poner el dedo** (`FingerprintChannel` → `fingerprint.js`): solo viajan
+  ids; la página pide `fingerprint_matches/:id` con los permisos de su
+  usuario. En la ventana de arriba (o la página): (1) **llena el campo** de
+  persona: los buscadores (`record_picker`, del tipo que el usuario puede
+  buscar) y el motorista de «Nueva salida» (`data-fingerprint-person-select`);
+  (2) si la página tiene su acción (`fingerprint_visit`): Facturar compras →
+  sus compras, Productores → el productor, Carreros → el carrero, Estados de
+  cuenta → el suyo, Personas → la persona; (3) si no, abre el **panel de la
+  persona** (`PersonPanel`) en la ventana o el panel lateral; con otra
+  ventana abierta, un aviso con «Abrir su panel»; una huella desconocida,
+  «No se reconoce esa huella».
+- **Panel** (cualquier usuario: las personas son catálogo compartido; cada
+  parte pide su permiso y lo propio): roles, DNI, teléfono, zona, avisos
+  (préstamos vencidos, compras sin facturar, datos que faltan), la tarjeta
+  de «Nueva compra» (productor) o de «Nuevo préstamo» (quien solo debe), lo
+  que se le debe al carrero y las salidas en camino del motorista; **atajos**,
+  el primero resaltado: Nueva compra, Facturar sus compras, Registrar abono
+  (el préstamo vencido o el que vence primero), Nuevo préstamo, Estado de
+  cuenta, Pagar al carrero, Nueva salida con él de motorista
+  (`new_sales_shipment_path(driver_id:)`) y ver su ficha.
+- Decisiones de implementación, **pendientes de confirmar**: el umbral de
+  coincidencia es el del SDK; tras cada dedo el lector espera 1.5 s; el panel
+  lo ve cualquier usuario con sesión; registrar pide un navegador enlazado
+  al lector.
 
 **Fotos de perfil** (`ProfilePhoto`, `HasPhoto`, Fernando 2026-10-13):
 personas (y por ellas productores, clientes, colaboradores) y usuarios.
@@ -1334,7 +1410,21 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   todos los lotes una factura no pasa del 100 %** y el lote **no pasa de su
   límite** (brutas de las compras × %). Al elegir facturas, junto a la
   parte (%) de cada una sale lo que equivale en libras brutas y, debajo,
-  netas (`batch_shares_controller.js`, Fernando, 2026-11-13). **El lote guarda las libras brutas
+  netas (`batch_shares_controller.js`, Fernando, 2026-11-13). **También
+  desde «Facturar compras»** (Fernando, 2026-11-13): «Lote (opcional)» y la
+  parte (%), 100 por defecto; solo se eligen los lotes del estado y la bodega
+  de las compras marcadas, con espacio y no en una salida vendida (salvo
+  administradores), y al marcar compras o cambiar el % sale lo que toma en
+  brutas y netas y lo que le queda al lote; si pasa del límite, dice el % que
+  cabe y no deja enviar (`invoice_batch_controller.js`). Factura y lote se
+  guardan juntos o nada (`InvoiceIssuer`); pide lo mismo que agregar
+  facturas al lote (`CoffeeBatchInvoicePolicy#create?`). **Y en «Editar
+  factura»** (administradores, mismo parcial `trading/invoices/_lot_fields`):
+  sale su lote con su % (lo que ya tomó cuenta como espacio libre); cambiar
+  el %, pasarla a otro lote o «Sin lote» (`CoffeeBatchInvoice.assign!`),
+  todo con la edición o nada. Si no se tocan, el lote sigue con sus libras
+  aunque cambien las compras. Una factura repartida en varios lotes solo los
+  lista: el reparto se cambia desde cada lote. **El lote guarda las libras brutas
   y netas que tomó de cada factura** (Fernando, 2026-11-13): si un
   administrador edita una compra y la factura **sube** de peso, el lote se
   queda con sus libras, su % baja solo y lo que subió **queda libre**, sin
@@ -1500,7 +1590,8 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   migración `RestructureSupplies`), con tres partes
   (`sales/supply_stocks/_tabs`): **Inventario y entradas**
   (`sales/supply_stocks#show`, `/sales/supplies`), **Por entregar**
-  (`sales/supply_deliveries`) y **Catálogo de insumos**
+  (`sales/supply_deliveries`), **Salidas** (`sales/supply_exits`) y
+  **Catálogo de insumos**
   (`sales/supplies`, `/sales/supplies/catalog`).
   - **Una entrada** (`SupplyEntry`) es una factura del proveedor con **uno
     o varios insumos** (`SupplyEntryLine`: insumo, cantidad, costo;
@@ -1526,6 +1617,21 @@ contado/crédito, forma de pago) [CONFIRMADO]:
     que el préstamo ya prestaba cuenta como disponible): cuántos no se
     podrán entregar hasta que entren más (`loan_composition_controller.js`,
     `LoansHelper#loan_supplies_data`; Fernando, 2026-11-13).
+  - **Salidas sin préstamo** (`SupplyExit`, Fernando, 2026-11-14:
+    «registrar una salida de inventario, como que lo vendan por aparte»)
+    [CONFIRMADO: venta a una persona del sistema que registra el ingreso, o
+    uso del negocio sin dinero]. Un insumo por salida, cantidad y fecha;
+    **nunca más de lo que hay en bodega**. La venta pide la persona
+    (buscador, `PickerSearchPolicy#people?` también para quien edita
+    Insumos), precio por unidad (empieza en el del catálogo), forma de pago
+    y **cuenta obligatoria**; total = cantidad × precio. Su dinero entra a
+    la cuenta (`AccountBalance`, `MoneyMovements` `supply_sales`, Ingresos).
+    Baja «En bodega» y «Disponible» (columna «Salió sin préstamo»). Se
+    registran o se quitan (vuelve a la bodega), no se editan; pasan a la
+    principal al fusionar personas. `supply_exit_controller.js` (muestra u
+    oculta lo de la venta, precio, en bodega, total). Decisión de
+    implementación, **pendiente de confirmar**: una salida lleva un solo
+    insumo.
   - Solo cuentan los préstamos desde el día en que empezó el inventario
     (`SiteSetting#supply_stock_starts_on`, `SupplyStock.starts_on`); los
     de antes quedaron entregados con su préstamo (migración) y uno nuevo
@@ -1593,6 +1699,12 @@ salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
   cuenta y categoría, auditado como cambio del registro; pide editar en
   `finance`. «Entradas y salidas de
   dinero» (Reportería) lee de aquí, con filtro y agrupación por cuenta.
+  **Cambiar la cuenta de lo que ya tiene** (Fernando, 2026-11-14): la
+  casilla «Incluir los que ya tienen cuenta» (`ConsolidationFilter#with_account`)
+  lista también esos, con su cuenta en una columna; marcarlos y asignar
+  cambia la cuenta (y el saldo pasa de una a otra). Sin la casilla, solo
+  salen los sin cuenta. `consolidation:revert` solo deshace cuentas que
+  estaban vacías.
 - **Gastos e inversiones** (`Expense`): categoría **propia, de dos
   niveles** (`FinanceCategory`; las de Fincas siguen aparte), detalle,
   beneficiario, fecha, monto, forma de pago, cuenta (obligatoria),
@@ -2377,6 +2489,7 @@ sistema ya guarda**; no agregan reglas de negocio.
 | Decisiones de implementación de las pantallas de cobro (2026-11-03): tramos de la cartera (30/60/90 días), «vencen pronto» a 7 días, semanas del calendario de lunes a domingo y 12 hacia adelante | Ajustes a Cartera, Calendario y el Inicio | Fernando |
 | Decisiones nuevas, por confirmar (2026-10-25): la liquidación del comprador pasa a ser lo que se cobra de la venta; los avisos de «Nueva compra» salen cuando la humedad, el rendimiento o el precio se alejan más de 30 % de lo normal (`PurchaseDefaults::UNUSUAL_PERCENT`) | Ajustes a la venta y a los avisos de la compra | Fernando / Cliente |
 | Precio del viaje del transportista: ¿se paga desde una cuenta (movimiento de dinero)? (Ya suma al costo de la salida, Fernando 2026-11-12) | Pago al transportista | Cliente |
+| Huella de personas (2026-11-14): umbral de coincidencia del SDK, 1.5 s entre dedos, el panel lo ve cualquier usuario con sesión, registrar pide un navegador enlazado; firma con huella en recibos, asistencia por huella y huella para entregar préstamos son ideas sin confirmar | Ajustes al lector y al panel | Fernando |
 | Decisiones de implementación, por confirmar (2026-11-13): lotes (factura solo si todas sus compras están en la bodega del lote; anular la factura la saca de sus lotes; lo que falta de una compra sale de lo más viejo); «productores que no venden» deja fuera a los que nunca vendieron; un préstamo con fecha antes del inventario de insumos nace entregado; una fecha de entrega de insumos es la del día en que se marca | Ajustes a lotes, Inicio e insumos | Fernando |
 | Contratos: moneda, cobro, aplicar libras a contratos | Ventas / contratos | Cliente |
 | Reporte exacto que piden el contador y el SAR | Reportería | Cliente |

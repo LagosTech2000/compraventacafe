@@ -1,0 +1,93 @@
+<% content_for :title, t(".title") %>
+<%= render "sales/nav" %>
+
+<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+<p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+
+<% stock = SupplyStock.new %>
+<% supplies = Supply.active.or(Supply.where(id: @exit.supply_id)).ordered.map do |supply|
+     row = stock.for(supply)
+     [ supply.name, supply.id, { data: { price: supply.default_price.to_s, stock: (row&.in_warehouse || 0).to_s, unit: supply.unit } } ]
+   end %>
+<%= form_with model: @exit, url: sales_supply_exits_path, class: form_surface_class("mt-6 space-y-6"),
+      data: { controller: "form-validation unsaved-changes supply-exit", action: unsaved_changes_actions,
+              supply_exit_stock_text_value: t(".in_warehouse", quantity: "%{quantity}"),
+              supply_exit_over_text_value: t(".over", quantity: "%{quantity}") } do |form| %>
+  <%= render "shared/form_errors", record: @exit %>
+
+  <fieldset>
+    <legend class="field-label"><%= SupplyExit.human_attribute_name(:kind) %></legend>
+    <div class="flex flex-wrap gap-4">
+      <% SupplyExit::KINDS.each do |kind| %>
+        <label class="flex min-h-11 cursor-pointer items-center gap-2 text-sm font-medium">
+          <%= form.radio_button :kind, kind, class: "size-4 accent-primary", data: { supply_exit_target: "kind", action: "supply-exit#toggle" } %>
+          <%= SupplyExit.human_attribute_name("kind/#{kind}") %>
+        </label>
+      <% end %>
+    </div>
+  </fieldset>
+
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div>
+      <%= form.label :supply_id, class: "field-label" %>
+      <%= form.select :supply_id, supplies, { prompt: t(".pick_supply") }, required: true, class: "field-input",
+            data: { supply_exit_target: "supply", action: "supply-exit#pickSupply" } %>
+      <p class="mt-1 text-xs text-ink-muted" data-supply-exit-target="stock"></p>
+    </div>
+    <div>
+      <%= form.label :quantity, class: "field-label" %>
+      <%= form.number_field :quantity, required: true, min: 0.01, max: SupplyExit::MAX_QUANTITY - 0.01, step: 0.01, inputmode: "decimal",
+            class: "field-input", data: { supply_exit_target: "quantity", action: "input->supply-exit#update" } %>
+      <p class="mt-1 text-xs font-semibold text-danger" data-supply-exit-target="over" hidden></p>
+    </div>
+    <div>
+      <%= form.label :exited_on, class: "field-label" %>
+      <%= form.date_field :exited_on, required: true, class: "field-input" %>
+    </div>
+  </div>
+
+  <%# A sale's buyer, price and where its money came in; off for a use of the business. %>
+  <fieldset class="space-y-5" data-supply-exit-target="sale">
+    <legend class="sr-only"><%= t(".sale") %></legend>
+    <%= tag.div data: { controller: "record-picker",
+                        action: "person:created@window->record-picker#add person:updated@window->record-picker#replace",
+                        **record_picker_data(:people, selected: @exit.person, missing_message: t(".person_missing")) } do %>
+      <%= form.label :person_id, for: "person_search", class: "field-label" %>
+      <%= render "shared/record_picker_search", id: "person_search", value: @exit.person&.picker_label, required: true,
+            placeholder: t(".person_placeholder"), missing_message: t(".person_missing") %>
+      <%= form.hidden_field :person_id, data: { record_picker_target: "id" } %>
+      <% if policy(Person).create? %>
+        <%= modal_link_to t(".new_person"), new_administration_person_path(picker: 1), class: "btn btn-sm mt-2" %>
+      <% end %>
+    <% end %>
+    <div class="grid gap-5 sm:grid-cols-2">
+      <div>
+        <%= form.label :unit_price, class: "field-label" %>
+        <%= form.number_field :unit_price, required: true, min: 0.01, max: Supply::MAX_PRICE - 0.01, step: 0.01, inputmode: "decimal",
+              class: "field-input", data: { supply_exit_target: "price", action: "input->supply-exit#update" } %>
+      </div>
+      <div>
+        <p class="field-label"><%= SupplyExit.human_attribute_name(:amount) %></p>
+        <p class="text-lg font-bold tabular-nums" data-supply-exit-target="total">L 0.00</p>
+      </div>
+    </div>
+    <div class="grid gap-5 sm:grid-cols-2" data-controller="money-account"
+         data-money-account-defaults-value="<%= MoneyAccount.defaults_by_method.to_json %>">
+      <div>
+        <%= form.label :payment_method, class: "field-label" %>
+        <%= form.select :payment_method, enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS), {}, required: true, class: "field-input",
+              data: { money_account_target: "method", action: "money-account#suggest" } %>
+      </div>
+      <%= render "shared/money_account_field", form:, required: true %>
+    </div>
+  </fieldset>
+
+  <div>
+    <%= form.label :observations, class: "field-label" %>
+    <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit t(".submit"), class: "btn btn-primary" %>
+    <%= cancel_button sales_supply_exits_path %>
+  </div>
+<% end %>

@@ -1,0 +1,51 @@
+<% content_for :title, t(".title") %>
+<%= render "administration/nav" %>
+
+<div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <%= link_to t(".new"), new_administration_fingerprint_station_path, class: "btn btn-primary" %>
+</div>
+
+<% if @stations.any? %>
+  <div class="overflow-x-auto panel">
+    <table class="data-table" data-controller="table-sort">
+      <thead>
+        <tr>
+          <th><%= FingerprintStation.human_attribute_name(:name) %></th>
+          <th><%= t(".state") %></th>
+          <th><%= FingerprintStation.human_attribute_name(:last_seen_at) %></th>
+          <th><%= FingerprintStation.human_attribute_name(:created_by) %></th>
+          <th class="cell-actions"><span class="sr-only"><%= t(".actions") %></span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @stations.each do |station| %>
+          <% state = station.state %>
+          <tr id="<%= dom_id(station) %>">
+            <td>
+              <%= station.name %>
+              <% if station.id == @linked_id %><span class="badge badge-success"><%= t(".this_browser") %></span><% end %>
+            </td>
+            <td>
+              <% if !station.active? %>
+                <span class="badge badge-neutral"><%= t(".inactive") %></span>
+              <% elsif !station.paired? %>
+                <span class="badge badge-neutral"><%= t(".unpaired") %></span>
+              <% else %>
+                <%= t("fingerprints.client.#{!state[:bridge] ? "bridge_off" : (state[:reader] ? "ready" : "reader_off")}") %>
+              <% end %>
+            </td>
+            <td class="whitespace-nowrap"><%= station.last_seen_at ? l(station.last_seen_at) : "—" %></td>
+            <td><%= station.created_by.name %></td>
+            <td class="cell-actions"><%= detail_button administration_fingerprint_station_path(station) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <p class="empty-state"><%= t(".empty") %></p>
+<% end %>

@@ -20,6 +20,7 @@ RSpec.describe "Sorting every list" do
     InvoiceIssuer.new(producer:, user: admin, purchase_ids: [ purchase.id ], payment_status: "pending").call
     create(:loan, person: producer.person)
     create(:supply_entry, supply: create(:supply))
+    create(:supply_exit)
     create(:loan, disbursed_on: Time.zone.today, due_on: Time.zone.today + 30, supply_items_attributes: [ { supply_id: Supply.first.id, quantity: 1, unit_price: 5 } ])
     create(:farm, producer:)
     create(:payroll_member, payroll: daily)
@@ -80,7 +81,8 @@ RSpec.describe "Sorting every list" do
     ExpenseFilter => -> { finance_expenses_path(from: "", to: "") },
     FinanceCategoryFilter => -> { finance_categories_path },
     ExpenseCategoryFilter => -> { farms_expense_categories_path },
-    ConsolidationFilter => -> { finance_consolidation_path },
+    ConsolidationFilter => -> { finance_consolidation_path(with_account: "1") },
+    SupplyExitFilter => -> { sales_supply_exits_path },
     CoffeeCollectionFilter => -> { loans_coffee_collection_path },
     SupplyEntryFilter => -> { sales_supply_stock_path },
     IdleProducerFilter => -> { trading_idle_producers_path },

@@ -35,7 +35,7 @@ export default class extends Controller {
     selects.forEach((select) => select.add(new Option(label, String(id))))
     const line = this.visibleLines().find((item) => item.querySelector("select").value === "") || this.add()
     line.querySelector("select").value = String(id)
-    line.querySelector("input[type=number]")?.focus()
+    line.querySelector("input[type=number], input[data-thousands]")?.focus()
   }
 
   update() {

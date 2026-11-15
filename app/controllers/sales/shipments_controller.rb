@@ -17,7 +17,9 @@ module Sales
     def new
       buyer = Buyer.active.find_by(id: params[:buyer_id])
       state = PurchaseDefaults::COFFEE_STATE
-      @shipment = authorize Shipment.new(departed_at: Time.current.change(sec: 0), coffee_state: state, buyer:,
+      # From a person's panel (the fingerprint reader): with them as its driver.
+      driver = StaffMember.active.find_by(id: params[:driver_id])
+      @shipment = authorize Shipment.new(departed_at: Time.current.change(sec: 0), coffee_state: state, buyer:, driver:,
                                          **PurchaseDefaults.inputs_for(state).transform_keys { :"origin_#{it}" })
       @stock = CoffeeStock.new
     end

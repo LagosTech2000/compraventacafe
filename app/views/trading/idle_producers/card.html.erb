@@ -22,7 +22,7 @@
             <span class="min-w-0">
               <%= link_to producer.full_name, trading_producer_path(producer), class: "link block truncate font-medium", data: { turbo_frame: "_top" } %>
               <span class="block truncate text-xs text-ink-muted">
-                <%= [ producer.person.zone&.name, t(".last", date: l(producer.last_purchased_at.to_date)) ].compact.join(" · ") %>
+                <%= [ producer.person.zone&.name, t(".last", date: l(producer.last_purchased_at.in_time_zone.to_date)) ].compact.join(" · ") %>
               </span>
             </span>
             <span class="badge badge-neutral shrink-0 tabular-nums"><%= t(".days_ago", count: IdleProducers.days_since(producer)) %></span>

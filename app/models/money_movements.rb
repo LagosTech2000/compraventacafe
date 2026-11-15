@@ -7,7 +7,8 @@
 #        Planilla interna's payments and advances, and processing costs
 #   in   loan payments in cash, transfer or check, collections of coffee
 #        sales (not the ones «con anticipo»: that money came in with the
-#        buyer's advance), buyers' advances and other income
+#        buyer's advance), buyers' advances, supplies sold apart and other
+#        income
 #   both transfers between accounts: out of one, into the other (the
 #        business's totals leave them out: the money stays home)
 #
@@ -17,12 +18,12 @@
 # 2026-10-25: «fechas con hora»), newest last.
 class MoneyMovements
   SOURCES = %w[invoices hauler_payments loans loan_payments payroll_payments payroll_expenses
-               sale_payments buyer_advances processing_costs shipment_costs expenses investments staff_payments staff_advances other_incomes transfers].freeze
+               sale_payments buyer_advances supply_sales processing_costs shipment_costs expenses investments staff_payments staff_advances other_incomes transfers].freeze
   # Which submodule each source's records belong to (who may read it).
   MODULES = {
     "invoices" => "trading.invoices", "hauler_payments" => "trading.haulers", "loans" => "loans.loans", "loan_payments" => "loans.loans",
     "payroll_payments" => "farms.payrolls", "payroll_expenses" => "farms.payrolls", "sale_payments" => "sales.sales",
-    "buyer_advances" => "sales.buyers", "processing_costs" => "sales.coffee_conversions",
+    "buyer_advances" => "sales.buyers", "supply_sales" => "sales.supplies", "processing_costs" => "sales.coffee_conversions",
     "shipment_costs" => "sales.shipments",
     "expenses" => "finance.expenses", "investments" => "finance.investments", "staff_payments" => "finance.staff",
     "staff_advances" => "finance.staff", "other_incomes" => "finance.incomes", "transfers" => "finance.accounts"
@@ -242,6 +243,18 @@ class MoneyMovements
           movement(id:, date:, created_at:, source: "staff_advances", description: I18n.t("money_movements.staff_advance", number: format("%04d", id)),
                    person: name, payment_method: method_label(Invoice, method), amount_out: amount, account_id:,
                    route: [ :finance_staff_member_path, member_id ])
+        end
+    end
+
+    # Supplies sold apart (Fernando, 2026-11-14).
+    def supply_sales
+      narrowed(SupplyExit.sales.joins(:supply, :person), "supply_exits.exited_on", "supply_exits.money_account_id")
+        .pluck("supply_exits.id", "supply_exits.exited_on", "supplies.name", "supply_exits.payment_method", Arel.sql(NAME),
+               "supply_exits.amount", "supply_exits.money_account_id", "supply_exits.created_at")
+        .map do |id, date, supply, method, name, amount, account_id, created_at|
+          movement(id:, date:, created_at:, source: "supply_sales", description: I18n.t("money_movements.supply_sale", supply:),
+                   person: name, payment_method: method_label(Invoice, method), amount_in: amount, account_id:,
+                   route: [ :sales_supply_exit_path, id ])
         end
     end
 

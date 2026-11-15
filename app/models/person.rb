@@ -29,9 +29,11 @@ class Person < ApplicationRecord
   has_one :producer, dependent: :restrict_with_error, autosave: true
   has_one :hauler, dependent: :restrict_with_error, autosave: true
   has_many :loans, dependent: :restrict_with_error
+  has_many :supply_exits, dependent: :restrict_with_error
   has_many :payroll_members, dependent: :restrict_with_error
   # In the business's own payroll (Planilla interna), once.
   has_one :staff_member, dependent: :restrict_with_error
+  has_many :fingerprints, -> { order(:id) }, dependent: :destroy
   has_many :private_document_prints, dependent: :restrict_with_error
 
   normalizes :first_names, :last_names, :civil_status, :nationality, with: ->(value) { value.squish.presence }

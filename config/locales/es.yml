@@ -152,7 +152,13 @@ es:
   shared:
     # Gross pounds first, net beside (Fernando, 2026-11-13).
     pounds:
-      gross_net: "%{gross} lb brutas · %{net} lb netas"
+      gross: "%{pounds} lb brutas"
+      net: "%{pounds} lb netas"
+    # Amounts typed with commas (thousands.js, Fernando, 2026-11-14).
+    thousands:
+      min: "Escribe %{min} o más."
+      max: "Escribe %{max} o menos."
+      number: "Escribe un número."
     unsaved_changes:
       leave: "Tienes cambios sin guardar en este formulario. ¿Salir sin guardar?"
     money_account_field:
@@ -430,9 +436,47 @@ es:
     payroll_expense: "%{description} · %{farm}"
     sale_payment: "Cobro de la venta %{number}"
     buyer_advance: "Anticipo %{number} de comprador"
+    supply_sale: "Venta de insumo: %{supply}"
     staff_payment: "Planilla interna %{number} · %{role} (%{period})"
     staff_advance: "Anticipo %{number} de planilla interna"
     transfer: "De %{from} a %{to}"
+  fingerprints:
+    client:
+      ready: "Lector listo"
+      reader_off: "Lector desconectado"
+      bridge_off: "Programa del lector apagado"
+      unknown: "No se reconoce esa huella. Prueba otro dedo o búscala por nombre."
+      found: "Huella de %{name}."
+      open: "Abrir su panel"
+  person_panels:
+    show:
+      dni: "DNI %{dni}"
+      no_details: "Sin DNI, teléfono ni zona"
+      shortcuts: "Atajos"
+      loading: "Cargando…"
+      overdue:
+        one: "Tiene 1 préstamo vencido."
+        other: "Tiene %{count} préstamos vencidos."
+      uninvoiced:
+        one: "Tiene 1 compra sin facturar."
+        other: "Tiene %{count} compras sin facturar."
+      missing: "Le falta: %{fields}."
+      hauler_balance_html: "Por pagarle en comisiones: %{amount}"
+      staff: "Planilla interna · %{role}"
+      shipment: "Remisión %{number} · salió el %{date}"
+      no_shipments: "No lleva ninguna salida en camino."
+    actions:
+      new_purchase: "Nueva compra"
+      invoice: "Facturar sus compras"
+      producer: "Ver productor"
+      loan_payment: "Registrar abono"
+      new_loan: "Nuevo préstamo"
+      credit_account: "Estado de cuenta"
+      hauler_payment: "Pagar al carrero"
+      hauler: "Ver carrero"
+      new_shipment: "Nueva salida con él de motorista"
+      staff_member: "Ver empleado"
+      person: "Ver persona"
   coffee_markets:
     show:
       title: "Café en la bolsa"
@@ -1113,6 +1157,20 @@ es:
         voided: "Factura anulada el %{date} por %{name}: %{reason}. Sus compras quedaron anuladas y sus abonos se quitaron."
         overpaid: "Se le pagó %{amount} de más: lo abonado pasa del total a pagar después de editar. Corrige o quita un abono."
         observations: "Observaciones"
+      lot_fields:
+        legend: "Lote (opcional)"
+        blank: "Sin lote"
+        option: "%{batch} · %{state} · %{warehouse} · caben %{room} lb brutas"
+        percent: "Parte de la factura en el lote (%)"
+        takes: "Toma %{gross} lb brutas · %{net} lb netas de las compras marcadas."
+        room: "El lote tiene %{room} lb brutas libres; con esta factura le quedan %{left}."
+        over: "Pasa del límite del lote por %{over} lb brutas. Con %{max} % o menos cabe."
+        mixed: "Las compras marcadas son de varios estados del café o de varias bodegas: esta factura no puede ir en un lote."
+        none_fit: "No hay lotes de este estado del café en esta bodega con espacio."
+        no_purchases: "Marca las compras para ver los lotes donde caben."
+        split: "Esta factura está repartida en %{lots}. El reparto se cambia desde cada lote."
+        share: "%{batch} (%{percent} %)"
+        error: "%{batch}: %{message}"
       create:
         success: "Factura creada."
       edit:
@@ -1844,26 +1902,30 @@ es:
         label: "Partes de Insumos"
         stock: "Inventario y entradas"
         deliveries: "Por entregar"
+        exits: "Salidas"
         catalog: "Catálogo de insumos"
       show:
         title: "Insumos"
         help: "Lo que entra de cada insumo (cada entrada registra su inversión en Control financiero), lo que se presta y lo que ya se entregó. Cuentan los préstamos desde el %{date}."
         new_entry: "Registrar entrada"
+        new_exit: "Registrar salida"
         stock: "Existencias"
         entries: "Entradas"
         add: "Entrada"
+        exit: "Salida"
         inactive: "Desactivado"
         no_supplies: "Todavía no hay insumos: créalos en «Catálogo de insumos»."
         no_entries: "No hay entradas con estos filtros."
         search_placeholder: "Proveedor, comprobante u observaciones"
         owed_hint: "Se prestó más de lo que entró: toca para ver a quién se le debe."
-        legend: "En bodega = entró − entregado. Disponible = entró − prestado: en negativo, se prestó más de lo que hay y se le debe a alguien; toca la cifra para ver a quién."
+        legend: "En bodega = entró − entregado − salió sin préstamo. Disponible = entró − prestado − salió sin préstamo: en negativo, se prestó más de lo que hay y se le debe a alguien; toca la cifra para ver a quién."
         columns:
           supply: "Insumo"
           entered: "Entró"
           lent: "Prestado"
           delivered: "Entregado"
           to_deliver: "Por entregar"
+          exited: "Salió sin préstamo"
           in_warehouse: "En bodega"
           available: "Disponible"
           invested: "Invertido"
@@ -1872,6 +1934,36 @@ es:
           amount: "Total (L)"
           payee: "Proveedor"
           receipt_number: "Comprobante"
+    # Supplies sold apart or used by the business (Fernando, 2026-11-14).
+    supply_exits:
+      index:
+        title: "Salidas de insumos"
+        help: "Lo que sale de la bodega sin préstamo: lo que se vende por aparte a una persona (su dinero entra a una cuenta) y lo que usa el negocio."
+        new: "Registrar salida"
+        search_placeholder: "Persona u observaciones"
+        empty: "No hay salidas con estos filtros."
+      new:
+        title: "Registrar salida de insumos"
+        help: "Una venta por aparte baja la bodega y su dinero entra a la cuenta; el uso del negocio solo baja la bodega."
+        pick_supply: "Selecciona un insumo"
+        in_warehouse: "En bodega: %{quantity}"
+        over: "No hay tanto en bodega: hay %{quantity}."
+        sale: "La venta"
+        person_placeholder: "Escribe 3 letras del nombre o el DNI"
+        person_missing: "Elige a quién se le vende."
+        new_person: "Nueva persona"
+        submit: "Registrar salida"
+      create:
+        success:
+          sale: "Venta registrada: %{supply}. El dinero entró a la cuenta."
+          business_use: "Salida registrada: %{supply}."
+      show:
+        title: "Salida de insumos %{number}"
+        destroy: "Quitar salida"
+        confirm_destroy: "¿Quitar esta salida? Lo que salió vuelve a la bodega y, si fue venta, su dinero sale de la cuenta."
+        income: "Su dinero entró a «%{account}»: sale en Ingresos y en Movimientos."
+      destroy:
+        success: "Se quitó la salida: lo que salió volvió a la bodega."
     # What the loans lent and whether it was handed out (Fernando, 2026-11-13).
     supply_deliveries:
       status:
@@ -3150,12 +3242,19 @@ es:
     consolidations:
       show:
         title: "Consolidación"
-        help: "Los pagos y cobros de los módulos que se registraron sin cuenta. Asígnales una para que los saldos de las cuentas estén completos."
+        help: "Los pagos y cobros de los módulos que se registraron sin cuenta. Asígnales una para que los saldos de las cuentas estén completos. Para cambiar la cuenta de uno que ya tiene, marca «Incluir los que ya tienen cuenta»."
         search_placeholder: "Detalle o persona"
         count:
           zero: "Ningún movimiento sin cuenta"
           one: "1 movimiento sin cuenta"
           other: "%{count} movimientos sin cuenta"
+        count_all:
+          zero: "Ningún movimiento"
+          one: "1 movimiento"
+          other: "%{count} movimientos"
+        with_account: "Incluir los que ya tienen cuenta"
+        no_account: "Sin cuenta"
+        empty_all: "No hay movimientos con estos filtros."
         marked:
           zero: "Ninguno marcado"
           one: "1 marcado"
@@ -5215,6 +5314,7 @@ es:
           payroll_expenses: "Gasto de planilla"
           sale_payments: "Cobro de venta"
           buyer_advances: "Anticipo de comprador"
+          supply_sales: "Venta de insumos"
           processing_costs: "Gasto de procesamiento"
           shipment_costs: "Gasto de salida"
           expenses: "Gasto"
@@ -5610,7 +5710,68 @@ es:
             - "Toca tu nombre para abrir «Mi configuración»: ventanas o panel lateral, y el menú arriba o a la izquierda."
           tips:
             - "Si no ves ningún módulo, pídele a un administrador que te asigne permisos."
+      person_panels:
+        show:
+          title: "Panel de la persona"
+          summary: "Se abre al poner un dedo registrado en el lector de huella de esta PC: quién es, lo pendiente y atajos."
+          steps:
+            - "Arriba, su foto, sus roles, su DNI, su teléfono y su zona."
+            - "Los atajos hacen lo más común para esa persona: a un productor, una compra nueva; a quien debe, un abono; a un carrero, pagarle; a un motorista, una salida."
+            - "Debajo, lo que tiene pendiente en cada módulo que puedes ver."
+          tips:
+            - "Si estás en una página con un campo de persona (Nueva compra, Nuevo préstamo, el motorista de Nueva salida), el dedo llena ese campo en vez de abrir el panel."
+            - "En Facturar compras, Productores, Carreros, Estados de cuenta y Personas, el dedo abre lo de esa persona en esa pantalla."
+      fingerprint_matches:
+        show:
+          title: "Huella reconocida"
+          summary: "Lo que la página necesita para llenar un campo con la persona del dedo."
+          steps:
+            - "La usa el sistema solo: al poner un dedo, la página llena su campo de persona o abre su panel."
+      fingerprint_bridge:
+        templates:
+          show:
+            title: "Huellas para el programa del lector"
+            summary: "Lo pide el programa del lector de cada PC para reconocer los dedos."
+            steps:
+              - "La usa el programa del lector al arrancar y cada vez que se registra o quita una huella."
       administration:
+        fingerprint_stations:
+          index:
+            title: "Lectores de huella"
+            summary: "Las PC con lector ZK9500. Solo administradores."
+            steps:
+              - "Toca «Agregar lector» desde la PC donde está el lector."
+              - "Cada lector dice si su programa está abierto y si el lector está conectado."
+          show:
+            title: "Lector de huella"
+            summary: "Su estado, el código para el programa del lector y qué navegadores lo usan."
+            steps:
+              - "«Nuevo código» da un código de 6 números para escribir en el programa del lector; vence en 15 minutos."
+              - "«Usar en este navegador» hace que lo que este lector reconoce se abra en este navegador."
+              - "«Desactivar» corta el programa y los navegadores."
+          form:
+            title: "Agregar lector de huella"
+            summary: "Dale un nombre a la PC; este navegador queda enlazado al lector."
+            steps:
+              - "Escribe el nombre de la PC (Caja, Báscula…)."
+              - "Toca «Agregar y ver el código» y escribe ese código en el programa del lector."
+        fingerprints:
+          form:
+            title: "Registrar huella"
+            summary: "La persona pone el mismo dedo 3 veces en el lector de esta PC. Solo administradores, con su consentimiento."
+            steps:
+              - "Elige el dedo; conviene registrar 2 o 3 dedos por persona."
+              - "Marca que la persona aceptó y toca «Empezar»."
+            tips:
+              - "Con manos sucias, húmedas o con callos, limpia el lector y el dedo, o usa otro dedo."
+          show:
+            title: "Registrando huella"
+            summary: "Los 3 círculos se llenan con cada lectura; al terminar vuelve a la persona."
+            steps:
+              - "La persona pone el dedo en el lector cuando la pantalla lo pide, 3 veces."
+              - "Al terminar, vuelve sola a la página de la persona con la huella en su lista."
+            tips:
+              - "Si esa huella ya es de otra persona, no se guarda: puede ser la misma persona registrada dos veces."
         private_documents:
           index:
             title: "Documentos privados"
@@ -6007,12 +6168,15 @@ es:
               - "Deja marcadas las compras que van en la factura."
               - "En «Pago», elige si queda pendiente, si se paga completa (cancelada) o si se paga una parte (pago parcial)."
               - "Si se paga algo, elige la forma y la fecha de pago; en pago parcial escribe el monto pagado ahora."
+              - "Si la factura va en un lote, elígelo en «Lote» y escribe la parte (%): abajo ves cuántas libras brutas y netas toma y cuánto le queda al lote."
               - "Toca «Crear factura»."
             tips:
               - "Si falta una compra, toca «Nueva compra para este productor»: se registra en una ventana y aparece en la lista."
               - "Si una compra no va, toca «Anular» en su fila: sale de la lista y de los totales."
               - "Las compras facturadas ya no se pueden editar, anular ni borrar; solo un administrador, desde «Editar factura»."
               - "La lista muestra cuánto restó el daño de cada compra, en libras y en lempiras."
+              - "«Lote» solo muestra los lotes del estado del café y la bodega de las compras marcadas, con espacio bajo su límite; si la parte no cabe, no se crea la factura."
+              - "En «Editar factura» se cambia su lote o su parte, o se saca del lote con «Sin lote»; si no se tocan, el lote se queda con las libras que ya tomó."
               - "«Editar factura» (solo administradores, aunque esté cancelada): cambia la fecha, las observaciones y qué compras lleva; las desmarcadas quedan sin facturar. Cada compra se edita con «Editar compra». Si el total baja de lo pagado, sale el aviso de «Pagado de más»."
           show:
             title: "Factura"
@@ -6193,12 +6357,39 @@ es:
               - "Revisa «Existencias»: entró, prestado, entregado, por entregar, en bodega, disponible y lo invertido de cada insumo."
               - "Si «Disponible» está en rojo, se prestó más de lo que entró: tócalo para ver a quién se le debe."
               - "Toca «Registrar entrada» (o «Entrada» en un insumo) cuando se compren insumos; una entrada lleva todos los de la factura."
+              - "Toca «Registrar salida» (o «Salida» en un insumo) cuando se venda por aparte o lo use el negocio: baja la bodega y, si es venta, el dinero entra a la cuenta."
               - "Filtra las entradas por insumo, fechas o texto; toca una para ver su detalle, su factura y su inversión."
             tips:
               - "Cada entrada registra sola su inversión en Control financiero; al quitar la entrada, se quita la inversión."
               - "Un préstamo puede llevar más de lo que hay: queda por entregar hasta que entre y un administrador lo marque entregado."
               - "Cuentan los préstamos desde que empezó el inventario."
               - "Los insumos se crean y se desactivan en «Catálogo de insumos»."
+        supply_exits:
+          index:
+            title: "Salidas de insumos"
+            summary: "Lo que sale de la bodega sin préstamo: ventas por aparte y lo que usa el negocio."
+            steps:
+              - "Toca «Registrar salida» (o «Salida» en un insumo de «Existencias»)."
+              - "Filtra por motivo, insumo, fechas o persona; toca una para ver su detalle."
+            tips:
+              - "Una venta por aparte suma a la cuenta elegida y sale en Ingresos y Movimientos."
+              - "No sale más de lo que hay en bodega."
+          form:
+            title: "Registrar salida de insumos"
+            summary: "Lo que se vende por aparte o lo que usa el negocio."
+            steps:
+              - "Elige el motivo: «Venta por aparte» o «Uso del negocio»."
+              - "Elige el insumo (debajo dice cuánto hay en bodega) y escribe la cantidad y la fecha."
+              - "En una venta, elige a quién se le vende, revisa el precio por unidad (empieza en el del catálogo), la forma de pago y la cuenta."
+              - "Toca «Registrar salida»."
+            tips:
+              - "El uso del negocio no mueve dinero: solo baja la bodega."
+              - "Una salida no se edita: se quita y se registra de nuevo."
+          show:
+            title: "Salida de insumos"
+            summary: "Qué salió, por qué y, si fue venta, a quién, por cuánto y a qué cuenta entró."
+            steps:
+              - "«Quitar salida» devuelve lo que salió a la bodega y, si fue venta, saca su dinero de la cuenta."
         supply_deliveries:
           index:
             title: "Insumos por entregar"
@@ -6851,7 +7042,8 @@ es:
             tips:
               - "La categoría solo se cambia en lo que la lleva (los gastos de planilla, con las categorías de Fincas); a lo demás no se le toca."
               - "Solo cambian la cuenta y la categoría; el pago queda como estaba y el cambio queda en la auditoría."
-              - "Los gastos, inversiones, otros ingresos y transferencias siempre llevan cuenta: no salen aquí."
+              - "Con «Incluir los que ya tienen cuenta» salen también los que ya tienen una, con su cuenta en una columna, para cambiarla: el saldo pasa de una cuenta a la otra."
+              - "Los gastos, inversiones, otros ingresos y transferencias siempre llevan cuenta y se cambian desde su propio formulario: no salen aquí."
         budgets:
           show:
             title: "Presupuesto"
@@ -7288,6 +7480,70 @@ es:
               - "Se guarda el período por su nombre: «Este mes» siempre es el mes en curso."
 
   administration:
+    fingerprint_stations:
+      index:
+        title: "Lectores de huella"
+        help: "Cada PC con un lector ZK9500 y su programa del lector. Lo que el lector reconoce se abre en los navegadores enlazados a esa PC."
+        new: "Agregar lector"
+        state: "Estado"
+        actions: "Acciones"
+        this_browser: "Este navegador"
+        inactive: "Desactivado"
+        unpaired: "Falta emparejar el programa"
+        empty: "Todavía no hay lectores. Agrega uno desde la PC donde está conectado."
+      new:
+        title: "Agregar lector de huella"
+        help: "Hazlo desde el navegador de la PC donde está conectado el lector: este navegador queda enlazado y después te damos el código para el programa del lector."
+        name_placeholder: "Caja, Báscula, Oficina…"
+        submit: "Agregar y ver el código"
+      create:
+        success: "Lector agregado. Escribe el código en el programa del lector."
+      show:
+        linked: "este navegador está enlazado"
+        not_linked: "este navegador no está enlazado"
+        link: "Usar en este navegador"
+        new_code: "Nuevo código"
+        deactivate: "Desactivar"
+        confirm_deactivate: "¿Desactivar «%{name}»? Su programa deja de conectarse y nadie más ve lo que reconoce."
+        code_title: "Código para el programa del lector"
+        code_help: "En la PC, abre el programa del lector y escribe la dirección %{url} y este código. Vence en %{minutes} minutos y sirve una sola vez."
+        back: "Volver a los lectores"
+      pairing:
+        success: "Código nuevo. El programa del lector que tenía deja de servir cuando se empareje otro."
+      link:
+        success: "Este navegador ya está enlazado al lector."
+      destroy:
+        success: "Lector desactivado."
+    fingerprints:
+      new:
+        title: "Registrar huella: %{name}"
+        help: "Se usa el lector «%{station}». Elige el dedo y toca «Empezar»: la persona pone el mismo dedo 3 veces."
+        consent: "%{name} aceptó que se registre su huella para identificarla en el negocio."
+        consent_required: "Falta el consentimiento de la persona."
+        recommended: "%{finger} (recomendado)"
+        finger_help: "Registra primero el índice derecho; agrega otro dedo por si ese se lastima o no lo lee bien."
+        submit: "Empezar"
+        no_station: "Este navegador no está enlazado a un lector de huella. Hazlo desde «Lectores de huella» en la PC donde está el lector."
+        stations: "Ir a Lectores de huella"
+      show:
+        title: "Registrar huella: %{name}"
+        finger: "Dedo: %{finger}"
+        retry: "Intentar otra vez"
+        texts:
+          put: "Pon el dedo en el lector (%{n} de 3)."
+          saving: "Guardando…"
+          done: "Huella registrada."
+          timeout: "El lector no respondió. Revisa que el programa del lector esté abierto y el lector conectado."
+      destroy:
+        success: "Se quitó la huella: %{finger}."
+      failures:
+        mismatch: "No fue el mismo dedo las 3 veces. Inténtalo otra vez."
+        timeout: "No se puso el dedo a tiempo."
+        merge: "El lector no pudo juntar las 3 lecturas. Limpia el lector y el dedo, e inténtalo otra vez."
+        no_reader: "El lector no está conectado a la PC."
+        busy: "El lector está ocupado con otro registro."
+        other: "El lector no pudo registrar la huella."
+        duplicate: "Esa huella ya está registrada para %{name} (%{finger}). Si es la misma persona, fusiona las dos personas."
     private_documents:
       index:
         title: "Documentos privados"
@@ -7325,6 +7581,7 @@ es:
       audit_events: "Auditoría"
       site_setting: "Configuración del sitio"
       backup: "Respaldo"
+      fingerprint_stations: "Lectores de huella"
     backups:
       show:
         title: "Respaldo de datos"
@@ -7374,6 +7631,7 @@ es:
         farms_description: "Todas las fincas, del negocio y de los productores: crear, editar y borrar las que no se usan."
         zones_description: "Las zonas de donde vienen las personas: crear, editar y borrar las que no se usan."
         backup_description: "Descarga una copia de todos los datos (base de datos y CSV)."
+        fingerprint_stations_description: "Las PC con lector de huella: agrégalas, empareja su programa y registra las huellas de las personas."
         users_description: "Crear usuarios, asignar permisos por pestaña de cada módulo y restablecer contraseñas."
         audit_description: "Quién creó, modificó o borró qué, y cuándo."
         site_description: "Nombre del negocio, ubicación y logo que se ven en la barra, el inicio de sesión y los impresos."
@@ -7465,6 +7723,7 @@ es:
         processing_cost: "el gasto de procesamiento"
         supply_entry: "la entrada de insumos"
         supply_entry_line: "el insumo de la entrada"
+        supply_exit: "la salida de insumos"
         shipment_cost: "el gasto de la salida"
         shipment_invoice: "la factura de la salida"
         coffee_batch: "el lote"
@@ -7595,6 +7854,12 @@ es:
         merge: "Fusionar con otra persona"
         confirm_destroy: "¿Borrar a %{name}? Esta acción no se puede deshacer."
         back: "Volver a personas"
+        fingerprints: "Huellas"
+        add_fingerprint: "Registrar huella"
+        remove_fingerprint: "Quitar"
+        confirm_remove_fingerprint: "¿Quitar la huella «%{finger}»? Ese dedo deja de reconocerla."
+        fingerprint_consent: "aceptó el %{date}"
+        no_fingerprints: "No tiene huellas registradas."
       hauler:
         title: "Como carrero"
         open: "Abrir en Compra de café"
@@ -7688,6 +7953,8 @@ es:
         hauler: "Carrero"
       moved:
         document_prints: "Impresiones de documentos"
+        supply_exits: "Salidas de insumos"
+        fingerprints: "Huellas"
         purchases: "Compras"
         invoices: "Facturas"
         farms: "Fincas"
@@ -7869,9 +8136,18 @@ es:
       supply_entry_line:
         one: "Insumo de la entrada"
         other: "Insumos de la entrada"
+      supply_exit:
+        one: "Salida de insumos"
+        other: "Salidas de insumos"
       shipment_cost:
         one: "Gasto de la salida"
         other: "Gastos de la salida"
+      fingerprint:
+        one: "Huella"
+        other: "Huellas"
+      fingerprint_station:
+        one: "Lector de huella"
+        other: "Lectores de huella"
       coffee_batch:
         one: "Lote"
         other: "Lotes"
@@ -8431,6 +8707,24 @@ es:
         payment_method: "Forma de pago"
         created_by: "Registró"
         created_by_id: "Registró"
+      supply_exit:
+        kind: "Motivo"
+        kind/sale: "Venta por aparte"
+        kind/business_use: "Uso del negocio"
+        supply: "Insumo"
+        supply_id: "Insumo"
+        exited_on: "Fecha"
+        quantity: "Cantidad"
+        person: "Se le vendió a"
+        person_id: "Se le vendió a"
+        unit_price: "Precio por unidad (L)"
+        amount: "Total (L)"
+        payment_method: "Forma de pago"
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
+        observations: "Observaciones"
+        created_by: "Registró"
+        created_by_id: "Registró"
       supply_entry_line:
         supply_entry: "Entrada de insumos"
         supply_entry_id: "Entrada de insumos"
@@ -8450,6 +8744,35 @@ es:
         shipment_id: "Salida"
         created_by: "Registró"
         created_by_id: "Registró"
+      fingerprint:
+        person: "Persona"
+        person_id: "Persona"
+        finger: "Dedo"
+        finger/right_index: "Índice derecho"
+        finger/right_thumb: "Pulgar derecho"
+        finger/right_middle: "Medio derecho"
+        finger/right_ring: "Anular derecho"
+        finger/right_little: "Meñique derecho"
+        finger/left_index: "Índice izquierdo"
+        finger/left_thumb: "Pulgar izquierdo"
+        finger/left_middle: "Medio izquierdo"
+        finger/left_ring: "Anular izquierdo"
+        finger/left_little: "Meñique izquierdo"
+        template: "Plantilla de la huella"
+        template_ciphertext: "Plantilla de la huella"
+        consented_at: "Consentimiento de la persona"
+        created_by: "Registró"
+        created_by_id: "Registró"
+      fingerprint_station:
+        name: "Nombre de la PC"
+        token_digest: "Llave del programa del lector"
+        pairing_code_digest: "Código para emparejar"
+        pairing_expires_at: "El código vence"
+        paired_at: "Emparejado"
+        last_seen_at: "Última conexión"
+        active: "Activo"
+        created_by: "Creó"
+        created_by_id: "Creó"
       coffee_batch_invoice:
         coffee_batch: "Lote"
         coffee_batch_id: "Lote"
@@ -8979,6 +9302,12 @@ es:
           attributes:
             supply:
               inactive: "está desactivado"
+        supply_exit:
+          attributes:
+            supply:
+              inactive: "está desactivado"
+            quantity:
+              not_in_warehouse: "pasa de lo que hay en bodega (%{available})"
         loan_supply:
           not_in_warehouse: "No hay suficiente «%{supply}» en bodega para entregarlo: hay %{there} %{unit}. Registra primero su entrada."
         shipment_cost:
@@ -9002,6 +9331,14 @@ es:
               taken: "ya tiene este lote"
             warehouse:
               inactive: "está desactivada"
+        fingerprint:
+          attributes:
+            base:
+              no_station: "Este navegador no está enlazado a un lector de huella."
+            consented_at:
+              accepted: "falta: la persona tiene que aceptar"
+            finger:
+              taken: "ya está registrado para esta persona"
         coffee_batch_invoice:
           attributes:
             base:

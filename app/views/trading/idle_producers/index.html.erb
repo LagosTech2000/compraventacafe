@@ -22,7 +22,7 @@
             <% @producers.each do |producer| %>
               <li class="data-card" id="<%= dom_id(producer, :idle_card) %>">
                 <p class="font-medium"><%= with_avatar(producer.person) %></p>
-                <p class="text-xs text-ink-muted"><%= [ producer.person.zone&.name, l(producer.last_purchased_at.to_date) ].compact.join(" · ") %></p>
+                <p class="text-xs text-ink-muted"><%= [ producer.person.zone&.name, l(producer.last_purchased_at.in_time_zone.to_date) ].compact.join(" · ") %></p>
                 <p class="text-sm"><%= t("trading.idle_producers.card.days_ago", count: IdleProducers.days_since(producer)) %></p>
                 <%= page_link_to t(".open"), trading_producer_path(producer), class: "btn btn-sm mt-2", data: { row_link: true } %>
               </li>
@@ -44,7 +44,7 @@
                   <tr id="<%= dom_id(producer, :idle) %>">
                     <td><%= with_avatar(producer.person) %></td>
                     <td><%= producer.person.zone&.name || "—" %></td>
-                    <td class="whitespace-nowrap"><%= l(producer.last_purchased_at.to_date) %></td>
+                    <td class="whitespace-nowrap"><%= l(producer.last_purchased_at.in_time_zone.to_date) %></td>
                     <td class="text-right tabular-nums"><%= IdleProducers.days_since(producer) %></td>
                     <td class="cell-actions"><%= page_link_to t(".open"), trading_producer_path(producer), class: "btn btn-sm", data: { row_link: true } %></td>
                   </tr>

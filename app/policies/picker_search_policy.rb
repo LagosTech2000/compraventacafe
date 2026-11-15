@@ -5,8 +5,9 @@ class PickerSearchPolicy < ApplicationPolicy
   # A purchase (Compra de café), a farm's owner (Fincas, or Administración → Fincas).
   def producers? = reads?("trading.purchases") || writes?("farms.farms") || writes?("administration.farms")
 
-  # A loan's borrower; the other person of a merge (administrators).
-  def people? = writes?("loans.loans") || writes?("administration.people")
+  # A loan's borrower; the other person of a merge (administrators); who
+  # buys supplies sold apart (Insumos → Salidas).
+  def people? = writes?("loans.loans") || writes?("administration.people") || writes?("sales.supplies")
 
   # A payroll's employee; an employee of the Planilla interna.
   def collaborators? = writes?("farms.payrolls") || writes?("finance.staff") || writes?("administration.people")

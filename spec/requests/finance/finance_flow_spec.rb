@@ -100,13 +100,32 @@ RSpec.describe "Finance flow" do
     expect(flash[:notice]).to include("Se asignó la cuenta a 2 movimientos.", "1 movimiento sin cuenta sugerida quedó pendiente.")
     expect([ cash.reload.money_account, check.reload.money_account, loan.reload.money_account ]).to eq([ box, nil, box ])
 
-    patch finance_consolidation_path, params: { account_id: bank.id, items: [ "invoices:#{check.id}", "invoices:#{cash.id}" ] }
+    patch finance_consolidation_path, params: { account_id: bank.id, items: [ "invoices:#{check.id}" ] }
     expect(check.reload.money_account).to eq(bank)
-    expect(cash.reload.money_account).to eq(box) # it already had one
     expect(AuditEvent.where(auditable: check, action: "update").last.changeset).to include("money_account_id")
 
     patch finance_consolidation_path, params: { items: [ "invoices:#{check.id}" ] }
     expect(flash[:alert]).to eq("Elige la cuenta o la categoría que les vas a asignar.")
+  end
+
+  it "changes the account of what has one, listed only with its check box (Fernando, 2026-11-14)" do
+    create(:permission, user:, module_key: "trading", can_read: true)
+    box = create(:money_account, name: "Caja")
+    bank = create(:money_account, name: "Banco", kind: "bank")
+    invoice = create(:invoice)
+    payment = invoice.payments.create!(amount: 10, paid_on: Time.zone.today, payment_method: "cash", created_by: user, money_account: box)
+
+    get finance_consolidation_path
+    expect(response.body).to include("Ningún movimiento sin cuenta")
+    get finance_consolidation_path(with_account: "1")
+    row = Nokogiri::HTML(response.body).at_css("tr#consolidation_invoices-#{payment.id}-out")
+    expect(row.text).to include("Factura #{invoice.display_number}", "Caja")
+    expect(response.body).to include("1 movimiento")
+
+    patch finance_consolidation_path, params: { account_id: bank.id, items: [ "invoices:#{payment.id}" ] }
+    expect(flash[:notice]).to eq("Se asignó la cuenta a 1 movimiento.")
+    expect(payment.reload.money_account).to eq(bank)
+    expect(AuditEvent.where(auditable: payment, action: "update").last.changeset).to include("money_account_id" => [ box.id, bank.id ])
   end
 
   it "changes the category only of what has one, and filters by method, direction and amount" do

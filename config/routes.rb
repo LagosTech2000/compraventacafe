@@ -24,12 +24,31 @@ Rails.application.routes.draw do
   resource :pending_work, only: :show, controller: "pending_work"
   # What a searchable picker finds as the user types (JSON, PickerSearch).
   get "picker_search/:kind", to: "picker_searches#show", as: :picker_search, defaults: { format: :json }
+  # A person's panel, opened by putting a finger on the reader (Fernando,
+  # 2026-11-14), and what a page needs to fill its fields with that person.
+  resources :person_panels, only: :show, path: "people/panel"
+  resources :fingerprint_matches, only: :show, defaults: { format: :json }
+  # The fingerprint bridge of a PC (tools/fingerprint_bridge): pairing with
+  # a one-time code and the templates it identifies with.
+  namespace :fingerprint_bridge do
+    resource :pairing, only: :create
+    resource :templates, only: :show
+  end
 
   namespace :administration do
     root "home#index"
     resources :people do
       # Merge another person into this one (Fernando, 2026-10-14).
       resource :merge, only: %i[ new create ], controller: "person_merges"
+      # Its fingerprints (Fernando, 2026-11-14): administrators only.
+      resources :fingerprints, only: %i[ new create show destroy ]
+    end
+    # The PCs with a fingerprint reader.
+    resources :fingerprint_stations, except: %i[ edit update ] do
+      member do
+        patch :link
+        post :pairing
+      end
     end
     resources :producers, only: %i[ edit update ]
     resources :farms
@@ -131,6 +150,7 @@ Rails.application.routes.draw do
       get "/", to: "supply_stocks#show", as: :supply_stock
       resources :supply_entries, path: "entries", only: %i[ new create show destroy ]
       resources :supply_deliveries, path: "deliveries", only: %i[ index update destroy ]
+      resources :supply_exits, path: "exits", only: %i[ index new create show destroy ]
       resources :supplies, path: "catalog", only: %i[ index new create edit update ]
     end
     # One coffee state of the stock (or all: "total"), lot by lot.

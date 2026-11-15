@@ -46,4 +46,18 @@ FactoryBot.define do
     quantity { 10 }
     amount { 1_000 }
   end
+
+  # Supplies sold apart or used by the business (Fernando, 2026-11-14); a
+  # sale by default, with what it takes already in the warehouse.
+  factory :supply_exit do
+    supply { create(:supply_entry).lines.first.supply }
+    kind { "sale" }
+    exited_on { Time.zone.today }
+    quantity { 2 }
+    person
+    unit_price { 1_000 }
+    payment_method { "cash" }
+    money_account
+    created_by { SpecOwner.user || association(:user) }
+  end
 end

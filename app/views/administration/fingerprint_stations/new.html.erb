@@ -1,0 +1,20 @@
+<% content_for :title, t(".title") %>
+<%= render "administration/nav" %>
+
+<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+<p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t(".help") %></p>
+
+<%# A full page load after saving: the live connection then carries this browser's link. %>
+<%= form_with model: @station, url: administration_fingerprint_stations_path, class: form_surface_class("mt-6 space-y-5"),
+      data: { controller: "form-validation", turbo: false } do |form| %>
+  <%= render "shared/form_errors", record: @station %>
+  <div>
+    <%= form.label :name, class: "field-label" %>
+    <%= form.text_field :name, required: true, maxlength: 80, placeholder: t(".name_placeholder"), class: "field-input",
+          data: { missing_message: "#{FingerprintStation.human_attribute_name(:name)} #{t("errors.messages.blank")}" } %>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit t(".submit"), class: "btn btn-primary" %>
+    <%= cancel_button administration_fingerprint_stations_path %>
+  </div>
+<% end %>
