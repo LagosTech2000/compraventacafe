@@ -24,12 +24,31 @@ Rails.application.routes.draw do
   resource :pending_work, only: :show, controller: "pending_work"
   # What a searchable picker finds as the user types (JSON, PickerSearch).
   get "picker_search/:kind", to: "picker_searches#show", as: :picker_search, defaults: { format: :json }
+  # A person's panel, opened by putting a finger on the reader (Fernando,
+  # 2026-11-14), and what a page needs to fill its fields with that person.
+  resources :person_panels, only: :show, path: "people/panel"
+  resources :fingerprint_matches, only: :show, defaults: { format: :json }
+  # The fingerprint bridge of a PC (tools/fingerprint_bridge): pairing with
+  # a one-time code and the templates it identifies with.
+  namespace :fingerprint_bridge do
+    resource :pairing, only: :create
+    resource :templates, only: :show
+  end
 
   namespace :administration do
     root "home#index"
     resources :people do
       # Merge another person into this one (Fernando, 2026-10-14).
       resource :merge, only: %i[ new create ], controller: "person_merges"
+      # Its fingerprints (Fernando, 2026-11-14): administrators only.
+      resources :fingerprints, only: %i[ new create show destroy ]
+    end
+    # The PCs with a fingerprint reader.
+    resources :fingerprint_stations, except: %i[ edit update ] do
+      member do
+        patch :link
+        post :pairing
+      end
     end
     resources :producers, only: %i[ edit update ]
     resources :farms
@@ -49,15 +68,21 @@ Rails.application.routes.draw do
   end
 
   namespace :trading do
+    # Producers that stopped selling (Fernando, 2026-11-13): the Inicio's card and the whole list.
+    resources :idle_producers, only: :index do
+      get :card, on: :collection
+    end
     root "home#index"
     resources :purchases do
       patch :void, on: :member
       # Pay the producer's loans with this purchase ("pago con café").
       resource :loan_settlement, only: %i[ new create ]
     end
-    resources :invoices, only: %i[ index show new create ] do
+    resources :invoices, only: %i[ index show new create edit update ] do
+      # Administrators void it, even paid (Fernando, 2026-11-12).
+      resource :void, only: %i[ new create ], controller: "invoice_voids"
       # Payments to the producer ("abonos"), each with its receipt.
-      resources :payments, only: %i[ new create show destroy ], controller: "invoice_payments"
+      resources :payments, only: %i[ new create show edit update destroy ], controller: "invoice_payments"
     end
     resources :producers, except: :destroy
     # The card beside the purchase form: the producer picked, at a glance.
@@ -76,17 +101,31 @@ Rails.application.routes.draw do
     root "home#index"
     # «Nueva salida»: to sell, to process or to another warehouse.
     resource :departure, only: :new
+    # The driver's card beside the shipment form (Fernando, 2026-11-13).
+    resources :driver_cards, only: :show
+    # Lots of purchased coffee (Fernando, 2026-11-13): shares of purchase
+    # invoices that go on the shipments. Before the shipments: "lots" is no id.
+    resources :coffee_batches, path: "shipments/lots" do
+      resources :invoices, only: %i[ new create destroy ], controller: "coffee_batch_invoices"
+    end
     resources :shipments, except: :destroy do
       patch :void, on: :member
       # Weighed on the buyer's scale.
       resource :arrival, only: %i[ edit update ]
+      # Its remission, to print (as the client's booklet).
+      resource :remission, only: :show
+      # What it cost (Fernando, 2026-11-12): its lots (2026-11-13), costs
+      # registered from it and expenses of Control financiero assigned to it.
+      resources :batches, only: %i[ new create destroy ], controller: "shipment_batches"
+      resources :costs, only: %i[ new create destroy ], controller: "shipment_costs"
+      resources :expenses, only: %i[ new create destroy ], controller: "shipment_expenses"
     end
-    resources :sales, only: %i[ index show new create ] do
+    resources :sales, only: %i[ index show new create edit update ] do
       patch :void, on: :member
       # The buyer's settlement: what it pays per its own liquidation.
       resource :settlement, only: %i[edit update], controller: "sale_settlements"
       # What the buyer pays ("cobros"), each with its receipt.
-      resources :payments, only: %i[ new create show destroy ], controller: "sale_payments"
+      resources :payments, only: %i[ new create show edit update destroy ], controller: "sale_payments"
     end
     resources :buyers, except: :destroy do
       # Advances the buyer gives, paid back with coffee.
@@ -104,6 +143,16 @@ Rails.application.routes.draw do
       patch :void, on: :member
     end
     resource :stock, only: :show
+    # Insumos (Fernando, 2026-11-12/13): the inventory (what came in, what the
+    # loans took and what was delivered), each entry with its investment,
+    # what is still to deliver and the catalog (from Préstamos).
+    scope "supplies" do
+      get "/", to: "supply_stocks#show", as: :supply_stock
+      resources :supply_entries, path: "entries", only: %i[ new create show destroy ]
+      resources :supply_deliveries, path: "deliveries", only: %i[ index update destroy ]
+      resources :supply_exits, path: "exits", only: %i[ index new create show destroy ]
+      resources :supplies, path: "catalog", only: %i[ index new create edit update ]
+    end
     # One coffee state of the stock (or all: "total"), lot by lot.
     get "stock/:coffee_state", to: "stock_states#show", as: :stock_state,
                                constraints: { coffee_state: /cherry|wet_parchment|dry_parchment|total/ }
@@ -170,6 +219,8 @@ Rails.application.routes.draw do
   namespace :loans do
     root "home#index"
     resources :loans do
+      # The filtered list on paper, with its totals (Fernando, 2026-11-12).
+      get :print, on: :collection
       resources :payments, only: %i[ new create show destroy ]
     end
     resources :credit_accounts, only: %i[ index show ] do
@@ -178,7 +229,6 @@ Rails.application.routes.draw do
     end
     # The card beside the loan form with the person picked.
     resources :borrowers, only: :show
-    resources :supplies, only: %i[ index new create edit update ]
     # Collection and follow-up screens (Fernando, 2026-11-03).
     resource :coffee_collection, only: :show
     resource :collection_calendar, only: :show

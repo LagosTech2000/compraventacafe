@@ -19,6 +19,7 @@
 # back; a finished one can have its result removed, back to in process.
 class CoffeeConversion < ApplicationRecord
   include Auditable
+  include OwnedRecord
   include LiveUpdates
   live_updates :sales
 

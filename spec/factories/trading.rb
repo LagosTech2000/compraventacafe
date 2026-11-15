@@ -10,7 +10,7 @@ FactoryBot.define do
 
   factory :hauler_payment do
     hauler
-    association :created_by, factory: :user
+    created_by { SpecOwner.user || association(:user) }
     amount { 100 }
     paid_on { Time.zone.today }
     payment_method { "cash" }
@@ -27,7 +27,7 @@ FactoryBot.define do
 
   factory :purchase do
     producer
-    association :created_by, factory: :user
+    created_by { SpecOwner.user || association(:user) }
     purchased_at { Time.current }
     coffee_state { "wet_parchment" }
     gross_weight { 146 }
@@ -40,7 +40,7 @@ FactoryBot.define do
 
   factory :invoice do
     producer
-    association :created_by, factory: :user
+    created_by { SpecOwner.user || association(:user) }
     issued_on { Time.zone.today }
     payment_status { "pending" }
     purchases { [ association(:purchase, producer: producer) ] }

@@ -3,6 +3,7 @@ module Finance
   # attendance, editing; paying from it, creating (like a payment).
   class StaffSheetPolicy < ApplicationPolicy
     self.module_key = "finance"
+    self.submodule_key = "staff"
 
     def pay? = can?(:create)
   end

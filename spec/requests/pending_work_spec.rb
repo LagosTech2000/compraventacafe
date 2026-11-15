@@ -34,12 +34,11 @@ RSpec.describe "Pending work" do
 
     get pending_work_path, headers: { "Turbo-Frame" => "modal" }
     expect(response).to have_http_status(:ok)
-    # One tab per kind, with how many it lists; only the first one shows.
-    tabs = page.css("[role=tablist][aria-label='Tipos de tarea'] [role=tab]")
-    expect(tabs.map { it.text.squish })
+    # Every kind one below the other (Fernando, 2026-11-13), with how many it lists.
+    titles = page.css("section[id^=pending-] > h2")
+    expect(titles.map { it.text.squish })
       .to eq([ "Compras sin facturar 1", "Facturas sin cancelar 1", "Préstamos vencidos 1", "Empleados sin salario 1" ])
-    expect(tabs.map { it["aria-selected"] }).to eq(%w[true false false false])
-    expect(page.css("[role=tabpanel]").map { it["hidden"].nil? }).to eq([ true, false, false, false ])
+    expect(page.css("section[id^=pending-][hidden], [role=tab]")).to be_empty
     expect(page.css("a[href^='#']")).to be_empty # no jump links: inside a frame they loaded the home page
 
     ana_row = section(:uninvoiced).at_css("##{ActionView::RecordIdentifier.dom_id(ana, :pending)}")
@@ -80,7 +79,7 @@ RSpec.describe "Pending work" do
     expect(page.at_css("[data-open-conversions]").text.squish).to include("1 proceso sin resultado", "500.00 lb brutas")
   end
 
-  it "shows only the modules the user reads, and only the buttons they may use" do
+  it "shows only the modules the user reads, and only the buttons they may use", :all_records do
     reader = create(:user).tap { create(:permission, user: it, module_key: "trading", can_read: true) }
     create(:purchase)
     create(:loan, cash_amount: 500, monthly_interest_rate: 0, disbursed_on: today - 90, due_on: today - 5)

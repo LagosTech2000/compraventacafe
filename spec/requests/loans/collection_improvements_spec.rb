@@ -36,7 +36,7 @@ RSpec.describe "Loans collection improvements" do
 
     it "says nothing about loans to whoever cannot pay them" do
       clerk = create(:user)
-      clerk.permissions.create!(module_key: "trading", can_read: true, can_create: true)
+      create(:permission, user: clerk, module_key: "trading", can_read: true, can_create: true)
       sign_in clerk
       create(:loan, person: producer.person)
 

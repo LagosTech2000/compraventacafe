@@ -85,7 +85,7 @@
                 </div>
                 <%= render "sales/lots/badges", lot:, first: @first_out.include?(lot), thresholds: %>
               </div>
-              <p class="mt-2 text-sm tabular-nums"><%= t(".lots.card_line", left: format_pounds(lot.net), entered: format_pounds(lot.net_in), value: format_money(lot.value)) %></p>
+              <p class="mt-2 text-sm tabular-nums"><%= t(".lots.card_line", left_gross: format_pounds(lot.gross), left: format_pounds(lot.net), entered_gross: format_pounds(lot.gross_in), entered: format_pounds(lot.net_in), value: format_money(lot.value)) %></p>
             </li>
           <% end %>
         </ul>
@@ -113,8 +113,8 @@
                   <% unless @warehouse %><td><%= @warehouses.find { it.id == lot.warehouse_id }&.name %></td><% end %>
                   <td class="whitespace-nowrap" data-sort-value="<%= lot.entered_at.to_i %>"><%= l(lot.entered_at) %></td>
                   <td class="whitespace-nowrap" data-sort-value="<%= lot.hours %>"><%= stock_age(lot) %></td>
-                  <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(lot.net_in) %></td>
-                  <td class="whitespace-nowrap text-right font-semibold tabular-nums"><%= format_pounds(lot.net) %></td>
+                  <td class="whitespace-nowrap text-right tabular-nums" data-sort-value="<%= lot.gross_in %>"><%= format_pounds(lot.gross_in) %><span class="block text-xs text-ink-muted"><%= t("sales.shipments.table.net_line", net: format_pounds(lot.net_in)) %></span></td>
+                  <td class="whitespace-nowrap text-right font-semibold tabular-nums" data-sort-value="<%= lot.gross %>"><%= format_pounds(lot.gross) %><span class="block text-xs font-normal text-ink-muted"><%= t("sales.shipments.table.net_line", net: format_pounds(lot.net)) %></span></td>
                   <td class="whitespace-nowrap text-right tabular-nums"><%= number_with_precision(lot.sacks, precision: 1) %></td>
                   <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(lot.value) %></td>
                   <td><%= render "sales/lots/badges", lot:, first: @first_out.include?(lot), thresholds: %></td>

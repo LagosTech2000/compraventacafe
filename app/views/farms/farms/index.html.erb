@@ -13,7 +13,7 @@
 <%# Filters apply as they change and only the results reload (live_filter_controller.js). %>
 <div data-controller="live-filter">
 <%= render layout: "shared/filters", locals: { filter: @filter, url: farms_farms_path, frame: "farms-list", live: true } do |form| %>
-  <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: Farm.human_attribute_name(:name) %>
+  <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("farms.farms.index.search_placeholder") %>
   <%= filter_select form, :status, t("farms.farms.index.status"),
         FarmFilter::STATUSES.map { |status| [ t("farms.statuses.#{status}"), status ] }, selected: @filter.status %>
   <%= filter_select form, :owner, t("farms.owner"),

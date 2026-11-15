@@ -13,8 +13,8 @@ module Trading
 
     def show
       @filter = HaulerPurchaseFilter.new(params)
-      @purchases, @next_page = @filter.results(@hauler.purchases)
-      @payments = @hauler.payments.includes(:created_by).reverse
+      @purchases, @next_page = @filter.results(@hauler.purchases.owned)
+      @payments = @hauler.payments.owned.includes(:created_by).reverse
     end
 
     def new

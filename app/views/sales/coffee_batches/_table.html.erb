@@ -1,0 +1,54 @@
+<%# Lots with their pounds (gross first) and value. `totals`: their
+    CoffeeBatch::Totals by id; `choose`: a checkbox to take each one. %>
+<% choose = local_assigns.fetch(:choose, false) %>
+<% scope = "sales.coffee_batches.table" %>
+<div class="mt-4 overflow-x-auto panel">
+  <table class="data-table data-table-compact" <%= tag.attributes(data: table_sort_data(sorting)) %> data-coffee-batches>
+    <thead>
+      <tr>
+        <% if choose %>
+          <th class="cell-select w-10"><input type="checkbox" class="size-4 accent-primary" data-check-all-target="all" data-action="check-all#toggleAll" aria-label="<%= t("#{scope}.mark_all") %>"></th>
+        <% end %>
+        <%= sort_th t("#{scope}.number"), :number, sorting %>
+        <%= sort_th t("#{scope}.batched_on"), :batched_on, sorting %>
+        <%= sort_th Purchase.human_attribute_name(:coffee_state), :coffee_state, sorting %>
+        <%= sort_th CoffeeBatch.human_attribute_name(:warehouse), :warehouse, sorting %>
+        <%= sort_th t("#{scope}.gross"), :gross, sorting, class: "text-right" %>
+        <%= sort_th t("#{scope}.net"), :net, sorting, class: "text-right" %>
+        <%= sort_th t("#{scope}.gross_limit"), :gross_limit, sorting, class: "text-right" %>
+        <%= sort_th t("#{scope}.value"), :value, sorting, class: "text-right" %>
+        <%= sort_th t("#{scope}.shipment"), :shipment, sorting %>
+        <th class="cell-actions"><span class="sr-only"><%= t("#{scope}.actions") %></span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% batches.each do |batch| %>
+        <% sums = totals.fetch(batch.id, CoffeeBatch::Totals.zero) %>
+        <tr id="<%= dom_id(batch) %>">
+          <% if choose %>
+            <td class="cell-select">
+              <input type="checkbox" name="batch_ids[]" value="<%= batch.id %>" class="size-4 accent-primary" data-check-all-target="item"
+                     data-action="check-all#update" aria-label="<%= t("#{scope}.mark", batch: batch.label) %>">
+            </td>
+          <% end %>
+          <td class="tabular-nums"><%= batch.display_number %></td>
+          <td class="whitespace-nowrap"><%= l(batch.batched_on) %></td>
+          <td><%= batch.human_coffee_state %></td>
+          <td><%= batch.warehouse.name %></td>
+          <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(sums.gross) %></td>
+          <td class="whitespace-nowrap text-right tabular-nums text-ink-muted"><%= format_pounds(sums.net) %></td>
+          <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(batch.gross_limit) %></td>
+          <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(sums.value) %></td>
+          <td>
+            <% if batch.shipment %>
+              <%= link_to shipment_label(batch.shipment), sales_shipment_path(batch.shipment), class: "link", data: { turbo_frame: "_top" } %>
+            <% else %>
+              <span class="badge badge-neutral"><%= t("#{scope}.free") %></span>
+            <% end %>
+          </td>
+          <td class="cell-actions"><%= detail_button sales_coffee_batch_path(batch) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

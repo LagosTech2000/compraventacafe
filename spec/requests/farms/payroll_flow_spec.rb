@@ -81,7 +81,7 @@ RSpec.describe "Farms flow" do
 
     get farms_payroll_path(payroll)
     periods = Nokogiri::HTML(response.body).css("tr[id^='period_'] td:first-child").map(&:text)
-    expect(periods.last).to eq("1 de sep – 30 de sep")
+    expect(periods.last).to eq("Mar 1 de sep – Mié 30 de sep")
   end
 
   it "lists what is left to pay on the module home" do
@@ -209,7 +209,7 @@ RSpec.describe "Farms flow" do
     end
   end
 
-  it "takes loans permission to deduct loans, and keeps a read-only user from changing anything" do
+  it "takes loans permission to deduct loans, and keeps a read-only user from changing anything", :all_records do
     payroll = create(:payroll, starts_on: today)
     member = create(:payroll_member, payroll:)
     PayrollAttendance.create!(member:, worked_on: today, day_fraction: 1)

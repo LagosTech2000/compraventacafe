@@ -22,7 +22,7 @@ RSpec.describe "Printing private documents" do
     contract.update!(body: %(<p>Contrato con <span data-variable="person.full_name">x</span></p>))
   end
 
-  it "puts on each loan a button per document, which opens the document filled in, each with its counter" do
+  it "puts on each loan a button per document, which opens the document filled in, each with its counter", :all_records do
     older = create(:loan, person:, disbursed_on: Time.zone.today - 300, due_on: Time.zone.today - 200)
     create_list(:private_document_print, 2, person:, loan: older, private_document: note, user: admin)
     sign_in lender(can_create: true)
@@ -53,7 +53,7 @@ RSpec.describe "Printing private documents" do
     expect(card.at_css("a")["href"]).to eq(loans_credit_account_document_print_path(person, print))
   end
 
-  it "counts the prints for everyone who sees the loans, with no buttons for who cannot print" do
+  it "counts the prints for everyone who sees the loans, with no buttons for who cannot print", :all_records do
     create(:private_document_print, person:, loan:, private_document: contract, user: admin)
     sign_in lender
 
@@ -92,7 +92,7 @@ RSpec.describe "Printing private documents" do
     expect(page.at_css("#document-missing a")).to be_nil
   end
 
-  it "records the print, filled in, and opens it to print" do
+  it "records the print, filled in, and opens it to print", :all_records do
     user = lender(can_create: true)
     sign_in user
     expect {

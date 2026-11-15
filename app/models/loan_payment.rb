@@ -12,6 +12,7 @@
 # the payroll payment, not one by one.
 class LoanPayment < ApplicationRecord
   include Auditable
+  include OwnedRecord
   include HasMoneyAccount
   include LiveUpdates
   # Paid with coffee, it also changes the purchase and its invoice.

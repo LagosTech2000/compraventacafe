@@ -1,0 +1,16 @@
+<%# Whether a loan's supply was handed out, and the administrator's button. %>
+<% if line.delivered? %>
+  <span class="badge badge-success" data-delivery="delivered"><%= t("sales.supply_deliveries.status.delivered", date: l(line.delivered_on)) %></span>
+  <% if SupplyDeliveryPolicy.new(Current.user, line).destroy? %>
+    <%= button_to t("sales.supply_deliveries.status.undo"), sales_supply_delivery_path(line), method: :delete, class: "btn btn-sm",
+          form: { class: "inline", data: { turbo_confirm: t("sales.supply_deliveries.status.confirm_undo") } } %>
+  <% end %>
+<% elsif !line.counted? %>
+  <span class="badge badge-neutral"><%= t("sales.supply_deliveries.status.outside") %></span>
+<% else %>
+  <span class="badge badge-warning" data-delivery="pending"><%= t("sales.supply_deliveries.status.pending") %></span>
+  <% if SupplyDeliveryPolicy.new(Current.user, line).update? %>
+    <%= button_to t("sales.supply_deliveries.status.deliver"), sales_supply_delivery_path(line), method: :patch, class: "btn btn-sm btn-primary",
+          form: { class: "inline" } %>
+  <% end %>
+<% end %>

@@ -30,7 +30,7 @@ class PurchaseLoanSettlement
 
   # The person's unpaid loans, the ones due first at the top.
   def open_loans
-    @open_loans ||= person.loans.unpaid.includes(:payments, supply_items: :supply).order(:due_on, :id).to_a
+    @open_loans ||= person.loans.owned.unpaid.includes(:payments, supply_items: :supply).order(:due_on, :id).to_a
   end
 
   def balance(loan)

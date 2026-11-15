@@ -1,4 +1,5 @@
-<%# Supplies lent in a loan, with the price each was lent at. %>
+<%# Supplies lent in a loan, with the price each was lent at and whether
+    it was handed out (Fernando, 2026-11-13). %>
 <div class="overflow-x-auto panel">
   <table class="data-table data-table-compact" data-controller="table-sort">
     <thead>
@@ -7,15 +8,17 @@
         <th class="text-right"><%= LoanSupply.human_attribute_name(:quantity) %></th>
         <th class="text-right"><%= LoanSupply.human_attribute_name(:unit_price) %></th>
         <th class="text-right"><%= LoanSupply.human_attribute_name(:total) %></th>
+        <th data-sort="false"><%= t("sales.supply_deliveries.status.title") %></th>
       </tr>
     </thead>
     <tbody>
-      <% loan.supply_items.includes(:supply).each do |item| %>
+      <% loan.supply_items.includes(:supply, :loan).each do |item| %>
         <tr id="<%= dom_id(item) %>">
           <td class="font-medium"><%= item.supply.name %></td>
           <td class="whitespace-nowrap text-right tabular-nums"><%= format_quantity(item.quantity, item.supply.unit) %></td>
           <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(item.unit_price) %></td>
           <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(item.total) %></td>
+          <td class="whitespace-nowrap"><%= render "sales/supply_deliveries/status", line: item %></td>
         </tr>
       <% end %>
     </tbody>
@@ -23,6 +26,7 @@
       <tr class="font-semibold">
         <td colspan="3"><%= t("loans.loans.show.supplies_amount") %></td>
         <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(loan.supplies_amount) %></td>
+        <td></td>
       </tr>
     </tfoot>
   </table>

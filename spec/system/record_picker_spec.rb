@@ -8,7 +8,7 @@ RSpec.describe "Searchable picker", type: :system do
   before { sign_in_as(user) }
 
   it "asks for 3 characters, shows the matches and chooses one with the arrows and Enter" do
-    ana = create(:producer, person: create(:person, first_names: "Ana", last_names: "Zelaya"))
+    ana = create(:producer, person: create(:person, first_names: "Ana", last_names: "Zelaya", dni: "0801199912345", zone: create(:zone, name: "El Rosario")))
     create(:producer, person: create(:person, first_names: "Luis", last_names: "Zelaya"))
     ana.farms.create!(name: "El Mirador")
     visit new_trading_purchase_path
@@ -21,17 +21,18 @@ RSpec.describe "Searchable picker", type: :system do
     box.send_keys("la")
     within("#producer_search_matches") do
       expect(page).to have_css("[role=option]", count: 2)
-      expect(page).to have_css("[role=option]", text: "Ana Zelaya")
+      # Its zone after the DNI, only in the list (Fernando, 2026-11-13).
+      expect(page).to have_css("[role=option]", exact_text: "Ana Zelaya — 0801199912345 — El Rosario")
     end
     box.send_keys(:down, :enter)
 
-    expect(page).to have_field("producer_search", with: "Ana Zelaya")
+    expect(page).to have_field("producer_search", with: "Ana Zelaya — 0801199912345")
     expect(page).to have_css("#producer_search_matches", visible: :hidden)
     expect(page).to have_select("purchase_farm_id", options: [ "Sin finca asignada", "El Mirador" ])
   end
 
   it "chooses a match with a click, and says when there is none" do
-    create(:person, :client, first_names: "Rosa", last_names: "Mejía")
+    create(:person, :client, first_names: "Rosa", last_names: "Mejía", zone: create(:zone, name: "El Rosario"))
     visit new_loans_loan_path
 
     box = find_field("person_search")
@@ -39,6 +40,8 @@ RSpec.describe "Searchable picker", type: :system do
     expect(page).to have_css("#person_search_matches", text: "No se encontró a nadie con ese nombre o número.")
 
     box.send_keys(*Array.new(3, :backspace), "mejia")
+    # Its zone in the list, as in Nueva compra (Fernando, 2026-11-13).
+    expect(page).to have_css("#person_search_matches [role=option]", exact_text: "Rosa Mejía — El Rosario")
     find("#person_search_matches [role=option]", text: "Rosa Mejía").click
     expect(page).to have_field("person_search", with: "Rosa Mejía")
     within("turbo-frame#borrower-card") { expect(page).to have_text("Rosa Mejía") }

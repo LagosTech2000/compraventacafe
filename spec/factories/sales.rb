@@ -9,7 +9,7 @@ FactoryBot.define do
   # the buyer's too.
   factory :shipment do
     buyer
-    association :created_by, factory: :user
+    created_by { SpecOwner.user || association(:user) }
     departed_at { Time.current }
     coffee_state { "wet_parchment" }
     origin_gross_weight { 1_000 }
@@ -50,7 +50,7 @@ FactoryBot.define do
 
   factory :sale_payment do
     sale
-    association :created_by, factory: :user
+    created_by { SpecOwner.user || association(:user) }
     amount { 100 }
     paid_on { Time.zone.today }
     payment_method { "cash" }
@@ -69,7 +69,7 @@ FactoryBot.define do
     estimated_yield_percent { from_state == "cherry" ? 37.95 : 50 }
     weighed_at { Time.current }
     input_gross_weight { 1_000 }
-    association :created_by, factory: :user
+    created_by { SpecOwner.user || association(:user) }
 
     # A process needs coffee of its state in its warehouse (client,
     # 2026-10-30): with none, a purchase of what goes in arrives first.
@@ -99,7 +99,7 @@ FactoryBot.define do
   factory :warehouse_transfer do
     from_warehouse { Warehouse.main! }
     to_warehouse { association(:warehouse) }
-    association :created_by, factory: :user
+    created_by { SpecOwner.user || association(:user) }
     transferred_at { Time.current }
     coffee_state { "wet_parchment" }
     gross_weight { 100 }
@@ -108,7 +108,7 @@ FactoryBot.define do
   # L 500 of freight, paid in cash.
   factory :processing_cost do
     coffee_conversion
-    association :created_by, factory: :user
+    created_by { SpecOwner.user || association(:user) }
     concept { "freight" }
     pricing { "total" }
     amount { 500 }
@@ -133,9 +133,18 @@ FactoryBot.define do
   factory :buyer_advance do
     buyer
     money_account
-    association :created_by, factory: :user
+    created_by { SpecOwner.user || association(:user) }
     received_on { Time.zone.today }
     amount { 10_000 }
     payment_method { "transfer" }
+  end
+
+  # A lot of purchased coffee (Fernando, 2026-11-13), without invoices yet.
+  factory :coffee_batch do
+    warehouse { Warehouse.main! }
+    coffee_state { "wet_parchment" }
+    gross_limit { 10_000 }
+    batched_on { Time.zone.today }
+    created_by { SpecOwner.user || association(:user) }
   end
 end

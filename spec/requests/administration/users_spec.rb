@@ -3,6 +3,8 @@ require "rails_helper"
 RSpec.describe "Administration::Users" do
   let!(:admin) { create(:user, :admin) }
 
+  def page = Nokogiri::HTML(response.body)
+
   context "as a non-admin, even with every administration flag" do
     before do
       user = create(:user)
@@ -31,38 +33,53 @@ RSpec.describe "Administration::Users" do
       expect(response.body).to include(admin.email_address)
     end
 
-    it "shows a permission row for every module on the new form" do
+    it "shows a permission row for every module and every tab on the new form" do
       get new_administration_user_path
       AppModule::KEYS.each { |key| expect(response.body).to include(CGI.escapeHTML(AppModule.human_name(key))) }
+      expect(page.css("input[type=hidden][name$='[submodule_key]']").map { it["value"] })
+        .to eq(AppModule::SUBMODULES.values.flatten)
+      expect(page.css("tbody[data-controller='permission-matrix']").size).to eq(AppModule::KEYS.size)
     end
 
-    it "creates a user with per-module permissions" do
+    # Permissions per submodule (Fernando, 2026-11-12).
+    it "creates a user with per-submodule permissions" do
       post administration_users_path, params: {
         user: {
           name: "María José Reyes", email_address: "nueva@example.com", password: "clave-larga", password_confirmation: "clave-larga", admin: "0",
           permissions_attributes: {
-            "0" => { module_key: "trading", can_read: "1", can_create: "1", can_update: "0", can_destroy: "0" },
-            "1" => { module_key: "farms", can_read: "0", can_create: "0", can_update: "0", can_destroy: "0" }
+            "0" => { module_key: "trading", submodule_key: "invoices", can_read: "1", can_create: "1", can_update: "0", can_destroy: "0" },
+            "1" => { module_key: "trading", submodule_key: "purchases", can_read: "1", can_create: "0", can_update: "0", can_destroy: "0" },
+            "2" => { module_key: "farms", submodule_key: "payrolls", can_read: "0", can_create: "0", can_update: "0", can_destroy: "0" }
           }
         }
       }
       expect(response).to redirect_to(administration_users_path)
       user = User.find_by!(email_address: "nueva@example.com")
       expect(user.name).to eq("María José Reyes")
-      expect(user.can?(:trading, :create)).to be(true)
-      expect(user.can?(:trading, :update)).to be(false)
+      expect(user.can?("trading.invoices", :create)).to be(true)
+      expect(user.can?("trading.purchases", :create)).to be(false)
+      expect(user.can?("trading.purchases", :read)).to be(true)
+      expect(user.can?("trading.zones", :read)).to be(false)
       expect(user.can?(:farms, :read)).to be(false)
     end
 
     it "updates an existing user's permissions" do
       user = create(:user)
-      permission = create(:permission, user: user, module_key: "loans", can_read: true)
+      permission = create(:permission, user: user, module_key: "loans", submodule_key: "loans", can_read: true)
       patch administration_user_path(user), params: {
-        user: { permissions_attributes: { "0" => { id: permission.id, module_key: "loans", can_read: "0", can_update: "1" } } }
+        user: { permissions_attributes: { "0" => { id: permission.id, module_key: "loans", submodule_key: "loans", can_read: "0", can_update: "1" } } }
       }
       expect(response).to redirect_to(administration_users_path)
-      expect(user.reload.can?(:loans, :read)).to be(false)
-      expect(user.can?(:loans, :update)).to be(true)
+      expect(user.reload.can?("loans.loans", :read)).to be(false)
+      expect(user.can?("loans.loans", :update)).to be(true)
+    end
+
+    it "shows each user's permissions by tab" do
+      user = create(:user)
+      create(:permission, user:, module_key: "trading", submodule_key: "invoices", can_read: true)
+      get administration_user_path(user)
+      row = page.css("tr").find { it.text.include?("Facturas") }
+      expect(row.css("td").map { it.text.strip }).to eq([ "Compra de café › Facturas", "✓", "—", "—", "—" ])
     end
 
     it "shows the edit form with the permission matrix" do

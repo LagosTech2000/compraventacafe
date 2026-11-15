@@ -6,6 +6,9 @@ class ExpensesReport < Report
   TOP_CATEGORY_NAME = "MIN(COALESCE(parents_finance_categories.name, finance_categories.name))".freeze
 
   self.module_key = "finance"
+  # Expenses and investments are two tabs (ExpensePolicy): either one opens
+  # the report, which shows only the kinds the user reads.
+  def self.readable_by?(user) = Expense::KINDS.any? { |kind| user.can?(ExpensePolicy.permission_key_for(kind), :read) }
   self.date_column = "expenses.spent_on"
   self.default_period = "this_month"
   self.default_sort = :spent_on
@@ -55,7 +58,7 @@ class ExpensesReport < Report
   end
 
   def scope
-    Expense.joins(:money_account).joins(:category).left_joins(category: :parent)
+    (user ? ExpensePolicy::Scope.new(user, Expense).resolve : Expense).joins(:money_account).joins(:category).left_joins(category: :parent)
   end
 
   def apply_filters(relation)

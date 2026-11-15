@@ -38,6 +38,7 @@
               <th><%= Purchase.human_attribute_name(:season_year) %></th>
               <th class="text-right"><%= t(".seasons.purchases") %></th>
               <th class="text-right"><%= t("trading.purchases.table.quintals") %></th>
+              <th class="text-right"><%= t(".seasons.common_quintals") %></th>
               <th class="text-right"><%= Purchase.human_attribute_name(:total) %></th>
               <th class="text-right"><%= t(".seasons.average_price") %></th>
             </tr>
@@ -48,6 +49,7 @@
                 <td class="whitespace-nowrap <%= "font-semibold" if row.season == profile.season %>"><%= format_season(row.season) %></td>
                 <td class="text-right tabular-nums"><%= row.purchases_count %></td>
                 <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(row.quintals) %></td>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(row.common_quintals) %></td>
                 <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(row.total) %></td>
                 <td class="whitespace-nowrap text-right tabular-nums"><%= row.average_price ? format_money(row.average_price) : "—" %></td>
               </tr>

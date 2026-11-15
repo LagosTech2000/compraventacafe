@@ -4,6 +4,8 @@ module Farms
     # running or about to start.
     def index
       authorize [ :farms, :home ]
+      return unless module_home_or_first_tab("farms")
+
       payrolls = policy_scope(Payroll).includes(:farm, :payments)
       today = Time.zone.today
       # Each running payroll with today's period and what it amounts to so

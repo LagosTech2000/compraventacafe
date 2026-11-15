@@ -17,13 +17,15 @@ module Sales
     def new
       buyer = Buyer.active.find_by(id: params[:buyer_id])
       state = PurchaseDefaults::COFFEE_STATE
-      @shipment = authorize Shipment.new(departed_at: Time.current.change(sec: 0), coffee_state: state, buyer:,
+      # From a person's panel (the fingerprint reader): with them as its driver.
+      driver = StaffMember.active.find_by(id: params[:driver_id])
+      @shipment = authorize Shipment.new(departed_at: Time.current.change(sec: 0), coffee_state: state, buyer:, driver:,
                                          **PurchaseDefaults.inputs_for(state).transform_keys { :"origin_#{it}" })
       @stock = CoffeeStock.new
     end
 
     def create
-      @shipment = authorize Shipment.new(shipment_params.merge(created_by: Current.user))
+      @shipment = authorize Shipment.new(shipment_params.merge(created_by: Current.user, origin_skippable: Current.user.admin?))
 
       if @shipment.save
         close_modal_with notice: t(".success", number: @shipment.display_number, buyer: @shipment.buyer.name),
@@ -39,6 +41,7 @@ module Sales
     end
 
     def update
+      @shipment.origin_skippable = Current.user.admin?
       if @shipment.update(shipment_params)
         close_modal_with notice: t(".success"), fallback: sales_shipment_path(@shipment)
       else
@@ -65,7 +68,7 @@ module Sales
       end
 
       def shipment_params
-        params.expect(shipment: [ :departed_at, :buyer_id, :warehouse_id, :coffee_state, :remission_number, :transport_mode, :carrier_id, :trip_price, :vehicle_id, :driver_id, :driver_name, :observations,
+        params.expect(shipment: [ :skip_origin, :departed_at, :buyer_id, :warehouse_id, :coffee_state, :transport_mode, :carrier_id, :trip_price, :vehicle_id, :driver_id, :driver_name, :observations, { batch_ids: [] },
                                   :origin_gross_weight, :origin_sacks, :origin_humidity_percent, :origin_damage_percent,
                                   :origin_yield_factor, :origin_weight_mode, :lock_version,
                                   weighings_attributes: [ [ :id, :gross_weight, :sacks, :_destroy ] ] ])
@@ -73,9 +76,12 @@ module Sales
 
       def shipment_totals(scope)
         scope = scope.unscope(:order, :includes)
-        { count: scope.count, sacks: scope.sum(:origin_sacks), origin_net: scope.sum(:origin_net_weight),
+        { count: scope.count, sacks: scope.sum(:origin_sacks), origin_net: scope.sum(:origin_net_weight), origin_gross: scope.sum(:origin_gross_weight),
           destination_net: scope.where.not(destination_net_weight: nil).sum(:destination_net_weight),
-          compared_origin: scope.where.not(destination_net_weight: nil).sum(:origin_net_weight) }
+          destination_gross: scope.where.not(destination_net_weight: nil).sum(:destination_gross_weight),
+          compared_origin: scope.where.not(destination_net_weight: nil).sum(:origin_net_weight),
+          # Only the ones with both scales (Fernando, 2026-11-12).
+          compared_destination: scope.where.not(destination_net_weight: nil).where.not(origin_net_weight: nil).sum(:destination_net_weight) }
       end
   end
 end

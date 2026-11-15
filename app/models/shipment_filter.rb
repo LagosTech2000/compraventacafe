@@ -14,6 +14,9 @@ class ShipmentFilter < ListFilter
   field :coffee_state, :choice, in: Purchase::COFFEE_STATES
   field :status, :choice, in: STATUSES
   field :over_tolerance, :choice, in: %w[1]
+  # Shrink (Fernando, 2026-11-13): weight lost, weight gained, or no lots yet.
+  SHRINKS = %w[loss gain no_batches].freeze
+  field :shrink, :choice, in: SHRINKS
 
   DIFFERENCE_PERCENT = <<~SQL.squish.freeze
     CASE WHEN shipments.origin_net_weight > 0 AND shipments.destination_net_weight IS NOT NULL
@@ -23,12 +26,13 @@ class ShipmentFilter < ListFilter
   SORTS = {
     number: "shipments.number", departed_at: "shipments.departed_at",
     buyer: { sql: text("buyers.name"), joins: :buyer },
-    coffee_state: "shipments.coffee_state", remission: "shipments.remission_number",
+    coffee_state: "shipments.coffee_state",
     origin_net: "shipments.origin_net_weight", sacks: "shipments.origin_sacks",
     destination_net: "shipments.destination_net_weight",
     difference: "shipments.destination_net_weight - shipments.origin_net_weight",
     difference_percent: DIFFERENCE_PERCENT,
-    status: %w[shipments.voided_at shipments.received_on]
+    status: %w[shipments.voided_at shipments.received_on],
+    shrink: Shipment::SHRINK_GROSS_SQL
   }.freeze
   sorts(**SORTS)
 
@@ -42,18 +46,26 @@ class ShipmentFilter < ListFilter
     scope = scope.where(coffee_state:) if coffee_state
     scope = status ? scope.with_status(status) : scope.active
     scope = scope.where("ABS(#{DIFFERENCE_PERCENT}) > ?", WeightTolerance.percent) if over_tolerance && WeightTolerance.percent
+    scope = by_shrink(scope) if shrink
     scope.includes(:buyer, :active_sale_line, :sale).newest_first
   end
 
   private
+    def by_shrink(scope)
+      case shrink
+      when "loss" then ShrinkSummary.measurable(scope).where("#{Shipment::SHRINK_NET_SQL} > 0")
+      when "gain" then ShrinkSummary.measurable(scope).where("#{Shipment::SHRINK_NET_SQL} < 0")
+      else scope.where.not(id: CoffeeBatch.where.not(shipment_id: nil).select(:shipment_id))
+      end
+    end
+
     def search(scope)
       text = like(q)
       number = q.to_s.delete("^0-9").presence&.to_i
       conditions = scope.where(buyer_id: Buyer.where("buyers.name ILIKE ?", text).select(:id))
                         .or(scope.where(carrier_id: Carrier.where("carriers.name ILIKE ?", text).select(:id)))
                         .or(scope.where(vehicle_id: Vehicle.where("vehicles.plate ILIKE ?", text).select(:id)))
-                        .or(scope.where("shipments.remission_number ILIKE ? OR shipments.weight_note_number ILIKE ? OR shipments.driver_name ILIKE ?",
-                                        text, text, text))
+                        .or(scope.where("shipments.weight_note_number ILIKE ? OR shipments.driver_name ILIKE ?", text, text))
       number ? conditions.or(scope.where(number:)) : conditions
     end
 end

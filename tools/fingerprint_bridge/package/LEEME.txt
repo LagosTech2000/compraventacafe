@@ -1,0 +1,50 @@
+LECTOR DE HUELLA - INSTALAR EN UNA PC NUEVA (Windows 11)
+=========================================================
+
+Esta carpeta trae todo lo que necesita la PC del lector ZKTeco ZK9500:
+
+  1-ZKFinger-SDK\setup.exe     el driver del lector
+  2-FingerprintBridge.exe      el programa del lector
+
+Copia la carpeta completa a la otra PC (USB o red) y sigue los pasos.
+
+
+PASO 1. Driver del lector
+-------------------------
+1. Conecta el lector ZK9500 por USB.
+2. Abre 1-ZKFinger-SDK\setup.exe con clic derecho, "Ejecutar como administrador".
+   Acepta todo hasta el final.
+3. Desconecta y vuelve a conectar el lector. Se enciende su luz.
+
+
+PASO 2. Programa del lector
+---------------------------
+1. Copia 2-FingerprintBridge.exe a C:\Program Files\FingerprintBridge\
+   (crea la carpeta si no existe). También sirve otra carpeta que no se borre.
+2. Ábrelo. Si Windows dice "Windows protegió su PC":
+   "Más información" y luego "Ejecutar de todas formas".
+3. Se abre una ventana que pide la dirección y un código. Déjala abierta.
+
+
+PASO 3. Enlazar con el sistema
+------------------------------
+1. En el navegador de ESA PC, entra al sistema con un usuario administrador.
+2. Administración > Lectores de huella > Agregar lector.
+   Ponle un nombre (Caja, Báscula, Oficina...) y toca "Agregar y ver el código".
+3. En la ventana del programa escribe:
+     Dirección: la del sistema, con https:// al inicio
+     Código:    los 6 números de la página (vencen en 15 minutos)
+   y toca "Emparejar".
+4. Abajo a la izquierda del sistema debe decir "Lector listo".
+
+Listo. El programa queda junto al reloj de Windows y arranca solo con Windows.
+
+
+SI ALGO FALLA
+-------------
+- "Programa del lector apagado": abre el programa (icono junto al reloj).
+- "Lector desconectado": desconecta y conecta el USB; prueba otro puerto.
+- "No se pudo emparejar": revisa la dirección; si pasaron 15 minutos, en la
+  página del lector toca "Nuevo código".
+- Lo que hace el programa queda en %APPDATA%\FingerprintBridge\bridge.log
+  (pega esa ruta en el Explorador de archivos). Mándalo a soporte.

@@ -1,0 +1,39 @@
+<% content_for :title, @station.name %>
+<%= render "administration/nav" %>
+<% state = @station.state %>
+
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= @station.name %></h1>
+    <p class="mt-1 text-sm text-ink-muted">
+      <% if !@station.active? %>
+        <%= t("administration.fingerprint_stations.index.inactive") %>
+      <% elsif !@station.paired? %>
+        <%= t("administration.fingerprint_stations.index.unpaired") %>
+      <% else %>
+        <%= t("fingerprints.client.#{!state[:bridge] ? "bridge_off" : (state[:reader] ? "ready" : "reader_off")}") %>
+      <% end %>
+      · <%= @linked ? t(".linked") : t(".not_linked") %>
+    </p>
+  </div>
+  <% if policy(@station).destroy? %>
+    <div class="flex flex-wrap gap-3">
+      <% unless @linked %>
+        <%= button_to t(".link"), link_administration_fingerprint_station_path(@station), method: :patch, class: "btn btn-primary", form: { data: { turbo: false } } %>
+      <% end %>
+      <%= button_to t(".new_code"), pairing_administration_fingerprint_station_path(@station), class: "btn" %>
+      <%= button_to t(".deactivate"), administration_fingerprint_station_path(@station), method: :delete, class: "btn",
+            form: { data: { turbo_confirm: t(".confirm_deactivate", name: @station.name) } } %>
+    </div>
+  <% end %>
+</div>
+
+<% if (code = flash[:pairing_code]) %>
+  <section class="mt-6 panel p-5" aria-labelledby="pairing-code">
+    <h2 id="pairing-code" class="font-semibold"><%= t(".code_title") %></h2>
+    <p class="mt-3 font-mono text-4xl font-bold tracking-[0.3em] tabular-nums" data-pairing-code><%= code %></p>
+    <p class="mt-3 max-w-2xl text-sm text-ink-muted"><%= t(".code_help", minutes: FingerprintStation::PAIRING_MINUTES, url: request.base_url) %></p>
+  </section>
+<% end %>
+
+<p class="mt-6"><%= link_to t(".back"), administration_fingerprint_stations_path, class: "text-sm link" %></p>

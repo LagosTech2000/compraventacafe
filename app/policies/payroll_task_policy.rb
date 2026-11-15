@@ -1,6 +1,7 @@
 # A task paid in a payroll payment is closed.
 class PayrollTaskPolicy < ApplicationPolicy
   self.module_key = "farms"
+  self.submodule_key = "payrolls"
 
   def update?
     super && !(record.is_a?(PayrollTask) && record.paid?)

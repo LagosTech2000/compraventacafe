@@ -32,13 +32,23 @@
         </tr>
       </thead>
       <tbody>
-        <% AppModule::KEYS.each do |key| %>
-          <tr>
-            <td><%= AppModule.human_name(key) %></td>
-            <% AppModule::ACTIONS.each do |action| %>
-              <td class="text-center"><%= @user.can?(key, action) ? "✓" : "—" %></td>
-            <% end %>
-          </tr>
+        <%# One row per submodule, after its module's name. %>
+        <% AppModule::SUBMODULES.each do |key, submodules| %>
+          <% submodules.each do |submodule_key| %>
+            <% permission_key = "#{key}.#{submodule_key}" %>
+            <tr>
+              <td data-sort-value="<%= AppModule::PERMISSION_KEYS.index(permission_key) %>">
+                <% if AppModule.single?(key) %>
+                  <%= AppModule.human_name(key) %>
+                <% else %>
+                  <span class="text-ink-muted"><%= AppModule.human_name(key) %> ›</span> <%= AppModule.human_submodule(key, submodule_key) %>
+                <% end %>
+              </td>
+              <% AppModule::ACTIONS.each do |action| %>
+                <td class="text-center"><%= @user.can?(permission_key, action) ? "✓" : "—" %></td>
+              <% end %>
+            </tr>
+          <% end %>
         <% end %>
       </tbody>
     </table>

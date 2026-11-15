@@ -64,7 +64,7 @@ module Administration
       end
 
       def permissions_attributes
-        { permissions_attributes: [ [ :id, :module_key, :can_read, :can_create, :can_update, :can_destroy ] ] }
+        { permissions_attributes: [ [ :id, :module_key, :submodule_key, :can_read, :can_create, :can_update, :can_destroy ] ] }
       end
 
       def create_params

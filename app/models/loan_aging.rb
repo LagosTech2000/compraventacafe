@@ -27,7 +27,7 @@ class LoanAging
   end
 
   def loans
-    @loans ||= Loan.unpaid.includes(:payments, :supply_items, person: :zone).to_a
+    @loans ||= Loan.owned.unpaid.includes(:payments, :supply_items, person: :zone).to_a
   end
 
   def balance(loan) = balances.fetch(loan.id)

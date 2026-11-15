@@ -94,7 +94,7 @@ RSpec.describe "Loans flow" do
     paths = [ loans_root_path, loans_loans_path, new_loans_loan_path, new_loans_loan_path(person_id: person.id),
               edit_loans_loan_path(create(:loan)), loans_loan_path(loan), new_loans_loan_payment_path(loan),
               loans_credit_accounts_path, loans_credit_account_path(person),
-              loans_supplies_path, new_loans_supply_path, edit_loans_supply_path(create(:supply)),
+              sales_supplies_path, new_sales_supply_path, edit_sales_supply_path(create(:supply)),
               edit_loans_loan_path(create(:loan, supply_items_attributes: [ { supply_id: create(:supply).id, quantity: 1, unit_price: 5 } ])) ]
 
     paths.each do |path|
@@ -115,7 +115,7 @@ RSpec.describe "Loans flow" do
 
   describe "supplies" do
     it "registers a supply and hands it to the loan form from the modal" do
-      post loans_supplies_path, headers: { "Turbo-Frame" => "modal_2" },
+      post sales_supplies_path, headers: { "Turbo-Frame" => "modal_2" },
                                 params: { picker: "1", supply: { name: " Abono  18-46-0 ", unit: "Saco", default_price: "1250" } }
       supply = Supply.last
       expect(supply).to have_attributes(name: "Abono 18-46-0", unit: "saco", default_price: 1_250, active: true)
@@ -126,11 +126,11 @@ RSpec.describe "Loans flow" do
 
     it "lists active supplies by default and deactivates them instead of deleting" do
       supply = create(:supply, name: "Urea")
-      patch loans_supply_path(supply), params: { supply: { active: "0" } }
+      patch sales_supply_path(supply), params: { supply: { active: "0" } }
       expect(supply.reload.active).to be(false)
-      get loans_supplies_path
+      get sales_supplies_path
       expect(response.body).not_to include("Urea")
-      get loans_supplies_path(status: "inactive")
+      get sales_supplies_path(status: "inactive")
       expect(response.body).to include("Urea")
     end
   end
@@ -138,6 +138,7 @@ RSpec.describe "Loans flow" do
   describe "mixed loans" do
     it "lends cash plus supplies at a price changed on the form" do
       supply = create(:supply, name: "Abono 18-46-0", default_price: 1_250)
+      create(:supply_entry, supply:, quantity: 5) # the inventory has it (Fernando, 2026-11-12)
       post loans_loans_path, params: { loan: {
         person_id: person.id, cash_amount: "2000", monthly_interest_rate: "2",
         disbursed_on: Time.zone.today, due_on: Time.zone.today + 90,
@@ -166,7 +167,7 @@ RSpec.describe "Loans flow" do
       create(:supply, name: "Viejo", active: false)
       get new_loans_loan_path
       page = Nokogiri::HTML(response.body)
-      expect(page.at_css("template select").css("option").map(&:text)).to eq([ "Selecciona un insumo", "Urea" ])
+      expect(page.at_css("template select").css("option").map(&:text)).to eq([ "Selecciona un insumo", "Urea (disponible: 0 saco)" ])
       supplies = JSON.parse(page.at_css("[data-loan-composition-supplies-value]")["data-loan-composition-supplies-value"])
       expect(supplies.values.map { |s| s["price"] }).to include("1100.00")
 

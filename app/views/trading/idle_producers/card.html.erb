@@ -1,0 +1,36 @@
+<%# The Inicio's card (Fernando, 2026-11-13): the last producers that stopped
+    selling, by the days chosen; «Ver todos» opens the whole list. %>
+<%= turbo_frame_tag "idle-producers" do %>
+  <section class="panel p-4" aria-labelledby="idle-producers-title" data-idle-producers="<%= @days %>">
+    <div class="flex flex-wrap items-center justify-between gap-3"
+         data-controller="navigate-select" data-navigate-select-frame-value="idle-producers">
+      <h2 id="idle-producers-title" class="flex flex-wrap items-center gap-2 font-semibold">
+        <label for="idle_producers_days"><%= t(".title") %></label>
+        <select id="idle_producers_days" class="field-input w-auto py-1.5 text-sm" data-action="navigate-select#go">
+          <% IdleProducers::DAYS.each do |days| %>
+            <option value="<%= card_trading_idle_producers_path(days:) %>" <%= "selected" if days == @days %>><%= t("trading.idle_producers.days.#{days}") %></option>
+          <% end %>
+        </select>
+      </h2>
+      <%= modal_link_to t(".see_all"), trading_idle_producers_path(days: @days), class: "btn btn-sm" %>
+    </div>
+
+    <% if @producers.any? %>
+      <ul class="mt-3 grid gap-x-6 sm:grid-cols-2 xl:grid-cols-3">
+        <% @producers.each do |producer| %>
+          <li class="flex items-center justify-between gap-3 border-b border-line py-2 text-sm" id="<%= dom_id(producer, :idle) %>">
+            <span class="min-w-0">
+              <%= link_to producer.full_name, trading_producer_path(producer), class: "link block truncate font-medium", data: { turbo_frame: "_top" } %>
+              <span class="block truncate text-xs text-ink-muted">
+                <%= [ producer.person.zone&.name, t(".last", date: l(producer.last_purchased_at.in_time_zone.to_date)) ].compact.join(" · ") %>
+              </span>
+            </span>
+            <span class="badge badge-neutral shrink-0 tabular-nums"><%= t(".days_ago", count: IdleProducers.days_since(producer)) %></span>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="mt-3 text-sm text-ink-muted"><%= t(".empty") %></p>
+    <% end %>
+  </section>
+<% end %>

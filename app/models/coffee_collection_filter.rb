@@ -24,8 +24,8 @@ class CoffeeCollectionFilter < ListFilter
         due_on: { ruby: ->(row) { row.next_due_on } }
 
   def self.rows
-    purchases = Purchase.active.left_joins(:invoice).where("invoices.id IS NULL OR invoices.payment_status <> 'paid'")
-                        .joins(:producer).where(producers: { person_id: Loan.unpaid.select(:person_id) })
+    purchases = Purchase.owned.active.left_joins(:invoice).where("invoices.id IS NULL OR invoices.payment_status <> 'paid'")
+                        .joins(:producer).where(producers: { person_id: Loan.owned.unpaid.select(:person_id) })
                         .includes(:loan_payments, invoice: [ :payments, { purchases: :loan_payments } ],
                                   producer: { person: [ :zone, :photo_info, { loans: %i[payments supply_items] } ] })
                         .order(purchased_at: :desc, id: :desc).to_a

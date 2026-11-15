@@ -3,5 +3,6 @@ module Administration
   # Administración permissions, not Compra de café's.
   class ZonePolicy < ApplicationPolicy
     self.module_key = "administration"
+    self.submodule_key = "zones"
   end
 end

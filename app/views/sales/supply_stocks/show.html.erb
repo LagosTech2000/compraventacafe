@@ -1,0 +1,144 @@
+<% content_for :title, t(".title") %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= live_updates_from :sales %>
+<%= render "sales/nav" %>
+
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t(".help", date: l(SupplyStock.starts_on, format: :long)) %></p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <% if policy(SupplyExit).create? %>
+      <%= modal_link_to t(".new_exit"), new_sales_supply_exit_path, class: "btn" %>
+    <% end %>
+    <% if policy(SupplyEntry).create? %>
+      <%= modal_link_to t(".new_entry"), new_sales_supply_entry_path, class: "btn btn-primary" %>
+    <% end %>
+  </div>
+</div>
+
+<%= render "sales/supply_stocks/tabs" %>
+
+<%# Of each supply (Fernando, 2026-11-13): in the warehouse (entered −
+    delivered), still to deliver and available to lend (entered − lent, it
+    may be below zero: who is owed opens with a click). %>
+<section class="mt-6" aria-labelledby="supply-stock-title">
+  <h2 id="supply-stock-title" class="mb-3 text-lg font-semibold"><%= t(".stock") %></h2>
+  <% if @stock.rows.any? %>
+    <div class="overflow-x-auto panel">
+      <table class="data-table data-table-compact" data-controller="table-sort" data-supply-stock>
+        <thead>
+          <tr>
+            <th><%= t(".columns.supply") %></th>
+            <th class="text-right"><%= t(".columns.entered") %></th>
+            <th class="text-right"><%= t(".columns.lent") %></th>
+            <th class="text-right"><%= t(".columns.delivered") %></th>
+            <th class="text-right"><%= t(".columns.to_deliver") %></th>
+            <th class="text-right"><%= t(".columns.exited") %></th>
+            <th class="text-right"><%= t(".columns.in_warehouse") %></th>
+            <th class="text-right"><%= t(".columns.available") %></th>
+            <th class="text-right"><%= t(".columns.invested") %></th>
+            <th class="cell-actions" data-sort="false"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% owed_path = ->(supply) { sales_supply_deliveries_path(supply_id: supply.id) } %>
+          <% @stock.rows.each do |row| %>
+            <% quantity = ->(value) { "#{number_with_precision(value, precision: 2, delimiter: ",", strip_insignificant_zeros: true)} #{row.supply.unit}" } %>
+            <tr id="<%= dom_id(row.supply, :stock) %>">
+              <td class="font-medium"><%= row.supply.name %><% unless row.supply.active? %> <span class="badge badge-neutral"><%= t(".inactive") %></span><% end %></td>
+              <td class="whitespace-nowrap text-right tabular-nums" data-sort-value="<%= row.entered %>"><%= quantity.call(row.entered) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums" data-sort-value="<%= row.lent %>"><%= quantity.call(row.lent) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums" data-sort-value="<%= row.delivered %>"><%= quantity.call(row.delivered) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums" data-sort-value="<%= row.to_deliver %>" data-to-deliver>
+                <% if row.to_deliver.positive? %>
+                  <%= link_to quantity.call(row.to_deliver), owed_path.call(row.supply), class: "link font-semibold text-warning" %>
+                <% else %>
+                  <%= quantity.call(row.to_deliver) %>
+                <% end %>
+              </td>
+              <td class="whitespace-nowrap text-right tabular-nums" data-sort-value="<%= row.exited %>" data-exited>
+                <% if row.exited.positive? && policy(SupplyExit).index? %>
+                  <%= link_to quantity.call(row.exited), sales_supply_exits_path(supply_id: row.supply.id), class: "link" %>
+                <% else %>
+                  <%= quantity.call(row.exited) %>
+                <% end %>
+              </td>
+              <td class="whitespace-nowrap text-right tabular-nums" data-sort-value="<%= row.in_warehouse %>" data-in-warehouse><%= quantity.call(row.in_warehouse) %></td>
+              <td class="whitespace-nowrap text-right font-semibold tabular-nums <%= "text-danger" if row.available.negative? %>" data-sort-value="<%= row.available %>" data-available>
+                <% if row.available.negative? %>
+                  <%= link_to quantity.call(row.available), owed_path.call(row.supply), class: "link text-danger", title: t(".owed_hint") %>
+                <% else %>
+                  <%= quantity.call(row.available) %>
+                <% end %>
+              </td>
+              <td class="whitespace-nowrap text-right tabular-nums" data-sort-value="<%= row.invested %>"><%= format_money(row.invested) %></td>
+              <td class="cell-actions">
+                <% if policy(SupplyEntry).create? && row.supply.active? %>
+                  <%= modal_link_to t(".add"), new_sales_supply_entry_path(supply_id: row.supply.id), class: "btn btn-sm" %>
+                <% end %>
+                <% if policy(SupplyExit).create? && row.supply.active? && row.in_warehouse.positive? %>
+                  <%= modal_link_to t(".exit"), new_sales_supply_exit_path(supply_id: row.supply.id), class: "btn btn-sm" %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <p class="mt-2 text-xs text-ink-muted"><%= t(".legend") %></p>
+  <% else %>
+    <p class="empty-state"><%= t(".no_supplies") %></p>
+  <% end %>
+</section>
+
+<%# The entries, with their filters (they apply as they change). %>
+<section class="mt-8" aria-labelledby="supply-entries-title">
+  <h2 id="supply-entries-title" class="mb-3 text-lg font-semibold"><%= t(".entries") %></h2>
+  <% supplies = Supply.ordered.pluck(:name, :id) %>
+  <div data-controller="live-filter">
+    <%= render layout: "shared/filters", locals: { filter: @filter, url: sales_supply_stock_path, frame: "supply-entries-list", live: true } do |form| %>
+      <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("sales.supply_stocks.show.search_placeholder") %>
+      <%= filter_select form, :supply_id, t("sales.supply_stocks.show.columns.supply"), supplies, selected: @filter.supply_id %>
+      <%= filter_date_field form, :from, t("shared.filters.from"), value: @filter.from %>
+      <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
+    <% end %>
+
+    <%= list_frame "supply-entries-list" do %>
+      <%= live_list_status @filter, supply_id: supplies %>
+      <% if @entries.any? %>
+        <% sorting = { filter: @filter, frame: "supply-entries-list" } %>
+        <div class="mt-4 overflow-x-auto panel">
+          <table class="data-table data-table-compact" <%= tag.attributes(data: table_sort_data(sorting)) %>>
+            <thead>
+              <tr>
+                <%= sort_th t(".columns.received_on"), :received_on, sorting %>
+                <%= sort_th t(".columns.lines"), :lines, sorting %>
+                <%= sort_th t(".columns.amount"), :amount, sorting, class: "text-right" %>
+                <%= sort_th t(".columns.payee"), :payee, sorting %>
+                <%= sort_th t(".columns.receipt_number"), :receipt_number, sorting %>
+                <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @entries.each do |entry| %>
+                <tr id="<%= dom_id(entry) %>">
+                  <td class="whitespace-nowrap"><%= l(entry.received_on) %></td>
+                  <td><%= entry.summary %></td>
+                  <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(entry.amount) %></td>
+                  <td><%= entry.payee || "—" %></td>
+                  <td><%= entry.receipt_number || "—" %></td>
+                  <td class="cell-actions"><%= detail_button sales_supply_entry_path(entry) %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+        <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "supply-entries-list" %>
+      <% else %>
+        <p class="empty-state mt-4"><%= t(".no_entries") %></p>
+      <% end %>
+    <% end %>
+  </div>
+</section>

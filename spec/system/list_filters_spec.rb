@@ -60,7 +60,7 @@ RSpec.describe "Live list filters", type: :system do
     expect(page).to have_select("zone_id", selected: "Todas las zonas")
     expect(page).to have_text("2 compras")
 
-    select "Facturadas", from: "invoiced"
+    select "Facturada, pendiente de pago", from: "status"
     click_button "Todo"
     expect(page).to have_css(".chip-filter", count: 2)
     click_button "Limpiar todo"

@@ -12,6 +12,7 @@
 # Registered or removed; never edited.
 class ProcessingCost < ApplicationRecord
   include Auditable
+  include OwnedRecord
   include HasMoneyAccount
   include LiveUpdates
   live_updates :sales, :finance

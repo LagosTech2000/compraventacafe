@@ -7,6 +7,8 @@
 </div>
 
 <% if @producer.nil? %>
+  <%# A finger on the reader: that producer's purchases to invoice. %>
+  <div hidden <%= tag.attributes(data: fingerprint_visit(new_trading_invoice_path(producer_id: "__producer_id__"))) %>></div>
   <h2 class="mb-3 text-lg font-semibold"><%= t(".choose_producer") %></h2>
   <% if @producers_to_invoice.any? %>
     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -20,7 +22,7 @@
 <% else %>
   <%# Wide: the payment and the button stay in a column on the right of the purchases. %>
   <%= form_with model: @invoice, url: trading_invoices_path, class: form_surface_class("@container max-w-none"),
-        data: { controller: "form-validation unsaved-changes", action: unsaved_changes_actions,
+        data: { controller: "form-validation unsaved-changes invoice-batch", action: unsaved_changes_actions,
                 unsaved_changes_message_value: t("shared.unsaved_changes.leave") } do |form| %>
     <%= hidden_field_tag :producer_id, @producer.id %>
     <%= render "shared/form_errors", record: @invoice %>
@@ -60,7 +62,8 @@
             </thead>
             <tbody>
               <% @purchases.each do |purchase| %>
-                <tr>
+                <tr data-invoice-batch-target="purchase" data-gross="<%= purchase.gross_weight.to_d %>" data-net="<%= purchase.net_weight.to_d %>"
+                    data-state="<%= purchase.coffee_state %>" data-warehouse="<%= purchase.warehouse_id %>">
                   <td>
                     <%= check_box_tag "invoice[purchase_ids][]", purchase.id, true, id: dom_id(purchase, :select), class: "size-4 accent-primary",
                           aria: { label: "#{l(purchase.purchased_at)} #{format_money(purchase.total)}" } %>
@@ -105,6 +108,7 @@
     <%# Paid on the spot in full, in part (with the amount) or later. The
         fields that do not apply hide (invoice_payment_choice_controller.js). %>
     <aside class="space-y-5 @5xl:sticky @5xl:top-24">
+    <%= render "lot_fields", batches: @batches, lot_id: @lot_id, percent: @batch_percent %>
     <fieldset class="grid gap-5 @xl:grid-cols-2 @5xl:grid-cols-1" data-controller="invoice-payment-choice money-account" data-money-account-defaults-value="<%= MoneyAccount.defaults_by_method.to_json %>">
       <legend class="mb-3 text-lg font-semibold"><%= t(".payment") %></legend>
       <div>

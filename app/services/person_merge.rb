@@ -129,6 +129,11 @@ class PersonMerge
       @moved[:payrolls] = PayrollMember.where(person_id: secondary.id).update_all(person_id: primary.id)
       @moved[:staff] = StaffMember.where(person_id: secondary.id).update_all(person_id: primary.id)
       @moved[:document_prints] = PrivateDocumentPrint.where(person_id: secondary.id).update_all(person_id: primary.id)
+      @moved[:supply_exits] = SupplyExit.where(person_id: secondary.id).update_all(person_id: primary.id)
+      # Its fingerprints go too (Fernando, 2026-11-14); a finger both have keeps the primary's.
+      taken = primary.fingerprints.pluck(:finger)
+      secondary.fingerprints.where(finger: taken).find_each(&:destroy!)
+      @moved[:fingerprints] = secondary.fingerprints.where.not(finger: taken).find_each.count { it.update!(person: primary) }
       merge_photo
       merge_details
       label = "#{secondary.full_name} ##{secondary.id}"

@@ -2,5 +2,6 @@
 module Loans
   class SimulationPolicy < ApplicationPolicy
     self.module_key = "loans"
+    self.submodule_key = "simulation"
   end
 end

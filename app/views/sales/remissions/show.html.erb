@@ -1,0 +1,27 @@
+<% content_for :title, t(".title", number: @shipment.display_number) %>
+<%= render "sales/nav" %>
+<%= render "shared/breadcrumbs", crumbs: buyer_crumbs(@shipment.buyer, [ shipment_label(@shipment), sales_shipment_path(@shipment) ], [ t("sales.remissions.remission.title") ]) %>
+
+<div class="mb-6 flex flex-wrap items-start justify-between gap-4 print:hidden">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title", number: @shipment.display_number) %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <div data-controller="print">
+    <button type="button" class="btn btn-primary" data-action="print#print" autofocus><%= t(".print") %></button>
+  </div>
+</div>
+
+<% if @shipment.voided? %>
+  <p class="flash-alert mb-4 print:hidden" role="status"><%= t(".voided") %></p>
+<% end %>
+
+<%# Original and copy, each on its own sheet. %>
+<div class="space-y-6 print:space-y-0">
+  <%= render "remission", shipment: @shipment, buyer: @buyer, label: t("sales.sales.show.original") %>
+  <div class="border-t border-line pt-6 print:break-before-page print:border-0 print:pt-0">
+    <%= render "remission", shipment: @shipment, buyer: @buyer, label: t("sales.sales.show.copy") %>
+  </div>
+</div>
+
+<p class="mt-6 print:hidden"><%= link_to t(".back"), sales_shipment_path(@shipment), class: "text-sm link" %></p>

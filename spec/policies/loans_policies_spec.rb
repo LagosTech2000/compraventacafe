@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe "Loans policies" do
+RSpec.describe "Loans policies", :all_records do
   def lender(**flags)
     create(:user).tap { |u| create(:permission, user: u, module_key: "loans", **flags) }.reload
   end

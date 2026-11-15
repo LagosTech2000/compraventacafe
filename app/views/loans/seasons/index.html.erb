@@ -51,8 +51,10 @@
             <td class="whitespace-nowrap font-medium" data-sort-value="<%= row.season.year %>"><%= row.season.label %></td>
             <td class="text-right tabular-nums"><%= row.loans_count %></td>
             <td class="text-right tabular-nums"><%= row.people_count %></td>
-            <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(row.lent) %></td>
-            <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(row.collected) %></td>
+            <td class="whitespace-nowrap text-right tabular-nums" data-sort-value="<%= row.lent %>"><%= format_money(row.lent) %>
+              <span class="block text-xs text-ink-muted" data-season-split><%= t("loans.loans.totals.cash", amount: format_money(row.lent_cash)) %> · <%= t("loans.loans.totals.supplies", amount: format_money(row.lent_supplies)) %></span></td>
+            <td class="whitespace-nowrap text-right tabular-nums" data-sort-value="<%= row.collected %>"><%= format_money(row.collected) %>
+              <span class="block text-xs text-ink-muted"><%= t(".capital_split", cash: format_money(row.cash_collected), supplies: format_money(row.supplies_collected)) %></span></td>
             <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(row.interest_collected) %></td>
             <td class="whitespace-nowrap text-right tabular-nums"><%= number_to_percentage(row.recovered_percent, precision: 1) %></td>
             <td class="whitespace-nowrap text-right font-semibold tabular-nums"><%= format_money(row.owed) %></td>

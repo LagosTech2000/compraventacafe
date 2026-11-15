@@ -84,6 +84,54 @@ es:
       create: "Crear"
       update: "Editar"
       destroy: "Borrar"
+    # One per tab of each module's bar (AppModule::SUBMODULES).
+    submodules:
+      trading:
+        purchases: "Compras"
+        invoices: "Facturas"
+        daily_close: "Cierre diario"
+        producers: "Productores"
+        haulers: "Carreros"
+        zones: "Zonas"
+      sales:
+        shipments: "Salidas"
+        sales: "Ventas"
+        stock: "Inventario y bodegas"
+        coffee_conversions: "Procesos"
+        daily_close: "Cierre diario"
+        buyers: "Clientes comerciales"
+        carriers: "Transportistas"
+        vehicles: "Vehículos"
+        supplies: "Insumos"
+      farms:
+        payrolls: "Planillas"
+        farms: "Fincas"
+        expense_categories: "Categorías de gastos"
+      loans:
+        loans: "Préstamos y abonos"
+        credit_accounts: "Estados de cuenta"
+        coffee_collection: "Cobrar con café"
+        collection_calendar: "Calendario de cobro"
+        portfolio: "Cartera"
+        seasons: "Por cosecha"
+        daily_close: "Cierre diario"
+        simulation: "Simulador"
+      finance:
+        movements: "Movimientos"
+        incomes: "Ingresos"
+        expenses: "Gastos"
+        investments: "Inversiones"
+        accounts: "Cuentas"
+        consolidation: "Consolidación"
+        budget: "Presupuesto"
+        staff: "Planilla interna"
+        categories: "Categorías"
+      reports:
+        reports: "Reportería"
+      administration:
+        people: "Personas"
+        farms: "Fincas"
+        zones: "Zonas"
 
   layouts:
     navigation:
@@ -102,6 +150,15 @@ es:
     "on": "En vivo"
     "off": "Conectando…"
   shared:
+    # Gross pounds first, net beside (Fernando, 2026-11-13).
+    pounds:
+      gross: "%{pounds} lb brutas"
+      net: "%{pounds} lb netas"
+    # Amounts typed with commas (thousands.js, Fernando, 2026-11-14).
+    thousands:
+      min: "Escribe %{min} o más."
+      max: "Escribe %{max} o menos."
+      number: "Escribe un número."
     unsaved_changes:
       leave: "Tienes cambios sin guardar en este formulario. ¿Salir sin guardar?"
     money_account_field:
@@ -117,6 +174,8 @@ es:
       failed: "No se pudo buscar. Revisa la conexión e intenta de nuevo."
     print_letterhead:
       rtn: "RTN %{rtn}"
+      owner: "De: %{name}"
+      phones: "Teléfonos: %{phones}"
     photo_field:
       choose: "Elegir foto"
       change: "Cambiar foto"
@@ -161,6 +220,7 @@ es:
       pick_account: "Selecciona la cuenta"
       no_account: "Sin cuenta"
       no_hauler: "Sin carrero"
+      pick_hauler: "Selecciona el carrero"
     filters:
       title: "Filtros"
       active: "activos"
@@ -274,7 +334,6 @@ es:
     show:
       title: "Tareas pendientes"
       summary: "Todo lo que espera por alguien, con el botón para resolverlo. Lo más viejo va primero."
-      kinds: "Tipos de tarea"
       empty: "No hay nada pendiente. ¡Todo al día!"
       groups:
         uninvoiced:
@@ -296,7 +355,7 @@ es:
         shipments_in_transit:
           title: "Salidas en camino"
           help: "Vehículos que salieron y todavía no tienen el peso de la báscula del comprador."
-          name: "Salida %{number} · %{buyer}"
+          name: "Remisión %{number} · %{buyer}"
           days:
             zero: "salió hoy"
             one: "salió hace 1 día"
@@ -369,6 +428,7 @@ es:
   money_movements:
     invoice: "Factura %{number}"
     processing_cost: "%{concept} · proceso %{number}"
+    shipment_cost: "%{concept} · remisión %{number}"
     hauler_payment: "Recibo %{number} de comisiones de carreo"
     loan: "Préstamo %{number}"
     loan_payment: "Recibo %{number} del préstamo %{loan}"
@@ -376,9 +436,47 @@ es:
     payroll_expense: "%{description} · %{farm}"
     sale_payment: "Cobro de la venta %{number}"
     buyer_advance: "Anticipo %{number} de comprador"
+    supply_sale: "Venta de insumo: %{supply}"
     staff_payment: "Planilla interna %{number} · %{role} (%{period})"
     staff_advance: "Anticipo %{number} de planilla interna"
     transfer: "De %{from} a %{to}"
+  fingerprints:
+    client:
+      ready: "Lector listo"
+      reader_off: "Lector desconectado"
+      bridge_off: "Programa del lector apagado"
+      unknown: "No se reconoce esa huella. Prueba otro dedo o búscala por nombre."
+      found: "Huella de %{name}."
+      open: "Abrir su panel"
+  person_panels:
+    show:
+      dni: "DNI %{dni}"
+      no_details: "Sin DNI, teléfono ni zona"
+      shortcuts: "Atajos"
+      loading: "Cargando…"
+      overdue:
+        one: "Tiene 1 préstamo vencido."
+        other: "Tiene %{count} préstamos vencidos."
+      uninvoiced:
+        one: "Tiene 1 compra sin facturar."
+        other: "Tiene %{count} compras sin facturar."
+      missing: "Le falta: %{fields}."
+      hauler_balance_html: "Por pagarle en comisiones: %{amount}"
+      staff: "Planilla interna · %{role}"
+      shipment: "Remisión %{number} · salió el %{date}"
+      no_shipments: "No lleva ninguna salida en camino."
+    actions:
+      new_purchase: "Nueva compra"
+      invoice: "Facturar sus compras"
+      producer: "Ver productor"
+      loan_payment: "Registrar abono"
+      new_loan: "Nuevo préstamo"
+      credit_account: "Estado de cuenta"
+      hauler_payment: "Pagar al carrero"
+      hauler: "Ver carrero"
+      new_shipment: "Nueva salida con él de motorista"
+      staff_member: "Ver empleado"
+      person: "Ver persona"
   coffee_markets:
     show:
       title: "Café en la bolsa"
@@ -417,6 +515,7 @@ es:
       no_changes: "No ha hecho cambios."
     show:
       title: "Inicio"
+      idle_producers_loading: "Cargando los productores que no venden…"
       coffee_market_loading: "Cargando el precio del café en la bolsa…"
       welcome: "Hola, %{name}"
       purpose: "Compra y venta de café, préstamos, planillas y finanzas de %{business}"
@@ -450,7 +549,7 @@ es:
         season_quintals:
           one: "1 compra · %{total}"
           other: "%{count} compras · %{total}"
-        coffee_stock: "%{pounds} lb netas · %{in_transit} lb en camino"
+        coffee_stock: "%{gross} lb brutas · %{pounds} lb netas · %{in_transit} lb netas en camino"
         sales_owed:
           zero: "Ninguna venta por cobrar"
           one: "1 venta por cobrar"
@@ -560,7 +659,7 @@ es:
         details:
           purchase: "Compra %{number} · %{quintals} QQ · %{total}"
           invoice: "Factura %{number} · %{status} · %{total}"
-          shipment: "Salida %{number} · %{pounds} lb netas"
+          shipment: "Remisión %{number} · %{gross} lb brutas · %{pounds} lb netas"
           sale: "Venta %{number} · %{status} · %{total}"
           loan: "Préstamo %{number} · %{amount}"
           loan_payment: "Préstamo %{number} · %{amount}"
@@ -684,6 +783,7 @@ es:
       show:
         season: "Café · Temporada %{season}"
         quintals: "QQ vendidos"
+        common_quintals: "Aparte, café corriente: %{quintals} QQ"
         sold:
           one: "1 compra"
           other: "%{count} compras"
@@ -710,6 +810,7 @@ es:
         search_placeholder: "Nombre, DNI, RTN o clave IHCAFE"
         name: "Nombre"
         season_quintals: "QQ temporada"
+        common_quintals: "Café corriente (QQ)"
         last_purchase: "Última compra"
         empty: "No hay productores que coincidan con los filtros."
       show:
@@ -722,6 +823,8 @@ es:
         figures:
           season_quintals: "QQ de la temporada"
           previous_season: "Temporada pasada: %{value} QQ"
+          season_common_quintals: "QQ de café corriente"
+          common_hint: "Aparte: no suma a los QQ de la temporada"
           season_purchases: "Compras de la temporada"
           season_total: "Comprado en la temporada"
           season_average_price: "Precio promedio por libra"
@@ -772,6 +875,7 @@ es:
         seasons:
           title: "Por temporada"
           purchases: "Compras"
+          common_quintals: "Café corriente (QQ)"
           average_price: "Precio promedio / lb"
         states:
           title: "Estado del café · %{season}"
@@ -804,15 +908,44 @@ es:
         success: "Productor creado."
       update:
         success: "Productor actualizado."
+    # Producers that stopped selling (Fernando, 2026-11-13).
+    idle_producers:
+      days:
+        "7": "7 días"
+        "15": "15 días"
+        "30": "un mes"
+      card:
+        title: "Productores que no venden hace"
+        see_all: "Ver todos"
+        last: "última compra el %{date}"
+        days_ago:
+          one: "hace 1 día"
+          other: "hace %{count} días"
+        empty: "Todos los productores han vendido en ese tiempo."
+      index:
+        title: "Productores que no venden"
+        help: "Los que ya vendieron y su última compra (no anulada) es de antes de ese tiempo; primero los que dejaron de vender más recientemente."
+        days: "Sin vender hace"
+        search_placeholder: "Nombre, DNI o RTN"
+        last_purchase: "Última compra"
+        days_ago: "Días sin vender"
+        actions: "Acciones"
+        open: "Abrir"
+        empty: "Todos los productores han vendido en ese tiempo."
     purchases:
       index:
         title: "Compras"
         producer: "Productor"
         search_placeholder: "Nombre, DNI o RTN"
-        invoiced: "Facturación"
-        invoiced_yes: "Facturadas"
-        invoiced_no: "Sin facturar"
-        show_voided: "Mostrar anuladas"
+        status: "Estado"
+        statuses:
+          active: "Todas, sin las anuladas"
+          uninvoiced: "Sin facturar"
+          pending: "Facturada, pendiente de pago"
+          partial: "Facturada, pago parcial"
+          paid: "Facturada y cancelada"
+          voided: "Anuladas"
+          all: "Todos los estados, con anuladas"
         new: "Nueva compra"
         empty: "No hay compras que coincidan con los filtros."
         count:
@@ -822,7 +955,7 @@ es:
         chips:
           q: "Productor: %{text}"
           zone: "Zona: %{name}"
-          voided: "Con anuladas"
+          status: "Estado: %{name}"
       table:
         number: "N.º"
         producer: "Productor"
@@ -872,7 +1005,8 @@ es:
         farm_gaps: "A esta finca le faltan datos por ingresar: %{fields}."
         complete_farm: "Completar datos de la finca"
         new_hauler: "Nuevo carrero"
-        hauler_help: "Si la trajo un carrero, gana su comisión por esta compra."
+        hauler_help: "Si la trajo un carrero, gana su comisión por esta compra. Si no, elige «Sin carrero»."
+        hauler_missing: "Elige el carrero que la trajo, o «Sin carrero»."
         hauler_terms: "%{price} por libra neta"
         hauler_commission: "Comisión del carrero"
         hauler_paid_apart: "La paga el negocio aparte: no cambia lo que se le paga al productor."
@@ -880,6 +1014,7 @@ es:
         cancel: "Cancelar"
         weighings_help: "Anota cada pesada con su peso y los sacos contados. El peso bruto y los sacos son la suma; la tara es 1 lb por saco contado."
         damage_types_help: "Con daño, elige uno o más tipos."
+        common_coffee_help: "Solo pergamino húmedo. No cuenta en la retención de fin de temporada (cuando exista)."
         damage_types_missing: "Elige al menos un tipo de daño."
         unusual:
           humidity:
@@ -957,8 +1092,10 @@ es:
         number: "N.º"
         receipt: "Recibo"
         destroy: "Quitar"
+        edit: "Editar"
         confirm_destroy: "¿Quitar este abono? Su monto vuelve al saldo de la factura."
         none: "Todavía no se le ha pagado nada de esta factura."
+        overpaid: "Pagado de más"
       index:
         title: "Facturas"
         new: "Facturar compras"
@@ -1015,8 +1152,52 @@ es:
         payment: "Abono %{number} · %{date} · %{method}"
         balance_due: "Saldo pendiente"
         settled: "Cancelada"
+        edit: "Editar factura"
+        void: "Anular factura"
+        voided: "Factura anulada el %{date} por %{name}: %{reason}. Sus compras quedaron anuladas y sus abonos se quitaron."
+        overpaid: "Se le pagó %{amount} de más: lo abonado pasa del total a pagar después de editar. Corrige o quita un abono."
+        observations: "Observaciones"
+      lot_fields:
+        legend: "Lote (opcional)"
+        blank: "Sin lote"
+        option: "%{batch} · %{state} · %{warehouse} · caben %{room} lb brutas"
+        percent: "Parte de la factura en el lote (%)"
+        takes: "Toma %{gross} lb brutas · %{net} lb netas de las compras marcadas."
+        room: "El lote tiene %{room} lb brutas libres; con esta factura le quedan %{left}."
+        over: "Pasa del límite del lote por %{over} lb brutas. Con %{max} % o menos cabe."
+        mixed: "Las compras marcadas son de varios estados del café o de varias bodegas: esta factura no puede ir en un lote."
+        none_fit: "No hay lotes de este estado del café en esta bodega con espacio."
+        no_purchases: "Marca las compras para ver los lotes donde caben."
+        split: "Esta factura está repartida en %{lots}. El reparto se cambia desde cada lote."
+        share: "%{batch} (%{percent} %)"
+        error: "%{batch}: %{message}"
       create:
         success: "Factura creada."
+      edit:
+        title: "Editar factura %{number}"
+        help: "Solo administradores, aunque esté cancelada. Cambia la fecha, las observaciones y qué compras lleva; cada compra se edita con «Editar compra»."
+        purchases: "Compras de la factura"
+        purchases_help: "Las marcadas van en la factura; al desmarcar una, queda sin facturar. Abajo, las compras sin facturar de %{producer}."
+        uninvoiced: "Sin facturar"
+        edit_purchase: "Editar compra"
+        submit: "Guardar cambios"
+      update:
+        success: "Factura actualizada."
+    invoice_voids:
+      new:
+        title: "Anular factura %{number}"
+        warning: "Al anularla, solo administradores y sin deshacer:"
+        purchases:
+          one: "Su compra queda anulada: su café sale del inventario."
+          other: "Sus %{count} compras quedan anuladas: su café sale del inventario."
+        payments:
+          one: "Su abono de %{amount} se quita: deja de contar en la cuenta y en Movimientos (queda en la auditoría)."
+          other: "Sus %{count} abonos (%{amount}) se quitan: dejan de contar en las cuentas y en Movimientos (quedan en la auditoría)."
+        batches: "Sale de %{batches}."
+        record: "La factura conserva su número y queda como registro anulado, con el motivo."
+        submit: "Anular factura"
+      create:
+        success: "Factura %{number} anulada."
     invoice_payments:
       new:
         title: "Registrar abono"
@@ -1026,6 +1207,13 @@ es:
         balance_due: "Saldo"
         amount_help: "El saldo completo o una parte: lo que falte queda pendiente."
         submit: "Registrar abono"
+      edit:
+        title: "Editar abono %{number}"
+        admin_only: "Solo administradores: el recibo y la factura cambian con el abono."
+        amount_help: "Hasta %{amount}: lo que la factura todavía tiene por pagar sin contar este abono."
+        submit: "Guardar abono"
+      update:
+        success: "Abono actualizado."
       show:
         title: "Recibo de pago %{number}"
         invoice: "Factura %{number} · %{producer}"
@@ -1169,10 +1357,11 @@ es:
       stock: "Inventario"
       coffee_conversions: "Procesos"
       daily_close: "Cierre diario"
-      buyers: "Compradores"
+      buyers: "Clientes comerciales"
       carriers: "Transportistas"
       vehicles: "Vehículos"
       warehouses: "Bodegas"
+      supplies: "Insumos"
       new_shipment: "Nueva salida"
     carriers:
       index:
@@ -1385,11 +1574,11 @@ es:
         origin: "De dónde viene"
         entered_at: "Entró"
         age: "En bodega"
-        entered: "Entraron (lb netas)"
-        left: "Quedan (lb netas)"
+        entered: "Entraron (lb brutas · netas)"
+        left: "Quedan (lb brutas · netas)"
         value: "Valor"
         status: "Marcas"
-        taken: "Libras netas"
+        taken: "Libras brutas / netas"
       purchase: "Compra de %{producer}"
       conversion: "Proceso %{number} (de %{from})"
       transferred: "Llegó con el traslado %{number}"
@@ -1428,9 +1617,9 @@ es:
           per_pound: "Costo por libra neta"
           help: "Valor de compra: lo que se pagó a los productores por el café que queda. Costos acumulados: la comisión de los carreros y, en el café procesado, lo que costó procesarlo. Es dinero invertido en café, no efectivo."
         lots:
-          title: "Lotes"
-          help: "Cada compra o proceso que todavía tiene café, con su fecha y cuánto lleva en bodega. Cuando sale café, sale primero el lote más viejo."
-          card_line: "Quedan %{left} de %{entered} lb netas · %{value}"
+          title: "Café por compra o proceso"
+          help: "Cada compra o proceso que todavía tiene café, con su fecha y cuánto lleva en bodega. Cuando sale café sin lotes de salida, sale primero el más viejo; una salida con lotes saca el de sus compras."
+          card_line: "Quedan %{left_gross} lb brutas (%{left} netas) de %{entered_gross} (%{entered} netas) · %{value}"
           empty: "No queda café de este estado."
     stock:
       title: "Café en inventario"
@@ -1440,12 +1629,13 @@ es:
       quintals: "%{quintals} QQ de compra"
       gross: "Libras brutas"
       net: "Libras netas"
+      net_pounds: "%{pounds} lb netas"
       quintals_label: "QQ de compra"
       in_process: "En proceso"
       cherry_net: "Las libras netas de la uva son el café que se espera sacar de ella, no lo que pesó."
       out_detail: "Fuera: %{in_transit} lb en camino · %{unsold} lb pesadas sin vender"
       negative: "Hay más café en salidas que en compras para algún estado del café. Revisa que estén registradas todas las compras y que las salidas tengan el estado correcto."
-      help: "Libras netas. Toca un inventario para ver sus libras brutas, sacos, daño, valor y lotes."
+      help: "Libras brutas y, debajo, netas. Toca un inventario para ver sus sacos, daño, valor y lotes."
     summary:
       sales: "Ventas"
       buyers: "Compradores"
@@ -1462,6 +1652,7 @@ es:
         other: "%{count} ventas"
     difference:
       over_tolerance: "Pasa la tolerancia"
+      no_origin: "Sin báscula local"
     lifecycle:
       label: "Etapas de la salida"
       next_badge: "Sigue"
@@ -1484,27 +1675,46 @@ es:
           one: "1 salida de esta temporada tiene una diferencia de peso mayor al %{tolerance} entre la báscula local y la del comprador."
           other: "%{count} salidas de esta temporada tienen una diferencia de peso mayor al %{tolerance} entre la báscula local y la del comprador."
         see_over_tolerance: "Ver esas salidas"
+        shrink:
+          title: "Merma de la %{season}"
+          help: "Lo que dicen las compras de los lotes de cada salida menos lo que pesó la báscula local, en libras brutas (y netas). Positiva: se perdió peso. Toca una cifra para ver esas salidas."
+          all:
+            zero: "Merma total (ninguna salida con lotes y báscula local)"
+            one: "Merma total (1 salida)"
+            other: "Merma total (%{count} salidas)"
+          net: "%{value} netas · %{percent} de las compras"
+          net_only: "%{value} netas"
+          loss:
+            zero: "Con merma: ninguna salida"
+            one: "Con merma: 1 salida"
+            other: "Con merma: %{count} salidas"
+          gain:
+            zero: "Pesaron más: ninguna salida"
+            one: "Pesó más: 1 salida"
+            other: "Pesaron más: %{count} salidas"
+          no_batches: "Salidas sin lotes"
+          no_batches_help: "Sin lotes no hay merma: agrégalos para saberla."
         steps:
           ship:
             title: "Registrar salidas"
             status_html:
               zero: "Hoy no ha salido ningún vehículo."
-              one: "Hoy salió 1 vehículo con %{pounds} lb netas."
-              other: "Hoy salieron %{count} vehículos con %{pounds} lb netas."
+              one: "Hoy salió 1 vehículo con %{gross} lb brutas (%{pounds} lb netas)."
+              other: "Hoy salieron %{count} vehículos con %{gross} lb brutas (%{pounds} lb netas)."
             action: "Nueva salida"
           receive:
             title: "Pesar en destino"
             status_html:
               zero: "No hay vehículos en camino."
-              one: "1 salida espera su peso en destino (%{pounds} lb al salir)."
-              other: "%{count} salidas esperan su peso en destino (%{pounds} lb al salir)."
+              one: "1 salida espera su peso en destino (%{gross} lb brutas, %{pounds} lb netas al salir)."
+              other: "%{count} salidas esperan su peso en destino (%{gross} lb brutas, %{pounds} lb netas al salir)."
             action: "Ver salidas en camino"
           sell:
             title: "Vender"
             status_html:
               zero: "No hay salidas pesadas sin vender."
-              one: "1 salida pesada espera su venta (%{pounds} lb del comprador)."
-              other: "%{count} salidas pesadas esperan su venta (%{pounds} lb del comprador)."
+              one: "1 salida pesada espera su venta (%{gross} lb brutas, %{pounds} lb netas del comprador)."
+              other: "%{count} salidas pesadas esperan su venta (%{gross} lb brutas, %{pounds} lb netas del comprador)."
             action: "Nueva venta"
           collect:
             title: "Cobrar"
@@ -1513,15 +1723,408 @@ es:
               one: "1 venta por cobrar: faltan %{amount}."
               other: "%{count} ventas por cobrar: faltan %{amount}."
             action: "Ver ventas por cobrar"
+    # Lots of purchased coffee (Fernando, 2026-11-13).
+    coffee_batches:
+      label: "Lote %{number}"
+      index:
+        title: "Lotes"
+        help: "El café comprado en lotes: cada uno con su bodega, su estado del café, su límite de libras brutas y una parte de facturas de compra. Los lotes van en las salidas; los más recientes primero."
+        new: "Nuevo lote"
+        search_placeholder: "Número del lote o productor de sus facturas"
+        status: "Salida"
+        statuses:
+          free: "Libres"
+          shipped: "En una salida"
+        empty: "No hay lotes con estos filtros."
+      table:
+        number: "Lote"
+        batched_on: "Fecha"
+        gross: "Brutas (lb)"
+        net: "Netas (lb)"
+        gross_limit: "Límite (lb brutas)"
+        value: "Valor (L)"
+        shipment: "Salida"
+        actions: "Acciones"
+        free: "Libre"
+        mark_all: "Marcar todos"
+        mark: "Marcar el %{batch}"
+      form:
+        limit_help: "Lo máximo de café, en libras brutas, que puede entrar desde las facturas."
+        pick_state: "Selecciona el estado del café"
+        locked: "Ya tiene facturas: su estado del café y su bodega no cambian."
+        create: "Crear lote y elegir facturas"
+        update: "Guardar cambios"
+      new:
+        title: "Nuevo lote %{number}"
+        help: "Primero su fecha, su bodega, su estado del café y su límite de libras brutas; después se eligen sus facturas."
+      edit:
+        title: "Editar %{batch}"
+      show:
+        edit: "Editar"
+        destroy: "Quitar lote"
+        confirm_destroy: "¿Quitar este lote? Sus facturas quedan libres."
+        figures:
+          gross: "Brutas (lb)"
+          net: "Netas (lb)"
+          gross_limit: "Límite (lb brutas)"
+          room: "Caben todavía (lb brutas)"
+          value: "Valor de compra"
+        on_shipment: "Salió en la"
+        free_help: "Todavía no está en ninguna salida."
+        invoices: "Facturas del lote"
+        add_invoices: "Agregar facturas"
+        invoices_hidden: "Ver sus facturas pide permiso de ver Compra de café → Facturas."
+        no_invoices: "Todavía no tiene facturas."
+        percent: "Parte"
+        gross: "Brutas (lb)"
+        net: "Netas (lb)"
+        value: "Valor (L)"
+        remove: "Quitar"
+        confirm_remove: "¿Quitar la factura %{number} de este lote? Su parte queda libre."
+      create:
+        success: "%{batch} creado: ahora elige sus facturas."
+      update:
+        success: "Lote actualizado."
+      destroy:
+        success: "%{batch} quitado."
+    coffee_batch_invoices:
+      new:
+        title: "Facturas para el %{batch}"
+        help: "Facturas de %{state} con todas sus compras en %{warehouse}, con una parte todavía libre. Marca las que entran y la parte (%) de cada una; una factura nunca pasa del 100 % entre todos los lotes."
+        room: "Límite: %{limit} lb brutas · ya tiene %{gross} lb · caben %{room} lb brutas."
+        mark_column: "Marcar"
+        gross: "Brutas (lb)"
+        net: "Netas (lb)"
+        left: "Libre"
+        percent: "Parte (%) y lo que equivale"
+        takes_gross: "%{pounds} lb brutas"
+        takes_net: "%{pounds} lb netas"
+        mark: "Marcar la factura %{number}"
+        percent_of: "Parte de la factura %{number}"
+        chosen: "%{count} marcadas: %{pounds} lb brutas de %{room} que caben."
+        over: "%{count} marcadas: %{pounds} lb brutas, más de las %{room} que caben. Baja la parte de alguna."
+        none_marked: "Ninguna marcada"
+        submit: "Agregar al lote"
+        empty: "No hay facturas libres de ese estado del café en esa bodega con estos filtros."
+      create:
+        none: "Marca al menos una factura."
+        success:
+          one: "1 factura en el lote."
+          other: "%{count} facturas en el lote."
+      destroy:
+        success: "La factura %{number} salió del lote."
+    shipment_batches:
+      new:
+        title: "Lotes para la remisión %{number}"
+        crumb: "Agregar lotes"
+        help: "Los lotes libres de %{state} en %{warehouse}. Márcalos y toca «Agregar a la salida»: su café es el que sale del inventario."
+        new_batch: "Nuevo lote"
+        marked: "Lotes marcados: %{count}"
+        none_marked: "Ninguno marcado"
+        submit: "Agregar a la salida"
+        empty: "No hay lotes libres de ese estado del café en esa bodega."
+      create:
+        none: "Marca al menos un lote."
+        success:
+          one: "1 lote en la salida."
+          other: "%{count} lotes en la salida."
+      destroy:
+        success: "%{batch} quedó libre."
+    # The driver chosen in the shipment form (Fernando, 2026-11-13).
+    driver_cards:
+      show:
+        identity: "Identidad"
+        missing: "Le falta: %{fields}. La remisión lo deja en blanco; tócale «Editar» para completarlo."
+    # The remission of a shipment, as the client's booklet (Fernando, 2026-11-12).
+    remissions:
+      show:
+        title: "Remisión %{number}"
+        help: "Lo que acompaña al café en el camino: a dónde va, cuánto lleva, quién lo manda y quién lo lleva. Se imprimen el original y la copia, cada uno en su hoja."
+        print: "Imprimir"
+        back: "Volver a la salida"
+        voided: "Esta salida está anulada."
+      remission:
+        title: "Remisión"
+        place_date: "%{place}, %{date}"
+        destination: "Destino"
+        to: "Para"
+        quantity: "Cantidad de café enviada"
+        sacks: "Sacos"
+        cans: "Latas"
+        gold_quintals: "Equivalentes QQ oro"
+        sent_by: "Enviadas por"
+        address: "Dirección"
+        driver: "Nombre de motorista"
+        phone: "Teléfono"
+        identity: "Identidad"
+        vehicle: "Vehículo"
+        brand: "Marca"
+        color: "Color"
+        plate: "Placa No."
+        observations: "Observaciones"
+        sender_signature: "Remisor"
+        received_signature: "Recibí conforme"
+        driver_signature: "Motorista"
+    # Inventario de insumos (Fernando, 2026-11-12).
+    # The supplies' catalog (Fernando, 2026-11-13: from Préstamos to Comercialización → Insumos).
+    supplies:
+      index:
+        title: "Catálogo de insumos"
+        new: "Nuevo insumo"
+        help: "Lo que se compra y se presta en especie (abono, fungicida...), con su precio predeterminado. Al prestarlo se puede cambiar el precio."
+        status: "Estado"
+        statuses:
+          active: "Activos"
+          inactive: "Inactivos"
+        badges:
+          active: "Activo"
+          inactive: "Inactivo"
+        per_unit: "%{price} por %{unit}"
+        edit: "Editar"
+        actions: "Acciones"
+        empty: "No hay insumos que coincidan con los filtros."
+      new:
+        title: "Nuevo insumo"
+      edit:
+        title: "Editar insumo"
+      form:
+        name_placeholder: "Ej.: Abono 18-46-0"
+        unit_placeholder: "Ej.: saco"
+        unit_suggestions: [saco, quintal, bolsa, libra, galón, litro, unidad]
+        price_help: "Se pone solo al agregarlo a un préstamo; ahí se puede cambiar."
+        active_help: "Un insumo inactivo ya no aparece al prestar. Los préstamos que ya lo tienen no cambian."
+      create:
+        success: "Insumo creado."
+      update:
+        success: "Insumo actualizado."
+    supply_stocks:
+      tabs:
+        label: "Partes de Insumos"
+        stock: "Inventario y entradas"
+        deliveries: "Por entregar"
+        exits: "Salidas"
+        catalog: "Catálogo de insumos"
+      show:
+        title: "Insumos"
+        help: "Lo que entra de cada insumo (cada entrada registra su inversión en Control financiero), lo que se presta y lo que ya se entregó. Cuentan los préstamos desde el %{date}."
+        new_entry: "Registrar entrada"
+        new_exit: "Registrar salida"
+        stock: "Existencias"
+        entries: "Entradas"
+        add: "Entrada"
+        exit: "Salida"
+        inactive: "Desactivado"
+        no_supplies: "Todavía no hay insumos: créalos en «Catálogo de insumos»."
+        no_entries: "No hay entradas con estos filtros."
+        search_placeholder: "Proveedor, comprobante u observaciones"
+        owed_hint: "Se prestó más de lo que entró: toca para ver a quién se le debe."
+        legend: "En bodega = entró − entregado − salió sin préstamo. Disponible = entró − prestado − salió sin préstamo: en negativo, se prestó más de lo que hay y se le debe a alguien; toca la cifra para ver a quién."
+        columns:
+          supply: "Insumo"
+          entered: "Entró"
+          lent: "Prestado"
+          delivered: "Entregado"
+          to_deliver: "Por entregar"
+          exited: "Salió sin préstamo"
+          in_warehouse: "En bodega"
+          available: "Disponible"
+          invested: "Invertido"
+          received_on: "Fecha"
+          lines: "Insumos"
+          amount: "Total (L)"
+          payee: "Proveedor"
+          receipt_number: "Comprobante"
+    # Supplies sold apart or used by the business (Fernando, 2026-11-14).
+    supply_exits:
+      index:
+        title: "Salidas de insumos"
+        help: "Lo que sale de la bodega sin préstamo: lo que se vende por aparte a una persona (su dinero entra a una cuenta) y lo que usa el negocio."
+        new: "Registrar salida"
+        search_placeholder: "Persona u observaciones"
+        empty: "No hay salidas con estos filtros."
+      new:
+        title: "Registrar salida de insumos"
+        help: "Una venta por aparte baja la bodega y su dinero entra a la cuenta; el uso del negocio solo baja la bodega."
+        pick_supply: "Selecciona un insumo"
+        in_warehouse: "En bodega: %{quantity}"
+        over: "No hay tanto en bodega: hay %{quantity}."
+        sale: "La venta"
+        person_placeholder: "Escribe 3 letras del nombre o el DNI"
+        person_missing: "Elige a quién se le vende."
+        new_person: "Nueva persona"
+        submit: "Registrar salida"
+      create:
+        success:
+          sale: "Venta registrada: %{supply}. El dinero entró a la cuenta."
+          business_use: "Salida registrada: %{supply}."
+      show:
+        title: "Salida de insumos %{number}"
+        destroy: "Quitar salida"
+        confirm_destroy: "¿Quitar esta salida? Lo que salió vuelve a la bodega y, si fue venta, su dinero sale de la cuenta."
+        income: "Su dinero entró a «%{account}»: sale en Ingresos y en Movimientos."
+      destroy:
+        success: "Se quitó la salida: lo que salió volvió a la bodega."
+    # What the loans lent and whether it was handed out (Fernando, 2026-11-13).
+    supply_deliveries:
+      status:
+        title: "Entrega"
+        pending: "Por entregar"
+        delivered: "Entregado el %{date}"
+        outside: "Antes del inventario"
+        deliver: "Marcar entregado"
+        undo: "Deshacer"
+        confirm_undo: "¿Quitar la marca de entregado? Vuelve a la bodega y queda por entregar."
+      index:
+        title: "Insumos por entregar"
+        help: "Lo que los préstamos llevan en insumos y si ya se entregó. Un administrador lo marca al entregarlo: sale de la bodega. No se entrega lo que no hay en bodega."
+        status: "Estado"
+        statuses:
+          pending: "Por entregar"
+          delivered: "Entregados"
+          all: "Todos"
+        search_placeholder: "Nombre, DNI o RTN de la persona"
+        see_loan: "Ver préstamo"
+        empty: "No hay insumos con estos filtros."
+        columns:
+          disbursed_on: "Fecha del préstamo"
+          person: "Se le debe a"
+          supply: "Insumo"
+          quantity: "Cantidad"
+          total: "Valor (L)"
+          delivered_on: "Entrega"
+          actions: "Acciones"
+      update:
+        success: "%{supply} entregado a %{person}."
+      destroy:
+        success: "%{supply} vuelve a quedar por entregar."
+    supply_entries:
+      investment: "Compra de insumos: %{supplies}"
+      line: "%{supply} × %{quantity} %{unit}"
+      new:
+        title: "Registrar entrada de insumos"
+        help: "Lo que se compró en una factura del proveedor, con uno o varios insumos. Al guardar, cada uno se suma al inventario y se registra sola una inversión en Control financiero por el total, con la factura como comprobante."
+        lines: "Insumos de la factura"
+        add_line: "Agregar otro insumo"
+        new_supply: "Nuevo insumo"
+        remove_line: "Quitar"
+        no_lines: "Agrega al menos un insumo."
+        amount_help: "Lo que costó toda esa cantidad."
+        total: "Total de la factura (la inversión)"
+        payee_placeholder: "A quién se le compró"
+        receipt_help: "Opcional: la foto o el PDF de la factura, hasta %{size}. Queda como comprobante de la inversión."
+        submit: "Registrar entrada"
+      create:
+        success: "Entrada de %{supplies} registrada, con su inversión."
+      show:
+        title: "Entrada de insumos %{number}"
+        destroy: "Quitar entrada"
+        confirm_destroy: "¿Quitar esta entrada? Sale del inventario y se quita su inversión de Control financiero."
+        investment: "Registró una inversión de %{amount} en Control financiero."
+        see_investment: "Ver la inversión"
+        see_receipt: "Ver la factura"
+        lines: "Insumos"
+      destroy:
+        success: "Entrada quitada, con su inversión."
+    shipment_invoices:
+      new:
+        title: "Facturas de la remisión %{number}"
+        crumb: "Elegir facturas"
+        help: "Las facturas de compra de %{state} que todavía no están en ninguna salida. Márcalas y toca «Ligar a la salida»: su total es el costo del café de esta salida."
+        mark_all: "Marcar todas"
+        mark: "Marcar la factura %{number}"
+        marked: "Facturas marcadas: %{count}"
+        none_marked: "Ninguna marcada"
+        submit: "Ligar a la salida"
+        empty: "No hay facturas de ese estado libres con estos filtros."
+      create:
+        none: "Marca al menos una factura."
+        success:
+          one: "1 factura ligada a la salida."
+          other: "%{count} facturas ligadas a la salida."
+      destroy:
+        success: "La factura %{number} quedó libre."
+    shipment_expenses:
+      new:
+        title: "Gastos para la remisión %{number}"
+        crumb: "Asignar gastos"
+        help: "Los gastos de Control financiero que todavía no están en ninguna salida (de este mes, si no cambias las fechas). Márcalos y toca «Asignar a la salida»: suman a su costo y siguen en Control financiero."
+        mark_all: "Marcar todos"
+        mark: "Marcar el gasto «%{description}»"
+        marked: "Gastos marcados: %{count}"
+        none_marked: "Ninguno marcado"
+        submit: "Asignar a la salida"
+        empty: "No hay gastos libres con estos filtros."
+      create:
+        none: "Marca al menos un gasto."
+        success:
+          one: "1 gasto asignado a la salida."
+          other: "%{count} gastos asignados a la salida."
+      destroy:
+        success: "El gasto quedó libre."
+    shipment_costs:
+      terms:
+        per_unit: "%{price} por %{unit} %{kind} %{side} · %{pounds} lb"
+      new:
+        title: "Gasto de la remisión %{number}"
+        crumb: "Registrar gasto"
+        help: "%{buyer} · %{state}. Se suma al costo de la salida y sale de la cuenta que elijas."
+        description_placeholder: "Opcional; obligatorio si es «Otro»"
+        destination_later: "(cuando se pese en destino)"
+        quintal: "Quintal de %{pounds} lb"
+        preview: "Monto del gasto"
+        base: "Calculado sobre"
+        submit: "Registrar gasto"
+      create:
+        success: "Gasto de %{amount} registrado."
+      destroy:
+        success: "Gasto quitado."
     shipments:
       table:
-        number: "No."
+        number: "Remisión"
         sacks: "Sacos"
-        origin_net: "Neto local (lb)"
-        destination_net: "Neto comprador (lb)"
+        origin_net: "Local (lb brutas · netas)"
+        destination_net: "Comprador (lb brutas · netas)"
+        net_line: "%{net} netas"
         difference: "Diferencia"
         status: "Estado"
         actions: "Acciones"
+        remission: "Remisión"
+        shrink: "Merma"
+        shrink_net: "%{value} netas"
+      # What a shipment cost (Fernando, 2026-11-12).
+      cost:
+        title: "Costo de la salida"
+        help: "Lo que costó el café de sus lotes (su parte de cada compra), la comisión de carreros de esas compras, sus gastos y el precio del viaje."
+        missing: "Sin lotes: falta el costo del café. Agrega los lotes de esta salida."
+        remove: "Quitar"
+        figures:
+          coffee: "Café (lotes)"
+          hauler_commission: "Comisión de carreros"
+          costs: "Gastos y viaje"
+          total: "Costo total"
+          per_pound: "Costo por libra neta"
+        batches:
+          title: "Lotes"
+          help: "Los lotes del café que salió: de %{state}, de %{warehouse}. Su café sale del inventario (su parte de cada compra)."
+          choose: "Agregar lotes"
+          none: "Todavía no tiene lotes: el inventario baja con su báscula local, lo más viejo primero."
+          confirm_remove: "¿Quitar el %{batch} de esta salida? Queda libre para otra y su café vuelve al inventario."
+        costs:
+          title: "Gastos de la salida"
+          help: "Los registrados desde aquí (salen de una cuenta), los gastos de Control financiero asignados y el precio del viaje del transportista."
+          new: "Registrar gasto"
+          assign: "Asignar gastos"
+          date: "Fecha"
+          concept: "Concepto"
+          origin: "Origen"
+          amount: "Monto (L)"
+          registered: "De la salida"
+          assigned: "Control financiero"
+          trip: "Precio del viaje"
+          none: "Todavía no tiene gastos."
+          confirm_remove: "¿Quitar este gasto? Deja de salir de su cuenta."
+          confirm_unassign: "¿Quitar este gasto de la salida? Sigue en Control financiero."
+          hidden_expenses: "Tiene gastos de Control financiero asignados que no puedes ver; sí cuentan en el costo."
       index:
         title: "Salidas de vehículos"
         help: "Cada vehículo que sale con café: su peso en la báscula local y, al llegar, en la del comprador."
@@ -1530,6 +2133,12 @@ es:
         all_active: "Todas (sin anuladas)"
         over_tolerance: "Solo con diferencia mayor al %{tolerance}"
         over_tolerance_chip: "Fuera de tolerancia"
+        batches: "Lotes"
+        shrink: "Merma"
+        shrinks:
+          loss: "Con merma (se perdió peso)"
+          gain: "Pesó más que sus compras"
+          no_batches: "Sin lotes (sin merma)"
         empty: "No hay salidas con estos filtros."
         count:
           zero: "Ninguna salida"
@@ -1537,18 +2146,37 @@ es:
           other: "%{count} salidas"
         totals:
           sacks: "Sacos"
-          origin_net: "Neto local (lb)"
-          destination_net: "Neto comprador (lb)"
-          difference: "Diferencia de las pesadas en destino (lb)"
+          origin_net: "Báscula local"
+          destination_net: "Báscula del comprador"
+          difference: "Diferencia de las pesadas en destino (lb netas)"
+        lots: "Lotes"
+      # Shrink (merma, Fernando, 2026-11-13): its lots' purchases − its local scale.
+      shrink:
+        title: "Merma"
+        gross: "Merma bruta"
+        net: "Merma neta"
+        percent: "Merma (% del neto de las compras)"
+        detail: "Las compras de sus lotes: %{batches_gross} lb brutas y %{batches_net} lb netas; la báscula local: %{origin_gross} lb brutas y %{origin_net} lb netas. Positiva: se perdió peso; negativa: pesó más."
+        no_origin: "Sin báscula local todavía: la merma sale al completarla."
+        pounds: "%{value} lb"
       of_record:
         title: "Sus salidas"
         empty: "No hay salidas con esos filtros."
       form:
+        batches: "Lotes"
+        batches_help: "Los lotes libres de este estado del café y esta bodega. Su café es el que sale del inventario."
+        new_batch: "Nuevo lote"
+        batch_pounds: "%{gross} lb brutas · %{net} lb netas"
+        no_batches: "No hay lotes libres de este estado del café en esta bodega. Crea uno con «Nuevo lote»."
+        skip_origin: "Sin báscula local (solo administradores)"
+        skip_origin_help: "La salida se guarda sin peso ni sacos locales: no saca café del inventario y no tiene diferencia entre básculas hasta que alguien escriba la báscula local editando la salida."
+        complete_origin: "Esta salida se registró sin báscula local: escribe su peso para completarla."
         new_buyer: "Nuevo comprador"
         transport: "Transporte"
         new_carrier: "Nuevo transportista"
         new_vehicle: "Nuevo vehículo"
         driver_typed: "Escribirlo abajo"
+        edit_driver: "Editar"
         driver_name_placeholder: "Nombre del motorista"
         driver_help: "Un chofer de la planilla interna, o escribe su nombre."
         transport_mode: "¿Quién lo lleva?"
@@ -1570,18 +2198,21 @@ es:
         over_stock: "Sale más de lo que hay en inventario de este estado del café (%{stock} lb). Se puede guardar igual."
       new:
         title: "Nueva salida de vehículo"
-        number: "Salida No. %{number}"
+        number: "Remisión No. %{number}"
       edit:
-        title: "Editar la salida %{number}"
+        title: "Editar la remisión %{number}"
       create:
-        success: "Salida %{number} registrada para %{buyer}."
+        success: "Remisión %{number} registrada para %{buyer}."
       update:
         success: "Salida actualizada."
       void:
         success: "Salida anulada: su café vuelve al inventario."
       show:
-        title: "Salida %{number}"
+        title: "Remisión %{number}"
         edit: "Editar"
+        remission: "Imprimir remisión"
+        origin_missing: "Esta salida se registró sin báscula local: no ha sacado café del inventario y no tiene diferencia entre básculas hasta que se complete."
+        complete_origin: "Completar báscula local"
         void: "Anular"
         confirm_void: "¿Anular esta salida? Su café vuelve al inventario. No se puede deshacer."
         full_page: "Abrir en página completa"
@@ -1609,7 +2240,7 @@ es:
         details: "Datos de la salida"
     arrivals:
       edit:
-        title: "Peso en destino · salida %{number}"
+        title: "Peso en destino · remisión %{number}"
         subtitle: "%{buyer} · %{state} · salió con %{net} lb netas"
         weighing: "Báscula del comprador"
         weighing_help: "Copia lo que dice la nota de peso del comprador. Empieza con los sacos, la humedad y el daño de la salida."
@@ -1618,7 +2249,7 @@ es:
         origin_net: "Neto local: %{net} lb"
         submit: "Guardar peso en destino"
       update:
-        success: "Peso en destino de la salida %{number} guardado."
+        success: "Peso en destino de la remisión %{number} guardado."
     sales:
       voided: "Anulada"
       price_unit_quintal: "Por quintal de %{pounds} lb"
@@ -1689,8 +2320,20 @@ es:
         success: "Venta %{number} registrada."
       void:
         success: "Venta anulada: sus salidas quedan libres para otra venta."
+      edit:
+        title: "Editar venta %{number}"
+        crumb: "Editar"
+        help: "Solo administradores, aunque esté cobrada. Cambia la fecha, el precio, las libras por quintal, el documento, las observaciones y qué salidas lleva; el total se calcula de nuevo. Si queda menos de lo cobrado, se guarda con el aviso de cobrado de más."
+        submit: "Guardar cambios"
+      update:
+        success: "Venta actualizada."
       show:
         title: "Venta %{number}"
+        edit: "Editar venta"
+        overpaid: "Se cobró %{amount} de más: lo cobrado pasa de lo que se cobra después de editar. Corrige o quita un cobro."
+        void_with_payments:
+          one: "Tiene 1 cobro: al anularla (solo administradores) se quita, deja de contar en la cuenta y, si fue con anticipo, vuelve al saldo del comprador."
+          other: "Tiene %{count} cobros: al anularla (solo administradores) se quitan, dejan de contar en las cuentas y lo que fue con anticipo vuelve al saldo del comprador."
         print: "Imprimir"
         original: "ORIGINAL"
         copy: "COPIA"
@@ -1718,6 +2361,8 @@ es:
         number: "Recibo"
         receipt: "Recibo"
         destroy: "Quitar"
+        edit: "Editar"
+        overpaid: "Cobrado de más"
         confirm_destroy: "¿Quitar este cobro? La venta vuelve a quedar por cobrar."
         none: "Todavía no hay cobros."
       receipt:
@@ -1771,6 +2416,13 @@ es:
         sale: "Venta %{number} · %{buyer}"
         amount_help: "Empieza con lo que falta por cobrar."
         submit: "Guardar cobro"
+      edit:
+        title: "Editar cobro %{number}"
+        admin_only: "Solo administradores: el recibo y la venta cambian con el cobro."
+        amount_help: "Hasta %{amount}: lo que la venta todavía tiene por cobrar sin contar este cobro."
+        submit: "Guardar cobro"
+      update:
+        success: "Cobro actualizado."
       create:
         success: "Cobro registrado."
       destroy:
@@ -1789,8 +2441,8 @@ es:
         receiver_signature: "Recibí conforme"
     buyers:
       index:
-        title: "Compradores"
-        help: "Exportadoras, beneficios y otros compradores del café."
+        title: "Clientes comerciales"
+        help: "Exportadoras, beneficios e intermediarios que le compran el café al negocio."
         new: "Nuevo comprador"
         search_placeholder: "Nombre, RTN o contacto"
         status: "Estado"
@@ -2409,6 +3061,7 @@ es:
         payee_placeholder: "A quién se le pagó"
         new_category: "Nueva categoría"
         receipt_help: "Opcional: foto (JPG, PNG o WebP) o PDF del comprobante, hasta %{size}."
+        kind_help: "Al cambiar entre gasto e inversión, elige una categoría del tipo nuevo: cada uno tiene las suyas."
         remove_receipt: "Quitar el comprobante"
         submit:
           expense: "Registrar gasto"
@@ -2589,12 +3242,19 @@ es:
     consolidations:
       show:
         title: "Consolidación"
-        help: "Los pagos y cobros de los módulos que se registraron sin cuenta. Asígnales una para que los saldos de las cuentas estén completos."
+        help: "Los pagos y cobros de los módulos que se registraron sin cuenta. Asígnales una para que los saldos de las cuentas estén completos. Para cambiar la cuenta de uno que ya tiene, marca «Incluir los que ya tienen cuenta»."
         search_placeholder: "Detalle o persona"
         count:
           zero: "Ningún movimiento sin cuenta"
           one: "1 movimiento sin cuenta"
           other: "%{count} movimientos sin cuenta"
+        count_all:
+          zero: "Ningún movimiento"
+          one: "1 movimiento"
+          other: "%{count} movimientos"
+        with_account: "Incluir los que ya tienen cuenta"
+        no_account: "Sin cuenta"
+        empty_all: "No hay movimientos con estos filtros."
         marked:
           zero: "Ninguno marcado"
           one: "1 marcado"
@@ -2684,7 +3344,6 @@ es:
       new_loan: "Nuevo préstamo"
       loans: "Préstamos"
       credit_accounts: "Estados de cuenta"
-      supplies: "Insumos"
       coffee_collection: "Cobrar con café"
       collection_calendar: "Calendario de cobro"
       portfolio: "Cartera"
@@ -2701,11 +3360,38 @@ es:
         no_history: "Sin historial"
     home:
       index:
+        groups:
+          owed: "Por cobrar hoy"
+          lent: "Prestado (todos los préstamos)"
+          collected: "Cobrado (todos los abonos)"
         stats:
           open_loans: "Préstamos por cobrar"
           principal_owed: "Capital por cobrar"
+          cash_owed: "Capital por cobrar en efectivo"
+          supplies_owed: "Capital por cobrar en insumos"
           interest_owed: "Interés acumulado"
           overdue_loans: "Préstamos vencidos"
+          lent: "Prestado"
+          lent_cash: "Prestado en efectivo"
+          lent_supplies: "Prestado en insumos"
+          principal_collected: "Capital cobrado"
+          cash_collected: "Capital cobrado en efectivo"
+          supplies_collected: "Capital cobrado en insumos"
+          interest_collected: "Interés cobrado"
+        stats_go:
+          open_loans: "Ver los préstamos por cobrar"
+          principal_owed: "Ver los préstamos por cobrar"
+          cash_owed: "Ver los por cobrar con efectivo"
+          supplies_owed: "Ver los por cobrar con insumos"
+          interest_owed: "Ver los préstamos por cobrar"
+          overdue_loans: "Ver los vencidos"
+          lent: "Ver todos los préstamos"
+          lent_cash: "Ver los préstamos con efectivo"
+          lent_supplies: "Ver los préstamos con insumos"
+          principal_collected: "Ver los abonos (todos)"
+          cash_collected: "Ver los préstamos con efectivo"
+          supplies_collected: "Ver los préstamos con insumos"
+          interest_collected: "Ver los abonos (todos)"
         overdue: "Préstamos vencidos"
         overdue_help: "Pasaron su fecha límite y todavía deben. Los más atrasados primero."
         no_overdue: "No hay préstamos vencidos."
@@ -2737,10 +3423,45 @@ es:
         season_option: "Temporada %{season}"
         due_from: "Vence desde"
         due_to: "Vence hasta"
+        unpaid: "Por cobrar (al día y vencidos)"
+        no_zone: "Sin zona"
+        composition: "Lleva"
+        compositions:
+          with_cash: "Efectivo (solo efectivo o mixto)"
+          with_supplies: "Insumos (solo insumos o mixto)"
+        print: "Imprimir"
         chips:
           season: "Cosecha: %{season}"
           due_from: "Vence desde el %{date}"
           due_to: "Vence hasta el %{date}"
+          zone: "Zona: %{name}"
+      totals:
+        label: "Totales de lo filtrado"
+        count:
+          one: "1 préstamo"
+          other: "%{count} préstamos"
+        people:
+          one: "1 persona"
+          other: "%{count} personas"
+        principal: "Capital prestado"
+        paid: "Abonado"
+        principal_paid: "Capital cobrado"
+        interest_paid: "Interés cobrado"
+        principal_owed: "Capital pendiente"
+        cash: "Efectivo %{amount}"
+        supplies: "Insumos %{amount}"
+        interest_owed: "Interés a hoy"
+        total_owed: "Debe hoy"
+      print:
+        title: "Préstamos"
+        page_title: "Imprimir préstamos"
+        help: "Los préstamos que coinciden con los filtros, con sus totales."
+        print: "Imprimir"
+        back: "Volver a préstamos"
+        filters: "Filtros"
+        no_filters: "Sin filtros: todos los préstamos."
+        printed_on: "Impreso el %{date}"
+        truncated: "Se imprimen los primeros %{count} préstamos; los totales cuentan todos."
       show:
         title: "Préstamo %{number}"
         edit: "Editar"
@@ -2765,6 +3486,7 @@ es:
         interest_owed: "Interés acumulado a hoy"
         principal_paid: "Capital pagado"
         interest_paid: "Interés pagado"
+        split: "Efectivo %{cash} · insumos %{supplies}"
         payments: "Abonos"
         no_payments: "Todavía no tiene abonos."
         back: "Volver a préstamos"
@@ -2773,6 +3495,8 @@ es:
       edit:
         title: "Editar préstamo"
       form:
+        supply_option: "%{name} (disponible: %{stock} %{unit})"
+        no_stock: "Sin existencias de %{name}: hay %{available} %{unit} disponibles. Se presta igual: %{missing} %{unit} no se podrán entregar hasta que entren más."
         account_help: "De dónde salió el efectivo (Control financiero). Sin efectivo, no lleva cuenta."
         person_placeholder: "Escribe para buscar una persona"
         person_missing: "Selecciona una persona de la lista"
@@ -2931,6 +3655,9 @@ es:
           lent_cash: "Prestado en efectivo"
           lent_supplies: "Prestado en insumos"
           collected: "Cobrado"
+          principal_collected: "Cobrado de capital"
+          cash_collected: "De eso, efectivo"
+          supplies_collected: "De eso, insumos"
           interest_collected: "Cobrado de interés"
           collected_money: "Cobrado en dinero"
         by_method: "Cobrado por forma de pago"
@@ -2962,6 +3689,7 @@ es:
         current: "Actual"
         chart_label: "Prestado y recuperado por cosecha"
         bar_text: "Prestado %{lent} · recuperado de capital %{back} (%{percent})"
+        capital_split: "Capital: efectivo %{cash} · insumos %{supplies}"
         columns:
           season: "Cosecha"
           loans: "Préstamos"
@@ -3024,36 +3752,6 @@ es:
         success: "Abono registrado."
       destroy:
         success: "Abono quitado."
-    supplies:
-      index:
-        title: "Insumos"
-        new: "Nuevo insumo"
-        help: "Lo que se presta en especie (abono, fungicida...), con su precio predeterminado. Al prestarlo se puede cambiar el precio."
-        status: "Estado"
-        statuses:
-          active: "Activos"
-          inactive: "Inactivos"
-        badges:
-          active: "Activo"
-          inactive: "Inactivo"
-        per_unit: "%{price} por %{unit}"
-        edit: "Editar"
-        actions: "Acciones"
-        empty: "No hay insumos que coincidan con los filtros."
-      new:
-        title: "Nuevo insumo"
-      edit:
-        title: "Editar insumo"
-      form:
-        name_placeholder: "Ej.: Abono 18-46-0"
-        unit_placeholder: "Ej.: saco"
-        unit_suggestions: [saco, quintal, bolsa, libra, galón, litro, unidad]
-        price_help: "Se pone solo al agregarlo a un préstamo; ahí se puede cambiar."
-        active_help: "Un insumo inactivo ya no aparece al prestar. Los préstamos que ya lo tienen no cambian."
-      create:
-        success: "Insumo creado."
-      update:
-        success: "Insumo actualizado."
     borrowers:
       placeholder:
         title: "¿A quién se le presta?"
@@ -3269,6 +3967,7 @@ es:
     farms:
       index:
         title: "Fincas"
+        search_placeholder: "Nombre de la finca o del productor"
         new: "Nueva finca"
         status: "Estado"
         location: "Ubicación"
@@ -4010,6 +4709,7 @@ es:
         description: "Las facturas entregadas a productores: total, lo abonado a préstamos con café, lo que se les ha pagado, el saldo y cuánto se tardó en cancelarlas."
         no_single_method: "Sin pagar o varias formas"
         columns:
+          gross_weight: "Bruto (lb)"
           net_weight: "Neto (lb)"
           number: "Factura"
           issued_on: "Fecha"
@@ -4094,19 +4794,22 @@ es:
         title: "Salidas de vehículos"
         description: "Cada vehículo que salió con café (sin los anulados): lo que pesó en la báscula local, lo que pesó donde el comprador y la diferencia entre las dos."
         columns:
-          number: "Salida"
+          number: "Remisión"
           departed_at: "Salió"
           buyer: "Comprador"
           coffee_state: "Estado del café"
-          remission_number: "Remisión"
           weight_note_number: "Nota de peso"
           sacks: "Sacos"
+          origin_gross: "Bruto local (lb)"
           origin_net: "Neto local (lb)"
+          destination_gross: "Bruto comprador (lb)"
           destination_net: "Neto comprador (lb)"
           difference: "Diferencia (lb)"
           difference_percent: "Diferencia (%)"
           status: "Estado"
           count: "Salidas"
+          shrink_gross: "Merma bruta (lb)"
+          shrink_net: "Merma neta (lb)"
         kpis:
           count: "Salidas"
           origin_net: "Neto que salió (lb)"
@@ -4114,6 +4817,8 @@ es:
           difference: "Diferencia (lb)"
           difference_percent: "Diferencia (%)"
           in_transit: "En camino hoy"
+          shrink_gross: "Merma bruta (lb)"
+          shrink_net: "Merma neta (lb)"
         charts:
           weights:
             title: "Lo que salió y lo que pesó el comprador"
@@ -4183,7 +4888,7 @@ es:
         title: "Inventario de café"
         description: "Cada compra que entró al inventario (su peso neto) y cada salida de vehículo que se fue (su neto local), por estado del café, con el inventario al empezar y al terminar el período."
         purchase: "Compra %{number} · %{name}"
-        shipment: "Salida %{number} · %{name}"
+        shipment: "Remisión %{number} · %{name}"
         conversion_out: "Proceso %{number} · %{from} → %{to}"
         conversion_in: "Proceso %{number} · %{from} → %{to}"
         kinds:
@@ -4228,6 +4933,7 @@ es:
           zone: "Zona"
           purchases_count: "Compras"
           quintals: "QQ"
+          common_quintals: "Café corriente (QQ)"
           total: "Total"
           average_price: "Precio prom./lb"
           last_purchase_on: "Última compra"
@@ -4608,7 +5314,9 @@ es:
           payroll_expenses: "Gasto de planilla"
           sale_payments: "Cobro de venta"
           buyer_advances: "Anticipo de comprador"
+          supply_sales: "Venta de insumos"
           processing_costs: "Gasto de procesamiento"
+          shipment_costs: "Gasto de salida"
           expenses: "Gasto"
           investments: "Inversión"
           staff_payments: "Pago de planilla interna"
@@ -4671,14 +5379,14 @@ es:
       how_it_works: "¿Cómo funciona?"
     general:
       title: "Cómo usar el sistema"
-      summary: "El sistema está dividido en módulos. Solo ves los módulos y botones para los que tienes permiso."
+      summary: "El sistema está dividido en módulos, y cada módulo en pestañas. Solo ves los módulos, pestañas y botones para los que tienes permiso."
       steps:
         - "Entra a un módulo desde el Inicio o desde el menú de arriba (en el celular, el botón «Menú»)."
         - "En las listas, usa «Filtros» para buscar y toca cualquier parte de una fila (o su botón «Detalle» o «Abrir») para abrir el registro."
         - "Los botones «Nuevo…» y «Editar» abren un formulario; al guardar, la lista se actualiza sola."
         - "Toca el botón «?» en cualquier pantalla para ver cómo se usa."
       tips:
-        - "Si no ves un módulo o un botón, pídele a un administrador que te dé el permiso."
+        - "Si no ves un módulo, una pestaña o un botón, pídele a un administrador que te dé el permiso."
         - "Si aparece un error con un código de referencia, pásale ese código a un administrador."
         - "El Inicio y las pantallas de Compra de café y Préstamos se actualizan solas cuando otra persona registra algo: lo nuevo aparece con un brillo y las cifras que cambian dan un pulso. Abajo a la izquierda dice «En vivo». Si tienes una ventana abierta, se actualiza al cerrarla."
     processes:
@@ -5002,7 +5710,68 @@ es:
             - "Toca tu nombre para abrir «Mi configuración»: ventanas o panel lateral, y el menú arriba o a la izquierda."
           tips:
             - "Si no ves ningún módulo, pídele a un administrador que te asigne permisos."
+      person_panels:
+        show:
+          title: "Panel de la persona"
+          summary: "Se abre al poner un dedo registrado en el lector de huella de esta PC: quién es, lo pendiente y atajos."
+          steps:
+            - "Arriba, su foto, sus roles, su DNI, su teléfono y su zona."
+            - "Los atajos hacen lo más común para esa persona: a un productor, una compra nueva; a quien debe, un abono; a un carrero, pagarle; a un motorista, una salida."
+            - "Debajo, lo que tiene pendiente en cada módulo que puedes ver."
+          tips:
+            - "Si estás en una página con un campo de persona (Nueva compra, Nuevo préstamo, el motorista de Nueva salida), el dedo llena ese campo en vez de abrir el panel."
+            - "En Facturar compras, Productores, Carreros, Estados de cuenta y Personas, el dedo abre lo de esa persona en esa pantalla."
+      fingerprint_matches:
+        show:
+          title: "Huella reconocida"
+          summary: "Lo que la página necesita para llenar un campo con la persona del dedo."
+          steps:
+            - "La usa el sistema solo: al poner un dedo, la página llena su campo de persona o abre su panel."
+      fingerprint_bridge:
+        templates:
+          show:
+            title: "Huellas para el programa del lector"
+            summary: "Lo pide el programa del lector de cada PC para reconocer los dedos."
+            steps:
+              - "La usa el programa del lector al arrancar y cada vez que se registra o quita una huella."
       administration:
+        fingerprint_stations:
+          index:
+            title: "Lectores de huella"
+            summary: "Las PC con lector ZK9500. Solo administradores."
+            steps:
+              - "Toca «Agregar lector» desde la PC donde está el lector."
+              - "Cada lector dice si su programa está abierto y si el lector está conectado."
+          show:
+            title: "Lector de huella"
+            summary: "Su estado, el código para el programa del lector y qué navegadores lo usan."
+            steps:
+              - "«Nuevo código» da un código de 6 números para escribir en el programa del lector; vence en 15 minutos."
+              - "«Usar en este navegador» hace que lo que este lector reconoce se abra en este navegador."
+              - "«Desactivar» corta el programa y los navegadores."
+          form:
+            title: "Agregar lector de huella"
+            summary: "Dale un nombre a la PC; este navegador queda enlazado al lector."
+            steps:
+              - "Escribe el nombre de la PC (Caja, Báscula…)."
+              - "Toca «Agregar y ver el código» y escribe ese código en el programa del lector."
+        fingerprints:
+          form:
+            title: "Registrar huella"
+            summary: "La persona pone el mismo dedo 3 veces en el lector de esta PC. Solo administradores, con su consentimiento."
+            steps:
+              - "Elige el dedo; conviene registrar 2 o 3 dedos por persona."
+              - "Marca que la persona aceptó y toca «Empezar»."
+            tips:
+              - "Con manos sucias, húmedas o con callos, limpia el lector y el dedo, o usa otro dedo."
+          show:
+            title: "Registrando huella"
+            summary: "Los 3 círculos se llenan con cada lectura; al terminar vuelve a la persona."
+            steps:
+              - "La persona pone el dedo en el lector cuando la pantalla lo pide, 3 veces."
+              - "Al terminar, vuelve sola a la página de la persona con la huella en su lista."
+            tips:
+              - "Si esa huella ya es de otra persona, no se guarda: puede ser la misma persona registrada dos veces."
         private_documents:
           index:
             title: "Documentos privados"
@@ -5157,22 +5926,25 @@ es:
               - "Los usuarios no se borran: se desactivan para conservar el registro de lo que hicieron."
           show:
             title: "Detalle del usuario"
-            summary: "Muestra el tipo, el estado y los permisos por módulo del usuario."
+            summary: "Muestra el tipo, el estado y los permisos del usuario en cada pestaña de cada módulo."
             steps:
               - "Toca «Editar» para cambiar sus datos, permisos o estado."
               - "Toca «Restablecer contraseña» si la olvidó."
           form:
             title: "Crear o editar un usuario"
-            summary: "Cada usuario tiene permisos separados de ver, crear, editar y borrar en cada módulo."
+            summary: "Cada usuario tiene permisos separados de ver, crear, editar y borrar en cada pestaña de cada módulo."
             steps:
               - "Escribe el nombre completo y el correo electrónico."
               - "Al crearlo, define una contraseña de al menos 8 caracteres y confírmala."
               - "Marca «Administrador» solo si debe tener acceso completo y manejar usuarios."
-              - "En la tabla de permisos, marca qué puede hacer en cada módulo."
+              - "En la tabla de permisos, marca qué puede hacer en cada pestaña (Compras, Facturas, Productores…)."
+              - "La fila de cada módulo, «Todo el módulo», marca o quita esa columna en todas sus pestañas; si solo algunas la tienen, la casilla se ve a medias."
               - "Para quitarle el acceso, edítalo y desmarca «Activo»."
             tips:
               - "Un usuario inactivo no puede entrar, y si tenía una sesión abierta, se cierra."
               - "No se puede desactivar ni quitar el rol de administrador al último administrador activo."
+              - "Con al menos una pestaña, el usuario ve el módulo: su Resumen y el Inicio muestran solo lo de las pestañas que ve, y si el Resumen no tiene nada para él, el módulo abre en su primera pestaña."
+              - "Usuarios, Auditoría, Configuración del sitio, Documentos privados y Fusionar personas siguen siendo solo para administradores."
           edit_password:
             title: "Restablecer contraseña"
             summary: "Define una contraseña nueva para el usuario cuando la olvidó."
@@ -5219,6 +5991,18 @@ es:
               - "Un logo cuadrado se ve mejor: va dentro de un círculo pequeño."
               - "Para volver al grano de café, marca «Quitar el logo actual»."
       trading:
+        idle_producers:
+          index:
+            title: "Productores que no venden"
+            summary: "Los productores que ya vendieron y llevan ese tiempo sin vender, primero los que dejaron de vender más recientemente."
+            steps:
+              - "Elige el tiempo: 7 días, 15 días o un mes."
+              - "Busca por nombre o filtra por zona; toca una fila para abrir al productor."
+          card:
+            title: "Productores que no venden (Inicio)"
+            summary: "La tarjeta del Inicio con los últimos 30 productores que llevan ese tiempo sin vender."
+            steps:
+              - "Cambia el tiempo en la lista de arriba; toca «Ver todos» para la lista completa."
         home:
           index:
             title: "Resumen de compra de café"
@@ -5244,7 +6028,7 @@ es:
               - "Toca «Nueva compra» para registrar una sin salir de la lista."
             tips:
               - "Al elegir una temporada se borran las fechas, para ver la temporada completa. Solo salen las temporadas que tienen compras."
-              - "Las compras anuladas no aparecen; marca «Mostrar anuladas» en «Filtros» para verlas."
+              - "Las compras anuladas no aparecen: elige «Anuladas» o «Todos los estados, con anuladas» en «Estado» para verlas."
               - "Los totales de arriba nunca cuentan las compras anuladas."
           show:
             title: "Detalle de la compra"
@@ -5384,12 +6168,16 @@ es:
               - "Deja marcadas las compras que van en la factura."
               - "En «Pago», elige si queda pendiente, si se paga completa (cancelada) o si se paga una parte (pago parcial)."
               - "Si se paga algo, elige la forma y la fecha de pago; en pago parcial escribe el monto pagado ahora."
+              - "Si la factura va en un lote, elígelo en «Lote» y escribe la parte (%): abajo ves cuántas libras brutas y netas toma y cuánto le queda al lote."
               - "Toca «Crear factura»."
             tips:
               - "Si falta una compra, toca «Nueva compra para este productor»: se registra en una ventana y aparece en la lista."
               - "Si una compra no va, toca «Anular» en su fila: sale de la lista y de los totales."
-              - "Las compras facturadas ya no se pueden editar, anular ni borrar."
+              - "Las compras facturadas ya no se pueden editar, anular ni borrar; solo un administrador, desde «Editar factura»."
               - "La lista muestra cuánto restó el daño de cada compra, en libras y en lempiras."
+              - "«Lote» solo muestra los lotes del estado del café y la bodega de las compras marcadas, con espacio bajo su límite; si la parte no cabe, no se crea la factura."
+              - "En «Editar factura» se cambia su lote o su parte, o se saca del lote con «Sin lote»; si no se tocan, el lote se queda con las libras que ya tomó."
+              - "«Editar factura» (solo administradores, aunque esté cancelada): cambia la fecha, las observaciones y qué compras lleva; las desmarcadas quedan sin facturar. Cada compra se edita con «Editar compra». Si el total baja de lo pagado, sale el aviso de «Pagado de más»."
           show:
             title: "Factura"
             summary: "El recibo para el productor, con original y copia."
@@ -5402,7 +6190,18 @@ es:
             tips:
               - "Desde la ventana de detalle, «Imprimir» abre la factura en página completa."
               - "En pergamino, «Daño (lb)» y «Daño (L)» muestran lo que el daño restó de cada compra, con su porcentaje; en uva no aplica."
-              - "Una factura no se borra; una vez cancelada, ya no cambia."
+              - "Una factura no se borra. Solo un administrador la edita o la anula, aunque esté cancelada, y edita o quita cualquier abono."
+        invoice_voids:
+          form:
+            title: "Anular factura"
+            summary: "Solo administradores, aunque esté cancelada: la factura y sus compras quedan anuladas y sus abonos se quitan."
+            steps:
+              - "Lee lo que pasa al anular: compras anuladas (su café sale del inventario), abonos quitados (dejan de contar en las cuentas) y la factura sale de su salida."
+              - "Escribe el motivo y toca «Anular factura»."
+            tips:
+              - "No se puede deshacer. La factura conserva su número y se ve en Facturas eligiendo el estado «Anulada»."
+              - "Si una compra abonó un préstamo (pago con café), quita ese abono antes."
+              - "Lo quitado queda en la auditoría."
         producer_cards:
           show:
             title: "Ficha del productor en la compra"
@@ -5509,8 +6308,10 @@ es:
               - "Revisa la barra de etapas: salió, pesada en destino, vendida, cobrada."
               - "Usa el botón del siguiente paso: registrar el peso en destino, vender o ver la venta."
               - "Mientras no esté en una venta, puedes editarla o anularla."
+              - "En «Costo de la salida», elige sus facturas de compra, registra sus gastos o asígnale gastos de Control financiero: sale el costo total y por libra neta."
             tips:
-              - "Anular una salida devuelve su café al inventario."
+              - "Anular una salida devuelve su café al inventario y deja libres sus facturas y gastos asignados. Con gastos registrados desde ella, quítalos primero."
+              - "Sin facturas, la salida dice que falta el costo del café."
           form:
             title: "Registrar o editar una salida"
             summary: "El vehículo que sale: comprador, papeles y el peso en la báscula local. El sistema calcula la tara, el peso neto y los QQ mientras escribes."
@@ -5523,6 +6324,7 @@ es:
             tips:
               - "Tara: 1 libra por saco contado. Neto: como en las compras."
               - "Si sale más café del que hay en inventario de ese estado, aparece un aviso; se puede guardar igual."
+              - "Un administrador puede marcar «Sin báscula local»: la salida se guarda sin peso ni sacos locales, no saca café del inventario y no tiene diferencia entre básculas hasta que alguien escriba la báscula local editándola (también ya vendida)."
         arrivals:
           form:
             title: "Peso en destino"
@@ -5534,6 +6336,182 @@ es:
             tips:
               - "La venta se cobra con este peso."
               - "Si la diferencia pasa la tolerancia, el recuadro se marca en rojo."
+        remissions:
+          show:
+            title: "Remisión de la salida"
+            summary: "El papel que acompaña al café en el camino, con los campos del talonario: a dónde va, cuánto lleva, quién lo manda y quién lo lleva."
+            steps:
+              - "Ábrela con «Imprimir remisión» en el detalle de la salida o con «Remisión» en la lista."
+              - "Revisa los datos y toca «Imprimir»: salen el original y la copia, cada uno en su hoja."
+              - "Firman el remisor, quien recibe y el motorista."
+            tips:
+              - "El número es el de «Remisión» de la salida (el del talonario). Si está vacío, sale la línea para escribirlo."
+              - "Latas y equivalentes en QQ oro salen en blanco para llenar a mano."
+              - "El propietario y los teléfonos del encabezado se escriben en Administración → Configuración del sitio."
+              - "Con transportista en vez de motorista, el nombre, teléfono e identidad del motorista salen en blanco."
+        supply_stocks:
+          show:
+            title: "Insumos"
+            summary: "Cuánto hay de cada insumo en bodega, cuánto se debe entregar y cuánto queda para prestar, y cada entrada con su costo."
+            steps:
+              - "Revisa «Existencias»: entró, prestado, entregado, por entregar, en bodega, disponible y lo invertido de cada insumo."
+              - "Si «Disponible» está en rojo, se prestó más de lo que entró: tócalo para ver a quién se le debe."
+              - "Toca «Registrar entrada» (o «Entrada» en un insumo) cuando se compren insumos; una entrada lleva todos los de la factura."
+              - "Toca «Registrar salida» (o «Salida» en un insumo) cuando se venda por aparte o lo use el negocio: baja la bodega y, si es venta, el dinero entra a la cuenta."
+              - "Filtra las entradas por insumo, fechas o texto; toca una para ver su detalle, su factura y su inversión."
+            tips:
+              - "Cada entrada registra sola su inversión en Control financiero; al quitar la entrada, se quita la inversión."
+              - "Un préstamo puede llevar más de lo que hay: queda por entregar hasta que entre y un administrador lo marque entregado."
+              - "Cuentan los préstamos desde que empezó el inventario."
+              - "Los insumos se crean y se desactivan en «Catálogo de insumos»."
+        supply_exits:
+          index:
+            title: "Salidas de insumos"
+            summary: "Lo que sale de la bodega sin préstamo: ventas por aparte y lo que usa el negocio."
+            steps:
+              - "Toca «Registrar salida» (o «Salida» en un insumo de «Existencias»)."
+              - "Filtra por motivo, insumo, fechas o persona; toca una para ver su detalle."
+            tips:
+              - "Una venta por aparte suma a la cuenta elegida y sale en Ingresos y Movimientos."
+              - "No sale más de lo que hay en bodega."
+          form:
+            title: "Registrar salida de insumos"
+            summary: "Lo que se vende por aparte o lo que usa el negocio."
+            steps:
+              - "Elige el motivo: «Venta por aparte» o «Uso del negocio»."
+              - "Elige el insumo (debajo dice cuánto hay en bodega) y escribe la cantidad y la fecha."
+              - "En una venta, elige a quién se le vende, revisa el precio por unidad (empieza en el del catálogo), la forma de pago y la cuenta."
+              - "Toca «Registrar salida»."
+            tips:
+              - "El uso del negocio no mueve dinero: solo baja la bodega."
+              - "Una salida no se edita: se quita y se registra de nuevo."
+          show:
+            title: "Salida de insumos"
+            summary: "Qué salió, por qué y, si fue venta, a quién, por cuánto y a qué cuenta entró."
+            steps:
+              - "«Quitar salida» devuelve lo que salió a la bodega y, si fue venta, saca su dinero de la cuenta."
+        supply_deliveries:
+          index:
+            title: "Insumos por entregar"
+            summary: "Lo que los préstamos llevan en insumos y si ya se entregó: a quién se le debe."
+            steps:
+              - "Filtra por estado (por entregar, entregados o todos), insumo o persona."
+              - "Un administrador toca «Marcar entregado» cuando lo entrega: sale de la bodega."
+              - "«Deshacer» lo devuelve a la bodega y lo deja por entregar."
+            tips:
+              - "No se puede marcar entregado lo que no hay en bodega: registra antes su entrada."
+        supplies:
+          index:
+            title: "Catálogo de insumos"
+            summary: "Lo que se compra y se presta en especie, como sacos de abono, con su precio predeterminado."
+            steps:
+              - "Busca por nombre o filtra por activos e inactivos en «Filtros»."
+              - "Toca «Nuevo insumo» para agregar uno, o «Editar» para cambiar su nombre, unidad o precio."
+            tips:
+              - "Cambiar el precio predeterminado no cambia los préstamos que ya se hicieron."
+              - "Un insumo que ya no se presta se desactiva; no se borra."
+          form:
+            title: "Crear o editar un insumo"
+            summary: "Nombre, unidad en que se presta y precio predeterminado por unidad."
+            steps:
+              - "Escribe el nombre, por ejemplo «Abono 18-46-0»."
+              - "Escribe la unidad, por ejemplo «saco»; puedes elegir una de las sugeridas."
+              - "Escribe el precio por unidad que se pone al prestarlo."
+              - "Toca el botón de guardar."
+            tips:
+              - "Si lo creas desde un préstamo o una entrada de insumos, al guardar queda elegido ahí."
+        supply_entries:
+          form:
+            title: "Registrar entrada de insumos"
+            summary: "Lo que se compró en una factura del proveedor, con uno o varios insumos: se suma al inventario y se registra su inversión."
+            steps:
+              - "Elige el insumo, la cantidad y lo que costó en total; con «Agregar otro insumo» agrega los demás de la misma factura."
+              - "Si el insumo no existe, toca «Nuevo insumo»: se crea y queda elegido."
+              - "Sube, si quieres, la foto o el PDF de la factura."
+              - "Elige la categoría de la inversión, el proveedor, la forma de pago y la cuenta de donde salió el dinero."
+              - "Toca «Registrar entrada»."
+            tips:
+              - "La inversión no se edita aparte: si algo salió mal, quita la entrada y regístrala de nuevo."
+          show:
+            title: "Entrada de insumos"
+            summary: "Lo que entró, lo que costó y la inversión que registró."
+            steps:
+              - "«Ver la inversión» la abre en Control financiero."
+              - "«Ver la factura» abre la foto o el PDF que se subió."
+              - "«Quitar entrada» la saca del inventario junto con su inversión, si lo que trajo no se entregó todavía en préstamos."
+        coffee_batches:
+          index:
+            title: "Lotes"
+            summary: "El café comprado en lotes, los más recientes primero: cada uno con su bodega, su estado del café, su límite de libras brutas y una parte de facturas de compra."
+            steps:
+              - "Filtra por fechas, estado del café, bodega, si ya salió, o busca por número o productor."
+              - "Toca «Nuevo lote» para crear uno y elegir sus facturas."
+              - "Toca un lote para ver sus facturas y en qué salida va."
+          show:
+            title: "Lote"
+            summary: "Sus libras brutas y netas contra su límite, su valor de compra, sus facturas con la parte de cada una y la salida en que va."
+            steps:
+              - "«Agregar facturas» suma más facturas mientras quepan en su límite."
+              - "«Quitar» saca una factura: su parte queda libre para otro lote."
+            tips:
+              - "Un lote en una salida vendida ya no cambia; uno en una salida no se quita."
+          form:
+            title: "Crear o editar un lote"
+            summary: "Su fecha, su bodega, su estado del café y lo máximo de libras brutas que puede llevar."
+            steps:
+              - "Escribe la fecha y el límite en libras brutas."
+              - "Elige la bodega y el estado del café: solo entran facturas de ese estado con sus compras en esa bodega."
+              - "Toca «Crear lote y elegir facturas»."
+            tips:
+              - "Con facturas, su estado del café y su bodega ya no cambian."
+        coffee_batch_invoices:
+          form:
+            title: "Facturas para un lote"
+            summary: "Elige las facturas de compra del lote y la parte (%) de cada una."
+            steps:
+              - "Filtra por productor o número, fechas, temporada o zona."
+              - "Marca cada factura y escribe su parte; abajo ves cuántas libras brutas suman contra lo que cabe."
+              - "Toca «Agregar al lote»."
+            tips:
+              - "Una factura puede repartirse en varios lotes, sin pasar del 100 % entre todos."
+              - "El lote no pasa de su límite de libras brutas."
+        shipment_batches:
+          form:
+            title: "Lotes para una salida"
+            summary: "Los lotes libres del estado del café y la bodega de la salida."
+            steps:
+              - "Marca los lotes (o «Marcar todos») y toca «Agregar a la salida»."
+              - "«Nuevo lote» crea uno sin salir de aquí."
+            tips:
+              - "El café de sus lotes es el que sale del inventario; la merma es lo que dicen sus compras menos la báscula local."
+        shipment_expenses:
+          form:
+            title: "Asignar gastos a la salida"
+            summary: "Elige gastos ya registrados en Control financiero para sumarlos al costo de la salida."
+            steps:
+              - "Filtra por texto, fechas (este mes, si no las cambias) o categoría."
+              - "Marca los gastos y toca «Asignar a la salida»."
+            tips:
+              - "Un gasto va a una sola salida y sigue siendo un gasto de Control financiero: no se mueve dinero."
+              - "Para un gasto nuevo de la salida, usa «Registrar gasto» en la salida."
+        shipment_costs:
+          form:
+            title: "Registrar un gasto de la salida"
+            summary: "Flete, mano de obra, carga y descarga, combustible u otro: se suma al costo de la salida y sale de una cuenta."
+            steps:
+              - "Elige el concepto y, si es «Otro», escribe el detalle."
+              - "Elige cómo se cobra: monto total, por libra o por quintal."
+              - "Por libra o quintal, elige sobre qué peso (báscula local o del comprador, brutas o netas) y el precio."
+              - "Escribe la fecha, la forma de pago y la cuenta, y guarda."
+            tips:
+              - "El peso del comprador se puede usar cuando la salida ya se pesó en destino."
+              - "Un gasto no se edita: se quita y se registra de nuevo. Una salida con gastos registrados no se anula hasta quitarlos."
+        driver_cards:
+          show:
+            title: "Datos del motorista"
+            summary: "Bajo el motorista elegido en la salida: su identidad y su teléfono, que salen en la remisión."
+            steps:
+              - "Si le falta la identidad o el teléfono, toca «Editar» a la derecha del motorista, complétalo y guarda: la salida no se pierde."
         sales:
           index:
             title: "Ventas"
@@ -5553,6 +6531,7 @@ es:
               - "Mientras no tenga cobros, puedes anularla con su motivo."
             tips:
               - "Al anular, sus salidas quedan libres para otra venta."
+              - "Un administrador edita la venta («Editar venta»: fecha, precio, libras por quintal, documento, observaciones y salidas) y la anula aunque tenga cobros: se quitan, dejan de contar en las cuentas y lo cobrado con anticipo vuelve al saldo del comprador. También edita o quita cualquier cobro."
           form:
             title: "Nueva venta"
             summary: "Agrupa salidas de un comprador, ya pesadas en destino, en una venta."
@@ -5588,10 +6567,11 @@ es:
               - "Guarda: se abre el recibo listo para imprimir."
             tips:
               - "No puede pasar de lo que falta ni ir antes de la venta o del último cobro."
+              - "Un administrador puede editar un cobro ya registrado (monto, fecha, forma de pago, cuenta u observaciones), sin pasar de lo que la venta tiene por cobrar."
         buyers:
           index:
-            title: "Compradores"
-            summary: "Exportadoras, beneficios y otros compradores, con lo enviado, lo vendido y lo que deben."
+            title: "Clientes comerciales"
+            summary: "Exportadoras, beneficios e intermediarios, con lo enviado, lo vendido y lo que deben."
             steps:
               - "Busca por nombre, RTN o contacto; filtra por tipo o estado."
               - "Toca una fila para ver sus ventas, salidas y cobros."
@@ -5985,6 +6965,7 @@ es:
               - "Si quieres, adjunta la foto o el PDF del comprobante."
             tips:
               - "La foto o el PDF puede pesar hasta 1 MB."
+              - "Al editar, se puede cambiar de gasto a inversión y al revés: elige el tipo y una categoría del tipo nuevo. Pide poder crear en la otra pestaña; un gasto asignado a una salida no pasa a inversión."
         expense_receipts:
           show:
             title: "Comprobante"
@@ -6061,7 +7042,8 @@ es:
             tips:
               - "La categoría solo se cambia en lo que la lleva (los gastos de planilla, con las categorías de Fincas); a lo demás no se le toca."
               - "Solo cambian la cuenta y la categoría; el pago queda como estaba y el cambio queda en la auditoría."
-              - "Los gastos, inversiones, otros ingresos y transferencias siempre llevan cuenta: no salen aquí."
+              - "Con «Incluir los que ya tienen cuenta» salen también los que ya tienen una, con su cuenta en una columna, para cambiarla: el saldo pasa de una cuenta a la otra."
+              - "Los gastos, inversiones, otros ingresos y transferencias siempre llevan cuenta y se cambian desde su propio formulario: no salen aquí."
         budgets:
           show:
             title: "Presupuesto"
@@ -6345,9 +7327,13 @@ es:
         home:
           index:
             title: "Resumen de préstamos"
-            summary: "Lo que hay por cobrar hoy y los préstamos vencidos."
+            summary: "Lo que hay por cobrar hoy, lo cobrado de capital y de interés, y los préstamos vencidos."
             steps:
-              - "Revisa las cifras: préstamos por cobrar, capital, interés acumulado y vencidos."
+              - "Revisa las cifras en tres grupos: por cobrar hoy, prestado y cobrado. El capital sale también separado en efectivo e insumos."
+              - "Toca una cifra para ver su detalle: abre la lista de préstamos ya filtrada (por cobrar, vencidos, con efectivo o con insumos); el capital y el interés cobrados en total abren el reporte de abonos, si ves Reportería."
+            tips:
+              - "En un préstamo mixto, cada abono de capital se reparte entre efectivo e insumos en la misma proporción en que se prestó. El interés no se reparte."
+              - "Los préstamos mixtos salen tanto en «con efectivo» como en «con insumos»."
               - "En «Préstamos vencidos» toca «Detalle» para ver un préstamo y registrarle un abono."
               - "Usa las pestañas de arriba para prestar, ver todos los préstamos o los estados de cuenta."
         loans:
@@ -6355,9 +7341,22 @@ es:
             title: "Préstamos"
             summary: "Todos los préstamos, los más recientes primero, con lo que debe hoy cada uno."
             steps:
-              - "Filtra por fechas del préstamo, por persona o por estado: al día, vencido o pagado."
+              - "Filtra por fechas del préstamo, por persona, por estado (al día, vencido, pagado o por cobrar), por la zona de la persona, por cosecha o por vencimiento."
+              - "Con algún filtro, arriba de la lista salen los totales de todo lo filtrado: capital prestado, capital cobrado, interés cobrado, capital pendiente, interés a hoy y lo que deben hoy; el capital, también en efectivo e insumos."
+              - "«Lleva» filtra los préstamos con efectivo o con insumos (los mixtos salen en los dos)."
+              - "Toca «Imprimir» para sacar en papel la lista con esos filtros y sus totales."
               - "Toca «Detalle» para ver el préstamo, sus abonos y registrar uno nuevo."
               - "Toca «Nuevo préstamo» para prestar."
+            tips:
+              - "En Cartera, «Ver préstamos» de una zona abre esta lista con esa zona y los préstamos por cobrar."
+          print:
+            title: "Imprimir préstamos"
+            summary: "La lista de préstamos con los filtros que elegiste, con sus totales, lista para imprimir."
+            steps:
+              - "Revisa los filtros y los totales arriba de la tabla."
+              - "Toca «Imprimir»; la ventana de impresión se abre sola al llegar."
+            tips:
+              - "Los totales cuentan todos los préstamos filtrados, aunque sean más de los que caben en la hoja."
           show:
             title: "Detalle del préstamo"
             summary: "Cuánto se prestó (efectivo e insumos), cuánto debe hoy y cada abono con lo que fue a interés y a capital."
@@ -6421,26 +7420,6 @@ es:
             tips:
               - "El saldo es el de la fecha del abono; los abonos posteriores no lo cambian."
               - "El recibo de cualquier abono, también los pagados con café, se abre con el botón «Recibo» en el detalle del préstamo."
-        supplies:
-          index:
-            title: "Insumos"
-            summary: "Lo que se presta en especie, como sacos de abono, con su precio predeterminado."
-            steps:
-              - "Busca por nombre o filtra por activos e inactivos en «Filtros»."
-              - "Toca «Nuevo insumo» para agregar uno, o «Editar» para cambiar su nombre, unidad o precio."
-            tips:
-              - "Cambiar el precio predeterminado no cambia los préstamos que ya se hicieron."
-              - "Un insumo que ya no se presta se desactiva; no se borra."
-          form:
-            title: "Crear o editar un insumo"
-            summary: "Nombre, unidad en que se presta y precio predeterminado por unidad."
-            steps:
-              - "Escribe el nombre, por ejemplo «Abono 18-46-0»."
-              - "Escribe la unidad, por ejemplo «saco»; puedes elegir una de las sugeridas."
-              - "Escribe el precio por unidad que se pone al prestarlo."
-              - "Toca el botón de guardar."
-            tips:
-              - "Si lo creas desde un préstamo, al guardar queda elegido en ese préstamo."
         credit_accounts:
           index:
             title: "Estados de cuenta"
@@ -6474,7 +7453,7 @@ es:
             tips:
               - "Un filtro guardado con «Este mes» siempre muestra el mes en curso, no el mes en que lo guardaste."
               - "«Exportar a Excel (CSV)» baja todos los registros del reporte con estos filtros, no solo los que se ven."
-              - "Cada reporte necesita el permiso de ver de Reportería y el del módulo de donde salen sus datos."
+              - "Cada reporte necesita el permiso de ver de Reportería y el de la pestaña de donde salen sus datos (el de compras, Compras; el de facturas, Facturas)."
           charts:
             title: "Gráficos del reporte"
             summary: "Los gráficos de los datos filtrados del reporte."
@@ -6501,6 +7480,70 @@ es:
               - "Se guarda el período por su nombre: «Este mes» siempre es el mes en curso."
 
   administration:
+    fingerprint_stations:
+      index:
+        title: "Lectores de huella"
+        help: "Cada PC con un lector ZK9500 y su programa del lector. Lo que el lector reconoce se abre en los navegadores enlazados a esa PC."
+        new: "Agregar lector"
+        state: "Estado"
+        actions: "Acciones"
+        this_browser: "Este navegador"
+        inactive: "Desactivado"
+        unpaired: "Falta emparejar el programa"
+        empty: "Todavía no hay lectores. Agrega uno desde la PC donde está conectado."
+      new:
+        title: "Agregar lector de huella"
+        help: "Hazlo desde el navegador de la PC donde está conectado el lector: este navegador queda enlazado y después te damos el código para el programa del lector."
+        name_placeholder: "Caja, Báscula, Oficina…"
+        submit: "Agregar y ver el código"
+      create:
+        success: "Lector agregado. Escribe el código en el programa del lector."
+      show:
+        linked: "este navegador está enlazado"
+        not_linked: "este navegador no está enlazado"
+        link: "Usar en este navegador"
+        new_code: "Nuevo código"
+        deactivate: "Desactivar"
+        confirm_deactivate: "¿Desactivar «%{name}»? Su programa deja de conectarse y nadie más ve lo que reconoce."
+        code_title: "Código para el programa del lector"
+        code_help: "En la PC, abre el programa del lector y escribe la dirección %{url} y este código. Vence en %{minutes} minutos y sirve una sola vez."
+        back: "Volver a los lectores"
+      pairing:
+        success: "Código nuevo. El programa del lector que tenía deja de servir cuando se empareje otro."
+      link:
+        success: "Este navegador ya está enlazado al lector."
+      destroy:
+        success: "Lector desactivado."
+    fingerprints:
+      new:
+        title: "Registrar huella: %{name}"
+        help: "Se usa el lector «%{station}». Elige el dedo y toca «Empezar»: la persona pone el mismo dedo 3 veces."
+        consent: "%{name} aceptó que se registre su huella para identificarla en el negocio."
+        consent_required: "Falta el consentimiento de la persona."
+        recommended: "%{finger} (recomendado)"
+        finger_help: "Registra primero el índice derecho; agrega otro dedo por si ese se lastima o no lo lee bien."
+        submit: "Empezar"
+        no_station: "Este navegador no está enlazado a un lector de huella. Hazlo desde «Lectores de huella» en la PC donde está el lector."
+        stations: "Ir a Lectores de huella"
+      show:
+        title: "Registrar huella: %{name}"
+        finger: "Dedo: %{finger}"
+        retry: "Intentar otra vez"
+        texts:
+          put: "Pon el dedo en el lector (%{n} de 3)."
+          saving: "Guardando…"
+          done: "Huella registrada."
+          timeout: "El lector no respondió. Revisa que el programa del lector esté abierto y el lector conectado."
+      destroy:
+        success: "Se quitó la huella: %{finger}."
+      failures:
+        mismatch: "No fue el mismo dedo las 3 veces. Inténtalo otra vez."
+        timeout: "No se puso el dedo a tiempo."
+        merge: "El lector no pudo juntar las 3 lecturas. Limpia el lector y el dedo, e inténtalo otra vez."
+        no_reader: "El lector no está conectado a la PC."
+        busy: "El lector está ocupado con otro registro."
+        other: "El lector no pudo registrar la huella."
+        duplicate: "Esa huella ya está registrada para %{name} (%{finger}). Si es la misma persona, fusiona las dos personas."
     private_documents:
       index:
         title: "Documentos privados"
@@ -6538,6 +7581,7 @@ es:
       audit_events: "Auditoría"
       site_setting: "Configuración del sitio"
       backup: "Respaldo"
+      fingerprint_stations: "Lectores de huella"
     backups:
       show:
         title: "Respaldo de datos"
@@ -6587,15 +7631,17 @@ es:
         farms_description: "Todas las fincas, del negocio y de los productores: crear, editar y borrar las que no se usan."
         zones_description: "Las zonas de donde vienen las personas: crear, editar y borrar las que no se usan."
         backup_description: "Descarga una copia de todos los datos (base de datos y CSV)."
-        users_description: "Crear usuarios, asignar permisos por módulo y restablecer contraseñas."
+        fingerprint_stations_description: "Las PC con lector de huella: agrégalas, empareja su programa y registra las huellas de las personas."
+        users_description: "Crear usuarios, asignar permisos por pestaña de cada módulo y restablecer contraseñas."
         audit_description: "Quién creó, modificó o borró qué, y cuándo."
         site_description: "Nombre del negocio, ubicación y logo que se ven en la barra, el inicio de sesión y los impresos."
     site_settings:
       show:
         title: "Configuración del sitio"
-        help: "Cómo se presenta el negocio: el nombre va en la barra de navegación, la pestaña del navegador, el inicio de sesión y los impresos (facturas, recibos, planillas y cierre diario); la ubicación, en el inicio de sesión y los impresos; el RTN, en las facturas; el logo, en el botón de inicio de la barra y en el inicio de sesión."
+        help: "Cómo se presenta el negocio: el nombre va en la barra de navegación, la pestaña del navegador, el inicio de sesión y los impresos (facturas, recibos, planillas y cierre diario); la ubicación, en el inicio de sesión y los impresos; el RTN, en las facturas; el propietario y los teléfonos, en la remisión de las salidas; el logo, en el botón de inicio de la barra y en el inicio de sesión."
         edit: "Editar"
         values: "Datos"
+        phones: "Teléfonos"
         no_logo: "Sin logo: se muestra el grano de café."
         defaults: "Todavía no se ha guardado: estos son los valores iniciales del sistema."
         preview: "Así se ve"
@@ -6611,6 +7657,8 @@ es:
         location_help: "Opcional. Va debajo del nombre en el inicio de sesión y en los impresos."
         rtn_placeholder: "14 dígitos"
         rtn_help: "Opcional. El RTN del negocio, que sale en las facturas debajo del nombre y la ubicación."
+        owner_help: "Opcional. Sale en la remisión de las salidas («De: …» y «Enviadas por»)."
+        phones_help: "Opcionales. Salen en la remisión de las salidas."
         weight_tolerance_help: "Opcional. En Comercialización, una salida cuya báscula del comprador difiere de la local en más de este porcentaje (más o menos) sale resaltada. Vacía, no se resalta ninguna."
         cherry_alert: "Alerta de uva sin procesar (horas)"
         cherry_alert_help: "Comercialización avisa cuando un lote de uva lleva en bodega más de estas horas sin procesar: primero un aviso y después, urgente."
@@ -6673,6 +7721,13 @@ es:
         warehouse: "la bodega"
         processing_site: "el lugar de procesamiento"
         processing_cost: "el gasto de procesamiento"
+        supply_entry: "la entrada de insumos"
+        supply_entry_line: "el insumo de la entrada"
+        supply_exit: "la salida de insumos"
+        shipment_cost: "el gasto de la salida"
+        shipment_invoice: "la factura de la salida"
+        coffee_batch: "el lote"
+        coffee_batch_invoice: "la factura del lote"
         warehouse_transfer: "el traslado entre bodegas"
         carrier: "el transportista"
         vehicle: "el vehículo"
@@ -6799,6 +7854,12 @@ es:
         merge: "Fusionar con otra persona"
         confirm_destroy: "¿Borrar a %{name}? Esta acción no se puede deshacer."
         back: "Volver a personas"
+        fingerprints: "Huellas"
+        add_fingerprint: "Registrar huella"
+        remove_fingerprint: "Quitar"
+        confirm_remove_fingerprint: "¿Quitar la huella «%{finger}»? Ese dedo deja de reconocerla."
+        fingerprint_consent: "aceptó el %{date}"
+        no_fingerprints: "No tiene huellas registradas."
       hauler:
         title: "Como carrero"
         open: "Abrir en Compra de café"
@@ -6892,6 +7953,8 @@ es:
         hauler: "Carrero"
       moved:
         document_prints: "Impresiones de documentos"
+        supply_exits: "Salidas de insumos"
+        fingerprints: "Huellas"
         purchases: "Compras"
         invoices: "Facturas"
         farms: "Fincas"
@@ -6969,7 +8032,7 @@ es:
       show:
         edit: "Editar"
         reset_password: "Restablecer contraseña"
-        permissions: "Permisos por módulo"
+        permissions: "Permisos por módulo y pestaña"
         admin_has_all: "Es administrador: tiene acceso completo a todos los módulos."
         back: "Volver a usuarios"
       new:
@@ -6980,9 +8043,11 @@ es:
         title: "Restablecer contraseña"
         help: "Define una contraseña nueva para %{name} (%{email}). Se cerrarán todas sus sesiones abiertas."
       form:
-        permissions: "Permisos por módulo"
-        permissions_help: "Un administrador tiene acceso completo; los permisos por módulo aplican a los demás usuarios."
-        module: "Módulo"
+        permissions: "Permisos"
+        permissions_help: "Un administrador tiene acceso completo. A los demás se les da, en cada módulo, ver, crear, editar y borrar por separado en cada pestaña. La fila del módulo marca o quita esa columna en todas sus pestañas."
+        module: "Módulo y pestaña"
+        whole_module: "Todo el módulo"
+        whole_module_action: "%{module}: %{action} en todo el módulo"
         cancel: "Cancelar"
       create:
         success: "Usuario creado."
@@ -7065,6 +8130,30 @@ es:
       processing_cost:
         one: "Gasto de procesamiento"
         other: "Gastos de procesamiento"
+      supply_entry:
+        one: "Entrada de insumos"
+        other: "Entradas de insumos"
+      supply_entry_line:
+        one: "Insumo de la entrada"
+        other: "Insumos de la entrada"
+      supply_exit:
+        one: "Salida de insumos"
+        other: "Salidas de insumos"
+      shipment_cost:
+        one: "Gasto de la salida"
+        other: "Gastos de la salida"
+      fingerprint:
+        one: "Huella"
+        other: "Huellas"
+      fingerprint_station:
+        one: "Lector de huella"
+        other: "Lectores de huella"
+      coffee_batch:
+        one: "Lote"
+        other: "Lotes"
+      coffee_batch_invoice:
+        one: "Factura del lote"
+        other: "Facturas del lote"
       warehouse_transfer:
         one: "Traslado entre bodegas"
         other: "Traslados entre bodegas"
@@ -7310,6 +8399,8 @@ es:
       expense:
         created_by_id: "Registró"
         money_account_id: "Cuenta"
+        shipment: "Salida"
+        shipment_id: "Salida"
         receipt: "Comprobante"
         receipt_info: "Comprobante"
         kind: "Tipo"
@@ -7399,7 +8490,7 @@ es:
         kind: "Tipo"
         kind/exporter: "Exportador"
         kind/processor: "Beneficio"
-        kind/other: "Otro comprador"
+        kind/other: "Intermediario"
         rtn: "RTN"
         phone: "Teléfono"
         email: "Correo"
@@ -7420,13 +8511,13 @@ es:
         sale: "Venta"
         sale_lines: "Ventas de la salida"
         voided_by_id: "Anuló"
-        number: "Número"
+        number: "Remisión"
         buyer: "Comprador"
         created_by: "Registró"
         departed_at: "Fecha y hora de salida"
         season_year: "Temporada"
         coffee_state: "Estado del café"
-        remission_number: "Remisión"
+        remission_number: "Remisión escrita a mano (ya no se usa)"
         carrier: "Transportista"
         carrier_id: "Transportista"
         vehicle: "Vehículo"
@@ -7596,6 +8687,136 @@ es:
         money_account_id: "Cuenta"
         created_by: "Registró"
         created_by_id: "Registró"
+      supply_entry:
+        # Columns gone on 2026-11-13 (now on its lines); their names stay for the audit history.
+        supply: "Insumo"
+        supply_id: "Insumo"
+        quantity: "Cantidad"
+        lines: "Insumos"
+        amount: "Total (L)"
+        unit_cost: "Costo por unidad"
+        receipt_upload: "Factura (foto o PDF)"
+        received_on: "Fecha"
+        payee: "Proveedor"
+        receipt_number: "Número de comprobante"
+        observations: "Observaciones"
+        expense: "Inversión"
+        expense_id: "Inversión"
+        finance_category_id: "Categoría de la inversión"
+        money_account_id: "Cuenta"
+        payment_method: "Forma de pago"
+        created_by: "Registró"
+        created_by_id: "Registró"
+      supply_exit:
+        kind: "Motivo"
+        kind/sale: "Venta por aparte"
+        kind/business_use: "Uso del negocio"
+        supply: "Insumo"
+        supply_id: "Insumo"
+        exited_on: "Fecha"
+        quantity: "Cantidad"
+        person: "Se le vendió a"
+        person_id: "Se le vendió a"
+        unit_price: "Precio por unidad (L)"
+        amount: "Total (L)"
+        payment_method: "Forma de pago"
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
+        observations: "Observaciones"
+        created_by: "Registró"
+        created_by_id: "Registró"
+      supply_entry_line:
+        supply_entry: "Entrada de insumos"
+        supply_entry_id: "Entrada de insumos"
+        supply: "Insumo"
+        supply_id: "Insumo"
+        quantity: "Cantidad"
+        amount: "Costo (L)"
+      coffee_batch:
+        number: "Número"
+        batched_on: "Fecha"
+        coffee_state: "Estado del café"
+        warehouse: "Bodega"
+        warehouse_id: "Bodega"
+        gross_limit: "Límite (lb brutas)"
+        observations: "Observaciones"
+        shipment: "Salida"
+        shipment_id: "Salida"
+        created_by: "Registró"
+        created_by_id: "Registró"
+      fingerprint:
+        person: "Persona"
+        person_id: "Persona"
+        finger: "Dedo"
+        finger/right_index: "Índice derecho"
+        finger/right_thumb: "Pulgar derecho"
+        finger/right_middle: "Medio derecho"
+        finger/right_ring: "Anular derecho"
+        finger/right_little: "Meñique derecho"
+        finger/left_index: "Índice izquierdo"
+        finger/left_thumb: "Pulgar izquierdo"
+        finger/left_middle: "Medio izquierdo"
+        finger/left_ring: "Anular izquierdo"
+        finger/left_little: "Meñique izquierdo"
+        template: "Plantilla de la huella"
+        template_ciphertext: "Plantilla de la huella"
+        consented_at: "Consentimiento de la persona"
+        created_by: "Registró"
+        created_by_id: "Registró"
+      fingerprint_station:
+        name: "Nombre de la PC"
+        token_digest: "Llave del programa del lector"
+        pairing_code_digest: "Código para emparejar"
+        pairing_expires_at: "El código vence"
+        paired_at: "Emparejado"
+        last_seen_at: "Última conexión"
+        active: "Activo"
+        created_by: "Creó"
+        created_by_id: "Creó"
+      coffee_batch_invoice:
+        coffee_batch: "Lote"
+        coffee_batch_id: "Lote"
+        invoice: "Factura"
+        invoice_id: "Factura"
+        percent: "Parte (%)"
+        gross_weight: "Libras brutas que tomó"
+        net_weight: "Libras netas que tomó"
+        created_by: "Agregó"
+        created_by_id: "Agregó"
+      shipment_cost:
+        shipment: "Salida"
+        shipment_id: "Salida"
+        concept: "Concepto"
+        concept/freight: "Flete"
+        concept/labor: "Mano de obra"
+        concept/loading: "Carga y descarga"
+        concept/fuel: "Combustible"
+        concept/other: "Otro"
+        description: "Detalle"
+        pricing: "Cómo se cobra"
+        pricing/total: "Monto total"
+        pricing/per_pound: "Por libra"
+        pricing/per_quintal: "Por quintal"
+        weight_side: "Sobre el peso"
+        weight_side/origin: "De la báscula local"
+        weight_side/destination: "Del comprador"
+        weight_kind: "En libras"
+        weight_kind/gross: "Brutas"
+        weight_kind/net: "Netas"
+        quintal_pounds: "Libras por quintal"
+        base_pounds: "Libras sobre las que se cobró"
+        quantity: "Cantidad cobrada"
+        unit_price: "Precio (L)"
+        amount: "Monto (L)"
+        paid_on: "Fecha de pago"
+        payment_method: "Forma de pago"
+        payment_method/cash: "Efectivo"
+        payment_method/transfer: "Transferencia"
+        payment_method/check: "Cheque"
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
+        created_by: "Registró"
+        created_by_id: "Registró"
       processing_site:
         name: "Nombre"
         from_states: "Procesos"
@@ -7708,6 +8929,7 @@ es:
         person: "Persona"
         person_id: "Persona"
       purchase:
+        common_coffee: "Café corriente"
         purchased_at: "Fecha y hora"
         warehouse: "Bodega"
         warehouse_id: "Bodega"
@@ -7716,7 +8938,8 @@ es:
         farm: "Finca"
         farm_id: "Finca"
         hauler: "Carrero"
-        hauler_id: "Carrero (opcional)"
+        hauler_id: "Carrero"
+        hauler_choice: "Carrero"
         # Columns gone on 2026-10-28; their names stay for the audit history.
         hauler_commission_percent: "Comisión del carrero (%)"
         hauler_can_price: "Precio de la lata del carrero (L)"
@@ -7771,12 +8994,20 @@ es:
         payment_status/partial: "Pago parcial"
         payment_status/paid: "Cancelada"
         payment_status/unpaid: "Sin cancelar (pendiente o parcial)"
+        payment_status/voided: "Anulada"
+        payment_status/all: "Todos los estados, con anuladas"
+        payment_status/active: "Todas, sin las anuladas"
         payment_method: "Forma de pago"
         payment_method/cash: "Efectivo"
         payment_method/transfer: "Transferencia"
         payment_method/check: "Cheque"
         paid_on: "Fecha de pago"
         total: "Total"
+        voided_at: "Anulada el"
+        voided_by: "Anuló"
+        voided_by_id: "Anuló"
+        void_reason: "Motivo de la anulación"
+        observations: "Observaciones"
       invoice_payment:
         money_account: "Cuenta"
         money_account_id: "Cuenta"
@@ -7998,6 +9229,9 @@ es:
         business_name: "Nombre del negocio"
         location: "Ubicación"
         rtn: "RTN del negocio"
+        owner_name: "Propietario"
+        phone: "Teléfono"
+        secondary_phone: "Otro teléfono"
         logo: "Logo"
         logo_filename: "Archivo del logo"
         logo_content_type: "Tipo de imagen del logo"
@@ -8007,6 +9241,7 @@ es:
         cherry_yield_percent: "Uva a pergamino húmedo (%)"
         drying_yield_percent: "Secado: húmedo a pergamino seco (%)"
         cherry_critical_hours: "Urgente después de (horas)"
+        supply_stock_starts_on: "Inventario de insumos desde"
       purchase/weighings:
         gross_weight: "Peso de la pesada (lb)"
         sacks: "Sacos de la pesada"
@@ -8023,9 +9258,13 @@ es:
         quantity: "Cantidad"
         unit_price: "Precio unitario (L)"
         total: "Subtotal"
+        delivered_on: "Entregado el"
+        delivered_by: "Entregó"
+        delivered_by_id: "Entregó"
       permission:
         user_id: "Usuario"
         module_key: "Módulo"
+        submodule_key: "Pestaña"
         can_read: "Ver"
         can_create: "Crear"
         can_update: "Editar"
@@ -8054,6 +9293,63 @@ es:
             base:
               main_inactive: "La bodega por defecto no se puede desactivar: elige antes otra por defecto."
               has_coffee: "La bodega todavía tiene café: trasládalo a otra antes de desactivarla."
+        supply_entry:
+          delivered: "No se puede quitar: ya se entregó en préstamos lo que trajo de %{supplies}, y la bodega quedaría en negativo."
+          attributes:
+            lines:
+              blank: "faltan: agrega al menos un insumo"
+        supply_entry_line:
+          attributes:
+            supply:
+              inactive: "está desactivado"
+        supply_exit:
+          attributes:
+            supply:
+              inactive: "está desactivado"
+            quantity:
+              not_in_warehouse: "pasa de lo que hay en bodega (%{available})"
+        loan_supply:
+          not_in_warehouse: "No hay suficiente «%{supply}» en bodega para entregarlo: hay %{there} %{unit}. Registra primero su entrada."
+        shipment_cost:
+          attributes:
+            base:
+              voided: "La salida está anulada: ya no lleva gastos."
+            weight_side:
+              not_weighed: "no puede ser «Del comprador» hasta que se pese en destino"
+            description:
+              blank: "es obligatorio cuando el concepto es «Otro»"
+        coffee_batch:
+          attributes:
+            base:
+              has_invoices: "Ya tiene facturas: su estado del café y su bodega no cambian."
+              shipped: "Está en una salida: quítalo de la salida primero."
+            gross_limit:
+              below_coffee: "no puede ser menor a lo que ya tiene (%{gross} lb brutas)"
+            shipment:
+              other_coffee: "es de otro estado del café o de otra bodega"
+              closed: "está anulada, o vendida y solo un administrador la cambia"
+              taken: "ya tiene este lote"
+            warehouse:
+              inactive: "está desactivada"
+        fingerprint:
+          attributes:
+            base:
+              no_station: "Este navegador no está enlazado a un lector de huella."
+            consented_at:
+              accepted: "falta: la persona tiene que aceptar"
+            finger:
+              taken: "ya está registrado para esta persona"
+        coffee_batch_invoice:
+          attributes:
+            base:
+              lot_sold: "El lote está en una salida vendida: solo un administrador lo cambia."
+            invoice:
+              not_eligible: "no puede ir en este lote: debe ser de su estado del café, con todas sus compras en su bodega y una parte libre"
+            invoice_id:
+              taken: "ya está en este lote"
+            percent:
+              over_invoice: "pasa de lo libre de la factura (%{left} %)"
+              over_limit: "pasa del límite del lote: caben %{room} lb brutas"
         processing_cost:
           attributes:
             base:
@@ -8134,6 +9430,8 @@ es:
               other_kind: "es de otro tipo"
         expense:
           attributes:
+            kind:
+              on_shipment: "no puede ser inversión: está asignado a la remisión %{number}. Quítalo de esa salida primero."
             category:
               other_kind: "es de otro tipo (gasto o inversión)"
               inactive: "está desactivada"
@@ -8171,6 +9469,10 @@ es:
             base:
               sold: "La salida ya está en una venta: no se cambian su comprador, estado ni pesos. Anula la venta primero."
               carrier_and_driver: "Lleva un transportista o un motorista, no los dos."
+              has_batches: "La salida tiene lotes: su estado del café y su bodega no cambian. Quita sus lotes primero."
+              batches_gone: "Alguno de los lotes elegidos ya no existe."
+              batch_taken: "El %{batch} ya está en otra salida."
+              batch_other_coffee: "El %{batch} es de otro estado del café o de otra bodega."
             buyer:
               inactive: "está desactivado"
             warehouse:
@@ -8190,6 +9492,9 @@ es:
             base:
               partial_not_less: "El cobro parcial debe ser menor que el total; si cobras todo, elige «De contado»."
               has_payments: "La venta tiene cobros: quítalos antes de anularla."
+              already_voided: "La venta ya está anulada."
+            sold_on:
+              after_payments: "no puede ser después del primer cobro (%{date})"
             buyer_total:
               below_paid: "no puede ser menos de lo ya cobrado (%{paid})"
             buyer_total_reason:
@@ -8330,6 +9635,8 @@ es:
           attributes:
             hauler:
               inactive: "está desactivado: elige otro o actívalo en su ficha"
+            hauler_choice:
+              blank: "falta: elige el carrero o «Sin carrero»"
             warehouse:
               inactive: "está desactivada: elige otra"
             invoice:
@@ -8341,9 +9648,16 @@ es:
         invoice:
           partial_not_less: "Un pago parcial debe ser menor que el total a pagar. Si se paga todo, elige «Cancelada»."
           attributes:
+            base:
+              already_voided: "La factura ya está anulada."
+              has_loan_payments: "Una de sus compras abonó un préstamo (pago con café): quita ese abono antes de anular la factura."
+              purchase_not_voided: "La compra %{number} no se puede anular: %{message}"
+            issued_on:
+              after_payments: "no puede ser después del primer abono (%{date})"
             purchases:
               other_producer: "deben ser todas del mismo productor"
               unavailable: "ya no están disponibles: otra persona las facturó o fueron borradas. Revisa la lista."
+              blank: "debe llevar al menos una compra"
         loan:
           nothing_lent: "Agrega efectivo, insumos o ambos: el préstamo no puede quedar en cero."
           attributes:
@@ -8368,6 +9682,7 @@ es:
             password_challenge:
               invalid: "no es la que tienes ahora"
       messages:
+        below_lots: "Sus lotes tomaron de esta factura %{taken_gross} lb brutas y %{taken_net} lb netas, y quedaría con %{gross} lb brutas y %{net} lb netas. Quita la factura de un lote o bájale el porcentaje primero."
         record_invalid: "La validación falló: %{errors}"
         restrict_dependent_destroy:
           has_one: "No se puede eliminar el registro porque existe un %{record} dependiente"
@@ -8492,16 +9807,21 @@ es:
       submit: "Guardar %{model}"
       update: "Guardar cambios"
 
+  # Every date shown says its day of the week (Fernando, 2026-11-13: «Lun,
+  # Mar, Mié…»). `plain` (no day) is for what is not read on screen: CSV,
+  # the private documents' text.
   date:
-    abbr_day_names: [dom, lun, mar, mié, jue, vie, sáb]
+    abbr_day_names: [Dom, Lun, Mar, Mié, Jue, Vie, Sáb]
     abbr_month_names: [~, ene, feb, mar, abr, may, jun, jul, ago, sep, oct, nov, dic]
     day_names: [domingo, lunes, martes, miércoles, jueves, viernes, sábado]
     month_names: [~, enero, febrero, marzo, abril, mayo, junio, julio, agosto, septiembre, octubre, noviembre, diciembre]
     formats:
-      default: "%d/%m/%Y"
-      long: "%-d de %B de %Y"
+      default: "%a %d/%m/%Y"
+      plain: "%d/%m/%Y"
+      long: "%a %-d de %B de %Y"
+      long_plain: "%-d de %B de %Y"
       weekday_long: "%A %-d de %B de %Y"
-      short: "%-d de %b"
+      short: "%a %-d de %b"
       short_day: "%a %-d/%m"
       month_year: "%b %Y"
       month_short: "%b"
@@ -8511,12 +9831,13 @@ es:
     am: "a. m."
     pm: "p. m."
     formats:
-      audit: "%d/%m/%Y %H:%M:%S"
+      audit: "%a %d/%m/%Y %H:%M:%S"
       time_only: "%H:%M:%S"
       hour: "%H:%M"
-      default: "%d/%m/%Y %H:%M"
-      long: "%-d de %B de %Y %H:%M"
-      short: "%-d de %b %H:%M"
+      default: "%a %d/%m/%Y %H:%M"
+      plain: "%d/%m/%Y %H:%M"
+      long: "%a %-d de %B de %Y %H:%M"
+      short: "%a %-d de %b %H:%M"
 
   number:
     currency:

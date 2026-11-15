@@ -12,6 +12,7 @@ class ShipmentsReport < Report
   STATUSES = %w[in_transit received sold].freeze
 
   self.module_key = "sales"
+  def self.permission_keys = %w[sales.shipments]
   self.date_column = "shipments.departed_at"
   self.date_type = :datetime
   self.default_period = "this_month"
@@ -30,10 +31,12 @@ class ShipmentsReport < Report
   column(:departed_at, :datetime, sort: "shipments.departed_at")
   column(:buyer, :text, sort: "buyers.name") { |shipment| shipment.buyer.name }
   column(:coffee_state, :text, sort: "shipments.coffee_state", priority: 2, &:human_coffee_state)
-  column(:remission_number, :text, sort: "shipments.remission_number", priority: 3)
   column(:weight_note_number, :text, sort: "shipments.weight_note_number", priority: 3)
   column(:sacks, :integer, sort: "shipments.origin_sacks", priority: 3, &:origin_sacks)
+  # Gross first, net beside (Fernando, 2026-11-13).
+  column(:origin_gross, :pounds, sort: "shipments.origin_gross_weight", priority: 2, &:origin_gross_weight)
   column(:origin_net, :pounds, sort: "shipments.origin_net_weight", &:origin_net_weight)
+  column(:destination_gross, :pounds, sort: "shipments.destination_gross_weight", priority: 2, &:destination_gross_weight)
   column(:destination_net, :pounds, sort: "shipments.destination_net_weight", &:destination_net_weight)
   column(:difference, :pounds, sort: DIFFERENCE, priority: 2, &:net_difference)
   column(:difference_percent, :percent, sort: "#{DIFFERENCE} / NULLIF(shipments.origin_net_weight, 0)", &:difference_percent)
@@ -41,10 +44,14 @@ class ShipmentsReport < Report
 
   measure :count, :integer, "COUNT(*)"
   measure :sacks, :integer, "SUM(shipments.origin_sacks)"
+  measure :origin_gross, :pounds, "SUM(shipments.origin_gross_weight)"
   measure :origin_net, :pounds, "SUM(shipments.origin_net_weight)"
   measure :destination_net, :pounds, "SUM(shipments.destination_net_weight)"
   measure :difference, :pounds, "SUM(#{DIFFERENCE})"
   measure :difference_percent, :percent, DIFFERENCE_PERCENT
+  # Shrink (Fernando, 2026-11-13): its lots' purchases − its local scale.
+  measure :shrink_gross, :pounds, "SUM(#{Shipment::SHRINK_GROSS_SQL})"
+  measure :shrink_net, :pounds, "SUM(#{Shipment::SHRINK_NET_SQL})"
 
   group :day, unit: "day"
   group :week, unit: "week"
@@ -58,15 +65,17 @@ class ShipmentsReport < Report
   kpi :difference, :pounds, "SUM(#{DIFFERENCE})"
   kpi :difference_percent, :percent, DIFFERENCE_PERCENT
   kpi :in_transit, :integer, "COUNT(*) FILTER (WHERE shipments.received_on IS NULL)", good: :down, compare: false
+  kpi :shrink_gross, :pounds, "SUM(#{Shipment::SHRINK_GROSS_SQL})", good: :down
+  kpi :shrink_net, :pounds, "SUM(#{Shipment::SHRINK_NET_SQL})", good: :down
 
   def scope
-    Shipment.active.joins(:buyer)
+    Shipment.visible_to(user).active.joins(:buyer)
   end
 
   def apply_filters(relation)
     if filter.q
       text = like(filter.q)
-      relation = relation.where("buyers.name ILIKE :q OR shipments.remission_number ILIKE :q OR shipments.weight_note_number ILIKE :q", q: text)
+      relation = relation.where("buyers.name ILIKE :q OR shipments.weight_note_number ILIKE :q", q: text)
     end
     relation = relation.where(buyer_id: filter.buyer_id) if filter.buyer_id
     relation = relation.where(coffee_state: filter.coffee_state) if filter.coffee_state

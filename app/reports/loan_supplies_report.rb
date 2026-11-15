@@ -4,6 +4,7 @@ class LoanSuppliesReport < Report
   NAME = "people.first_names || ' ' || people.last_names".freeze
 
   self.module_key = "loans"
+  def self.permission_keys = %w[loans.loans]
   self.date_column = "loans.disbursed_on"
   self.default_period = "this_season"
   self.default_sort = :disbursed_on
@@ -39,7 +40,7 @@ class LoanSuppliesReport < Report
   kpi :people, :integer, "COUNT(DISTINCT loans.person_id)"
 
   def scope
-    LoanSupply.joins(:supply, loan: :person)
+    LoanSupply.joins(:supply, loan: :person).merge(Loan.visible_to(user))
   end
 
   def apply_filters(relation)

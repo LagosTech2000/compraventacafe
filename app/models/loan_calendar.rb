@@ -19,7 +19,7 @@ class LoanCalendar
   end
 
   def loans
-    @loans ||= Loan.unpaid.includes(:payments, :supply_items, person: %i[zone photo_info]).order(:due_on, :id).to_a
+    @loans ||= Loan.owned.unpaid.includes(:payments, :supply_items, person: %i[zone photo_info]).order(:due_on, :id).to_a
   end
 
   def balance(loan) = balances.fetch(loan.id)

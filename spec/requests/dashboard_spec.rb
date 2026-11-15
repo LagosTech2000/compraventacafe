@@ -28,7 +28,7 @@ RSpec.describe "Home page" do
 
     get root_path
     expect(page.at_css("h1").text).to eq("Hola, #{admin.name}")
-    expect(page.at_css("h1 + p").text.squish).to include(I18n.l(today, format: :long))
+    expect(page.at_css("h1 + p").text.squish).to include(I18n.l(today, format: :weekday_long))
     expect(figures).to include("Compras de hoy" => "2", "Préstamos por cobrar" => "1", "Fincas activas" => "1", "Pendientes" => "3")
 
     pending = page.at_css("#dashboard-pending").text.squish
@@ -42,7 +42,7 @@ RSpec.describe "Home page" do
     expect(actions).to include("Registrar compra", "Facturar compras", "Nuevo préstamo", "Reportes")
   end
 
-  it "shows only what the user may see and do" do
+  it "shows only what the user may see and do", :all_records do
     reader = user_with("trading")
     create(:purchase)
     create(:loan, cash_amount: 500, monthly_interest_rate: 0)
@@ -57,7 +57,7 @@ RSpec.describe "Home page" do
     expect(actions).to eq([ "Productores" ]) # reading only: no "Registrar compra" nor "Facturar compras"
   end
 
-  it "sums what the business owes and is owed, only for the modules the user reads (Fernando, 2026-10-25)" do
+  it "sums what the business owes and is owed, only for the modules the user reads (Fernando, 2026-10-25)", :all_records do
     admin = create(:user, :admin)
     purchase = create(:purchase, hauler: create(:hauler))
     InvoiceIssuer.new(producer: purchase.producer, user: admin, purchase_ids: [ purchase.id ], payment_status: "pending").call
@@ -160,7 +160,7 @@ RSpec.describe "Home page" do
 
       visits = card.css("[data-presence-visits] a")
       expect(visits.map { it["href"] }).to eq([ "/trading/invoices/12", "/trading/purchases" ])
-      expect(visits.map { it.text.squish }).to eq([ "10:05 Factura 0012 /trading/invoices/12", "14 de oct 10:05 Compras /trading/purchases" ])
+      expect(visits.map { it.text.squish }).to eq([ "10:05 Factura 0012 /trading/invoices/12", "Mié 14 de oct 10:05 Compras /trading/purchases" ])
 
       link = card.at_css("[data-presence-changes] a")
       expect(link["href"]).to eq(administration_audit_event_path(change))

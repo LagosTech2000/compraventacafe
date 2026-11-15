@@ -5,6 +5,7 @@
 # or PDF of the receipt (ExpenseReceipt).
 class Expense < ApplicationRecord
   include Auditable
+  include OwnedRecord
   include LiveUpdates
   live_updates :finance
 
@@ -13,6 +14,11 @@ class Expense < ApplicationRecord
 
   belongs_to :category, class_name: "FinanceCategory", foreign_key: :finance_category_id, inverse_of: :expenses
   belongs_to :money_account
+  # The shipment it was a cost of (Fernando, 2026-11-12), assigned from it.
+  belongs_to :shipment, optional: true
+  # Registered by an entry of the supplies' inventory (Fernando, 2026-11-12):
+  # changed or removed only through it.
+  has_one :supply_entry, dependent: :restrict_with_error
   belongs_to :created_by, class_name: "User"
   has_one :receipt, class_name: "ExpenseReceipt", dependent: :destroy, autosave: true
   # The receipt without its bytes, to show it in lists.
@@ -31,6 +37,8 @@ class Expense < ApplicationRecord
   validates :payment_method, inclusion: { in: Invoice::PAYMENT_METHODS }
   validates :observations, length: { maximum: 500 }
   validate :category_fits, if: -> { will_save_change_to_finance_category_id? || will_save_change_to_kind? }
+  # Only expenses go to a shipment's cost (Fernando, 2026-11-12).
+  validate :investment_off_shipments, if: :will_save_change_to_kind?
   validate :account_active, if: :will_save_change_to_money_account_id?
   validate :receipt_upload_is_valid
 
@@ -67,6 +75,10 @@ class Expense < ApplicationRecord
 
       errors.add(:category, :other_kind) if category.kind != kind
       errors.add(:category, :inactive) unless category.active?
+    end
+
+    def investment_off_shipments
+      errors.add(:kind, :on_shipment, number: shipment.display_number) if investment? && shipment
     end
 
     def account_active

@@ -19,10 +19,10 @@ module Sales
       case @tab
       when "sales"
         @filter = BuyerSaleFilter.new(params)
-        @sales, @next_page = @filter.results(@buyer.sales)
+        @sales, @next_page = @filter.results(@buyer.sales.owned)
       when "shipments"
         @filter = BuyerShipmentFilter.new(params)
-        @shipments, @next_page = @filter.results(@buyer.shipments)
+        @shipments, @next_page = @filter.results(@buyer.shipments.owned)
       when "advances"
         @advances = @buyer.advances.includes(:money_account, :created_by).newest_first.to_a
         @taken = @buyer.sale_payments.advance.includes(sale: { lines: :shipment }).merge(SalePayment.newest_first).to_a

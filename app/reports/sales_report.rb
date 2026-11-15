@@ -16,6 +16,7 @@ class SalesReport < Report
   STATUS_TONES = InvoicesReport::STATUS_TONES
 
   self.module_key = "sales"
+  def self.permission_keys = %w[sales.sales]
   self.date_column = "sales.sold_on"
   self.default_period = "this_month"
   self.default_sort = :number
@@ -70,7 +71,7 @@ class SalesReport < Report
   kpi :average_days, :number, "AVG(#{DAYS_TO_PAY})", good: :down
 
   def scope
-    Sale.active.joins(:buyer).joins(PAID_JOIN)
+    Sale.visible_to(user).active.joins(:buyer).joins(PAID_JOIN)
   end
 
   def apply_filters(relation)

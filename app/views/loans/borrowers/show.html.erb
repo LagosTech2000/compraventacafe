@@ -103,7 +103,10 @@
         <dl class="mt-3 grid grid-cols-2 gap-2">
           <div class="rounded-xl bg-surface-2 px-3 py-2">
             <dt class="text-[0.65rem] text-ink-muted"><%= t(".quintals") %></dt>
-            <dd class="font-bold tabular-nums"><%= number_with_precision(season.quintals, precision: 2, delimiter: ",") %></dd>
+            <dd class="font-bold tabular-nums"><%= number_with_precision(@producer_profile.season_quintals, precision: 2, delimiter: ",") %></dd>
+            <% if @producer_profile.season_common_quintals.positive? %>
+              <dd class="text-[0.65rem] text-ink-muted" data-common-quintals><%= t("trading.producer_cards.show.common_quintals", quintals: number_with_precision(@producer_profile.season_common_quintals, precision: 2, delimiter: ",")) %></dd>
+            <% end %>
           </div>
           <div class="rounded-xl bg-surface-2 px-3 py-2">
             <dt class="text-[0.65rem] text-ink-muted"><%= t(".sold", count: season.purchases_count) %></dt>

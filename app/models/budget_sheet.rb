@@ -42,7 +42,7 @@ class BudgetSheet
     end
 
     def spending
-      @spending ||= Expense.where(spent_on: season.starts_on..season.ends_on).joins(:category)
+      @spending ||= Expense.owned.where(spent_on: season.starts_on..season.ends_on).joins(:category)
                            .group(Arel.sql("COALESCE(finance_categories.parent_id, finance_categories.id)"),
                                   Arel.sql("DATE_TRUNC('month', expenses.spent_on)::date"))
                            .sum(:amount)

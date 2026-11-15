@@ -19,6 +19,7 @@ class PurchasesReport < Report
   }.freeze
 
   self.module_key = "trading"
+  def self.permission_keys = %w[trading.purchases]
   self.date_column = "purchases.purchased_at"
   self.date_type = :datetime
   self.default_period = "this_month"
@@ -89,7 +90,7 @@ class PurchasesReport < Report
   kpi :uninvoiced, :money, "SUM(purchases.total) FILTER (WHERE purchases.invoice_id IS NULL)", compare: false
 
   def scope
-    Purchase.active.joins(producer: :person).joins(:created_by).left_joins(:zone, :invoice)
+    Purchase.visible_to(user).active.joins(producer: :person).joins(:created_by).left_joins(:zone, :invoice)
   end
 
   def apply_filters(relation)

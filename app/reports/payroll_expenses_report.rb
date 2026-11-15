@@ -5,6 +5,7 @@ class PayrollExpensesReport < Report
   TOP_CATEGORY_NAME = "MIN(COALESCE(parents_expense_categories.name, expense_categories.name))".freeze
 
   self.module_key = "farms"
+  def self.permission_keys = %w[farms.payrolls]
   self.date_column = "payroll_expenses.spent_on"
   self.default_period = "this_month"
   self.default_sort = :spent_on
@@ -40,7 +41,7 @@ class PayrollExpensesReport < Report
   kpi :categories, :integer, "COUNT(DISTINCT #{TOP_CATEGORY})"
 
   def scope
-    PayrollExpense.joins(:category, :created_by, payroll: :farm).left_joins(category: :parent)
+    PayrollExpense.visible_to(user).joins(:category, :created_by, payroll: :farm).left_joins(category: :parent)
   end
 
   def apply_filters(relation)

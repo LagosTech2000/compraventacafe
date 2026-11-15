@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe "Trading policies" do
+RSpec.describe "Trading policies", :all_records do
   def trader(**flags)
     create(:user).tap { |u| create(:permission, user: u, module_key: "trading", **flags) }.reload
   end
@@ -19,10 +19,13 @@ RSpec.describe "Trading policies" do
       expect(described_class.new(full, build(:purchase))).to permit_actions(%i[edit update destroy])
     end
 
-    it "freezes an invoiced purchase, even for an admin" do
+    # Only an administrator edits it, even paid (Fernando, 2026-11-12); it is
+    # voided with its invoice, never alone.
+    it "freezes an invoiced purchase, but an admin edits it" do
       purchase = create(:invoice).purchases.first
       expect(described_class.new(full, purchase)).to forbid_actions(%i[edit update destroy])
-      expect(described_class.new(create(:user, :admin), purchase)).to forbid_actions(%i[edit update destroy void])
+      expect(described_class.new(create(:user, :admin), purchase)).to permit_actions(%i[edit update])
+      expect(described_class.new(create(:user, :admin), purchase)).to forbid_actions(%i[destroy void])
     end
 
     it "voids with the delete permission, only what is neither invoiced nor voided" do
@@ -35,8 +38,13 @@ RSpec.describe "Trading policies" do
   end
 
   describe InvoicePolicy do
-    it "never edits invoices: they are paid with payments" do
-      expect(described_class.new(full, create(:invoice))).to forbid_action(:update)
+    it "edits and voids invoices only for an admin, never once voided" do
+      invoice = create(:invoice)
+      expect(described_class.new(full, invoice)).to forbid_actions(%i[update void])
+      admin = create(:user, :admin)
+      expect(described_class.new(admin, invoice)).to permit_actions(%i[update void])
+      invoice.update_columns(voided_at: Time.current)
+      expect(described_class.new(admin, invoice)).to forbid_actions(%i[update void])
     end
 
     it "never deletes invoices" do

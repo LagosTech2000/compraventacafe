@@ -2,6 +2,7 @@
 # taken off a payment), never edited.
 class StaffAdvancePolicy < ApplicationPolicy
   self.module_key = "finance"
+  self.submodule_key = "staff"
 
   def update?
     false

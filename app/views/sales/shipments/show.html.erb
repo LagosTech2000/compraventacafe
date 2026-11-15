@@ -19,11 +19,24 @@
       <%= button_to t(".void"), void_sales_shipment_path(@shipment), method: :patch, class: "btn",
             form: { data: { turbo_confirm: t(".confirm_void") } } %>
     <% end %>
+    <% unless @shipment.voided? %>
+      <%= page_link_to t(".remission"), sales_shipment_remission_path(@shipment), class: "btn" %>
+    <% end %>
     <% if modal_request? %>
       <%= page_link_to t(".full_page"), sales_shipment_path(@shipment), class: "btn" %>
     <% end %>
   </div>
 </div>
+
+<%# Registered without the local scale (Fernando, 2026-11-12): to complete. %>
+<% if @shipment.origin_missing? && !@shipment.voided? %>
+  <div class="flash-alert mb-4 flex flex-wrap items-center justify-between gap-3" role="status" data-origin-missing>
+    <p><%= t(".origin_missing") %></p>
+    <% if policy(@shipment).update? %>
+      <%= modal_link_to t(".complete_origin"), edit_sales_shipment_path(@shipment), class: "btn btn-sm" %>
+    <% end %>
+  </div>
+<% end %>
 
 <% unless @shipment.voided? %>
   <div class="mb-6">
@@ -64,7 +77,7 @@
 <section class="mt-4 panel p-4" aria-labelledby="shipment-details">
   <h2 id="shipment-details" class="font-semibold"><%= t(".details") %></h2>
   <dl class="mt-3 grid grid-cols-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
-    <% { warehouse: @shipment.warehouse.name, remission_number: @shipment.remission_number,
+    <% { warehouse: @shipment.warehouse.name,
          carrier: (@shipment.carrier && (policy(@shipment.carrier).show? ? link_to(@shipment.carrier.name, sales_carrier_path(@shipment.carrier), class: "link") : @shipment.carrier.name)),
          vehicle: (@shipment.vehicle && (policy(@shipment.vehicle).show? ? link_to(@shipment.vehicle.label, sales_vehicle_path(@shipment.vehicle), class: "link") : @shipment.vehicle.label)),
          trip_price: (format_money(@shipment.trip_price) if @shipment.trip_price),
@@ -77,3 +90,6 @@
     <p class="mt-3 text-sm"><span class="font-semibold"><%= Shipment.human_attribute_name(:observations) %>:</span> <%= @shipment.observations %></p>
   <% end %>
 </section>
+
+<%# What it cost (Fernando, 2026-11-12): its purchase invoices, its costs and the expenses assigned to it. %>
+<%= render "sales/shipments/cost", shipment: @shipment %>

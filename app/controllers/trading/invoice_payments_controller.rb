@@ -26,6 +26,21 @@ module Trading
       end
     end
 
+    # An administrator's correction (Fernando, 2026-11-12).
+    def edit
+      @payment = authorize @invoice.payments.find(params[:id])
+    end
+
+    def update
+      @payment = authorize @invoice.payments.find(params[:id])
+
+      if @payment.update(payment_params)
+        close_modal_with notice: t(".success"), fallback: trading_invoice_path(@invoice)
+      else
+        render :edit, status: :unprocessable_content
+      end
+    end
+
     def destroy
       payment = authorize @invoice.payments.find(params[:id])
       payment.destroy!

@@ -1,0 +1,27 @@
+<%# The sums of every loan the filters match (LoanTotals), not only the rows
+    loaded: on the list when it is filtered, and on its printout. The
+    principal lent, collected and owed also in cash and in supplies (in each
+    loan's proportion, Fernando, 2026-11-12). %>
+<% split = { principal: [ totals.cash, totals.supplies ], principal_paid: [ totals.cash_paid, totals.supplies_paid ],
+             principal_owed: [ totals.cash_owed, totals.supplies_owed ] } %>
+<section class="min-w-0 flex-1" aria-label="<%= t("loans.loans.totals.label") %>" data-loan-totals>
+  <p class="mb-2 text-xs font-semibold tracking-wide text-ink-muted uppercase">
+    <%= t("loans.loans.totals.label") %> ·
+    <%= t("loans.loans.totals.count", count: totals.count) %> · <%= t("loans.loans.totals.people", count: totals.people_count) %>
+  </p>
+  <dl class="flex flex-wrap gap-3 print:gap-2">
+    <% { principal: totals.principal, principal_paid: totals.principal_paid, interest_paid: totals.interest_paid, principal_owed: totals.principal_owed,
+         interest_owed: totals.interest_owed, total_owed: totals.total_owed }.each do |key, amount| %>
+      <div class="stat min-w-0 flex-1 basis-36 print:p-2" data-total="<%= key %>">
+        <dt><%= t("loans.loans.totals.#{key}") %></dt>
+        <dd class="<%= "text-danger" if key == :total_owed && amount.positive? %>" data-live-value><%= format_money(amount) %></dd>
+        <% if (cash, supplies = split[key]) %>
+          <p class="mt-1 text-xs text-ink-muted" data-total-split>
+            <span data-cash><%= t("loans.loans.totals.cash", amount: format_money(cash)) %></span> ·
+            <span data-supplies><%= t("loans.loans.totals.supplies", amount: format_money(supplies)) %></span>
+          </p>
+        <% end %>
+      </div>
+    <% end %>
+  </dl>
+</section>

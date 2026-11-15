@@ -2,5 +2,6 @@
 module Loans
   class SeasonPolicy < ApplicationPolicy
     self.module_key = "loans"
+    self.submodule_key = "seasons"
   end
 end

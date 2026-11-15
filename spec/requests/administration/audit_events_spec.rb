@@ -17,11 +17,11 @@ RSpec.describe "Administration::AuditEvents" do
     sign_in admin
     user = create(:user)
     patch administration_user_path(user), params: {
-      user: { permissions_attributes: { "0" => { module_key: "trading", can_read: "1" } } }
+      user: { permissions_attributes: { "0" => { module_key: "trading", submodule_key: "invoices", can_read: "1" } } }
     }
     event = AuditEvent.find_by!(auditable_type: "Permission", action: "create")
     expect(event.user).to eq(admin)
-    expect(event.auditable_label).to eq("#{user.email_address}: Compra de café")
+    expect(event.auditable_label).to eq("#{user.email_address}: Compra de café › Facturas")
     expect(event.request_id).to be_present
   end
 

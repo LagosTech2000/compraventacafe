@@ -66,7 +66,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Persona | `Person` |
 | Cliente | `Client` |
 | Colaborador | `Collaborator` |
-| Permiso | `Permission` |
+| Permiso / submódulo (pestaña del módulo) | `Permission` / `submodule_key` (`AppModule::SUBMODULES`, `"trading.invoices"`) |
 | Módulo | `AppModule` (`Module` es palabra reservada de Ruby) |
 | Ver / crear / editar / borrar | `read` / `create` / `update` / `destroy` |
 | Administración | `administration` |
@@ -77,6 +77,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Productor / intermediario / finca propia | `Producer` (`kind`: `producer` / `intermediary` / `own_farm`) |
 | Carrero (rol de persona: trae el café con los carros del negocio y gana comisión) / pago a carrero | `Hauler` / `HaulerPayment` (`trading/hauler_payments#show` = recibo) |
 | Precio por libra neta del carrero / comisión del carrero | `Hauler#price_per_pound`; en la compra `hauler_price_per_pound`, `hauler_commission` |
+| Café corriente (solo pergamino húmedo) | `Purchase#common_coffee` |
 | Tipo de daño (amarillo, broca, verde, pulpa, pelado) | `Purchase#damage_types` (`Purchase::DAMAGE_TYPES`: `yellow` / `borer` / `green` / `pulp` / `peeled`) |
 | Préstamo tipo intermediario (10 días sin interés, para cualquiera) | `Loan#interest_grace` (`Loan::GRACE_DAYS`, `Loan#interest_starts_on`) |
 | Tarea por monto fijo / por manzana / por barril / por abono | `PayrollTask#pricing`: `fixed` / `per_manzana` / `per_barrel` / `per_fertilizer` (`quantity`, `unit_price`, `barrel_liters`, `quantity_unit`) |
@@ -94,7 +95,15 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Abono a factura (pago al productor) / recibo de pago | `InvoicePayment` / `trading/invoice_payments#show` |
 | Cierre diario | `DailyClose` |
 | Préstamo / abono | `Loan` / `LoanPayment` |
-| Insumo / insumo del préstamo | `Supply` / `LoanSupply` |
+| Insumo / insumo del préstamo / entrada de insumos (con sus líneas) / inventario de insumos | `Supply` / `LoanSupply` / `SupplyEntry` + `SupplyEntryLine` / `SupplyStock` |
+| Insumo entregado / por entregar (del préstamo) | `LoanSupply#delivered_on`, `delivered_by` (`sales/supply_deliveries`) |
+| Salida de insumos (venta por aparte / uso del negocio) | `SupplyExit` (`kind`: `sale` / `business_use`, `sales/supply_exits`); en el libro, `supply_sales` |
+| En bodega / disponible (insumos) | `SupplyStock::Row#in_warehouse` (entró − entregado − salió) / `#available` (entró − prestado − salió, puede ser negativo) |
+| Lo propio (cada usuario ve lo que registró) | `OwnedRecord` (`owned`, `visible_to`, `OwnedRecord.visible?`), `Current.owner` |
+| Lote de café comprado / factura del lote (parte en %) | `CoffeeBatch` (`sales/coffee_batches`) / `CoffeeBatchInvoice` (`percent`) |
+| Merma de la salida (compras de sus lotes − báscula local) | `Shipment#shrink_gross` / `#shrink_net`, `ShrinkSummary`, `ShipmentFilter#shrink` |
+| Productores que no venden | `IdleProducers` (`trading/idle_producers`, tarjeta del Inicio) |
+| Datos del motorista en la salida | `sales/driver_cards#show` (`driver_card_controller.js`) |
 | Préstamo en efectivo / en insumos / mixto | `Loan#kind`: `cash` / `supplies` / `mixed` |
 | Pago con café (abonar préstamos con una compra) | `PurchaseLoanSettlement`; abono con `payment_method: "coffee"` |
 | Estado de cuenta / historial crediticio | `CreditAccount` |
@@ -137,17 +146,20 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Foto de perfil (persona o usuario) | `ProfilePhoto` (`HasPhoto`) |
 | Ubicación en el mapa | `latitude` / `longitude` (`HasAddress#located?`) |
 | Huella digital (passkey) / entrar con huella | `WebauthnCredential` / `PasskeySessionsController` |
+| Huella de una persona (lector ZK9500) / lector de huella (una PC) / programa del lector | `Fingerprint` / `FingerprintStation` / `tools/fingerprint_bridge` (FingerprintBridge) |
+| Panel de la persona (al poner el dedo) | `PersonPanel` (`person_panels#show`, `fingerprint.js`) |
 | Documentos privados (pagaré / contrato privado de préstamo) | `PrivateDocument` (`key`: `promissory_note` / `loan_contract`) |
 | Variable de un documento / impresión de un documento | `PrivateDocumentVariables` (`<span data-variable="person.full_name">`) / `PrivateDocumentPrint` |
 | Estado civil / nacionalidad | `Person#civil_status` / `Person#nationality` |
 | Número en letras | `NumberWords` (palabras en `es.yml`, `number_words`) |
 | Comercialización | `sales` |
-| Comprador (exportador / beneficio / otro) | `Buyer` (`kind`: `exporter` / `processor` / `other`) |
+| Comprador o cliente comercial (exportador / beneficio / intermediario; pestaña «Clientes comerciales», Fernando 2026-11-12) | `Buyer` (`kind`: `exporter` / `processor` / `other`) |
 | Nueva salida (venta / procesamiento / traslado) | `sales/departures#new` (elige el tipo y abre su formulario) |
 | Salida de vehículo (antes «de camión») / báscula local / báscula del comprador | `Shipment` / `origin_*` / `destination_*` (`ArrivalsController`, `shipments/:id/arrival`) |
-| Nota de peso / remisión | `Shipment#weight_note_number` / `remission_number` |
+| Nota de peso / remisión (número: el de la salida) / remisión impresa | `Shipment#weight_note_number` / `Shipment#number` / `sales/remissions#show` |
 | Transportista / vehículo / motorista de la salida | `Carrier` / `Vehicle` (`own`: del negocio; antes `Truck`) / `Shipment#driver` (un `StaffMember`) o `driver_name` |
 | Tipo de vehículo (camión, pick-up…) | `VehicleType` (`sales/vehicle_types`, `Vehicle#vehicle_type`) |
+| Costo de la salida / lotes de la salida / gasto de la salida / gasto asignado | `ShipmentCostSummary` / `Shipment#coffee_batches` (`sales/shipment_batches`) / `ShipmentCost` / `Expense#shipment_id` |
 | Pesadas de la salida (báscula local) | `ShipmentWeighing` (`Shipment#origin_weight_mode`: `single` / `weighings`) |
 | En camino / pesada sin vender / vendida | `Shipment#status`: `in_transit` / `received` / `sold` (+ `voided`) |
 | Venta / salida vendida / cobro de venta | `Sale` / `SaleLine` / `SalePayment` (`SaleIssuer`) |
@@ -186,21 +198,83 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 
 ## Modelo de permisos
 
-No hay roles fijos: cada usuario recibe, **por módulo**, permisos separados de
-ver, crear, editar y borrar.
+No hay roles fijos: cada usuario recibe, **por submódulo** (una pestaña de
+la barra de cada módulo), permisos separados de ver, crear, editar y borrar
+(Fernando, 2026-11-12; antes era por módulo).
 
-- `AppModule::KEYS` y `AppModule::ACTIONS` son la lista canónica de módulos y
+- `AppModule::SUBMODULES` (de ahí salen `KEYS` y `PERMISSION_KEYS`) y
+  `AppModule::ACTIONS` son la lista canónica de módulos, submódulos y
   acciones. Su orden es el de todos los menús, las tarjetas del Inicio y
   las pantallas de permisos: **Administración va al final** (Fernando,
-  2026-10-13). Agregar un módulo = una clave ahí + una entrada en `es.yml` + su
-  namespace de controladores. Nada más.
-- `Permission` es una fila por `(user, module_key)` con cuatro banderas
-  booleanas. Índice único en `[user_id, module_key]`.
-- `User#can?(module_key, action)` es el único punto de decisión.
+  2026-10-13). Agregar un módulo = sus submódulos ahí + sus nombres en
+  `es.yml` (`app_modules.submodules`) + su namespace de controladores + la
+  página de cada submódulo y lo que muestra su Resumen en `ModuleTabs`
+  (`PATHS`, `HOMES`).
+- Submódulos [CONFIRMADO]: uno por pestaña. Lo que no es pestaña va con la
+  suya: abonos a factura → Facturas, pagos a carrero → Carreros, anticipos →
+  Compradores, bodegas y traslados → Inventario, lugares y gastos de
+  procesamiento → Procesos, tipos de vehículo → Vehículos, todo lo de una
+  planilla → Planillas, abonos e impresos → Préstamos, arqueos y
+  transferencias → Cuentas, otros ingresos → Ingresos, roles, anticipos y
+  pagos de la planilla interna → Planilla interna. Gastos e inversiones
+  son el mismo registro con dos permisos (`ExpensePolicy`, por `kind`).
+  Reportería tiene uno solo. Usuarios, Auditoría, Configuración del sitio,
+  Documentos privados y Fusionar personas siguen siendo **solo de
+  administradores** y el Respaldo del usuario 1: no son submódulos.
+- `Permission` es una fila por `(user, module_key, submodule_key)` con
+  cuatro banderas booleanas. Índice único en `[user_id, module_key,
+  submodule_key]`. La migración `AddSubmoduleKeyToPermissions` copió a cada
+  submódulo lo que el usuario tenía en el módulo (nadie ganó ni perdió).
+- `User#can?(clave, action)` es el único punto de decisión. La clave es
+  `"trading.invoices"` (ese submódulo) o `"trading"` (**cualquiera** de sus
+  submódulos: el módulo se abre a quien ve al menos una pestaña). Usa la
+  del submódulo para todo lo que muestra datos; la del módulo solo para
+  abrir el módulo (menú, tarjetas, su Resumen, en vivo).
 - `User#admin` da acceso completo y es quien administra usuarios.
+- **Lo propio** (Fernando, 2026-11-13) [CONFIRMADO]: los administradores
+  ven todo; **quien no es administrador ve y trabaja solo lo que él
+  registró** (`created_by`): compras, facturas, abonos, pagos a carreros,
+  préstamos y abonos, salidas, lotes, ventas y cobros, anticipos, gastos e
+  inversiones, otros ingresos, transferencias, arqueos, planillas y sus
+  pagos y gastos, procesos y sus gastos, traslados, entradas de insumos y
+  la planilla interna (`OwnedRecord`, incluido en esos modelos). Aplica en
+  listas (`ApplicationPolicy::Scope#resolve` con `visible_to`), detalles y
+  acciones (`ApplicationPolicy#can?` con `OwnedRecord.visible?`: lo suyo, o
+  lo que está dentro de algo suyo, `OwnedRecord::PARENTS`), Resumen de cada
+  módulo, Inicio, Tareas pendientes, cierres diarios, pantallas de cobro,
+  estados de cuenta, ficha del productor, reportes y Movimientos/Ingresos
+  (`MoneyMovements` con `owner:`). **Solo sobre lo suyo**: factura sus
+  compras, abona a sus préstamos, vende sus salidas, arma lotes con sus
+  facturas. Dentro de un registro suyo se ve todo lo que tiene (abonos de
+  otro a su préstamo). **Se comparten** los catálogos (personas,
+  productores, zonas, compradores, insumos, cuentas, carreros) y **son del
+  negocio completo** el inventario de café e insumos, el kárdex y los
+  saldos y estados de cuenta de las cuentas (y el saldo de carreros y
+  anticipos de compradores). Fuera de una solicitud (`Current.owner` vacío)
+  todo es global. Lo nuevo con datos del negocio que alguien registra
+  lleva `created_by` e `include OwnedRecord`, y sus resúmenes usan
+  `owned`/`visible_to`.
 - Las políticas de Pundit heredan de `ApplicationPolicy`, declaran su
-  `module_key` y delegan todo a `User#can?`. No metas lógica de permisos en
-  controladores ni vistas: pregunta a la política.
+  `module_key` **y su `submodule_key`** y delegan todo a `User#can?`
+  (`spec/models/app_module_spec.rb` revisa que toda política declare uno;
+  solo los Resumen y «Nueva salida» van sin él). No metas lógica de
+  permisos en controladores ni vistas: pregunta a la política.
+- **Lo que cruza pestañas pide la suya**: cada cifra, pendiente, deuda y
+  actividad del Inicio (`Dashboard::PENDING`, `Dashboard#can?`), cada
+  fuente de dinero (`MoneyMovements::MODULES`), cada reporte
+  (`Report.permission_keys`, `readable_by?`), los buscadores
+  (`PickerSearchPolicy`), las fichas de «Nueva compra» y «Nuevo préstamo»
+  (`card?`: van con Compras y Préstamos) y el pago con café (ver Compras y
+  crear en Préstamos).
+- **La barra de cada módulo muestra solo las pestañas que el usuario ve**
+  (`can_read?`). **Su Resumen muestra solo las partes de esas pestañas**; si
+  no tiene nada para él, el módulo abre en su primera pestaña
+  (`ModuleTabs#module_home_or_first_tab`) y «Resumen» no sale en la barra.
+- La pantalla de permisos (Administración → Usuarios) tiene una fila por
+  pestaña, agrupadas por módulo; la fila del módulo («Todo el módulo») marca
+  o quita una columna en todas sus pestañas y se ve a medias si solo algunas
+  la tienen (`permission_matrix_controller.js`). En los specs,
+  `create(:permission, module_key:)` sin `submodule_key` da el módulo entero.
 - `ApplicationController` tiene `after_action :verify_authorized`: una acción
   que olvide autorizar **falla**. Eso es intencional.
 
@@ -662,7 +736,9 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
   `btn-primary`, `btn-sm` (píldoras clay); `nav-pill` / `nav-pill-active`
   (vía `nav_link_class`; dentro de `.subnav` el activo va en tono suave);
   `glass` (encabezado fijo translúcido); `tile` (tarjeta que enlaza, con
-  `shared/_tile` e `icon`); `stat` (cifras); `panel` (contenedor plano de
+  `shared/_tile` e `icon`); `stat` (cifras: la de su `dd` **nunca se
+  parte en dos líneas** y achica la letra con el ancho de la tarjeta,
+  `container-type` + `cqi`; Fernando, 2026-11-13); `panel` (contenedor plano de
   tablas, detalles y filtros); `data-table`, `data-card`, `cell-actions`;
   `field-label`, `field-input`; `badge` + `badge-success` / `badge-danger` /
   `badge-neutral`; `empty-state`; `link`; `flash-notice` / `flash-alert`;
@@ -692,20 +768,47 @@ El primer administrador se crea con `db:seed` leyendo `ADMIN_NAME`,
   Administración → Configuración del sitio (`SiteSetting`, solo
   administradores) y se leen con `business_name`, `business_location`,
   `business_rtn` y `business_logo` (`SiteHelper`). El RTN es opcional (14
-  dígitos, como el de una persona) y sale **solo en las facturas**, bajo el
-  nombre y la ubicación (`shared/_print_letterhead` con `rtn: true`;
-  Fernando, 2026-10-15). Mientras no se guarde, salen de
+  dígitos, como el de una persona) y sale en las facturas y en la remisión
+  de las salidas, bajo el nombre y la ubicación (`shared/_print_letterhead`
+  con `rtn: true`; Fernando, 2026-10-15). El propietario y dos teléfonos
+  (opcionales, `business_owner`, `business_phones`) salen solo en la
+  remisión (`contact: true`, Fernando, 2026-11-12). Mientras no se guarde, salen de
   `es.yml` (`negocio.*`). El logo se guarda en la base (no hay
   almacenamiento de archivos en el servidor), se sirve en `/site_logo`
   (público, por el inicio de sesión) y solo acepta PNG, JPG, WebP o GIF
   de hasta 1 MB, revisados por su contenido; SVG no.
 - Locale `:es` únicamente. Zona horaria `America/Tegucigalpa`.
+- **Toda fecha dice su día** (Fernando, 2026-11-13): «Lun 13/11/2026»,
+  «Jue 13 de noviembre de 2026», «Mié 14 de oct 10:05»
+  (`date.formats` / `time.formats` en `es.yml`, `abbr_day_names` con
+  mayúscula). El CSV de reportes y el texto de los documentos privados
+  usan `plain` / `long_plain`, sin día. `table_sort_controller.js` lee
+  fechas con o sin el día.
+- **Libras brutas primero, netas al lado** (Fernando, 2026-11-13): donde se
+  muestran libras netas salen antes las brutas (`format_gross_net`,
+  «1,000.00 lb brutas · 487.06 lb netas»; en tablas, brutas arriba y
+  «X netas» debajo, o columnas brutas antes de netas): facturas, salidas y
+  sus totales, tarjetas de inventario, café por compra o proceso del
+  inventario, venta e impreso de venta, cierres, Resumen de
+  Comercialización, Inicio y los reportes de facturas y salidas.
+  `format_gross_net` deja cada mitad en una línea y **pasa las netas abajo
+  donde no caben a la par** (`.gross-net`, Fernando, 2026-11-14: rompían
+  las tarjetas de Salidas).
+- **Montos con comas al escribir** (Fernando, 2026-11-14, `thousands.js`,
+  global): todo campo decimal que puede llegar a mil (`inputmode="decimal"`,
+  `step` distinto de `any`, sin `max` o con `max` ≥ 1,000: montos, precios,
+  libras; no porcentajes, rendimientos ni coordenadas) pasa a campo de texto
+  que muestra «12,345.67». Su `value` en JavaScript da el número sin comas
+  (los demás controladores y los specs no cambian), el formulario lo manda
+  sin comas (evento `formdata`) y el script revisa mínimo, máximo y
+  decimales (mensajes en `shared.thousands`). Para enfocar uno, busca
+  `input[type=number], input[data-thousands]`.
 
 ## Módulos
 
 | Clave | Estado |
 | --- | --- |
-| `administration` | Usuarios y permisos, auditoría, configuración del sitio y documentos privados (solo administradores); respaldo de datos (solo el usuario con id 1); personas, clientes y colaboradores, con su ficha de productor; fincas y zonas (permisos del módulo); fusionar personas (solo administradores) |
+| `administration` | Usuarios y permisos por pestaña de cada módulo, auditoría, configuración del sitio y documentos privados (solo administradores); respaldo de datos (solo el usuario con id 1); personas, clientes y colaboradores, con su ficha de productor; fincas y zonas (cada una con su permiso); fusionar personas (solo administradores) |
 | `sales` | Comercialización: salidas de vehículos con báscula local y del comprador, ventas por libra o por quintal (120 lb por defecto, ajustable por venta) con cobros por abonos, compradores, inventario por estado del café con kárdex y cierre diario |
 | `finance` | Control financiero: cuentas (caja y bancos) con saldo y estado de cuenta, ingresos, gastos e inversiones con categoría de dos niveles y comprobante, otros ingresos, transferencias, presupuesto mensual, la planilla interna del negocio (roles, anticipos, horas extra, metas y bonos) y el libro único de movimientos de todos los módulos |
 | `trading` | Demo: zonas, productores (con pestañas y QQ por temporada), carreros con su comisión y pagos con recibo, compras con cálculo por estado del café y anulación, facturas imprimibles (original y copia) con estado de pago, cierre diario |
@@ -856,6 +959,16 @@ desplazamiento cuando llega una actualización. Su Inicio
 escucha `Presence::WATCH_STREAM` en vez de `presence`, y solo su página
 recibe ese stream firmado: a los demás no les llega ni la ruta. Vive en la memoria del proceso, como el adaptador `async`.
 
+**Productores que no venden hace…** (`IdleProducers`, Fernando,
+2026-11-13): tarjeta del Inicio (frame `idle-producers`, para quien ve
+Productores) con una lista de 7 días, 15 días o un mes: los productores
+que ya vendieron y cuya última compra activa es de antes, **los últimos
+30** (los que dejaron de vender más recientemente primero), con zona,
+fecha y días. «Ver todos» abre la lista completa en el modal
+(`trading/idle_producers#index`, filtros, orden y carga continua).
+Decisión de implementación, **pendiente de confirmar**: los que nunca
+vendieron no salen.
+
 **Café en la bolsa** (`CoffeeMarket`, Fernando, 2026-10-13): tarjeta del
 Inicio, a todo el ancho (precio, línea y rangos en una fila; apilados en
 angosto), con el arábica «C» de ICE Nueva York (`KC=F`, centavos de dólar por
@@ -912,6 +1025,67 @@ solo sirve en el dominio donde se registró (en Render, el de producción) y
 WebAuthn exige HTTPS o `localhost`. En los specs: `WebAuthn::FakeClient`
 en los de petición y el autenticador virtual de Chrome en el de pantalla
 (visitando `localhost`, no una IP).
+
+**Huella de las personas** (lector ZKTeco ZK9500, Fernando, 2026-11-14)
+[CONFIRMADO: solo administradores registran y borran, con consentimiento de
+la persona; el dedo llena el campo de persona de la página y, según la
+página, hace lo relacionado; un «cliente» es un productor o alguien que
+compra café; PCs con Windows 11]. Distinto de la «Huella digital» de los
+usuarios (passkeys): esta identifica a cualquier persona (productor,
+carrero, motorista…).
+- **Programa del lector** (`tools/fingerprint_bridge`, C# .NET 8, se compila
+  con `dotnet publish`; ver su README): en cada PC con lector, junto al reloj.
+  Llama al `libzkfp.dll` que instala el ZKFinger SDK 5.x (ningún archivo del
+  SDK va al repositorio, que es público). Carga todas las plantillas en la
+  memoria del lector y reconoce cada dedo **1:N en la PC** (el algoritmo del
+  SDK solo existe para Windows; el servidor nunca compara huellas). Habla con
+  el sistema por HTTPS (`fingerprint_bridge/pairing`, `/templates`) y por
+  Action Cable (`FingerprintBridgeChannel`, con `Authorization: Bearer` y
+  `Origin`), y se reconecta solo. Registro: 3 lecturas del mismo dedo
+  (`DBMatch`), si la primera ya es de otra persona lo dice (`duplicate_fid`)
+  y se junta con `DBMerge`.
+- **Lectores** (`FingerprintStation`, Administración → Lectores de huella,
+  solo administradores): se crean desde el navegador de esa PC, que queda
+  **enlazado** (cookie firmada `fingerprint_station_id`; otro navegador, con
+  «Usar en este navegador»); el programa se empareja con un código de 6
+  números que vence en 15 minutos y recibe una llave; solo se guardan sus
+  resúmenes (HMAC). Desactivar corta programa y navegadores. Si el programa y
+  el lector están conectados vive en la memoria del proceso (como
+  `Presence`) y sale abajo a la izquierda («Lector listo»,
+  `#fingerprint-status`).
+- **Huellas** (`Fingerprint`): una por dedo y persona, la plantilla (base64)
+  **cifrada** con una llave derivada de `secret_key_base` (nunca la imagen),
+  fuera de la auditoría (`[FILTERED]`); se registran desde el detalle de la
+  persona (`administration/fingerprints`, espera en vivo,
+  `fingerprint_enroll_controller.js`; `FingerprintEnrollment` guarda el
+  pedido en memoria 3 minutos y crea la huella como el administrador que
+  pidió). Se borran con la persona y **pasan a la principal al fusionar**
+  (un dedo que tienen las dos se queda el de la principal). Cada cambio avisa
+  a los programas que recarguen.
+- **Al poner el dedo** (`FingerprintChannel` → `fingerprint.js`): solo viajan
+  ids; la página pide `fingerprint_matches/:id` con los permisos de su
+  usuario. En la ventana de arriba (o la página): (1) **llena el campo** de
+  persona: los buscadores (`record_picker`, del tipo que el usuario puede
+  buscar) y el motorista de «Nueva salida» (`data-fingerprint-person-select`);
+  (2) si la página tiene su acción (`fingerprint_visit`): Facturar compras →
+  sus compras, Productores → el productor, Carreros → el carrero, Estados de
+  cuenta → el suyo, Personas → la persona; (3) si no, abre el **panel de la
+  persona** (`PersonPanel`) en la ventana o el panel lateral; con otra
+  ventana abierta, un aviso con «Abrir su panel»; una huella desconocida,
+  «No se reconoce esa huella».
+- **Panel** (cualquier usuario: las personas son catálogo compartido; cada
+  parte pide su permiso y lo propio): roles, DNI, teléfono, zona, avisos
+  (préstamos vencidos, compras sin facturar, datos que faltan), la tarjeta
+  de «Nueva compra» (productor) o de «Nuevo préstamo» (quien solo debe), lo
+  que se le debe al carrero y las salidas en camino del motorista; **atajos**,
+  el primero resaltado: Nueva compra, Facturar sus compras, Registrar abono
+  (el préstamo vencido o el que vence primero), Nuevo préstamo, Estado de
+  cuenta, Pagar al carrero, Nueva salida con él de motorista
+  (`new_sales_shipment_path(driver_id:)`) y ver su ficha.
+- Decisiones de implementación, **pendientes de confirmar**: el umbral de
+  coincidencia es el del SDK; tras cada dedo el lector espera 1.5 s; el panel
+  lo ve cualquier usuario con sesión; registrar pide un navegador enlazado
+  al lector.
 
 **Fotos de perfil** (`ProfilePhoto`, `HasPhoto`, Fernando 2026-10-13):
 personas (y por ellas productores, clientes, colaboradores) y usuarios.
@@ -972,10 +1146,10 @@ bancos al lado; solo sumas de lo que cada módulo ya guarda, de los módulos
 que el usuario ve, cada línea abre su lugar); actividad reciente de los módulos que
 ve, con enlace; café en la bolsa y usuarios conectados; y sus módulos. La cifra
 «Pendientes» (y «Ver el detalle» del panel) abre en el modal **Tareas
-pendientes** (`PendingWorkController`): **una pestaña por tipo** con
-cuántos hay (`tabs_controller.js`, cambian ahí mismo, también con las
-flechas; nunca enlaces `#ancla`, que dentro de un frame cargaban el
-Inicio), cada una con sus registros, lo más viejo primero, y el botón que lo resuelve (Facturar por productor,
+pendientes** (`PendingWorkController`): **cada tipo uno debajo del
+otro** (Fernando, 2026-11-13; antes, una pestaña por tipo) con cuántos hay
+(nunca enlaces `#ancla`, que dentro de un frame cargaban el Inicio), cada
+uno con sus registros, lo más viejo primero, y el botón que lo resuelve (Facturar por productor,
 Registrar abono, Pagar el período, Asignar salario), solo si el usuario
 puede hacerlo. Los formularios se abren encima; «Atrás» vuelve a la lista. Todo sale de los datos y scopes existentes;
 nada se estima ni se inventa.
@@ -1188,9 +1362,34 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   **precio del viaje** (`trip_price`, lo que se le paga por ese viaje), en
   el detalle y sumado en su ficha. Las salidas de antes con los dos se
   quedan así. «Nueva salida» dice el número que tendrá
-  (`Shipment.next_number`; el real se da al guardar). Pendiente de
+  (`Shipment.next_number`; el real se da al guardar). **Remisión impresa**
+  (Fernando, 2026-11-12, con la foto del talonario del cliente) [CONFIRMADO]:
+  «Imprimir remisión» en el detalle y «Remisión» en la lista (no en una
+  anulada) abren `sales/remissions#show` (ver la salida, original y copia
+  en hojas separadas). Lleva los campos del talonario en su orden: **número
+  = el de la salida** (Fernando, 2026-11-13: «como número de remisión pon
+  el número de salida, pero en ningún lado debería decir número de salida
+  porque es número de remisión»: en toda pantalla el número de la salida
+  se llama «Remisión», p. ej. «Remisión 0012»; el campo escrito a mano se
+  quitó, migración `RemoveRemissionNumberFromShipments`, que pasa lo escrito a
+  observaciones);
+  lugar y fecha = ubicación del negocio y fecha de salida; destino =
+  dirección del comprador; para = comprador; sacos (de la báscula local);
+  **latas y equivalentes QQ oro en blanco** (no se guardan; el QQ oro sigue
+  abierto); enviadas por = **propietario** y dirección = ubicación del
+  negocio; motorista con teléfono e identidad (de su persona; escrito a
+  mano, solo el nombre; con transportista, en blanco; en «Nueva salida»,
+  al elegir al motorista salen su identidad y su teléfono debajo y
+  «Editar» a la derecha abre su persona en el modal sin perder la salida,
+  `sales/driver_cards#show`, Fernando, 2026-11-13); tipo, marca, color
+  y placa del vehículo; observaciones; firmas de remisor, recibí conforme
+  y motorista. El encabezado lleva además «De: propietario» y los
+  teléfonos (`shared/_print_letterhead` con `contact: true`), que se
+  escriben en Configuración del sitio (`owner_name`, `phone`,
+  `secondary_phone`, opcionales). Pendiente de
   preguntar: si el precio del viaje se paga desde una cuenta (hoy solo se
-  anota, no mueve dinero) y si se suma al costo del café. Lo que las salidas tenían escrito
+  anota, no mueve dinero); sí suma al costo de la salida (Fernando,
+  2026-11-12). Lo que las salidas tenían escrito
   (transportista, placa) pasó a los catálogos en la migración. Se pesa en la **báscula local** (`origin_*`) y, al
   llegar, en la **del comprador** (`destination_*`, con nota de peso y
   fecha; `ArrivalsController`). Cada neto usa **el mismo cálculo de la
@@ -1202,6 +1401,107 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   como en compras (`ShipmentWeighing`, Fernando, 2026-10-25): por pesadas,
   el bruto y los sacos son la suma y no se escriben. Etapas (`SalesLifecycle`): salió → pesada en destino →
   vendida → cobrada. Número correlativo con bloqueo consultivo.
+- **Lotes de café comprado** (`CoffeeBatch`, Fernando, 2026-11-13)
+  [CONFIRMADO]: Comercialización → Salidas → «Lotes»
+  (`sales/coffee_batches`, permiso de Salidas), los más recientes primero.
+  Un lote tiene **fecha, bodega, estado del café y un límite de libras
+  brutas**, y toma **un % de facturas de compra** (`CoffeeBatchInvoice`):
+  solo facturas de su estado con todas sus compras en su bodega; **entre
+  todos los lotes una factura no pasa del 100 %** y el lote **no pasa de su
+  límite** (brutas de las compras × %). Al elegir facturas, junto a la
+  parte (%) de cada una sale lo que equivale en libras brutas y, debajo,
+  netas (`batch_shares_controller.js`, Fernando, 2026-11-13). **También
+  desde «Facturar compras»** (Fernando, 2026-11-13): «Lote (opcional)» y la
+  parte (%), 100 por defecto; solo se eligen los lotes del estado y la bodega
+  de las compras marcadas, con espacio y no en una salida vendida (salvo
+  administradores), y al marcar compras o cambiar el % sale lo que toma en
+  brutas y netas y lo que le queda al lote; si pasa del límite, dice el % que
+  cabe y no deja enviar (`invoice_batch_controller.js`). Factura y lote se
+  guardan juntos o nada (`InvoiceIssuer`); pide lo mismo que agregar
+  facturas al lote (`CoffeeBatchInvoicePolicy#create?`). **Y en «Editar
+  factura»** (administradores, mismo parcial `trading/invoices/_lot_fields`):
+  sale su lote con su % (lo que ya tomó cuenta como espacio libre); cambiar
+  el %, pasarla a otro lote o «Sin lote» (`CoffeeBatchInvoice.assign!`),
+  todo con la edición o nada. Si no se tocan, el lote sigue con sus libras
+  aunque cambien las compras. Una factura repartida en varios lotes solo los
+  lista: el reparto se cambia desde cada lote. **El lote guarda las libras brutas
+  y netas que tomó de cada factura** (Fernando, 2026-11-13): si un
+  administrador edita una compra y la factura **sube** de peso, el lote se
+  queda con sus libras, su % baja solo y lo que subió **queda libre**, sin
+  lote, para que las salidas no cambien (`CoffeeBatchInvoice.rebase!`); si
+  **baja** (brutas o netas) por debajo de lo que tomaron sus lotes, **no se
+  guarda** (`Purchase#keeps_its_lots`, también al quitar compras de la
+  factura en `Invoice#revise!`). **En una salida vendida, solo un
+  administrador cambia sus lotes** (Fernando, 2026-11-13: «aun después de
+  la venta»): editar el lote, sus facturas y su %, y agregar o quitar lotes
+  de la salida (`CoffeeBatch.sold_editable?`; políticas de lotes, facturas
+  del lote y lotes de la salida); la venta no cambia, sí el inventario, la
+  merma y el costo de la salida. Valor y comisión salen de las netas que
+  tomó contra las de la factura (`NET_SHARE_SQL`). Ver sus facturas pide además ver
+  Facturas. **Los lotes van en las salidas en vez de las facturas**: cada
+  lote completo a una sola salida, una salida con uno o varios lotes, del
+  mismo estado y bodega. En «Nueva salida» salen los lotes libres de ese
+  estado y bodega para marcar, y **«Nuevo lote»** lo crea en una ventana y
+  sigue a elegir sus facturas; al terminar vuelve marcado
+  (`coffee_batch:created`, `batch_picker_controller.js`). Desde el detalle,
+  «Agregar lotes» (`sales/shipment_batches`) y «Quitar». **La salida con
+  lotes saca del inventario el café de sus lotes** (su parte de cada
+  compra, no lo más viejo; `Shipment::STOCK_NET_SQL`, `CoffeeLots`): baja
+  lo del lote completo; sin lotes sigue bajando su neto local, lo más viejo
+  primero. Las facturas que ya estaban en salidas pasaron a un lote por
+  salida (migración `CreateCoffeeBatches`). Decisiones de implementación,
+  **pendientes de confirmar**: una factura entra solo si todas sus compras
+  están en la bodega del lote (el café trasladado no entra); anular la
+  factura la saca de sus lotes; un lote en una salida no se borra; si a una compra del lote ya no le
+  queda café, lo que falta sale de lo más viejo.
+- **Merma** (Fernando, 2026-11-13) [CONFIRMADO]: **lo que dicen las compras
+  de sus lotes − lo que pesó la báscula local**, en libras **brutas y
+  netas** (brutas primero); positiva = se perdió peso, negativa = pesó
+  más (`Shipment#shrink_gross` / `#shrink_net`, `#shrink_percent` sobre el
+  neto de las compras). Sale en el detalle de la salida, en la lista
+  (columna y filtro «Merma»: con merma, pesó más, sin lotes;
+  `ShipmentFilter#shrink`), en el **Resumen de Comercialización** (merma de
+  la temporada: total, con merma, pesaron más y salidas sin lotes; **cada
+  cifra abre la lista filtrada**, `ShrinkSummary`) y en el reporte de
+  salidas (cifras y medidas). Sin lotes o sin báscula local no hay merma.
+- **Costo de la salida** (Fernando, 2026-11-12) [CONFIRMADO]: en el
+  detalle de la salida, «Costo de la salida» (`ShipmentCostSummary`,
+  `sales/shipments/_cost`) = **el café de sus lotes** (lo pagado a los
+  productores, en la parte de cada compra; antes, sus facturas completas)
+  + **la comisión de carreros** de esas compras en la misma parte + **sus
+  gastos** + **el precio del viaje**; también por libra neta que salió.
+  Sin lotes dice que **falta el costo**.
+  - **Gastos de la salida** (`ShipmentCost`, `sales/shipment_costs`), como
+    los de procesamiento: flete, mano de obra, carga y descarga,
+    combustible u otro (**lista pendiente de confirmar**); monto total, por
+    libra o por quintal sobre el peso local o del comprador (este solo ya
+    pesada en destino), brutas o netas; fecha, forma de pago y cuenta
+    (`MoneyMovements` `shipment_costs`, `AccountBalance`, Consolidación).
+    Se registran o se quitan.
+  - **Gastos de Control financiero asignados** (`Expense#shipment_id`,
+    `sales/shipment_expenses`): «Asignar gastos» lista los gastos (no
+    inversiones) sin salida, con sus filtros (este mes por defecto); se
+    marcan y se asignan; un gasto a una sola salida; siguen siendo gastos de
+    Control financiero (no mueven dinero). Pide editar en Salidas y ver
+    Gastos (`ShipmentExpensePolicy`).
+  - Decisiones de implementación, **pendientes de confirmar**: anular la
+    salida deja libres sus lotes y gastos asignados; una salida con
+    gastos registrados no se anula hasta quitarlos (como un proceso).
+- **Sin báscula local** (Fernando, 2026-11-12) [CONFIRMADO]: un
+  **administrador** marca «Sin báscula local» en la salida
+  (`skip_origin`, `origin_skippable` lo pone el controlador;
+  `skip_origin_controller.js` apaga ese `<fieldset>`): se guarda **sin
+  peso ni sacos locales** (`origin_*` vacíos, `Shipment#origin_missing?`).
+  Mientras tanto **no saca café del inventario** (existencias, lotes,
+  kárdex) y **no tiene diferencia entre básculas**: sale «Sin báscula
+  local» (`weight_difference`), no cuenta para la tolerancia ni para la
+  diferencia en lempiras; una venta con una salida así no tiene neto local
+  (`Sale#origin_net_weight` vacío, `SaleSummary` compara solo las
+  completas). **Se completa después** editando la salida, cualquiera con
+  permiso de editar, **aunque ya esté vendida** (`ShipmentPolicy#open?`,
+  `not_sold`); entonces la venta toma su neto local (`Sale#refresh_origin!`).
+  Guardar otra cosa (el peso en destino) la deja vacía
+  (`origin_left_empty?`). El detalle avisa con «Completar báscula local».
 - **Diferencia entre básculas**: neto del comprador − neto local, en lb y
   %, en la salida, la venta, las listas y los reportes. Se **resalta** si
   pasa (más o menos) la **tolerancia** de Configuración del sitio
@@ -1246,7 +1546,15 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   venta; cada cobro con recibo (original y copia). Registrar pide editar
   en `sales`.
 - **Anular**: una venta **solo sin cobros** (con motivo); sus salidas
-  quedan **libres** para otra venta y sus líneas quedan como registro. Una
+  quedan **libres** para otra venta y sus líneas quedan como registro. **Un
+  administrador** (Fernando, 2026-11-12) [CONFIRMADO] la **anula aunque
+  tenga cobros** (se quitan: dejan de contar en las cuentas y lo cobrado
+  con anticipo vuelve al saldo del comprador), la **edita** aunque esté
+  cobrada (`Sale#revise!`, `sales/sales#edit`, con la vista previa de
+  «Nueva venta»: fecha, precio, por libra o quintal, libras por quintal,
+  documento, observaciones y salidas; líneas y total se calculan de nuevo)
+  y **edita o quita cualquier cobro**. Con un total menor que lo cobrado se
+  guarda con el aviso de cobrado de más (`Sale#overpaid_amount`). Una
   salida se anula aparte, solo si no está en una venta activa: su café
   vuelve al inventario. Ninguna se borra.
 - **Comprador** (`Buyer`): catálogo propio para empresas (nombre o razón
@@ -1276,6 +1584,59 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   brutas salen en la proporción bruto/neto de esa venta. Quitar ese cobro devuelve el monto al saldo;
   un anticipo ya descontado no se quita. Pestaña «Anticipos» del
   comprador.
+- **Insumos** (Fernando, 2026-11-12/13) [CONFIRMADO]: pestaña propia de
+  Comercialización (`sales.supplies`; **el catálogo pasó de Préstamos a
+  aquí**, y quien tenía permiso de Préstamos → Insumos lo recibió aquí,
+  migración `RestructureSupplies`), con tres partes
+  (`sales/supply_stocks/_tabs`): **Inventario y entradas**
+  (`sales/supply_stocks#show`, `/sales/supplies`), **Por entregar**
+  (`sales/supply_deliveries`), **Salidas** (`sales/supply_exits`) y
+  **Catálogo de insumos**
+  (`sales/supplies`, `/sales/supplies/catalog`).
+  - **Una entrada** (`SupplyEntry`) es una factura del proveedor con **uno
+    o varios insumos** (`SupplyEntryLine`: insumo, cantidad, costo;
+    «Agregar otro insumo», «Nuevo insumo» desde el formulario,
+    `supply_entry_controller.js`) y, opcional, **la foto o el PDF de la
+    factura**, que queda como comprobante de su inversión. **Registra sola
+    una inversión** de Control financiero por el total (la categoría, la
+    cuenta y la forma de pago se eligen en la entrada); esa inversión no se
+    edita ni se borra aparte (`ExpensePolicy#from_supply_entry?`): se quita
+    la entrada y se va con ella, solo si lo que trajo no se entregó ya.
+  - **Los préstamos pueden prestar aunque no haya** (Fernando, 2026-11-13):
+    cada insumo del préstamo queda **«Por entregar»** hasta que **un
+    administrador lo marca entregado** (`LoanSupply#delivered_on`,
+    `delivered_by`; desde el detalle del préstamo o «Por entregar», y se
+    puede deshacer); **no se entrega lo que no hay en bodega**. El interés
+    corre desde la fecha del préstamo, como siempre.
+  - Cifras por insumo (`SupplyStock`): entró, prestado, entregado, **por
+    entregar**, **en bodega** (entró − entregado) y **disponible** (entró −
+    prestado: **puede quedar en negativo**; un clic en él o en «Por
+    entregar» abre a quién se le debe). «Nuevo préstamo» dice lo disponible
+    de cada insumo y **avisa, sin impedir guardar, la línea que presta más
+    de lo disponible** (sumando las líneas del mismo insumo; al editar, lo
+    que el préstamo ya prestaba cuenta como disponible): cuántos no se
+    podrán entregar hasta que entren más (`loan_composition_controller.js`,
+    `LoansHelper#loan_supplies_data`; Fernando, 2026-11-13).
+  - **Salidas sin préstamo** (`SupplyExit`, Fernando, 2026-11-14:
+    «registrar una salida de inventario, como que lo vendan por aparte»)
+    [CONFIRMADO: venta a una persona del sistema que registra el ingreso, o
+    uso del negocio sin dinero]. Un insumo por salida, cantidad y fecha;
+    **nunca más de lo que hay en bodega**. La venta pide la persona
+    (buscador, `PickerSearchPolicy#people?` también para quien edita
+    Insumos), precio por unidad (empieza en el del catálogo), forma de pago
+    y **cuenta obligatoria**; total = cantidad × precio. Su dinero entra a
+    la cuenta (`AccountBalance`, `MoneyMovements` `supply_sales`, Ingresos).
+    Baja «En bodega» y «Disponible» (columna «Salió sin préstamo»). Se
+    registran o se quitan (vuelve a la bodega), no se editan; pasan a la
+    principal al fusionar personas. `supply_exit_controller.js` (muestra u
+    oculta lo de la venta, precio, en bodega, total). Decisión de
+    implementación, **pendiente de confirmar**: una salida lleva un solo
+    insumo.
+  - Solo cuentan los préstamos desde el día en que empezó el inventario
+    (`SiteSetting#supply_stock_starts_on`, `SupplyStock.starts_on`); los
+    de antes quedaron entregados con su préstamo (migración) y uno nuevo
+    con fecha anterior nace entregado. Nada se guarda: `SupplyStock` lo
+    calcula.
 - **Contratos con exportador** (aplicar libras a contratos en orden):
   **no se construyen**, siguen abiertos.
 
@@ -1338,12 +1699,23 @@ salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
   cuenta y categoría, auditado como cambio del registro; pide editar en
   `finance`. «Entradas y salidas de
   dinero» (Reportería) lee de aquí, con filtro y agrupación por cuenta.
+  **Cambiar la cuenta de lo que ya tiene** (Fernando, 2026-11-14): la
+  casilla «Incluir los que ya tienen cuenta» (`ConsolidationFilter#with_account`)
+  lista también esos, con su cuenta en una columna; marcarlos y asignar
+  cambia la cuenta (y el saldo pasa de una a otra). Sin la casilla, solo
+  salen los sin cuenta. `consolidation:revert` solo deshace cuentas que
+  estaban vacías.
 - **Gastos e inversiones** (`Expense`): categoría **propia, de dos
   niveles** (`FinanceCategory`; las de Fincas siguen aparte), detalle,
   beneficiario, fecha, monto, forma de pago, cuenta (obligatoria),
   número de comprobante y, **opcional, la foto o el PDF del comprobante**
   (`ExpenseReceipt`, en la base, JPG/PNG/WebP/PDF revisados por contenido,
   hasta 1 MB). Se editan y borran con permisos, auditados.
+- **Gasto ↔ inversión** (Fernando, 2026-11-12) [CONFIRMADO]: al editar,
+  se elige el tipo y la categoría del tipo nuevo (cada tipo tiene las
+  suyas; `expense_kind_controller.js` muestra la lista del elegido). Pide
+  poder crear en la otra pestaña (`ExpensePolicy` por tipo). Un gasto
+  asignado a una salida no pasa a inversión (`Expense#investment_off_shipments`).
 - **Otro ingreso** (`OtherIncome`: aporte del dueño, préstamo del banco…)
   y **transferencias** (`AccountTransfer`) se registran o se quitan.
 - **Arqueo de caja** (`CashCount`, Fernando, 2026-10-25): lo que se contó
@@ -1450,6 +1822,20 @@ textos; la clave y el código siguen siendo `trading`.
     escribir el daño; `purchase_calculator_controller.js` avisa). Sale en
     el detalle y en la factura. Las compras de antes sin tipo se pueden
     anular; al cambiarles el daño lo piden.
+- **Café corriente** (Fernando, 2026-11-12) [CONFIRMADO]: casilla en
+  «Nueva compra» **solo para pergamino húmedo** (`Purchase#common_coffee`;
+  en otro estado se borra, en el formulario y en el servidor). Sale junto al
+  estado («Pergamino húmedo · Café corriente», `Purchase#coffee_label`) en
+  el detalle y las listas. **La retención es la suma de los QQ de la
+  temporada de cada productor, y el café corriente no suma a esos QQ**
+  (Fernando, 2026-11-12): los **QQ de temporada del productor** ya lo
+  dejan fuera (`ProducerProfile#season_quintals`, «QQ de todas las
+  temporadas», por mes; lista de Productores y su orden; fichas de «Nueva
+  compra» y «Nuevo préstamo»; reporte de Productores) y el café corriente
+  sale **aparte, también por temporada** («QQ de café corriente»,
+  `season_common_quintals`, columna en «Por temporada», en la lista y en el
+  reporte). Compras, inventario, facturas y totales en lempiras siguen
+  contando todo. Qué se hace con la retención sigue abierto.
 - **Forma de pesar** (`Purchase#weight_mode`) [CONFIRMADO, Fernando,
   2026-10-10]: `single` (peso bruto directo; sacos = bruto ÷ 165 y tara como
   arriba) o `weighings` (por pesadas, `PurchaseWeighing`: peso + sacos
@@ -1491,9 +1877,23 @@ textos; la clave y el código siguen siendo `trading`.
 - **Anular compra** [CONFIRMADO]: una compra sin facturar se anula (no se
   borra) con el permiso de borrar (`PurchasePolicy#void?`). Queda registrada
   con quién y cuándo, pero sale de listas, totales, cierre diario y
-  facturación (`Purchase.active`; `uninvoiced` ya la excluye). Las listas de
-  compras la muestran solo con "Mostrar anuladas". No se edita, no se borra y
-  no se puede deshacer.
+  facturación (`Purchase.active`; `uninvoiced` ya la excluye). No se edita,
+  no se borra y no se puede deshacer.
+- **Filtro «Estado»** en Compras (también en la pestaña de un productor) y
+  en Facturas (Fernando, 2026-11-13; **la casilla «Mostrar anuladas» se
+  quitó**): sin elegir, todas menos las anuladas; compras: sin facturar,
+  facturada pendiente de pago, con pago parcial o cancelada, anuladas o
+  **todos los estados, con anuladas** (`Purchase.with_status`,
+  `Purchase::STATUSES`); facturas: sus estados de pago, anuladas o todos
+  (`Invoice::LIST_STATUSES` con `all`).
+- **Carrero obligatorio de elegir** (Fernando, 2026-11-13): en «Nueva
+  compra» el carrero empieza sin elegir y hay que escoger uno o «Sin
+  carrero» (`Purchase#hauler_choice`, `NO_HAULER`; solo lo pide el
+  formulario).
+- **El buscador de productor** de «Nueva compra» (y el de persona de «Nuevo
+  préstamo» y los demás buscadores de personas, si tiene zona) muestra en la lista la
+  zona después de la identidad; al elegirlo, el campo no la lleva
+  (`PickerSearch.data` `hint`, Fernando, 2026-11-13).
 - **Clave IHCAFE** del productor (`ihcafe_code`) [CONFIRMADO, Fernando,
   2026-10-12]: `XX-XX-XXXXX`, letras o números, **opcional y única**, para
   todos los tipos de productor. Se busca en la lista de productores.
@@ -1538,7 +1938,29 @@ textos; la clave y el código siguen siendo `trading`.
   (`InvoiceIssuer`, con bloqueo de filas). Número correlativo con bloqueo
   consultivo (`Invoice::NUMBERING_LOCK_KEY`), mostrado con 4 dígitos.
 - Una compra facturada **no se edita ni se borra** (`PurchasePolicy`). Una
-  factura no se borra ni se edita.
+  factura no se borra. **Solo un administrador** (Fernando, 2026-11-12)
+  [CONFIRMADO], aunque esté cancelada:
+  - **Anula la factura** (`Invoice#void!`, `trading/invoice_voids`, con
+    motivo): **sus compras quedan anuladas** (su café sale del inventario)
+    y **sus abonos se quitan** (dejan de contar en cuentas y Movimientos;
+    quedan en la auditoría); sale de su salida. Conserva su número, queda
+    como registro y sale de listas y totales (`Invoice.active`; `unpaid` y
+    `with_payment_status` ya la dejan fuera); en Facturas se ve con el
+    estado «Anulada» (`Invoice::LIST_STATUSES`). No se anula mientras una
+    compra abonó un préstamo (quitar el pago con café primero).
+  - **Edita la factura** (`Invoice#revise!`, `trading/invoices#edit`):
+    fecha (no después del primer abono), observaciones (nuevas, salen en el
+    impreso) y qué compras lleva (las desmarcadas quedan sin facturar;
+    entran otras sin facturar del productor). **Edita cada compra
+    facturada** (`PurchasePolicy#admin_revision?`, sin pago con café); la
+    factura sigue su nuevo total (`Purchase#refresh_invoice`).
+  - **Edita o quita cualquier abono** (monto sin pasar de lo que la factura
+    tiene por pagar con los otros, fecha, forma de pago y cuenta).
+  - Si el total queda **menor que lo pagado**, se guarda: queda cancelada
+    con el aviso **«Pagado de más»** (`Invoice#overpaid_amount`).
+  - Decisión de implementación, **pendiente de confirmar**: los abonos de
+    una factura anulada se borran (quedan solo en la auditoría), no se
+    guardan como anulados.
 - **Pago de facturas por abonos** [CONFIRMADO, Fernando, 2026-10-12, por
   observación del cliente: «parte en efectivo y otra pendiente de pago»]:
   una factura se paga con uno o más abonos (`InvoicePayment`: monto, fecha,
@@ -1662,7 +2084,8 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
 - `CreditAccount` arma el estado de cuenta de una persona: totales, sus
   préstamos con saldo a hoy, historial de préstamos y abonos, y score.
 - **Insumos** (`Supply`) [CONFIRMADO, Fernando, 2026-10-10]: catálogo del
-  módulo (Préstamos → Insumos) con nombre, unidad y precio predeterminado.
+  módulo (desde 2026-11-13 en Comercialización → Insumos → Catálogo) con
+  nombre, unidad y precio predeterminado.
   No se borran: se desactivan y dejan de salir al prestar.
 - **Préstamos mixtos** [CONFIRMADO]: un préstamo lleva efectivo
   (`cash_amount`, puede ser 0) y líneas de insumos (`LoanSupply`: cantidad ×
@@ -1705,6 +2128,37 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
   no solo a los productores intermediarios (Fernando, el mismo día). Los
   días 1–10 nunca cobran; desde el día 11 corre normal (`LoanBalance`
   cuenta desde `Loan#interest_starts_on`).
+- **Resumen de Préstamos** (Fernando, 2026-11-12): además de lo que se
+  debe, **capital cobrado** e **interés cobrado** de todos los abonos (lo
+  que cada abono guardó en `principal_amount` / `interest_amount`, de
+  cualquier forma de pago). **Cada cifra abre su detalle**: lo que se debe,
+  la lista de préstamos «Por cobrar» (o los vencidos); lo cobrado, el
+  reporte de abonos con «Todo» (solo si ve Reportería; si no, la cifra no
+  es enlace). Capital e interés cobrados también en los totales de la
+  lista de préstamos y en el cierre diario de préstamos.
+- **Efectivo e insumos aparte** (Fernando, 2026-11-12) [CONFIRMADO]: el
+  capital prestado, cobrado y por cobrar se separa en efectivo e insumos;
+  **cada abono de capital se reparte en la proporción en que se prestó**
+  (`Loan.split_principal`: el efectivo redondeado al centavo y los insumos
+  el resto; `LoanBalance#cash_paid` / `supplies_paid` / `cash_owed` /
+  `supplies_owed`); **el interés no se reparte**. Sale en el Resumen
+  (grupos «Por cobrar hoy», «Prestado», «Cobrado», cada cifra abre la lista
+  filtrada), en los totales de la lista y su impresión, el detalle de un
+  préstamo mixto, el estado de cuenta, el cierre diario y «Por cosecha».
+  Filtro `LoanFilter#composition` («Lleva»: `with_cash` = solo efectivo o
+  mixto, `with_supplies` = solo insumos o mixto).
+- **Lista de préstamos** (Fernando, 2026-11-12): filtra también por **la
+  zona de la persona** (`LoanFilter#zone_id`: un id o `none`, «Sin zona») y
+  por estado «Por cobrar» (`unpaid`: al día y vencidos, solo del filtro).
+  **Con algún filtro**, arriba de la lista salen los **totales de todo lo
+  filtrado** (`LoanTotals`, `loans/loans/_totals`: préstamos, personas,
+  capital prestado, capital cobrado, interés cobrado, capital pendiente,
+  interés a hoy y debe hoy),
+  no solo de las filas cargadas. «Imprimir» (sigue los filtros) abre
+  `loans/loans#print`: membrete, los filtros en palabras, los totales y la
+  tabla de todos los filtrados (hasta `PRINT_LIMIT`, los totales cuentan
+  todos), con la ventana de impresión sola (`?print=1`). En **Cartera por
+  zona**, «Ver préstamos» abre la lista con esa zona y «Por cobrar».
 - **Pantallas de cobro** (Fernando, 2026-11-03; en la barra del módulo).
   Solo leen y suman lo que el sistema ya guarda; ninguna cambia una regla:
   - **Cobrar con café** (`CoffeeCollectionFilter`, pide ver Préstamos **y**
@@ -1878,7 +2332,9 @@ Reglas decididas por Fernando el 2026-10-10 [CONFIRMADO]:
   primero arriba.
 - **Fincas propias** (Fernando, 2026-10-18): las listas de fincas (Fincas
   y Administración) filtran por dueño: todas, las del negocio («Fincas
-  propias») o las de productores (`FarmFilter#owner`).
+  propias») o las de productores (`FarmFilter#owner`). La búsqueda encuentra
+  también **por el nombre del productor** dueño (Fernando, 2026-11-13), cada
+  palabra sin acentos.
 - **Extensión de la finca** (Fernando, 2026-10-14): opcional, en
   manzanas, hectáreas o metros cuadrados, la que el usuario prefiera; se
   guarda como se escribió (`area_value`, `area_unit`) y las otras se
@@ -1996,9 +2452,12 @@ sistema ya guarda**; no agregan reglas de negocio.
   (abre el estado de cuenta), personas, planillas, latas y gastos (abren la
   finca). Solo dibuja datos guardados; no estima ubicaciones. La demo trae
   puntos ficticios alrededor de Morocelí.
-- **Permisos**: un reporte pide ver Reportería **y** ver el módulo de donde
-  salen sus datos (`ReportPolicy`, `Report.module_keys`). Personas y
-  Entradas y salidas cruzan módulos y piden los tres. Guardar filtros solo
+- **Permisos**: un reporte pide ver Reportería **y** ver la pestaña de donde
+  salen sus datos (`ReportPolicy`, `Report.permission_keys`: el de compras,
+  Compras; el de facturas, Facturas). Personas pide Compras, Estados de
+  cuenta y Planillas; Entradas y salidas, los tres módulos y muestra solo
+  las fuentes de las pestañas que el usuario ve; Gastos, Gastos o
+  Inversiones, y solo los tipos que ve. Guardar filtros solo
   pide ver Reportería: son de cada usuario y nadie más los ve.
 - **Reportes sugeridos** (`ReportPreset`): preguntas frecuentes ya filtradas
   (compras sin facturar, facturas pendientes, préstamos vencidos,
@@ -2019,9 +2478,8 @@ sistema ya guarda**; no agregan reglas de negocio.
 | Punto | Qué bloquea | Quién decide |
 | --- | --- | --- |
 | Tabla de precios (zona + calidad + bolsa) y categorías de calidad | Precio automático; hoy es manual | Cliente |
-| Retención de fin de temporada | Reporte de retención | Cliente |
+| Retención de fin de temporada (ya decidido: es la suma de los QQ de temporada del productor, sin café corriente) | Qué se hace con ella y su reporte | Cliente |
 | Reportes por temporada (qué muestran) | El reporte de temporada que pida el cliente; los reportes generales ya filtran por temporada | Cliente |
-| Inventario de insumos (existencias, costo de compra) | Control de bodega de insumos | Cliente |
 | Planillas: séptimo día, décimo, IHSS u otras deducciones o bonos | Cálculo legal de planillas | Cliente |
 | Si la factura siempre agrupa hasta 4 compras | Hoy no hay límite | Cliente |
 | Cómo calcula el dueño la ganancia | Reporte de ganancias | Cliente |
@@ -2030,7 +2488,9 @@ sistema ya guarda**; no agregan reglas de negocio.
 | Calidad por bodega | Depende de las categorías de calidad | Cliente |
 | Decisiones de implementación de las pantallas de cobro (2026-11-03): tramos de la cartera (30/60/90 días), «vencen pronto» a 7 días, semanas del calendario de lunes a domingo y 12 hacia adelante | Ajustes a Cartera, Calendario y el Inicio | Fernando |
 | Decisiones nuevas, por confirmar (2026-10-25): la liquidación del comprador pasa a ser lo que se cobra de la venta; los avisos de «Nueva compra» salen cuando la humedad, el rendimiento o el precio se alejan más de 30 % de lo normal (`PurchaseDefaults::UNUSUAL_PERCENT`) | Ajustes a la venta y a los avisos de la compra | Fernando / Cliente |
-| Precio del viaje del transportista: ¿se paga desde una cuenta (movimiento de dinero) y se suma al costo del café? | Pago al transportista y costo del café | Cliente |
+| Precio del viaje del transportista: ¿se paga desde una cuenta (movimiento de dinero)? (Ya suma al costo de la salida, Fernando 2026-11-12) | Pago al transportista | Cliente |
+| Huella de personas (2026-11-14): umbral de coincidencia del SDK, 1.5 s entre dedos, el panel lo ve cualquier usuario con sesión, registrar pide un navegador enlazado; firma con huella en recibos, asistencia por huella y huella para entregar préstamos son ideas sin confirmar | Ajustes al lector y al panel | Fernando |
+| Decisiones de implementación, por confirmar (2026-11-13): lotes (factura solo si todas sus compras están en la bodega del lote; anular la factura la saca de sus lotes; lo que falta de una compra sale de lo más viejo); «productores que no venden» deja fuera a los que nunca vendieron; un préstamo con fecha antes del inventario de insumos nace entregado; una fecha de entrega de insumos es la del día en que se marca | Ajustes a lotes, Inicio e insumos | Fernando |
 | Contratos: moneda, cobro, aplicar libras a contratos | Ventas / contratos | Cliente |
 | Reporte exacto que piden el contador y el SAR | Reportería | Cliente |
 | `pg_dump` en Render (versión ≥ 18) | Que el respaldo incluya `base.dump` en producción | Fernando + Render |
@@ -2050,7 +2510,8 @@ obligatoria en gastos e ingresos; presupuesto sin gastos de planilla; otros
 ingresos y transferencias se quitan y se registran de nuevo),
 Comercialización (un estado por salida y por venta; salir de más avisa;
 tolerancia en ambos sentidos; cobros en orden, sin pasar del saldo, quitando
-solo el último; la venta no se edita), conversiones, anticipos y planilla
+solo el último; la venta no se edita, salvo un administrador desde el
+2026-11-12), conversiones, anticipos y planilla
 interna; **no hay recargo por mora**. Versión de Ruby (3.4.x), Ubuntu 24.04 LTS, ambiente WSL, regla del
 último administrador activo (se bloquea), idioma del código (inglés), campos de
 `Person`, personas/clientes/colaboradores en `administration`, formato,

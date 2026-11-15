@@ -3,6 +3,7 @@
 # removed (the ones after it were counted on it).
 class HaulerPaymentPolicy < ApplicationPolicy
   self.module_key = "trading"
+  self.submodule_key = "haulers"
 
   def create?
     can?(:update)

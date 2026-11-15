@@ -6,6 +6,7 @@ class LoanPaymentsReport < Report
   NAME = "people.first_names || ' ' || people.last_names".freeze
 
   self.module_key = "loans"
+  def self.permission_keys = %w[loans.loans]
   self.date_column = "loan_payments.paid_on"
   self.default_period = "this_month"
   self.default_sort = :paid_on
@@ -48,7 +49,7 @@ class LoanPaymentsReport < Report
   kpi :payroll, :money, "COALESCE(SUM(loan_payments.amount) FILTER (WHERE loan_payments.payment_method = 'payroll'), 0)"
 
   def scope
-    LoanPayment.joins(loan: :person).joins(:created_by)
+    LoanPayment.visible_to(user).joins(loan: :person).joins(:created_by)
   end
 
   def apply_filters(relation)

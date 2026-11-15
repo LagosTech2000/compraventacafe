@@ -3,28 +3,14 @@
 <% today = dashboard.today %>
 <%# Each kind of pending work the Inicio counts, with its records and the
     button that solves each one; only what exists, only what the user reads. %>
-<% groups = [] %>
-<% if dashboard.can?("trading") %>
-  <% groups << :uninvoiced if dashboard.uninvoiced_by_producer.any? %>
-  <% groups << :unpaid_invoices if dashboard.unpaid_invoices.any? %>
-  <% groups << :haulers_to_pay if dashboard.haulers_to_pay.any? %>
-<% end %>
-<% if dashboard.can?("sales") %>
-  <% groups << :shipments_in_transit if dashboard.shipments_in_transit.any? %>
-  <% groups << :unsold_shipments if dashboard.unsold_shipments.any? %>
-  <% groups << :unpaid_sales if dashboard.unpaid_sales.any? %>
-  <% groups << :cherry_waiting if dashboard.cherry_waiting.any? %>
-  <% groups << :open_conversions if dashboard.open_conversions.any? %>
-  <% groups << :negative_stock if dashboard.negative_stock.any? %>
-<% end %>
-<% groups << :overdue_loans if dashboard.can?("loans") && dashboard.overdue_loans.any? %>
-<% groups << :due_soon_loans if dashboard.can?("loans") && dashboard.due_soon_loans.any? %>
-<% if dashboard.can?("farms") %>
-  <% groups << :periods_to_pay if dashboard.periods_to_pay.any? %>
-  <% groups << :members_without_wage if dashboard.members_without_wage.any? %>
-<% end %>
-
-<% groups << :over_budget if dashboard.can?("finance") && dashboard.over_budget.any? %>
+<% present = { uninvoiced: -> { dashboard.uninvoiced_by_producer.any? }, unpaid_invoices: -> { dashboard.unpaid_invoices.any? },
+                haulers_to_pay: -> { dashboard.haulers_to_pay.any? }, shipments_in_transit: -> { dashboard.shipments_in_transit.any? },
+                unsold_shipments: -> { dashboard.unsold_shipments.any? }, unpaid_sales: -> { dashboard.unpaid_sales.any? },
+                cherry_waiting: -> { dashboard.cherry_waiting.any? }, open_conversions: -> { dashboard.open_conversions.any? },
+                negative_stock: -> { dashboard.negative_stock.any? }, overdue_loans: -> { dashboard.overdue_loans.any? },
+                due_soon_loans: -> { dashboard.due_soon_loans.any? }, periods_to_pay: -> { dashboard.periods_to_pay.any? },
+                members_without_wage: -> { dashboard.members_without_wage.any? }, over_budget: -> { dashboard.over_budget.any? } } %>
+<% groups = dashboard.pending_kinds.select { |key| present.fetch(key).call } %>
 
 <h1 class="text-xl font-bold"><%= t(".title") %></h1>
 <p class="mt-1 text-sm text-ink-muted"><%= t(".summary") %></p>
@@ -33,25 +19,15 @@
   <p class="empty-state mt-5"><%= t(".empty") %></p>
 <% end %>
 
-<%# One tab per kind of work (Fernando, 2026-10-13): they change in place,
-    without leaving the window (tabs_controller.js). %>
-<div data-controller="tabs">
-<% if groups.any? %>
-  <nav class="subnav mt-4 rounded-2xl" role="tablist" aria-label="<%= t(".kinds") %>">
-    <% groups.each_with_index do |key, index| %>
-      <button type="button" role="tab" id="pending-tab-<%= key %>" aria-controls="pending-<%= key %>"
-              aria-selected="<%= index.zero? %>" tabindex="<%= index.zero? ? 0 : -1 %>"
-              class="nav-pill <%= "nav-pill-active" if index.zero? %>"
-              data-tabs-target="tab" data-action="tabs#select keydown->tabs#key">
-        <%= t(".groups.#{key}.title") %>
-        <span class="badge badge-neutral ml-1"><%= pending_work_count(dashboard, key) %></span>
-      </button>
-    <% end %>
-  </nav>
-<% end %>
-<div class="mt-4">
+<%# Every kind of work one below the other (Fernando, 2026-11-13: «en vez
+    de pestañas que se muestren hacia abajo todos los contenidos»). %>
+<div class="mt-4 space-y-4">
   <% if groups.include?(:uninvoiced) %>
-    <section id="pending-uninvoiced" role="tabpanel" aria-labelledby="pending-tab-uninvoiced" data-tabs-target="panel" <%= "hidden" unless groups.first == :uninvoiced %>>
+    <section id="pending-uninvoiced" class="panel p-4" aria-labelledby="pending-title-uninvoiced">
+      <h2 id="pending-title-uninvoiced" class="flex items-center gap-2 text-base font-semibold">
+        <%= t(".groups.uninvoiced.title") %>
+        <span class="badge badge-neutral"><%= pending_work_count(dashboard, :uninvoiced) %></span>
+      </h2>
       <p class="text-xs text-ink-muted"><%= t(".groups.uninvoiced.help") %></p>
       <ul class="mt-2 divide-y divide-line">
         <% dashboard.uninvoiced_by_producer.each do |group| %>
@@ -75,7 +51,11 @@
   <% end %>
 
   <% if groups.include?(:unpaid_invoices) %>
-    <section id="pending-unpaid_invoices" role="tabpanel" aria-labelledby="pending-tab-unpaid_invoices" data-tabs-target="panel" <%= "hidden" unless groups.first == :unpaid_invoices %>>
+    <section id="pending-unpaid_invoices" class="panel p-4" aria-labelledby="pending-title-unpaid_invoices">
+      <h2 id="pending-title-unpaid_invoices" class="flex items-center gap-2 text-base font-semibold">
+        <%= t(".groups.unpaid_invoices.title") %>
+        <span class="badge badge-neutral"><%= pending_work_count(dashboard, :unpaid_invoices) %></span>
+      </h2>
       <p class="text-xs text-ink-muted"><%= t(".groups.unpaid_invoices.help") %></p>
       <ul class="mt-2 divide-y divide-line">
         <% dashboard.unpaid_invoices.sort_by(&:issued_on).each do |invoice| %>
@@ -100,7 +80,11 @@
   <% end %>
 
   <% if groups.include?(:haulers_to_pay) %>
-    <section id="pending-haulers_to_pay" role="tabpanel" aria-labelledby="pending-tab-haulers_to_pay" data-tabs-target="panel" <%= "hidden" unless groups.first == :haulers_to_pay %>>
+    <section id="pending-haulers_to_pay" class="panel p-4" aria-labelledby="pending-title-haulers_to_pay">
+      <h2 id="pending-title-haulers_to_pay" class="flex items-center gap-2 text-base font-semibold">
+        <%= t(".groups.haulers_to_pay.title") %>
+        <span class="badge badge-neutral"><%= pending_work_count(dashboard, :haulers_to_pay) %></span>
+      </h2>
       <p class="text-xs text-ink-muted"><%= t(".groups.haulers_to_pay.help") %></p>
       <ul class="mt-2 divide-y divide-line">
         <% dashboard.haulers_to_pay.each do |hauler| %>
@@ -120,7 +104,11 @@
   <% end %>
 
   <% if groups.include?(:cherry_waiting) %>
-    <section id="pending-cherry_waiting" role="tabpanel" aria-labelledby="pending-tab-cherry_waiting" data-tabs-target="panel" <%= "hidden" unless groups.first == :cherry_waiting %>>
+    <section id="pending-cherry_waiting" class="panel p-4" aria-labelledby="pending-title-cherry_waiting">
+      <h2 id="pending-title-cherry_waiting" class="flex items-center gap-2 text-base font-semibold">
+        <%= t(".groups.cherry_waiting.title") %>
+        <span class="badge badge-neutral"><%= pending_work_count(dashboard, :cherry_waiting) %></span>
+      </h2>
       <p class="text-xs text-ink-muted"><%= t(".groups.cherry_waiting.help") %></p>
       <ul class="mt-2 divide-y divide-line">
         <% dashboard.cherry_waiting.each do |item| %>
@@ -143,7 +131,11 @@
   <% end %>
 
   <% if groups.include?(:open_conversions) %>
-    <section id="pending-open_conversions" role="tabpanel" aria-labelledby="pending-tab-open_conversions" data-tabs-target="panel" <%= "hidden" unless groups.first == :open_conversions %>>
+    <section id="pending-open_conversions" class="panel p-4" aria-labelledby="pending-title-open_conversions">
+      <h2 id="pending-title-open_conversions" class="flex items-center gap-2 text-base font-semibold">
+        <%= t(".groups.open_conversions.title") %>
+        <span class="badge badge-neutral"><%= pending_work_count(dashboard, :open_conversions) %></span>
+      </h2>
       <p class="text-xs text-ink-muted"><%= t(".groups.open_conversions.help") %></p>
       <ul class="mt-2 divide-y divide-line">
         <% dashboard.open_conversions.each do |conversion| %>
@@ -166,7 +158,11 @@
   <% end %>
 
   <% if groups.include?(:negative_stock) %>
-    <section id="pending-negative_stock" role="tabpanel" aria-labelledby="pending-tab-negative_stock" data-tabs-target="panel" <%= "hidden" unless groups.first == :negative_stock %>>
+    <section id="pending-negative_stock" class="panel p-4" aria-labelledby="pending-title-negative_stock">
+      <h2 id="pending-title-negative_stock" class="flex items-center gap-2 text-base font-semibold">
+        <%= t(".groups.negative_stock.title") %>
+        <span class="badge badge-neutral"><%= pending_work_count(dashboard, :negative_stock) %></span>
+      </h2>
       <p class="text-xs text-ink-muted"><%= t(".groups.negative_stock.help") %></p>
       <ul class="mt-2 divide-y divide-line">
         <% dashboard.negative_stock.each do |row| %>
@@ -183,7 +179,11 @@
   <% end %>
 
   <% if groups.include?(:shipments_in_transit) %>
-    <section id="pending-shipments_in_transit" role="tabpanel" aria-labelledby="pending-tab-shipments_in_transit" data-tabs-target="panel" <%= "hidden" unless groups.first == :shipments_in_transit %>>
+    <section id="pending-shipments_in_transit" class="panel p-4" aria-labelledby="pending-title-shipments_in_transit">
+      <h2 id="pending-title-shipments_in_transit" class="flex items-center gap-2 text-base font-semibold">
+        <%= t(".groups.shipments_in_transit.title") %>
+        <span class="badge badge-neutral"><%= pending_work_count(dashboard, :shipments_in_transit) %></span>
+      </h2>
       <p class="text-xs text-ink-muted"><%= t(".groups.shipments_in_transit.help") %></p>
       <ul class="mt-2 divide-y divide-line">
         <% dashboard.shipments_in_transit.each do |shipment| %>
@@ -193,7 +193,7 @@
               <span class="block text-xs text-ink-muted"><%= t(".groups.shipments_in_transit.days", count: (today - shipment.departed_at.to_date).to_i) %></span>
             </span>
             <span class="flex items-center gap-2">
-              <span class="font-semibold tabular-nums"><%= format_pounds(shipment.origin_net_weight) %> lb</span>
+              <span class="font-semibold tabular-nums"><%= shipment.origin_missing? ? t("sales.difference.no_origin") : "#{format_pounds(shipment.origin_net_weight)} lb" %></span>
               <%= modal_link_to t("shared.detail"), sales_shipment_path(shipment), class: "btn btn-sm" %>
               <% if policy(shipment).receive? %>
                 <%= modal_link_to t(".groups.shipments_in_transit.action"), edit_sales_shipment_arrival_path(shipment), class: "btn btn-sm btn-primary" %>
@@ -206,7 +206,11 @@
   <% end %>
 
   <% if groups.include?(:unsold_shipments) %>
-    <section id="pending-unsold_shipments" role="tabpanel" aria-labelledby="pending-tab-unsold_shipments" data-tabs-target="panel" <%= "hidden" unless groups.first == :unsold_shipments %>>
+    <section id="pending-unsold_shipments" class="panel p-4" aria-labelledby="pending-title-unsold_shipments">
+      <h2 id="pending-title-unsold_shipments" class="flex items-center gap-2 text-base font-semibold">
+        <%= t(".groups.unsold_shipments.title") %>
+        <span class="badge badge-neutral"><%= pending_work_count(dashboard, :unsold_shipments) %></span>
+      </h2>
       <p class="text-xs text-ink-muted"><%= t(".groups.unsold_shipments.help") %></p>
       <ul class="mt-2 divide-y divide-line">
         <% dashboard.unsold_shipments.group_by(&:buyer).each do |buyer, shipments| %>
@@ -228,7 +232,11 @@
   <% end %>
 
   <% if groups.include?(:unpaid_sales) %>
-    <section id="pending-unpaid_sales" role="tabpanel" aria-labelledby="pending-tab-unpaid_sales" data-tabs-target="panel" <%= "hidden" unless groups.first == :unpaid_sales %>>
+    <section id="pending-unpaid_sales" class="panel p-4" aria-labelledby="pending-title-unpaid_sales">
+      <h2 id="pending-title-unpaid_sales" class="flex items-center gap-2 text-base font-semibold">
+        <%= t(".groups.unpaid_sales.title") %>
+        <span class="badge badge-neutral"><%= pending_work_count(dashboard, :unpaid_sales) %></span>
+      </h2>
       <p class="text-xs text-ink-muted"><%= t(".groups.unpaid_sales.help") %></p>
       <ul class="mt-2 divide-y divide-line">
         <% dashboard.unpaid_sales.sort_by(&:sold_on).each do |sale| %>
@@ -251,7 +259,11 @@
   <% end %>
 
   <% if groups.include?(:overdue_loans) %>
-    <section id="pending-overdue_loans" role="tabpanel" aria-labelledby="pending-tab-overdue_loans" data-tabs-target="panel" <%= "hidden" unless groups.first == :overdue_loans %>>
+    <section id="pending-overdue_loans" class="panel p-4" aria-labelledby="pending-title-overdue_loans">
+      <h2 id="pending-title-overdue_loans" class="flex items-center gap-2 text-base font-semibold">
+        <%= t(".groups.overdue_loans.title") %>
+        <span class="badge badge-neutral"><%= pending_work_count(dashboard, :overdue_loans) %></span>
+      </h2>
       <p class="text-xs text-ink-muted"><%= t(".groups.overdue_loans.help") %></p>
       <ul class="mt-2 divide-y divide-line">
         <% dashboard.overdue_loans.sort_by(&:due_on).each do |loan| %>
@@ -276,7 +288,11 @@
   <% end %>
 
   <% if groups.include?(:due_soon_loans) %>
-    <section id="pending-due_soon_loans" role="tabpanel" aria-labelledby="pending-tab-due_soon_loans" data-tabs-target="panel" <%= "hidden" unless groups.first == :due_soon_loans %>>
+    <section id="pending-due_soon_loans" class="panel p-4" aria-labelledby="pending-title-due_soon_loans">
+      <h2 id="pending-title-due_soon_loans" class="flex items-center gap-2 text-base font-semibold">
+        <%= t(".groups.due_soon_loans.title") %>
+        <span class="badge badge-neutral"><%= pending_work_count(dashboard, :due_soon_loans) %></span>
+      </h2>
       <p class="text-xs text-ink-muted"><%= t(".groups.due_soon_loans.help", days: Dashboard::DUE_SOON_DAYS) %></p>
       <ul class="mt-2 divide-y divide-line">
         <% dashboard.due_soon_loans.each do |loan| %>
@@ -299,7 +315,11 @@
   <% end %>
 
   <% if groups.include?(:periods_to_pay) %>
-    <section id="pending-periods_to_pay" role="tabpanel" aria-labelledby="pending-tab-periods_to_pay" data-tabs-target="panel" <%= "hidden" unless groups.first == :periods_to_pay %>>
+    <section id="pending-periods_to_pay" class="panel p-4" aria-labelledby="pending-title-periods_to_pay">
+      <h2 id="pending-title-periods_to_pay" class="flex items-center gap-2 text-base font-semibold">
+        <%= t(".groups.periods_to_pay.title") %>
+        <span class="badge badge-neutral"><%= pending_work_count(dashboard, :periods_to_pay) %></span>
+      </h2>
       <p class="text-xs text-ink-muted"><%= t(".groups.periods_to_pay.help") %></p>
       <ul class="mt-2 divide-y divide-line">
         <% dashboard.periods_to_pay.sort_by { |_, period| period.ends_on }.each do |payroll, period| %>
@@ -321,7 +341,11 @@
   <% end %>
 
   <% if groups.include?(:members_without_wage) %>
-    <section id="pending-members_without_wage" role="tabpanel" aria-labelledby="pending-tab-members_without_wage" data-tabs-target="panel" <%= "hidden" unless groups.first == :members_without_wage %>>
+    <section id="pending-members_without_wage" class="panel p-4" aria-labelledby="pending-title-members_without_wage">
+      <h2 id="pending-title-members_without_wage" class="flex items-center gap-2 text-base font-semibold">
+        <%= t(".groups.members_without_wage.title") %>
+        <span class="badge badge-neutral"><%= pending_work_count(dashboard, :members_without_wage) %></span>
+      </h2>
       <p class="text-xs text-ink-muted"><%= t(".groups.members_without_wage.help") %></p>
       <ul class="mt-2 divide-y divide-line">
         <% dashboard.members_without_wage.sort_by { |member| [ member.payroll.name, member.person.full_name ] }.each do |member| %>
@@ -339,7 +363,11 @@
     </section>
   <% end %>
   <% if groups.include?(:over_budget) %>
-    <section id="pending-over_budget" role="tabpanel" aria-labelledby="pending-tab-over_budget" data-tabs-target="panel" <%= "hidden" unless groups.first == :over_budget %>>
+    <section id="pending-over_budget" class="panel p-4" aria-labelledby="pending-title-over_budget">
+      <h2 id="pending-title-over_budget" class="flex items-center gap-2 text-base font-semibold">
+        <%= t(".groups.over_budget.title") %>
+        <span class="badge badge-neutral"><%= pending_work_count(dashboard, :over_budget) %></span>
+      </h2>
       <p class="text-xs text-ink-muted"><%= t(".groups.over_budget.help") %></p>
       <ul class="mt-2 divide-y divide-line">
         <% dashboard.over_budget.each do |line| %>
@@ -354,5 +382,4 @@
       </ul>
     </section>
   <% end %>
-</div>
 </div>

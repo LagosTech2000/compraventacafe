@@ -1,6 +1,8 @@
 # Gives an account to movements that were registered without one
 # (Control financiero → Consolidación, Fernando, 2026-10-25), so every
-# balance is complete. Only payments and collections of the other modules
+# balance is complete, or changes the one a movement has (Fernando,
+# 2026-11-14: «cambiar la cuenta de cualquier movimiento aunque ya esté
+# accionado»; the list shows those only with its check box). Only payments and collections of the other modules
 # can lack it (expenses, other income and transfers always have one).
 #
 # The account is the one chosen, or, with `by_method`, the one each
@@ -15,7 +17,7 @@ class AccountConsolidation
   MODELS = {
     "invoices" => "InvoicePayment", "hauler_payments" => "HaulerPayment", "loans" => "Loan", "loan_payments" => "LoanPayment",
     "payroll_payments" => "PayrollPayment", "payroll_expenses" => "PayrollExpense", "sale_payments" => "SalePayment",
-    "processing_costs" => "ProcessingCost"
+    "processing_costs" => "ProcessingCost", "shipment_costs" => "ShipmentCost"
   }.freeze
   SOURCES = MODELS.keys.freeze
   # The records that have a category, and its column.
@@ -24,7 +26,7 @@ class AccountConsolidation
   PRELOADS = {
     "invoices" => :invoice, "hauler_payments" => { hauler: :person }, "loans" => :person, "loan_payments" => { loan: :person },
     "payroll_payments" => { payroll: :farm }, "payroll_expenses" => { payroll: :farm }, "sale_payments" => { sale: :buyer },
-    "processing_costs" => :coffee_conversion
+    "processing_costs" => :coffee_conversion, "shipment_costs" => :shipment
   }.freeze
 
   # assigned: given an account; skipped: waiting for one (by method);
@@ -44,7 +46,7 @@ class AccountConsolidation
     counts = Hash.new(0)
     ActiveRecord::Base.transaction do
       @items.group_by(&:first).each do |source, pairs|
-        records = MODELS.fetch(source).constantize.where(id: pairs.map(&:last), money_account_id: nil)
+        records = MODELS.fetch(source).constantize.where(id: pairs.map(&:last))
         # A collection «con anticipo» moved no money: it takes no account.
         records = records.in_money if source == "sale_payments"
         records = records.lock.to_a

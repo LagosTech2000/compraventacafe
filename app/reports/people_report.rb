@@ -1,7 +1,7 @@
 # Each person and everything they have with the business in the period,
 # across modules: coffee they sold (trading), what they earned in payrolls
 # (farms), what they paid on loans and what they owe today (loans). Needs
-# the read permission of the three modules.
+# the read permission of purchases, accounts and payrolls.
 class PeopleReport < Report
   ROLES = %w[producer client collaborator borrower employee].freeze
   ACTIVITIES = %w[with_activity].freeze
@@ -36,6 +36,7 @@ class PeopleReport < Report
   filter :activity, :choice, in: ACTIVITIES, default: "with_activity"
 
   def self.module_keys = %w[trading loans farms]
+  def self.permission_keys = %w[trading.purchases loans.credit_accounts farms.payrolls]
 
   detail { |person| loans_credit_account_path(person) }
 
@@ -103,17 +104,17 @@ class PeopleReport < Report
     def join(name, relation) = "LEFT JOIN (#{relation.to_sql}) #{name} ON #{name}.person_id = people.id"
 
     def sales(in_period)
-      within(Purchase.active.joins(:producer), in_period, column: "purchases.purchased_at", type: :datetime)
+      within(Purchase.visible_to(user).active.joins(:producer), in_period, column: "purchases.purchased_at", type: :datetime)
         .group("producers.person_id").select("producers.person_id", "SUM(purchases.net_weight) AS net_weight", "SUM(purchases.total) AS total")
     end
 
     def earned(in_period)
-      within(PayrollPaymentLine.joins(:payment, :member), in_period, column: "payroll_payments.paid_on")
+      within(PayrollPaymentLine.joins(:payment, :member).merge(PayrollPayment.visible_to(user)), in_period, column: "payroll_payments.paid_on")
         .group("payroll_members.person_id").select("payroll_members.person_id", "SUM(payroll_payment_lines.gross_amount) AS amount")
     end
 
     def repaid(in_period)
-      within(LoanPayment.joins(:loan), in_period, column: "loan_payments.paid_on")
+      within(LoanPayment.visible_to(user).joins(:loan), in_period, column: "loan_payments.paid_on")
         .group("loans.person_id").select("loans.person_id", "SUM(loan_payments.amount) AS amount")
     end
 end

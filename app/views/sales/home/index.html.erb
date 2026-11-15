@@ -12,15 +12,15 @@
     and collected. Each card says what is pending and links to do it. %>
 <ol class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
   <% [
-       { key: "ship", count: @daily_close.departed.size, pounds: @daily_close.departed_net, amount: nil,
+       { key: "ship", read: "shipments", count: @daily_close.departed.size, pounds: @daily_close.departed_net, gross: @daily_close.departed_gross, amount: nil,
          path: new_sales_shipment_path, allowed: policy(Shipment).create?, pending: false },
-       { key: "receive", count: @in_transit.count, pounds: @in_transit.sum(:origin_net_weight), amount: nil,
+       { key: "receive", read: "shipments", count: @in_transit.count, pounds: @in_transit.sum(:origin_net_weight), gross: @in_transit.sum(:origin_gross_weight), amount: nil,
          path: sales_shipments_path(status: "in_transit"), allowed: policy(Shipment).index?, pending: @in_transit.exists? },
-       { key: "sell", count: @unsold.count, pounds: @unsold.sum(:destination_net_weight), amount: nil,
+       { key: "sell", read: "shipments", count: @unsold.count, pounds: @unsold.sum(:destination_net_weight), gross: @unsold.sum(:destination_gross_weight), amount: nil,
          path: new_sales_sale_path, allowed: policy(Sale).create?, pending: @unsold.exists? },
-       { key: "collect", count: @unpaid.count, pounds: nil, amount: @unpaid_balance,
+       { key: "collect", read: "sales", count: @unpaid.count, pounds: nil, amount: @unpaid_balance,
          path: sales_sales_path(payment_status: "unpaid"), allowed: policy(Sale).index?, pending: @unpaid.exists? }
-     ].each_with_index do |step, index| %>
+     ].select { |step| can_read?("sales.#{step[:read]}") }.each_with_index do |step, index| %>
     <li class="clay flex flex-col p-5 <%= step[:pending] ? "ring-2 ring-primary" : "ring-1 ring-line/60" %>">
       <p class="flex items-center gap-2 text-[0.7rem] font-semibold uppercase tracking-wide text-primary">
         <span class="grid size-6 place-items-center rounded-full <%= step[:pending] ? "bg-primary text-on-primary" : "bg-primary-soft" %>"><%= index + 1 %></span>
@@ -30,6 +30,7 @@
       <p class="mt-1 flex-1 text-sm text-ink-muted" data-live-value="step-<%= step[:key] %>">
         <%= t(".steps.#{step[:key]}.status_html", count: step[:count],
               pounds: step[:pounds] && tag.span(format_pounds(step[:pounds]), class: "whitespace-nowrap"),
+              gross: step[:gross] && tag.span(format_pounds(step[:gross]), class: "whitespace-nowrap"),
               amount: step[:amount] && tag.span(format_money(step[:amount]), class: "whitespace-nowrap")) %>
       </p>
       <% if step[:allowed] %>
@@ -39,20 +40,55 @@
   <% end %>
 </ol>
 
-<% if @over_tolerance.exists? %>
+<% if can_read?("sales.shipments") && @over_tolerance.exists? %>
   <div class="flash-alert mt-4 flex flex-wrap items-center justify-between gap-3" role="status">
     <p><%= t(".over_tolerance", count: @over_tolerance.count, tolerance: format_percent(WeightTolerance.percent)) %></p>
     <%= link_to t(".see_over_tolerance"), sales_shipments_path(over_tolerance: 1, season_year: Season.current.year), class: "btn btn-sm" %>
   </div>
 <% end %>
 
-<div class="mt-8">
-  <%= render "sales/stock", stock: @stock, alert: @alert %>
-  <% if @alert.any? %><%= render "sales/cherry_alert", alert: @alert %><% end %>
-</div>
+<%# Shrink of the season (Fernando, 2026-11-13): the shipments' lots'
+    purchases − their local scale; each figure opens those shipments. %>
+<% if can_read?("sales.shipments") %>
+  <% shrink = @shrink %>
+  <section class="panel mt-6 p-4" aria-labelledby="sales-shrink-title" data-season-shrink>
+    <h2 id="sales-shrink-title" class="font-semibold"><%= t(".shrink.title", season: @season.label) %></h2>
+    <p class="text-xs text-ink-muted"><%= t(".shrink.help") %></p>
+    <% season_path = ->(shrink_kind) { sales_shipments_path(shrink: shrink_kind, season_year: @season.year) } %>
+    <dl class="mt-3 flex flex-wrap gap-3">
+      <div class="stat min-w-0 flex-1 basis-44" data-shrink="all">
+        <dt><%= t(".shrink.all", count: shrink.all.count) %></dt>
+        <dd data-live-value><span class="<%= shrink_class(shrink.all.gross) %>"><%= format_shrink(shrink.all.gross) %></span></dd>
+        <p class="text-xs text-ink-muted"><%= t(".shrink.net", value: format_shrink(shrink.all.net), percent: shrink.percent ? format_percent(shrink.percent) : "—") %></p>
+      </div>
+      <% { loss: shrink.loss, gain: shrink.gain }.each do |key, group| %>
+        <div class="stat min-w-0 flex-1 basis-44" data-shrink="<%= key %>">
+          <dt><%= link_to t(".shrink.#{key}", count: group.count), season_path.call(key.to_s), class: "link" %></dt>
+          <dd data-live-value><%= link_to format_shrink(group.gross), season_path.call(key.to_s), class: shrink_class(group.gross) %></dd>
+          <p class="text-xs text-ink-muted"><%= t(".shrink.net_only", value: format_shrink(group.net)) %></p>
+        </div>
+      <% end %>
+      <div class="stat min-w-0 flex-1 basis-44" data-shrink="no_batches">
+        <dt><%= link_to t(".shrink.no_batches"), season_path.call("no_batches"), class: "link" %></dt>
+        <dd data-live-value><%= link_to shrink.without_batches, season_path.call("no_batches") %></dd>
+        <p class="text-xs text-ink-muted"><%= t(".shrink.no_batches_help") %></p>
+      </div>
+    </dl>
+  </section>
+<% end %>
 
-<h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".today", date: l(@daily_close.date, format: :long)) %></h2>
-<%= render "sales/summary", summary: @daily_close.summary %>
+<% if can_read?("sales.stock") %>
+  <div class="mt-8">
+    <%= render "sales/stock", stock: @stock, alert: @alert %>
+    <% if @alert.any? %><%= render "sales/cherry_alert", alert: @alert %><% end %>
+  </div>
+<% end %>
 
-<h2 class="mt-8 mb-3 text-lg font-semibold"><%= format_season_dates(@season) %></h2>
-<%= render "sales/summary", summary: @season_summary %>
+<%# The figures of the day and the season are the sales'. %>
+<% if can_read?("sales.sales") %>
+  <h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".today", date: l(@daily_close.date, format: :long)) %></h2>
+  <%= render "sales/summary", summary: @daily_close.summary %>
+
+  <h2 class="mt-8 mb-3 text-lg font-semibold"><%= format_season_dates(@season) %></h2>
+  <%= render "sales/summary", summary: @season_summary %>
+<% end %>

@@ -14,8 +14,8 @@ class LoanDailyClose
     @date = date
   end
 
-  def loans = @loans ||= Loan.where(disbursed_on: date).includes(:money_account, :created_by, person: :photo_info, supply_items: :supply).order(:id).to_a
-  def payments = @payments ||= LoanPayment.where(paid_on: date).includes(:money_account, :created_by, :purchase, { payroll_payment_line: { payment: :payroll } }, loan: :person).order(:id).to_a
+  def loans = @loans ||= Loan.owned.where(disbursed_on: date).includes(:money_account, :created_by, person: :photo_info, supply_items: :supply).order(:id).to_a
+  def payments = @payments ||= LoanPayment.owned.where(paid_on: date).includes(:money_account, :created_by, :purchase, { payroll_payment_line: { payment: :payroll } }, loan: :person).order(:id).to_a
 
   def lent = loans.sum(0.to_d, &:principal)
   def lent_cash = loans.sum(0.to_d, &:cash_amount)
@@ -23,6 +23,9 @@ class LoanDailyClose
   def collected = payments.sum(0.to_d, &:amount)
   def interest_collected = payments.sum(0.to_d, &:interest_amount)
   def principal_collected = payments.sum(0.to_d, &:principal_amount)
+  # Principal collected in cash and in supplies, each loan's proportion (Fernando, 2026-11-12).
+  def cash_collected = payments.sum(0.to_d) { it.loan.split_principal(it.principal_amount).first }
+  def supplies_collected = principal_collected - cash_collected
   # What came in as money (cash, transfer, check), not with coffee or payroll.
   def collected_money = payments.reject { it.with_coffee? || it.from_payroll? }.sum(0.to_d, &:amount)
 

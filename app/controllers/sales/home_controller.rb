@@ -4,6 +4,8 @@ module Sales
   class HomeController < ApplicationController
     def index
       authorize [ :sales, :home ]
+      return unless module_home_or_first_tab("sales")
+
       @stock = CoffeeStock.new
       @alert = CherryAlert.new
       shipments = policy_scope(Shipment)
@@ -15,6 +17,8 @@ module Sales
       @daily_close = SalesDailyClose.new(Time.zone.today)
       @season = Season.current
       @season_summary = SaleSummary.new(policy_scope(Sale).in_season(@season))
+      # The season's shrink (Fernando, 2026-11-13).
+      @shrink = ShrinkSummary.new(shipments.active.where(season_year: @season.year))
     end
 
     private

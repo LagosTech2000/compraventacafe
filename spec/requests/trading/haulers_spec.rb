@@ -48,7 +48,7 @@ RSpec.describe "Trading haulers" do
   it "names the carrero on a purchase and shows the commission there" do
     hauler = create(:hauler, price_per_pound: "0.3")
     producer = create(:producer)
-    post trading_purchases_path, params: { purchase: { producer_id: producer.id, hauler_id: hauler.id, purchased_at: Time.current,
+    post trading_purchases_path, params: { purchase: { producer_id: producer.id, hauler_choice: hauler.id, purchased_at: Time.current,
                                                        coffee_state: "cherry", weight_mode: "single", gross_weight: "1661",
                                                        yield_factor: "1", price_per_pound: "10" } }
     purchase = Purchase.last
@@ -58,8 +58,30 @@ RSpec.describe "Trading haulers" do
     expect(response.body).to include("Carreada por #{hauler.full_name}", "Comisión: L 0.30 por libra neta =", "L 495.00")
 
     get new_trading_purchase_path
-    option = page.at_css("select#purchase_hauler_id option[value='#{hauler.id}']")
+    option = page.at_css("select#purchase_hauler_choice option[value='#{hauler.id}']")
     expect(option.to_h).to include("data-price-per-pound" => "0.3")
+  end
+
+  it "asks to choose the carrero or «Sin carrero» in the purchase form (Fernando, 2026-11-13)" do
+    producer = create(:producer)
+    fields = { producer_id: producer.id, purchased_at: Time.current, coffee_state: "cherry", weight_mode: "single",
+               gross_weight: "1661", yield_factor: "1", price_per_pound: "10" }
+
+    get new_trading_purchase_path
+    select = page.at_css("select#purchase_hauler_choice")
+    expect(select["required"]).to eq("required")
+    expect(select.css("option").first(2).map { [ it.text, it["value"] ] }).to eq([ [ "Selecciona el carrero", "" ], [ "Sin carrero", "none" ] ])
+    expect(select.at_css("option[selected]").text).to eq("Selecciona el carrero") # unchosen
+
+    expect { post trading_purchases_path, params: { purchase: fields.merge(hauler_choice: "") } }.not_to change(Purchase, :count)
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("falta: elige el carrero o «Sin carrero»")
+
+    post trading_purchases_path, params: { purchase: fields.merge(hauler_choice: "none") }
+    purchase = Purchase.last
+    expect(purchase.hauler).to be_nil
+    get edit_trading_purchase_path(purchase)
+    expect(page.at_css("select#purchase_hauler_choice option[selected]").text).to eq("Sin carrero")
   end
 
   it "pays what is owed with a receipt, original and copy, and removes only the last payment" do

@@ -10,6 +10,7 @@
 # can get one, not only intermediaries (Fernando, the same day).
 class Loan < ApplicationRecord
   include Auditable
+  include OwnedRecord
   include HasMoneyAccount
   include LiveUpdates
   live_updates :loans
@@ -34,6 +35,8 @@ class Loan < ApplicationRecord
   validates :disbursed_on, :due_on, presence: true
   validates :observations, length: { maximum: 500 }
   validate :due_on_not_before_disbursement
+  # Never more of a supply than the inventory has (Fernando, 2026-11-12),
+  # for the loans from the day the inventory started.
 
   before_validation :compute_principal
 
@@ -86,6 +89,20 @@ class Loan < ApplicationRecord
   def supplies_amount
     kept_supply_items.sum { |item| LoanSupply.total_for(item.quantity, item.unit_price) || 0 }
   end
+
+  # The value of its supplies as kept (principal − cash), without loading its lines.
+  def supplies_value = principal.to_d - cash_amount.to_d
+
+  # The cash and supplies parts of `amount` of principal (Fernando,
+  # 2026-11-12: «en proporción»): as the loan was lent, the cash share
+  # rounded to the cent and the supplies the rest.
+  def self.split_principal(amount, cash:, principal:)
+    amount = amount.to_d
+    cash_part = principal.to_d.positive? ? (amount * cash.to_d / principal.to_d).round(2) : 0.to_d
+    [ cash_part, amount - cash_part ]
+  end
+
+  def split_principal(amount) = self.class.split_principal(amount, cash: cash_amount, principal:)
 
   # Cash only, supplies only, or both.
   def kind

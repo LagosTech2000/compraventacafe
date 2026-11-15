@@ -6,8 +6,8 @@
   <table class="mt-3 w-full border-collapse">
     <tbody>
       <tr>
-        <% { departed: close.departed.size, departed_net: format_pounds(close.departed_net), received: close.received.size,
-             received_net: format_pounds(close.received_net), received_difference: format_pounds(close.received_difference),
+        <% { departed: close.departed.size, departed_net: format_gross_net(close.departed_gross, close.departed_net), received: close.received.size,
+             received_net: format_gross_net(close.received_gross, close.received_net), received_difference: format_pounds(close.received_difference),
              sold: format_money(close.summary.total), collected: format_money(close.collected) }.each do |key, value| %>
           <td class="border border-black px-2 py-1">
             <span class="block text-[7.5pt] uppercase tracking-wide"><%= t("sales.daily_closes.show.figures.#{key}") %></span>
@@ -56,7 +56,6 @@
           <th class="py-1 pr-1"><%= t("sales.shipments.table.number") %></th>
           <th class="py-1 pr-1"><%= Shipment.human_attribute_name(:buyer) %></th>
           <th class="py-1 pr-1"><%= Purchase.human_attribute_name(:coffee_state) %></th>
-          <th class="py-1 pr-1"><%= Shipment.human_attribute_name(:remission_number) %></th>
           <th class="py-1 pl-1 text-right"><%= t("sales.shipments.table.sacks") %></th>
           <th class="py-1 pl-1 text-right"><%= t("sales.shipments.table.origin_net") %></th>
           <th class="py-1 pl-1 text-right"><%= t("sales.shipments.table.destination_net") %></th>
@@ -69,10 +68,9 @@
             <td class="py-0.5 pr-1 tabular-nums"><%= shipment.display_number %></td>
             <td class="py-0.5 pr-1"><%= shipment.buyer.name %></td>
             <td class="py-0.5 pr-1"><%= shipment.human_coffee_state %></td>
-            <td class="py-0.5 pr-1"><%= shipment.remission_number %></td>
             <td class="py-0.5 pl-1 text-right tabular-nums"><%= shipment.origin_sacks %></td>
-            <td class="py-0.5 pl-1 text-right tabular-nums"><%= format_pounds(shipment.origin_net_weight) %></td>
-            <td class="py-0.5 pl-1 text-right tabular-nums"><%= shipment.destination_net_weight ? format_pounds(shipment.destination_net_weight) : "—" %></td>
+            <td class="py-0.5 pl-1 text-right tabular-nums"><%= shipment.origin_missing? ? "—" : "#{format_pounds(shipment.origin_gross_weight)} / #{format_pounds(shipment.origin_net_weight)}" %></td>
+            <td class="py-0.5 pl-1 text-right tabular-nums"><%= shipment.destination_net_weight ? "#{format_pounds(shipment.destination_gross_weight)} / #{format_pounds(shipment.destination_net_weight)}" : "—" %></td>
             <td class="py-0.5 pl-1 text-right tabular-nums"><%= shipment.net_difference ? format_pounds(shipment.net_difference) : "—" %></td>
           </tr>
         <% end %>

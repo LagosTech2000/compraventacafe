@@ -323,7 +323,6 @@ class ReportDemoData
         gross = (net / (1 - humidity / 100.0)).round
         sacks = (gross / PurchaseCalculation::SACK_WEIGHT.to_f).ceil
         shipment = Shipment.create!(buyer: pick(@buyers), created_by: pick(@clerks), departed_at: moment(date), coffee_state: state,
-                                    remission_number: (400 + @counts[:shipments]).to_s,
                                     **[ :carrier, :vehicle ].zip(@transport.fetch(pick([ "Transporte Demo", "Camión propio" ]))).to_h,
                                     origin_gross_weight: gross + sacks, origin_sacks: sacks, origin_humidity_percent: humidity, origin_damage_percent: 0)
         @in_transit << [ shipment, date + @random.rand(0..2) ]

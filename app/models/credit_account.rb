@@ -10,10 +10,12 @@ class CreditAccount
     @person = person
     @today = today
     # Loaded once per list (preloaded loans, payments and supplies) or here.
+    # Only the user's own when they see only theirs (OwnedRecord).
+    owner = Current.owner if OwnedRecord.restricted?(Current.owner)
     @loans = if person.association(:loans).loaded?
-      person.loans.sort_by { |loan| [ loan.disbursed_on, loan.id ] }.reverse
+      person.loans.select { owner.nil? || it.created_by_id == owner.id }.sort_by { |loan| [ loan.disbursed_on, loan.id ] }.reverse
     else
-      person.loans.includes(:payments, :supply_items).newest_first.to_a
+      person.loans.owned.includes(:payments, :supply_items).newest_first.to_a
     end
   end
 
@@ -26,6 +28,13 @@ class CreditAccount
   end
 
   def lent = loans.sum(&:principal)
+  # Principal lent, paid and owed in cash and in supplies (Fernando, 2026-11-12).
+  def lent_cash = loans.sum { it.cash_amount.to_d }
+  def lent_supplies = lent - lent_cash
+  def cash_paid = balances.values.sum(&:cash_paid)
+  def supplies_paid = principal_paid - cash_paid
+  def cash_owed = balances.values.sum(&:cash_owed)
+  def supplies_owed = principal_owed - cash_owed
   def principal_paid = balances.values.sum(&:principal_paid)
   def interest_paid = balances.values.sum(&:interest_paid)
   def principal_owed = balances.values.sum(&:principal_owed)

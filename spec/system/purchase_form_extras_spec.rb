@@ -46,7 +46,7 @@ RSpec.describe "Purchase form extras", type: :system do
     end
 
     expect(page).to have_no_css("dialog[open]")
-    expect(page).to have_select("purchase_hauler_id", selected: "Pedro Cruz")
+    expect(page).to have_select("purchase_hauler_choice", selected: "Pedro Cruz")
     expect(page).to have_css("[data-hauler-commission-target='terms']", text: "L 0.30 por libra neta")
   end
 
@@ -70,6 +70,11 @@ RSpec.describe "Purchase form extras", type: :system do
     select "El Rosario", from: "purchase_zone_id"
     fill_in "purchase_gross_weight", with: "330"
     fill_in "purchase_price_per_pound", with: "58"
+    # The carrero must be chosen (Fernando, 2026-11-13): the browser stops it first.
+    within("main form") { find("[type=submit]").click }
+    expect(page).to have_css("#purchase_hauler_choice:invalid")
+    expect(find("#purchase_hauler_choice").evaluate_script("this.validationMessage")).to eq("Elige el carrero que la trajo, o «Sin carrero».")
+    select "Sin carrero", from: "purchase_hauler_choice"
     within("main form") { find("[type=submit]").click }
 
     expect(page).to have_text("Ana Zelaya no tenía zona: quedó en El Rosario.")

@@ -11,14 +11,17 @@ class PickerSearch
 
   # What one record carries to the page: its label, the details it misses
   # and, for a producer, its zone and its active farms (with theirs), which
-  # the purchase form uses when it is picked.
+  # the purchase form uses when it is picked. A producer's zone name goes
+  # after its DNI in the list only (`hint`, Fernando, 2026-11-13), not in
+  # the label the box shows once chosen; a person's zone too, if it has one
+  # (Nuevo préstamo and every person search, Fernando, 2026-11-13).
   def self.data(record)
     case record
     when Producer
-      { id: record.id, label: record.picker_label, zone_id: record.zone_id, missing: record.missing_fields,
+      { id: record.id, label: record.picker_label, hint: record.person.zone&.name, zone_id: record.zone_id, missing: record.missing_fields,
         farms: record.farms.select(&:active?).sort_by(&:name).map { |farm| [ farm.id, farm.name, farm.missing_fields ] } }
     when Person
-      { id: record.id, label: record.picker_label, missing: record.missing_fields }
+      { id: record.id, label: record.picker_label, hint: record.zone&.name, missing: record.missing_fields }
     end
   end
 
@@ -49,7 +52,7 @@ class PickerSearch
   private
     def scope
       case kind
-      when "producers" then Producer.picker_search(text).includes(:person, :farms).alphabetical
+      when "producers" then Producer.picker_search(text).includes(:farms, person: :zone).alphabetical
       when "people" then people(Person.all)
       when "collaborators" then people(Person.collaborators)
       end
@@ -57,6 +60,6 @@ class PickerSearch
 
     def people(scope)
       scope = scope.where.not(id: except) if except
-      scope.picker_search(text).alphabetical
+      scope.picker_search(text).includes(:zone).alphabetical
     end
 end

@@ -1,0 +1,41 @@
+<%# The lot an invoice goes in and its percent (Fernando, 2026-11-13), in
+    «Facturar compras» and «Editar factura»: what it comes to as purchases
+    are marked (invoice_batch_controller.js). `batches` is [lot, room] for
+    the lots it may go in; `shares`, its lots now when there is more than
+    one (then they change from each lot); `was`, the lot and percent it had,
+    so saving without touching them leaves the lot as it is. %>
+<% shares ||= []
+   was ||= nil %>
+<% if shares.many? %>
+  <section class="grid gap-2">
+    <h2 class="text-lg font-semibold"><%= t("trading.invoices.lot_fields.legend") %></h2>
+    <p class="text-sm text-ink-muted">
+      <%= t("trading.invoices.lot_fields.split", lots: shares.map { |share| t("trading.invoices.lot_fields.share", batch: share.coffee_batch.label, percent: number_with_precision(share.percent, precision: 2, strip_insignificant_zeros: true)) }.to_sentence) %>
+    </p>
+  </section>
+<% elsif batches.present? %>
+  <fieldset class="grid gap-3" data-invoice-batch-target="box" data-texts="<%= %i[takes room over mixed none_fit no_purchases].to_h { [ it, t("trading.invoices.lot_fields.#{it}") ] }.to_json %>">
+    <legend class="mb-1 text-lg font-semibold"><%= t("trading.invoices.lot_fields.legend") %></legend>
+    <% if was %><%= hidden_field_tag "invoice[lot_was]", was, id: nil %><% end %>
+    <div>
+      <%= label_tag "invoice_coffee_batch_id", CoffeeBatch.model_name.human, class: "field-label" %>
+      <select name="invoice[coffee_batch_id]" id="invoice_coffee_batch_id" class="field-input"
+              data-invoice-batch-target="lot" data-action="invoice-batch#update">
+        <option value=""><%= t("trading.invoices.lot_fields.blank") %></option>
+        <% batches.each do |lot, room| %>
+          <option value="<%= lot.id %>" data-state="<%= lot.coffee_state %>" data-warehouse="<%= lot.warehouse_id %>" data-room="<%= room %>"
+                  <%= "selected" if lot_id.to_s == lot.id.to_s %>>
+            <%= t("trading.invoices.lot_fields.option", batch: lot.label, state: lot.human_coffee_state, warehouse: lot.warehouse.name, room: format_pounds(room)) %>
+          </option>
+        <% end %>
+      </select>
+    </div>
+    <div data-invoice-batch-target="percentField">
+      <%= label_tag "invoice_batch_percent", t("trading.invoices.lot_fields.percent"), class: "field-label" %>
+      <%= number_field_tag "invoice[batch_percent]", number_with_precision(percent, precision: 4, strip_insignificant_zeros: true), id: "invoice_batch_percent",
+            min: 0.0001, max: 100, step: "any", inputmode: "decimal", class: "field-input tabular-nums",
+            data: { invoice_batch_target: "percent", action: "invoice-batch#update" } %>
+    </div>
+    <output class="block text-sm tabular-nums" aria-live="polite" data-invoice-batch-target="result"></output>
+  </fieldset>
+<% end %>

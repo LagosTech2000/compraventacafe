@@ -1,0 +1,68 @@
+<% person = @panel.person %>
+<% content_for :title, person.full_name %>
+<%# A person's panel, opened by the fingerprint reader (Fernando,
+    2026-11-14): who it is, shortcuts for what can be done for them and,
+    for each role the user sees, what is pending. %>
+<div class="space-y-5" data-person-panel="<%= person.id %>">
+  <div class="flex min-w-0 items-center gap-4">
+    <%= avatar(person, css: "size-16 text-lg") %>
+    <div class="min-w-0">
+      <h1 class="text-2xl font-bold"><%= person.full_name %></h1>
+      <div class="mt-1"><%= render "administration/people/roles", person: %></div>
+      <p class="mt-1 text-sm text-ink-muted">
+        <%= [ (t(".dni", dni: person.dni) if person.dni.present?), format_phone(person.phone).presence, person.zone&.name ].compact.join(" · ").presence || t(".no_details") %>
+      </p>
+    </div>
+  </div>
+
+  <% if @panel.actions.any? %>
+    <nav aria-label="<%= t(".shortcuts") %>" class="flex flex-wrap gap-2">
+      <% @panel.actions.each_with_index do |action, index| %>
+        <% css = index.zero? ? "btn btn-primary" : "btn" %>
+        <%= action.modal ? modal_link_to(action.label, action.path, class: css) : page_link_to(action.label, action.path, class: css) %>
+      <% end %>
+    </nav>
+  <% end %>
+
+  <% alerts = [] %>
+  <% alerts << t(".overdue", count: @panel.overdue_loans.size) if @panel.overdue_loans.any? %>
+  <% alerts << t(".uninvoiced", count: @panel.uninvoiced_count) if @panel.uninvoiced_count.positive? %>
+  <% alerts << t(".missing", fields: @panel.missing_fields.to_sentence) if @panel.missing_fields.any? %>
+  <% if alerts.any? %>
+    <ul class="flash-alert space-y-1 text-sm" role="status">
+      <% alerts.each do |alert| %><li><%= alert %></li><% end %>
+    </ul>
+  <% end %>
+
+  <% if @panel.producer_card? %>
+    <%= turbo_frame_tag "producer-card", src: trading_producer_card_path(@panel.producer), loading: :lazy do %>
+      <p class="text-sm text-ink-muted"><%= t(".loading") %></p>
+    <% end %>
+  <% elsif @panel.borrower_card? %>
+    <%= turbo_frame_tag "borrower-card", src: loans_borrower_path(person), loading: :lazy do %>
+      <p class="text-sm text-ink-muted"><%= t(".loading") %></p>
+    <% end %>
+  <% end %>
+
+  <% unless @panel.hauler_balance.nil? %>
+    <section class="panel p-4" aria-labelledby="panel-hauler">
+      <h2 id="panel-hauler" class="font-semibold"><%= Hauler.model_name.human %></h2>
+      <p class="mt-1 text-sm"><%= t(".hauler_balance_html", amount: tag.strong(format_money(@panel.hauler_balance), class: "tabular-nums")) %></p>
+    </section>
+  <% end %>
+
+  <% if @panel.staff_member %>
+    <section class="panel p-4" aria-labelledby="panel-driver">
+      <h2 id="panel-driver" class="font-semibold"><%= t(".staff", role: @panel.staff_member.role.name) %></h2>
+      <% if @panel.shipments_driving.any? %>
+        <ul class="mt-2 space-y-1 text-sm">
+          <% @panel.shipments_driving.each do |shipment| %>
+            <li><%= modal_link_to t(".shipment", number: shipment.display_number, date: l(shipment.departed_at.to_date)), sales_shipment_path(shipment), class: "link" %></li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="mt-1 text-sm text-ink-muted"><%= t(".no_shipments") %></p>
+      <% end %>
+    </section>
+  <% end %>
+</div>

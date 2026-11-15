@@ -13,6 +13,7 @@
 # Every kind is paid by pay period (PayPeriod): weekly, biweekly or monthly.
 class Payroll < ApplicationRecord
   include Auditable
+  include OwnedRecord
 
   KINDS = %w[daily task harvest].freeze
   # Not started yet ("upcoming"), running ("active") or past its end date.

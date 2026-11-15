@@ -75,7 +75,7 @@ RSpec.describe "Sales screens", type: :system do
     expect(page).to have_css("[data-weighing-calculator-target='net']", text: "184.88")
 
     click_button "Registrar salida"
-    expect(page).to have_text("Salida 0001 registrada para Beneficio Henola")
+    expect(page).to have_text("Remisión 0001 registrada para Beneficio Henola")
     expect(Shipment.last).to have_attributes(coffee_state: "cherry", origin_net_weight: BigDecimal("184.88"))
   end
 
@@ -98,7 +98,7 @@ RSpec.describe "Sales screens", type: :system do
     expect(page).to have_css("[data-weighing-calculator-target='net']", text: "487.06")
 
     click_button "Registrar salida"
-    expect(page).to have_text("Salida 0001 registrada")
+    expect(page).to have_text("Remisión 0001 registrada")
     expect(Shipment.last).to have_attributes(origin_weight_mode: "weighings", origin_gross_weight: 1_000, origin_sacks: 6)
     expect(Shipment.last.weighings.map(&:gross_weight)).to eq([ 600, 400 ])
   end
@@ -115,7 +115,7 @@ RSpec.describe "Sales screens", type: :system do
     expect(page).to have_css("[data-weighing-calculator-target='differenceBox'][data-over-tolerance='true']")
 
     click_button "Guardar peso en destino"
-    expect(page).to have_text("Peso en destino de la salida 0001 guardado")
+    expect(page).to have_text("Peso en destino de la remisión 0001 guardado")
     expect(shipment.reload.destination_net_weight).to eq(BigDecimal("472.49"))
   end
 
@@ -191,4 +191,23 @@ RSpec.describe "Sales screens", type: :system do
   end
 
   def dom_id(record, prefix) = ActionView::RecordIdentifier.dom_id(record, prefix)
+
+  # Administrators may leave the local scale empty (Fernando, 2026-11-12).
+  it "hides the local scale with «Sin báscula local» and saves the shipment without it" do
+    visit new_sales_shipment_path
+    select "Beneficio Henola", from: "shipment_buyer_id"
+    choose "Un motorista"
+    fill_in "shipment_driver_name", with: "Pedro Lara"
+    check "Sin báscula local (solo administradores)"
+    expect(page).to have_no_field("shipment_origin_gross_weight")
+    select "Uva", from: "shipment_coffee_state"
+    expect(page).to have_no_field("shipment_origin_yield_factor")
+    uncheck "Sin báscula local (solo administradores)"
+    expect(page).to have_field("shipment_origin_yield_factor")
+    check "Sin báscula local (solo administradores)"
+
+    click_button "Registrar salida"
+    expect(page).to have_text("Remisión 0001 registrada para Beneficio Henola")
+    expect(Shipment.last).to be_origin_missing
+  end
 end

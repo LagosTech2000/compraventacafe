@@ -4,7 +4,7 @@
 # this month by default, newest first. Transfers between accounts are not
 # income: the money stays home.
 class IncomeFilter < ListFilter
-  SOURCES = %w[sale_payments buyer_advances loan_payments other_incomes].freeze
+  SOURCES = %w[sale_payments buyer_advances supply_sales loan_payments other_incomes].freeze
 
   field :from, :date, default: -> { Time.zone.today.beginning_of_month }
   field :to, :date, default: -> { Time.zone.today }
@@ -33,7 +33,7 @@ class IncomeFilter < ListFilter
 
   def incomes
     @incomes ||= begin
-      list = MoneyMovements.new(range: from || to ? (from..to) : nil, account: account_id,
+      list = MoneyMovements.new(range: from || to ? (from..to) : nil, account: account_id, owner: Current.owner,
                                 sources: source ? sources & [ source ] : sources).all
       if q
         text = I18n.transliterate(q).downcase

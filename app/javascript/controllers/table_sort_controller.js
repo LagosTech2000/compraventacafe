@@ -72,7 +72,8 @@ export default class extends Controller {
   }
 }
 
-const DATE = /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/
+// Dates read "Lun 13/11/2026" (the day of the week first, Fernando, 2026-11-13) or "13/11/2026".
+const DATE = /^(?:\p{L}{3}\.?\s+)?(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/u
 const NUMBER = /^[^\d-]*(-?[\d,]*\.?\d+)\s*%?$/
 
 function sortKey(cell) {

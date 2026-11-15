@@ -2,6 +2,7 @@
 # voided (never edited nor deleted) with the delete permission.
 class WarehouseTransferPolicy < ApplicationPolicy
   self.module_key = "sales"
+  self.submodule_key = "stock"
 
   def update?
     false

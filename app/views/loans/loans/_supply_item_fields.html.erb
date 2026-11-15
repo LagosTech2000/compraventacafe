@@ -2,7 +2,9 @@
     inside a <template> (index NEW_RECORD) that the form copies to add lines. %>
 <% item = form.object %>
 <div class="data-card grid gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto_auto] sm:items-end"
-     data-loan-composition-target="item" <%= "hidden" if item.marked_for_destruction? %>>
+     data-loan-composition-target="item" <%= "hidden" if item.marked_for_destruction? %>
+     <%# What this line already lent when saved: on editing, it counts as still there. %>
+     data-saved-supply="<%= item.supply_id_in_database if item.persisted? %>" data-saved-quantity="<%= item.quantity_in_database if item.persisted? %>">
   <%= form.hidden_field :id if item.persisted? %>
   <%= form.hidden_field :_destroy, value: item.marked_for_destruction? ? "1" : "0", data: { loan_composition_target: "destroy" } %>
   <div>
@@ -33,4 +35,6 @@
   </div>
   <button type="button" class="btn btn-sm self-center sm:self-end sm:mb-1" data-action="loan-composition#remove"
           aria-label="<%= t("loans.loans.form.remove_supply") %>"><%= t("loans.loans.form.remove_supply") %></button>
+  <%# Lending more than there is: allowed, it stays to be delivered (Fernando, 2026-11-13). %>
+  <p class="flash-alert text-sm sm:col-span-full" role="status" hidden data-loan-composition-target="stockWarning" data-no-stock></p>
 </div>

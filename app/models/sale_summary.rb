@@ -13,7 +13,8 @@ class SaleSummary
   def buyers_count = @sales.distinct.count(:buyer_id)
   def net_weight = @sales.sum(:net_weight)
   def origin_net_weight = @sales.sum(:origin_net_weight)
-  def net_difference = net_weight - origin_net_weight
+  # Only the sales with the local scale of every shipment (Fernando, 2026-11-12).
+  def net_difference = @sales.where.not(origin_net_weight: nil).sum("sales.net_weight - sales.origin_net_weight")
   # The weight difference in money, each sale at its own price per pound.
   def difference_amount
     @sales.sum(Arel.sql("(sales.net_weight - sales.origin_net_weight) * " \

@@ -6,7 +6,7 @@ module Auditable
   extend ActiveSupport::Concern
 
   IGNORED_ATTRIBUTES = %w[id created_at updated_at lock_version].freeze
-  SENSITIVE_ATTRIBUTES = %w[password_digest].freeze
+  SENSITIVE_ATTRIBUTES = %w[password_digest template_ciphertext token_digest pairing_code_digest].freeze
 
   included do
     # Attributes a model keeps out of the log (e.g. a file's bytes); the

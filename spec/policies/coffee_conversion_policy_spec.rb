@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe CoffeeConversionPolicy do
+RSpec.describe CoffeeConversionPolicy, :all_records do
   def user_with(**flags)
     create(:user).tap { |user| create(:permission, user:, module_key: "sales", can_read: true, **flags) }.reload
   end

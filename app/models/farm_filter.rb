@@ -14,9 +14,17 @@ class FarmFilter < ListFilter
         status: "NOT farms.active"
 
   def apply(scope)
-    scope = scope.where("name ILIKE ?", like(q)) if q
+    scope = search(scope) if q
     scope = scope.where(active: status == "active") if status
     scope = owner == "business" ? scope.of_business : scope.where.not(producer_id: nil) if owner
     scope.includes(:department, :municipality, producer: :person).newest_first
   end
+
+  private
+    # By the farm's name or its producer's (Fernando, 2026-11-13): every
+    # word in the names, ignoring case and accents, as the pickers search.
+    def search(scope)
+      owners = Producer.where(person_id: Person.picker_search(q).select(:id)).select(:id)
+      scope.where("farms.name ILIKE ?", like(q)).or(scope.where(producer_id: owners))
+    end
 end

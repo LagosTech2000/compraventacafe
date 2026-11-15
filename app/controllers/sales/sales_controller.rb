@@ -1,8 +1,9 @@
 module Sales
   # Sales: shipments of one buyer, weighed at destination, charged on the
-  # buyer's net (SaleIssuer). Never edited: collected in payments or voided.
+  # buyer's net (SaleIssuer). Collected in payments or voided; an
+  # administrator edits it, even collected (Fernando, 2026-11-12).
   class SalesController < ApplicationController
-    before_action :set_sale, only: %i[ show void ]
+    before_action :set_sale, only: %i[ show edit update void ]
 
     def index
       authorize Sale
@@ -23,7 +24,7 @@ module Sales
         @shipments = @buyer.shipments.unsold.newest_first
       else
         # Buyers whose latest shipment ready to sell is most recent come first.
-        @buyers_to_sell = Buyer.joins(:shipments).merge(Shipment.unsold).group(:id)
+        @buyers_to_sell = Buyer.joins(:shipments).merge(Shipment.owned.unsold).group(:id)
                                .order(Arel.sql("MAX(shipments.departed_at) DESC, buyers.id DESC"))
                                .select("buyers.*", "COUNT(shipments.id) AS shipments_count",
                                        "SUM(shipments.destination_net_weight) AS net_total")
@@ -45,13 +46,34 @@ module Sales
       end
     end
 
+    def edit
+      @shipments = editable_shipments
+    end
+
+    def update
+      permitted = params.expect(sale: [ :sold_on, :price_unit, :unit_price, :quintal_pounds, :buyer_document_number, :observations, shipment_ids: [] ])
+      @sale.revise!(permitted.except(:shipment_ids), shipment_ids: permitted[:shipment_ids])
+      redirect_to sales_sale_path(@sale), notice: t(".success")
+    rescue ActiveRecord::RecordInvalid
+      @shipments = editable_shipments
+      render :edit, status: :unprocessable_content
+    end
+
+    # Without payments, with the delete permission; with payments, an
+    # administrator (they are removed).
     def void
       authorize @sale, :void?
-      @sale.void!(Current.user, reason: params.dig(:sale, :void_reason))
+      @sale.void!(Current.user, reason: params.dig(:sale, :void_reason), with_payments: Current.user.admin?)
       redirect_to sales_sale_path(@sale), notice: t(".success")
     end
 
     private
+      # Its shipments and the buyer's free ones of its coffee state.
+      def editable_shipments
+        ids = @sale.lines.select { it.active? }.map(&:shipment_id)
+        Shipment.where(id: ids).or(@sale.buyer.shipments.owned.unsold.where(coffee_state: @sale.coffee_state)).order(:number)
+      end
+
       def set_sale
         @sale = Sale.includes(:buyer, :created_by, :voided_by, payments: :created_by, lines: :shipment).find(params[:id])
         authorize @sale unless action_name == "void"

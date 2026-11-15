@@ -16,7 +16,7 @@ export default class extends Controller {
   static targets = ["coffeeState", "gross", "grossHelp", "humidity", "damage", "yield", "price",
                     "parchmentField", "cherryField", "sacks", "tare", "damageWeight", "damageAmount", "netWeight", "quintals", "total",
                     "weightMode", "weighingsSection", "weighings", "weighingTemplate", "weighing",
-                    "weighingDestroy", "weighingGross", "weighingSacks", "damageTypes", "damageType"]
+                    "weighingDestroy", "weighingGross", "weighingSacks", "damageTypes", "damageType", "wetField"]
   static values = { sackWeight: Number, tarePerSack: Number, quintalWeight: Number, defaults: Object,
                     damageTypesMessage: String }
 
@@ -30,6 +30,11 @@ export default class extends Controller {
     const cherry = state === "cherry"
     this.parchmentFieldTargets.forEach((field) => this.toggle(field, !cherry))
     this.cherryFieldTargets.forEach((field) => this.toggle(field, cherry))
+    // «Café corriente» is only for wet parchment.
+    this.wetFieldTargets.forEach((field) => {
+      this.toggle(field, state === "wet_parchment")
+      if (state !== "wet_parchment") field.querySelectorAll("input[type=checkbox]").forEach((box) => { box.checked = false })
+    })
 
     const defaults = this.defaultsValue[state] || {}
     if (cherry) {
@@ -59,7 +64,7 @@ export default class extends Controller {
   addWeighing() {
     const html = this.weighingTemplateTarget.innerHTML.replace(/NEW_RECORD/g, String(Date.now()))
     this.weighingsTarget.insertAdjacentHTML("beforeend", html)
-    this.weighingTargets[this.weighingTargets.length - 1].querySelector("input[type='number']")?.focus()
+    this.weighingTargets[this.weighingTargets.length - 1].querySelector("input[type='number'], input[data-thousands]")?.focus()
     this.update()
   }
 

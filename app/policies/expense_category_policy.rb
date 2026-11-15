@@ -2,6 +2,7 @@
 # deleted.
 class ExpenseCategoryPolicy < ApplicationPolicy
   self.module_key = "farms"
+  self.submodule_key = "expense_categories"
 
   def destroy?
     false

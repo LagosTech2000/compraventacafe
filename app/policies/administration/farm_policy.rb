@@ -3,5 +3,6 @@ module Administration
   # Administración permissions, not the Fincas module's.
   class FarmPolicy < ApplicationPolicy
     self.module_key = "administration"
+    self.submodule_key = "farms"
   end
 end

@@ -9,7 +9,7 @@ FactoryBot.define do
 
   factory :payroll do
     farm
-    association :created_by, factory: :user
+    created_by { SpecOwner.user || association(:user) }
     sequence(:name) { |n| "Planilla #{n}" }
     kind { "daily" }
     pay_frequency { "weekly" }
@@ -32,7 +32,7 @@ FactoryBot.define do
   factory :payroll_expense do
     payroll
     association :category, factory: :expense_category
-    association :created_by, factory: :user
+    created_by { SpecOwner.user || association(:user) }
     spent_on { payroll.starts_on }
     description { "Transporte de personal" }
     amount { 500 }

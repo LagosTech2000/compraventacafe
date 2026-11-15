@@ -19,7 +19,9 @@ RSpec.describe "Sorting every list" do
     create(:hauler_payment, hauler:, amount: 10)
     InvoiceIssuer.new(producer:, user: admin, purchase_ids: [ purchase.id ], payment_status: "pending").call
     create(:loan, person: producer.person)
-    create(:supply)
+    create(:supply_entry, supply: create(:supply))
+    create(:supply_exit)
+    create(:loan, disbursed_on: Time.zone.today, due_on: Time.zone.today + 30, supply_items_attributes: [ { supply_id: Supply.first.id, quantity: 1, unit_price: 5 } ])
     create(:farm, producer:)
     create(:payroll_member, payroll: daily)
     create(:payroll_expense, payroll: daily)
@@ -32,6 +34,8 @@ RSpec.describe "Sorting every list" do
     create(:staff_member)
     create(:shipment, buyer:, carrier: create(:carrier), vehicle: create(:vehicle))
     create(:coffee_conversion, :finished)
+    create(:purchase, purchased_at: 20.days.ago) # a producer that stopped selling
+    create(:coffee_batch)
     sign_in admin
   end
 
@@ -43,7 +47,7 @@ RSpec.describe "Sorting every list" do
     ProducerFilter => -> { trading_producers_path },
     HaulerFilter => -> { trading_haulers_path },
     HaulerPurchaseFilter => -> { trading_hauler_path(hauler) },
-    SupplyFilter => -> { loans_supplies_path },
+    SupplyFilter => -> { sales_supplies_path },
     FarmFilter => -> { farms_farms_path },
     CreditAccountFilter => -> { loans_credit_accounts_path },
     PurchaseFilter => -> { trading_purchases_path(from: "", to: "") },
@@ -77,8 +81,13 @@ RSpec.describe "Sorting every list" do
     ExpenseFilter => -> { finance_expenses_path(from: "", to: "") },
     FinanceCategoryFilter => -> { finance_categories_path },
     ExpenseCategoryFilter => -> { farms_expense_categories_path },
-    ConsolidationFilter => -> { finance_consolidation_path },
-    CoffeeCollectionFilter => -> { loans_coffee_collection_path }
+    ConsolidationFilter => -> { finance_consolidation_path(with_account: "1") },
+    SupplyExitFilter => -> { sales_supply_exits_path },
+    CoffeeCollectionFilter => -> { loans_coffee_collection_path },
+    SupplyEntryFilter => -> { sales_supply_stock_path },
+    IdleProducerFilter => -> { trading_idle_producers_path },
+    SupplyDeliveryFilter => -> { sales_supply_deliveries_path(status: "all") },
+    CoffeeBatchFilter => -> { sales_coffee_batches_path }
   }.freeze
 
   it "covers every list filter" do

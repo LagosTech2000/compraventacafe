@@ -25,6 +25,9 @@ class CashMovementsReport < Report
   filter :account, :text
 
   def self.module_keys = %w[trading loans farms]
+  # Any tab of the three modules; each source shows only for who reads its
+  # submodule (MoneyMovements.sources_for).
+  def self.readable_by?(user) = super && MoneyMovements.sources_for(user).any?
 
   detail { |movement| movement.route && public_send(*movement.route) }
 
@@ -93,7 +96,8 @@ class CashMovementsReport < Report
   private
     def load(in_period)
       range = in_period&.range
-      MoneyMovements.new(range: range && (range.begin..range.end), account: account_id, sources: MoneyMovements.sources_for(user)).all
+      owner = user if OwnedRecord.restricted?(user)
+      MoneyMovements.new(range: range && (range.begin..range.end), account: account_id, sources: MoneyMovements.sources_for(user), owner:).all
     end
 
     # The account chosen: its id, :none, or nil.

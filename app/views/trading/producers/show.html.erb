@@ -45,15 +45,16 @@
   <h2 id="producer-figures" class="mb-3 text-sm font-semibold text-ink-muted"><%= format_season_dates(season) %></h2>
   <% previous = @profile.previous_season_summary %>
   <% figures = [
-       [ :season_quintals, format_pounds(@profile.season_summary.quintals),
-         (t(".figures.previous_season", value: format_pounds(previous.quintals)) if previous.purchases_count.positive?) ],
+       [ :season_quintals, format_pounds(@profile.season_quintals),
+         (t(".figures.previous_season", value: format_pounds(@profile.previous_season_quintals)) if previous.purchases_count.positive?) ],
+       [ :season_common_quintals, format_pounds(@profile.season_common_quintals), t(".figures.common_hint") ],
        [ :season_purchases, @profile.season_summary.purchases_count, nil ],
        [ :season_total, format_money(@profile.season_summary.total), nil ],
        [ :season_average_price, (@profile.season_average_price ? format_money(@profile.season_average_price) : "—"), t(".figures.average_price_hint") ],
-       [ :all_time_quintals, format_pounds(@profile.all_time_summary.quintals), nil ]
+       [ :all_time_quintals, format_pounds(@profile.all_time_quintals), nil ]
      ] %>
   <% figures << [ :loans_owed, format_money(@credit_account.total_owed), nil ] if @credit_account %>
-  <dl class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+  <dl class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
     <% figures.each do |key, value, hint| %>
       <div class="stat">
         <dt><%= t(".figures.#{key}") %></dt>
@@ -78,7 +79,7 @@
              [ Producer.human_attribute_name(:zone), @producer.zone&.name, nil ],
              [ Producer.human_attribute_name(:farms), @producer.farm_names, nil ],
              [ t(".record.first_purchase"), (l(@profile.first_purchased_at.to_date) if @profile.first_purchased_at), nil ],
-             [ t(".record.last_purchase"), (l(@profile.last_purchased_at.to_date) if @profile.last_purchased_at), nil ]
+             [ t(".record.last_purchase"), (l(@profile.last_purchased_at.in_time_zone.to_date) if @profile.last_purchased_at), nil ]
            ].each do |label, value, css| %>
           <div class="min-w-0">
             <dt class="text-xs text-ink-muted"><%= label %></dt>
@@ -165,9 +166,9 @@
         <%= hidden_field_tag :tab, "purchases", id: nil %>
         <%= filter_select form, :season_year, Purchase.human_attribute_name(:season_year), season_options(@producer.purchases),
               selected: @filter.season_year, all: t("shared.filters.all_seasons") %>
-        <%= filter_select form, :invoiced, t("trading.purchases.index.invoiced"),
-              PurchaseFilter::INVOICED.map { |v| [ t("trading.purchases.index.invoiced_#{v}"), v ] }, selected: @filter.invoiced %>
-        <%= filter_check_box form, :show_voided, t("trading.purchases.index.show_voided"), checked: @filter.show_voided.present? %>
+        <%= filter_select form, :status, t("trading.purchases.index.status"),
+              Purchase::STATUSES.map { [ t("trading.purchases.index.statuses.#{it}"), it ] }, selected: @filter.status,
+              all: t("trading.purchases.index.statuses.active") %>
       <% end %>
       <%= list_frame "producer-purchases-list" do %>
       <div class="mt-4">
@@ -184,7 +185,8 @@
       <%= render layout: "shared/filters", locals: { filter: @filter, url: trading_producer_path(@producer, tab: "invoices") } do |form| %>
         <%= hidden_field_tag :tab, "invoices", id: nil %>
         <%= filter_select form, :payment_status, Invoice.human_attribute_name(:payment_status),
-              enum_options(Invoice, :payment_status, Invoice::FILTER_STATUSES), selected: @filter.payment_status %>
+              enum_options(Invoice, :payment_status, Invoice::LIST_STATUSES), selected: @filter.payment_status,
+              all: Invoice.human_attribute_name("payment_status/active") %>
       <% end %>
       <%= list_frame "producer-invoices-list" do %>
       <div class="mt-4">

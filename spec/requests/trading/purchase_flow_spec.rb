@@ -67,7 +67,7 @@ RSpec.describe "Trading purchase flow" do
 
     result = Nokogiri::HTML(response.body).at_css("turbo-frame#modal [data-controller='modal-result']")
     expect(result["data-modal-result-event-value"]).to eq("producer:created")
-    expect(JSON.parse(result["data-modal-result-detail-value"])).to eq("id" => producer.id, "label" => "Pedro Martínez", "zone_id" => zone.id,
+    expect(JSON.parse(result["data-modal-result-detail-value"])).to eq("id" => producer.id, "label" => "Pedro Martínez", "hint" => zone.name, "zone_id" => zone.id,
                                                                        "farms" => [ [ producer.farms.sole.id, "El Cerro", [ "Extensión", "Dirección", "Ubicación en el mapa" ] ] ],
                                                                        "missing" => [ "DNI", "RTN", "Correo electrónico", "Dirección", "Clave IHCAFE" ])
     expect(result["data-modal-result-refresh-value"]).to eq("false")
@@ -501,8 +501,36 @@ RSpec.describe "Trading purchase flow" do
 
       get trading_purchases_path
       expect(response.body).not_to include(dom_id_for(purchase))
-      get trading_purchases_path(show_voided: "1")
+      # By «Estado» (Fernando, 2026-11-13): the voided ones, or every state.
+      expect(response.body).not_to include("Mostrar anuladas")
+      get trading_purchases_path(status: "voided")
       expect(response.body).to include(dom_id_for(purchase), "Anulada")
+      get trading_purchases_path(status: "all")
+      expect(response.body).to include(dom_id_for(purchase))
+      get trading_purchases_path(status: "uninvoiced")
+      expect(response.body).not_to include(dom_id_for(purchase))
+    end
+
+    it "filters by the state of the purchase: not invoiced, by its invoice's payment, voided or all" do
+      admin = create(:user, :admin)
+      uninvoiced = create(:purchase)
+      pending = create(:purchase)
+      InvoiceIssuer.new(producer: pending.producer, user: admin, purchase_ids: [ pending.id ], payment_status: "pending").call
+      paid = create(:purchase)
+      InvoiceIssuer.new(producer: paid.producer, user: admin, purchase_ids: [ paid.id ], payment_status: "paid", payment_method: "cash").call
+      voided = create(:purchase)
+      voided.void!(user)
+
+      expect(Purchase.with_status(nil)).to contain_exactly(uninvoiced, pending, paid)
+      expect(Purchase.with_status("uninvoiced")).to contain_exactly(uninvoiced)
+      expect(Purchase.with_status("pending")).to contain_exactly(pending)
+      expect(Purchase.with_status("paid")).to contain_exactly(paid)
+      expect(Purchase.with_status("partial")).to be_empty
+      expect(Purchase.with_status("voided")).to contain_exactly(voided)
+      expect(Purchase.with_status("all")).to contain_exactly(uninvoiced, pending, paid, voided)
+
+      get trading_purchases_path(status: "pending")
+      expect(response.body).to include("Estado: Facturada, pendiente de pago")
     end
 
     it "leaves voided purchases out of the totals, the daily close and invoicing" do

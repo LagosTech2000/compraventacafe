@@ -2,6 +2,7 @@
 # like a collection. Never edited; removed only while not taken off a sale.
 class BuyerAdvancePolicy < ApplicationPolicy
   self.module_key = "sales"
+  self.submodule_key = "buyers"
 
   def create? = can?(:update)
   def update? = false

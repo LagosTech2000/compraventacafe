@@ -2,5 +2,6 @@
 module Loans
   class DailyClosePolicy < ApplicationPolicy
     self.module_key = "loans"
+    self.submodule_key = "daily_close"
   end
 end

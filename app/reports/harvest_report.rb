@@ -5,6 +5,7 @@ class HarvestReport < Report
   VALUE = "harvest_entries.cans * payrolls.can_price".freeze
 
   self.module_key = "farms"
+  def self.permission_keys = %w[farms.payrolls]
   self.date_column = "harvest_entries.worked_on"
   self.default_period = "this_week"
   self.default_sort = :worked_on
@@ -43,7 +44,7 @@ class HarvestReport < Report
   kpi(:best_day, :number) { |relation, _| relation.group(:worked_on).sum(:cans).values.max }
 
   def scope
-    HarvestEntry.joins(member: [ :person, { payroll: :farm } ])
+    HarvestEntry.joins(member: [ :person, { payroll: :farm } ]).merge(Payroll.visible_to(user))
   end
 
   def apply_filters(relation)

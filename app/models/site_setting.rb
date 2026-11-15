@@ -3,7 +3,8 @@
 # (sign-in page and printed documents), its RTN (invoices; optional, 14
 # digits like a person's) and its logo (the home button of the
 # navigation bar and the sign-in page). Admins set it in Administración →
-# Configuración del sitio.
+# Configuración del sitio. Its owner and phones go on the shipments'
+# remission (Fernando, 2026-11-12).
 #
 # One row. Until an admin saves it, the values come from es.yml (negocio.*).
 # The logo's bytes are stored in the row and served by SiteLogosController;
@@ -22,7 +23,7 @@ class SiteSetting < ApplicationRecord
   MAX_LOGO_SIZE = 1.megabyte
   # Every column but the logo's bytes, for pages that only need to know
   # whether there is a logo.
-  LIGHT_COLUMNS = %w[id business_name location rtn weight_tolerance_percent cherry_warning_hours cherry_critical_hours cherry_yield_percent drying_yield_percent logo_content_type logo_filename logo_byte_size created_at updated_at].freeze
+  LIGHT_COLUMNS = %w[id business_name location rtn owner_name phone secondary_phone supply_stock_starts_on weight_tolerance_percent cherry_warning_hours cherry_critical_hours cherry_yield_percent drying_yield_percent logo_content_type logo_filename logo_byte_size created_at updated_at].freeze
 
   self.audit_skipped_attributes = %w[logo_data]
 
@@ -31,10 +32,14 @@ class SiteSetting < ApplicationRecord
 
   normalizes :business_name, :location, with: ->(value) { value.squish.presence }
   normalizes :rtn, with: FieldFormats::DIGITS
+  normalizes :owner_name, with: ->(value) { value.squish.presence }
+  normalizes :phone, :secondary_phone, with: FieldFormats::PHONE
 
   validates :business_name, presence: true, length: { maximum: 80 }
   validates :location, length: { maximum: 120 }
   validates :rtn, field_format: :rtn
+  validates :owner_name, field_format: :person_name, length: { maximum: 100 }
+  validates :phone, :secondary_phone, field_format: :phone
   # Comercialización: from what difference between scales a shipment stands out.
   validates :weight_tolerance_percent, numericality: { greater_than: 0, less_than: 100 }, allow_nil: true
   # Hours cherry may wait before a warning, and before a critical alert.

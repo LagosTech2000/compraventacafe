@@ -9,12 +9,17 @@
 # between both scales is shown, and stands out when it passes the
 # tolerance of the site settings. A sale (Sale) charges the destination net.
 #
+# Administrators may leave the local scale empty (Fernando, 2026-11-12):
+# then it takes no coffee out of the stock and has no difference between
+# scales until someone completes it (#origin_missing?), even once sold.
+#
 # Stages: in transit → received (weighed at destination) → sold; or voided.
 # Weights are kept as calculated: they change only when an input does.
 # A shipment in a sale is not changed nor voided; voided, its coffee is
 # back in stock.
 class Shipment < ApplicationRecord
   include Auditable
+  include OwnedRecord
   include LiveUpdates
   live_updates :sales
 
@@ -25,6 +30,7 @@ class Shipment < ApplicationRecord
   MAX_SACKS = 10_000
   # What each side's calculation reads.
   INPUTS = %w[gross_weight sacks humidity_percent damage_percent yield_factor].freeze
+  ORIGIN_COLUMNS = (INPUTS + %w[tare net_weight]).map { "origin_#{it}" }.freeze
   # The local scale: the gross weight and sacks typed, or the sums of
   # weighings (ShipmentWeighing), as in the purchases.
   WEIGHT_MODES = Purchase::WEIGHT_MODES
@@ -45,25 +51,36 @@ class Shipment < ApplicationRecord
   has_one :active_sale_line, -> { where(active: true) }, class_name: "SaleLine", inverse_of: :shipment
   has_one :sale, through: :active_sale_line
   has_many :weighings, -> { order(:id) }, class_name: "ShipmentWeighing", dependent: :destroy, inverse_of: :shipment
+  # Its lots of purchased coffee (Fernando, 2026-11-13; before, its purchase
+  # invoices): what it takes from the stock, its cost and its shrink.
+  has_many :coffee_batches, -> { order(:number) }, dependent: :restrict_with_error, inverse_of: :shipment
+  # Its cost (Fernando, 2026-11-12, ShipmentCostSummary): its lots, the costs
+  # registered from it and the expenses of Control financiero assigned to it.
+  has_many :costs, -> { chronological }, class_name: "ShipmentCost", dependent: :restrict_with_error, inverse_of: :shipment
+  has_many :expenses, dependent: :restrict_with_error
   accepts_nested_attributes_for :weighings, allow_destroy: true, reject_if: :blank_weighing?
 
-  normalizes :remission_number, :weight_note_number, :driver_name, with: ->(value) { value.squish.presence }
+  normalizes :weight_note_number, :driver_name, with: ->(value) { value.squish.presence }
   normalizes :observations, with: FieldFormats::STRIP
 
   validates :departed_at, presence: true
   validates :coffee_state, inclusion: { in: Purchase::COFFEE_STATES }
   validates :origin_weight_mode, inclusion: { in: WEIGHT_MODES }
   validate :weighings_present, if: :by_weighings?
-  validates :remission_number, :weight_note_number, length: { maximum: 60 }
+  validates :weight_note_number, length: { maximum: 60 }
   validates :driver_name, length: { maximum: 120 }
   validates :trip_price, numericality: { greater_than: 0, less_than: 100_000_000 }, allow_nil: true
+  validate :keeps_its_batches, if: -> { persisted? && (will_save_change_to_coffee_state? || will_save_change_to_warehouse_id?) }
+  validate :batches_fit, if: -> { @batch_ids }
   validate :carrier_or_driver, if: -> { will_save_change_to_carrier_id? || will_save_change_to_driver_id? || will_save_change_to_driver_name? }
   validate :carrier_and_vehicle_active
   validate :warehouse_active, if: :will_save_change_to_warehouse_id?
   validates :observations, length: { maximum: 500 }
-  validates :origin_gross_weight, numericality: { greater_than: 0, less_than: MAX_WEIGHT }
-  validates :origin_sacks, numericality: { only_integer: true, greater_than: 0, less_than: MAX_SACKS }
-  validate :inputs_of_origin
+  with_options unless: :origin_left_empty? do
+    validates :origin_gross_weight, numericality: { greater_than: 0, less_than: MAX_WEIGHT }
+    validates :origin_sacks, numericality: { only_integer: true, greater_than: 0, less_than: MAX_SACKS }
+    validate :inputs_of_origin
+  end
   validate :destination_complete, if: -> { receiving || destination_entered? }
   validate :received_after_departure
   validate :buyer_active, if: :will_save_change_to_buyer_id?
@@ -71,9 +88,10 @@ class Shipment < ApplicationRecord
 
   # First: by weighings, the local gross weight and sacks come from them.
   before_validation { self.warehouse ||= Warehouse.main! if new_record? }
-  before_validation :sum_weighings
+  before_validation :clear_origin, if: :skipping_origin?
+  before_validation :sum_weighings, unless: :origin_left_empty?
   before_validation :clear_unused_inputs
-  before_validation -> { calculate("origin") }, if: -> { recalculate?("origin") }
+  before_validation -> { calculate("origin") }, if: -> { !origin_left_empty? && recalculate?("origin") }
   before_validation -> { calculate("destination") }, if: -> { recalculate?("destination") }
   before_validation :assign_season
   # The employee chosen as driver wins over a name typed.
@@ -84,6 +102,25 @@ class Shipment < ApplicationRecord
 
   # Set when the destination weighing is saved: then it is required.
   attr_accessor :receiving
+  # The form's «Sin báscula local», and whether whoever saves may use it
+  # (administrators, set by the controller).
+  attr_accessor :skip_origin, :origin_skippable
+
+  # Completed after it was sold: its sale's local net follows.
+  after_update :refresh_sale_origin, if: -> { saved_change_to_origin_net_weight? && sold? }
+  # The lots the form chose (Nueva salida, Fernando, 2026-11-13).
+  after_save :take_batches, if: -> { @batch_ids }
+
+  # What left the stock (Fernando, 2026-11-13), in SQL: its lots' pounds
+  # (that share of each purchase), or without lots its local net (nothing
+  # without the local scale).
+  def self.batches_sql(column) = "(SELECT SUM(#{CoffeeBatch.share_sql(column, batches: "batches")}) FROM coffee_batches batches WHERE batches.shipment_id = shipments.id)"
+  STOCK_NET_SQL = "COALESCE(#{batches_sql(:net_weight)}, shipments.origin_net_weight)".freeze
+  STOCK_GROSS_SQL = "COALESCE(#{batches_sql(:gross_weight)}, shipments.origin_gross_weight)".freeze
+  # Shrink (merma, Fernando, 2026-11-13): what its lots' purchases say − what
+  # its local scale gave. Positive: weight was lost. Only with lots and the local scale.
+  SHRINK_GROSS_SQL = "(#{batches_sql(:gross_weight)} - shipments.origin_gross_weight)".freeze
+  SHRINK_NET_SQL = "(#{batches_sql(:net_weight)} - shipments.origin_net_weight)".freeze
 
   TRANSPORT_MODES = %w[carrier driver].freeze
   # What the form chose: a carrier or a driver. The other one is cleared.
@@ -147,13 +184,16 @@ class Shipment < ApplicationRecord
 
   def season = Season.new(season_year)
 
+  # Registered without the local scale, not completed yet.
+  def origin_missing? = origin_net_weight.nil?
+
   # QQ of 125 lb, as the purchases count them.
-  def origin_quintals = PurchaseCalculation.quintals(origin_net_weight)
+  def origin_quintals = origin_net_weight && PurchaseCalculation.quintals(origin_net_weight)
   def destination_quintals = destination_net_weight && PurchaseCalculation.quintals(destination_net_weight)
 
   # Destination net − origin net: negative when the buyer's scale gave less.
   def net_difference
-    destination_net_weight - origin_net_weight if destination_net_weight
+    destination_net_weight - origin_net_weight if destination_net_weight && origin_net_weight
   end
 
   def difference_percent
@@ -167,13 +207,70 @@ class Shipment < ApplicationRecord
     tolerance.present? && difference_percent.present? && difference_percent.abs > tolerance
   end
 
-  # Takes its coffee out of the shipments and back to stock. Only while it
-  # is in no sale.
-  def void!(user)
-    update!(voided_at: Time.current, voided_by: user)
+  # What left the stock of some shipments, in one query: { id => [net, gross] }.
+  def self.stock_weights(ids)
+    return {} if ids.empty?
+
+    where(id: ids).pluck(:id, Arel.sql(STOCK_NET_SQL), Arel.sql(STOCK_GROSS_SQL)).to_h { |id, net, gross| [ id, [ net&.to_d&.round(2), gross&.to_d&.round(2) ] ] }
   end
 
-  def voidable? = !voided? && !sold?
+  # Shrink of some shipments, in one query: { id => [gross, net] } (nil without lots or local scale).
+  def self.shrinks(ids)
+    return {} if ids.empty?
+
+    where(id: ids).pluck(:id, Arel.sql(SHRINK_GROSS_SQL), Arel.sql(SHRINK_NET_SQL)).to_h { |id, gross, net| [ id, [ gross&.to_d&.round(2), net&.to_d&.round(2) ] ] }
+  end
+
+  # The lots chosen in the form: ids of free lots (or already its own).
+  def batch_ids = @batch_ids || coffee_batch_ids
+
+  def batch_ids=(ids)
+    @batch_ids = Array(ids).compact_blank.map(&:to_i).uniq
+  end
+
+  # Its lots' pounds and value together (nil without lots).
+  def batch_totals
+    return @batch_totals if defined?(@batch_totals)
+
+    ids = coffee_batches.map(&:id)
+    @batch_totals = ids.any? ? CoffeeBatch::Totals.by_batch(ids).values.reduce(CoffeeBatch::Totals.zero, :+) : nil
+  end
+
+  def batches? = batch_totals.present?
+
+  def reload(*)
+    remove_instance_variable(:@batch_totals) if defined?(@batch_totals)
+    super
+  end
+
+  # What left the stock: its lots' pounds, or its local scale without lots.
+  def stock_net_weight = batches? ? batch_totals.net : origin_net_weight
+  def stock_gross_weight = batches? ? batch_totals.gross : origin_gross_weight
+
+  # Shrink (merma): its lots' purchases − its local scale; positive, weight
+  # was lost. Nil without lots or without the local scale.
+  def shrink_gross = (batch_totals.gross - origin_gross_weight.to_d if batches? && origin_gross_weight)
+  def shrink_net = (batch_totals.net - origin_net_weight.to_d if batches? && origin_net_weight)
+
+  def shrink_percent
+    return unless shrink_net && batch_totals.net.positive?
+
+    (shrink_net * 100 / batch_totals.net).round(2)
+  end
+
+  # Takes its coffee out of the shipments and back to stock. Only while it
+  # is in no sale.
+  # Voided, its lots and assigned expenses are free for another shipment.
+  def void!(user)
+    transaction do
+      coffee_batches.each { it.update!(shipment: nil) }
+      expenses.each { it.update!(shipment: nil) }
+      update!(voided_at: Time.current, voided_by: user)
+    end
+  end
+
+  # Not with costs registered from it: remove them first (as a process).
+  def voidable? = !voided? && !sold? && costs.none?
 
   def destination_entered?
     received_on.present? || INPUTS.any? { |input| public_send("destination_#{input}").present? }
@@ -211,6 +308,7 @@ class Shipment < ApplicationRecord
     def clear_unused_inputs
       SIDES.each do |side|
         next if side == "destination" && !destination_entered?
+        next if side == "origin" && origin_left_empty?
 
         if cherry?
           self["#{side}_humidity_percent"] = self["#{side}_damage_percent"] = nil
@@ -279,12 +377,38 @@ class Shipment < ApplicationRecord
       errors.add(:vehicle, :inactive) if will_save_change_to_vehicle_id? && vehicle && !vehicle.active?
     end
 
-    # In a sale its weights and buyer are what was charged.
+    # In a sale its weights and buyer are what was charged. A local scale left
+    # empty can still be completed.
     def not_sold
       return unless sold?
 
-      changed_inputs = (changed - %w[updated_at lock_version observations remission_number carrier_id vehicle_id driver_id driver_name trip_price weight_note_number])
+      free = %w[updated_at lock_version observations carrier_id vehicle_id driver_id driver_name trip_price weight_note_number]
+      free += ORIGIN_COLUMNS + %w[origin_weight_mode] if origin_net_weight_in_database.nil?
+      changed_inputs = (changed - free)
       errors.add(:base, :sold) if changed_inputs.any?
+    end
+
+    def skipping_origin? = ActiveModel::Type::Boolean.new.cast(skip_origin) && origin_skippable.present?
+
+    # Empty and staying so: an administrator chose it, or it was saved empty
+    # and nothing of the local scale comes now (an arrival, another edit).
+    def origin_left_empty?
+      return true if skipping_origin?
+      return false if new_record? || !origin_net_weight_in_database.nil?
+
+      origin_gross_weight.blank? && origin_sacks.blank? && kept_weighings.empty?
+    end
+
+    # Without the local scale: nothing of it is kept.
+    def clear_origin
+      ORIGIN_COLUMNS.each { self[it] = nil }
+      self.origin_weight_mode = "single"
+      weighings.each(&:mark_for_destruction)
+    end
+
+    def refresh_sale_origin
+      active_sale_line.update!(origin_net_weight:)
+      sale.refresh_origin!
     end
 
     def assign_season
@@ -314,5 +438,33 @@ class Shipment < ApplicationRecord
 
     def warehouse_active
       errors.add(:warehouse, :inactive) if warehouse && !warehouse.active?
+    end
+
+    # Its lots are of its coffee state and warehouse: they do not change with them.
+    def keeps_its_batches
+      return if @batch_ids&.empty?
+
+      errors.add(:base, :has_batches) if coffee_batches.exists?
+    end
+
+    def batches_fit
+      chosen = CoffeeBatch.where(id: @batch_ids).to_a
+      errors.add(:base, :batches_gone) if chosen.size != @batch_ids.size
+      chosen.each do |batch|
+        if batch.shipment_id && batch.shipment_id != id
+          errors.add(:base, :batch_taken, batch: batch.label)
+        elsif batch.coffee_state != coffee_state || batch.warehouse_id != warehouse_id
+          errors.add(:base, :batch_other_coffee, batch: batch.label)
+        end
+      end
+    end
+
+    # The lots chosen join it; the ones left out are free again.
+    def take_batches
+      coffee_batches.where.not(id: @batch_ids).find_each { it.update!(shipment: nil) }
+      CoffeeBatch.where(id: @batch_ids).where(shipment_id: nil).find_each { it.update!(shipment: self) }
+      coffee_batches.reset
+      remove_instance_variable(:@batch_totals) if defined?(@batch_totals)
+      @batch_ids = nil
     end
 end

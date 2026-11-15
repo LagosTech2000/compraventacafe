@@ -9,7 +9,7 @@ module Administration
       @filter = ZoneFilter.new(params)
       @zones, @next_page = @filter.results(policy_scope([ :administration, Zone ]))
       @people = Person.where(zone_id: @zones.map(&:id)).group(:zone_id).count
-      @purchases = Purchase.active.where(zone_id: @zones.map(&:id)).group(:zone_id).count
+      @purchases = Purchase.owned.active.where(zone_id: @zones.map(&:id)).group(:zone_id).count
     end
 
     def new

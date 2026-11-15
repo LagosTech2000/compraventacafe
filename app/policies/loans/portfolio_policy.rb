@@ -2,5 +2,6 @@
 module Loans
   class PortfolioPolicy < ApplicationPolicy
     self.module_key = "loans"
+    self.submodule_key = "portfolio"
   end
 end

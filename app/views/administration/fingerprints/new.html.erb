@@ -1,0 +1,36 @@
+<% content_for :title, t(".title", name: @person.full_name) %>
+<%= render "administration/nav" %>
+<%= render "shared/breadcrumbs", crumbs: person_crumbs(@person, [ t(".title", name: @person.full_name) ]) %>
+
+<h1 class="text-2xl font-bold"><%= t(".title", name: @person.full_name) %></h1>
+
+<% if @station %>
+  <p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t(".help", station: @station.name) %></p>
+  <%= form_with model: @fingerprint, url: administration_person_fingerprints_path(@person), class: form_surface_class("mt-6 space-y-5"),
+        data: { controller: "form-validation" } do |form| %>
+    <%= render "shared/form_errors", record: @fingerprint %>
+    <div>
+      <%= form.label :finger, class: "field-label" %>
+      <%# Only the saved ones: the one being built is the finger chosen. %>
+      <% taken = @person.fingerprints.select(&:persisted?).map(&:finger) %>
+      <%# The right index first and chosen (Fernando, 2026-11-14: «el más importante»). %>
+      <%= form.select :finger, (Fingerprint::FINGERS - taken).map { |finger|
+            name = Fingerprint.human_attribute_name("finger/#{finger}")
+            [ finger == Fingerprint::RECOMMENDED ? t(".recommended", finger: name) : name, finger ]
+          }, {}, required: true, class: "field-input" %>
+      <p class="mt-1 text-xs text-ink-muted"><%= t(".finger_help") %></p>
+    </div>
+    <label class="flex items-start gap-3 text-sm">
+      <%= form.check_box :consent, { required: true, class: "mt-0.5 size-4 accent-primary",
+            data: { missing_message: t(".consent_required") } }, "1", nil %>
+      <span><%= t(".consent", name: @person.full_name) %></span>
+    </label>
+    <div class="flex flex-wrap gap-3">
+      <%= form.submit t(".submit"), class: "btn btn-primary" %>
+      <%= cancel_button administration_person_path(@person) %>
+    </div>
+  <% end %>
+<% else %>
+  <p class="mt-4 flash-alert"><%= t(".no_station") %></p>
+  <p class="mt-4"><%= link_to t(".stations"), administration_fingerprint_stations_path, class: "btn" %></p>
+<% end %>

@@ -18,6 +18,10 @@
     <%# Signed-in pages keep the user online (presence.js, Presence) and say
         which page they are, for the user with id 1 (Presence::WATCHER_IDS). %>
     <% if authenticated? %><meta name="presence" content="on" data-title="<%= content_for(:title) %>"><% end %>
+    <%# A browser linked to a PC's fingerprint reader hears it (fingerprint.js). %>
+    <% if (fingerprint_station = linked_fingerprint_station) %><meta name="fingerprint-station" content="<%= fingerprint_station.id %>" data-texts="<%= fingerprint_texts %>"><% end %>
+    <%# Amounts show their commas while typed (thousands.js); its messages. %>
+    <meta name="thousands-messages" content="<%= { min: t("shared.thousands.min"), max: t("shared.thousands.max"), number: t("shared.thousands.number") }.to_json %>">
 
     <%# ?v= busts the year-long cache of public/: bump it when the icon changes. %>
     <link rel="icon" href="/icon.png?v=2" type="image/png">
@@ -52,6 +56,18 @@
         comes back to itself (morphed) pairs it by id instead of mixing its
         new notice into the page's first nodes. %>
     <div id="toasts"><%= render "shared/flash" %></div>
+
+    <%# The state of this PC's fingerprint reader, kept across visits (fingerprint.js). %>
+    <% if fingerprint_station %>
+      <% reader = fingerprint_station.state
+         reader_state = !reader[:bridge] ? "bridge_off" : (reader[:reader] ? "ready" : "reader_off") %>
+      <div id="fingerprint-status" class="fingerprint-status print:hidden" data-turbo-permanent data-state="<%= reader_state %>">
+        <span class="live-badge" role="status">
+          <span class="live-dot" aria-hidden="true"></span>
+          <span data-fingerprint-label><%= t("fingerprints.client.#{reader_state}") %></span>
+        </span>
+      </div>
+    <% end %>
 
     <%# Reusable modals: links with data-turbo-frame="modal" open here (ModalSupport).
         The later ones stack on top, for links opened from inside a modal. %>

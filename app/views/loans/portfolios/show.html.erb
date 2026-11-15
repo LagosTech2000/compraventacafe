@@ -85,6 +85,7 @@
             <% end %>
             <th class="text-right"><%= t(".columns.late") %></th>
             <th class="text-right"><%= t(".columns.total") %></th>
+            <th class="cell-actions" data-sort="false"><span class="sr-only"><%= t("loans.payments.table.actions") %></span></th>
           </tr>
         </thead>
         <tbody>
@@ -96,6 +97,11 @@
               <% end %>
               <td class="whitespace-nowrap text-right tabular-nums <%= "text-danger" if row.late.positive? %>"><%= format_money(row.late) %></td>
               <td class="whitespace-nowrap text-right font-semibold tabular-nums"><%= format_money(row.total) %></td>
+              <%# Its loans in the list, filtered by that zone (Fernando, 2026-11-12). %>
+              <td class="cell-actions">
+                <%= link_to t(".see_loans"), loans_loans_path(status: "unpaid", zone_id: row.zone&.id || LoanFilter::NO_ZONE),
+                      class: "btn btn-sm", data: { row_link: true } %>
+              </td>
             </tr>
           <% end %>
         </tbody>

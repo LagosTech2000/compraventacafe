@@ -34,7 +34,7 @@ RSpec.describe "Finance staff payroll" do
     goal = StaffGoal.sole
 
     get finance_staff_member_path(member)
-    expect(response.body).to include("Inventario al día", "Por descontar", "Pagar 1 de oct – 15 de oct")
+    expect(response.body).to include("Inventario al día", "Por descontar", "Pagar Jue 1 de oct – Jue 15 de oct")
 
     # Attendance in the payroll sheet: 12 days of the first fortnight (3 to 14).
     get finance_staff_sheet_path(month: "2026-10", half: 1)
@@ -62,7 +62,7 @@ RSpec.describe "Finance staff payroll" do
     get finance_staff_member_staff_payment_path(member, payment)
     receipt = page.css("article")
     expect(receipt.size).to eq(2)
-    expect(receipt.first.text.squish).to include("Marta Cruz", "Horas extra: 2 × L 50.00", "Bono por meta: Inventario al día", "Anticipo del 10/10/2026", "× 12 días", "Se le entregaL 1,800.00")
+    expect(receipt.first.text.squish).to include("Marta Cruz", "Horas extra: 2 × L 50.00", "Bono por meta: Inventario al día", "Anticipo del Sáb 10/10/2026", "× 12 días", "Se le entregaL 1,800.00")
     expect(AuditEvent.where(auditable: payment, action: "create")).to exist
 
     get finance_movements_path

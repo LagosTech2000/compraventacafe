@@ -4,7 +4,7 @@
 <% kind = expense.kind %>
 <%= form_with model: expense, url: expense.persisted? ? expense_path(expense) : expenses_path, scope: :expense,
       class: form_surface_class("space-y-6"), multipart: true,
-      data: { controller: "form-validation unsaved-changes", action: unsaved_changes_actions,
+      data: { controller: "form-validation unsaved-changes expense-kind", action: unsaved_changes_actions,
               unsaved_changes_message_value: t("shared.unsaved_changes.leave") } do |form| %>
   <%= render "shared/form_errors", record: expense %>
   <%= form.hidden_field :lock_version if expense.persisted? %>
@@ -15,14 +15,37 @@
             placeholder: t("finance.expenses.form.description_placeholder.#{kind}"),
             data: { missing_message: "#{Expense.human_attribute_name(:description)} #{t("errors.messages.blank")}" } %>
     </div>
-    <div data-controller="option-picker" data-action="finance_category:created@window->option-picker#add">
-      <%= form.label :finance_category_id, Expense.human_attribute_name(:category), class: "field-label" %>
-      <%= form.select :finance_category_id, FinanceCategory.options_for(kind, including: expense.finance_category_id),
-            { prompt: t("shared.select.pick_category") }, required: true, class: "field-input", data: { option_picker_target: "select" } %>
-      <% if policy(FinanceCategory).create? %>
-        <%= modal_link_to t("finance.expenses.form.new_category"), new_finance_category_path(kind:, picker: 1), class: "btn btn-sm mt-2" %>
-      <% end %>
-    </div>
+    <%# Editing, it can change from expense to investment and back (Fernando,
+        2026-11-12), into a kind the user can create; each kind has its own categories. %>
+    <% kinds = expense.persisted? ? Expense::KINDS.select { it == kind || policy(Expense.new(kind: it)).create? } : [ kind ] %>
+    <% if kinds.many? %>
+      <fieldset class="sm:col-span-2">
+        <legend class="field-label"><%= Expense.human_attribute_name(:kind) %></legend>
+        <div class="flex flex-wrap gap-x-6 gap-y-2">
+          <% kinds.each do |option| %>
+            <label class="flex min-h-11 cursor-pointer items-center gap-2 text-sm font-medium">
+              <%= form.radio_button :kind, option, checked: option == kind, class: "size-4 accent-primary",
+                    data: { expense_kind_target: "kind", action: "expense-kind#update" } %>
+              <%= Expense.human_attribute_name("kind/#{option}") %>
+            </label>
+          <% end %>
+        </div>
+        <p class="mt-1 text-xs text-ink-muted"><%= t("finance.expenses.form.kind_help") %></p>
+      </fieldset>
+    <% end %>
+    <% kinds.each do |option| %>
+      <div data-controller="option-picker" data-action="finance_category:created@window->option-picker#add"
+           data-expense-kind-target="panel" data-kind="<%= option %>" <%= "hidden" unless option == kind %>>
+        <%= form.label :finance_category_id, Expense.human_attribute_name(:category), class: "field-label", for: (kinds.many? ? "expense_finance_category_id_#{option}" : "expense_finance_category_id") %>
+        <%= form.select :finance_category_id, FinanceCategory.options_for(option, including: (expense.finance_category_id if option == kind)),
+              { prompt: t("shared.select.pick_category"), selected: (expense.finance_category_id if option == kind) },
+              required: true, disabled: option != kind, id: (kinds.many? ? "expense_finance_category_id_#{option}" : "expense_finance_category_id"), class: "field-input",
+              data: { option_picker_target: "select" } %>
+        <% if policy(FinanceCategory).create? %>
+          <%= modal_link_to t("finance.expenses.form.new_category"), new_finance_category_path(kind: option, picker: 1), class: "btn btn-sm mt-2" %>
+        <% end %>
+      </div>
+    <% end %>
     <div>
       <%= form.label :payee, class: "field-label" %>
       <%= form.text_field :payee, maxlength: 120, class: "field-input", placeholder: t("finance.expenses.form.payee_placeholder") %>

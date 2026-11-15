@@ -171,8 +171,12 @@
   }
 
   /* Summary figures. */
+  /* Its figure never breaks («−L» on one line, the amount on the next,
+     Fernando 2026-11-13): it stays on one line and its size follows the
+     card's width (container units), up to text-xl. */
   .stat {
     @apply clay p-4 ring-1 ring-line/60;
+    container-type: inline-size;
   }
 
   .stat dt {
@@ -180,7 +184,34 @@
   }
 
   .stat dd {
-    @apply mt-1 text-xl font-bold tracking-tight tabular-nums;
+    @apply mt-1 font-bold tracking-tight whitespace-nowrap tabular-nums;
+    font-size: clamp(0.8rem, 10.5cqi, 1.25rem);
+    line-height: 1.75rem;
+  }
+
+  /* Gross and net pounds (format_gross_net): side by side with a dot, or the
+     net below when they do not fit. Every half has the dot in its left
+     padding; the box starts that far to the left and clips it, so a line
+     never starts with a dot. */
+  .gross-net {
+    display: inline-flex;
+    flex-wrap: wrap;
+    margin-inline-start: -1.1em;
+    clip-path: inset(0 0 0 1.1em);
+  }
+
+  .gross-net > span {
+    position: relative;
+    padding-inline-start: 1.1em;
+    white-space: nowrap;
+  }
+
+  .gross-net > span + span::before {
+    content: "·";
+    position: absolute;
+    left: 0;
+    width: 1.1em;
+    text-align: center;
   }
 
   /* Flat container for data: tables, details, filters. */
@@ -288,6 +319,10 @@
 
   .picker-option {
     @apply cursor-pointer px-3.5 py-2 text-sm text-ink hover:bg-surface-2 aria-selected:bg-primary-soft aria-selected:text-ink;
+  }
+
+  .picker-option-hint {
+    @apply text-ink-muted;
   }
 
   .picker-note {
@@ -906,6 +941,38 @@ tr.live-new > td {
 @media (width >= 64rem) {
   body:has(.sidebar) .live-indicator { left: 17rem; }
   body.sidebar-collapsed:has(.sidebar) .live-indicator { left: 5.75rem; }
+}
+
+/* The fingerprint reader of this PC (fingerprint.js), above «En vivo». */
+.fingerprint-status {
+  position: fixed;
+  bottom: 3.25rem;
+  left: 1rem;
+  z-index: 20;
+}
+@media (width >= 64rem) {
+  body:has(.sidebar) .fingerprint-status { left: 17rem; }
+  body.sidebar-collapsed:has(.sidebar) .fingerprint-status { left: 5.75rem; }
+}
+.fingerprint-status[data-state="ready"] .live-dot { background: var(--color-success); }
+.fingerprint-status[data-state="ready"] .live-badge { color: var(--color-success); }
+.fingerprint-status:not([data-state="ready"]) .live-dot { background: var(--color-danger); }
+
+/* Registering a finger: the three captures (fingerprint_enroll_controller.js). */
+.enroll-step {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 9999px;
+  border: 2px solid var(--color-line);
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+.enroll-step.is-done {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success);
 }
 
 .live-indicator:has(turbo-cable-stream-source[connected]) .live-dot {

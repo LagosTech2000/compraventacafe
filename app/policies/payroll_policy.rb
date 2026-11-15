@@ -2,6 +2,7 @@
 # payments, expenses): the database refuses otherwise.
 class PayrollPolicy < ApplicationPolicy
   self.module_key = "farms"
+  self.submodule_key = "payrolls"
 
   # Recording attendance, cans or tasks.
   def record_work?

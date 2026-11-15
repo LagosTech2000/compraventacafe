@@ -1,0 +1,60 @@
+<% content_for :title, t(".title") %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= live_updates_from :sales %>
+<%= render "sales/nav" %>
+
+<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+<p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t(".help") %></p>
+<%= render "sales/supply_stocks/tabs" %>
+
+<% supplies = Supply.ordered.pluck(:name, :id) %>
+<% statuses = SupplyDeliveryFilter::STATUSES.map { [ t("sales.supply_deliveries.index.statuses.#{it}"), it ] } %>
+<div class="mt-4" data-controller="live-filter">
+  <%= render layout: "shared/filters", locals: { filter: @filter, url: sales_supply_deliveries_path, frame: "supply-deliveries-list", live: true } do |form| %>
+    <%= filter_select form, :status, t("sales.supply_deliveries.index.status"), statuses, selected: @filter.status, all: nil %>
+    <%= filter_select form, :supply_id, t("sales.supply_stocks.show.columns.supply"), supplies, selected: @filter.supply_id %>
+    <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("sales.supply_deliveries.index.search_placeholder") %>
+  <% end %>
+
+  <%= list_frame "supply-deliveries-list" do %>
+    <%= live_list_status @filter, status: statuses, supply_id: supplies %>
+    <% if @lines.any? %>
+      <% sorting = { filter: @filter, frame: "supply-deliveries-list" } %>
+      <div class="mt-4 overflow-x-auto panel">
+        <table class="data-table data-table-compact" <%= tag.attributes(data: table_sort_data(sorting)) %> data-supply-deliveries>
+          <thead>
+            <tr>
+              <%= sort_th t(".columns.disbursed_on"), :disbursed_on, sorting %>
+              <%= sort_th t(".columns.person"), :person, sorting %>
+              <%= sort_th t(".columns.supply"), :supply, sorting %>
+              <%= sort_th t(".columns.quantity"), :quantity, sorting, class: "text-right" %>
+              <%= sort_th t(".columns.total"), :total, sorting, class: "text-right" %>
+              <%= sort_th t(".columns.delivered_on"), :delivered_on, sorting %>
+              <th class="cell-actions"><span class="sr-only"><%= t(".columns.actions") %></span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @lines.each do |line| %>
+              <tr id="<%= dom_id(line, :delivery) %>">
+                <td class="whitespace-nowrap"><%= l(line.loan.disbursed_on) %></td>
+                <td><%= with_avatar(line.loan.person) %></td>
+                <td><%= line.supply.name %></td>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= format_quantity(line.quantity, line.supply.unit) %></td>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(line.total) %></td>
+                <td class="whitespace-nowrap"><%= render "sales/supply_deliveries/status", line: %></td>
+                <td class="cell-actions">
+                  <% if policy(line.loan).show? %>
+                    <%= modal_link_to t(".see_loan"), loans_loan_path(line.loan), class: "btn btn-sm" %>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "supply-deliveries-list" %>
+    <% else %>
+      <p class="empty-state mt-4"><%= t(".empty") %></p>
+    <% end %>
+  <% end %>
+</div>

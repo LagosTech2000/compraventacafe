@@ -36,7 +36,7 @@
      ([ t(".actions.farms"), farms_root_path, false ] if farms),
      ([ t(".actions.new_expense"), new_finance_expense_path, false ] if finance && policy(Expense).create?),
      ([ t(".actions.new_loan"), new_loans_loan_path, false ] if loans && policy(Loan).create?),
-     ([ t(".actions.loans"), loans_loans_path, false ] if loans),
+     ([ t(".actions.loans"), loans_loans_path, false ] if dashboard.can?("loans.loans")),
      ([ t(".actions.reports"), reports_root_path, false ] if dashboard.can?("reports"))
    ].compact %>
 <% if actions.any? %>
@@ -49,7 +49,7 @@
 
 <%# The business at a glance. %>
 <% figures = [] %>
-<% if trading %>
+<% if dashboard.can?("trading.purchases") %>
   <% today_close = dashboard.today_summary %>
   <% season = dashboard.season_summary %>
   <% figures << [ :purchases_today, today_close.purchases_count,
@@ -59,61 +59,76 @@
                   t(".hints.season_quintals", count: season.purchases_count, total: format_money(season.total)),
                   trading_purchases_path(season_year: dashboard.season.year, from: "", to: "") ] %>
 <% end %>
-<% if sales %>
+<% if dashboard.can?("sales.stock") %>
   <% stock = dashboard.coffee_stock %>
   <% figures << [ :coffee_stock, format_pounds(stock.quintals),
-                  t(".hints.coffee_stock", pounds: format_pounds(stock.stock), in_transit: format_pounds(stock.in_transit)), sales_stock_path ] %>
+                  t(".hints.coffee_stock", gross: format_pounds(stock.gross_stock), pounds: format_pounds(stock.stock), in_transit: format_pounds(stock.in_transit)), sales_stock_path ] %>
+<% end %>
+<% if dashboard.can?("sales.sales") %>
   <% figures << [ :sales_owed, format_money(dashboard.sales_owed), t(".hints.sales_owed", count: dashboard.unpaid_sales.size),
                   sales_sales_path(payment_status: "unpaid") ] %>
 <% end %>
-<% if loans %>
+<% if dashboard.can?("loans.loans") %>
   <% overdue = dashboard.overdue_loans.size %>
   <% figures << [ :open_loans, dashboard.open_loans.size,
                   [ t(".hints.loans_owed", amount: format_money(dashboard.loans_owed)), (t(".hints.overdue", count: overdue) if overdue.positive?) ].compact.join(" · "),
                   loans_root_path ] %>
 <% end %>
-<% if finance %>
-  <% if dashboard.accounts? %>
-    <% figures << [ :accounts_balance, signed_money(dashboard.accounts_balance), t(".hints.accounts_balance"), finance_money_accounts_path ] %>
-  <% end %>
+<% if dashboard.can?("finance.accounts") && dashboard.accounts? %>
+  <% figures << [ :accounts_balance, signed_money(dashboard.accounts_balance), t(".hints.accounts_balance"), finance_money_accounts_path ] %>
+<% end %>
+<% if dashboard.can?("finance.expenses") %>
   <% figures << [ :month_spending, format_money(dashboard.month_spending), t(".hints.month_spending"), finance_expenses_path ] %>
 <% end %>
-<% if farms %>
+<% if dashboard.can?("farms.farms") %>
   <% figures << [ :active_farms, dashboard.active_farms_count, t(".hints.running_payrolls", count: dashboard.running_payrolls.size), farms_farms_path ] %>
 <% end %>
 
 <%# What needs the user's attention, only what exists. %>
 <% pending = [] %>
-<% if trading %>
+<% pending_kinds = dashboard.pending_kinds %>
+<% if pending_kinds.include?(:uninvoiced) %>
   <% uninvoiced = dashboard.uninvoiced %>
-  <% pending << [ :uninvoiced, uninvoiced.purchases_count, uninvoiced.total, (policy(Invoice).create? ? new_trading_invoice_path : trading_purchases_path(invoiced: "no", from: "", to: "")) ] if uninvoiced.purchases_count.positive? %>
+  <% pending << [ :uninvoiced, uninvoiced.purchases_count, uninvoiced.total, (policy(Invoice).create? ? new_trading_invoice_path : trading_purchases_path(status: "uninvoiced", from: "", to: "")) ] if uninvoiced.purchases_count.positive? %>
+<% end %>
+<% if pending_kinds.include?(:unpaid_invoices) %>
   <% unpaid = dashboard.unpaid_invoices %>
   <% pending << [ :unpaid_invoices, unpaid.size, unpaid.sum(&:balance_due), trading_invoices_path(payment_status: "unpaid") ] if unpaid.any? %>
+<% end %>
+<% if pending_kinds.include?(:haulers_to_pay) %>
   <% haulers = dashboard.haulers_to_pay %>
   <% pending << [ :haulers_to_pay, haulers.size, haulers.sum(&:balance), trading_haulers_path ] if haulers.any? %>
 <% end %>
-<% if sales %>
+<% if pending_kinds.include?(:shipments_in_transit) %>
   <% in_transit = dashboard.shipments_in_transit %>
   <% pending << [ :shipments_in_transit, in_transit.size, nil, sales_shipments_path(status: "in_transit") ] if in_transit.any? %>
   <% unsold = dashboard.unsold_shipments %>
   <% pending << [ :unsold_shipments, unsold.size, nil, (policy(Sale).create? ? new_sales_sale_path : sales_shipments_path(status: "received")) ] if unsold.any? %>
+<% end %>
+<% if pending_kinds.include?(:unpaid_sales) %>
   <% unpaid_sales = dashboard.unpaid_sales %>
   <% pending << [ :unpaid_sales, unpaid_sales.size, dashboard.sales_owed, sales_sales_path(payment_status: "unpaid") ] if unpaid_sales.any? %>
+<% end %>
+<% if pending_kinds.include?(:cherry_waiting) %>
   <% cherry_waiting = dashboard.cherry_waiting %>
   <% pending << [ :cherry_waiting, cherry_waiting.size, nil, sales_stock_state_path("cherry") ] if cherry_waiting.any? %>
+<% end %>
+<% if pending_kinds.include?(:open_conversions) %>
   <% open_conversions = dashboard.open_conversions %>
   <% pending << [ :open_conversions, open_conversions.size, nil, sales_coffee_conversions_path(status: "in_process") ] if open_conversions.any? %>
+<% end %>
+<% if pending_kinds.include?(:negative_stock) %>
   <% negative = dashboard.negative_stock %>
   <% pending << [ :negative_stock, negative.size, nil, sales_stock_path(coffee_state: negative.first.coffee_state, anchor: "stock-ledger-title") ] if negative.any? %>
 <% end %>
-<% if loans && (overdue_loans = dashboard.overdue_loans).any? %>
+<% if pending_kinds.include?(:overdue_loans) && (overdue_loans = dashboard.overdue_loans).any? %>
   <% pending << [ :overdue_loans, overdue_loans.size, overdue_loans.sum { |loan| loan.balance(as_of: dashboard.today).total_owed }, loans_loans_path(status: "overdue") ] %>
 <% end %>
-<% if loans && (due_soon = dashboard.due_soon_loans).any? %>
+<% if pending_kinds.include?(:due_soon_loans) && (due_soon = dashboard.due_soon_loans).any? %>
   <% pending << [ :due_soon_loans, due_soon.size, due_soon.sum { |loan| loan.balance(as_of: dashboard.today).total_owed },
                   loans_loans_path(status: "active", due_from: dashboard.today.iso8601, due_to: (dashboard.today + Dashboard::DUE_SOON_DAYS).iso8601) ] %>
 <% end %>
-<% if farms %>
+<% if pending_kinds.include?(:periods_to_pay) %>
   <% periods = dashboard.periods_to_pay %>
   <% pending << [ :periods_to_pay, periods.size, periods.sum { |payroll, period| payroll.calculation(period).gross_total }, farms_root_path ] if periods.any? %>
   <% without_wage = dashboard.members_without_wage %>
@@ -122,7 +137,7 @@
     <% pending << [ :members_without_wage, without_wage.size, nil, farms_payroll_path(payroll, tab: "members") ] %>
   <% end %>
 <% end %>
-<% if finance && (over = dashboard.over_budget).any? %>
+<% if pending_kinds.include?(:over_budget) && (over = dashboard.over_budget).any? %>
   <% pending << [ :over_budget, over.size, over.sum { it.spent - it.budget }, finance_budget_path ] %>
 <% end %>
 <%# Space used fully: figures and tiles stretch to fill each row (no
@@ -158,7 +173,8 @@
 <% if owes.any? || owed.any? %>
   <section class="panel mt-6 p-4" id="dashboard-debts" aria-labelledby="dashboard-debts-title">
     <h2 id="dashboard-debts-title" class="font-semibold"><%= t(".debts.title") %></h2>
-    <div class="mt-3 grid gap-4 md:grid-cols-<%= finance && dashboard.accounts? ? 3 : 2 %>">
+    <% show_accounts = dashboard.can?("finance.accounts") && dashboard.accounts? %>
+    <div class="mt-3 grid gap-4 md:grid-cols-<%= show_accounts ? 3 : 2 %>">
       <% [ [ :owes, owes, "text-danger" ], [ :owed, owed, "text-success" ] ].each do |side, lines, color| %>
         <div class="min-w-0" data-debts="<%= side %>">
           <p class="text-xs font-semibold tracking-wide text-ink-muted uppercase"><%= t(".debts.#{side}") %></p>
@@ -174,7 +190,7 @@
           </ul>
         </div>
       <% end %>
-      <% if finance && dashboard.accounts? %>
+      <% if show_accounts %>
         <div class="min-w-0" data-debts="accounts">
           <p class="text-xs font-semibold tracking-wide text-ink-muted uppercase"><%= t(".debts.accounts") %></p>
           <p class="text-2xl font-bold tabular-nums" data-live-value><%= signed_money(dashboard.accounts_balance) %></p>
@@ -183,6 +199,14 @@
       <% end %>
     </div>
   </section>
+<% end %>
+
+<%# Producers that stopped selling, by 7, 15 days or a month (Fernando,
+    2026-11-13), loaded apart; a live refresh loads it again with its days. %>
+<% if policy(Producer).index? %>
+  <%= turbo_frame_tag "idle-producers", src: card_trading_idle_producers_path, refresh: "morph", class: "mt-6 block" do %>
+    <div class="panel p-4 text-sm text-ink-muted" role="status"><%= t(".idle_producers_loading") %></div>
+  <% end %>
 <% end %>
 
 <%# The coffee exchange, the whole width (loaded apart: the page never waits

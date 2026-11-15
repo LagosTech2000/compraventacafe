@@ -7,6 +7,9 @@ class Supply < ApplicationRecord
   MAX_PRICE = 10_000_000
 
   has_many :loan_supplies, dependent: :restrict_with_error
+  # What came into the inventory (Fernando, 2026-11-12).
+  has_many :entries, class_name: "SupplyEntry", dependent: :restrict_with_error
+  has_many :exits, class_name: "SupplyExit", dependent: :restrict_with_error
 
   normalizes :name, with: ->(value) { value.squish.presence }
   normalizes :unit, with: ->(value) { value.squish.downcase.presence }

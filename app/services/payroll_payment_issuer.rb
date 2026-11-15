@@ -48,7 +48,7 @@ class PayrollPaymentIssuer
   def open_loans(member)
     return [] unless @with_loans
 
-    @open_loans ||= Loan.unpaid.where(person_id: lines.map { |line| line.member.person_id })
+    @open_loans ||= Loan.owned.unpaid.where(person_id: lines.map { |line| line.member.person_id })
                         .includes(:payments, :supply_items).order(:due_on, :id).group_by(&:person_id)
     @open_loans.fetch(member.person_id, [])
   end

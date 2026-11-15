@@ -3,6 +3,19 @@ module TradingHelper
     number_with_precision(value, precision: 2, delimiter: ",")
   end
 
+  # Gross pounds first and net beside (Fernando, 2026-11-13: «en toda parte
+  # que se muestren las libras netas, mostrar las brutas primero y a la par
+  # las netas»): "1,000.00 lb brutas · 487.06 lb netas". Each half stays on
+  # one line and the net goes below when both do not fit (Fernando,
+  # 2026-11-14: they broke the cards of Salidas); `.gross-net` hides the dot
+  # that would start the second line.
+  def format_gross_net(gross, net)
+    tag.span(class: "gross-net") do
+      safe_join([ tag.span(t("shared.pounds.gross", pounds: gross ? format_pounds(gross) : "—")),
+                  tag.span(t("shared.pounds.net", pounds: net ? format_pounds(net) : "—")) ])
+    end
+  end
+
   def format_money(value)
     number_to_currency(value)
   end
@@ -49,11 +62,11 @@ module TradingHelper
     values.map { |value| [ model_class.human_attribute_name("#{attribute}/#{value}"), value ] }
   end
 
-  PAYMENT_STATUS_BADGES = { "paid" => "badge-success", "partial" => "badge-warning", "pending" => "badge-danger" }.freeze
+  PAYMENT_STATUS_BADGES = { "paid" => "badge-success", "partial" => "badge-warning", "pending" => "badge-danger", "voided" => "badge-neutral" }.freeze
   # A purchase's payment state (PurchaseSummary::PAYMENT_STATES): its invoice's, or not invoiced.
   DAILY_CLOSE_BADGES = PAYMENT_STATUS_BADGES.merge("uninvoiced" => "badge-neutral").freeze
 
   def payment_status_badge(invoice)
-    tag.span(invoice.human_payment_status, class: "badge #{PAYMENT_STATUS_BADGES.fetch(invoice.payment_status)}")
+    tag.span(invoice.human_payment_status, class: "badge #{PAYMENT_STATUS_BADGES.fetch(invoice.state)}")
   end
 end

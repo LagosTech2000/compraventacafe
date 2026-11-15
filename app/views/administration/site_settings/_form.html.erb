@@ -28,6 +28,28 @@
     <p class="mt-1 text-xs text-ink-muted"><%= t("administration.site_settings.form.rtn_help") %></p>
   </div>
 
+  <%# Who the business belongs to and its phones: the shipments' remission. %>
+  <div>
+    <%= form.label :owner_name, class: "field-label" %>
+    <%= form.text_field :owner_name, class: "field-input", **field_format_attributes(SiteSetting, :owner_name, :person_name) %>
+    <p class="mt-1 text-xs text-ink-muted"><%= t("administration.site_settings.form.owner_help") %></p>
+  </div>
+
+  <div>
+    <div class="grid max-w-md gap-4 sm:grid-cols-2">
+      <div>
+        <%= form.label :phone, class: "field-label" %>
+        <%= form.telephone_field :phone, value: format_phone(form.object.phone), class: "field-input", **field_format_attributes(SiteSetting, :phone, :phone) %>
+      </div>
+      <div>
+        <%= form.label :secondary_phone, class: "field-label" %>
+        <%= form.telephone_field :secondary_phone, value: format_phone(form.object.secondary_phone), class: "field-input",
+              **field_format_attributes(SiteSetting, :secondary_phone, :phone) %>
+      </div>
+    </div>
+    <p class="mt-1 text-xs text-ink-muted"><%= t("administration.site_settings.form.phones_help") %></p>
+  </div>
+
   <div>
     <%= form.label :weight_tolerance_percent, class: "field-label" %>
     <%= form.number_field :weight_tolerance_percent, min: 0.01, max: 99.99, step: 0.01, inputmode: "decimal", class: "field-input max-w-xs" %>

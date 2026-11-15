@@ -4,19 +4,58 @@
 <%= render "loans/nav" %>
 <h1 class="sr-only"><%= t("loans.nav.home") %></h1>
 
-<dl class="grid grid-cols-2 gap-3 lg:grid-cols-4">
-  <% {
-       open_loans: @balances.size,
-       principal_owed: format_money(@balances.values.sum(&:principal_owed)),
-       interest_owed: format_money(@balances.values.sum(&:interest_owed)),
-       overdue_loans: @overdue.size
-     }.each do |key, value| %>
-    <div class="stat">
-      <dt><%= t(".stats.#{key}") %></dt>
-      <dd><%= value %></dd>
-    </div>
+<%# Each figure opens the screen with its detail (Fernando, 2026-11-12):
+    the loans list already filtered (to collect, overdue, with cash or with
+    supplies); the interest collected, the payments report (for who sees
+    Reportería). Principal apart in cash and in supplies, in each loan's
+    proportion; interest is not split. %>
+<% unpaid = loans_loans_path(status: "unpaid") %>
+<% payments = (reports_report_path("loan_payments", period: "all") if policy(LoanPaymentsReport).show?) %>
+<% balances = @balances.values %>
+<% groups = {
+     owed: [
+       [ :open_loans, @balances.size, unpaid ],
+       [ :principal_owed, format_money(balances.sum(&:principal_owed)), unpaid ],
+       [ :cash_owed, format_money(balances.sum(&:cash_owed)), loans_loans_path(status: "unpaid", composition: "with_cash") ],
+       [ :supplies_owed, format_money(balances.sum(&:supplies_owed)), loans_loans_path(status: "unpaid", composition: "with_supplies") ],
+       [ :interest_owed, format_money(balances.sum(&:interest_owed)), unpaid ],
+       [ :overdue_loans, @overdue.size, loans_loans_path(status: "overdue") ]
+     ],
+     lent: [
+       [ :lent, format_money(@lent_cash + @lent_supplies), loans_loans_path ],
+       [ :lent_cash, format_money(@lent_cash), loans_loans_path(composition: "with_cash") ],
+       [ :lent_supplies, format_money(@lent_supplies), loans_loans_path(composition: "with_supplies") ]
+     ],
+     collected: [
+       [ :principal_collected, format_money(@cash_collected + @supplies_collected), payments ],
+       [ :cash_collected, format_money(@cash_collected), loans_loans_path(composition: "with_cash") ],
+       [ :supplies_collected, format_money(@supplies_collected), loans_loans_path(composition: "with_supplies") ],
+       [ :interest_collected, format_money(@interest_collected), payments ]
+     ]
+   } %>
+<div class="space-y-5">
+  <% groups.each do |group, figures| %>
+    <section aria-labelledby="loans-<%= group %>">
+      <h2 id="loans-<%= group %>" class="mb-2 text-sm font-semibold tracking-wide text-ink-muted uppercase"><%= t(".groups.#{group}") %></h2>
+      <dl class="flex flex-wrap gap-3">
+        <% figures.each do |key, value, path| %>
+          <% if path %>
+            <%= link_to path, class: "stat block min-w-0 flex-1 basis-40 transition hover:ring-primary/40", data: { loans_stat: key } do %>
+              <dt><%= t(".stats.#{key}") %></dt>
+              <dd data-live-value><%= value %></dd>
+              <p class="mt-1 text-xs text-ink-muted"><%= t(".stats_go.#{key}") %></p>
+            <% end %>
+          <% else %>
+            <div class="stat min-w-0 flex-1 basis-40" data-loans-stat="<%= key %>">
+              <dt><%= t(".stats.#{key}") %></dt>
+              <dd data-live-value><%= value %></dd>
+            </div>
+          <% end %>
+        <% end %>
+      </dl>
+    </section>
   <% end %>
-</dl>
+</div>
 
 <h2 class="mt-8 mb-1 text-lg font-semibold"><%= t(".overdue") %></h2>
 <p class="mb-3 text-sm text-ink-muted"><%= t(".overdue_help") %></p>

@@ -11,7 +11,7 @@ class DailyClose < PurchaseSummary
 
   def initialize(date)
     @date = date
-    super(Purchase.active.on(date))
+    super(Purchase.owned.active.on(date))
   end
 
   # [[state, purchases], ...] in PAYMENT_STATES order, skipping empty states.
@@ -48,7 +48,7 @@ class DailyClose < PurchaseSummary
 
   # Grouped by payment state, newest first within each group.
   def purchases
-    @purchase_list ||= Purchase.active.on(date).left_joins(:invoice).order(PAYMENT_ORDER).merge(Purchase.newest_first)
+    @purchase_list ||= Purchase.owned.active.on(date).left_joins(:invoice).order(PAYMENT_ORDER).merge(Purchase.newest_first)
                                .preload(:zone, :farm, :loan_payments, invoice: [ :payments, :producer, { purchases: :loan_payments } ], producer: :person).to_a
   end
 end

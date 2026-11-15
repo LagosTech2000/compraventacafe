@@ -1,0 +1,81 @@
+<% content_for :title, t(".title") %>
+<%= render "sales/nav" %>
+
+<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+<p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+
+<%= form_with model: @entry, url: sales_supply_entries_path, class: form_surface_class("mt-6 space-y-6 max-w-6xl"),
+      data: { controller: "form-validation unsaved-changes", action: unsaved_changes_actions } do |form| %>
+  <%= render "shared/form_errors", record: @entry %>
+
+  <%# The supplies of the supplier's invoice, each with what it cost. %>
+  <section class="space-y-3" aria-labelledby="supply-entry-lines" data-controller="supply-entry"
+           data-action="supply:created@window->supply-entry#addSupply">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <h2 id="supply-entry-lines" class="text-lg font-semibold"><%= t(".lines") %></h2>
+      <div class="flex flex-wrap gap-2">
+        <% if policy(Supply).create? %>
+          <%= modal_link_to t(".new_supply"), new_sales_supply_path(picker: 1), class: "btn btn-sm" %>
+        <% end %>
+        <button type="button" class="btn btn-sm btn-primary" data-action="supply-entry#addAndFocus"><%= t(".add_line") %></button>
+      </div>
+    </div>
+    <div class="space-y-3" data-supply-entry-target="lines">
+      <%= form.fields_for :lines do |line_form| %>
+        <%= render "sales/supply_entries/line_fields", form: line_form %>
+      <% end %>
+    </div>
+    <p class="empty-state" data-supply-entry-target="empty" hidden><%= t(".no_lines") %></p>
+    <template data-supply-entry-target="template">
+      <%= form.fields_for :lines, SupplyEntryLine.new, child_index: "NEW_RECORD" do |line_form| %>
+        <%= render "sales/supply_entries/line_fields", form: line_form %>
+      <% end %>
+    </template>
+    <p class="text-sm"><%= t(".total") %>: <strong class="text-lg tabular-nums" data-supply-entry-target="total">L 0.00</strong></p>
+  </section>
+
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div>
+      <%= form.label :received_on, class: "field-label" %>
+      <%= form.date_field :received_on, required: true, class: "field-input" %>
+    </div>
+    <div>
+      <%= form.label :payee, class: "field-label" %>
+      <%= form.text_field :payee, maxlength: 120, class: "field-input", placeholder: t(".payee_placeholder") %>
+    </div>
+    <div data-controller="option-picker" data-action="finance_category:created@window->option-picker#add">
+      <%= form.label :finance_category_id, class: "field-label" %>
+      <%= form.select :finance_category_id, FinanceCategory.options_for("investment", including: @entry.finance_category_id.to_i),
+            { prompt: t("shared.select.pick_category") }, required: true, class: "field-input", data: { option_picker_target: "select" } %>
+      <% if policy(FinanceCategory).create? %>
+        <%= modal_link_to t("finance.expenses.form.new_category"), new_finance_category_path(kind: "investment", picker: 1), class: "btn btn-sm mt-2" %>
+      <% end %>
+    </div>
+    <div>
+      <%= form.label :receipt_number, class: "field-label" %>
+      <%= form.text_field :receipt_number, maxlength: 120, class: "field-input" %>
+    </div>
+    <div class="grid gap-5 sm:col-span-2 sm:grid-cols-2" data-controller="money-account"
+         data-money-account-defaults-value="<%= MoneyAccount.defaults_by_method.to_json %>">
+      <div>
+        <%= form.label :payment_method, class: "field-label" %>
+        <%= form.select :payment_method, enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS), {}, required: true, class: "field-input",
+              data: { money_account_target: "method", action: "money-account#suggest" } %>
+      </div>
+      <%= render "shared/money_account_field", form:, required: true %>
+    </div>
+    <div class="sm:col-span-2">
+      <%= form.label :receipt_upload, class: "field-label" %>
+      <%= form.file_field :receipt_upload, accept: ExpenseReceipt::SIGNATURES.keys.join(","), class: "field-input py-2" %>
+      <p class="mt-1 text-xs text-ink-muted"><%= t(".receipt_help", size: number_to_human_size(ExpenseReceipt::MAX_SIZE)) %></p>
+    </div>
+    <div class="sm:col-span-2">
+      <%= form.label :observations, class: "field-label" %>
+      <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+    </div>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit t(".submit"), class: "btn btn-primary" %>
+    <%= cancel_button sales_supply_stock_path %>
+  </div>
+<% end %>

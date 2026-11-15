@@ -3,7 +3,7 @@
 class InvoicesReport < Report
   TOTALS = <<~SQL.squish.freeze
     LEFT JOIN (
-      SELECT purchases.invoice_id, COUNT(*) AS purchases_count, SUM(purchases.net_weight) AS net_weight, SUM(purchases.total) AS total
+      SELECT purchases.invoice_id, COUNT(*) AS purchases_count, SUM(purchases.gross_weight) AS gross_weight, SUM(purchases.net_weight) AS net_weight, SUM(purchases.total) AS total
       FROM purchases WHERE purchases.invoice_id IS NOT NULL GROUP BY purchases.invoice_id
     ) invoice_totals ON invoice_totals.invoice_id = invoices.id
     LEFT JOIN (
@@ -26,6 +26,7 @@ class InvoicesReport < Report
   DAYS_TO_PAY = "(invoices.paid_on - invoices.issued_on)".freeze
 
   self.module_key = "trading"
+  def self.permission_keys = %w[trading.invoices]
   self.date_column = "invoices.issued_on"
   self.default_period = "this_month"
   self.default_sort = :number
@@ -42,6 +43,8 @@ class InvoicesReport < Report
   column(:issued_on, :date, sort: "invoices.issued_on")
   column(:producer, :text, sort: "people.last_names") { |invoice| invoice.producer.full_name }
   column(:purchases_count, :integer, sort: "invoice_totals.purchases_count", priority: 3)
+  # Gross first, net beside (Fernando, 2026-11-13).
+  column(:gross_weight, :pounds, sort: "invoice_totals.gross_weight", priority: 3) { |invoice| invoice.gross_weight_sum.to_d }
   column(:net_weight, :pounds, sort: "invoice_totals.net_weight", priority: 3) { |invoice| invoice.net_weight_sum.to_d }
   column(:quintals, :quintals, sort: "invoice_totals.net_weight", priority: 2) do |invoice|
     invoice.net_weight_sum.to_d / PurchaseCalculation::QUINTAL_WEIGHT
@@ -62,6 +65,7 @@ class InvoicesReport < Report
   end
 
   measure :count, :integer, "COUNT(*)"
+  measure :gross_weight, :pounds, "SUM(invoice_totals.gross_weight)"
   measure :net_weight, :pounds, "SUM(invoice_totals.net_weight)"
   measure :quintals, :quintals, QUINTALS
   measure :total, :money, "SUM(#{TOTAL})"
@@ -88,7 +92,7 @@ class InvoicesReport < Report
   kpi :average_days, :number, "AVG(#{DAYS_TO_PAY})", good: :down
 
   def scope
-    Invoice.joins(producer: :person).joins(TOTALS)
+    Invoice.visible_to(user).active.joins(producer: :person).joins(TOTALS)
   end
 
   def apply_filters(relation)
@@ -132,7 +136,7 @@ class InvoicesReport < Report
   private
     def preload(relation)
       relation.includes(producer: :person)
-              .select("invoices.*", "invoice_totals.purchases_count", "invoice_totals.net_weight AS net_weight_sum",
+              .select("invoices.*", "invoice_totals.purchases_count", "invoice_totals.gross_weight AS gross_weight_sum", "invoice_totals.net_weight AS net_weight_sum",
                       "#{TOTAL} AS total_sum", "#{COFFEE} AS coffee_sum", "#{PAID} AS paid_sum")
     end
 end

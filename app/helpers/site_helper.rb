@@ -8,6 +8,9 @@ module SiteHelper
   def business_name = site_setting.business_name
   def business_location = site_setting.location
   def business_rtn = site_setting.rtn
+  def business_owner = site_setting.owner_name
+  # «9785-8796 / 9586-7270», or nil without any.
+  def business_phones = [ site_setting.phone, site_setting.secondary_phone ].compact_blank.map { format_phone(it) }.join(" / ").presence
 
   # The logo, or the coffee bean while there is none. Decorative: the
   # business name always goes next to it.

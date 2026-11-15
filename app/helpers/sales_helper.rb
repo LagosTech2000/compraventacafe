@@ -1,4 +1,15 @@
 module SalesHelper
+  # A shipment's shrink in pounds (Fernando, 2026-11-13): "+12.50 lb" lost,
+  # "−3.00 lb" when it weighed more.
+  def format_shrink(pounds)
+    return "—" if pounds.nil?
+
+    sign = pounds.positive? ? "+" : (pounds.negative? ? "−" : "")
+    t("sales.shipments.shrink.pounds", value: "#{sign}#{format_pounds(pounds.abs)}")
+  end
+
+  def shrink_class(pounds) = pounds.to_d.positive? ? "text-danger" : (pounds.to_d.negative? ? "text-success" : "")
+
   SHIPMENT_STATUS_BADGES = { "in_transit" => "badge-warning", "received" => "badge-neutral", "sold" => "badge-success", "voided" => "badge-neutral" }.freeze
   SALE_STATE_BADGES = TradingHelper::PAYMENT_STATUS_BADGES.merge("voided" => "badge-neutral").freeze
 
@@ -14,6 +25,8 @@ module SalesHelper
   # "−120.50 lb (−1.2 %)": the buyer's scale against the local one. Stands
   # out (with a mark that does not depend on color) over the tolerance.
   def weight_difference(record, pounds: record.net_difference, percent: record.difference_percent)
+    # Registered without the local scale (Fernando, 2026-11-12): nothing to compare.
+    return tag.span(t("sales.difference.no_origin"), class: "text-xs text-ink-muted", data: { no_origin: true }) if record.origin_missing?
     return tag.span("—", class: "text-ink-muted") if pounds.nil?
 
     over = record.over_tolerance?
@@ -45,6 +58,17 @@ module SalesHelper
     t("sales.processing_costs.terms.per_unit", price: format_price_per_pound(cost.unit_price), unit:,
       kind: ProcessingCost.human_attribute_name("weight_kind/#{cost.weight_kind}").downcase,
       side: ProcessingCost.human_attribute_name("weight_side/#{cost.weight_side}").downcase, pounds: format_pounds(cost.base_pounds))
+  end
+
+  # How a shipment's cost was charged (as a process's): "L 0.50 por libra
+  # neta de la báscula local · 1,000.00 lb" or "Monto total".
+  def shipment_cost_terms(cost)
+    return ShipmentCost.human_attribute_name("pricing/total") if cost.total?
+
+    unit = cost.per_quintal? ? t("sales.processing_costs.terms.quintal", pounds: cost.quintal_pounds) : t("sales.processing_costs.terms.pound")
+    t("sales.shipment_costs.terms.per_unit", price: format_price_per_pound(cost.unit_price), unit:,
+      kind: ShipmentCost.human_attribute_name("weight_kind/#{cost.weight_kind}").downcase,
+      side: ShipmentCost.human_attribute_name("weight_side/#{cost.weight_side}").downcase, pounds: format_pounds(cost.base_pounds))
   end
 
   # How long a lot has been in stock: hours for the first two days (cherry

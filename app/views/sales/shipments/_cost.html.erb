@@ -1,0 +1,166 @@
+<%# What a shipment cost (ShipmentCostSummary, Fernando, 2026-11-12): the
+    coffee of its lots (Fernando, 2026-11-13; before, its invoices), the
+    haulers' commission of those purchases, the costs registered from it,
+    the expenses of Control financiero assigned to it and the carrier's
+    trip price. And its shrink: its lots' purchases − its local scale. %>
+<% summary = ShipmentCostSummary.new(shipment) %>
+<% batch_policy = ShipmentBatchPolicy.new(Current.user, shipment) %>
+<% expense_policy = ShipmentExpensePolicy.new(Current.user, shipment) %>
+<% scope = "sales.shipments.cost" %>
+<section class="mt-4 panel p-4" id="shipment-cost" aria-labelledby="shipment-cost-title" data-shipment-cost>
+  <h2 id="shipment-cost-title" class="font-semibold"><%= t("#{scope}.title") %></h2>
+  <p class="text-xs text-ink-muted"><%= t("#{scope}.help") %></p>
+
+  <% unless summary.complete? %>
+    <p class="flash-notice mt-3" role="status" data-cost-missing><%= t("#{scope}.missing") %></p>
+  <% end %>
+
+  <dl class="mt-3 flex flex-wrap gap-3">
+    <% { coffee: summary.complete? ? format_money(summary.coffee) : "—", hauler_commission: format_money(summary.hauler_commission),
+         costs: format_money(summary.costs + summary.expenses + summary.trip_price),
+         total: summary.complete? ? format_money(summary.total) : "—",
+         per_pound: (summary.complete? && summary.cost_per_pound) ? format_money(summary.cost_per_pound) : "—" }.each do |key, value| %>
+      <div class="stat min-w-0 flex-1 basis-36" data-cost="<%= key %>">
+        <dt><%= t("#{scope}.figures.#{key}") %></dt>
+        <dd data-live-value><%= value %></dd>
+      </div>
+    <% end %>
+  </dl>
+
+  <%# Its lots, gross pounds first (Fernando, 2026-11-13). %>
+  <div class="mt-5 flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <h3 class="font-semibold"><%= t("#{scope}.batches.title") %></h3>
+      <p class="text-xs text-ink-muted"><%= t("#{scope}.batches.help", state: shipment.human_coffee_state.downcase, warehouse: shipment.warehouse.name) %></p>
+    </div>
+    <% if batch_policy.create? %>
+      <%= page_link_to t("#{scope}.batches.choose"), new_sales_shipment_batch_path(shipment), class: "btn btn-sm btn-primary" %>
+    <% end %>
+  </div>
+  <% if summary.batches.any? %>
+    <% totals = CoffeeBatch::Totals.by_batch(summary.batches.map(&:id)) %>
+    <div class="mt-3 overflow-x-auto">
+      <table class="data-table data-table-compact" data-controller="table-sort" data-shipment-batches>
+        <thead>
+          <tr>
+            <th><%= t("sales.coffee_batches.table.number") %></th>
+            <th><%= t("sales.coffee_batches.table.batched_on") %></th>
+            <th class="text-right"><%= t("sales.coffee_batches.table.gross") %></th>
+            <th class="text-right"><%= t("sales.coffee_batches.table.net") %></th>
+            <th class="text-right"><%= t("sales.coffee_batches.table.value") %></th>
+            <th class="cell-actions" data-sort="false"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% summary.batches.each do |batch| %>
+            <% sums = totals.fetch(batch.id, CoffeeBatch::Totals.zero) %>
+            <tr id="<%= dom_id(batch, :shipment) %>">
+              <td class="tabular-nums"><%= batch.display_number %></td>
+              <td class="whitespace-nowrap"><%= l(batch.batched_on) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(sums.gross) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums text-ink-muted"><%= format_pounds(sums.net) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(sums.value) %></td>
+              <td class="cell-actions">
+                <div class="flex justify-end gap-2">
+                  <%= detail_button sales_coffee_batch_path(batch) %>
+                  <% if batch_policy.destroy? %>
+                    <%= button_to t("#{scope}.remove"), sales_shipment_batch_path(shipment, batch), method: :delete, class: "btn btn-sm",
+                          form: { data: { turbo_confirm: t("#{scope}.batches.confirm_remove", batch: batch.label) } } %>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <%= render "sales/shipments/shrink", shipment: %>
+  <% else %>
+    <p class="mt-2 text-sm text-ink-muted"><%= t("#{scope}.batches.none") %></p>
+  <% end %>
+
+  <%# Costs registered from it and expenses assigned to it. %>
+  <% cost_policy = policy(ShipmentCost.new(shipment:)) %>
+  <% costs = shipment.costs.includes(:money_account).to_a %>
+  <% expenses = expense_policy.index? ? shipment.expenses.includes(:money_account, category: :parent).order(:spent_on, :id).to_a : [] %>
+  <div class="mt-5 flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <h3 class="font-semibold"><%= t("#{scope}.costs.title") %></h3>
+      <p class="text-xs text-ink-muted"><%= t("#{scope}.costs.help") %></p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <% if cost_policy.create? %>
+        <%= modal_link_to t("#{scope}.costs.new"), new_sales_shipment_cost_path(shipment), class: "btn btn-sm btn-primary" %>
+      <% end %>
+      <% if expense_policy.create? %>
+        <%= page_link_to t("#{scope}.costs.assign"), new_sales_shipment_expense_path(shipment), class: "btn btn-sm" %>
+      <% end %>
+    </div>
+  </div>
+  <% if costs.any? || expenses.any? || shipment.trip_price %>
+    <div class="mt-3 overflow-x-auto">
+      <table class="data-table data-table-compact" data-controller="table-sort" data-shipment-costs>
+        <thead>
+          <tr>
+            <th><%= t("#{scope}.costs.date") %></th>
+            <th><%= t("#{scope}.costs.concept") %></th>
+            <th><%= t("#{scope}.costs.origin") %></th>
+            <th><%= MoneyAccount.model_name.human %></th>
+            <th class="text-right"><%= t("#{scope}.costs.amount") %></th>
+            <th class="cell-actions" data-sort="false"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% costs.each do |cost| %>
+            <tr id="<%= dom_id(cost) %>">
+              <td class="whitespace-nowrap"><%= l(cost.paid_on) %></td>
+              <td><%= cost.label %><span class="block text-xs text-ink-muted"><%= shipment_cost_terms(cost) %></span></td>
+              <td><span class="badge badge-neutral"><%= t("#{scope}.costs.registered") %></span></td>
+              <td><%= cost.money_account&.name || t("reports.types.cash_movements.no_account") %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(cost.amount) %></td>
+              <td class="cell-actions">
+                <% if policy(cost).destroy? %>
+                  <%= button_to t("#{scope}.remove"), sales_shipment_cost_path(shipment, cost), method: :delete, class: "btn btn-sm",
+                        form: { data: { turbo_confirm: t("#{scope}.costs.confirm_remove") } } %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+          <% expenses.each do |expense| %>
+            <tr id="<%= dom_id(expense, :shipment) %>">
+              <td class="whitespace-nowrap"><%= l(expense.spent_on) %></td>
+              <td><%= expense.description %><span class="block text-xs text-ink-muted"><%= expense.category.full_name %></span></td>
+              <td><span class="badge badge-neutral"><%= t("#{scope}.costs.assigned") %></span></td>
+              <td><%= expense.money_account.name %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(expense.amount) %></td>
+              <td class="cell-actions">
+                <div class="flex justify-end gap-2">
+                  <% if policy(expense).show? %><%= detail_button finance_expense_path(expense) %><% end %>
+                  <% if expense_policy.destroy? %>
+                    <%= button_to t("#{scope}.remove"), sales_shipment_expense_path(shipment, expense), method: :delete, class: "btn btn-sm",
+                          form: { data: { turbo_confirm: t("#{scope}.costs.confirm_unassign") } } %>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+          <% if shipment.trip_price %>
+            <tr>
+              <td class="whitespace-nowrap"><%= l(shipment.departed_at.to_date) %></td>
+              <td><%= Shipment.human_attribute_name(:trip_price) %><span class="block text-xs text-ink-muted"><%= shipment.carrier&.name %></span></td>
+              <td><span class="badge badge-neutral"><%= t("#{scope}.costs.trip") %></span></td>
+              <td>—</td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(shipment.trip_price) %></td>
+              <td class="cell-actions"></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <% if expense_policy.index? == false && shipment.expenses.exists? %>
+      <p class="mt-2 text-xs text-ink-muted"><%= t("#{scope}.costs.hidden_expenses") %></p>
+    <% end %>
+  <% else %>
+    <p class="mt-2 text-sm text-ink-muted"><%= t("#{scope}.costs.none") %></p>
+  <% end %>
+</section>

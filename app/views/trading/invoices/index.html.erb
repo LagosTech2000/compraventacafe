@@ -17,7 +17,8 @@
   <%= render layout: "shared/filters", locals: { filter: @filter, url: trading_invoices_path, frame: "invoices-list", live: true } do |form| %>
     <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("trading.invoices.index.search_placeholder") %>
     <%= filter_select form, :payment_status, Invoice.human_attribute_name(:payment_status),
-          enum_options(Invoice, :payment_status, Invoice::FILTER_STATUSES), selected: @filter.payment_status %>
+          enum_options(Invoice, :payment_status, Invoice::LIST_STATUSES), selected: @filter.payment_status,
+          all: Invoice.human_attribute_name("payment_status/active") %>
     <%= filter_date_field form, :from, t("shared.filters.from"), value: @filter.from %>
     <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
     <%= filter_select form, :season_year, Purchase.human_attribute_name(:season_year),

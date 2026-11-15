@@ -186,4 +186,14 @@ RSpec.describe "Purchase form preview", type: :system do
     expect(page).to have_field("producer_search", with: /Carla Mejía/)
     expect(page).to have_select("purchase_farm_id", options: [ "Sin finca asignada", "El Cerro" ])
   end
+
+  # «Café corriente» (Fernando, 2026-11-12): only for wet parchment.
+  it "offers «Café corriente» only for wet parchment, and clears it on another state" do
+    expect(page).to have_field("purchase_common_coffee")
+    check "purchase_common_coffee"
+    select "Pergamino seco", from: "purchase_coffee_state"
+    expect(page).to have_no_field("purchase_common_coffee")
+    select "Pergamino húmedo", from: "purchase_coffee_state"
+    expect(page).to have_unchecked_field("purchase_common_coffee")
+  end
 end

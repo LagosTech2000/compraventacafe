@@ -8,6 +8,7 @@ class PayrollPaymentsReport < Report
   SQL
 
   self.module_key = "farms"
+  def self.permission_keys = %w[farms.payrolls]
   self.date_column = "payroll_payments.paid_on"
   self.default_period = "this_month"
   self.default_sort = :paid_on
@@ -51,7 +52,7 @@ class PayrollPaymentsReport < Report
   kpi(:total_cost, :money, good: :down) { |relation, in_period| relation.sum(:gross_total) + expenses_for(in_period).sum(:amount) }
 
   def scope
-    PayrollPayment.joins(payroll: :farm).joins(LINES)
+    PayrollPayment.visible_to(user).joins(payroll: :farm).joins(LINES)
   end
 
   def apply_filters(relation)

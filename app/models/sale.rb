@@ -7,10 +7,18 @@
 # Collected in payments (SalePayment), like the invoices: pending, partial,
 # paid. The buyer's settlement (buyer_total, with its reason) is what the
 # buyer says it pays per its own liquidation; once entered, it is what is
-# collected (amount_due) instead of the total. It is not edited: voided (only without payments) its shipments are
-# free for another sale, and its lines stay as a record.
+# collected (amount_due) instead of the total. Voided (only without
+# payments) its shipments are free for another sale, and its lines stay as
+# a record.
+#
+# Administrators edit it and void it even collected (Fernando, 2026-11-12):
+# its date, price, quintal, buyer's document, observations and shipments
+# (#revise!); voided with payments, these are removed (their money no
+# longer counts; what was taken off advances goes back to them). A total
+# below what was collected is saved and shows as overpaid.
 class Sale < ApplicationRecord
   include Auditable
+  include OwnedRecord
   include LiveUpdates
   live_updates :sales
 
@@ -106,11 +114,19 @@ class Sale < ApplicationRecord
     { net:, gross: }
   end
   # The buyer's net − the local net, over its shipments.
-  def net_difference = net_weight - origin_net_weight
-  def difference_percent = origin_net_weight.positive? ? (net_difference * 100 / origin_net_weight).round(2) : nil
+  # Without the local scale of a shipment there is no difference (Fernando, 2026-11-12).
+  def origin_missing? = origin_net_weight.nil?
+  def net_difference = origin_net_weight && net_weight - origin_net_weight
+  def difference_percent = origin_net_weight&.positive? ? (net_difference * 100 / origin_net_weight).round(2) : nil
   # That difference in money, at the sale's price per pound (Fernando,
   # 2026-10-25): below zero, coffee that left and was not charged for.
-  def difference_amount = (net_difference * price_per_pound).round(2)
+  def difference_amount = net_difference && (net_difference * price_per_pound).round(2)
+
+  # Its local net once every shipment has the local scale (one was completed).
+  def refresh_origin!
+    current = lines.active.to_a
+    update!(origin_net_weight: (current.sum(&:origin_net_weight) if current.all?(&:origin_net_weight)))
+  end
 
   def over_tolerance?(tolerance = WeightTolerance.percent)
     tolerance.present? && difference_percent.present? && difference_percent.abs > tolerance
@@ -122,7 +138,10 @@ class Sale < ApplicationRecord
   def settlement_difference = buyer_total && (buyer_total - total)
 
   def paid_total = payments.reject(&:new_record?).sum(&:amount)
-  def balance_due = voided? ? 0 : amount_due - paid_total
+  def balance_due = voided? ? 0 : [ amount_due - paid_total, 0 ].max
+  # Collected over what is due now (its total was lowered by an edit).
+  def overpaid_amount = voided? ? 0 : [ paid_total - amount_due, 0 ].max
+  def overpaid? = overpaid_amount.positive?
 
   def human_payment_status = self.class.human_attribute_name("payment_status/#{payment_status}")
   # "Por quintal de 120 lb" or "Por libra".
@@ -167,17 +186,58 @@ class Sale < ApplicationRecord
             paid_on: (status == "paid" ? (payments.maximum(:paid_on) || sold_on) : nil))
   end
 
-  # Voids it and frees its shipments for another sale. Only without payments.
-  def void!(user, reason: nil)
+  # Voids it and frees its shipments for another sale. Only without
+  # payments, unless `with_payments` (an administrator): they are removed.
+  def void!(user, reason: nil, with_payments: false)
     transaction do
       lock!
-      unless voidable?
-        errors.add(:base, :has_payments)
+      if voided? || (payments.any? && !with_payments)
+        errors.add(:base, voided? ? :already_voided : :has_payments)
         raise ActiveRecord::RecordInvalid, self
       end
 
+      payments.each(&:destroy!)
       lines.each { |line| line.update!(active: false) }
       update!(voided_at: Time.current, voided_by: user, void_reason: reason)
+    end
+  end
+
+  # An administrator's edit (Fernando, 2026-11-12): its date, price, the
+  # quintal's pounds, the buyer's document, observations and shipments (the
+  # ones taken off are free again; other shipments of the buyer weighed at
+  # destination and free can come in, of its coffee state). Weights, line
+  # amounts and total are worked out again. All of it or nothing.
+  def revise!(attributes, shipment_ids:)
+    transaction do
+      lock!
+      ids = Array(shipment_ids).compact_blank.map(&:to_i).uniq
+      kept = lines.active.where(shipment_id: ids).includes(:shipment).to_a
+      added = buyer.shipments.unsold.where(id: ids - kept.map(&:shipment_id)).lock.to_a
+      errors.add(:lines, :blank) if ids.empty?
+      errors.add(:lines, :unavailable) if kept.size + added.size != ids.size
+      errors.add(:lines, :mixed_states) if added.any? { it.coffee_state != coffee_state }
+      raise ActiveRecord::RecordInvalid, self if errors.any?
+
+      assign_attributes(attributes.to_h.symbolize_keys.slice(:sold_on, :price_unit, :unit_price, :quintal_pounds, :buyer_document_number, :observations))
+      lines.active.where.not(shipment_id: ids).find_each(&:destroy!)
+      added.each { |shipment| lines.create!(shipment:, net_weight: 0, origin_net_weight: 0, amount: 0) }
+      price = { unit_price:, price_unit:, quintal_pounds: }
+      valid_price = unit_price.to_d.positive? && price_unit.in?(PRICE_UNITS) && quintal_pounds.to_d.positive?
+      current = lines.active.includes(:shipment).to_a
+      current.each do |line|
+        shipment = line.shipment
+        line.update!(net_weight: shipment.destination_net_weight, origin_net_weight: shipment.origin_net_weight,
+                     amount: valid_price ? self.class.amount_for(shipment.destination_net_weight, **price) : 0)
+      end
+      self.net_weight = current.sum { it.shipment.destination_net_weight }
+      self.origin_net_weight = (current.sum { it.shipment.origin_net_weight } if current.all? { it.shipment.origin_net_weight })
+      self.total = valid_price ? self.class.amount_for(net_weight, **price) : 0
+      errors.add(:sold_on, :after_payments, date: I18n.l(payments.minimum(:paid_on))) if payments.exists? && sold_on && sold_on > payments.minimum(:paid_on)
+      raise ActiveRecord::RecordInvalid, self if errors.any?
+
+      save!
+      lines.reset
+      refresh_payment_status!
     end
   end
 

@@ -17,7 +17,8 @@ class Dashboard
     @today = today
   end
 
-  def can?(module_key) = user.can?(module_key, :read)
+  # A module ("trading": any of its tabs) or a submodule ("trading.invoices").
+  def can?(permission_key) = user.can?(permission_key, :read)
   def season = Season.for(today)
 
   def modules = AppModule::KEYS.select { |key| can?(key) }
@@ -25,10 +26,10 @@ class Dashboard
   # --- Figures ---------------------------------------------------------------
 
   def today_summary = @today_summary ||= DailyClose.new(today)
-  def season_summary = @season_summary ||= PurchaseSummary.new(Purchase.active.in_season(season))
+  def season_summary = @season_summary ||= PurchaseSummary.new(Purchase.visible_to(user).active.in_season(season))
 
   def open_loans
-    @open_loans ||= Loan.unpaid.includes(:person, :payments, :supply_items).to_a
+    @open_loans ||= Loan.visible_to(user).unpaid.includes(:person, :payments, :supply_items).to_a
   end
 
   def loans_owed = @loans_owed ||= open_loans.sum { |loan| loan.balance(as_of: today).total_owed }
@@ -43,17 +44,17 @@ class Dashboard
 
   # Comercialización: the coffee in stock and what the buyers owe.
   def coffee_stock = @coffee_stock ||= CoffeeStock.new(today)
-  def unpaid_sales = @unpaid_sales ||= Sale.unpaid.includes(:buyer, :payments).to_a
+  def unpaid_sales = @unpaid_sales ||= Sale.visible_to(user).unpaid.includes(:buyer, :payments).to_a
   def sales_owed = unpaid_sales.sum(&:balance_due)
 
   # Control financiero: where the money is and what went out this month.
   def accounts_balance = @accounts_balance ||= AccountBalance.new(as_of: today).total
   def accounts? = MoneyAccount.active.exists?
-  def month_spending = @month_spending ||= Expense.where(spent_on: today.beginning_of_month..today).sum(:amount)
+  def month_spending = @month_spending ||= Expense.visible_to(user).where(spent_on: today.beginning_of_month..today).sum(:amount)
   def over_budget = @over_budget ||= BudgetSheet.new(season).month_lines(today.beginning_of_month).select(&:over?)
 
   def active_farms_count = Farm.of_business.active.count
-  def running_payrolls = @running_payrolls ||= Payroll.active(today).includes(:payments).to_a
+  def running_payrolls = @running_payrolls ||= Payroll.visible_to(user).active(today).includes(:payments).to_a
 
   # --- What the business owes and is owed (Fernando, 2026-10-25) -----------------
   # Only sums of what each module already keeps, of the modules the user
@@ -62,50 +63,62 @@ class Dashboard
 
   def owed_by_business
     @owed_by_business ||= [
-      (Debt.new(:invoices, unpaid_invoices.sum(&:balance_due), [ :trading_invoices_path, { payment_status: "unpaid" } ]) if can?("trading")),
-      (Debt.new(:haulers, haulers_to_pay.sum(&:balance), [ :trading_haulers_path ]) if can?("trading")),
-      (Debt.new(:payrolls, periods_to_pay.sum { |payroll, period| payroll.calculation(period).gross_total }, [ :farms_root_path ]) if can?("farms")),
-      (Debt.new(:staff, StaffOverview.new(today:).due_amount, [ :finance_staff_sheet_path ]) if can?("finance")),
-      (Debt.new(:buyer_advances, buyer_advances_balance, [ :sales_buyers_path ]) if can?("sales"))
+      (Debt.new(:invoices, unpaid_invoices.sum(&:balance_due), [ :trading_invoices_path, { payment_status: "unpaid" } ]) if can?("trading.invoices")),
+      (Debt.new(:haulers, haulers_to_pay.sum(&:balance), [ :trading_haulers_path ]) if can?("trading.haulers")),
+      (Debt.new(:payrolls, periods_to_pay.sum { |payroll, period| payroll.calculation(period).gross_total }, [ :farms_root_path ]) if can?("farms.payrolls")),
+      (Debt.new(:staff, StaffOverview.new(today:).due_amount, [ :finance_staff_sheet_path ]) if can?("finance.staff")),
+      (Debt.new(:buyer_advances, buyer_advances_balance, [ :sales_buyers_path ]) if can?("sales.buyers"))
     ].compact.select { it.amount.positive? }
   end
 
   def owed_to_business
     @owed_to_business ||= [
-      (Debt.new(:sales, sales_owed, [ :sales_sales_path, { payment_status: "unpaid" } ]) if can?("sales")),
-      (Debt.new(:loans, loans_owed, [ :loans_credit_accounts_path ]) if can?("loans"))
+      (Debt.new(:sales, sales_owed, [ :sales_sales_path, { payment_status: "unpaid" } ]) if can?("sales.sales")),
+      (Debt.new(:loans, loans_owed, [ :loans_credit_accounts_path ]) if can?("loans.loans"))
     ].compact.select { it.amount.positive? }
   end
 
   # Money buyers gave in advance and are still owed in coffee.
   def buyer_advances_balance
-    BuyerAdvance.sum(:amount) - SalePayment.advance.joins(:sale).merge(Sale.active).sum(:amount)
+    BuyerAdvance.visible_to(user).sum(:amount) - SalePayment.advance.joins(:sale).merge(Sale.visible_to(user).active).sum(:amount)
   end
 
   # --- Pending work --------------------------------------------------------------
 
-  def uninvoiced = @uninvoiced ||= PurchaseSummary.new(Purchase.uninvoiced)
+  # Each kind of pending work and the tab it belongs to: it shows only to
+  # who reads that tab (Inicio and Tareas pendientes).
+  PENDING = {
+    uninvoiced: "trading.purchases", unpaid_invoices: "trading.invoices", haulers_to_pay: "trading.haulers",
+    shipments_in_transit: "sales.shipments", unsold_shipments: "sales.shipments", unpaid_sales: "sales.sales",
+    cherry_waiting: "sales.stock", open_conversions: "sales.coffee_conversions", negative_stock: "sales.stock",
+    overdue_loans: "loans.loans", due_soon_loans: "loans.loans",
+    periods_to_pay: "farms.payrolls", members_without_wage: "farms.payrolls", over_budget: "finance.budget"
+  }.freeze
+
+  def pending_kinds = PENDING.select { |_, permission_key| can?(permission_key) }.keys
+
+  def uninvoiced = @uninvoiced ||= PurchaseSummary.new(Purchase.visible_to(user).uninvoiced)
   # Purchases waiting for an invoice, per producer (an invoice groups one
   # producer's purchases): the one waiting longest first.
   UninvoicedGroup = Data.define(:producer, :purchases_count, :total, :since)
 
   def uninvoiced_by_producer
-    @uninvoiced_by_producer ||= Purchase.uninvoiced.includes(producer: :person).group_by(&:producer).map do |producer, purchases|
+    @uninvoiced_by_producer ||= Purchase.visible_to(user).uninvoiced.includes(producer: :person).group_by(&:producer).map do |producer, purchases|
       UninvoicedGroup.new(producer:, purchases_count: purchases.size, total: purchases.sum(&:total),
                           since: purchases.map(&:purchased_at).min)
     end.sort_by(&:since)
   end
 
-  def unpaid_invoices = @unpaid_invoices ||= Invoice.unpaid.includes(:payments, producer: :person, purchases: :loan_payments).to_a
+  def unpaid_invoices = @unpaid_invoices ||= Invoice.visible_to(user).unpaid.includes(:payments, producer: :person, purchases: :loan_payments).to_a
 
   # Trucks on their way: their weight at the buyer's is missing.
-  def shipments_in_transit = @shipments_in_transit ||= Shipment.in_transit.includes(:buyer, :active_sale_line).order(:departed_at).to_a
+  def shipments_in_transit = @shipments_in_transit ||= Shipment.visible_to(user).in_transit.includes(:buyer, :active_sale_line).order(:departed_at).to_a
   # Weighed at the buyer's, waiting for a sale.
-  def unsold_shipments = @unsold_shipments ||= Shipment.unsold.includes(:buyer, :active_sale_line).order(:departed_at).to_a
+  def unsold_shipments = @unsold_shipments ||= Shipment.visible_to(user).unsold.includes(:buyer, :active_sale_line).order(:departed_at).to_a
 
   # Conversions waiting for their result (Fernando, 2026-10-25): their
   # coffee is out of its state until then. The oldest first.
-  def open_conversions = @open_conversions ||= CoffeeConversion.in_process.order(:weighed_at).to_a
+  def open_conversions = @open_conversions ||= CoffeeConversion.visible_to(user).in_process.order(:weighed_at).to_a
   # Cherry that has waited too long to be processed (CherryAlert), the oldest first.
   def cherry_waiting = @cherry_waiting ||= CherryAlert.new.items.tap { |items| CoffeeLots.preload(items.map(&:lot)) }
 
@@ -120,7 +133,7 @@ class Dashboard
 
   # Pay periods whose day has come and are not paid, with something to pay.
   def periods_to_pay
-    @periods_to_pay ||= Payroll.unfinished(today).includes(:payments, :farm).flat_map do |payroll|
+    @periods_to_pay ||= Payroll.visible_to(user).unfinished(today).includes(:payments, :farm).flat_map do |payroll|
       payroll.periods_to_pay(today).map { |period| [ payroll, period ] }
     end
   end
@@ -129,7 +142,7 @@ class Dashboard
   # cannot be paid until they get a role or a wage of their own.
   def members_without_wage
     @members_without_wage ||= PayrollMember.active.where(payroll_role_id: nil, daily_wage_override: nil)
-                                           .joins(:payroll).merge(Payroll.unfinished(today)).where(payrolls: { kind: "daily" })
+                                           .joins(:payroll).merge(Payroll.visible_to(user).unfinished(today)).where(payrolls: { kind: "daily" })
                                            .includes(:person, :payroll).to_a
   end
 
@@ -141,8 +154,8 @@ class Dashboard
       items = []
       items.concat(trading_activity) if can?("trading")
       items.concat(sales_activity) if can?("sales")
-      items.concat(loans_activity) if can?("loans")
-      items.concat(farms_activity) if can?("farms")
+      items.concat(loans_activity) if can?("loans.loans")
+      items.concat(farms_activity) if can?("farms.payrolls")
       items.concat(finance_activity) if can?("finance")
       items.sort_by { |item| -item.at.to_f }.first(ACTIVITY_SIZE)
     end
@@ -151,48 +164,76 @@ class Dashboard
   private
     def latest(scope) = scope.order(created_at: :desc).limit(ACTIVITY_SIZE)
 
+    # Each kind only for who reads its tab.
     def trading_activity
-      latest(Purchase.active.includes(producer: :person)).map do |purchase|
+      purchase_activity + producer_activity + invoice_activity
+    end
+
+    def purchase_activity
+      return [] unless can?("trading.purchases")
+
+      latest(Purchase.visible_to(user).active.includes(producer: :person)).map do |purchase|
         Activity.new(at: purchase.created_at, kind: :purchase, title: purchase.producer.full_name,
                      detail: { number: purchase.id, quintals: purchase.quintals, total: purchase.total },
                      path: [ :trading_purchase_path, purchase ])
-      end +
-        latest(Producer.includes(:person)).map do |producer|
-          Activity.new(at: producer.created_at, kind: :producer, title: producer.full_name,
-                       detail: { kind: producer.human_kind }, path: [ :trading_producer_path, producer ])
-        end +
-        latest(Invoice.includes(:payments, producer: :person, purchases: :loan_payments)).map do |invoice|
-          Activity.new(at: invoice.created_at, kind: :invoice, title: invoice.producer.full_name,
-                       detail: { number: invoice.display_number, status: invoice.human_payment_status, total: invoice.amount_to_pay },
-                       path: [ :trading_invoice_path, invoice ])
-        end
+      end
+    end
+
+    def producer_activity
+      return [] unless can?("trading.producers")
+
+      latest(Producer.includes(:person)).map do |producer|
+        Activity.new(at: producer.created_at, kind: :producer, title: producer.full_name,
+                     detail: { kind: producer.human_kind }, path: [ :trading_producer_path, producer ])
+      end
+    end
+
+    def invoice_activity
+      return [] unless can?("trading.invoices")
+
+      latest(Invoice.visible_to(user).active.includes(:payments, producer: :person, purchases: :loan_payments)).map do |invoice|
+        Activity.new(at: invoice.created_at, kind: :invoice, title: invoice.producer.full_name,
+                     detail: { number: invoice.display_number, status: invoice.human_payment_status, total: invoice.amount_to_pay },
+                     path: [ :trading_invoice_path, invoice ])
+      end
     end
 
     def sales_activity
-      latest(Shipment.active.includes(:buyer)).map do |shipment|
+      shipment_activity + sale_activity
+    end
+
+    def shipment_activity
+      return [] unless can?("sales.shipments")
+
+      latest(Shipment.visible_to(user).active.includes(:buyer)).map do |shipment|
         Activity.new(at: shipment.created_at, kind: :shipment, title: shipment.buyer.name,
-                     detail: { number: shipment.display_number, pounds: shipment.origin_net_weight }, path: [ :sales_shipment_path, shipment ])
-      end +
-        latest(Sale.active.includes(:buyer)).map do |sale|
-          Activity.new(at: sale.created_at, kind: :sale, title: sale.buyer.name,
-                       detail: { number: sale.display_number, status: sale.human_payment_status, total: sale.total },
-                       path: [ :sales_sale_path, sale ])
-        end
+                     detail: { number: shipment.display_number, gross: shipment.origin_gross_weight, pounds: shipment.origin_net_weight }, path: [ :sales_shipment_path, shipment ])
+      end
+    end
+
+    def sale_activity
+      return [] unless can?("sales.sales")
+
+      latest(Sale.visible_to(user).active.includes(:buyer)).map do |sale|
+        Activity.new(at: sale.created_at, kind: :sale, title: sale.buyer.name,
+                     detail: { number: sale.display_number, status: sale.human_payment_status, total: sale.total },
+                     path: [ :sales_sale_path, sale ])
+      end
     end
 
     def loans_activity
-      latest(Loan.includes(:person, :supply_items)).map do |loan|
+      latest(Loan.visible_to(user).includes(:person, :supply_items)).map do |loan|
         Activity.new(at: loan.created_at, kind: :loan, title: loan.person.full_name,
                      detail: { number: loan.id, amount: loan.principal }, path: [ :loans_loan_path, loan ])
       end +
-        latest(LoanPayment.includes(loan: :person)).map do |payment|
+        latest(LoanPayment.visible_to(user).includes(loan: :person)).map do |payment|
           Activity.new(at: payment.created_at, kind: :loan_payment, title: payment.loan.person.full_name,
                        detail: { number: payment.loan_id, amount: payment.amount }, path: [ :loans_loan_path, payment.loan ])
         end
     end
 
     def finance_activity
-      latest(Expense.includes(category: :parent)).map do |expense|
+      latest(ExpensePolicy::Scope.new(user, Expense).resolve.includes(category: :parent)).map do |expense|
         Activity.new(at: expense.created_at, kind: expense.investment? ? :investment : :expense, title: expense.description,
                      detail: { category: expense.category.full_name, amount: expense.amount },
                      path: [ expense.investment? ? :finance_investment_path : :finance_expense_path, expense ])
@@ -200,7 +241,7 @@ class Dashboard
     end
 
     def farms_activity
-      latest(PayrollPayment.includes(payroll: :farm)).map do |payment|
+      latest(PayrollPayment.visible_to(user).includes(payroll: :farm)).map do |payment|
         Activity.new(at: payment.created_at, kind: :payroll_payment, title: payment.payroll.name,
                      detail: { farm: payment.payroll.farm.name, amount: payment.net_total },
                      path: [ :farms_payroll_payment_path, payment.payroll, payment ])

@@ -36,8 +36,8 @@ class FarmProfile
 
   # --- Cost ---------------------------------------------------------------------
 
-  def payroll_paid = @payroll_paid ||= PayrollPayment.joins(:payroll).where(payrolls: { farm_id: farm.id }).sum(:gross_total)
-  def expenses = @expenses ||= PayrollExpense.joins(:payroll).where(payrolls: { farm_id: farm.id }).sum(:amount)
+  def payroll_paid = @payroll_paid ||= PayrollPayment.owned.joins(:payroll).where(payrolls: { farm_id: farm.id }).sum(:gross_total)
+  def expenses = @expenses ||= PayrollExpense.owned.joins(:payroll).where(payrolls: { farm_id: farm.id }).sum(:amount)
   def cost = payroll_paid + expenses
   # What the coffee was worth less what the farm cost.
   def balance = sales_total - cost

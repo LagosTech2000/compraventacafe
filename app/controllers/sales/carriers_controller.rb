@@ -11,7 +11,7 @@ module Sales
 
     def show
       @filter = BuyerShipmentFilter.new(params)
-      @shipments, @next_page = @filter.results(@carrier.shipments)
+      @shipments, @next_page = @filter.results(@carrier.shipments.owned)
     end
 
     def new

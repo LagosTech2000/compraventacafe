@@ -1,0 +1,23 @@
+<%# One supply of an entry (Fernando, 2026-11-13). Rendered for each line and
+    once inside a <template> (index NEW_RECORD) that the form copies. %>
+<% line = form.object %>
+<div class="data-card grid gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end"
+     data-supply-entry-target="line" <%= "hidden" if line.marked_for_destruction? %>>
+  <%= form.hidden_field :_destroy, value: line.marked_for_destruction? ? "1" : "0", data: { supply_entry_target: "destroy" } %>
+  <div>
+    <%= form.label :supply_id, class: "field-label" %>
+    <%= form.collection_select :supply_id, Supply.active.ordered, :id, ->(supply) { "#{supply.name} (#{supply.unit})" },
+          { prompt: t("shared.select.pick_supply") }, required: true, class: "field-input",
+          data: { supply_entry_target: "supply", missing_message: "#{SupplyEntryLine.human_attribute_name(:supply)} #{t("errors.messages.blank")}" } %>
+  </div>
+  <div>
+    <%= form.label :quantity, class: "field-label" %>
+    <%= form.number_field :quantity, required: true, min: 0.01, max: 99_999.99, step: 0.01, inputmode: "decimal", class: "field-input" %>
+  </div>
+  <div>
+    <%= form.label :amount, class: "field-label" %>
+    <%= form.number_field :amount, required: true, min: 0.01, step: 0.01, inputmode: "decimal", class: "field-input",
+          data: { supply_entry_target: "amount", action: "supply-entry#update" } %>
+  </div>
+  <button type="button" class="btn btn-sm self-center sm:self-end sm:mb-1" data-action="supply-entry#remove"><%= t("sales.supply_entries.new.remove_line") %></button>
+</div>

@@ -6,15 +6,20 @@ import { Controller } from "@hotwired/stimulus"
 // principal (cash + supplies) and whether the loan is cash, supplies or
 // mixed. Loan (Ruby) computes the same on save; this is only a preview.
 //
+// A line that lends more than is left to lend of its supply (all its lines
+// together) says so: it is lent anyway and stays to be delivered (Fernando,
+// 2026-11-13). On editing, what the saved lines lent counts as still there.
+//
 // A supply created in the modal ("supply:created", wired to #addSupply) is
 // added to every line's list and selected in the last empty line.
 export default class extends Controller {
   static targets = ["cash", "items", "item", "template", "empty", "supply", "quantity", "price", "unit",
-                    "lineTotal", "destroy", "cashTotal", "suppliesTotal", "principal", "kind"]
-  static values = { supplies: Object }
+                    "lineTotal", "destroy", "cashTotal", "suppliesTotal", "principal", "kind", "stockWarning"]
+  static values = { supplies: Object, noStock: String }
 
   connect() {
     this.money = new Intl.NumberFormat("es-HN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    this.amount = new Intl.NumberFormat("es-HN", { maximumFractionDigits: 2 })
     this.update()
   }
 
@@ -53,7 +58,7 @@ export default class extends Controller {
   }
 
   addSupply({ detail: { id, name, unit, price } }) {
-    this.suppliesValue = { ...this.suppliesValue, [id]: { name, unit, price } }
+    this.suppliesValue = { ...this.suppliesValue, [id]: { name, unit, price, available: 0 } }
     const selects = [...this.supplyTargets, this.templateTarget.content.querySelector("select")]
     selects.forEach((select) => select.add(new Option(name, String(id))))
 
@@ -81,11 +86,43 @@ export default class extends Controller {
       this.field(item, "lineTotal").textContent = quantity > 0 && price > 0 ? `L ${this.money.format(total)}` : "—"
     })
 
+    this.warnStock()
     this.emptyTarget.hidden = lines > 0
     this.cashTotalTarget.textContent = `L ${this.money.format(cash)}`
     this.suppliesTotalTarget.textContent = `L ${this.money.format(supplies)}`
     this.principalTarget.textContent = `L ${this.money.format(cash + supplies)}`
     this.showKind(lines === 0 ? (cash > 0 ? "cash" : null) : (cash > 0 ? "mixed" : "supplies"))
+  }
+
+  // Per supply: what its visible lines lend against what is left, plus
+  // what its saved lines had lent (they are part of what is lent already).
+  warnStock() {
+    const wanted = {}
+    const room = {}
+    this.itemTargets.forEach((item) => {
+      if (item.dataset.savedSupply) {
+        room[item.dataset.savedSupply] = (room[item.dataset.savedSupply] || 0) + this.number(item.dataset.savedQuantity)
+      }
+      if (item.hidden) return
+      const id = this.field(item, "supply").value
+      if (id) wanted[id] = (wanted[id] || 0) + this.number(this.field(item, "quantity").value)
+    })
+
+    this.itemTargets.forEach((item) => {
+      const warning = this.field(item, "stockWarning")
+      if (!warning) return
+      const id = this.field(item, "supply").value
+      const supply = this.suppliesValue[id]
+      const available = supply ? Math.round(((supply.available || 0) + (room[id] || 0)) * 100) / 100 : 0
+      const short = !item.hidden && supply && wanted[id] > 0 && wanted[id] > available
+      warning.hidden = !short
+      if (short) {
+        const missing = Math.round((wanted[id] - Math.max(available, 0)) * 100) / 100
+        warning.textContent = this.noStockValue
+          .replace("%{name}", supply.name).replace(/%\{unit\}/g, supply.unit)
+          .replace("%{available}", this.amount.format(available)).replace("%{missing}", this.amount.format(missing))
+      }
+    })
   }
 
   showKind(kind) {

@@ -2,7 +2,8 @@
 # account (MoneyMovements with account :none), of the sources an account
 # can be given to, newest first. All dates unless chosen; also by payment
 # method, in or out, and an amount between two figures (Fernando,
-# 2026-10-24).
+# 2026-10-24). With «Incluir los que ya tienen cuenta» (Fernando,
+# 2026-11-14) also the ones that have one, to change it.
 class ConsolidationFilter < ListFilter
   field :from, :date
   field :to, :date
@@ -12,6 +13,7 @@ class ConsolidationFilter < ListFilter
   field :direction, :choice, in: MovementFilter::DIRECTIONS
   field :amount_min, :text
   field :amount_max, :text
+  field :with_account, :choice, in: %w[1]
 
   sorts date: { ruby: ->(movement) { movement.at } },
         source: { ruby: ->(movement) { I18n.t("reports.types.cash_movements.sources.#{movement.source}") } },
@@ -19,6 +21,7 @@ class ConsolidationFilter < ListFilter
         person: { ruby: ->(movement) { movement.person } },
         payment_method: { ruby: ->(movement) { movement.payment_method } },
         category: { ruby: ->(movement) { movement.category } },
+        account: { ruby: ->(movement) { movement.account_name } },
         amount_in: { ruby: ->(movement) { movement.amount_in.positive? ? movement.amount_in : nil } },
         amount_out: { ruby: ->(movement) { movement.amount_out.positive? ? movement.amount_out : nil } }
 
@@ -28,7 +31,7 @@ class ConsolidationFilter < ListFilter
 
   def movements
     @movements ||= begin
-      list = MoneyMovements.new(range: from || to ? (from..to) : nil, account: :none, sources: source ? [ source ] & sources : sources).all
+      list = MoneyMovements.new(range: from || to ? (from..to) : nil, account: with_account ? nil : :none, owner: Current.owner, sources: source ? [ source ] & sources : sources).all
       if q
         text = I18n.transliterate(q).downcase
         list = list.select { |movement| [ movement.description, movement.person ].compact.any? { I18n.transliterate(it).downcase.include?(text) } }

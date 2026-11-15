@@ -22,6 +22,7 @@ class LoansReport < Report
   NAME = "people.first_names || ' ' || people.last_names".freeze
 
   self.module_key = "loans"
+  def self.permission_keys = %w[loans.loans]
   self.date_column = "loans.disbursed_on"
   self.default_period = "all"
   self.default_sort = :disbursed_on
@@ -74,7 +75,7 @@ class LoansReport < Report
       compare: false
 
   def scope
-    Loan.joins(:person).joins(PAYMENTS)
+    Loan.visible_to(user).joins(:person).joins(PAYMENTS)
   end
 
   def apply_filters(relation)

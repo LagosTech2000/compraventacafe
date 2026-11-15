@@ -6,7 +6,7 @@ module Trading
   # (record_card_controller.js).
   class ProducerCardsController < ApplicationController
     def show
-      @producer = authorize Producer.includes(person: %i[zone photo_info]).find(params[:id]), :show?
+      @producer = authorize Producer.includes(person: %i[zone photo_info]).find(params[:id]), :card?
       @profile = ProducerProfile.new(@producer)
       @account = CreditAccount.new(@producer.person) if policy([ :loans, :credit_account ]).show?
     end

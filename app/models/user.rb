@@ -33,17 +33,21 @@ class User < ApplicationRecord
   scope :active_admins, -> { active.where(admin: true) }
 
   # Single decision point for permissions. Inactive users can do nothing;
-  # admins can do everything; everyone else needs the module's flag.
-  def can?(module_key, action)
-    module_key = module_key.to_s
+  # admins can do everything; everyone else needs the flag of the submodule
+  # ("trading.invoices"), or of any submodule when asked for the module
+  # alone ("trading": the module is open to whoever reads any of its tabs).
+  def can?(permission_key, action)
+    module_key, submodule_key = AppModule.split(permission_key)
     action = action.to_s
-    raise ArgumentError, "unknown module: #{module_key}" unless AppModule::KEYS.include?(module_key)
     raise ArgumentError, "unknown action: #{action}" unless AppModule::ACTIONS.include?(action)
 
     return false unless active?
     return true if admin?
 
-    permission_for(module_key)&.allows?(action) || false
+    permissions.any? do |permission|
+      permission.module_key == module_key && (submodule_key.nil? || permission.submodule_key == submodule_key) &&
+        permission.allows?(action)
+    end
   end
 
   # Only the user with this id downloads the data backup (the database dump
@@ -60,14 +64,17 @@ class User < ApplicationRecord
     "#{name} (#{email_address})"
   end
 
-  def permission_for(module_key)
-    permissions.detect { |permission| permission.module_key == module_key.to_s }
+  def permission_for(module_key, submodule_key)
+    permissions.detect { |permission| permission.module_key == module_key.to_s && permission.submodule_key == submodule_key.to_s }
   end
 
-  # Builds the missing rows so the permissions form always shows every module.
+  # Builds the missing rows so the permissions form always shows every
+  # submodule of every module.
   def build_missing_permissions
-    AppModule::KEYS.each do |key|
-      permissions.build(module_key: key) unless permission_for(key)
+    AppModule::SUBMODULES.each do |key, submodules|
+      submodules.each do |submodule_key|
+        permissions.build(module_key: key, submodule_key:) unless permission_for(key, submodule_key)
+      end
     end
     permissions
   end

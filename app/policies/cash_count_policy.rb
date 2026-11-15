@@ -2,6 +2,7 @@
 # permission, removed with delete, never edited.
 class CashCountPolicy < ApplicationPolicy
   self.module_key = "finance"
+  self.submodule_key = "accounts"
 
   def update?
     false
