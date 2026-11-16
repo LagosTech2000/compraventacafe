@@ -38,13 +38,23 @@ RSpec.describe "Invoice payments", type: :system do
     click_link "Registrar abono"
     within("dialog[open]") do
       expect(page).to have_field("invoice_payment_amount", with: "4120.9")
+      # The whole balance cancels the invoice: a «pago»; less is an «abono» (Fernando, 2026-11-15).
+      expect(page).to have_css("h1", text: "Pago de la factura de compra de café #{invoice.display_number}")
+      expect(page).to have_button("Registrar pago")
       fill_in "invoice_payment_amount", with: "1500"
+      expect(page).to have_css("h1", text: "Abono a la factura de compra de café #{invoice.display_number}")
       select "Transferencia", from: "invoice_payment_payment_method"
       click_button "Registrar abono"
     end
 
     expect(page).to have_text("Abono registrado.")
-    within("dialog[open]") { expect(page).to have_text("Recibo de pago", wait: 5).and have_text(/Saldo pendiente\s+L 2,620.90/) }
-    expect(invoice.reload).to be_partial
+    within("dialog[open]") { expect(page).to have_text("Recibo de abono", wait: 5).and have_text(/Saldo pendiente\s+L 2,620.90/) }
+
+    visit new_trading_invoice_payment_path(invoice)
+    select "Efectivo", from: "invoice_payment_payment_method"
+    click_button "Registrar pago"
+    expect(page).to have_text("Pago registrado: la factura quedó cancelada.")
+    expect(page).to have_text("Recibo de pago", wait: 5)
+    expect(invoice.reload.payment_status).to eq("paid")
   end
 end

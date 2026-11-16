@@ -20,7 +20,8 @@ module Trading
       if @payment.save
         # Back on the invoice, with the new payment's receipt open to print it.
         receipt = trading_invoice_path(@invoice, receipt: @payment.id)
-        close_modal_with notice: t(".success"), fallback: receipt, visit: receipt
+        # «Pago» when it cancelled the invoice, «abono» otherwise (Fernando, 2026-11-15).
+        close_modal_with notice: t(@invoice.reload.balance_due.zero? ? ".success_full" : ".success"), fallback: receipt, visit: receipt
       else
         render :new, status: :unprocessable_content
       end

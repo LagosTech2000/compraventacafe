@@ -8,7 +8,7 @@
     <% end %>
     <% { movements: finance_movements_path, incomes: finance_incomes_path, expenses: finance_expenses_path, investments: finance_investments_path,
          accounts: finance_money_accounts_path, consolidation: finance_consolidation_path, budget: finance_budget_path,
-         staff: finance_staff_members_path }.each do |key, path| %>
+         staff: finance_staff_members_path, owner_loans: finance_owner_loans_path }.each do |key, path| %>
       <% next unless can_read?("finance.#{key}") %>
       <%= link_to t("finance.nav.#{key}"), path, class: nav_link_class(path), aria: { current: (current_page?(path) ? "page" : nil) } %>
     <% end %>

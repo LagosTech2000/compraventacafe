@@ -24,6 +24,7 @@ module ModuleTabs
                    "expenses" => :finance_expenses_path, "investments" => :finance_investments_path,
                    "accounts" => :finance_money_accounts_path, "consolidation" => :finance_consolidation_path,
                    "budget" => :finance_budget_path, "staff" => :finance_staff_members_path,
+                   "owner_loans" => :finance_owner_loans_path,
                    "categories" => :finance_categories_path },
     "reports" => { "reports" => :reports_root_path },
     "administration" => { "people" => :administration_people_path, "farms" => :administration_farms_path,

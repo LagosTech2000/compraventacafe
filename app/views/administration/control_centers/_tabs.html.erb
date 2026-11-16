@@ -1,0 +1,8 @@
+<%# The tabs of the Centro de control (only User::DATA_EXPORTER_ID). %>
+<% current = local_assigns.fetch(:current) %>
+<nav class="mt-4 flex flex-wrap gap-2 print:hidden" aria-label="<%= t("administration.control_centers.tabs.label") %>" data-control-center-tabs>
+  <% { features: administration_control_center_path, maintenance: administration_maintenance_tasks_path }.each do |key, path| %>
+    <%= link_to t("administration.control_centers.tabs.#{key}"), path, class: "btn btn-sm #{"btn-primary" if key == current}",
+          aria: { current: (key == current ? "page" : nil) } %>
+  <% end %>
+</nav>

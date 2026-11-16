@@ -141,6 +141,8 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Préstamos que vencen pronto | `Dashboard#due_soon_loans` (`Dashboard::DUE_SOON_DAYS`) |
 | Versión de los datos (caché de reportes) | `DataVersion` |
 | Mantenimiento de datos (revisiones y tareas que completan datos) / corrida | `Maintenance` (`Maintenance::Task`, `Maintenance::Runner`) / `MaintenanceRun` |
+| Centro de control / desarrollo cotizado aparte / valor por hora | `administration/control_center` / `PaidFeature` (`CATALOG`) / `ControlSetting#hourly_rate` |
+| Préstamo de los dueños (lo que deben a un banco o tercero) / abono | `OwnerLoan` / `OwnerLoanPayment` (`finance/owner_loans`) |
 | Límite de solicitudes (auditoría) | acción `rate_limited` (`RateLimitAudit`) |
 | Mi configuración (datos, foto, contraseña, ventana o panel lateral, menú arriba o a la izquierda, huellas) | `UserSettingsController`; `User#window_style` (`modal` / `drawer`), `User#nav_position` (`top` / `left`) |
 | Usuarios conectados / páginas recientes de un usuario | `Presence` + `PresenceChannel` / `PageVisit` |
@@ -1146,18 +1148,46 @@ respaldo trae solo los CSV y lo explica; la pantalla muestra ambas
 versiones antes de descargar. **Verificar en Render** (`pg_dump --version`
 en el shell del servicio). Cada descarga se audita (`backup`).
 
-**Mantenimiento de datos** (`Maintenance`, Administración → Mantenimiento
-de datos, Fernando 2026-11-15; **solo el usuario con id 1**, como el
-respaldo: `MaintenancePolicy`): tareas para que las cifras cuadren, cada una
+**Centro de control** (Administración → Centro de control,
+`administration/control_center`, Fernando 2026-11-15; **solo el usuario con
+id 1**, `MaintenancePolicy`), con dos pestañas:
+
+- **Desarrollos cotizados aparte** [CONFIRMADO: «para llevar el control de
+  los desarrollos que son cotizados aparte»]. Lo que se le cobra aparte al
+  cliente vive en `PaidFeature::CATALOG` (clave, submódulos que abre, horas
+  estimadas y utilidad alta / media / baja; textos en `paid_features.catalog`)
+  y su estado en `paid_features` (activo, precio acordado, notas, quién y
+  cuándo lo activó; auditado). **Valor sugerido = horas × valor por hora**
+  (`ControlSetting#hourly_rate`, uno global que solo el usuario 1 cambia;
+  Fernando quiere un precio por hora accesible para tener clientes
+  agradecidos; empezó en L 100). **Un submódulo de un desarrollo apagado no
+  existe para nadie salvo el usuario 1**: `User#can?` dice que no aunque sea
+  administrador o tenga el permiso (`PaidFeature.locked?`, leído una vez por
+  solicitud en `Current.locked_submodules`), y sale de menús, pestañas y la
+  pantalla de permisos (`AppModule.offered_submodules`). Al activarlo, los
+  administradores entran y a los demás se les da en Usuarios → Permisos.
+  Hoy: **Huella de las personas** (activa, precio acordado L 2,500; no tiene
+  pestaña propia, apagarla no la oculta) y **Préstamos de los dueños**
+  (apagado hasta que Fernando decida). **Todo desarrollo nuevo que se cotice
+  aparte entra a este catálogo**, con sus horas y utilidad. El mismo bloque
+  (`administration/control_centers/_features`) sale también al final de
+  **Configuración del sitio**, solo para el usuario 1 (Fernando,
+  2026-11-15: «ponlo en configuración del sitio»).
+- **Mantenimiento de datos** (abajo).
+
+**Mantenimiento de datos** (`Maintenance`, pestaña del Centro de control,
+Fernando 2026-11-15; **solo el usuario con id 1**, como el respaldo:
+`MaintenancePolicy`): tareas para que las cifras cuadren, cada una
 una clase en `app/models/maintenance/` (`key`, `tier`, `area`, `param`;
 textos en `maintenance.tasks.<slug>` de `es.yml`) y la misma lista en
 `lib/tasks/maintenance.rake` (un spec revisa que coincidan), para correrlas
 también desde la Shell de Render. Tres tipos: **revisan** (`:check`, solo
 leen: `integrity:check` las corre todas y además facturas, carreros y
 lotes; `integrity:inventory`, `:shipments`,
-`:shipment_expense_candidates`, `:money`, `:cash_counts`, `:expenses`),
+`:shipment_expense_candidates`, `:sales`, `:money`, `:cash_counts`,
+`:expenses`),
 **completan con regla clara** (`:fill`: `purchases:assign_single_farm`,
-`farms:plots_from_lots`) y
+`farms:plots_from_lots`, `sales:recalculate`) y
 **necesitan decisión del cliente** (`:decision`: `batches:backfill`, lotes
 aproximados para salidas pasadas, las facturas con compras hasta el día de
 la salida, las compras más viejas primero, hasta su báscula local; la
@@ -1552,6 +1582,20 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   `not_sold`); entonces la venta toma su neto local (`Sale#refresh_origin!`).
   Guardar otra cosa (el peso en destino) la deja vacía
   (`origin_left_empty?`). El detalle avisa con «Completar báscula local».
+- **Editar y quitar las pesadas** (Fernando, 2026-11-15, pedido del
+  cliente: «para tener todo cuadrado en las ventas») [CONFIRMADO: en una
+  salida vendida, solo administradores]. En el detalle, cada báscula tiene
+  «Editar» y «Quitar» (`sales/shipments/_weighing`). Sin vender, quien edita
+  Salidas (quitar la local, administradores, como «Sin báscula local»).
+  **Vendida**: un administrador edita las dos (`Shipment#weights_by_admin`,
+  `ShipmentPolicy#open?`) y **la venta se recalcula sola**
+  (`Sale#recalculate_weights!`, que usa `revise!` con sus mismas salidas y
+  precio: líneas, total, estado de cobro y «cobrado de más»). La báscula
+  del comprador **no se quita mientras la salida esté en una venta** (la
+  venta cobra con ese peso; `Shipment#remove_destination!`): quitarla vuelve
+  la salida a «En camino» (`sales/shipment_scales#destroy`). Para lo que ya
+  quedó descuadrado, `integrity:sales` y `sales:recalculate` en
+  Mantenimiento de datos.
 - **Diferencia entre básculas**: neto del comprador − neto local, en lb y
   %, en la salida, la venta, las listas y los reportes. Se **resalta** si
   pasa (más o menos) la **tolerancia** de Configuración del sitio
@@ -1787,6 +1831,19 @@ salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
   de `MoneyMovements`, `IncomeFilter`), con el total y lo de cada origen;
   «Registrar ingreso» anota un `OtherIncome`. Las transferencias no son
   ingresos.
+- **Préstamos de los dueños** (`OwnerLoan`, `finance/owner_loans`,
+  submódulo `finance.owner_loans`, Fernando 2026-11-15) [CONFIRMADO: deudas
+  de los dueños con un banco o un tercero; interés opcional por préstamo].
+  Es un **desarrollo cotizado aparte** (apagado hasta que el usuario 1 lo
+  active en el Centro de control). Dueño que lo debe y prestamista (texto),
+  fecha, monto, tasa mensual (0 = sin interés), fecha límite opcional.
+  Interés y abonos como en Préstamos: `LoanBalance` (interés simple por día
+  sobre el capital pendiente; cada abono paga primero el interés y guarda su
+  reparto), no pasa de lo que se debe, en orden de fecha, solo se quita el
+  último; se edita mientras no tenga abonos. Decisión de implementación,
+  **pendiente de confirmar**: con cuenta, el préstamo **entra** a esa cuenta
+  y cada abono **sale** de la suya (`MoneyMovements` `owner_loans`,
+  `owner_loan_payments`, `AccountBalance`); sin cuenta no mueve saldos.
 - **Planilla interna** (`finance/staff`, Fernando, 2026-10-24: «planilla
   interna del negocio») [CONFIRMADO]:
   - **Roles** (`StaffRole`): **salario mensual**; frecuencia semanal,
@@ -2011,6 +2068,12 @@ textos; la clave y el código siguen siendo `trading`.
   - Decisión de implementación, **pendiente de confirmar**: los abonos de
     una factura anulada se borran (quedan solo en la auditoría), no se
     guardan como anulados.
+- **Abono o pago de una factura** (Fernando, 2026-11-15): mientras deja
+  saldo se llama «abono» («Abono a la factura de compra de café 0012»,
+  «Registrar abono», «Recibo de abono»); el que cancela la factura completa,
+  «pago» («Pago de la factura…», «Registrar pago», «Pago registrado: la
+  factura quedó cancelada», «Recibo de pago»). El formulario cambia al
+  escribir el monto (`payment_kind_controller.js`).
 - **Pago de facturas por abonos** [CONFIRMADO, Fernando, 2026-10-12, por
   observación del cliente: «parte en efectivo y otra pendiente de pago»]:
   una factura se paga con uno o más abonos (`InvoicePayment`: monto, fecha,

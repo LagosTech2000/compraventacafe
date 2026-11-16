@@ -125,6 +125,7 @@ es:
         consolidation: "Consolidación"
         budget: "Presupuesto"
         staff: "Planilla interna"
+        owner_loans: "Préstamos de los dueños"
         categories: "Categorías"
       reports:
         reports: "Reportería"
@@ -427,6 +428,15 @@ es:
           help: "En planillas por día: sin rol ni salario propio, sus días no se pueden pagar."
           action: "Asignar salario"
   # Data maintenance tasks (Maintenance, Fernando, 2026-11-15).
+  # Developments quoted apart (PaidFeature::CATALOG, Fernando, 2026-11-15).
+  paid_features:
+    catalog:
+      fingerprints:
+        title: "Huella de las personas"
+        description: "El lector ZK9500 en cada PC: registrar huellas con consentimiento, reconocer a la persona al poner el dedo, llenar el campo de la página o abrir su panel con atajos; su programa para Windows y su instalador."
+      owner_loans:
+        title: "Préstamos de los dueños"
+        description: "Control financiero → Préstamos de los dueños: lo que deben a un banco o a otra persona, con interés opcional, abonos y lo que deben hoy; con cuenta, mueve los saldos."
   # Christmas season (HolidaySeason, Fernando, 2026-11-15).
   holiday:
     greeting: "¡Felices fiestas!"
@@ -564,6 +574,32 @@ es:
         target: "Báscula local %{gross} lb brutas; el lote toma %{taken} lb brutas."
         share: "Factura %{number}: %{percent} %, %{gross} lb brutas, %{net} lb netas."
         missing: "Faltan %{gross} lb brutas: no hay más facturas libres de ese estado y bodega con compras hasta ese día."
+      integrity_sales:
+        title: "Ventas que no cuadran con sus salidas"
+        what: "Compara cada venta con sus salidas como están hoy: el peso del comprador y el local de cada línea, su monto con el precio de la venta, y el peso y el total de la venta con sus líneas."
+        after: "Nada cambia. Dice qué venta no cuadra y en qué."
+        risk: "Ninguno: solo lee."
+        total:
+          one: "1 venta activa."
+          other: "%{count} ventas activas."
+        line: "Venta %{number}: %{gaps}."
+        none: "Todas las ventas cuadran con sus salidas."
+        gaps:
+          line_net: "la remisión %{shipment} pesa distinto en el comprador"
+          line_origin: "la remisión %{shipment} pesa distinto en la báscula local"
+          line_amount: "el monto de la remisión %{shipment} no es su peso por el precio"
+          sale_net: "su peso no es la suma de sus líneas"
+          sale_total: "su total no es su peso por el precio"
+      sales_recalculate:
+        title: "Recalcular las ventas que no cuadran"
+        what: "A cada venta que no cuadra con sus salidas le calcula otra vez sus pesos, líneas y total con las pesadas de hoy, con su mismo precio y salidas."
+        after: "Esas ventas quedan con el peso y el total de sus salidas; su estado de cobro se actualiza y, si el total bajó de lo cobrado, avisa «cobrado de más»."
+        risk: "Medio: cambia el total de ventas ya cobradas. Se puede deshacer."
+        line: "Venta %{number} (total hoy %{total}) se recalcula."
+        none: "No hay ventas que recalcular."
+        done:
+          one: "Se recalculó 1 venta."
+          other: "Se recalcularon %{count} ventas."
       integrity_money:
         title: "Cuadre del dinero"
         what: "Para cada cuenta comprueba que su saldo sea igual al saldo inicial más todo lo que entró menos todo lo que salió en Movimientos. Avisa los saldos iniciales en cero, los movimientos con fecha antes del saldo inicial y el dinero de algo anulado que siga contando."
@@ -650,6 +686,8 @@ es:
     sale_payment: "Cobro de la venta %{number}"
     buyer_advance: "Anticipo %{number} de comprador"
     supply_sale: "Venta de insumo: %{supply}"
+    owner_loan: "Préstamo de %{lender} a los dueños"
+    owner_loan_payment: "Abono al préstamo de %{lender}"
     staff_payment: "Planilla interna %{number} · %{role} (%{period})"
     staff_advance: "Anticipo %{number} de planilla interna"
     transfer: "De %{from} a %{to}"
@@ -1414,6 +1452,10 @@ es:
     invoice_payments:
       new:
         title: "Registrar abono"
+        # «Abono» while it leaves a balance; «Pago» when it cancels the invoice (Fernando, 2026-11-15).
+        title_partial: "Abono a la factura de compra de café %{number}"
+        title_full: "Pago de la factura de compra de café %{number}"
+        submit_full: "Registrar pago"
         invoice: "Factura %{number} · %{producer}"
         amount_to_pay: "A pagar"
         paid_total: "Abonado"
@@ -1429,6 +1471,7 @@ es:
         success: "Abono actualizado."
       show:
         title: "Recibo de pago %{number}"
+        title_partial: "Recibo de abono %{number}"
         invoice: "Factura %{number} · %{producer}"
         print: "Imprimir"
         original: "ORIGINAL"
@@ -1436,6 +1479,7 @@ es:
         back: "Volver a la factura"
       receipt:
         title: "Recibo de pago"
+        title_partial: "Recibo de abono"
         producer: "Productor"
         amount: "Monto pagado"
         paid_until: "Abonado a la fecha"
@@ -1446,6 +1490,7 @@ es:
         registered_by: "Registrado por: %{name}"
       create:
         success: "Abono registrado."
+        success_full: "Pago registrado: la factura quedó cancelada."
       destroy:
         success: "Abono quitado."
     haulers:
@@ -2434,6 +2479,11 @@ es:
         confirm_void: "¿Anular esta salida? Su café vuelve al inventario. No se puede deshacer."
         full_page: "Abrir en página completa"
         receive: "Registrar peso en destino"
+        edit_scale: "Editar"
+        remove_scale: "Quitar"
+        confirm_remove_origin: "¿Quitar la báscula local? La salida deja de sacar café del inventario hasta que se complete; si está vendida, la venta se queda sin neto local."
+        confirm_remove_destination: "¿Quitar la báscula del comprador? La salida vuelve a «En camino»."
+        sold_scale_help: "Está vendida: al cambiar sus pesadas, la venta se recalcula sola (líneas, total y estado de cobro)."
         sell: "Vender"
         see_sale: "Ver la venta"
         voided: "Salida anulada el %{date} por %{name}. No cuenta en el inventario ni se puede vender."
@@ -2455,6 +2505,11 @@ es:
         tolerance: "Se resalta si pasa del %{tolerance} (Configuración del sitio)."
         no_tolerance: "Sin tolerancia configurada: un administrador la define en Configuración del sitio."
         details: "Datos de la salida"
+    shipment_scales:
+      destroy:
+        success:
+          origin: "Se quitó la báscula local."
+          destination: "Se quitó la báscula del comprador: la salida vuelve a «En camino»."
     arrivals:
       edit:
         title: "Peso en destino · remisión %{number}"
@@ -2907,6 +2962,59 @@ es:
           in_transit: "En camino (lb)"
           unsold: "Sin vender (lb)"
   finance:
+    # The owners' loans (Fernando, 2026-11-15; a development quoted apart).
+    owner_loans:
+      index:
+        title: "Préstamos de los dueños"
+        help: "Lo que los dueños deben a un banco o a otra persona: el monto, el interés si lo lleva, los abonos y lo que falta hoy."
+        new: "Registrar préstamo"
+        search_placeholder: "Dueño o prestamista"
+        owed: "Debe hoy"
+        empty: "No hay préstamos con estos filtros."
+        totals:
+          principal: "Prestado"
+          principal_paid: "Capital pagado"
+          interest_paid: "Interés pagado"
+          owed: "Deben hoy"
+      form:
+        owner_placeholder: "Ej.: el nombre del dueño"
+        lender_placeholder: "Ej.: Banco Atlántida"
+        rate_help: "0 si no lleva interés. El interés corre por día sobre el capital que falta."
+        account_help: "Opcional: si el dinero entró a una cuenta del negocio, súmalo a su saldo eligiéndola."
+      new:
+        title: "Registrar préstamo de los dueños"
+      edit:
+        title: "Editar préstamo de los dueños"
+      create:
+        success: "Préstamo registrado."
+      update:
+        success: "Préstamo actualizado."
+      show:
+        title: "Préstamo de %{lender}"
+        subtitle: "Lo debe %{owner} desde el %{date}."
+        new_payment: "Registrar abono"
+        edit: "Editar"
+        payments: "Abonos"
+        no_payments: "Todavía no tiene abonos."
+        remove_payment: "Quitar"
+        confirm_remove: "¿Quitar este abono? Lo que pagó vuelve a deberse."
+        figures:
+          principal: "Prestado"
+          principal_paid: "Capital pagado"
+          interest_paid: "Interés pagado"
+          principal_owed: "Capital que falta"
+          interest_owed: "Interés a hoy"
+          owed: "Deben hoy"
+    owner_loan_payments:
+      new:
+        title: "Registrar abono"
+        help: "Préstamo de %{lender}: deben hoy %{owed} (interés a hoy: %{interest})."
+        split_help: "El abono paga primero el interés y lo que sobra baja el capital."
+        submit: "Registrar abono"
+      create:
+        success: "Abono de %{amount} registrado."
+      destroy:
+        success: "Abono quitado."
     nav:
       home: "Resumen"
       movements: "Movimientos"
@@ -2917,6 +3025,7 @@ es:
       consolidation: "Consolidación"
       budget: "Presupuesto"
       staff: "Planilla"
+      owner_loans: "Préstamos de los dueños"
       categories: "Categorías"
       new_expense: "Nuevo gasto"
     home:
@@ -5573,6 +5682,8 @@ es:
           staff_payments: "Pago de planilla interna"
           staff_advances: "Anticipo de planilla interna"
           other_incomes: "Otro ingreso"
+          owner_loans: "Préstamo de los dueños"
+          owner_loan_payments: "Abono a préstamo de los dueños"
           transfers: "Transferencia entre cuentas"
         no_account: "Sin cuenta"
         directions:
@@ -6051,6 +6162,17 @@ es:
               - "Una variable se borra entera, como una sola letra."
               - "«Código fuente» (</>) muestra el HTML: sirve para copiar el documento completo, con sus variables, de un sistema a otro."
               - "Si sales con cambios sin guardar, el sistema pregunta antes."
+        control_centers:
+          show:
+            title: "Centro de control"
+            summary: "Los desarrollos que se cotizan aparte y el mantenimiento de datos. Solo lo ve el usuario a cargo de exportar los datos."
+            steps:
+              - "Cada desarrollo dice sus horas estimadas, su utilidad y su valor sugerido (horas × valor por hora)."
+              - "Marca «Activo» y guarda para abrirlo: los administradores entran y a los demás se les da en Usuarios → Permisos."
+              - "Escribe el precio acordado con el cliente y notas si las hay."
+              - "A la derecha, el valor por hora: cambiarlo recalcula los valores sugeridos."
+            tips:
+              - "Un desarrollo apagado no sale en menús, pestañas ni permisos para nadie más que para ti."
         maintenance_tasks:
           index:
             title: "Mantenimiento de datos"
@@ -7298,6 +7420,32 @@ es:
             summary: "Dinero que entra a una cuenta fuera de los módulos."
             steps:
               - "Escribe el concepto, el monto y la fecha; elige la forma de pago y la cuenta, y guarda."
+        owner_loans:
+          index:
+            title: "Préstamos de los dueños"
+            summary: "Lo que los dueños deben a un banco o a otra persona, con lo que deben hoy."
+            steps:
+              - "Toca «Registrar préstamo»: quién lo debe, a quién, cuánto, desde cuándo y su tasa mensual (0 si no lleva interés)."
+              - "Filtra por dueño o prestamista, estado o fechas; arriba salen los totales de lo filtrado."
+              - "Toca un préstamo para ver sus abonos y registrar uno nuevo."
+          show:
+            title: "Préstamo de los dueños"
+            summary: "Lo prestado, lo pagado y lo que deben hoy, con sus abonos."
+            steps:
+              - "«Registrar abono»: paga primero el interés y lo que sobra baja el capital."
+              - "Solo se quita el último abono. El préstamo se edita mientras no tenga abonos."
+          form:
+            title: "Préstamo de los dueños"
+            summary: "Los datos del préstamo."
+            steps:
+              - "Escribe el dueño que lo debe y el prestamista, el monto, la tasa mensual y la fecha; la fecha límite es opcional."
+              - "Si el dinero entró a una cuenta del negocio, elígela: así cuenta en su saldo."
+        owner_loan_payments:
+          form:
+            title: "Abono a un préstamo de los dueños"
+            summary: "Lo que se pagó del préstamo."
+            steps:
+              - "Escribe el monto y la fecha, la forma de pago y, si salió de una cuenta del negocio, la cuenta."
         categories:
           index:
             title: "Categorías"
@@ -7876,7 +8024,44 @@ es:
       site_setting: "Configuración del sitio"
       backup: "Respaldo"
       fingerprint_stations: "Lectores de huella"
-      maintenance: "Mantenimiento de datos"
+      control_center: "Centro de control"
+    # Centro de control (Fernando, 2026-11-15; only User::DATA_EXPORTER_ID).
+    control_centers:
+      tabs:
+        label: "Partes del Centro de control"
+        features: "Desarrollos cotizados aparte"
+        maintenance: "Mantenimiento de datos"
+      show:
+        title: "Centro de control"
+        help: "Los desarrollos que se cotizan aparte: cuáles están activos, sus horas, lo útiles que son y su precio. Uno apagado no existe para nadie más que para ti. Solo tú ves esta página."
+        status_on: "Activo"
+        status_off: "Apagado"
+        hours: "Horas estimadas"
+        hours_value:
+          one: "1 hora"
+          other: "%{count} horas"
+        usefulness: "Utilidad"
+        usefulness_levels:
+          high: "Alta"
+          medium: "Media"
+          low: "Baja"
+        suggested: "Valor sugerido"
+        opens: "Abre: %{tabs}."
+        no_tab: "No tiene una pestaña propia: apagarlo no lo oculta, solo lleva su precio."
+        enabled_since: "Activo desde %{when}, por %{who}."
+        enable: "Activo"
+        save: "Guardar"
+        settings: "Valor por hora"
+        rate_help: "Valor sugerido = horas estimadas × valor por hora. Cámbialo cuando quieras: los valores sugeridos se recalculan."
+        totals: "Lo activo"
+        total_on: "Suma de lo activo: %{amount} (precio acordado o, si no tiene, el sugerido)."
+        access_help: "Al activar un desarrollo, los administradores entran; a los demás se les da en Usuarios → Permisos, como cualquier pestaña."
+    control_settings:
+      update:
+        success: "Valor por hora guardado."
+    paid_features:
+      update:
+        success: "«%{title}» guardado."
     # Data maintenance tasks (Fernando, 2026-11-15; only User::DATA_EXPORTER_ID).
     maintenance_tasks:
       params:
@@ -8000,6 +8185,7 @@ es:
         site_description: "Nombre del negocio, ubicación y logo que se ven en la barra, el inicio de sesión y los impresos."
     site_settings:
       show:
+        paid_features: "Acceso a los desarrollos cotizados aparte"
         title: "Configuración del sitio"
         help: "Cómo se presenta el negocio: el nombre va en la barra de navegación, la pestaña del navegador, el inicio de sesión y los impresos (facturas, recibos, planillas y cierre diario); la ubicación, en el inicio de sesión y los impresos; el RTN, en las facturas; el propietario y los teléfonos, en la remisión de las salidas; el logo, en el botón de inicio de la barra y en el inicio de sesión."
         edit: "Editar"
@@ -8089,6 +8275,10 @@ es:
         supply_entry_line: "el insumo de la entrada"
         supply_exit: "la salida de insumos"
         farm_plot: "la parcela"
+        owner_loan: "el préstamo de los dueños"
+        owner_loan_payment: "el abono al préstamo de los dueños"
+        paid_feature: "el desarrollo cotizado aparte"
+        control_setting: "el valor por hora del Centro de control"
         coffee_variety: "la variedad del café"
         shipment_cost: "el gasto de la salida"
         shipment_invoice: "la factura de la salida"
@@ -8598,6 +8788,18 @@ es:
       loan_payment:
         one: "Abono"
         other: "Abonos"
+      owner_loan:
+        one: "Préstamo de los dueños"
+        other: "Préstamos de los dueños"
+      owner_loan_payment:
+        one: "Abono al préstamo de los dueños"
+        other: "Abonos a préstamos de los dueños"
+      paid_feature:
+        one: "Desarrollo cotizado aparte"
+        other: "Desarrollos cotizados aparte"
+      control_setting:
+        one: "Configuración del Centro de control"
+        other: "Configuración del Centro de control"
       supply:
         one: "Insumo"
         other: "Insumos"
@@ -9445,6 +9647,47 @@ es:
         status/active: "Al día"
         status/overdue: "Vencido"
         status/paid_off: "Pagado"
+      owner_loan:
+        owner_name: "Dueño que lo debe"
+        lender_name: "Prestamista (banco o persona)"
+        disbursed_on: "Fecha del préstamo"
+        due_on: "Fecha límite"
+        principal: "Monto (L)"
+        monthly_interest_rate: "Tasa mensual (%)"
+        money_account: "Cuenta a la que entró"
+        money_account_id: "Cuenta a la que entró"
+        paid_off_on: "Pagado el"
+        observations: "Observaciones"
+        status: "Estado"
+        status/active: "Al día"
+        status/overdue: "Vencido"
+        status/paid: "Pagado"
+        payments: "Abonos"
+        created_by: "Registró"
+        created_by_id: "Registró"
+      owner_loan_payment:
+        owner_loan: "Préstamo de los dueños"
+        owner_loan_id: "Préstamo de los dueños"
+        paid_on: "Fecha"
+        amount: "Monto (L)"
+        interest_amount: "A interés"
+        principal_amount: "A capital"
+        payment_method: "Forma de pago"
+        money_account: "Cuenta de la que salió"
+        money_account_id: "Cuenta de la que salió"
+        observations: "Observaciones"
+        created_by: "Registró"
+        created_by_id: "Registró"
+      paid_feature:
+        key: "Desarrollo"
+        enabled: "Activo"
+        agreed_price: "Precio acordado (L)"
+        notes: "Notas"
+        enabled_at: "Activado el"
+        enabled_by: "Activado por"
+        enabled_by_id: "Activado por"
+      control_setting:
+        hourly_rate: "Valor por hora (L)"
       loan_payment:
         payroll_payment_line_id: "Línea de planilla"
         money_account: "Cuenta"
@@ -9856,6 +10099,7 @@ es:
               blank: "faltan: agrega al menos una pesada"
             base:
               sold: "La salida ya está en una venta: no se cambian su comprador, estado ni pesos. Anula la venta primero."
+              sold_destination: "La salida está en una venta, que cobra con la báscula del comprador: quítala de la venta o anula la venta antes de quitar esa báscula."
               carrier_and_driver: "Lleva un transportista o un motorista, no los dos."
               has_batches: "La salida tiene lotes: su estado del café y su bodega no cambian. Quita sus lotes primero."
               batches_gone: "Alguno de los lotes elegidos ya no existe."
@@ -10055,6 +10299,16 @@ es:
           attributes:
             due_on:
               before_disbursement: "no puede ser antes de la fecha del préstamo"
+        owner_loan:
+          attributes:
+            due_on:
+              before_disbursed: "no puede ser antes de la fecha del préstamo"
+        owner_loan_payment:
+          attributes:
+            paid_on:
+              before_last_payment: "no puede ser antes de la fecha del préstamo ni del último abono"
+            amount:
+              over_balance: "es mayor que lo que se debe a esa fecha (%{owed})"
         loan_payment:
           attributes:
             paid_on:

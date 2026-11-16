@@ -79,3 +79,13 @@
     </div>
   </section>
 </div>
+
+<%# Access of the owners to the developments quoted apart (Fernando,
+    2026-11-15: «en configuración del sitio, solo para el usuario con id 1»). %>
+<% if policy(:maintenance).index? %>
+  <section class="mt-8" aria-labelledby="site-paid-features" data-site-paid-features>
+    <h2 id="site-paid-features" class="text-lg font-semibold"><%= t(".paid_features") %></h2>
+    <p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t("administration.control_centers.show.help") %></p>
+    <%= render "administration/control_centers/features", setting: ControlSetting.current, features: PaidFeature.ensure_all! %>
+  </section>
+<% end %>

@@ -18,7 +18,7 @@
 # 2026-10-25: «fechas con hora»), newest last.
 class MoneyMovements
   SOURCES = %w[invoices hauler_payments loans loan_payments payroll_payments payroll_expenses
-               sale_payments buyer_advances supply_sales processing_costs shipment_costs expenses investments staff_payments staff_advances other_incomes transfers].freeze
+               sale_payments buyer_advances supply_sales processing_costs shipment_costs expenses investments staff_payments staff_advances other_incomes owner_loans owner_loan_payments transfers].freeze
   # Which submodule each source's records belong to (who may read it).
   MODULES = {
     "invoices" => "trading.invoices", "hauler_payments" => "trading.haulers", "loans" => "loans.loans", "loan_payments" => "loans.loans",
@@ -26,7 +26,8 @@ class MoneyMovements
     "buyer_advances" => "sales.buyers", "supply_sales" => "sales.supplies", "processing_costs" => "sales.coffee_conversions",
     "shipment_costs" => "sales.shipments",
     "expenses" => "finance.expenses", "investments" => "finance.investments", "staff_payments" => "finance.staff",
-    "staff_advances" => "finance.staff", "other_incomes" => "finance.incomes", "transfers" => "finance.accounts"
+    "staff_advances" => "finance.staff", "other_incomes" => "finance.incomes",
+    "owner_loans" => "finance.owner_loans", "owner_loan_payments" => "finance.owner_loans", "transfers" => "finance.accounts"
   }.freeze
   NAME = "people.first_names || ' ' || people.last_names".freeze
 
@@ -255,6 +256,29 @@ class MoneyMovements
           movement(id:, date:, created_at:, source: "supply_sales", description: I18n.t("money_movements.supply_sale", supply:),
                    person: name, payment_method: method_label(Invoice, method), amount_in: amount, account_id:,
                    route: [ :sales_supply_exit_path, id ])
+        end
+    end
+
+    # The owners' loans (Fernando, 2026-11-15): with an account, the money
+    # came into it and each payment went out of its own.
+    def owner_loans
+      narrowed(OwnerLoan.all, "owner_loans.disbursed_on", "owner_loans.money_account_id")
+        .pluck(:id, :disbursed_on, :lender_name, :owner_name, :principal, :money_account_id, :created_at)
+        .map do |id, date, lender, owner, amount, account_id, created_at|
+          movement(id:, date:, created_at:, source: "owner_loans", description: I18n.t("money_movements.owner_loan", lender:), person: owner,
+                   amount_in: amount, account_id:, route: [ :finance_owner_loan_path, id ])
+        end
+    end
+
+    def owner_loan_payments
+      narrowed(OwnerLoanPayment.joins(:owner_loan), "owner_loan_payments.paid_on", "owner_loan_payments.money_account_id")
+        .pluck("owner_loan_payments.id", "owner_loan_payments.owner_loan_id", "owner_loan_payments.paid_on", "owner_loan_payments.amount",
+               "owner_loan_payments.payment_method", "owner_loans.lender_name", "owner_loans.owner_name", "owner_loan_payments.money_account_id",
+               "owner_loan_payments.created_at")
+        .map do |id, loan_id, date, amount, method, lender, owner, account_id, created_at|
+          movement(id:, date:, created_at:, source: "owner_loan_payments", description: I18n.t("money_movements.owner_loan_payment", lender:),
+                   person: owner, payment_method: method_label(Invoice, method), amount_out: amount, account_id:,
+                   route: [ :finance_owner_loan_path, loan_id ])
         end
     end
 

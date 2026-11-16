@@ -1,7 +1,24 @@
 <%# One scale's figures of a shipment (side: "origin" or "destination"). %>
 <% gross = shipment["#{side}_gross_weight"] %>
-<section class="panel p-4" aria-labelledby="shipment-<%= side %>">
-  <h2 id="shipment-<%= side %>" class="font-semibold"><%= t("sales.shipments.show.#{side}") %></h2>
+<section class="panel p-4" aria-labelledby="shipment-<%= side %>" data-scale="<%= side %>">
+  <div class="flex flex-wrap items-start justify-between gap-2">
+    <h2 id="shipment-<%= side %>" class="font-semibold"><%= t("sales.shipments.show.#{side}") %></h2>
+    <%# Edit or remove this scale (Fernando, 2026-11-15); in a sold shipment, an administrator, and the sale follows. %>
+    <% unless shipment.voided? || gross.nil? %>
+      <div class="flex flex-wrap gap-2 print:hidden">
+        <% if policy(shipment).update? %>
+          <%= modal_link_to t("sales.shipments.show.edit_scale"), side == "origin" ? edit_sales_shipment_path(shipment) : edit_sales_shipment_arrival_path(shipment), class: "btn btn-sm" %>
+        <% end %>
+        <% if policy(shipment).public_send("remove_#{side}?") %>
+          <%= button_to t("sales.shipments.show.remove_scale"), sales_shipment_scale_path(shipment, side:), method: :delete, class: "btn btn-sm",
+                form: { data: { turbo_confirm: t("sales.shipments.show.confirm_remove_#{side}") } } %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+  <% if shipment.sold? && !shipment.voided? && policy(shipment).update? %>
+    <p class="mt-1 text-xs text-ink-muted"><%= t("sales.shipments.show.sold_scale_help") %></p>
+  <% end %>
   <% if gross.nil? && side == "origin" %>
     <p class="mt-2 text-sm text-ink-muted"><%= t("sales.difference.no_origin") %></p>
   <% elsif gross.nil? %>

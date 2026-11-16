@@ -1,7 +1,11 @@
 <% content_for :title, t(".title") %>
 <%= render "trading/nav" %>
 
-<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+<%# «Abono» while it leaves a balance; «Pago» when it cancels the invoice (payment_kind_controller.js). %>
+<% kinds = { partial_title: t(".title_partial", number: @invoice.display_number), full_title: t(".title_full", number: @invoice.display_number),
+             partial_submit: t(".submit"), full_submit: t(".submit_full") } %>
+<div data-controller="payment-kind" data-payment-kind-balance-value="<%= @invoice.balance_due %>" data-payment-kind-texts-value="<%= kinds.to_json %>">
+<h1 class="text-2xl font-bold" data-payment-kind-target="title"><%= kinds[:partial_title] %></h1>
 <p class="mt-1 text-sm text-ink-muted"><%= t(".invoice", number: @invoice.display_number, producer: @invoice.producer.full_name) %></p>
 <div class="mt-2"><%= help_guide_button HelpGuide.process(:invoice_payments), label: true %></div>
 
@@ -22,7 +26,7 @@
     <div>
       <%= form.label :amount, class: "field-label" %>
       <%= form.number_field :amount, required: true, min: 0.01, max: @invoice.balance_due, step: 0.01, inputmode: "decimal",
-            autofocus: true, class: "field-input text-lg" %>
+            autofocus: true, class: "field-input text-lg", data: { payment_kind_target: "amount", action: "input->payment-kind#update" } %>
       <p class="mt-1 text-xs text-ink-muted"><%= t(".amount_help") %></p>
     </div>
     <div>
@@ -39,7 +43,8 @@
   </div>
 
   <div class="flex flex-wrap gap-3">
-    <%= form.submit t(".submit"), class: "btn btn-primary" %>
+    <%= form.submit t(".submit"), class: "btn btn-primary", data: { payment_kind_target: "submit" } %>
     <%= cancel_button trading_invoice_path(@invoice) %>
   </div>
 <% end %>
+</div>

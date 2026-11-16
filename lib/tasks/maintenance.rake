@@ -36,6 +36,8 @@ MAINTENANCE_TASKS = {
   "integrity:shipments" => "Salidas incompletas (solo revisa)",
   "integrity:shipment_expense_candidates" => "Gastos que parecen de un viaje (solo revisa; DAYS, CATEGORY_IDS)",
   "batches:backfill" => "Armar lotes para las salidas pasadas (FROM, TO; CONFIRM=1 aplica)",
+  "integrity:sales" => "Ventas que no cuadran con sus salidas (solo revisa)",
+  "sales:recalculate" => "Recalcular las ventas que no cuadran con sus salidas (CONFIRM=1 aplica)",
   "integrity:money" => "Cuadre del dinero (solo revisa)",
   "integrity:cash_counts" => "Arqueos que ya no cuadran (solo revisa)",
   "integrity:expenses" => "Gastos por revisar (solo revisa)",

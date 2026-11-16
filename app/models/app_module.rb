@@ -17,7 +17,7 @@ class AppModule
     "sales" => %w[shipments sales stock coffee_conversions daily_close buyers carriers vehicles supplies],
     "farms" => %w[payrolls farms expense_categories],
     "loans" => %w[loans credit_accounts coffee_collection collection_calendar portfolio seasons daily_close simulation],
-    "finance" => %w[movements incomes expenses investments accounts consolidation budget staff categories],
+    "finance" => %w[movements incomes expenses investments accounts consolidation budget staff owner_loans categories],
     "reports" => %w[reports],
     "administration" => %w[people farms zones]
   }.transform_values(&:freeze).freeze
@@ -28,6 +28,15 @@ class AppModule
   PERMISSION_KEYS = SUBMODULES.flat_map { |key, subs| subs.map { "#{key}.#{it}" } }.freeze
 
   def self.submodules(key) = SUBMODULES.fetch(key.to_s)
+
+  # Its submodules a user is offered (menus, permission screens): without
+  # those of a development quoted apart that is off (PaidFeature), unless
+  # the user is the one who turns them on.
+  def self.offered_submodules(key, user: Current.user)
+    return submodules(key) if user&.data_exporter?
+
+    submodules(key).reject { PaidFeature.locked?("#{key}.#{it}") }
+  end
 
   # "trading.invoices" => ["trading", "invoices"]; "trading" => ["trading", nil].
   # Raises on anything that is not a module or one of its submodules.

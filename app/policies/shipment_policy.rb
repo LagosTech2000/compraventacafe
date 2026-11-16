@@ -16,6 +16,12 @@ class ShipmentPolicy < ApplicationPolicy
     update?
   end
 
+  # Empties the local scale: an administrator (like «Sin báscula local»).
+  def remove_origin? = update? && user.admin? && (!record.is_a?(Shipment) || !record.origin_missing?)
+
+  # Removes the buyer's scale: while in no sale (the sale charges it).
+  def remove_destination? = update? && (!record.is_a?(Shipment) || (record.received? && !record.sold?))
+
   def destroy?
     false
   end
@@ -26,8 +32,9 @@ class ShipmentPolicy < ApplicationPolicy
 
   private
     # Sold, it is not changed, except to complete a local scale left empty
-    # (Fernando, 2026-11-12).
+    # (Fernando, 2026-11-12) or by an administrator, whose changes of its
+    # scales the sale follows (Fernando, 2026-11-15).
     def open?
-      !record.is_a?(Shipment) || !(record.voided? || (record.sold? && !record.origin_missing?))
+      !record.is_a?(Shipment) || !(record.voided? || (record.sold? && !record.origin_missing? && !user.admin?))
     end
 end

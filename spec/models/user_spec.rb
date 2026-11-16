@@ -107,7 +107,7 @@ RSpec.describe User do
   end
 
   describe "who downloads the data backup" do
-    it "is only the active user with id 1" do
+    it "is only the active user with id 1", :real_data_exporter_id do
       expect(User::DATA_EXPORTER_ID).to eq(1)
 
       user = create(:user, :admin)

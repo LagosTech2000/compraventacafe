@@ -1,9 +1,11 @@
-<% content_for :title, t(".title", number: @payment.display_number) %>
-<%= render "shared/breadcrumbs", crumbs: invoice_crumbs(@invoice, [ t("trading.invoice_payments.show.title", number: @payment.display_number) ]) %>
+<%# «Recibo de abono» while it left a balance, «Recibo de pago» when it cancelled the invoice. %>
+<% title = t(@payment.balance_after.positive? ? ".title_partial" : ".title", number: @payment.display_number) %>
+<% content_for :title, title %>
+<%= render "shared/breadcrumbs", crumbs: invoice_crumbs(@invoice, [ title ]) %>
 
 <div class="mb-6 flex flex-wrap items-start justify-between gap-4 print:hidden">
   <div>
-    <h1 class="text-2xl font-bold"><%= t(".title", number: @payment.display_number) %></h1>
+    <h1 class="text-2xl font-bold"><%= title %></h1>
     <p class="mt-1 text-sm text-ink-muted"><%= t(".invoice", number: @invoice.display_number, producer: @invoice.producer.full_name) %></p>
   </div>
   <% if modal_request? %>

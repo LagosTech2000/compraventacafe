@@ -202,7 +202,7 @@ RSpec.describe "Trading purchase flow" do
 
       get trading_invoice_payment_path(invoice, payment)
       receipt = Nokogiri::HTML(response.body).at_css("article").text.squish
-      expect(receipt).to include("Recibo de pago #{payment.display_number}", "Monto pagado L 1,000.00", "Saldo pendiente L 3,120.90", "Recibí conforme")
+      expect(receipt).to include("Recibo de abono #{payment.display_number}", "Monto pagado L 1,000.00", "Saldo pendiente L 3,120.90", "Recibí conforme")
 
       pay("3120.90", "transfer")
       expect(invoice.reload).to have_attributes(payment_status: "paid", paid_on: Time.zone.today, payment_method: nil)

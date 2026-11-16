@@ -17,6 +17,7 @@ module Sales
     def update
       @shipment.assign_attributes(arrival_params)
       @shipment.receiving = true
+      @shipment.weights_by_admin = Current.user.admin?
 
       if @shipment.save
         close_modal_with notice: t(".success", number: @shipment.display_number), fallback: sales_shipment_path(@shipment)

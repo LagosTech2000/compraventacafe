@@ -47,6 +47,8 @@ class AccountBalance
         [ StaffPayment.all, "paid_on", "net_total", "money_account_id", :out ],
         [ StaffAdvance.all, "given_on", "amount", "money_account_id", :out ],
         [ OtherIncome.all, "received_on", "amount", "money_account_id", :in ],
+        [ OwnerLoan.all, "disbursed_on", "principal", "money_account_id", :in ],
+        [ OwnerLoanPayment.all, "paid_on", "amount", "money_account_id", :out ],
         [ AccountTransfer.all, "transferred_on", "amount", "from_account_id", :out ],
         [ AccountTransfer.all, "transferred_on", "amount", "to_account_id", :in ]
       ]

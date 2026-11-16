@@ -47,7 +47,8 @@
           </tr>
         </thead>
         <% permissions = user.permissions.index_by(&:permission_key) %>
-        <% AppModule::SUBMODULES.each do |module_key, submodules| %>
+        <%# Without the tabs of a development quoted apart that is off (PaidFeature). %>
+        <% AppModule::KEYS.map { [ it, AppModule.offered_submodules(it) ] }.each do |module_key, submodules| %>
           <tbody data-controller="permission-matrix" data-permission-module="<%= module_key %>">
             <% unless AppModule.single?(module_key) %>
               <tr class="bg-surface-2">

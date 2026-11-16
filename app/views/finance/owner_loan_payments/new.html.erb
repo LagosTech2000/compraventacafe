@@ -1,0 +1,37 @@
+<% content_for :title, t(".title") %>
+<%= render "finance/nav" %>
+<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+<p class="mt-1 text-sm text-ink-muted"><%= t(".help", lender: @loan.lender_name, owed: format_money(@balance.total_owed), interest: format_money(@balance.interest_owed)) %></p>
+
+<%= form_with model: @payment, url: finance_owner_loan_payments_path(@loan), scope: :owner_loan_payment,
+      class: form_surface_class("mt-6 space-y-5 max-w-2xl"), data: { controller: "form-validation" } do |form| %>
+  <%= render "shared/form_errors", record: @payment %>
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div>
+      <%= form.label :amount, class: "field-label" %>
+      <%= form.number_field :amount, required: true, min: 0.01, max: @balance.total_owed, step: 0.01, inputmode: "decimal", autofocus: true, class: "field-input text-lg" %>
+    </div>
+    <div>
+      <%= form.label :paid_on, class: "field-label" %>
+      <%= form.date_field :paid_on, required: true, class: "field-input" %>
+    </div>
+    <div class="grid gap-5 sm:col-span-2 sm:grid-cols-2" data-controller="money-account"
+         data-money-account-defaults-value="<%= MoneyAccount.defaults_by_method.to_json %>">
+      <div>
+        <%= form.label :payment_method, class: "field-label" %>
+        <%= form.select :payment_method, enum_options(Invoice, :payment_method, OwnerLoanPayment::PAYMENT_METHODS), {}, required: true, class: "field-input",
+              data: { money_account_target: "method", action: "money-account#suggest" } %>
+      </div>
+      <%= render "shared/money_account_field", form: %>
+    </div>
+    <div class="sm:col-span-2">
+      <%= form.label :observations, class: "field-label" %>
+      <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+    </div>
+  </div>
+  <p class="text-xs text-ink-muted"><%= t(".split_help") %></p>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit t(".submit"), class: "btn btn-primary" %>
+    <%= cancel_button finance_owner_loan_path(@loan) %>
+  </div>
+<% end %>

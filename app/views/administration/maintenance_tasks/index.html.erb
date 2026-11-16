@@ -9,6 +9,8 @@
   <%= link_to t(".backup"), administration_backup_path, class: "btn" %>
 </div>
 
+<%= render "administration/control_centers/tabs", current: :maintenance %>
+
 <p class="mt-4 flash-notice max-w-4xl"><%= t(".safety") %></p>
 
 <% %i[general sales finance].each do |area| %>
