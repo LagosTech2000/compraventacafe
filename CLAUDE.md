@@ -100,7 +100,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Salida de insumos (venta por aparte / uso del negocio) | `SupplyExit` (`kind`: `sale` / `business_use`, `sales/supply_exits`); en el libro, `supply_sales` |
 | En bodega / disponible (insumos) | `SupplyStock::Row#in_warehouse` (entró − entregado − salió) / `#available` (entró − prestado − salió, puede ser negativo) |
 | Lo propio (cada usuario ve lo que registró) | `OwnedRecord` (`owned`, `visible_to`, `OwnedRecord.visible?`), `Current.owner` |
-| Lote de café comprado / factura del lote (parte en %) | `CoffeeBatch` (`sales/coffee_batches`) / `CoffeeBatchInvoice` (`percent`) |
+| Lote de café comprado / factura del lote (parte en %) / proceso del lote | `CoffeeBatch` (`sales/coffee_batches`) / `CoffeeBatchInvoice` (`percent`) / `CoffeeBatchConversion` |
 | Merma de la salida (compras de sus lotes − báscula local) | `Shipment#shrink_gross` / `#shrink_net`, `ShrinkSummary`, `ShipmentFilter#shrink` |
 | Productores que no venden | `IdleProducers` (`trading/idle_producers`, tarjeta del Inicio) |
 | Datos del motorista en la salida | `sales/driver_cards#show` (`driver_card_controller.js`) |
@@ -1189,9 +1189,11 @@ lotes; `integrity:inventory`, `:shipments`,
 **completan con regla clara** (`:fill`: `purchases:assign_single_farm`,
 `farms:plots_from_lots`, `sales:recalculate`) y
 **necesitan decisión del cliente** (`:decision`: `batches:backfill`, lotes
-aproximados para salidas pasadas, las facturas con compras hasta el día de
-la salida, las compras más viejas primero, hasta su báscula local; la
-merma de esas salidas no es real). Las que cambian datos: **vista previa
+aproximados para salidas pasadas con las facturas y los procesos
+terminados de hasta el día de la salida, lo más viejo primero, hasta su
+báscula local; **solo a las salidas que se llenan completas** (Fernando,
+2026-11-16: un lote a medias dejaría el resto de su café en el inventario),
+las demás se quedan sin lote; la merma de esas salidas no es real). Las que cambian datos: **vista previa
 primero**; se aplican solo desde esa vista previa, con la casilla «Ya
 descargué el respaldo», todo o nada (transacción), auditadas por sus
 modelos (en la Shell con `request_id` `maintenance-…`) y con **«Deshacer»**
@@ -1485,7 +1487,17 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   brutas**, y toma **un % de facturas de compra** (`CoffeeBatchInvoice`):
   solo facturas de su estado con todas sus compras en su bodega; **entre
   todos los lotes una factura no pasa del 100 %** y el lote **no pasa de su
-  límite** (brutas de las compras × %). Al elegir facturas, junto a la
+  límite** (brutas de las compras × %). **También procesos terminados**
+  (Fernando, 2026-11-16) [CONFIRMADO: un lote puede mezclar facturas y
+  procesos; un proceso en curso no entra]: `CoffeeBatchConversion`, un % de
+  lo que salió de un proceso terminado del estado del lote cuyo resultado
+  entró a su bodega, sin pasar del 100 % entre lotes; se eligen en la misma
+  pantalla de «Agregar facturas» (tabla «Procesos terminados»). Su valor es
+  su parte de lo que costó el café del proceso y de sus costos
+  (`CoffeeBatchConversion.output_values`, con `CoffeeLots`), que en el costo
+  de la salida va como «Comisión de carreros y procesos». Un proceso con
+  partes en lotes no cambia ni quita su resultado (sacarlo antes de los
+  lotes). Al elegir facturas, junto a la
   parte (%) de cada una sale lo que equivale en libras brutas y, debajo,
   netas (`batch_shares_controller.js`, Fernando, 2026-11-13); **para muchas
   a la vez** (Fernando, 2026-11-15): la casilla del encabezado marca todas

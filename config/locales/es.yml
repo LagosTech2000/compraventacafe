@@ -498,6 +498,7 @@ es:
         haulers_ok: "A ningún carrero se le pagó más de lo que ganó."
         lots_title: "Lotes"
         invoice_over: "Factura %{number}: entre todos sus lotes pasa del 100 %."
+        conversion_over: "Proceso %{name}: entre todos sus lotes pasa del 100 %."
         lot_over: "%{label}: tiene %{gross} lb brutas y su límite es %{limit}."
         lots_ok: "Ninguna factura pasa del 100 % y ningún lote pasa su límite."
       integrity_inventory:
@@ -548,7 +549,7 @@ es:
         none: "Ninguna salida tiene gastos sin asignar cerca de su fecha."
       batches_backfill:
         title: "Armar lotes para las salidas pasadas"
-        what: "A cada salida sin lote le arma uno con las facturas de su estado del café y su bodega, con todas sus compras hechas hasta el día en que salió, las compras más viejas primero, hasta el peso de su báscula local. Así esas salidas tienen costo."
+        what: "A cada salida sin lote le arma uno con las facturas y los procesos terminados de su estado del café y su bodega, de hasta el día en que salió, lo más viejo primero, hasta el peso de su báscula local. Solo a las salidas que se llenan completas; las demás se quedan sin lote. Así esas salidas tienen costo y sacan del inventario el café que se compró."
         after: "Esas salidas sacan del inventario el café de sus lotes en lugar del más viejo, y el inventario de cada estado puede moverse (la vista previa dice cuánto). Su merma no es real: el lote se llena hasta el peso de la báscula local."
         risk: "Alto: es una aproximación (nadie anotó qué facturas iban en cada camión) y cambia cifras pasadas. Correr solo cuando el cliente decida la fecha de corte de los lotes."
         observation: "Armado por la tarea «Armar lotes para las salidas pasadas»: aproximado, las facturas más viejas primero."
@@ -565,6 +566,14 @@ es:
         invoices:
           one: "Usa 1 factura."
           other: "Usa %{count} facturas."
+        conversions:
+          one: "Usa 1 proceso."
+          other: "Usa %{count} procesos."
+        incomplete:
+          one: "1 salida no se puede llenar completa y se queda sin lote: %{numbers}."
+          other: "%{count} salidas no se pueden llenar completas y se quedan sin lote: %{numbers}."
+        conversion_share: "Proceso %{name}: %{percent} %, %{gross} lb brutas, %{net} lb netas."
+        left_without_lot: "Se queda sin lote: un lote a medias dejaría el resto de su café en el inventario."
         stock_change: "%{state}: el inventario cambia en %{pounds} lb netas (positivo: queda más café)."
         shrink_warning: "La merma de estas salidas no es real: el lote se llena hasta el peso de la báscula local."
         skipped: "Salidas que se dejan fuera"
@@ -2039,16 +2048,22 @@ es:
         value: "Valor (L)"
         remove: "Quitar"
         confirm_remove: "¿Quitar la factura %{number} de este lote? Su parte queda libre."
+        conversions: "Procesos"
+        conversion: "Proceso"
+        confirm_remove_conversion: "¿Quitar el proceso %{conversion} de este lote? Su parte queda libre."
       create:
         success: "%{batch} creado: ahora elige sus facturas."
       update:
         success: "Lote actualizado."
       destroy:
         success: "%{batch} quitado."
+    coffee_batch_conversions:
+      destroy:
+        success: "El proceso %{conversion} salió del lote."
     coffee_batch_invoices:
       new:
         title: "Facturas para el %{batch}"
-        help: "Facturas de %{state} con todas sus compras en %{warehouse}, con una parte todavía libre. Marca las que entran y la parte (%) de cada una; una factura nunca pasa del 100 % entre todos los lotes."
+        help: "Facturas de %{state} con todas sus compras en %{warehouse}, y procesos terminados de %{state} con su resultado en %{warehouse}, con una parte todavía libre. Marca los que entran y la parte (%) de cada uno; ninguno pasa del 100 % entre todos los lotes."
         room: "Límite: %{limit} lb brutas · ya tiene %{gross} lb · caben %{room} lb brutas."
         mark_column: "Marcar"
         gross: "Brutas (lb)"
@@ -2062,6 +2077,12 @@ es:
         chosen: "%{count} marcadas: %{pounds} lb brutas de %{room} que caben."
         over: "%{count} marcadas: %{pounds} lb brutas, más de las %{room} que caben. Baja la parte de alguna."
         none_marked: "Ninguna marcada"
+        conversions: "Procesos terminados"
+        invoices: "Facturas de compra"
+        conversion: "Proceso"
+        finished_at: "Terminó"
+        mark_conversion: "Marcar el proceso %{number}"
+        percent_of_conversion: "Parte del proceso %{number}"
         mark_all: "Marcar o desmarcar todas las facturas cargadas"
         fill: "Llenar el lote"
         fill_help: "Marca las facturas en el orden de la lista hasta llenar el lote; la última, con la parte que cabe."
@@ -2356,12 +2377,12 @@ es:
       # What a shipment cost (Fernando, 2026-11-12).
       cost:
         title: "Costo de la salida"
-        help: "Lo que costó el café de sus lotes (su parte de cada compra), la comisión de carreros de esas compras, sus gastos y el precio del viaje."
+        help: "Lo que costó el café de sus lotes (su parte de cada compra o proceso), la comisión de carreros y los gastos de proceso de ese café, sus gastos y el precio del viaje."
         missing: "Sin lotes: falta el costo del café. Agrega los lotes de esta salida."
         remove: "Quitar"
         figures:
           coffee: "Café (lotes)"
-          hauler_commission: "Comisión de carreros"
+          hauler_commission: "Comisión de carreros y procesos"
           costs: "Gastos y viaje"
           total: "Costo total"
           per_pound: "Costo por libra neta"
@@ -8284,6 +8305,7 @@ es:
         shipment_invoice: "la factura de la salida"
         coffee_batch: "el lote"
         coffee_batch_invoice: "la factura del lote"
+        coffee_batch_conversion: "el proceso del lote"
         warehouse_transfer: "el traslado entre bodegas"
         carrier: "el transportista"
         vehicle: "el vehículo"
@@ -8710,6 +8732,9 @@ es:
       coffee_batch_invoice:
         one: "Factura del lote"
         other: "Facturas del lote"
+      coffee_batch_conversion:
+        one: "Proceso del lote"
+        other: "Procesos del lote"
       warehouse_transfer:
         one: "Traslado entre bodegas"
         other: "Traslados entre bodegas"
@@ -9347,6 +9372,16 @@ es:
         active: "Activo"
         created_by: "Creó"
         created_by_id: "Creó"
+      coffee_batch_conversion:
+        coffee_batch: "Lote"
+        coffee_batch_id: "Lote"
+        coffee_conversion: "Proceso"
+        coffee_conversion_id: "Proceso"
+        percent: "Parte (%)"
+        gross_weight: "Libras brutas que tomó"
+        net_weight: "Libras netas que tomó"
+        created_by: "Agregó"
+        created_by_id: "Agregó"
       coffee_batch_invoice:
         coffee_batch: "Lote"
         coffee_batch_id: "Lote"
@@ -9909,6 +9944,7 @@ es:
               not_finished: "El proceso todavía no tiene resultado."
               has_costs: "El proceso tiene gastos registrados: quítalos primero para anularlo."
               output_costs: "El proceso tiene gastos cobrados sobre lo que salió: quítalos primero para quitar el resultado."
+              in_lots: "Lo que salió de este proceso está en lotes: sácalo de los lotes antes de cambiar o quitar su resultado."
               no_stock: "No hay %{state} en %{warehouse}: no se puede mandar a procesar. Registra primero las compras o elige otra bodega."
             finished_at:
               before_weighed: "no puede ser antes de cuando se pesó lo que entró"
@@ -9970,6 +10006,17 @@ es:
               accepted: "falta: la persona tiene que aceptar"
             finger:
               taken: "ya está registrado para esta persona"
+        coffee_batch_conversion:
+          attributes:
+            base:
+              lot_sold: "El lote está en una salida vendida: solo un administrador lo cambia."
+            coffee_conversion:
+              not_eligible: "no puede ir en este lote: debe estar terminado, ser de su estado del café, con su resultado en su bodega y una parte libre"
+            coffee_conversion_id:
+              taken: "ya está en este lote"
+            percent:
+              over_conversion: "pasa de lo libre del proceso (%{left} %)"
+              over_limit: "pasa del límite del lote: caben %{room} lb brutas"
         coffee_batch_invoice:
           attributes:
             base:

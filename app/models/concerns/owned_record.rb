@@ -17,7 +17,7 @@ module OwnedRecord
   # The record a child belongs to: seeing or adding a child goes with it.
   PARENTS = {
     "InvoicePayment" => :invoice, "LoanPayment" => :loan, "SalePayment" => :sale, "ShipmentCost" => :shipment,
-    "ProcessingCost" => :coffee_conversion, "CoffeeBatchInvoice" => :coffee_batch, "PayrollPayment" => :payroll,
+    "ProcessingCost" => :coffee_conversion, "CoffeeBatchInvoice" => :coffee_batch, "CoffeeBatchConversion" => :coffee_batch, "PayrollPayment" => :payroll,
     "PayrollExpense" => :payroll, "LoanSupply" => :loan, "SupplyEntryLine" => :supply_entry, "ShipmentWeighing" => :shipment,
     "SaleLine" => :sale, "PurchaseWeighing" => :purchase, "PayrollMember" => :payroll, "PayrollTask" => :payroll,
     "PayrollRole" => :payroll, "OwnerLoanPayment" => :owner_loan

@@ -190,4 +190,25 @@ RSpec.describe "Lots of purchased coffee" do
     get new_sales_coffee_batch_invoice_path(batch)
     expect(response).to redirect_to(root_path)
   end
+
+  it "takes finished processes with invoices from the same screen, and lets one go (Fernando, 2026-11-16)" do
+    invoice = invoice_of(create(:purchase, producer:, gross_weight: 300))
+    conversion = create(:coffee_conversion, :finished, from_state: "cherry", weighed_at: 2.days.ago)
+    create(:coffee_conversion, from_state: "cherry") # in progress: not offered
+    batch = create(:coffee_batch, gross_limit: 1_000, created_by: admin)
+
+    get new_sales_coffee_batch_invoice_path(batch)
+    expect(page.css("[data-batch-conversion-choices] tbody tr").map { it["id"] }).to eq([ "choice_coffee_conversion_#{conversion.id}" ])
+
+    post sales_coffee_batch_invoices_path(batch), params: { shares: { invoice.id => { chosen: "1", percent: "100" } },
+                                                           conversion_shares: { conversion.id => { chosen: "1", percent: "50" } } }
+    expect(flash[:notice]).to eq("2 facturas en el lote.")
+    expect(batch.batch_conversions.sole).to have_attributes(coffee_conversion: conversion, percent: 50)
+
+    get sales_coffee_batch_path(batch)
+    expect(page.at_css("[data-batch-conversions]").text).to include(conversion.audit_label, "50%")
+
+    delete sales_coffee_batch_conversion_path(batch, conversion)
+    expect(batch.batch_conversions.reload).to be_empty
+  end
 end

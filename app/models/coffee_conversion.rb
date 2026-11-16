@@ -39,6 +39,8 @@ class CoffeeConversion < ApplicationRecord
   belongs_to :processing_site, optional: true
   # What processing it cost (client, 2026-10-26).
   has_many :processing_costs, -> { chronological }, dependent: :restrict_with_error, inverse_of: :coffee_conversion
+  # Lots that took a share of what came out (Fernando, 2026-11-16).
+  has_many :batch_conversions, class_name: "CoffeeBatchConversion", dependent: :restrict_with_error
   belongs_to :created_by, class_name: "User"
   belongs_to :finished_by, class_name: "User", optional: true
   belongs_to :voided_by, class_name: "User", optional: true
@@ -71,6 +73,7 @@ class CoffeeConversion < ApplicationRecord
     validates :output_damage_percent, numericality: { greater_than_or_equal_to: 0, less_than: 100 }
   end
   validate :finished_after_weighed, if: :finishing
+  validate :keeps_its_lots, if: -> { persisted? && (will_save_change_to_output_gross_weight? || will_save_change_to_output_net_weight? || will_save_change_to_output_warehouse_id?) }
   validate :warehouses_active
   validate :coffee_in_stock, on: :create
 
@@ -199,6 +202,7 @@ class CoffeeConversion < ApplicationRecord
   def reopen!
     raise ActiveRecord::RecordInvalid, tap { errors.add(:base, :not_finished) } unless finished?
     raise ActiveRecord::RecordInvalid, tap { errors.add(:base, :output_costs) } if processing_costs.exists?(weight_side: "output")
+    raise ActiveRecord::RecordInvalid, tap { errors.add(:base, :in_lots) } if batch_conversions.exists?
 
     self.finishing = false
     update!(finished_at: nil, finished_by: nil, output_warehouse: nil, output_gross_weight: nil, output_net_weight: nil, output_ratio: nil, output_ratio_source: nil,
@@ -206,6 +210,11 @@ class CoffeeConversion < ApplicationRecord
   end
 
   private
+    # What came out is in lots: it does not change (take it out of them first).
+    def keeps_its_lots
+      errors.add(:base, :in_lots) if batch_conversions.exists?
+    end
+
     def set_to_state
       self.to_state = NEXT_STATE[from_state]
     end

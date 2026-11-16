@@ -55,6 +55,8 @@ module Maintenance
       def lots_section
         over = CoffeeBatchInvoice.group(:invoice_id).having("SUM(percent) > 100").count.keys
         lines = Invoice.where(id: over).map { t(:invoice_over, number: it.display_number) }
+        over_conversions = CoffeeBatchConversion.group(:coffee_conversion_id).having("SUM(percent) > 100").count.keys
+        lines += CoffeeConversion.where(id: over_conversions).map { t(:conversion_over, name: it.audit_label) }
         totals = CoffeeBatch::Totals.by_batch(CoffeeBatch.pluck(:id))
         CoffeeBatch.order(:number).each do |batch|
           gross = totals[batch.id]&.gross.to_d

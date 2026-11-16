@@ -7,6 +7,10 @@
 # share of each purchase), not the oldest first; what its local scale gave
 # against what its purchases say is its shrink (Shipment#shrink_*).
 #
+# Since 2026-11-16 (Fernando) it can also take shares of finished processes
+# (CoffeeBatchConversion), mixed with invoices: their pounds count the same
+# way and their value is what the process's coffee cost.
+#
 # Each invoice share keeps the gross and net pounds it took
 # (CoffeeBatchInvoice): an edited purchase does not change them. Its value
 # comes from its invoices' purchases, in that net part.
@@ -25,7 +29,8 @@ class CoffeeBatch < ApplicationRecord
   # commission, its net pounds' part of its purchases.
   def self.share_sql(column, batches: "coffee_batches")
     if %w[gross_weight net_weight].include?(column.to_s)
-      "(SELECT COALESCE(SUM(coffee_batch_invoices.#{column}), 0) FROM coffee_batch_invoices WHERE coffee_batch_invoices.coffee_batch_id = #{batches}.id)"
+      "((SELECT COALESCE(SUM(coffee_batch_invoices.#{column}), 0) FROM coffee_batch_invoices WHERE coffee_batch_invoices.coffee_batch_id = #{batches}.id) + " \
+        "(SELECT COALESCE(SUM(coffee_batch_conversions.#{column}), 0) FROM coffee_batch_conversions WHERE coffee_batch_conversions.coffee_batch_id = #{batches}.id))"
     else
       "(SELECT COALESCE(SUM(purchases.#{column} * #{CoffeeBatchInvoice::NET_SHARE_SQL}), 0) FROM coffee_batch_invoices " \
         "JOIN purchases ON purchases.invoice_id = coffee_batch_invoices.invoice_id AND purchases.voided_at IS NULL " \
@@ -38,6 +43,8 @@ class CoffeeBatch < ApplicationRecord
   belongs_to :created_by, class_name: "User"
   has_many :batch_invoices, -> { order(:id) }, class_name: "CoffeeBatchInvoice", dependent: :destroy, inverse_of: :coffee_batch
   has_many :invoices, through: :batch_invoices
+  has_many :batch_conversions, -> { order(:id) }, class_name: "CoffeeBatchConversion", dependent: :destroy, inverse_of: :coffee_batch
+  has_many :conversions, through: :batch_conversions, source: :coffee_conversion
 
   normalizes :observations, with: FieldFormats::STRIP
 
@@ -79,6 +86,13 @@ class CoffeeBatch < ApplicationRecord
   # Gross pounds still under its limit.
   def room = gross_limit.to_d - gross_weight
 
+  # Gross pounds its invoices and processes took, without one share (being saved).
+  def taken_gross(except: nil)
+    invoices = batch_invoices.where.not(id: except.is_a?(CoffeeBatchInvoice) ? except.id : nil).sum(:gross_weight)
+    conversions = batch_conversions.where.not(id: except.is_a?(CoffeeBatchConversion) ? except.id : nil).sum(:gross_weight)
+    invoices.to_d + conversions.to_d
+  end
+
   def reload(*)
     @totals = nil
     super
@@ -94,12 +108,28 @@ class CoffeeBatch < ApplicationRecord
     def self.by_batch(ids)
       return {} if ids.empty?
 
-      pounds = CoffeeBatchInvoice.where(coffee_batch_id: ids).group(:coffee_batch_id)
-                                 .pluck(:coffee_batch_id, Arel.sql("SUM(gross_weight)"), Arel.sql("SUM(net_weight)")).to_h { |id, *rest| [ id, rest ] }
+      pounds = Hash.new { |hash, key| hash[key] = [ 0.to_d, 0.to_d ] }
+      [ CoffeeBatchInvoice, CoffeeBatchConversion ].each do |model|
+        model.where(coffee_batch_id: ids).group(:coffee_batch_id).pluck(:coffee_batch_id, Arel.sql("SUM(gross_weight)"), Arel.sql("SUM(net_weight)")).each do |id, gross, net|
+          pounds[id] = [ pounds[id][0] + gross.to_d, pounds[id][1] + net.to_d ]
+        end
+      end
       money = CoffeeBatchInvoice.joins("JOIN purchases ON purchases.invoice_id = coffee_batch_invoices.invoice_id AND purchases.voided_at IS NULL")
                                 .where(coffee_batch_id: ids).group(:coffee_batch_id)
                                 .pluck(:coffee_batch_id, *%w[total hauler_commission].map { Arel.sql("COALESCE(SUM(COALESCE(purchases.#{it}, 0) * #{CoffeeBatchInvoice::NET_SHARE_SQL}), 0)") })
                                 .to_h { |id, *rest| [ id, rest ] }
+      # A process's share: its net part of what the process's coffee cost and of its costs.
+      shares = CoffeeBatchConversion.where(coffee_batch_id: ids).includes(:coffee_conversion).to_a
+      values = CoffeeBatchConversion.output_values(shares.map(&:coffee_conversion_id).uniq)
+      shares.each do |share|
+        output = share.coffee_conversion.output_net_weight.to_d
+        next unless output.positive?
+
+        paid, costs = values.fetch(share.coffee_conversion_id, [ 0, 0 ])
+        fraction = share.net_weight.to_d / output
+        value, commission = money.fetch(share.coffee_batch_id, [ 0, 0 ])
+        money[share.coffee_batch_id] = [ value.to_d + paid * fraction, commission.to_d + costs * fraction ]
+      end
       pounds.to_h do |id, (gross, net)|
         value, commission = money.fetch(id, [ 0, 0 ])
         [ id, new(gross: gross.to_d.round(2), net: net.to_d.round(2), value: value.to_d.round(2), hauler_commission: commission.to_d.round(2)) ]
@@ -121,7 +151,7 @@ class CoffeeBatch < ApplicationRecord
     end
 
     def keeps_its_invoices
-      errors.add(:base, :has_invoices) if batch_invoices.exists?
+      errors.add(:base, :has_invoices) if batch_invoices.exists? || batch_conversions.exists?
     end
 
     # Of the shipment's coffee state and warehouse; the shipment not voided,

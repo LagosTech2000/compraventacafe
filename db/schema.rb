@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_15_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_16_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -126,6 +126,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_140000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["person_id"], name: "index_clients_on_person_id", unique: true
+  end
+
+  create_table "coffee_batch_conversions", force: :cascade do |t|
+    t.bigint "coffee_batch_id", null: false
+    t.bigint "coffee_conversion_id", null: false
+    t.decimal "percent", precision: 9, scale: 4, null: false
+    t.decimal "gross_weight", precision: 16, scale: 6, default: "0.0", null: false
+    t.decimal "net_weight", precision: 16, scale: 6, default: "0.0", null: false
+    t.bigint "created_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["coffee_batch_id", "coffee_conversion_id"], name: "index_batch_conversions_on_batch_and_conversion", unique: true
+    t.index ["coffee_batch_id"], name: "index_coffee_batch_conversions_on_coffee_batch_id"
+    t.index ["coffee_conversion_id"], name: "index_coffee_batch_conversions_on_coffee_conversion_id"
+    t.index ["created_by_id"], name: "index_coffee_batch_conversions_on_created_by_id"
   end
 
   create_table "coffee_batch_invoices", force: :cascade do |t|
@@ -1375,6 +1390,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_140000) do
   add_foreign_key "cash_counts", "money_accounts"
   add_foreign_key "cash_counts", "users", column: "created_by_id"
   add_foreign_key "clients", "people"
+  add_foreign_key "coffee_batch_conversions", "coffee_batches"
+  add_foreign_key "coffee_batch_conversions", "coffee_conversions"
+  add_foreign_key "coffee_batch_conversions", "users", column: "created_by_id"
   add_foreign_key "coffee_batch_invoices", "coffee_batches"
   add_foreign_key "coffee_batch_invoices", "invoices"
   add_foreign_key "coffee_batch_invoices", "users", column: "created_by_id"

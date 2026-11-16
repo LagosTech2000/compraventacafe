@@ -44,6 +44,46 @@
   <p class="mt-2 text-sm text-ink-muted"><%= @batch.observations %></p>
 <% end %>
 
+<%# Its processes, each with the share it takes (Fernando, 2026-11-16). %>
+<% if @batch_conversions.any? %>
+  <section class="mt-6" aria-labelledby="batch-conversions-title">
+    <h2 id="batch-conversions-title" class="mb-3 text-lg font-semibold"><%= t("#{scope}.conversions") %></h2>
+    <div class="overflow-x-auto panel">
+      <table class="data-table data-table-compact" data-controller="table-sort" data-batch-conversions>
+        <thead>
+          <tr>
+            <th><%= t("#{scope}.conversion") %></th>
+            <th class="text-right"><%= t("#{scope}.percent") %></th>
+            <th class="text-right"><%= t("#{scope}.gross") %></th>
+            <th class="text-right"><%= t("#{scope}.net") %></th>
+            <th class="cell-actions" data-sort="false"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @batch_conversions.each do |line| %>
+            <% conversion = line.coffee_conversion %>
+            <tr id="<%= dom_id(line) %>">
+              <td><%= conversion.audit_label %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= number_to_percentage(line.percent, precision: 2, strip_insignificant_zeros: true) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(line.gross_weight) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums text-ink-muted"><%= format_pounds(line.net_weight) %></td>
+              <td class="cell-actions">
+                <div class="flex justify-end gap-2">
+                  <%= detail_button sales_coffee_conversion_path(conversion) %>
+                  <% if policy(line).destroy? %>
+                    <%= button_to t("#{scope}.remove"), sales_coffee_batch_conversion_path(@batch, conversion), method: :delete, class: "btn btn-sm",
+                          form: { data: { turbo_confirm: t("#{scope}.confirm_remove_conversion", conversion: conversion.audit_label) } } %>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+<% end %>
+
 <%# Its invoices, each with the share it takes. %>
 <section class="mt-6" aria-labelledby="batch-invoices-title">
   <div class="mb-3 flex flex-wrap items-center justify-between gap-3">

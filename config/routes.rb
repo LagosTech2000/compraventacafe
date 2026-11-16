@@ -117,6 +117,7 @@ Rails.application.routes.draw do
     # invoices that go on the shipments. Before the shipments: "lots" is no id.
     resources :coffee_batches, path: "shipments/lots" do
       resources :invoices, only: %i[ new create destroy ], controller: "coffee_batch_invoices"
+      resources :conversions, only: :destroy, controller: "coffee_batch_conversions"
     end
     resources :shipments, except: :destroy do
       patch :void, on: :member

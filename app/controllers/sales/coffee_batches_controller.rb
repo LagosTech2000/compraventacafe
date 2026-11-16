@@ -16,6 +16,7 @@ module Sales
 
     def show
       @batch_invoices = @batch.batch_invoices.includes(invoice: [ :purchases, { producer: :person } ]).to_a
+      @batch_conversions = @batch.batch_conversions.includes(:coffee_conversion).to_a
     end
 
     def new
