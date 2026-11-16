@@ -11,14 +11,16 @@ module Sales
       @filter = InvoiceFilter.new(params)
       @invoices, @next_page = @filter.results(eligible)
       @used = CoffeeBatchInvoice.used_by_invoice(@invoices.map(&:id))
+      # And finished processes (Fernando, 2026-11-16).
+      @conversions = CoffeeBatchConversion.eligible_conversions(@batch).order(:finished_at, :id).to_a
+      @used_conversions = CoffeeBatchConversion.used_by_conversion(@conversions.map(&:id))
     end
 
     def create
       authorize CoffeeBatchInvoice.new(coffee_batch: @batch), :create?
-      raw = params.fetch(:shares, {})
-      shares = raw.keys.select { it.to_s.match?(/\A\d+\z/) }.to_h { [ it, raw.require(it).permit(:chosen, :percent).to_h ] }
-                  .select { |_, share| share["chosen"] == "1" }
-      return redirect_to(new_sales_coffee_batch_invoice_path(@batch, picker: params[:picker].presence), alert: t(".none")) if shares.empty?
+      shares = chosen(:shares)
+      conversion_shares = chosen(:conversion_shares)
+      return redirect_to(new_sales_coffee_batch_invoice_path(@batch, picker: params[:picker].presence), alert: t(".none")) if shares.empty? && conversion_shares.empty?
 
       lines = []
       CoffeeBatch.transaction do
@@ -29,11 +31,19 @@ module Sales
           line.save!
           lines << line
         end
+        conversion_shares.each do |conversion_id, share|
+          line = @batch.batch_conversions.find_or_initialize_by(coffee_conversion_id: conversion_id.to_i)
+          line.assign_attributes(percent: share["percent"], created_by: Current.user)
+          line.save!
+          lines << line
+        end
       end
       finish(t(".success", count: lines.size))
     rescue ActiveRecord::RecordInvalid => error
+      record = error.record
+      label = record.is_a?(CoffeeBatchConversion) ? record.coffee_conversion&.audit_label : record.invoice&.display_number
       redirect_to new_sales_coffee_batch_invoice_path(@batch, picker: params[:picker].presence),
-                  alert: "#{error.record.invoice&.display_number}: #{error.record.errors.full_messages.to_sentence}"
+                  alert: "#{label}: #{record.errors.full_messages.to_sentence}"
     end
 
     def destroy
@@ -43,6 +53,13 @@ module Sales
     end
 
     private
+      # The rows marked: { id => { "chosen", "percent" } }.
+      def chosen(key)
+        raw = params.fetch(key, {})
+        raw.keys.select { it.to_s.match?(/\A\d+\z/) }.to_h { [ it, raw.require(it).permit(:chosen, :percent).to_h ] }
+           .select { |_, share| share["chosen"] == "1" }
+      end
+
       def set_batch
         @batch = CoffeeBatch.find(params[:coffee_batch_id])
       end

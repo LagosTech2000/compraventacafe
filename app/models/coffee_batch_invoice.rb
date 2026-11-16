@@ -146,7 +146,7 @@ class CoffeeBatchInvoice < ApplicationRecord
     def within_the_limit
       return unless coffee_batch && invoice && percent
 
-      others = coffee_batch.batch_invoices.where.not(id:).sum(:gross_weight).to_d
+      others = coffee_batch.taken_gross(except: self)
       return if others + gross_weight.to_d <= coffee_batch.gross_limit.to_d
 
       room = [ coffee_batch.gross_limit.to_d - others, 0 ].max

@@ -194,7 +194,7 @@ class CoffeeLots
       # Without the local scale (and without lots) it takes nothing yet (Fernando, 2026-11-12).
       Shipment.active.where(departed_at: ..at).where.not(origin_net_weight: nil).or(Shipment.active.where(departed_at: ..at, id: with_batches))
               .select(:id, :departed_at, :coffee_state, :warehouse_id, :origin_net_weight).map do |shipment|
-        own = shares.select { |(shipment_id, _), _| shipment_id == shipment.id }.to_h { |(_, purchase_id), net| [ purchase_id, net ] }
+        own = shares.select { |(shipment_id, _), _| shipment_id == shipment.id }.to_h { |(_, source), net| [ source, net ] }
         apply = if own.any?
           -> { take_from_purchases(shipment, shipment.coffee_state, shipment.warehouse_id, own) }
         else
@@ -204,27 +204,33 @@ class CoffeeLots
       end
     end
 
-    # { [shipment id, purchase id] => net pounds } of the shipments' lots.
+    # { [shipment id, [source class, source id]] => net pounds } of the
+    # shipments' lots: each purchase of their invoices, and each process
+    # they took a share of (Fernando, 2026-11-16).
     def batch_shares
-      CoffeeBatchInvoice.joins(:coffee_batch)
-                        .joins("JOIN purchases ON purchases.invoice_id = coffee_batch_invoices.invoice_id AND purchases.voided_at IS NULL")
-                        .where.not(coffee_batches: { shipment_id: nil })
-                        .group("coffee_batches.shipment_id", "purchases.id")
-                        .sum(Arel.sql("COALESCE(purchases.net_weight * #{CoffeeBatchInvoice::NET_SHARE_SQL}, 0)"))
-                        .transform_values { it.to_d.round(2) }
+      purchases = CoffeeBatchInvoice.joins(:coffee_batch)
+                                    .joins("JOIN purchases ON purchases.invoice_id = coffee_batch_invoices.invoice_id AND purchases.voided_at IS NULL")
+                                    .where.not(coffee_batches: { shipment_id: nil })
+                                    .group("coffee_batches.shipment_id", "purchases.id")
+                                    .sum(Arel.sql("COALESCE(purchases.net_weight * #{CoffeeBatchInvoice::NET_SHARE_SQL}, 0)"))
+                                    .to_h { |(shipment_id, purchase_id), net| [ [ shipment_id, [ "Purchase", purchase_id ] ], net.to_d.round(2) ] }
+      conversions = CoffeeBatchConversion.joins(:coffee_batch).where.not(coffee_batches: { shipment_id: nil })
+                                         .group("coffee_batches.shipment_id", "coffee_batch_conversions.coffee_conversion_id").sum(:net_weight)
+                                         .to_h { |(shipment_id, conversion_id), net| [ [ shipment_id, [ "CoffeeConversion", conversion_id ] ], net.to_d.round(2) ] }
+      purchases.merge(conversions)
     end
 
-    # What a shipment with lots takes: from each purchase, its share; what is
-    # no longer there of one, from the oldest lots.
+    # What a shipment with lots takes: from each purchase or process, its
+    # share; what is no longer there of one, from the oldest lots.
     def take_from_purchases(record, coffee_state, warehouse_id, shares)
       queue = @queues[[ coffee_state, warehouse_id ]]
       portions = []
       rest = 0.to_d
-      shares.each do |purchase_id, amount|
+      shares.each do |(source_type, source_id), amount|
         wanted = amount.to_d
         queue.each do |lot|
           break unless wanted > EPSILON
-          next unless lot.left? && lot.purchase? && lot.source.id == purchase_id
+          next unless lot.left? && lot.source.class.name == source_type && lot.source.id == source_id
 
           portion = lot.take(wanted)
           wanted -= portion.net

@@ -33,11 +33,60 @@
   <%= list_frame frame do %>
     <%= live_list_status @filter, season_year: ->(year) { Season.new(year).label },
           zone_id: ->(id) { (name = Zone.find_by(id:)&.name) && t("trading.purchases.index.chips.zone", name:) } %>
-    <% if @invoices.any? %>
+    <% if @invoices.any? || @conversions.any? %>
       <%= form_with url: sales_coffee_batch_invoices_path(@batch), method: :post, class: "mt-4",
             data: { turbo_frame: window || "_top", controller: "batch-shares",
                     batch_shares_room_value: @batch.room.to_s, batch_shares_texts_value: { chosen: t(".chosen"), over: t(".over"), gross: t(".takes_gross"), net: t(".takes_net") }.to_json } do %>
         <%= hidden_field_tag :picker, picker, id: nil if picker %>
+        <%# Finished processes of its coffee state whose result went into its
+            warehouse, with a share left (Fernando, 2026-11-16). %>
+        <% if @conversions.any? %>
+          <h2 class="mb-2 text-sm font-semibold tracking-wide text-ink-muted uppercase"><%= t(".conversions") %></h2>
+          <div class="mb-6 overflow-x-auto panel">
+            <table class="data-table data-table-compact" data-batch-conversion-choices>
+              <thead>
+                <tr>
+                  <th class="cell-select w-10"><span class="sr-only"><%= t(".mark_column") %></span></th>
+                  <th><%= t(".conversion") %></th>
+                  <th><%= t(".finished_at") %></th>
+                  <th class="text-right"><%= t(".gross") %></th>
+                  <th class="text-right"><%= t(".net") %></th>
+                  <th class="text-right"><%= t(".left") %></th>
+                  <th class="text-right"><%= t(".percent") %></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @conversions.each do |conversion| %>
+                  <% left = 100 - @used_conversions.fetch(conversion.id, 0).to_d %>
+                  <tr id="<%= dom_id(conversion, :choice) %>" data-batch-shares-target="row" data-gross="<%= conversion.output_gross_weight %>" data-net="<%= conversion.output_net_weight %>">
+                    <td class="cell-select">
+                      <input type="checkbox" name="conversion_shares[<%= conversion.id %>][chosen]" value="1" class="size-4 accent-primary"
+                             data-action="click->batch-shares#pick" aria-label="<%= t(".mark_conversion", number: conversion.display_number) %>">
+                    </td>
+                    <td><%= conversion.audit_label %></td>
+                    <td class="whitespace-nowrap"><%= l(conversion.finished_at) %></td>
+                    <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(conversion.output_gross_weight) %></td>
+                    <td class="whitespace-nowrap text-right tabular-nums text-ink-muted"><%= format_pounds(conversion.output_net_weight) %></td>
+                    <td class="whitespace-nowrap text-right tabular-nums"><%= number_to_percentage(left, precision: 2, strip_insignificant_zeros: true) %></td>
+                    <td>
+                      <div class="flex items-center justify-end gap-3">
+                        <input type="number" name="conversion_shares[<%= conversion.id %>][percent]" value="<%= left.to_s("F").sub(/\.0\z/, "") %>" min="0.01" max="<%= left %>" step="0.0001"
+                               inputmode="decimal" class="field-input min-h-0 w-24 py-1 text-right tabular-nums" data-action="batch-shares#update"
+                               aria-label="<%= t(".percent_of_conversion", number: conversion.display_number) %>">
+                        <output class="block w-36 text-right leading-tight tabular-nums whitespace-nowrap" data-takes aria-live="polite">
+                          <span class="block" data-takes-gross>—</span>
+                          <span class="block text-xs text-ink-muted" data-takes-net></span>
+                        </output>
+                      </div>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+          <h2 class="mb-2 text-sm font-semibold tracking-wide text-ink-muted uppercase"><%= t(".invoices") %></h2>
+        <% end %>
+        <% if @invoices.any? %>
         <div class="overflow-x-auto panel">
           <table class="data-table data-table-compact" data-batch-invoice-choices>
             <thead>
@@ -90,6 +139,9 @@
           </table>
         </div>
         <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame:, extra_params: { picker:, modal_frame: window }.compact %>
+        <% else %>
+          <p class="empty-state"><%= t(".empty") %></p>
+        <% end %>
         <div class="sticky bottom-4 mt-4 flex flex-wrap items-center justify-between gap-3 clay p-3">
           <div class="grid gap-1">
             <p class="text-sm" data-batch-shares-target="summary" aria-live="polite"><%= t(".none_marked") %></p>

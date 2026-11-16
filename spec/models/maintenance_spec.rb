@@ -151,6 +151,26 @@ RSpec.describe Maintenance do
       expect(shipment.reload.coffee_batches).to be_empty
       expect(CoffeeBatchInvoice.count).to eq(0)
     end
+
+    it "takes finished processes too, and leaves without a lot a shipment it cannot fill whole (Fernando, 2026-11-16)" do
+      producer = create(:producer)
+      invoice = invoice_for(producer, gross: 600, at: 3.days.ago)
+      conversion = create(:coffee_conversion, :finished, from_state: "cherry", weighed_at: 3.days.ago)
+      conversion.update_columns(finished_at: 2.days.ago, output_gross_weight: 400, output_net_weight: 196)
+      filled = create(:shipment, departed_at: 1.day.ago, origin_gross_weight: 900)
+      short = create(:shipment, departed_at: Time.current, origin_gross_weight: 500)
+
+      preview = run(Maintenance::BatchesBackfill)
+      expect(lines(preview)).to include("1 salida no se puede llenar completa y se queda sin lote: #{short.display_number}.",
+                                        a_string_starting_with("Factura #{invoice.display_number}: 100 %"),
+                                        a_string_starting_with("Proceso #{conversion.audit_label}: 75 %"))
+
+      run(Maintenance::BatchesBackfill, apply: true)
+      batch = filled.reload.coffee_batches.sole
+      expect(batch.batch_conversions.sole).to have_attributes(coffee_conversion: conversion, percent: 75, gross_weight: 300)
+      expect(batch.gross_weight).to eq(900)
+      expect(short.reload.coffee_batches).to be_empty
+    end
   end
 
   describe "integrity:check" do
