@@ -88,6 +88,7 @@ RSpec.describe "Sorting every list" do
     SupplyExitFilter => -> { sales_supply_exits_path },
     CoffeeVarietyFilter => -> { farms_coffee_varieties_path },
     OwnerLoanFilter => -> { finance_owner_loans_path },
+    BatchInvoiceFilter => -> { new_sales_coffee_batch_invoice_path(CoffeeBatch.first) },
     CoffeeCollectionFilter => -> { loans_coffee_collection_path },
     SupplyEntryFilter => -> { sales_supply_stock_path },
     IdleProducerFilter => -> { trading_idle_producers_path },

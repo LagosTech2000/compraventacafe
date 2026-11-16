@@ -98,7 +98,9 @@
       </div>
       <% payments.each do |payment| %>
         <div class="flex justify-between gap-4 py-0.5">
-          <dt><%= t("trading.invoices.show.payment", number: payment.display_number, date: l(payment.paid_on), method: payment.human_payment_method) %></dt>
+          <%# «Pago» when it left nothing to pay, «Abono» otherwise (Fernando, 2026-11-16). %>
+          <dt><%= t(payment.balance_after.positive? ? "trading.invoices.show.payment" : "trading.invoices.show.payment_full",
+                    number: payment.display_number, date: l(payment.paid_on), method: payment.human_payment_method) %></dt>
           <dd class="tabular-nums">− <%= format_money(payment.amount) %></dd>
         </div>
       <% end %>

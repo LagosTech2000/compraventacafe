@@ -1,0 +1,121 @@
+<% state_name = @row.human_coffee_state %>
+<% factor = number_to_percentage(@row.factor_percent, precision: 2, strip_insignificant_zeros: true) %>
+<% content_for :title, t(".title", state: state_name) %>
+
+<div class="space-y-6" data-stock-check>
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title", state: state_name) %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".summary", warehouse: @warehouse&.name || t(".all_warehouses")) %></p>
+  </div>
+
+  <section class="panel p-4" aria-labelledby="check-figures">
+    <h2 id="check-figures" class="font-semibold"><%= t(".figures") %></h2>
+    <dl class="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+      <div><dt class="text-xs text-ink-muted"><%= t("sales.net_check.gross") %></dt><dd class="font-semibold tabular-nums"><%= format_pounds(@row.gross) %></dd></div>
+      <div><dt class="text-xs text-ink-muted"><%= t(".expected", factor:) %></dt><dd class="font-semibold tabular-nums"><%= format_pounds(@row.expected_net) %></dd></div>
+      <div><dt class="text-xs text-ink-muted"><%= t("sales.net_check.net") %></dt><dd class="font-semibold tabular-nums"><%= format_pounds(@row.net) %></dd></div>
+      <div><dt class="text-xs text-ink-muted"><%= t("sales.net_check.difference") %></dt><dd class="font-semibold tabular-nums <%= "text-danger" if @row.difference.negative? %>" data-check-difference><%= signed_pounds(@row.difference) %></dd></div>
+    </dl>
+    <p class="mt-3 text-sm"><%= t(@coffee_state == "cherry" ? ".formula_cherry" : ".formula", factor:) %></p>
+  </section>
+
+  <section class="panel p-4" aria-labelledby="check-parts">
+    <h2 id="check-parts" class="font-semibold"><%= t(".parts.title") %></h2>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".parts.help", factor:) %></p>
+    <div class="mt-3 overflow-x-auto">
+      <table class="data-table data-table-compact" data-controller="table-sort">
+        <thead>
+          <tr>
+            <th><%= t(".parts.what") %></th>
+            <th class="text-right"><%= t("sales.net_check.gross") %></th>
+            <th class="text-right"><%= t(".parts.net") %></th>
+            <th class="text-right"><%= t(".parts.effect") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @parts.each do |part| %>
+            <tr data-check-part="<%= part.key %>">
+              <td><%= t(".parts.keys.#{part.key}") %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= signed_pounds(part.gross) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= signed_pounds(part.net) %></td>
+              <td class="whitespace-nowrap text-right font-semibold tabular-nums <%= "text-danger" if part.effect.negative? %>"><%= signed_pounds(part.effect) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="3" class="text-right"><%= t(".parts.total") %></th>
+            <th class="text-right tabular-nums"><%= signed_pounds(@parts.sum(0.to_d, &:effect)) %></th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <p class="mt-2 text-xs text-ink-muted"><%= t(".parts.signs") %></p>
+  </section>
+
+  <section class="panel p-4" aria-labelledby="check-purchases">
+    <h2 id="check-purchases" class="font-semibold"><%= t(".purchases.title") %></h2>
+    <dl class="mt-3 space-y-3 text-sm">
+      <div>
+        <dt class="font-medium"><%= t(".purchases.tare", pounds: format_pounds(@purchases[:tare]), effect: signed_pounds(@purchases[:tare_effect])) %></dt>
+        <dd class="text-ink-muted"><%= t(".purchases.tare_help") %></dd>
+      </div>
+      <% unless @coffee_state == "cherry" %>
+        <div>
+          <dt class="font-medium"><%= t(".purchases.damage", pounds: format_pounds(@purchases[:damage]), effect: signed_pounds(@purchases[:damage_effect])) %></dt>
+          <dd class="text-ink-muted"><%= t(".purchases.damage_help") %></dd>
+        </div>
+      <% end %>
+      <div>
+        <dt class="font-medium"><%= t(@coffee_state == "cherry" ? ".purchases.other_cherry" : ".purchases.other", effect: signed_pounds(@purchases[:other_effect])) %></dt>
+        <dd class="text-ink-muted"><%= t(@coffee_state == "cherry" ? ".purchases.other_cherry_help" : ".purchases.other_help", factor:) %></dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="panel p-4" aria-labelledby="check-shipments">
+    <h2 id="check-shipments" class="font-semibold"><%= t(".shipments.title") %></h2>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".shipments.help", factor:) %></p>
+    <% if @shipments.any? %>
+      <div class="mt-3 overflow-x-auto">
+        <table class="data-table data-table-compact" data-controller="table-sort">
+          <thead>
+            <tr>
+              <th><%= t(".shipments.number") %></th>
+              <th><%= t(".shipments.date") %></th>
+              <th><%= t(".shipments.takes") %></th>
+              <th class="text-right"><%= t("sales.net_check.gross") %></th>
+              <th class="text-right"><%= t(".shipments.net") %></th>
+              <th class="text-right"><%= t(".shipments.expected", factor:) %></th>
+              <th class="text-right"><%= t(".parts.effect") %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @shipments.each do |item| %>
+              <tr data-check-shipment="<%= item.label %>">
+                <td><%= modal_link_to t(".shipments.remission", number: item.label), sales_shipment_path(item.record), class: "link" %></td>
+                <td class="whitespace-nowrap"><%= l(item.at.to_date) %></td>
+                <td><%= t(item.with_lots ? ".shipments.with_lots" : ".shipments.without_lots") %></td>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(item.gross) %></td>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(item.net) %></td>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(item.expected) %></td>
+                <td class="whitespace-nowrap text-right font-semibold tabular-nums <%= "text-danger" if item.effect.negative? %>"><%= signed_pounds(item.effect) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <p class="mt-3 text-sm text-ink-muted"><%= t(".shipments.empty") %></p>
+    <% end %>
+  </section>
+
+  <section class="panel p-4" aria-labelledby="check-sacks">
+    <h2 id="check-sacks" class="font-semibold"><%= t(".sacks.title") %></h2>
+    <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
+      <div><dt class="text-xs text-ink-muted"><%= t("sales.net_check.expected_sacks") %></dt><dd class="font-semibold tabular-nums"><%= number_with_precision(@row.expected_sacks, precision: 2) %></dd></div>
+      <div><dt class="text-xs text-ink-muted"><%= t("sales.net_check.sacks") %></dt><dd class="font-semibold tabular-nums"><%= number_with_precision(@row.sacks, precision: 2) %></dd></div>
+    </dl>
+    <p class="mt-3 text-sm"><%= t(".sacks.help", counted: @purchases[:counted], estimated: @purchases[:estimated]) %></p>
+  </section>
+</div>

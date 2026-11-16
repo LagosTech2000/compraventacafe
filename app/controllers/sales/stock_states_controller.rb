@@ -13,6 +13,8 @@ module Sales
       @first_out = @lots.group_by { [ it.coffee_state, it.warehouse_id ] }.values.map(&:first)
       stock = CoffeeStock.new(warehouse: @warehouse)
       @rows = @coffee_state ? [ stock.row(@coffee_state) ] : stock.rows
+      check = StockCheck.new(stock:, warehouse: @warehouse, lots: engine.lots(warehouse_id: @warehouse&.id))
+      @check_rows = @coffee_state ? [ check.row(@coffee_state) ] : check.rows
       @alert = CherryAlert.new(lots: engine, warehouse_id: @warehouse&.id) if @coffee_state.in?([ nil, "cherry" ])
       @warehouses = Warehouse.where(id: @lots.map(&:warehouse_id).uniq).or(Warehouse.active).alphabetical
     end

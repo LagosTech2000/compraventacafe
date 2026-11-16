@@ -1410,6 +1410,7 @@ es:
         loan_payment: "Abono a préstamo N.º %{number}"
         amount_to_pay: "Total a pagar"
         payment: "Abono %{number} · %{date} · %{method}"
+        payment_full: "Pago %{number} · %{date} · %{method}"
         balance_due: "Saldo pendiente"
         settled: "Cancelada"
         edit: "Editar factura"
@@ -1868,6 +1869,55 @@ es:
         other: "%{pounds} lb netas de uva llevan demasiadas horas sin procesar (%{count} lotes)"
       item: "Entró el %{entered} · %{hours} h en bodega · %{pounds} lb netas"
       process: "Procesar uva"
+    stock_checks:
+      show:
+        title: "Netas de %{state}, revisadas"
+        summary: "Por qué las netas calculadas no son las esperadas. Bodega: %{warehouse}. Al día de hoy."
+        all_warehouses: "todas"
+        figures: "Lo que dice el inventario"
+        expected: "Netas esperadas (brutas × %{factor})"
+        formula: "Cada compra calcula sus netas por separado: (brutas − tara) × (1 − humedad) × (1 − daño). Con la humedad de siempre (51 % en húmedo, 12 % en seco) y sin daño, eso es casi brutas × %{factor}; la tara, el daño y otra humedad lo bajan o lo suben."
+        formula_cherry: "Cada compra de uva calcula sus netas por separado: (brutas − tara) × rendimiento. Con el rendimiento de siempre eso es casi brutas × %{factor}; la tara y otro rendimiento lo bajan o lo suben."
+        parts:
+          title: "De dónde sale la diferencia"
+          help: "Cada movimiento de este estado: sus netas menos sus brutas × %{factor}. Las compras y lo que entra suman; lo que sale resta. Juntos dan la diferencia."
+          what: "Movimiento"
+          net: "Libras netas"
+          effect: "Efecto en la diferencia"
+          total: "Diferencia"
+          signs: "Efecto negativo: deja menos netas en el inventario que brutas × el porcentaje. Positivo: deja más. Puede haber un centavo de diferencia por el redondeo."
+          keys:
+            purchases: "Compras"
+            shipments: "Salidas de vehículo"
+            processes_in: "Procesos que dieron este café"
+            processes_out: "Café que se mandó a procesar"
+            transfers_in: "Traslados que entraron a la bodega"
+            transfers_out: "Traslados que salieron de la bodega"
+        purchases:
+          title: "Las compras"
+          tare: "Tara: %{pounds} lb · efecto %{effect} lb"
+          tare_help: "1 lb por cada saco de 165 lb, redondeado hacia arriba en cada compra: una compra de 19 lb resta 1 lb de tara (el 5 %), una de 1,650 lb resta 10 lb (el 0.6 %). Muchas compras pequeñas restan más."
+          damage: "Daño: %{pounds} lb · efecto %{effect} lb"
+          damage_help: "Lo que cada compra restó por daño (amarillo, broca, verde, pulpa, pelado)."
+          other: "Humedad distinta y redondeos: efecto %{effect} lb"
+          other_help: "Compras con otra humedad que la de siempre (o que la de siempre no da exactamente %{factor}) y los centavos de libra de cada compra."
+          other_cherry: "Rendimiento distinto y redondeos: efecto %{effect} lb"
+          other_cherry_help: "Compras con otro rendimiento que el de siempre (%{factor}) y los centavos de libra de cada compra."
+        shipments:
+          title: "Las salidas que mueven la diferencia"
+          help: "Una salida con lotes saca del inventario las netas de las compras de sus lotes (con su tara y su daño); sin lotes, saca las netas de su báscula local, calculadas con la humedad y el daño que se escribieron en la salida. Si se lleva menos netas que sus brutas × %{factor}, deja más netas en el inventario; si se lleva más, deja menos. Las que más mueven van primero."
+          number: "Remisión"
+          remission: "Remisión %{number}"
+          date: "Salió"
+          takes: "Saca"
+          with_lots: "Lo de sus lotes"
+          without_lots: "Su báscula local"
+          net: "Netas que sacó"
+          expected: "Brutas × %{factor}"
+          empty: "No hay salidas de este estado."
+        sacks:
+          title: "Los sacos"
+          help: "Sacos esperados: las brutas que quedan ÷ 165. Sacos calculados: lo que queda de los sacos de cada compra; cuando sale parte de una compra, sus sacos bajan en la misma proporción que sus libras. Una compra por pesadas lleva los sacos contados (%{counted} compras); una por peso directo, brutas ÷ 165 (%{estimated} compras): ahí los sacos son una estimación, no un conteo."
     stock_states:
       show:
         process: "Procesar"
@@ -1888,6 +1938,18 @@ es:
           help: "Cada compra o proceso que todavía tiene café, con su fecha y cuánto lleva en bodega. Cuando sale café sin lotes de salida, sale primero el más viejo; una salida con lotes saca el de sus compras."
           card_line: "Quedan %{left_gross} lb brutas (%{left} netas) de %{entered_gross} (%{entered} netas) · %{value}"
           empty: "No queda café de este estado."
+    net_check:
+      title: "Netas y sacos, revisados"
+      help: "Netas esperadas: las libras brutas por el porcentaje de siempre de ese estado. Netas calculadas: las de cada compra por separado (con su tara, daño y humedad), menos lo que salió. Los sacos igual: brutas ÷ 165 contra lo que queda de los sacos de cada compra."
+      gross: "Libras brutas"
+      expected_net: "Netas esperadas"
+      factor: "brutas × %{factor}"
+      net: "Netas calculadas"
+      difference: "Diferencia"
+      expected_sacks: "Sacos esperados (÷ 165)"
+      sacks: "Sacos calculados"
+      why: "¿Por qué?"
+      empty: "No hay café en inventario."
     stock:
       title: "Café en inventario"
       as_of: "Al %{date}"
@@ -2078,6 +2140,9 @@ es:
         over: "%{count} marcadas: %{pounds} lb brutas, más de las %{room} que caben. Baja la parte de alguna."
         none_marked: "Ninguna marcada"
         conversions: "Procesos terminados"
+        show_taken: "Mostrar las que ya están en lotes"
+        taken_mark: "La factura %{number} ya está en lotes"
+        in_lots_value: "Ya en %{lots}"
         invoices: "Facturas de compra"
         conversion: "Proceso"
         finished_at: "Terminó"
@@ -7157,6 +7222,17 @@ es:
               - "Escribe las libras brutas que se trasladan; a la derecha se ven las netas que equivalen en esa bodega."
             tips:
               - "Si es más de lo que hay en la bodega de salida, el sistema avisa pero deja guardar."
+        stock_checks:
+          show:
+            title: "Netas revisadas"
+            summary: "Por qué las netas calculadas de un estado del café no son sus brutas × el porcentaje de siempre, y sus sacos no son brutas ÷ 165. Solo administradores."
+            steps:
+              - "Arriba, lo que dice el inventario: brutas, netas esperadas, netas calculadas y la diferencia."
+              - "«De dónde sale la diferencia»: compras, salidas, procesos y traslados, cada uno con su efecto; juntos dan la diferencia."
+              - "«Las compras»: cuánto restaron la tara, el daño y la humedad distinta."
+              - "«Las salidas»: cada salida con lo que sacó y su efecto; abre la salida para revisarla."
+            tips:
+              - "Una salida sin lotes saca las netas de su báscula local: si su humedad o daño no son los de las compras, mueve la diferencia."
         stock_states:
           show:
             title: "Detalle del inventario"
