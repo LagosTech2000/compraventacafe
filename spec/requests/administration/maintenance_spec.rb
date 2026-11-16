@@ -20,7 +20,7 @@ RSpec.describe "Data maintenance" do
 
     sign_in exporter
     get administration_root_path
-    expect(response.body).to include(administration_maintenance_tasks_path)
+    expect(response.body).to include(administration_control_center_path)
   end
 
   it "lists every task with what it does, how it leaves the system and its command" do

@@ -190,4 +190,23 @@ RSpec.describe Maintenance do
       expect(FarmPlot.count).to eq(0)
     end
   end
+
+  describe "integrity:sales and sales:recalculate" do
+    it "finds a sale that does not match its shipments, recalculates it and is undone" do
+      sale = create(:sale, user: admin)
+      line = sale.lines.sole
+      expect(run(Maintenance::Sales).status).to eq("ok")
+
+      line.update_columns(net_weight: line.net_weight + 50, amount: line.amount + 100)
+      sale.update_columns(net_weight: sale.net_weight + 50, total: sale.total + 100)
+      expect(lines(run(Maintenance::Sales))).to include(a_string_starting_with("Venta #{sale.display_number}: la remisión"))
+
+      applied = run(Maintenance::SalesRecalculate, apply: true)
+      expect(sale.reload.net_weight).to eq(sale.shipments.sole.destination_net_weight)
+      expect(run(Maintenance::Sales).status).to eq("ok")
+
+      Maintenance::Runner.revert(applied, user: admin)
+      expect(sale.reload.net_weight).to eq(sale.shipments.sole.destination_net_weight + 50)
+    end
+  end
 end

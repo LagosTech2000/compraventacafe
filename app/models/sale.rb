@@ -207,6 +207,13 @@ class Sale < ApplicationRecord
   # ones taken off are free again; other shipments of the buyer weighed at
   # destination and free can come in, of its coffee state). Weights, line
   # amounts and total are worked out again. All of it or nothing.
+  # After a shipment's scales changed (Fernando, 2026-11-15): the same
+  # shipments, price and dates, its weights, lines and total again.
+  def recalculate_weights!
+    revise!({ sold_on:, price_unit:, unit_price:, quintal_pounds:, buyer_document_number:, observations: },
+            shipment_ids: lines.active.pluck(:shipment_id))
+  end
+
   def revise!(attributes, shipment_ids:)
     transaction do
       lock!

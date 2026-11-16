@@ -33,7 +33,7 @@
       </thead>
       <tbody>
         <%# One row per submodule, after its module's name. %>
-        <% AppModule::SUBMODULES.each do |key, submodules| %>
+        <% AppModule::KEYS.map { [ it, AppModule.offered_submodules(it) ] }.each do |key, submodules| %>
           <% submodules.each do |submodule_key| %>
             <% permission_key = "#{key}.#{submodule_key}" %>
             <tr>

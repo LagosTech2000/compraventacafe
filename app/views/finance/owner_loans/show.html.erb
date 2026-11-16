@@ -1,0 +1,76 @@
+<% content_for :title, @loan.audit_label %>
+<%= live_updates_from :finance %>
+<%= render "finance/nav" %>
+<%= render "shared/breadcrumbs", crumbs: [ [ t("finance.nav.owner_loans"), finance_owner_loans_path ], [ @loan.display_number ] ] %>
+
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title", lender: @loan.lender_name) %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".subtitle", owner: @loan.owner_name, date: l(@loan.disbursed_on, format: :long)) %>
+      <span class="badge <%= { "paid" => "badge-success", "overdue" => "badge-danger" }.fetch(@loan.status, "badge-neutral") %>"><%= @loan.human_status %></span></p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <% if !@loan.paid? && policy(OwnerLoanPayment).create? %>
+      <%= modal_link_to t(".new_payment"), new_finance_owner_loan_payment_path(@loan), class: "btn btn-primary" %>
+    <% end %>
+    <% if policy(@loan).update? %>
+      <%= modal_link_to t(".edit"), edit_finance_owner_loan_path(@loan), class: "btn" %>
+    <% end %>
+  </div>
+</div>
+
+<dl class="mt-6 flex flex-wrap gap-3">
+  <% { principal: format_money(@loan.principal), principal_paid: format_money(@balance.principal_paid), interest_paid: format_money(@balance.interest_paid),
+       principal_owed: format_money(@balance.principal_owed), interest_owed: format_money(@balance.interest_owed), owed: format_money(@balance.total_owed) }.each do |key, value| %>
+    <div class="stat min-w-0 flex-1 basis-40"><dt><%= t(".figures.#{key}") %></dt><dd><%= value %></dd></div>
+  <% end %>
+</dl>
+
+<dl class="mt-4 grid gap-3 panel p-4 text-sm sm:grid-cols-2">
+  <% { monthly_interest_rate: format_percent(@loan.monthly_interest_rate), due_on: (@loan.due_on && l(@loan.due_on)),
+       money_account: @loan.money_account&.name, observations: @loan.observations }.each do |key, value| %>
+    <div><dt class="text-xs text-ink-muted"><%= OwnerLoan.human_attribute_name(key) %></dt><dd><%= value.presence || "—" %></dd></div>
+  <% end %>
+</dl>
+
+<section class="mt-8" aria-labelledby="owner-loan-payments">
+  <h2 id="owner-loan-payments" class="mb-3 text-lg font-semibold"><%= t(".payments") %></h2>
+  <% if @loan.payments.any? %>
+    <div class="overflow-x-auto panel">
+      <table class="data-table data-table-compact" data-controller="table-sort" data-owner-loan-payments>
+        <thead>
+          <tr>
+            <th><%= OwnerLoanPayment.human_attribute_name(:paid_on) %></th>
+            <th class="text-right"><%= OwnerLoanPayment.human_attribute_name(:amount) %></th>
+            <th class="text-right"><%= OwnerLoanPayment.human_attribute_name(:interest_amount) %></th>
+            <th class="text-right"><%= OwnerLoanPayment.human_attribute_name(:principal_amount) %></th>
+            <th><%= OwnerLoanPayment.human_attribute_name(:payment_method) %></th>
+            <th><%= OwnerLoanPayment.human_attribute_name(:money_account) %></th>
+            <th class="cell-actions" data-sort="false"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% last = @loan.payments.last %>
+          <% @loan.payments.each do |payment| %>
+            <tr id="<%= dom_id(payment) %>">
+              <td class="whitespace-nowrap"><%= l(payment.paid_on) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(payment.amount) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(payment.interest_amount) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(payment.principal_amount) %></td>
+              <td><%= payment.human_payment_method %></td>
+              <td><%= payment.money_account&.name || "—" %></td>
+              <td class="cell-actions">
+                <% if payment == last && policy(payment).destroy? %>
+                  <%= button_to t(".remove_payment"), finance_owner_loan_payment_path(@loan, payment), method: :delete, class: "btn btn-sm",
+                        form: { data: { turbo_confirm: t(".confirm_remove") } } %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p class="empty-state"><%= t(".no_payments") %></p>
+  <% end %>
+</section>

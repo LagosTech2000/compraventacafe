@@ -7,7 +7,7 @@ module Maintenance
     self.tier = :check
     self.area = :general
 
-    PARTS = [ Inventory, Shipments, Money, CashCounts, Expenses ].freeze
+    PARTS = [ Inventory, Shipments, Sales, Money, CashCounts, Expenses ].freeze
 
     def sections
       parts = PARTS.flat_map do |task|

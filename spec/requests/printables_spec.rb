@@ -97,7 +97,7 @@ RSpec.describe "Printable documents" do
     expect(letterheads.map { |header| header.text.squish }).to all(include("Pago parcial"))
 
     get trading_invoice_payment_path(invoice, invoice.payments.first)
-    expect_letterhead("Recibo de pago", count: 2)
+    expect_letterhead("Recibo de abono", count: 2)
   end
 
   it "puts it on loan payment receipts, payroll payment sheets, the daily close, credit accounts and reports" do

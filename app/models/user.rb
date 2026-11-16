@@ -42,11 +42,14 @@ class User < ApplicationRecord
     raise ArgumentError, "unknown action: #{action}" unless AppModule::ACTIONS.include?(action)
 
     return false unless active?
+    # A development quoted apart that is off exists only for the data exporter (PaidFeature).
+    locked = !data_exporter? && submodule_key && PaidFeature.locked?(permission_key)
+    return false if locked
     return true if admin?
 
     permissions.any? do |permission|
       permission.module_key == module_key && (submodule_key.nil? || permission.submodule_key == submodule_key) &&
-        permission.allows?(action)
+        permission.allows?(action) && (data_exporter? || !PaidFeature.locked?("#{permission.module_key}.#{permission.submodule_key}"))
     end
   end
 

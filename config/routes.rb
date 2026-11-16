@@ -59,6 +59,11 @@ Rails.application.routes.draw do
     resources :private_documents, only: %i[ index show edit update ]
     # The data backup: a .zip with the database dump and a CSV per table.
     resource :backup, only: %i[ show create ]
+    # Centro de control (only User::DATA_EXPORTER_ID): the developments
+    # quoted apart (PaidFeature) and the data maintenance tasks.
+    resource :control_center, only: :show
+    resource :control_setting, only: :update
+    resources :paid_features, only: :update
     # Data maintenance tasks (Maintenance, only User::DATA_EXPORTER_ID).
     resources :maintenance_runs, path: "maintenance/runs", only: %i[ create show ] do
       member { post :revert }
@@ -117,6 +122,8 @@ Rails.application.routes.draw do
       patch :void, on: :member
       # Weighed on the buyer's scale.
       resource :arrival, only: %i[ edit update ]
+      # Removes one of its scales (Fernando, 2026-11-15).
+      delete "scales/:side", to: "shipment_scales#destroy", as: :scale, constraints: { side: /origin|destination/ }
       # Its remission, to print (as the client's booklet).
       resource :remission, only: :show
       # What it cost (Fernando, 2026-11-12): its lots (2026-11-13), costs
@@ -199,6 +206,10 @@ Rails.application.routes.draw do
     # The payroll sheet: fortnight (with its attendance), month and history.
     resource :staff_sheet, path: "staff/sheet", only: %i[ show update ] do
       post :pay
+    end
+    # The owners' loans from a bank or another person (a development quoted apart, PaidFeature).
+    resources :owner_loans, path: "owner-loans", except: :destroy do
+      resources :payments, controller: "owner_loan_payments", only: %i[ new create destroy ]
     end
     resources :staff_members, path: "staff" do
       resources :staff_payments, path: "payments", only: %i[ new create show destroy ]

@@ -1,0 +1,44 @@
+<%# An owners' loan: who owes it, to whom, how much, its rate (0 = none) and, optionally, the account the money came into. %>
+<%= form_with model: [ :finance, loan ], class: form_surface_class("space-y-5"), data: { controller: "form-validation" } do |form| %>
+  <%= render "shared/form_errors", record: loan %>
+  <%= form.hidden_field :lock_version if loan.persisted? %>
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div>
+      <%= form.label :owner_name, class: "field-label" %>
+      <%= form.text_field :owner_name, required: true, maxlength: 120, autofocus: true, class: "field-input", placeholder: t("finance.owner_loans.form.owner_placeholder") %>
+    </div>
+    <div>
+      <%= form.label :lender_name, class: "field-label" %>
+      <%= form.text_field :lender_name, required: true, maxlength: 120, class: "field-input", placeholder: t("finance.owner_loans.form.lender_placeholder") %>
+    </div>
+    <div>
+      <%= form.label :principal, class: "field-label" %>
+      <%= form.number_field :principal, required: true, min: 0.01, max: OwnerLoan::MAX_AMOUNT - 0.01, step: 0.01, inputmode: "decimal", class: "field-input text-lg" %>
+    </div>
+    <div>
+      <%= form.label :monthly_interest_rate, class: "field-label" %>
+      <%= form.number_field :monthly_interest_rate, required: true, min: 0, max: 99.99, step: 0.001, inputmode: "decimal", class: "field-input" %>
+      <p class="mt-1 text-xs text-ink-muted"><%= t("finance.owner_loans.form.rate_help") %></p>
+    </div>
+    <div>
+      <%= form.label :disbursed_on, class: "field-label" %>
+      <%= form.date_field :disbursed_on, required: true, class: "field-input" %>
+    </div>
+    <div>
+      <%= form.label :due_on, class: "field-label" %>
+      <%= form.date_field :due_on, class: "field-input" %>
+    </div>
+    <div class="sm:col-span-2">
+      <%= render "shared/money_account_field", form: %>
+      <p class="mt-1 text-xs text-ink-muted"><%= t("finance.owner_loans.form.account_help") %></p>
+    </div>
+    <div class="sm:col-span-2">
+      <%= form.label :observations, class: "field-label" %>
+      <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+    </div>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= cancel_button finance_owner_loans_path %>
+  </div>
+<% end %>

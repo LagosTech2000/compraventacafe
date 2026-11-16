@@ -60,7 +60,7 @@ RSpec.describe "User settings", type: :system do
     drawer.click_link "Registrar abono"
 
     expect(page).to have_css("dialog.drawer[open]", count: 1)
-    expect(drawer).to have_css("h1", text: "Registrar abono")
+    expect(drawer).to have_css("h1", text: "Pago de la factura de compra de café")
     drawer.click_button "Atrás"
 
     expect(drawer).to have_link("Registrar abono")

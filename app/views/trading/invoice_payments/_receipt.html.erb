@@ -4,7 +4,7 @@
 <% person = invoice.producer.person %>
 <% balance_after = payment.balance_after %>
 <article class="rounded-2xl border border-line bg-white p-5 shadow-[0_1px_2px_rgb(29_21_18/0.04)] break-inside-avoid print:p-3 print:shadow-none print:rounded-none print:border-ink">
-  <%= render "shared/print_letterhead", title: t("trading.invoice_payments.receipt.title"), number: payment.display_number, label: %>
+  <%= render "shared/print_letterhead", title: t(balance_after.positive? ? "trading.invoice_payments.receipt.title_partial" : "trading.invoice_payments.receipt.title"), number: payment.display_number, label: %>
 
   <dl class="mt-4 grid grid-cols-1 gap-x-6 gap-y-1 text-sm min-[30rem]:grid-cols-2 print:mt-2 print:grid-cols-2">
     <div><dt class="inline font-semibold"><%= t("trading.invoice_payments.receipt.producer") %>:</dt> <dd class="inline"><%= person.full_name %></dd></div>

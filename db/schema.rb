@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -216,6 +216,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["person_id"], name: "index_collaborators_on_person_id", unique: true
+  end
+
+  create_table "control_settings", force: :cascade do |t|
+    t.decimal "hourly_rate", precision: 12, scale: 2, default: "100.0", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "departments", force: :cascade do |t|
@@ -542,12 +548,62 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
     t.index ["received_on"], name: "index_other_incomes_on_received_on"
   end
 
+  create_table "owner_loan_payments", force: :cascade do |t|
+    t.bigint "owner_loan_id", null: false
+    t.date "paid_on", null: false
+    t.decimal "amount", precision: 14, scale: 2, null: false
+    t.decimal "interest_amount", precision: 14, scale: 2, default: "0.0", null: false
+    t.decimal "principal_amount", precision: 14, scale: 2, default: "0.0", null: false
+    t.string "payment_method", null: false
+    t.bigint "money_account_id"
+    t.text "observations"
+    t.bigint "created_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_owner_loan_payments_on_created_by_id"
+    t.index ["money_account_id"], name: "index_owner_loan_payments_on_money_account_id"
+    t.index ["owner_loan_id"], name: "index_owner_loan_payments_on_owner_loan_id"
+    t.index ["paid_on"], name: "index_owner_loan_payments_on_paid_on"
+  end
+
+  create_table "owner_loans", force: :cascade do |t|
+    t.string "owner_name", null: false
+    t.string "lender_name", null: false
+    t.date "disbursed_on", null: false
+    t.date "due_on"
+    t.decimal "principal", precision: 14, scale: 2, null: false
+    t.decimal "monthly_interest_rate", precision: 6, scale: 3, default: "0.0", null: false
+    t.bigint "money_account_id"
+    t.date "paid_off_on"
+    t.text "observations"
+    t.bigint "created_by_id", null: false
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_owner_loans_on_created_by_id"
+    t.index ["disbursed_on"], name: "index_owner_loans_on_disbursed_on"
+    t.index ["money_account_id"], name: "index_owner_loans_on_money_account_id"
+  end
+
   create_table "page_visits", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "path", null: false
     t.string "title"
     t.datetime "visited_at", null: false
     t.index ["user_id", "visited_at"], name: "index_page_visits_on_user_id_and_visited_at"
+  end
+
+  create_table "paid_features", force: :cascade do |t|
+    t.string "key", null: false
+    t.boolean "enabled", default: false, null: false
+    t.decimal "agreed_price", precision: 14, scale: 2
+    t.text "notes"
+    t.datetime "enabled_at"
+    t.bigint "enabled_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["enabled_by_id"], name: "index_paid_features_on_enabled_by_id"
+    t.index ["key"], name: "index_paid_features_on_key", unique: true
   end
 
   create_table "payroll_attendances", force: :cascade do |t|
@@ -1373,7 +1429,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
   add_foreign_key "municipalities", "departments"
   add_foreign_key "other_incomes", "money_accounts"
   add_foreign_key "other_incomes", "users", column: "created_by_id"
+  add_foreign_key "owner_loan_payments", "money_accounts"
+  add_foreign_key "owner_loan_payments", "owner_loans"
+  add_foreign_key "owner_loan_payments", "users", column: "created_by_id"
+  add_foreign_key "owner_loans", "money_accounts"
+  add_foreign_key "owner_loans", "users", column: "created_by_id"
   add_foreign_key "page_visits", "users", on_delete: :cascade
+  add_foreign_key "paid_features", "users", column: "enabled_by_id"
   add_foreign_key "payroll_attendances", "payroll_members"
   add_foreign_key "payroll_expenses", "expense_categories"
   add_foreign_key "payroll_expenses", "money_accounts"

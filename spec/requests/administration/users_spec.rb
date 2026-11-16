@@ -36,8 +36,9 @@ RSpec.describe "Administration::Users" do
     it "shows a permission row for every module and every tab on the new form" do
       get new_administration_user_path
       AppModule::KEYS.each { |key| expect(response.body).to include(CGI.escapeHTML(AppModule.human_name(key))) }
+      # Without the tabs of a development quoted apart that is off (PaidFeature).
       expect(page.css("input[type=hidden][name$='[submodule_key]']").map { it["value"] })
-        .to eq(AppModule::SUBMODULES.values.flatten)
+        .to eq(AppModule::SUBMODULES.values.flatten - %w[owner_loans])
       expect(page.css("tbody[data-controller='permission-matrix']").size).to eq(AppModule::KEYS.size)
     end
 

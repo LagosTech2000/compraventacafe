@@ -31,6 +31,7 @@ class Shipment < ApplicationRecord
   # What each side's calculation reads.
   INPUTS = %w[gross_weight sacks humidity_percent damage_percent yield_factor].freeze
   ORIGIN_COLUMNS = (INPUTS + %w[tare net_weight]).map { "origin_#{it}" }.freeze
+  DESTINATION_COLUMNS = (INPUTS + %w[tare net_weight]).map { "destination_#{it}" }.freeze
   # The local scale: the gross weight and sacks typed, or the sums of
   # weighings (ShipmentWeighing), as in the purchases.
   WEIGHT_MODES = Purchase::WEIGHT_MODES
@@ -102,12 +103,17 @@ class Shipment < ApplicationRecord
 
   # Set when the destination weighing is saved: then it is required.
   attr_accessor :receiving
+  # An administrator's edit: the scales of a sold shipment may change (its sale follows).
+  attr_accessor :weights_by_admin
   # The form's «Sin báscula local», and whether whoever saves may use it
   # (administrators, set by the controller).
   attr_accessor :skip_origin, :origin_skippable
 
   # Completed after it was sold: its sale's local net follows.
-  after_update :refresh_sale_origin, if: -> { saved_change_to_origin_net_weight? && sold? }
+  # Its sale follows its weights (Fernando, 2026-11-15: «para tener todo
+  # cuadrado en las ventas»): an administrator edits the scales of a sold
+  # shipment and the sale works its lines and total out again.
+  after_update :refresh_sale_weights, if: -> { sold? && (saved_change_to_origin_net_weight? || saved_change_to_destination_net_weight?) }
   # The lots the form chose (Nueva salida, Fernando, 2026-11-13).
   after_save :take_batches, if: -> { @batch_ids }
 
@@ -272,6 +278,17 @@ class Shipment < ApplicationRecord
   # Not with costs registered from it: remove them first (as a process).
   def voidable? = !voided? && !sold? && costs.none?
 
+  # Removes the buyer's scale (Fernando, 2026-11-15): back to «en camino».
+  # Not while in a sale, which charges that weight.
+  def remove_destination!
+    raise ActiveRecord::RecordInvalid, self if sold? && errors.add(:base, :sold_destination)
+
+    DESTINATION_COLUMNS.each { self[it] = nil }
+    self.received_on = nil
+    self.weight_note_number = nil
+    save!
+  end
+
   def destination_entered?
     received_on.present? || INPUTS.any? { |input| public_send("destination_#{input}").present? }
   end
@@ -383,7 +400,9 @@ class Shipment < ApplicationRecord
       return unless sold?
 
       free = %w[updated_at lock_version observations carrier_id vehicle_id driver_id driver_name trip_price weight_note_number]
-      free += ORIGIN_COLUMNS + %w[origin_weight_mode] if origin_net_weight_in_database.nil?
+      free += ORIGIN_COLUMNS + %w[origin_weight_mode] if origin_net_weight_in_database.nil? || weights_by_admin
+      # An administrator changes its scales (not removes the buyer's: the sale charges it).
+      free += DESTINATION_COLUMNS + %w[received_on] if weights_by_admin && destination_net_weight.present?
       changed_inputs = (changed - free)
       errors.add(:base, :sold) if changed_inputs.any?
     end
@@ -406,9 +425,8 @@ class Shipment < ApplicationRecord
       weighings.each(&:mark_for_destruction)
     end
 
-    def refresh_sale_origin
-      active_sale_line.update!(origin_net_weight:)
-      sale.refresh_origin!
+    def refresh_sale_weights
+      sale.recalculate_weights!
     end
 
     def assign_season

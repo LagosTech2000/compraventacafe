@@ -9,6 +9,7 @@ module Maintenance
   TASKS = %w[
     Maintenance::IntegrityCheck
     Maintenance::Inventory Maintenance::Shipments Maintenance::ShipmentExpenseCandidates Maintenance::BatchesBackfill
+    Maintenance::Sales Maintenance::SalesRecalculate
     Maintenance::Money Maintenance::CashCounts Maintenance::Expenses
     Maintenance::SingleFarm Maintenance::PlotsFromLots
   ].freeze
