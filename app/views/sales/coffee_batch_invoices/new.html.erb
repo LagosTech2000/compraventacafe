@@ -28,6 +28,15 @@
     <%= filter_select form, :season_year, Purchase.human_attribute_name(:season_year),
           season_options(Purchase.where(coffee_state: @batch.coffee_state)), selected: @filter.season_year, all: t("shared.filters.all_seasons") %>
     <%= filter_select form, :zone_id, Purchase.human_attribute_name(:zone), Zone.ordered.pluck(:name, :id), selected: @filter.zone_id, all: t("shared.filters.all_zones") %>
+    <%# Administrators: the invoices already whole in lots, in grey, ticked by default. %>
+    <% if Current.user.admin? %>
+      <div class="flex items-end">
+        <label class="flex min-h-11 cursor-pointer items-center gap-2 text-sm font-medium">
+          <%= hidden_field_tag :show_taken, "0", id: nil %>
+          <%= check_box_tag :show_taken, "1", @show_taken, class: "size-4 accent-primary" %> <%= t("sales.coffee_batch_invoices.new.show_taken") %>
+        </label>
+      </div>
+    <% end %>
   <% end %>
 
   <%= list_frame frame do %>
@@ -88,26 +97,42 @@
         <% end %>
         <% if @invoices.any? %>
         <div class="overflow-x-auto panel">
-          <table class="data-table data-table-compact" data-batch-invoice-choices>
+          <% sorting = { filter: @filter, frame:, extra_params: { picker:, modal_frame: window, show_taken: ("0" if Current.user.admin? && !@show_taken) }.compact } %>
+          <table class="data-table data-table-compact" data-batch-invoice-choices <%= tag.attributes(data: table_sort_data(sorting)) %>>
             <thead>
               <tr>
                 <th class="cell-select w-10">
                   <input type="checkbox" class="size-4 accent-primary" id="batch_invoices_all" data-batch-shares-target="all"
                          data-action="batch-shares#toggleAll" aria-label="<%= t(".mark_all") %>" title="<%= t(".mark_all") %>">
                 </th>
-                <th><%= t("trading.invoices.index.number") %></th>
-                <th><%= t("trading.invoices.index.date") %></th>
-                <th><%= t("trading.invoices.index.producer") %></th>
-                <th class="text-right"><%= t(".gross") %></th>
-                <th class="text-right"><%= t(".net") %></th>
-                <th class="text-right"><%= t(".left") %></th>
-                <th class="text-right"><%= t(".percent") %></th>
+                <%= sort_th t("trading.invoices.index.number"), :number, sorting %>
+                <%= sort_th t("trading.invoices.index.date"), :date, sorting %>
+                <%= sort_th t("trading.invoices.index.producer"), :producer, sorting %>
+                <%= sort_th t(".gross"), :gross, sorting, class: "text-right" %>
+                <%= sort_th t(".net"), :net, sorting, class: "text-right" %>
+                <%= sort_th t(".left"), :free, sorting, class: "text-right" %>
+                <%= sort_th t(".percent"), :free, sorting, class: "text-right" %>
                 <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
               </tr>
             </thead>
             <tbody>
               <% @invoices.each do |invoice| %>
                 <% left = 100 - @used.fetch(invoice.id, 0).to_d %>
+                <%# Already whole in lots: in grey, to see and not to choose (administrators). %>
+                <% if left <= 0 %>
+                  <tr id="<%= dom_id(invoice, :choice) %>" class="text-ink-muted opacity-60" data-taken-invoice>
+                    <td class="cell-select"><input type="checkbox" disabled class="size-4" aria-label="<%= t(".taken_mark", number: invoice.display_number) %>"></td>
+                    <td class="tabular-nums"><%= invoice.display_number %></td>
+                    <td class="whitespace-nowrap"><%= l(invoice.issued_on) %></td>
+                    <td><%= invoice.producer.full_name %></td>
+                    <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(invoice.gross_weight) %></td>
+                    <td class="whitespace-nowrap text-right tabular-nums"><%= format_pounds(invoice.net_weight) %></td>
+                    <td class="whitespace-nowrap text-right tabular-nums">0%</td>
+                    <td class="text-right text-xs"><%= t(".in_lots_value", lots: @taken_lots.fetch(invoice.id, []).map { "#{it.coffee_batch.label} (#{number_to_percentage(it.percent, precision: 2, strip_insignificant_zeros: true)})" }.join(", ")) %></td>
+                    <td class="cell-actions"><%= modal_link_to t("shared.detail"), trading_invoice_path(invoice), class: "btn btn-sm" %></td>
+                  </tr>
+                  <% next %>
+                <% end %>
                 <tr id="<%= dom_id(invoice, :choice) %>" data-batch-shares-target="row" data-gross="<%= invoice.gross_weight %>" data-net="<%= invoice.net_weight %>">
                   <td class="cell-select">
                     <input type="checkbox" name="shares[<%= invoice.id %>][chosen]" value="1" class="size-4 accent-primary"
@@ -138,7 +163,7 @@
             </tbody>
           </table>
         </div>
-        <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame:, extra_params: { picker:, modal_frame: window }.compact %>
+        <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame:, extra_params: { picker:, modal_frame: window, show_taken: ("0" if Current.user.admin? && !@show_taken) }.compact %>
         <% else %>
           <p class="empty-state"><%= t(".empty") %></p>
         <% end %>

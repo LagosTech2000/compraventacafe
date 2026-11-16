@@ -107,7 +107,7 @@ RSpec.describe "Sales warehouses and lots" do
     value = page.at_css("[data-stock-value]").text.squish
     expect(value).to include("L #{ActiveSupport::NumberHelper.number_to_delimited(format("%.2f", older.total + newer.total))}",
                              "L #{format("%.2f", older.hauler_commission)}")
-    rows = page.css("tbody tr")
+    rows = page.css("tbody tr[id^=lot_]")
     expect(rows.map { it["id"] }).to eq([ "lot_purchase_#{newer.id}", "lot_purchase_#{older.id}" ])
     expect(rows.last.text).to include("Sale primero", "3 días")
 

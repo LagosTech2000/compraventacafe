@@ -100,6 +100,19 @@ RSpec.describe "Printable documents" do
     expect_letterhead("Recibo de abono", count: 2)
   end
 
+  it "calls «Pago» on the invoice the payment that cancelled it, and «Abono» one that left a balance (Fernando, 2026-11-16)" do
+    paid = InvoiceIssuer.new(producer:, user:, purchase_ids: [ create(:purchase, producer:).id ], payment_status: "paid", payment_method: "cash").call.invoice
+    get trading_invoice_path(paid)
+    text = Nokogiri::HTML(response.body).css("article").first.text.squish
+    expect(text).to include("Pago #{paid.payments.sole.display_number}")
+    expect(text).not_to include("Abono #{paid.payments.sole.display_number}")
+
+    partial = InvoiceIssuer.new(producer:, user:, purchase_ids: [ create(:purchase, producer:).id ], payment_status: "partial",
+                                payment_method: "cash", amount: "1000").call.invoice
+    get trading_invoice_path(partial)
+    expect(Nokogiri::HTML(response.body).css("article").first.text.squish).to include("Abono #{partial.payments.sole.display_number}")
+  end
+
   it "puts it on loan payment receipts, payroll payment sheets, the daily close, credit accounts and reports" do
     loan = create(:loan, person: producer.person, cash_amount: 1_000, monthly_interest_rate: 0)
     payment = create(:loan_payment, loan:, amount: 100, payment_method: "cash")

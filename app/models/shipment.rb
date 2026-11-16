@@ -401,8 +401,10 @@ class Shipment < ApplicationRecord
 
       free = %w[updated_at lock_version observations carrier_id vehicle_id driver_id driver_name trip_price weight_note_number]
       free += ORIGIN_COLUMNS + %w[origin_weight_mode] if origin_net_weight_in_database.nil? || weights_by_admin
-      # An administrator changes its scales (not removes the buyer's: the sale charges it).
+      # An administrator changes its scales (not removes the buyer's: the sale charges it),
+      # and its departure date (Fernando, 2026-11-16: one registered late with the wrong day).
       free += DESTINATION_COLUMNS + %w[received_on] if weights_by_admin && destination_net_weight.present?
+      free += %w[departed_at season_year] if weights_by_admin
       changed_inputs = (changed - free)
       errors.add(:base, :sold) if changed_inputs.any?
     end

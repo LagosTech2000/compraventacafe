@@ -1300,6 +1300,18 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   daño aplicado, «Valor del inventario» y sus **lotes**. El kárdex sigue
   debajo en Inventario («Ver movimientos» desde el detalle) y lleva
   brutas, netas y quintales de cada movimiento y de los saldos.
+- **Netas y sacos, revisados** (`StockCheck`, `sales/_net_check`,
+  Fernando, 2026-11-16): tarjeta en Inventario y en el detalle de cada
+  estado: brutas, **netas esperadas** (brutas × el porcentaje de siempre:
+  49 % húmedo, 88 % seco, 0.186 uva, de `PurchaseDefaults`), **netas
+  calculadas** (compra por compra), la diferencia, **sacos esperados**
+  (brutas ÷ 165) y **calculados** (lo que queda de los sacos de cada
+  compra). «¿Por qué?» (solo administradores, `sales/stock_checks#show`,
+  `Sales::StockCheckPolicy`) explica la diferencia: cada movimiento
+  aporta sus netas − brutas × el porcentaje (compras: tara, daño y humedad
+  distinta; salidas una por una: con lotes sacan las netas de sus compras,
+  sin lotes las de su báscula; procesos y traslados), y juntos dan la
+  diferencia.
 - **Bodegas** (`Warehouse`, cliente, 2026-10-26) [CONFIRMADO]: se crean
   «Bodega 1» (por defecto, `main`) y «Bodega 2», se renombran y se agregan.
   Cada compra entra a una bodega (la de por defecto, salvo que se elija
@@ -1502,7 +1514,11 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   netas (`batch_shares_controller.js`, Fernando, 2026-11-13); **para muchas
   a la vez** (Fernando, 2026-11-15): la casilla del encabezado marca todas
   las cargadas, Shift + clic marca un rango y «Llenar el lote» las marca en
-  el orden de la lista hasta llenarlo (la última con la parte que cabe). **También
+  el orden de la lista hasta llenarlo (la última con la parte que cabe).
+  **Los administradores ven en la misma lista, en gris** (Fernando,
+  2026-11-16), las facturas de ese estado y bodega que ya están completas
+  en lotes («Ya en Lote 0001 (100%)»), sin poder elegirlas; la casilla
+  «Mostrar las que ya están en lotes» viene marcada y las oculta. **También
   desde «Facturar compras»** (Fernando, 2026-11-13): «Lote (opcional)» y la
   parte (%), 100 por defecto; solo se eligen los lotes del estado y la bodega
   de las compras marcadas, con espacio y no en una salida vendida (salvo

@@ -50,7 +50,7 @@ RSpec.describe "Lots of purchased coffee" do
     expect(other.batch_invoices.create(invoice: big, percent: 60, created_by: admin).errors[:percent].join).to include("pasa de lo libre de la factura (50 %)")
     expect(other.batch_invoices.create(invoice: big, percent: 50, created_by: admin)).to be_persisted
     get new_sales_coffee_batch_invoice_path(create(:coffee_batch))
-    expect(page.css("[data-batch-invoice-choices] tbody tr")).to be_empty
+    expect(page.css("[data-batch-invoice-choices] tbody tr[data-batch-shares-target=row]")).to be_empty
 
     get sales_coffee_batch_path(batch)
     expect(page.at_css("[data-batch='gross'] dd").text.strip).to eq("700.00")
@@ -210,5 +210,34 @@ RSpec.describe "Lots of purchased coffee" do
 
     delete sales_coffee_batch_conversion_path(batch, conversion)
     expect(batch.batch_conversions.reload).to be_empty
+  end
+
+  it "shows administrators, in the same list, in grey and not to choose, the invoices already whole in lots (Fernando, 2026-11-16)" do
+    whole = invoice_of(create(:purchase, producer:, gross_weight: 300))
+    free = invoice_of(create(:purchase, producer:, gross_weight: 200))
+    holder = create(:coffee_batch, gross_limit: 1_000, created_by: admin)
+    holder.batch_invoices.create!(invoice: whole, percent: 100, created_by: admin)
+    batch = create(:coffee_batch, gross_limit: 1_000, created_by: admin)
+
+    get new_sales_coffee_batch_invoice_path(batch)
+    rows = page.css("[data-batch-invoice-choices] tbody tr")
+    expect(rows.map { it["id"] }).to contain_exactly("choice_invoice_#{whole.id}", "choice_invoice_#{free.id}")
+    taken = page.at_css("tr[data-taken-invoice]")
+    expect(taken.text).to include(whole.display_number, "Ya en #{holder.label} (100%)")
+    expect(taken.at_css("input[type=checkbox]")["disabled"]).to be_present
+    expect(page.at_css("input[type=checkbox][name=show_taken]")["checked"]).to be_present
+
+    get new_sales_coffee_batch_invoice_path(batch, show_taken: "0")
+    expect(page.css("[data-batch-invoice-choices] tbody tr").map { it["id"] }).to eq([ "choice_invoice_#{free.id}" ])
+
+    clerk = create(:user).tap do |user|
+      create(:permission, user:, module_key: "sales", submodule_key: "shipments", can_read: true, can_update: true)
+      create(:permission, user:, module_key: "trading", submodule_key: "invoices", can_read: true)
+    end
+    batch.update_columns(created_by_id: clerk.id)
+    sign_in clerk
+    get new_sales_coffee_batch_invoice_path(batch)
+    expect(page.at_css("tr[data-taken-invoice]")).to be_nil
+    expect(page.at_css("input[name=show_taken]")).to be_nil
   end
 end

@@ -8,9 +8,14 @@ module Sales
 
     def new
       authorize CoffeeBatchInvoice.new(coffee_batch: @batch), :create?
-      @filter = InvoiceFilter.new(params)
-      @invoices, @next_page = @filter.results(eligible)
+      @filter = BatchInvoiceFilter.new(params)
+      # Administrators see in the same list, in grey and not to choose, the
+      # invoices already whole in lots (Fernando, 2026-11-16), unless they
+      # untick «Mostrar las que ya están en lotes».
+      @show_taken = Current.user.admin? && params[:show_taken] != "0"
+      @invoices, @next_page = @filter.results(@show_taken ? with_taken : eligible)
       @used = CoffeeBatchInvoice.used_by_invoice(@invoices.map(&:id))
+      @taken_lots = @show_taken ? CoffeeBatchInvoice.where(invoice_id: @invoices.select { @used.fetch(it.id, 0).to_d >= 100 }.map(&:id)).includes(:coffee_batch).group_by(&:invoice_id) : {}
       # And finished processes (Fernando, 2026-11-16).
       @conversions = CoffeeBatchConversion.eligible_conversions(@batch).order(:finished_at, :id).to_a
       @used_conversions = CoffeeBatchConversion.used_by_conversion(@conversions.map(&:id))
@@ -62,6 +67,14 @@ module Sales
 
       def set_batch
         @batch = CoffeeBatch.find(params[:coffee_batch_id])
+      end
+
+      # The invoices of its coffee state with every purchase in its warehouse,
+      # also the ones already whole (100 %) in lots.
+      def with_taken
+        Invoice.active.of_coffee_state(@batch.coffee_state)
+               .where.not(id: Purchase.where.not(warehouse_id: @batch.warehouse_id).where.not(invoice_id: nil).select(:invoice_id))
+               .merge(policy_scope(Invoice)).includes(:purchases, producer: :person)
       end
 
       def eligible

@@ -21,6 +21,7 @@
 <div class="mb-4"><%= warehouse_tabs(@warehouses, @warehouse, frame: "stock-page") { |id| sales_stock_path(warehouse_id: id) } %></div>
 <%= render "sales/stock", stock: @stock, warehouse: @warehouse, alert: @alert %>
 <% if @alert.any? %><%= render "sales/cherry_alert", alert: @alert, warehouse: @warehouse %><% end %>
+<div class="mt-4"><%= render "sales/net_check", rows: StockCheck.new(stock: @stock, warehouse: @warehouse).rows, warehouse: @warehouse %></div>
 
 <h2 id="stock-ledger-title" class="mt-8 scroll-mt-24 text-lg font-semibold"><%= t(".ledger") %></h2>
 <p class="mt-1 text-sm text-ink-muted"><%= t(".ledger_help") %></p>

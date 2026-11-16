@@ -47,4 +47,19 @@ RSpec.describe "Shipment scales" do
     expect(sale.reload.origin_net_weight).to be_nil
     expect(sale.lines.sole.origin_net_weight).to be_nil
   end
+
+  it "lets an administrator fix the departure date of a sold shipment (Fernando, 2026-11-16)" do
+    sale = create(:sale, buyer:, user: admin, shipments: [ create(:shipment, :received, buyer:, departed_at: 3.days.ago) ])
+    shipment = sale.shipments.sole
+    new_date = 5.days.ago.change(hour: 12)
+
+    sign_in clerk
+    patch sales_shipment_path(shipment), params: { shipment: { departed_at: new_date } }
+    expect(flash[:alert]).to eq("No tienes permiso para hacer eso.")
+
+    sign_in admin
+    patch sales_shipment_path(shipment), params: { shipment: { departed_at: new_date } }
+    expect(shipment.reload.departed_at).to be_within(1.minute).of(new_date)
+    expect(AuditEvent.where(auditable: shipment, action: "update").last.changeset).to have_key("departed_at")
+  end
 end

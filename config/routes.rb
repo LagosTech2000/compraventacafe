@@ -169,6 +169,9 @@ Rails.application.routes.draw do
     # One coffee state of the stock (or all: "total"), lot by lot.
     get "stock/:coffee_state", to: "stock_states#show", as: :stock_state,
                                constraints: { coffee_state: /cherry|wet_parchment|dry_parchment|total/ }
+    # Why its net pounds and sacks are not the expected ones (administrators).
+    get "stock/:coffee_state/check", to: "stock_checks#show", as: :stock_check,
+                                     constraints: { coffee_state: /cherry|wet_parchment|dry_parchment/ }
     # Coffee converted to the next state: weighed first, its result later.
     resources :coffee_conversions, path: "conversions", only: %i[ index show new create ] do
       member do
