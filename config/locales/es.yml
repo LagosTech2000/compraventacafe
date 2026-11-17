@@ -2402,8 +2402,13 @@ es:
         none_marked: "Ninguno marcado"
         submit: "Asignar a la salida"
         empty: "No hay gastos libres con estos filtros."
+        receipt: "Comprobante"
+        see_receipt: "Ver"
+        upload_receipt: "Foto o PDF del comprobante de «%{description}»"
+        no_receipt: "Sin comprobante"
       create:
         none: "Marca al menos un gasto."
+        invalid: "No se asignó nada: «%{description}»: %{errors}."
         success:
           one: "1 gasto asignado a la salida."
           other: "%{count} gastos asignados a la salida."
@@ -2472,6 +2477,7 @@ es:
           none: "Todavía no tiene gastos."
           confirm_remove: "¿Quitar este gasto? Deja de salir de su cuenta."
           confirm_unassign: "¿Quitar este gasto de la salida? Sigue en Control financiero."
+          receipt: "Comprobante"
           hidden_expenses: "Tiene gastos de Control financiero asignados que no puedes ver; sí cuentan en el costo."
       index:
         title: "Salidas de vehículos"
@@ -3259,7 +3265,7 @@ es:
         salary_override_placeholder: "El del rol"
         salary_override_help: "Opcional, mensual: si gana distinto que su rol (por ejemplo, un chofer 7,000 y otro 15,000). Manda sobre el salario del rol; la frecuencia y la hora extra siguen siendo las del rol."
         new_role: "Nuevo rol"
-        ends_on_help: "Opcional: el último día que trabajó."
+        ends_on_help: "Opcional: el último día que trabajó. Al desactivarlo sin fecha, queda el último día que trabajó o se le pagó: después de ese día ya no sale en la hoja de planilla."
         active: "Activo (sale en la planilla)"
       new:
         title: "Nuevo empleado"
@@ -6979,6 +6985,7 @@ es:
             steps:
               - "Filtra por texto, fechas (este mes, si no las cambias) o categoría."
               - "Marca los gastos y toca «Asignar a la salida»."
+              - "Si un gasto no tiene comprobante, en su fila puedes subir la foto o el PDF: se guarda con el gasto al asignarlo."
             tips:
               - "Un gasto va a una sola salida y sigue siendo un gasto de Control financiero: no se mueve dinero."
               - "Para un gasto nuevo de la salida, usa «Registrar gasto» en la salida."
@@ -6990,7 +6997,7 @@ es:
               - "Elige el concepto y, si es «Otro», escribe el detalle."
               - "Elige cómo se cobra: monto total, por libra o por quintal."
               - "Por libra o quintal, elige sobre qué peso (báscula local o del comprador, brutas o netas) y el precio."
-              - "Escribe la fecha, la forma de pago y la cuenta, y guarda."
+              - "Escribe la fecha, la forma de pago y la cuenta; si tienes la foto o el PDF del comprobante, súbelo (opcional), y guarda."
             tips:
               - "El peso del comprador se puede usar cuando la salida ya se pesó en destino."
               - "Un gasto no se edita: se quita y se registra de nuevo. Una salida con gastos registrados no se anula hasta quitarlos."
@@ -9097,6 +9104,8 @@ es:
       expense_receipt:
         data: "Archivo"
         expense_id: "Gasto"
+        shipment_cost: "Gasto de la salida"
+        shipment_cost_id: "Gasto de la salida"
         filename: "Nombre del archivo"
         expense: "Gasto"
         content_type: "Tipo de archivo"
@@ -9471,6 +9480,8 @@ es:
       shipment_cost:
         shipment: "Salida"
         shipment_id: "Salida"
+        receipt_upload: "Foto o PDF del comprobante"
+        receipt: "Comprobante"
         concept: "Concepto"
         concept/freight: "Flete"
         concept/labor: "Mano de obra"
@@ -10061,6 +10072,9 @@ es:
               not_weighed: "no puede ser «Del comprador» hasta que se pese en destino"
             description:
               blank: "es obligatorio cuando el concepto es «Otro»"
+            receipt_upload:
+              too_big: "pesa más de %{size}"
+              not_a_receipt: "debe ser una foto (JPG, PNG o WebP) o un PDF"
         coffee_batch:
           attributes:
             base:

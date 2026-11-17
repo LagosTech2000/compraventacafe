@@ -15,10 +15,25 @@ module Sales
 
     def create
       authorize @shipment, :create?, policy_class: ShipmentExpensePolicy
-      expenses = eligible.where(id: Array(params[:expense_ids])).to_a
+      expenses = free_expenses.where(id: Array(params[:expense_ids])).includes(:supply_entry).to_a
       return redirect_to(new_sales_shipment_expense_path(@shipment), alert: t(".none")) if expenses.empty?
 
-      Expense.transaction { expenses.each { it.update!(shipment: @shipment) } }
+      # The receipt of each, when one was chosen (Fernando, 2026-11-16), to
+      # who can edit that expense.
+      receipts = params.fetch(:receipts, {})
+      with_file = expenses.select { receipts[it.id.to_s].respond_to?(:read) }
+      ActiveRecord::Associations::Preloader.new(records: with_file, associations: :receipt).call if with_file.any?
+      expenses.each do |expense|
+        file = receipts[expense.id.to_s]
+        expense.receipt_upload = file if file.respond_to?(:read) && policy(expense).update?
+        expense.shipment = @shipment
+      end
+      if (invalid = expenses.find(&:invalid?))
+        return redirect_to(new_sales_shipment_expense_path(@shipment),
+                           alert: t(".invalid", description: invalid.description, errors: invalid.errors.full_messages.to_sentence))
+      end
+
+      Expense.transaction { expenses.each(&:save!) }
       redirect_to sales_shipment_path(@shipment, anchor: "shipment-cost"), notice: t(".success", count: expenses.size)
     end
 
@@ -35,8 +50,7 @@ module Sales
       end
 
       # Expenses (not investments) on no shipment.
-      def eligible
-        policy_scope(Expense).where(kind: "expense", shipment_id: nil)
-      end
+      def free_expenses = policy_scope(Expense).where(kind: "expense", shipment_id: nil)
+      def eligible = free_expenses.includes(:receipt_info, :supply_entry)
   end
 end

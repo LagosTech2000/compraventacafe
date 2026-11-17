@@ -81,8 +81,8 @@
 
   <%# Costs registered from it and expenses assigned to it. %>
   <% cost_policy = policy(ShipmentCost.new(shipment:)) %>
-  <% costs = shipment.costs.includes(:money_account).to_a %>
-  <% expenses = expense_policy.index? ? shipment.expenses.includes(:money_account, category: :parent).order(:spent_on, :id).to_a : [] %>
+  <% costs = shipment.costs.includes(:money_account, :receipt_info).to_a %>
+  <% expenses = expense_policy.index? ? shipment.expenses.includes(:money_account, :receipt_info, category: :parent).order(:spent_on, :id).to_a : [] %>
   <div class="mt-5 flex flex-wrap items-start justify-between gap-3">
     <div>
       <h3 class="font-semibold"><%= t("#{scope}.costs.title") %></h3>
@@ -119,10 +119,15 @@
               <td><%= cost.money_account&.name || t("reports.types.cash_movements.no_account") %></td>
               <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(cost.amount) %></td>
               <td class="cell-actions">
-                <% if policy(cost).destroy? %>
-                  <%= button_to t("#{scope}.remove"), sales_shipment_cost_path(shipment, cost), method: :delete, class: "btn btn-sm",
-                        form: { data: { turbo_confirm: t("#{scope}.costs.confirm_remove") } } %>
-                <% end %>
+                <div class="flex justify-end gap-2">
+                  <% if (receipt = cost.receipt_info) %>
+                    <%= link_to t("#{scope}.costs.receipt"), finance_expense_receipt_path(receipt, v: receipt.version), class: "btn btn-sm", target: "_blank", rel: "noopener", data: { cost_receipt: cost.id } %>
+                  <% end %>
+                  <% if policy(cost).destroy? %>
+                    <%= button_to t("#{scope}.remove"), sales_shipment_cost_path(shipment, cost), method: :delete, class: "btn btn-sm",
+                          form: { data: { turbo_confirm: t("#{scope}.costs.confirm_remove") } } %>
+                  <% end %>
+                </div>
               </td>
             </tr>
           <% end %>
@@ -135,6 +140,9 @@
               <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(expense.amount) %></td>
               <td class="cell-actions">
                 <div class="flex justify-end gap-2">
+                  <% if (receipt = expense.receipt_info) && policy(receipt).show? %>
+                    <%= link_to t("#{scope}.costs.receipt"), finance_expense_receipt_path(receipt, v: receipt.version), class: "btn btn-sm", target: "_blank", rel: "noopener" %>
+                  <% end %>
                   <% if policy(expense).show? %><%= detail_button finance_expense_path(expense) %><% end %>
                   <% if expense_policy.destroy? %>
                     <%= button_to t("#{scope}.remove"), sales_shipment_expense_path(shipment, expense), method: :delete, class: "btn btn-sm",

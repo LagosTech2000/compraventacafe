@@ -10,6 +10,8 @@ class ShipmentCost < ApplicationRecord
   include OwnedRecord
   include HasMoneyAccount
   include LiveUpdates
+  # The photo or PDF of its receipt, optional (Fernando, 2026-11-16).
+  include HasReceipt
   live_updates :sales, :finance
 
   # The ones of the processes that apply to a trip (pending confirmation).

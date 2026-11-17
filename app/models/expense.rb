@@ -7,6 +7,7 @@ class Expense < ApplicationRecord
   include Auditable
   include OwnedRecord
   include LiveUpdates
+  include HasReceipt
   live_updates :finance
 
   KINDS = FinanceCategory::KINDS
@@ -20,11 +21,6 @@ class Expense < ApplicationRecord
   # changed or removed only through it.
   has_one :supply_entry, dependent: :restrict_with_error
   belongs_to :created_by, class_name: "User"
-  has_one :receipt, class_name: "ExpenseReceipt", dependent: :destroy, autosave: true
-  # The receipt without its bytes, to show it in lists.
-  has_one :receipt_info, -> { select(ExpenseReceipt.column_names - %w[data]) }, class_name: "ExpenseReceipt"
-
-  attr_reader :receipt_upload, :remove_receipt
 
   normalizes :payee, :description, :receipt_number, with: ->(value) { value.squish.presence }
   normalizes :observations, with: FieldFormats::STRIP
@@ -40,7 +36,6 @@ class Expense < ApplicationRecord
   # Only expenses go to a shipment's cost (Fernando, 2026-11-12).
   validate :investment_off_shipments, if: :will_save_change_to_kind?
   validate :account_active, if: :will_save_change_to_money_account_id?
-  validate :receipt_upload_is_valid
 
   scope :expenses, -> { where(kind: "expense") }
   scope :investments, -> { where(kind: "investment") }
@@ -50,24 +45,6 @@ class Expense < ApplicationRecord
   def human_kind = self.class.human_attribute_name("kind/#{kind}")
   def human_payment_method = Invoice.human_attribute_name("payment_method/#{payment_method}")
   def investment? = kind == "investment"
-
-  # The file the form sent (a photo, which the browser already shrank, or a PDF).
-  def receipt_upload=(file)
-    @receipt_upload = file
-    return unless file.respond_to?(:read)
-
-    @receipt_bytes = file.read.b
-    type = ExpenseReceipt.content_type_of(@receipt_bytes)
-    return unless type && @receipt_bytes.bytesize <= ExpenseReceipt::MAX_SIZE
-
-    (receipt || build_receipt).assign_attributes(data: @receipt_bytes, content_type: type, byte_size: @receipt_bytes.bytesize,
-                                                 filename: File.basename(file.original_filename.to_s).first(255).presence)
-  end
-
-  def remove_receipt=(value)
-    @remove_receipt = value
-    receipt&.mark_for_destruction if ActiveModel::Type::Boolean.new.cast(value) && !@receipt_bytes
-  end
 
   private
     def category_fits
@@ -83,15 +60,5 @@ class Expense < ApplicationRecord
 
     def account_active
       errors.add(:money_account, :inactive) if money_account && !money_account.active?
-    end
-
-    def receipt_upload_is_valid
-      return unless @receipt_bytes
-
-      if @receipt_bytes.bytesize > ExpenseReceipt::MAX_SIZE
-        errors.add(:receipt_upload, :too_big, size: ActiveSupport::NumberHelper.number_to_human_size(ExpenseReceipt::MAX_SIZE))
-      elsif ExpenseReceipt.content_type_of(@receipt_bytes).nil?
-        errors.add(:receipt_upload, :not_a_receipt)
-      end
     end
 end

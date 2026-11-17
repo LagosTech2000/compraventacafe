@@ -86,4 +86,21 @@ RSpec.describe StaffSheet do
     expect(sheet.payable_rows.map(&:member)).to eq([ ready ])
     expect(described_class.new(month: "2026-10", half: 2).payable_rows).to be_empty
   end
+
+  it "leaves out a deactivated employee after their last day, and keeps them in the history (Fernando, 2026-11-16)" do
+    gone = employee(salary: 15_000, starts_on: Date.new(2026, 9, 1))
+    work(gone, [ 1, 2, 3 ])
+    gone.update!(active: false)
+    expect(gone.ends_on).to eq(Date.new(2026, 10, 3))
+
+    stays = employee(salary: 12_000)
+    first = described_class.new(view: "fortnight", month: "2026-10", half: 1)
+    second = described_class.new(view: "fortnight", month: "2026-10", half: 2)
+    expect(first.rows.map(&:member)).to contain_exactly(gone, stays)
+    expect(second.rows.map(&:member)).to eq([ stays ])
+    expect(described_class.new(view: "history").history_rows.map(&:member)).to include(gone)
+
+    by_hand = employee(salary: 10_000, starts_on: Date.new(2026, 9, 1)).tap { it.update!(active: false, ends_on: Date.new(2026, 9, 30)) }
+    expect(by_hand.ends_on).to eq(Date.new(2026, 9, 30))
+  end
 end

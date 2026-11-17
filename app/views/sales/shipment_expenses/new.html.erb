@@ -22,7 +22,7 @@
     <%= render "shared/filter_status", filter: @filter, count: t("shared.filters.count", count: @filter.total_count), periods: quick_periods(@filter),
           chips: filter_chips(@filter, q: ->(text) { t("shared.filters.chips.q", text:) }, category_id: ->(id) { categories.find { it.last == id }&.first }) %>
     <% if @expenses.any? %>
-      <%= form_with url: sales_shipment_expenses_path(@shipment), method: :post, class: "mt-4",
+      <%= form_with url: sales_shipment_expenses_path(@shipment), method: :post, class: "mt-4", multipart: true,
             data: { turbo_frame: "_top", controller: "check-all", check_all_label_value: t(".marked", count: "%{count}"),
                     check_all_none_value: t(".none_marked") } do %>
         <div class="overflow-x-auto panel">
@@ -36,6 +36,7 @@
                 <th><%= Expense.human_attribute_name(:category) %></th>
                 <th><%= Expense.human_attribute_name(:payee) %></th>
                 <th class="text-right"><%= Expense.human_attribute_name(:amount) %></th>
+                <th><%= t(".receipt") %></th>
                 <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
               </tr>
             </thead>
@@ -52,6 +53,17 @@
                   <td><%= expense.category.full_name %></td>
                   <td><%= expense.payee %></td>
                   <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(expense.amount) %></td>
+                  <%# Its receipt, or upload one with it (Fernando, 2026-11-16). %>
+                  <td data-expense-receipt>
+                    <% if (receipt = expense.receipt_info) %>
+                      <%= link_to t(".see_receipt"), finance_expense_receipt_path(receipt, v: receipt.version), class: "link text-sm", target: "_blank", rel: "noopener" %>
+                    <% elsif policy(expense).update? %>
+                      <input type="file" name="receipts[<%= expense.id %>]" accept="<%= ExpenseReceipt::SIGNATURES.keys.join(",") %>" class="field-input max-w-56 py-1 text-xs"
+                             aria-label="<%= t(".upload_receipt", description: expense.description) %>">
+                    <% else %>
+                      <span class="text-xs text-ink-muted"><%= t(".no_receipt") %></span>
+                    <% end %>
+                  </td>
                   <td class="cell-actions"><%= modal_link_to t("shared.detail"), finance_expense_path(expense), class: "btn btn-sm" %></td>
                 </tr>
               <% end %>

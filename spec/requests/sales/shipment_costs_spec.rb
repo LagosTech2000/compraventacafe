@@ -16,6 +16,8 @@ RSpec.describe "Shipment costs" do
     InvoiceIssuer.new(producer: purchases.first.producer, user: admin, purchase_ids: purchases.map(&:id), payment_status: "pending").call.invoice
   end
 
+  def receipt(bytes = "%PDF-1.4 recibo") = Rack::Test::UploadedFile.new(StringIO.new(bytes), "application/pdf", original_filename: "recibo.pdf")
+
   before { sign_in admin }
 
   it "adds the coffee of its lots and their haulers' commission" do
@@ -102,5 +104,44 @@ RSpec.describe "Shipment costs" do
     expect(shipment.coffee_batches).to be_empty
     expect(batch.reload.shipment).to be_nil
     expect(expense.reload.shipment).to be_nil
+  end
+
+  it "keeps the receipt of a cost registered from the shipment (Fernando, 2026-11-16)" do
+    post sales_shipment_costs_path(shipment), params: { shipment_cost: { concept: "fuel", pricing: "total", amount: "450", paid_on: Time.zone.today,
+                                                                         payment_method: "cash", receipt_upload: receipt } }
+    cost = shipment.costs.sole
+    expect(cost.receipt).to have_attributes(content_type: "application/pdf", filename: "recibo.pdf")
+
+    get sales_shipment_path(shipment)
+    link = page.at_css("[data-cost-receipt='#{cost.id}']")
+    get link["href"]
+    expect(response.body).to eq("%PDF-1.4 recibo")
+
+    post sales_shipment_costs_path(shipment), params: { shipment_cost: { concept: "fuel", pricing: "total", amount: "10", paid_on: Time.zone.today,
+                                                                         payment_method: "cash", receipt_upload: receipt("no es un comprobante") } }
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("debe ser una foto (JPG, PNG o WebP) o un PDF")
+
+    delete sales_shipment_cost_path(shipment, cost)
+    expect(ExpenseReceipt.count).to eq(0)
+  end
+
+  it "uploads the receipt of an expense while assigning it, and shows the one it had" do
+    bare = create(:expense, description: "Peaje a Danlí")
+    with_receipt = create(:expense, description: "Diésel", receipt_upload: receipt("%PDF-1.4 diesel"))
+
+    get new_sales_shipment_expense_path(shipment)
+    expect(page.at_css("input[type=file][name='receipts[#{bare.id}]']")).to be_present
+    expect(page.at_css("##{ActionView::RecordIdentifier.dom_id(with_receipt, :choice)} [data-expense-receipt] a")).to be_present
+
+    post sales_shipment_expenses_path(shipment), params: { expense_ids: [ bare.id, with_receipt.id ], receipts: { bare.id.to_s => receipt } }
+    expect(bare.reload).to have_attributes(shipment:)
+    expect(bare.receipt.data).to eq("%PDF-1.4 recibo")
+    expect(with_receipt.reload.receipt.data).to eq("%PDF-1.4 diesel")
+
+    other = create(:expense, description: "Comida")
+    post sales_shipment_expenses_path(shipment), params: { expense_ids: [ other.id ], receipts: { other.id.to_s => receipt("nada") } }
+    expect(flash[:alert]).to include("No se asignó nada", "Comida")
+    expect(other.reload.shipment).to be_nil
   end
 end
