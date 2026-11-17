@@ -87,5 +87,7 @@ class CoffeeBatchConversion < ApplicationRecord
 
     def lot_open
       errors.add(:base, :lot_sold) if coffee_batch&.shipment&.sold? && !CoffeeBatch.sold_editable?
+      # Its coffee went to be processed with these pounds (Fernando, 2026-11-16).
+      errors.add(:base, :lot_processed) if coffee_batch&.processed?
     end
 end

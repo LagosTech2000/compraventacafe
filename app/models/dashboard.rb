@@ -80,7 +80,7 @@ class Dashboard
 
   # Money buyers gave in advance and are still owed in coffee.
   def buyer_advances_balance
-    BuyerAdvance.visible_to(user).sum(:amount) - SalePayment.advance.joins(:sale).merge(Sale.visible_to(user).active).sum(:amount)
+    BuyerAdvance.visible_to(user).pending.balance_sum
   end
 
   # --- Pending work --------------------------------------------------------------

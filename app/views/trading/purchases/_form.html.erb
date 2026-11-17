@@ -92,8 +92,9 @@
          data-farm-gaps-edit-url-value="<%= farm_edit_url %>"
          data-action="producer-farms:changed@window->farm-gaps#render producer-farms:changed@window->farm-plots#refresh">
       <%= form.label :farm_id, class: "field-label" %>
-      <% farm_options = purchase.producer ? purchase.producer.farms.includes(:plots).select { |farm| farm.active? || farm.id == purchase.farm_id }.sort_by(&:name) : [] %>
-      <%= form.select :farm_id, farm_options.map { |farm| [ farm.name, farm.id, { data: { missing: farm.missing_fields.to_json, plots: farm.plot_options.to_json } } ] },
+      <% farm_options = purchase.producer ? purchase.producer.purchase_farms.select { |farm| farm.active? || farm.id == purchase.farm_id }.sort_by { [ it.producer_id ? 0 : 1, it.name ] } : [] %>
+      <% ActiveRecord::Associations::Preloader.new(records: farm_options, associations: :plots).call %>
+      <%= form.select :farm_id, farm_options.map { |farm| [ farm.purchase_label, farm.id, { data: { missing: farm.missing_fields.to_json, plots: farm.plot_options.to_json } } ] },
             { include_blank: t("shared.select.no_farm") }, class: "field-input",
             data: { producer_farms_target: "select", farm_gaps_target: "select", farm_plots_target: "farm", action: "farm-gaps#render farm-plots#refresh" } %>
       <p class="mt-1 text-xs text-ink-muted" data-producer-farms-target="hint" <%= "hidden" if purchase.producer %>><%= t(".farm_pick_producer") %></p>

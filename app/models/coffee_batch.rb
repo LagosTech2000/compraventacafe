@@ -40,6 +40,9 @@ class CoffeeBatch < ApplicationRecord
 
   belongs_to :warehouse
   belongs_to :shipment, optional: true
+  # Or the process it went to be processed in (Fernando, 2026-11-16): a lot
+  # goes to a shipment or to a process, never both.
+  belongs_to :processing, class_name: "CoffeeConversion", foreign_key: :coffee_conversion_id, optional: true, inverse_of: :input_batches
   belongs_to :created_by, class_name: "User"
   has_many :batch_invoices, -> { order(:id) }, class_name: "CoffeeBatchInvoice", dependent: :destroy, inverse_of: :coffee_batch
   has_many :invoices, through: :batch_invoices
@@ -60,7 +63,7 @@ class CoffeeBatch < ApplicationRecord
   before_create :assign_number
   before_destroy :not_shipped, prepend: true
 
-  scope :free, -> { where(shipment_id: nil) }
+  scope :free, -> { where(shipment_id: nil, coffee_conversion_id: nil) }
   scope :newest_first, -> { order(batched_on: :desc, id: :desc) }
 
   def self.next_number = (maximum(:number) || 0) + 1
@@ -76,6 +79,9 @@ class CoffeeBatch < ApplicationRecord
   def audit_label = label
   def human_coffee_state = Purchase.human_attribute_name("coffee_state/#{coffee_state}")
   def shipped? = shipment_id.present?
+  def processed? = coffee_conversion_id.present?
+  # Gone to a shipment or a process.
+  def taken? = shipped? || processed?
 
   # Its purchases' pounds and value, in its share (a voided purchase does not count).
   def totals = @totals ||= Totals.for(self)
@@ -167,7 +173,7 @@ class CoffeeBatch < ApplicationRecord
     end
 
     def not_shipped
-      return unless shipped?
+      return unless taken?
 
       errors.add(:base, :shipped)
       throw :abort

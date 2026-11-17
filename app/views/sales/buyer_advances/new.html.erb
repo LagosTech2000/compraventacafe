@@ -2,13 +2,24 @@
 <%= render "sales/nav" %>
 
 <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
-<p class="mt-1 text-sm text-ink-muted"><%= @buyer.name %> · <%= t(".help") %></p>
+<p class="mt-1 text-sm text-ink-muted"><%= [ @buyer&.name, t(".help") ].compact.join(" · ") %></p>
 <div class="mt-2"><%= help_guide_button HelpGuide.process(:buyer_advances), label: true %></div>
 
-<%= form_with model: @advance, url: sales_buyer_buyer_advances_path(@buyer), scope: :buyer_advance, class: form_surface_class("mt-6 space-y-6"),
+<%= form_with model: @advance, url: @buyer ? sales_buyer_buyer_advances_path(@buyer) : sales_buyer_advances_path, scope: :buyer_advance, class: form_surface_class("mt-6 space-y-6"),
       data: { controller: "form-validation" } do |form| %>
   <%= render "shared/form_errors", record: @advance %>
   <div class="grid gap-5 sm:grid-cols-2" data-controller="money-account" data-money-account-defaults-value="<%= MoneyAccount.defaults_by_method.to_json %>">
+    <%# Who gives it, when it is registered from the list: a buyer or a bank (Fernando, 2026-11-16). %>
+    <% unless @buyer %>
+      <div class="sm:col-span-2">
+        <%= form.label :buyer_id, class: "field-label" %>
+        <%= form.select :buyer_id, Buyer.active.order(:name).map { [ "#{it.name} · #{it.human_kind}", it.id ] },
+              { prompt: t(".pick_buyer") }, required: true, class: "field-input" %>
+        <% if policy(Buyer).create? %>
+          <p class="mt-1 text-xs text-ink-muted"><%= t(".bank_help") %> <%= page_link_to t(".new_buyer"), new_sales_buyer_path, class: "link" %></p>
+        <% end %>
+      </div>
+    <% end %>
     <div>
       <%= form.label :amount, class: "field-label" %>
       <%= form.number_field :amount, required: true, min: 0.01, step: 0.01, inputmode: "decimal", autofocus: true, class: "field-input text-lg" %>
@@ -34,6 +45,6 @@
   </div>
   <div class="flex flex-wrap gap-3">
     <%= form.submit t(".submit"), class: "btn btn-primary" %>
-    <%= cancel_button sales_buyer_path(@buyer, tab: "advances") %>
+    <%= cancel_button @buyer ? sales_buyer_path(@buyer, tab: "advances") : sales_buyer_advances_path %>
   </div>
 <% end %>

@@ -8,6 +8,16 @@
 
   <%= render "shared/person_roles", form: form %>
 
+  <%# The owners of the business: only an administrator marks them (Fernando, 2026-11-16). %>
+  <% if Current.user.admin? %>
+    <div>
+      <label class="flex items-center gap-2 text-sm font-medium">
+        <%= form.check_box :business_owner, class: "size-4 accent-primary" %> <%= Person.human_attribute_name(:business_owner) %>
+      </label>
+      <p class="mt-1 text-xs text-ink-muted"><%= t("administration.people.form.business_owner_help") %></p>
+    </div>
+  <% end %>
+
   <div class="flex flex-wrap gap-3">
     <%= form.submit class: "btn btn-primary" %>
     <%= cancel_button administration_people_path %>

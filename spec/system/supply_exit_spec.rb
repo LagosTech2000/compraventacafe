@@ -16,27 +16,39 @@ RSpec.describe "Supply exit form", type: :system do
 
   it "sells with the supply's price and the total as typed, and warns past what is in the warehouse" do
     visit new_sales_supply_exit_path
-    select "Urea", from: "supply_exit_supply_id"
+    select "Urea", from: "supply_exit_lines_attributes_0_supply_id"
     expect(page).to have_text("En bodega: 1,500 saco")
-    expect(find_field("supply_exit_unit_price").value).to eq("1250.00")
+    expect(find_field("supply_exit_lines_attributes_0_unit_price").value).to eq("1250.00")
 
-    fill_in "supply_exit_quantity", with: "1600"
+    fill_in "supply_exit_lines_attributes_0_quantity", with: "1600"
     expect(page).to have_text("No hay tanto en bodega: hay 1,500 saco.")
-    fill_in "supply_exit_quantity", with: "1000"
+    fill_in "supply_exit_lines_attributes_0_quantity", with: "1000"
     expect(page).to have_no_text("No hay tanto en bodega")
     expect(page).to have_css("[data-supply-exit-target=total]", text: "L 1,250,000.00")
+
+    # A second line of the same supply adds up against what is in the warehouse.
+    click_button "Agregar otro insumo"
+    line = all("[data-supply-exit-target~=line]").last
+    line.find("select").select("Urea")
+    line.find("[data-line-field=quantity]").fill_in(with: "600")
+    expect(page).to have_text("No hay tanto en bodega: hay 1,500 saco.", count: 2)
+    expect(page).to have_css("[data-supply-exit-target=total]", text: "L 2,000,000.00")
+    line.click_button "Quitar"
+    expect(page).to have_no_text("No hay tanto en bodega")
 
     pick_record("person_search", "Rosa Mejía")
     click_button "Registrar salida"
     expect(page).to have_text("Venta registrada: Urea × 1,000 saco.")
-    expect(SupplyExit.last).to have_attributes(kind: "sale", quantity: 1_000, amount: 1_250_000, money_account: account)
+    expect(SupplyExit.last).to have_attributes(kind: "sale", amount: 1_250_000, money_account: account)
+    expect(SupplyExit.last.lines.sole.quantity).to eq(1_000)
   end
 
   it "registers a use of the business without asking for a buyer" do
     visit new_sales_supply_exit_path(supply_id: supply.id)
     choose "Uso del negocio"
     expect(page).to have_no_field("person_search")
-    fill_in "supply_exit_quantity", with: "5"
+    expect(page).to have_no_field("supply_exit_lines_attributes_0_unit_price")
+    fill_in "supply_exit_lines_attributes_0_quantity", with: "5"
     click_button "Registrar salida"
     expect(page).to have_text("Salida registrada: Urea × 5 saco.")
     expect(SupplyExit.last).to have_attributes(kind: "business_use", person: nil, amount: nil)

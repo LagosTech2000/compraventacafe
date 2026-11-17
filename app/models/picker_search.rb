@@ -19,10 +19,10 @@ class PickerSearch
     case record
     when Producer
       # Each farm with its plots (loaded at once when the search did not bring them).
-      farms = record.farms.to_a
+      farms = record.purchase_farms
       ActiveRecord::Associations::Preloader.new(records: farms, associations: :plots).call
       { id: record.id, label: record.picker_label, hint: record.person.zone&.name, zone_id: record.zone_id, missing: record.missing_fields,
-        farms: farms.select(&:active?).sort_by(&:name).map { |farm| [ farm.id, farm.name, farm.missing_fields, farm.plot_options ] } }
+        farms: farms.select(&:active?).sort_by { [ it.producer_id ? 0 : 1, it.name ] }.map { |farm| [ farm.id, farm.purchase_label, farm.missing_fields, farm.plot_options ] } }
     when Person
       { id: record.id, label: record.picker_label, hint: record.zone&.name, missing: record.missing_fields }
     end

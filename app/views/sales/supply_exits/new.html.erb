@@ -5,7 +5,7 @@
 <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
 
 <% stock = SupplyStock.new %>
-<% supplies = Supply.active.or(Supply.where(id: @exit.supply_id)).ordered.map do |supply|
+<% supplies = Supply.active.or(Supply.where(id: @exit.lines.map(&:supply_id))).ordered.map do |supply|
      row = stock.for(supply)
      [ supply.name, supply.id, { data: { price: supply.default_price.to_s, stock: (row&.in_warehouse || 0).to_s, unit: supply.unit } } ]
    end %>
@@ -27,24 +27,29 @@
     </div>
   </fieldset>
 
-  <div class="grid gap-5 sm:grid-cols-2">
-    <div>
-      <%= form.label :supply_id, class: "field-label" %>
-      <%= form.select :supply_id, supplies, { prompt: t(".pick_supply") }, required: true, class: "field-input",
-            data: { supply_exit_target: "supply", action: "supply-exit#pickSupply" } %>
-      <p class="mt-1 text-xs text-ink-muted" data-supply-exit-target="stock"></p>
-    </div>
-    <div>
-      <%= form.label :quantity, class: "field-label" %>
-      <%= form.number_field :quantity, required: true, min: 0.01, max: SupplyExit::MAX_QUANTITY - 0.01, step: 0.01, inputmode: "decimal",
-            class: "field-input", data: { supply_exit_target: "quantity", action: "input->supply-exit#update" } %>
-      <p class="mt-1 text-xs font-semibold text-danger" data-supply-exit-target="over" hidden></p>
-    </div>
-    <div>
-      <%= form.label :exited_on, class: "field-label" %>
-      <%= form.date_field :exited_on, required: true, class: "field-input" %>
-    </div>
+  <div class="max-w-xs">
+    <%= form.label :exited_on, class: "field-label" %>
+    <%= form.date_field :exited_on, required: true, class: "field-input" %>
   </div>
+
+  <%# Its supplies, one line each (Fernando, 2026-11-16), as an entry. %>
+  <section class="space-y-3" aria-labelledby="supply-exit-lines">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h2 id="supply-exit-lines" class="text-lg font-semibold"><%= SupplyExit.human_attribute_name(:lines) %></h2>
+      <button type="button" class="btn btn-sm btn-primary" data-action="supply-exit#addAndFocus"><%= t("sales.supply_entries.new.add_line") %></button>
+    </div>
+    <div class="space-y-3" data-supply-exit-target="lines">
+      <%= form.fields_for :lines do |line_form| %>
+        <%= render "sales/supply_exits/line_fields", form: line_form, supplies: %>
+      <% end %>
+    </div>
+    <p class="empty-state" data-supply-exit-target="empty" hidden><%= t("sales.supply_entries.new.no_lines") %></p>
+    <template data-supply-exit-target="template">
+      <%= form.fields_for :lines, SupplyExitLine.new, child_index: "NEW_RECORD" do |line_form| %>
+        <%= render "sales/supply_exits/line_fields", form: line_form, supplies: %>
+      <% end %>
+    </template>
+  </section>
 
   <%# A sale's buyer, price and where its money came in; off for a use of the business. %>
   <fieldset class="space-y-5" data-supply-exit-target="sale">
@@ -60,16 +65,9 @@
         <%= modal_link_to t(".new_person"), new_administration_person_path(picker: 1), class: "btn btn-sm mt-2" %>
       <% end %>
     <% end %>
-    <div class="grid gap-5 sm:grid-cols-2">
-      <div>
-        <%= form.label :unit_price, class: "field-label" %>
-        <%= form.number_field :unit_price, required: true, min: 0.01, max: Supply::MAX_PRICE - 0.01, step: 0.01, inputmode: "decimal",
-              class: "field-input", data: { supply_exit_target: "price", action: "input->supply-exit#update" } %>
-      </div>
-      <div>
-        <p class="field-label"><%= SupplyExit.human_attribute_name(:amount) %></p>
-        <p class="text-lg font-bold tabular-nums" data-supply-exit-target="total">L 0.00</p>
-      </div>
+    <div>
+      <p class="field-label"><%= SupplyExit.human_attribute_name(:amount) %></p>
+      <p class="text-lg font-bold tabular-nums" data-supply-exit-target="total">L 0.00</p>
     </div>
     <div class="grid gap-5 sm:grid-cols-2" data-controller="money-account"
          data-money-account-defaults-value="<%= MoneyAccount.defaults_by_method.to_json %>">

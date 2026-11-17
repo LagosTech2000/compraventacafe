@@ -3,10 +3,9 @@
 # coffee state: a sale has one price. It is charged on the buyer's net
 # weight; each line keeps its weights and amount.
 #
-# Part of it can be taken off the buyer's advances (`advance_amount`, a
-# collection «con anticipo», Fernando, 2026-10-25), and what is left can be
-# collected on the spot, in full ("paid", contado) or in part ("partial",
-# with the amount). All of it is saved or none.
+# It can be collected on the spot, in full ("paid", contado) or in part
+# ("partial", with the amount). All of it is saved or none. Advances are
+# applied to sales afterwards (BuyerAdvanceSale, Fernando, 2026-11-16).
 class SaleIssuer
   Result = Data.define(:sale) do
     def success? = sale.persisted? && sale.errors.none?
@@ -14,8 +13,7 @@ class SaleIssuer
 
   PAYMENT_CHOICES = Sale::PAYMENT_STATUSES
 
-  def initialize(buyer:, shipment_ids:, user:, sale: {}, payment_status: nil, payment_method: nil, paid_on: nil, amount: nil, money_account_id: nil,
-                 advance_amount: nil)
+  def initialize(buyer:, shipment_ids:, user:, sale: {}, payment_status: nil, payment_method: nil, paid_on: nil, amount: nil, money_account_id: nil)
     @buyer = buyer
     @shipment_ids = Array(shipment_ids).compact_blank.map(&:to_i)
     @user = user
@@ -23,7 +21,6 @@ class SaleIssuer
     @payment_status = payment_status.presence_in(PAYMENT_CHOICES) || "pending"
     @payment = { payment_method: payment_method.presence, paid_on: paid_on.presence || @attributes[:sold_on].presence || Time.zone.today,
                  amount: amount.presence, money_account_id: money_account_id.presence }
-    @advance_amount = advance_amount.to_d
   end
 
   def call
@@ -41,7 +38,7 @@ class SaleIssuer
         sale.errors.add(:lines, :mixed_states)
       else
         build_lines(sale, shipments)
-        raise ActiveRecord::Rollback unless sale.save && take_advance(sale) && collect(sale)
+        raise ActiveRecord::Rollback unless sale.save && collect(sale)
       end
     end
 
@@ -65,14 +62,7 @@ class SaleIssuer
 
     def sale_price(sale) = { unit_price: sale.unit_price, price_unit: sale.price_unit, quintal_pounds: sale.quintal_pounds }
 
-    # What is taken off the buyer's advances, on the sale's day.
-    def take_advance(sale)
-      return true unless @advance_amount.positive?
-
-      record_payment(sale, amount: @advance_amount, paid_on: sale.sold_on, payment_method: SalePayment::ADVANCE, money_account_id: nil)
-    end
-
-    # The payment made when selling, if any, on what the advance left.
+    # The payment made when selling, if any.
     # Its errors go on the sale.
     def collect(sale)
       return true if @payment_status == "pending"

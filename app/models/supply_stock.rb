@@ -23,7 +23,7 @@ class SupplyStock
   def self.starts_on = SiteSetting.current.supply_stock_starts_on || STARTED_ON
 
   def self.entered(supply_id) = SupplyEntryLine.where(supply_id:).sum(:quantity)
-  def self.exited(supply_id) = SupplyExit.where(supply_id:).sum(:quantity)
+  def self.exited(supply_id) = SupplyExitLine.where(supply_id:).sum(:quantity)
 
   # What there is of a supply in the warehouse; a line being delivered does
   # not count itself.
@@ -51,7 +51,7 @@ class SupplyStock
       invested = SupplyEntryLine.group(:supply_id).sum(:amount)
       lent = self.class.counted_lines.group(:supply_id).sum(:quantity)
       delivered = self.class.counted_lines.where.not(delivered_on: nil).group(:supply_id).sum(:quantity)
-      exited = SupplyExit.group(:supply_id).sum(:quantity)
+      exited = SupplyExitLine.group(:supply_id).sum(:quantity)
       ids = entered.keys | lent.keys | exited.keys
       Supply.where(id: ids).or(Supply.active).ordered.map do |supply|
         Row.new(supply:, entered: entered.fetch(supply.id, 0.to_d), lent: lent.fetch(supply.id, 0.to_d),

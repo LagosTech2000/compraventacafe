@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_17_002519) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_17_024718) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -57,6 +57,36 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_002519) do
     t.index ["finance_category_id", "month"], name: "index_budgets_on_finance_category_id_and_month", unique: true
   end
 
+  create_table "buyer_advance_refunds", force: :cascade do |t|
+    t.bigint "buyer_advance_id", null: false
+    t.date "refunded_on", null: false
+    t.decimal "amount", precision: 14, scale: 2, null: false
+    t.string "payment_method", null: false
+    t.bigint "money_account_id", null: false
+    t.text "observations"
+    t.bigint "created_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["buyer_advance_id"], name: "index_buyer_advance_refunds_on_buyer_advance_id"
+    t.index ["created_by_id"], name: "index_buyer_advance_refunds_on_created_by_id"
+    t.index ["money_account_id"], name: "index_buyer_advance_refunds_on_money_account_id"
+  end
+
+  create_table "buyer_advance_sales", force: :cascade do |t|
+    t.bigint "buyer_advance_id", null: false
+    t.bigint "sale_id", null: false
+    t.decimal "percent", precision: 7, scale: 4, null: false
+    t.decimal "amount", precision: 14, scale: 2, null: false
+    t.date "applied_on", null: false
+    t.bigint "created_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["buyer_advance_id", "sale_id"], name: "index_buyer_advance_sales_on_buyer_advance_id_and_sale_id", unique: true
+    t.index ["buyer_advance_id"], name: "index_buyer_advance_sales_on_buyer_advance_id"
+    t.index ["created_by_id"], name: "index_buyer_advance_sales_on_created_by_id"
+    t.index ["sale_id"], name: "index_buyer_advance_sales_on_sale_id"
+  end
+
   create_table "buyer_advances", force: :cascade do |t|
     t.bigint "buyer_id", null: false
     t.date "received_on", null: false
@@ -68,9 +98,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_002519) do
     t.bigint "created_by_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "status", default: "pending", null: false
+    t.date "cancelled_on"
     t.index ["buyer_id"], name: "index_buyer_advances_on_buyer_id"
     t.index ["created_by_id"], name: "index_buyer_advances_on_created_by_id"
     t.index ["money_account_id"], name: "index_buyer_advances_on_money_account_id"
+    t.index ["status"], name: "index_buyer_advances_on_status"
   end
 
   create_table "buyers", force: :cascade do |t|
@@ -169,11 +202,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_002519) do
     t.bigint "created_by_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "coffee_conversion_id"
     t.index ["batched_on"], name: "index_coffee_batches_on_batched_on"
+    t.index ["coffee_conversion_id"], name: "index_coffee_batches_on_coffee_conversion_id"
     t.index ["created_by_id"], name: "index_coffee_batches_on_created_by_id"
     t.index ["number"], name: "index_coffee_batches_on_number", unique: true
     t.index ["shipment_id"], name: "index_coffee_batches_on_shipment_id"
     t.index ["warehouse_id"], name: "index_coffee_batches_on_warehouse_id"
+    t.check_constraint "shipment_id IS NULL OR coffee_conversion_id IS NULL", name: "coffee_batches_one_destination"
   end
 
   create_table "coffee_conversions", force: :cascade do |t|
@@ -787,6 +823,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_002519) do
     t.decimal "longitude", precision: 9, scale: 6
     t.string "civil_status"
     t.string "nationality"
+    t.boolean "business_owner", default: false, null: false
     t.index ["department_id"], name: "index_people_on_department_id"
     t.index ["dni"], name: "index_people_on_dni", unique: true, where: "(dni IS NOT NULL)"
     t.index ["last_names", "first_names"], name: "index_people_on_last_names_and_first_names"
@@ -970,6 +1007,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_002519) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "money_account_id"
+    t.bigint "buyer_advance_sale_id"
+    t.index ["buyer_advance_sale_id"], name: "index_sale_payments_on_buyer_advance_sale_id", unique: true
     t.index ["created_by_id"], name: "index_sale_payments_on_created_by_id"
     t.index ["money_account_id"], name: "index_sale_payments_on_money_account_id"
     t.index ["paid_on"], name: "index_sale_payments_on_paid_on"
@@ -1268,13 +1307,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_002519) do
     t.index ["supply_id"], name: "index_supply_entry_lines_on_supply_id"
   end
 
-  create_table "supply_exits", force: :cascade do |t|
+  create_table "supply_exit_lines", force: :cascade do |t|
+    t.bigint "supply_exit_id", null: false
     t.bigint "supply_id", null: false
+    t.decimal "quantity", precision: 10, scale: 2, null: false
+    t.decimal "unit_price", precision: 14, scale: 2
+    t.decimal "amount", precision: 14, scale: 2
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["supply_exit_id"], name: "index_supply_exit_lines_on_supply_exit_id"
+    t.index ["supply_id"], name: "index_supply_exit_lines_on_supply_id"
+  end
+
+  create_table "supply_exits", force: :cascade do |t|
     t.string "kind", null: false
     t.date "exited_on", null: false
-    t.decimal "quantity", precision: 10, scale: 2, null: false
     t.bigint "person_id"
-    t.decimal "unit_price", precision: 14, scale: 2
     t.decimal "amount", precision: 14, scale: 2
     t.string "payment_method"
     t.bigint "money_account_id"
@@ -1286,7 +1334,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_002519) do
     t.index ["exited_on"], name: "index_supply_exits_on_exited_on"
     t.index ["money_account_id"], name: "index_supply_exits_on_money_account_id"
     t.index ["person_id"], name: "index_supply_exits_on_person_id"
-    t.index ["supply_id"], name: "index_supply_exits_on_supply_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -1385,6 +1432,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_002519) do
   add_foreign_key "account_transfers", "users", column: "created_by_id"
   add_foreign_key "audit_events", "users", on_delete: :nullify
   add_foreign_key "budgets", "finance_categories"
+  add_foreign_key "buyer_advance_refunds", "buyer_advances"
+  add_foreign_key "buyer_advance_refunds", "money_accounts"
+  add_foreign_key "buyer_advance_refunds", "users", column: "created_by_id"
+  add_foreign_key "buyer_advance_sales", "buyer_advances"
+  add_foreign_key "buyer_advance_sales", "sales"
+  add_foreign_key "buyer_advance_sales", "users", column: "created_by_id"
   add_foreign_key "buyer_advances", "buyers"
   add_foreign_key "buyer_advances", "money_accounts"
   add_foreign_key "buyer_advances", "users", column: "created_by_id"
@@ -1399,6 +1452,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_002519) do
   add_foreign_key "coffee_batch_invoices", "coffee_batches"
   add_foreign_key "coffee_batch_invoices", "invoices"
   add_foreign_key "coffee_batch_invoices", "users", column: "created_by_id"
+  add_foreign_key "coffee_batches", "coffee_conversions"
   add_foreign_key "coffee_batches", "shipments"
   add_foreign_key "coffee_batches", "users", column: "created_by_id"
   add_foreign_key "coffee_batches", "warehouses"
@@ -1503,6 +1557,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_002519) do
   add_foreign_key "purchases", "zones"
   add_foreign_key "sale_lines", "sales"
   add_foreign_key "sale_lines", "shipments"
+  add_foreign_key "sale_payments", "buyer_advance_sales"
   add_foreign_key "sale_payments", "money_accounts"
   add_foreign_key "sale_payments", "sales"
   add_foreign_key "sale_payments", "users", column: "created_by_id"
@@ -1540,9 +1595,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_002519) do
   add_foreign_key "supply_entries", "users", column: "created_by_id"
   add_foreign_key "supply_entry_lines", "supplies"
   add_foreign_key "supply_entry_lines", "supply_entries"
+  add_foreign_key "supply_exit_lines", "supplies"
+  add_foreign_key "supply_exit_lines", "supply_exits"
   add_foreign_key "supply_exits", "money_accounts"
   add_foreign_key "supply_exits", "people"
-  add_foreign_key "supply_exits", "supplies"
   add_foreign_key "supply_exits", "users", column: "created_by_id"
   add_foreign_key "vehicles", "vehicle_types"
   add_foreign_key "warehouse_transfers", "users", column: "created_by_id"

@@ -10,9 +10,10 @@ module Sales
     end
 
     def new
-      @exit = authorize SupplyExit.new(kind: "sale", exited_on: Time.zone.today, supply_id: params[:supply_id], payment_method: "cash",
+      @exit = authorize SupplyExit.new(kind: "sale", exited_on: Time.zone.today, payment_method: "cash",
                                        money_account_id: MoneyAccount.default_for("cash")&.id)
-      @exit.unit_price = @exit.supply&.default_price
+      supply = Supply.active.find_by(id: params[:supply_id])
+      @exit.lines.build(supply:, unit_price: supply&.default_price)
     end
 
     def create
@@ -26,7 +27,7 @@ module Sales
     end
 
     def show
-      @exit = authorize SupplyExit.includes(:supply, :person, :money_account, :created_by).find(params[:id])
+      @exit = authorize SupplyExit.includes({ lines: :supply }, :person, :money_account, :created_by).find(params[:id])
     end
 
     def destroy
@@ -37,7 +38,8 @@ module Sales
 
     private
       def exit_params
-        params.expect(supply_exit: %i[kind supply_id quantity exited_on person_id unit_price payment_method money_account_id observations])
+        params.expect(supply_exit: [ :kind, :exited_on, :person_id, :payment_method, :money_account_id, :observations,
+                                     { lines_attributes: [ %i[supply_id quantity unit_price _destroy] ] } ])
       end
   end
 end

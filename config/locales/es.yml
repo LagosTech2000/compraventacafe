@@ -694,6 +694,7 @@ es:
     payroll_expense: "%{description} · %{farm}"
     sale_payment: "Cobro de la venta %{number}"
     buyer_advance: "Anticipo %{number} de comprador"
+    buyer_advance_refund: "Devolución del anticipo %{number}"
     supply_sale: "Venta de insumo: %{supply}"
     owner_loan: "Préstamo de %{lender} a los dueños"
     owner_loan_payment: "Abono al préstamo de %{lender}"
@@ -1965,6 +1966,34 @@ es:
       out_detail: "Fuera: %{in_transit} lb en camino · %{unsold} lb pesadas sin vender"
       negative: "Hay más café en salidas que en compras para algún estado del café. Revisa que estén registradas todas las compras y que las salidas tengan el estado correcto."
       help: "Libras brutas y, debajo, netas. Toca un inventario para ver sus sacos, daño, valor y lotes."
+    quintal_gain:
+      title: "QQ sobrantes: QQ de compra contra QQ de venta"
+      help: "El café vendido contado en QQ de compra (sus libras netas de la báscula local ÷ 125) y en QQ de venta (las netas del comprador ÷ las libras por quintal de cada venta). Al vender en quintales de 100 lb, de cada 100 QQ de compra salen 125 de venta (25 % más); en quintales de 120 lb, 104.17 (4.17 % más). Cada parte en dinero, al precio de cada venta."
+      empty: "No hay ventas con báscula local en este período."
+      purchase_quintals: "QQ de compra (÷ 125)"
+      local_net: "%{pounds} lb netas de la báscula local"
+      sale_quintals: "QQ de venta"
+      buyer_net: "%{pounds} lb netas del comprador"
+      quintals: "QQ sobrantes"
+      percent: "%{percent} más que los QQ de compra"
+      pounds: "Libras sobrantes"
+      pounds_help: "Netas del comprador − netas de la báscula local"
+      amount: "Dinero de los QQ sobrantes"
+      amount_help: "Lo que se cobró por esos QQ, al precio de cada venta"
+      total: "Total vendido de estas ventas"
+      at_purchase_quintals: "Lo que se habría cobrado en QQ de compra y con el peso local"
+      left_out:
+        one: "1 venta no cuenta: alguna de sus salidas no tiene báscula local."
+        other: "%{count} ventas no cuentan: alguna de sus salidas no tiene báscula local."
+      parts:
+        from: "De dónde salen"
+        quintals: "QQ"
+        amount: "Dinero"
+        size: "Por el tamaño del quintal"
+        size_help: "Se compra en quintales de 125 lb y se vende en los de cada venta (100 o 120 lb), con el peso de la báscula local."
+        weight: "Por el peso"
+        weight_help: "Lo que el comprador pesó de más (o de menos) que la báscula local, en QQ de venta."
+        total: "QQ sobrantes"
     summary:
       sales: "Ventas"
       buyers: "Compradores"
@@ -2057,13 +2086,13 @@ es:
       label: "Lote %{number}"
       index:
         title: "Lotes"
-        help: "El café comprado en lotes: cada uno con su bodega, su estado del café, su límite de libras brutas y una parte de facturas de compra. Los lotes van en las salidas; los más recientes primero."
+        help: "El café comprado en lotes: cada uno con su bodega, su estado del café, su límite de libras brutas y una parte de facturas de compra. Los lotes van en las salidas o se mandan a procesar; los más recientes primero."
         new: "Nuevo lote"
         search_placeholder: "Número del lote o productor de sus facturas"
         status: "Salida"
         statuses:
           free: "Libres"
-          shipped: "En una salida"
+          shipped: "En una salida o un proceso"
         empty: "No hay lotes con estos filtros."
       table:
         number: "Lote"
@@ -2075,6 +2104,7 @@ es:
         shipment: "Salida"
         actions: "Acciones"
         free: "Libre"
+        process: "Proceso %{number}"
         mark_all: "Marcar todos"
         mark: "Marcar el %{batch}"
       form:
@@ -2099,6 +2129,7 @@ es:
           room: "Caben todavía (lb brutas)"
           value: "Valor de compra"
         on_shipment: "Salió en la"
+        on_process: "Se mandó a procesar en el proceso"
         free_help: "Todavía no está en ninguna salida."
         invoices: "Facturas del lote"
         add_invoices: "Agregar facturas"
@@ -2668,9 +2699,6 @@ es:
           more: "%{amount} de más a este precio"
         mixed_states: "Elegiste salidas de dos estados del café: una venta lleva un solo estado. Haz una venta por cada uno."
         payment: "Cobro"
-        advance_amount: "Descontar de anticipos (L)"
-        advance_help: "El comprador tiene %{balance} en anticipos. Lo que escribas se descuenta como un cobro «con anticipo», sin mover dinero; lo que quede se cobra como elijas abajo."
-        advance_pounds: "Equivale a %{net} lb netas y %{gross} lb brutas de café, a este precio."
         quintal_pounds_help: "%{pounds} si no se cambia. La venta guarda las suyas."
         price_per_quintal: "Precio por quintal (L)"
         price_per_pound: "Precio por libra (L)"
@@ -2702,6 +2730,7 @@ es:
         original: "ORIGINAL"
         copy: "COPIA"
         new_payment: "Registrar cobro"
+        apply_advance: "Aplicar anticipo"
         settle: "Liquidación del comprador"
         settlement:
           less: "Según su liquidación, el comprador paga %{buyer_total}: %{amount} menos que la venta. Motivo: %{reason}. Se cobra lo de su liquidación."
@@ -2729,6 +2758,7 @@ es:
         overpaid: "Cobrado de más"
         confirm_destroy: "¿Quitar este cobro? La venta vuelve a quedar por cobrar."
         none: "Todavía no hay cobros."
+        from_advance: "Del anticipo %{number} · %{buyer}"
       receipt:
         title: "Nota de venta"
         shipment: "Salida"
@@ -2741,28 +2771,97 @@ es:
         seller_signature: "Firma por el negocio"
         issued_by: "Registró: %{name}"
     buyer_advances:
+      index:
+        title: "Anticipos"
+        help: "El dinero que adelantan los compradores y los bancos. Se aplica a las ventas por un % del anticipo, o se devuelve en dinero; queda «Pendiente» mientras le quede saldo y «Cancelado» cuando se cubre todo."
+        new: "Nuevo anticipo"
+        search_placeholder: "Comprador, banco o documento"
+        empty: "No hay anticipos con estos filtros."
       new:
         title: "Registrar anticipo"
-        help: "Dinero que adelanta el comprador y se le paga con café, sin intereses."
-        document_placeholder: "Cheque, transferencia o comprobante del comprador"
+        help: "Dinero que adelanta un comprador o un banco, sin intereses: se paga con café (aplicándolo a ventas) o se devuelve en dinero."
+        pick_buyer: "Selecciona un comprador o banco"
+        bank_help: "¿Es un banco que no está? Agrégalo como comprador de tipo «Banco»."
+        new_buyer: "Nuevo comprador"
+        document_placeholder: "Cheque, transferencia o comprobante"
         submit: "Registrar anticipo"
       create:
         success: "Anticipo registrado."
       destroy:
         success: "Anticipo quitado."
       show:
-        title: "Recibo de anticipo %{number}"
-        print: "Imprimir"
+        title: "Anticipo %{number}"
+        print: "Imprimir recibo"
         original: "ORIGINAL"
         copy: "COPIA"
-        back: "Volver al comprador"
+        back: "Volver a los anticipos"
+        cancelled_on: "Cancelado el %{date}"
+        free_percent: "%{percent} del anticipo libre"
+        remove: "Quitar"
+        destroy: "Quitar anticipo"
+        figures:
+          amount: "Anticipado"
+          applied: "Aplicado a ventas"
+          refunded: "Devuelto en dinero"
+          balance: "Saldo"
+        applications:
+          title: "Aplicado a ventas"
+          help: "Cada venta toma un % del anticipo, que se le cobra «con anticipo» (no mueve dinero)."
+          apply: "Aplicar a ventas"
+          none: "Todavía no se aplica a ninguna venta."
+          confirm_remove: "¿Quitar lo aplicado a esta venta? Se quita su cobro con anticipo y el monto vuelve al saldo del anticipo."
+        refunds:
+          title: "Devuelto en dinero"
+          help: "Lo que se le devolvió en dinero: sale de la cuenta elegida."
+          new: "Registrar devolución"
+          none: "Todavía no se devuelve nada."
+          confirm_remove: "¿Quitar esta devolución? El dinero vuelve a la cuenta y el monto al saldo del anticipo."
       receipt:
         title: "Recibo de anticipo"
         amount: "Recibimos"
-        concept: "Anticipo del comprador, a pagar con café, sin intereses."
-        giver_signature: "Entregó (comprador)"
+        concept: "Anticipo, a pagar con café o en dinero, sin intereses."
+        giver_signature: "Entregó"
         receiver_signature: "Recibió"
         registered_by: "Registró: %{name}"
+    buyer_advance_sales:
+      collection: "Anticipo %{number}"
+      new:
+        title_advance: "Aplicar el anticipo %{number} de %{buyer}"
+        title_sale: "Aplicar anticipos a la venta %{number}"
+        help_advance: "Marca las ventas y escribe qué % del anticipo toma cada una; al lado sale el dinero que equivale y lo que le queda a la venta. Se le cobra «con anticipo»: no mueve dinero."
+        help_sale: "Marca los anticipos y escribe qué % de cada uno se aplica a esta venta. Un anticipo de un banco paga ventas de cualquier comprador."
+        advance_room: "Anticipo de %{amount} · saldo %{balance} (%{percent} libre)."
+        sale_room: "Venta de %{buyer} · falta por cobrar %{due}."
+        mark_column: "Marcar"
+        mark: "Marcar %{number}"
+        percent: "% del anticipo"
+        percent_of: "% del anticipo para %{number}"
+        free: "%{percent} libre"
+        summary_advance: "Toma %{percent} del anticipo: %{amount}."
+        summary_sale: "Cubre %{amount} de %{due} que falta por cobrar."
+        over_free: "Pasa de lo libre (%{percent})."
+        over_due: "Pasa de lo que falta (%{due})."
+        left: "Le queda %{amount} por cobrar"
+        submit: "Aplicar"
+        no_sales: "No hay ventas por cobrar con estos filtros."
+        no_advances: "No hay anticipos con saldo."
+      create:
+        none: "Marca al menos una."
+        success:
+          one: "Anticipo aplicado a 1 venta."
+          other: "Anticipo aplicado: %{count} cobros con anticipo."
+        failed: "No se aplicó nada: %{errors}."
+      destroy:
+        success: "Se quitó lo aplicado: el monto volvió al saldo del anticipo."
+    buyer_advance_refunds:
+      new:
+        title: "Devolver el anticipo %{number}"
+        help: "Lo que se le devuelve en dinero a %{buyer}. Saldo del anticipo: %{balance}."
+        submit: "Registrar devolución"
+      create:
+        success: "Devolución de %{amount} registrada."
+      destroy:
+        success: "Devolución quitada: el dinero volvió a la cuenta."
     sale_settlements:
       edit:
         title: "Liquidación del comprador · venta %{number}"
@@ -2775,7 +2874,6 @@ es:
         success: "Liquidación del comprador guardada."
     sale_payments:
       new:
-        advance_option: "Con anticipo (saldo %{balance})"
         title: "Registrar cobro"
         sale: "Venta %{number} · %{buyer}"
         amount_help: "Empieza con lo que falta por cobrar."
@@ -2808,6 +2906,7 @@ es:
         title: "Clientes comerciales"
         help: "Exportadoras, beneficios e intermediarios que le compran el café al negocio."
         new: "Nuevo comprador"
+        advances: "Anticipos"
         search_placeholder: "Nombre, RTN o contacto"
         status: "Estado"
         statuses:
@@ -2888,6 +2987,7 @@ es:
         card_difference: "Netas que salieron contra las que entraron: %{pounds} lb"
         sites: "Lugares"
       show:
+        batches: "Lotes que entraron (de sus facturas y procesos)"
         title: "Proceso %{number}"
         input: "Entró: %{state}"
         output: "Salió: %{state}"
@@ -2938,6 +3038,8 @@ es:
         new_site: "Nuevo lugar"
         no_sites: "Todavía no hay lugares para este proceso: registra uno con «Nuevo lugar»."
         input_gross_weight: "lb brutas a procesar"
+        gross_from_batches: "Salen de los lotes marcados (sus facturas y procesos)."
+        batches_help: "Marca los lotes cuyo café entra a procesar, o crea uno con «Nuevo lote» y elige sus facturas. Las libras brutas son las de los lotes."
         estimate: "Debería salir"
         estimate_help: "Libras brutas, según el rendimiento estimado, de"
         average: "En promedio, tus procesos de este café han dado %{percent} %."
@@ -4254,6 +4356,7 @@ es:
         back: "Volver a estados de cuenta"
 
   farms:
+    purchase_label: "%{name} · del negocio"
     # Coffee varieties and plots (Fernando, 2026-11-15).
     varieties:
       label: "Variedades"
@@ -5766,6 +5869,7 @@ es:
           payroll_expenses: "Gasto de planilla"
           sale_payments: "Cobro de venta"
           buyer_advances: "Anticipo de comprador"
+          buyer_advance_refunds: "Devolución de anticipo"
           supply_sales: "Venta de insumos"
           processing_costs: "Gasto de procesamiento"
           shipment_costs: "Gasto de salida"
@@ -5849,7 +5953,7 @@ es:
         summary: "Pasar café de uva a pergamino húmedo, o de húmedo a pergamino seco, en dos pasos: pesar lo que entra y registrar lo que salió."
         steps:
           - "En Comercialización → Procesos (o en Inventario), toca «Procesar café»."
-          - "Elige qué se procesa, la bodega, el lugar (cada proceso tiene su propia lista de lugares) y las lb brutas a procesar. Ese café sale de su estado y queda «En proceso»."
+          - "Elige qué se procesa, la bodega, el lugar (cada proceso tiene su propia lista de lugares) y marca los lotes cuyo café entra (o crea uno con «Nuevo lote» y elige sus facturas): las lb brutas a procesar son las de los lotes. Ese café sale de su estado y queda «En proceso»."
           - "Cuando salga, abre el proceso y toca «Registrar resultado»: pesa lo que salió como una compra (libras brutas, sacos, humedad y daño). Se suma a su inventario."
           - "Al mandar a procesar se ve cuánto debería salir según el rendimiento estimado (37.95 % de la uva, 50 % al secar, o el que escribas)."
           - "El detalle compara lo estimado con lo que salió, la merma y las libras netas que entraron con las que salieron."
@@ -5936,17 +6040,18 @@ es:
           - "Los períodos se pagan en orden; solo se quita el último pago."
           - "Los anticipos salen de la cuenta el día que se dan; al pagar solo se restan de lo que se entrega."
       buyer_advances:
-        title: "Anticipos de compradores"
-        summary: "El comprador adelanta dinero y se le paga con café, sin intereses: se descuenta de sus ventas."
+        title: "Anticipos"
+        summary: "Un comprador o un banco adelanta dinero, sin intereses. Se registra sin venta y después se aplica a una o varias ventas por un % del anticipo, o se devuelve en dinero."
         steps:
-          - "En la ficha del comprador toca «Registrar anticipo»: el dinero entra a la cuenta elegida y sube su saldo de anticipos."
-          - "En «Nueva venta», si el comprador tiene anticipos, escribe cuánto descontar en «Descontar de anticipos»; lo que quede se cobra como siempre."
-          - "También después: «Registrar cobro» en la venta, con la forma de pago «Con anticipo»."
-          - "La pestaña «Anticipos» del comprador muestra lo que dio y lo descontado de cada venta."
+          - "Compradores → «Anticipos» → «Nuevo anticipo» (o desde la ficha del comprador): el dinero entra a la cuenta elegida."
+          - "En el anticipo, «Aplicar a ventas»: marca las ventas y el % del anticipo de cada una. O en la venta, «Aplicar anticipo»."
+          - "Cada venta queda cobrada «con anticipo» por ese monto."
+          - "Lo que se le devuelve en dinero se anota con «Registrar devolución»: sale de la cuenta."
+          - "El anticipo queda «Pendiente» mientras le quede saldo y «Cancelado» cuando las ventas y las devoluciones lo cubren."
         tips:
           - "Un cobro con anticipo no mueve dinero: el dinero ya entró con el anticipo. No lleva cuenta."
-          - "No se descuenta más que el saldo de anticipos ni más de lo que falta por cobrar."
-          - "Si se quita un cobro con anticipo, el monto vuelve al saldo del comprador."
+          - "Un anticipo no pasa del 100 % entre ventas y devoluciones, y una venta no recibe más de lo que falta por cobrar."
+          - "Si se quita lo aplicado a una venta (o su cobro), el monto vuelve al saldo del anticipo y este vuelve a «Pendiente»."
       hauler_commission:
         title: "Comisión y pagos de un carrero"
         summary: "El carrero trae el café con los carros del negocio y gana una comisión por cada compra que trae."
@@ -7253,18 +7358,48 @@ es:
               - "«Sale primero» marca el lote más viejo de cada bodega: es el que sale en la próxima salida, proceso o traslado."
               - "En la uva, «Uva esperando» y «Uva urgente» marcan los lotes que llevan demasiadas horas sin procesar."
         buyer_advances:
-          form:
-            title: "Registrar un anticipo de comprador"
-            summary: "Dinero que adelanta el comprador y se le paga con café, sin intereses."
+          index:
+            title: "Anticipos"
+            summary: "Todo el dinero que adelantan los compradores y los bancos, con lo aplicado a ventas, lo devuelto y su saldo."
             steps:
+              - "Filtra por estado (pendiente o cancelado), comprador o banco, fechas o texto."
+              - "Arriba, los totales de todo lo filtrado: anticipado, aplicado, devuelto y saldo."
+              - "Toca un anticipo para ver su detalle, aplicarlo a ventas o registrar una devolución."
+          form:
+            title: "Registrar un anticipo"
+            summary: "Dinero que adelanta un comprador o un banco, sin intereses: se paga con café o se devuelve en dinero."
+            steps:
+              - "Si lo registras desde la lista, elige el comprador o el banco (un banco se agrega como comprador de tipo «Banco»)."
               - "Escribe el monto, la fecha, la forma de pago y la cuenta donde entró."
               - "Si tienes el número del cheque o del comprobante, escríbelo en «Documento»."
-              - "Toca «Registrar anticipo»: se abre su recibo para imprimir."
+              - "Toca «Registrar anticipo»: se abre su detalle, con su recibo para imprimir."
           show:
-            title: "Recibo de anticipo"
-            summary: "El comprobante de un anticipo, con original y copia, cada uno en su hoja."
+            title: "Anticipo"
+            summary: "Dónde está el anticipo: lo aplicado a ventas, lo devuelto en dinero y su saldo, con su recibo."
             steps:
-              - "Toca «Imprimir»: el original y la copia salen cada uno en su hoja."
+              - "Arriba, su estado: «Pendiente» mientras le quede saldo, «Cancelado» cuando las ventas y las devoluciones lo cubren."
+              - "«Aplicar a ventas» elige ventas y el % del anticipo que toma cada una."
+              - "«Registrar devolución» anota lo que se le devuelve en dinero, desde una cuenta."
+              - "«Imprimir recibo» saca el original y la copia, cada uno en su hoja."
+        buyer_advance_sales:
+          form:
+            title: "Aplicar un anticipo a ventas"
+            summary: "Cada venta toma un % del anticipo y se le cobra «con anticipo», sin mover dinero."
+            steps:
+              - "Desde el anticipo: marca las ventas por cobrar y escribe el % del anticipo de cada una."
+              - "Desde la venta: marca los anticipos con saldo y escribe el % de cada uno."
+              - "Al lado de cada fila sale el dinero que equivale y lo que le queda a la venta."
+              - "Elige la fecha y toca «Aplicar»: se guarda todo junto o nada."
+            tips:
+              - "Entre todas, un anticipo no pasa del 100 %, y una venta no recibe más de lo que falta por cobrar."
+              - "Un anticipo de un banco puede pagar ventas de cualquier comprador."
+        buyer_advance_refunds:
+          form:
+            title: "Devolver un anticipo en dinero"
+            summary: "Lo que se le devuelve al comprador o al banco: sale de la cuenta elegida."
+            steps:
+              - "Escribe el monto (empieza con el saldo del anticipo), la fecha, la forma de pago y la cuenta."
+              - "Toca «Registrar devolución»: el saldo del anticipo baja y, si llega a cero, queda cancelado."
         coffee_conversions:
           index:
             title: "Procesos"
@@ -7286,7 +7421,7 @@ es:
             steps:
               - "Elige qué se procesa: uva a pergamino húmedo o húmedo a seco."
               - "Elige el lugar: solo salen los que hacen ese proceso. «Nuevo lugar» registra uno para ese proceso."
-              - "Escribe la fecha y hora y las lb brutas a procesar; a la derecha se ven sus libras netas y quintales."
+              - "Escribe la fecha y hora y marca los lotes que entran (o «Nuevo lote» con sus facturas): las lb brutas a procesar salen de ellos y a la derecha se ven sus libras netas y quintales."
               - "Toca «Pesar y mandar a procesar»: sale de su estado y queda en proceso."
             tips:
               - "Si es más de lo que hay en inventario, avisa sin impedirlo."
@@ -8371,6 +8506,8 @@ es:
         hauler_payment: "el pago a carrero"
         buyer: "el comprador"
         buyer_advance: "el anticipo del comprador"
+        buyer_advance_sale: "el anticipo aplicado a una venta"
+        buyer_advance_refund: "la devolución del anticipo"
         coffee_conversion: "el proceso de café"
         warehouse: "la bodega"
         processing_site: "el lugar de procesamiento"
@@ -8378,6 +8515,7 @@ es:
         supply_entry: "la entrada de insumos"
         supply_entry_line: "el insumo de la entrada"
         supply_exit: "la salida de insumos"
+        supply_exit_line: "el insumo de la salida"
         farm_plot: "la parcela"
         owner_loan: "el préstamo de los dueños"
         owner_loan_payment: "el abono al préstamo de los dueños"
@@ -8543,6 +8681,7 @@ es:
         title: "Editar persona"
       form:
         roles: "Roles"
+        business_owner_help: "Un dueño, al elegirlo como productor en «Nueva compra», puede comprar también el café de las fincas del negocio."
         cancel: "Cancelar"
       create:
         success: "Persona creada."
@@ -8777,8 +8916,14 @@ es:
         one: "Cobro de venta"
         other: "Cobros de ventas"
       buyer_advance:
-        one: "Anticipo de comprador"
-        other: "Anticipos de compradores"
+        one: "Anticipo"
+        other: "Anticipos"
+      buyer_advance_sale:
+        one: "Anticipo aplicado"
+        other: "Anticipos aplicados"
+      buyer_advance_refund:
+        one: "Devolución de anticipo"
+        other: "Devoluciones de anticipo"
       coffee_conversion:
         one: "Proceso de café"
         other: "Procesos de café"
@@ -8800,6 +8945,9 @@ es:
       supply_exit:
         one: "Salida de insumos"
         other: "Salidas de insumos"
+      supply_exit_line:
+        one: "Insumo de la salida"
+        other: "Insumos de la salida"
       shipment_cost:
         one: "Gasto de la salida"
         other: "Gastos de la salida"
@@ -9174,6 +9322,7 @@ es:
         kind: "Tipo"
         kind/exporter: "Exportador"
         kind/processor: "Beneficio"
+        kind/bank: "Banco"
         kind/other: "Intermediario"
         rtn: "RTN"
         phone: "Teléfono"
@@ -9286,6 +9435,8 @@ es:
         amount: "Monto"
         active: "Activa"
       sale_payment:
+        buyer_advance_sale: "Anticipo aplicado"
+        buyer_advance_sale_id: "Anticipo aplicado"
         created_by_id: "Registró"
         money_account: "Cuenta"
         money_account_id: "Cuenta"
@@ -9396,7 +9547,7 @@ es:
         kind/sale: "Venta por aparte"
         kind/business_use: "Uso del negocio"
         supply: "Insumo"
-        supply_id: "Insumo"
+        lines: "Insumos"
         exited_on: "Fecha"
         quantity: "Cantidad"
         person: "Se le vendió a"
@@ -9409,6 +9560,14 @@ es:
         observations: "Observaciones"
         created_by: "Registró"
         created_by_id: "Registró"
+      supply_exit_line:
+        supply_exit: "Salida de insumos"
+        supply_exit_id: "Salida de insumos"
+        supply: "Insumo"
+        supply_id: "Insumo"
+        quantity: "Cantidad"
+        unit_price: "Precio por unidad (L)"
+        amount: "Monto (L)"
       supply_entry_line:
         supply_entry: "Entrada de insumos"
         supply_entry_id: "Entrada de insumos"
@@ -9417,6 +9576,9 @@ es:
         quantity: "Cantidad"
         amount: "Costo (L)"
       coffee_batch:
+        coffee_conversion: "Proceso"
+        coffee_conversion_id: "Proceso"
+        processing: "Proceso"
         number: "Número"
         batched_on: "Fecha"
         coffee_state: "Estado del café"
@@ -9541,8 +9703,12 @@ es:
         voided_by: "Anuló"
         voided_by_id: "Anuló"
       buyer_advance:
-        buyer: "Comprador"
-        buyer_id: "Comprador"
+        buyer: "Comprador o banco"
+        buyer_id: "Comprador o banco"
+        status: "Estado"
+        status/pending: "Pendiente"
+        status/cancelled: "Cancelado"
+        cancelled_on: "Cancelado el"
         received_on: "Fecha"
         amount: "Monto (L)"
         payment_method: "Forma de pago"
@@ -9550,6 +9716,27 @@ es:
         money_account_id: "Cuenta"
         document_number: "Documento"
         observations: "Observaciones"
+        created_by_id: "Registró"
+      buyer_advance_sale:
+        buyer_advance: "Anticipo"
+        buyer_advance_id: "Anticipo"
+        sale: "Venta"
+        sale_id: "Venta"
+        percent: "% del anticipo"
+        amount: "Monto (L)"
+        applied_on: "Fecha"
+        created_by: "Registró"
+        created_by_id: "Registró"
+      buyer_advance_refund:
+        buyer_advance: "Anticipo"
+        buyer_advance_id: "Anticipo"
+        refunded_on: "Fecha"
+        amount: "Monto (L)"
+        payment_method: "Forma de pago"
+        money_account: "Cuenta"
+        money_account_id: "Cuenta"
+        observations: "Observaciones"
+        created_by: "Registró"
         created_by_id: "Registró"
       private_document:
         key: "Documento"
@@ -9585,6 +9772,7 @@ es:
         current_password: "Contraseña actual"
         password_challenge: "Contraseña actual"
       person:
+        business_owner: "Dueño del negocio"
         civil_status: "Estado civil"
         nationality: "Nacionalidad"
         first_names: "Nombres"
@@ -10033,6 +10221,10 @@ es:
               output_costs: "El proceso tiene gastos cobrados sobre lo que salió: quítalos primero para quitar el resultado."
               in_lots: "Lo que salió de este proceso está en lotes: sácalo de los lotes antes de cambiar o quitar su resultado."
               no_stock: "No hay %{state} en %{warehouse}: no se puede mandar a procesar. Registra primero las compras o elige otra bodega."
+              no_batches: "Marca al menos un lote: lo que se procesa sale de sus facturas."
+              batches_gone: "Uno de los lotes marcados ya no existe."
+              batch_taken: "El %{batch} ya está en una salida o en otro proceso."
+              batch_other_coffee: "El %{batch} es de otro estado del café o de otra bodega."
             finished_at:
               before_weighed: "no puede ser antes de cuando se pesó lo que entró"
             warehouse:
@@ -10058,10 +10250,14 @@ es:
               inactive: "está desactivado"
         supply_exit:
           attributes:
+            base:
+              not_in_warehouse: "«%{supply}» pasa de lo que hay en bodega (%{available})"
+            lines:
+              blank: "debe tener al menos un insumo"
+        supply_exit_line:
+          attributes:
             supply:
               inactive: "está desactivado"
-            quantity:
-              not_in_warehouse: "pasa de lo que hay en bodega (%{available})"
         loan_supply:
           not_in_warehouse: "No hay suficiente «%{supply}» en bodega para entregarlo: hay %{there} %{unit}. Registra primero su entrada."
         shipment_cost:
@@ -10100,6 +10296,7 @@ es:
           attributes:
             base:
               lot_sold: "El lote está en una salida vendida: solo un administrador lo cambia."
+              lot_processed: "El lote ya se mandó a procesar con estas libras: no cambia."
             coffee_conversion:
               not_eligible: "no puede ir en este lote: debe estar terminado, ser de su estado del café, con su resultado en su bodega y una parte libre"
             coffee_conversion_id:
@@ -10111,6 +10308,7 @@ es:
           attributes:
             base:
               lot_sold: "El lote está en una salida vendida: solo un administrador lo cambia."
+              lot_processed: "El lote ya se mandó a procesar con estas libras: no cambia."
             invoice:
               not_eligible: "no puede ir en este lote: debe ser de su estado del café, con todas sus compras en su bodega y una parte libre"
             invoice_id:
@@ -10275,7 +10473,27 @@ es:
         buyer_advance:
           attributes:
             base:
-              used: "Este anticipo ya se descontó de una venta: quita primero ese cobro con anticipo."
+              used: "Este anticipo ya se aplicó a ventas o se devolvió: quita primero eso."
+            money_account:
+              inactive: "está desactivada"
+        buyer_advance_sale:
+          attributes:
+            base:
+              sale_voided: "La venta está anulada."
+            percent:
+              over_advance: "pasa de lo libre del anticipo (%{free})"
+            amount:
+              over_sale: "pasa de lo que falta por cobrar de la venta (%{balance})"
+            applied_on:
+              before_advance: "no puede ser antes del anticipo"
+            sale_id:
+              taken: "ya tiene este anticipo aplicado"
+        buyer_advance_refund:
+          attributes:
+            amount:
+              over_advance: "pasa del saldo del anticipo (%{balance})"
+            refunded_on:
+              before_advance: "no puede ser antes del anticipo"
             money_account:
               inactive: "está desactivada"
         sale_payment:
@@ -10284,7 +10502,8 @@ es:
               sale_voided: "La venta está anulada."
             amount:
               over_balance: "es mayor que lo que falta por cobrar (%{balance})"
-              over_advances: "es mayor que el saldo de anticipos del comprador (%{balance})"
+            payment_method:
+              advance_only_applied: "«Con anticipo» solo sale al aplicar un anticipo a la venta"
             paid_on:
               before_sale: "no puede ser antes de la fecha de la venta"
               before_last_payment: "no puede ser antes del último cobro"

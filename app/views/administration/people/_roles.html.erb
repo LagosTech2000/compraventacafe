@@ -1,4 +1,7 @@
 <span class="flex flex-wrap gap-1">
+  <% if person.business_owner? %>
+    <span class="badge badge-success" data-business-owner><%= Person.human_attribute_name(:business_owner) %></span>
+  <% end %>
   <% if person.client? %>
     <span class="badge badge-neutral"><%= Client.model_name.human %></span>
   <% end %>

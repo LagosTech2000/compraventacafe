@@ -73,13 +73,6 @@
                 data: { missing_message: "#{CoffeeConversion.human_attribute_name(:weighed_at)} #{t("errors.messages.blank")}" } %>
         </div>
         <div>
-          <%= form.label :input_gross_weight, t(".input_gross_weight"), class: "field-label" %>
-          <%= form.number_field :input_gross_weight, required: true, min: 0.01, step: 0.01, inputmode: "decimal", class: "field-input text-lg",
-                autofocus: true, data: { conversion_preview_target: "gross", action: "conversion-preview#update",
-                                         missing_message: "#{t(".input_gross_weight")} #{t("errors.messages.blank")}" } %>
-          <p class="mt-1 text-xs text-ink-muted"><%= t(".available") %> <span class="tabular-nums" data-conversion-preview-target="available"></span></p>
-        </div>
-        <div>
           <%= form.label :estimated_yield_percent, class: "field-label" %>
           <%= form.number_field :estimated_yield_percent, required: true, min: 0.01, max: 100, step: 0.01, inputmode: "decimal", class: "field-input",
                 data: { conversion_preview_target: "estimate", action: "conversion-preview#update",
@@ -95,6 +88,9 @@
           <p class="mt-1 text-xs text-ink-muted"><%= t(".humidity_help") %></p>
         </div>
       </div>
+      <%# What goes in is taken from invoices, through lots (Fernando, 2026-11-16). %>
+      <%= render "sales/shipments/batches_field", record: @conversion, scope: "coffee_conversion", state_field: "from_state",
+                                                  help: t(".batches_help"), gross_form: form %>
       <div>
         <%= form.label :observations, class: "field-label" %>
         <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>

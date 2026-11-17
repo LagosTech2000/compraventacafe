@@ -26,9 +26,9 @@ class CoffeeBatchFilter < ListFilter
     scope = scope.where(batched_on: ..to) if to
     scope = scope.where(coffee_state:) if coffee_state
     scope = scope.where(warehouse_id:) if warehouse_id
-    scope = status == "free" ? scope.free : scope.where.not(shipment_id: nil) if status
+    scope = status == "free" ? scope.free : scope.where.not(shipment_id: nil).or(scope.where.not(coffee_conversion_id: nil)) if status
     scope = search(scope) if q
-    scope.includes(:warehouse, :shipment).newest_first
+    scope.includes(:warehouse, :shipment, :processing).newest_first
   end
 
   private

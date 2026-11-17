@@ -1,0 +1,128 @@
+<%# Applying an advance to sales by a % of it (Fernando, 2026-11-16), like
+    the invoices of a lot: from the advance (its rows are sales with
+    something due) or from a sale (its rows are the pending advances). %>
+<% from_advance = @advance.present? %>
+<% title = from_advance ? t(".title_advance", number: @advance.display_number, buyer: @advance.buyer.name) : t(".title_sale", number: @sale.display_number) %>
+<% content_for :title, title %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= render "sales/nav" %>
+
+<h1 class="text-2xl font-bold"><%= title %></h1>
+<p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t(from_advance ? ".help_advance" : ".help_sale") %></p>
+<p class="mt-2 text-sm" data-application-room>
+  <% if from_advance %>
+    <%= t(".advance_room", amount: format_money(@advance.amount), balance: format_money(@advance.balance), percent: format_percent(@advance.free_percent)) %>
+  <% else %>
+    <%= t(".sale_room", buyer: @sale.buyer.name, due: format_money(@sale.balance_due)) %>
+  <% end %>
+</p>
+
+<% frame = "advance-application-list" %>
+<div data-controller="live-filter">
+  <% if from_advance %>
+    <% buyers = Buyer.order(:name).pluck(:name, :id) %>
+    <%= render layout: "shared/filters", locals: { filter: @filter, url: new_sales_advance_application_path, frame:, live: true } do |form| %>
+      <%= hidden_field_tag :advance_id, @advance.id, id: nil %>
+      <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("sales.sales.index.search_placeholder") %>
+      <%= filter_select form, :buyer_id, Sale.human_attribute_name(:buyer), buyers, selected: @filter.buyer_id %>
+      <%= filter_date_field form, :from, t("shared.filters.from"), value: @filter.from %>
+      <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
+    <% end %>
+  <% end %>
+
+  <%= list_frame frame do %>
+    <% rows = from_advance ? @sales : @advances %>
+    <% if rows.any? %>
+      <%= form_with url: sales_advance_applications_path, method: :post, class: "mt-4",
+            data: { turbo_frame: "_top", controller: "advance-shares", advance_shares_mode_value: from_advance ? "advance" : "sale",
+                    advance_shares_free_value: (@advance&.free_percent || 0).to_s, advance_shares_due_value: (@sale&.balance_due || 0).to_s,
+                    advance_shares_texts_value: { summary_advance: t(".summary_advance", percent: "%{percent}", amount: "%{amount}"),
+                                                  summary_sale: t(".summary_sale", amount: "%{amount}", due: "%{due}"),
+                                                  over_free: t(".over_free", percent: "%{percent}"), over_due: t(".over_due", due: "%{due}"),
+                                                  left: t(".left", amount: "%{amount}") }.to_json } do %>
+        <%= hidden_field_tag :advance_id, @advance.id if from_advance %>
+        <%= hidden_field_tag :sale_id, @sale.id unless from_advance %>
+        <div class="mb-3 max-w-xs">
+          <%= label_tag :applied_on, BuyerAdvanceSale.human_attribute_name(:applied_on), class: "field-label" %>
+          <%= date_field_tag :applied_on, Time.zone.today, required: true, class: "field-input" %>
+        </div>
+        <div class="overflow-x-auto panel">
+          <table class="data-table data-table-compact" data-advance-application-choices>
+            <thead>
+              <tr>
+                <th class="cell-select w-10"><span class="sr-only"><%= t(".mark_column") %></span></th>
+                <% if from_advance %>
+                  <th><%= t("sales.sales.show.title", number: "") %></th>
+                  <th><%= Sale.human_attribute_name(:sold_on) %></th>
+                  <th><%= Sale.human_attribute_name(:buyer) %></th>
+                  <th class="text-right"><%= Sale.human_attribute_name(:total) %></th>
+                  <th class="text-right"><%= t("sales.sales.payments.balance_due") %></th>
+                <% else %>
+                  <th><%= t("sales.buyers.show.advance_number") %></th>
+                  <th><%= BuyerAdvance.human_attribute_name(:received_on) %></th>
+                  <th><%= BuyerAdvance.human_attribute_name(:buyer) %></th>
+                  <th class="text-right"><%= BuyerAdvance.human_attribute_name(:amount) %></th>
+                  <th class="text-right"><%= t("sales.buyer_advances.show.figures.balance") %></th>
+                <% end %>
+                <th class="text-right"><%= t(".percent") %></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% rows.each do |row| %>
+                <% if from_advance %>
+                  <% advance, sale = @advance, row %>
+                <% else %>
+                  <% advance, sale = row, @sale %>
+                <% end %>
+                <tr id="<%= dom_id(row, :application) %>" data-advance-shares-target="row"
+                    data-advance-amount="<%= advance.amount %>" data-free="<%= advance.free_percent %>" data-balance="<%= advance.balance %>"
+                    data-due="<%= sale.balance_due %>">
+                  <td class="cell-select">
+                    <input type="checkbox" name="shares[<%= row.id %>][chosen]" value="1" class="size-4 accent-primary"
+                           data-action="advance-shares#update" aria-label="<%= t(".mark", number: row.display_number) %>">
+                  </td>
+                  <td class="tabular-nums"><%= row.display_number %></td>
+                  <% if from_advance %>
+                    <td class="whitespace-nowrap"><%= l(sale.sold_on) %></td>
+                    <td><%= sale.buyer.name %></td>
+                    <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(sale.total) %></td>
+                    <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(sale.balance_due) %></td>
+                  <% else %>
+                    <td class="whitespace-nowrap"><%= l(advance.received_on) %></td>
+                    <td><%= advance.buyer.name %><span class="block text-xs text-ink-muted"><%= advance.buyer.human_kind %></span></td>
+                    <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(advance.amount) %></td>
+                    <td class="whitespace-nowrap text-right font-medium tabular-nums">
+                      <%= format_money(advance.balance) %><span class="block text-xs text-ink-muted"><%= t(".free", percent: format_percent(advance.free_percent)) %></span>
+                    </td>
+                  <% end %>
+                  <td>
+                    <div class="flex items-center justify-end gap-3">
+                      <input type="number" name="shares[<%= row.id %>][percent]" min="0.0001" max="<%= advance.free_percent %>" step="0.0001"
+                             value="<%= advance.free_percent.to_s("F").sub(/\.0\z/, "") %>" inputmode="decimal"
+                             class="field-input min-h-0 w-24 py-1 text-right tabular-nums" data-action="advance-shares#update"
+                             aria-label="<%= t(".percent_of", number: row.display_number) %>">
+                      <output class="block w-40 text-right leading-tight tabular-nums whitespace-nowrap" aria-live="polite">
+                        <span class="block" data-share-amount>—</span>
+                        <span class="block text-xs text-ink-muted" data-share-note></span>
+                      </output>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+        <% if from_advance %><%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: %><% end %>
+        <div class="sticky bottom-4 mt-4 flex flex-wrap items-center justify-between gap-3 clay p-3">
+          <p class="text-sm" data-advance-shares-target="summary" aria-live="polite"></p>
+          <div class="flex flex-wrap gap-2">
+            <button type="submit" class="btn btn-primary" data-advance-shares-target="submit" disabled><%= t(".submit") %></button>
+            <%= link_to t("shared.cancel"), from_advance ? sales_buyer_buyer_advance_path(@advance.buyer, @advance) : sales_sale_path(@sale), class: "btn" %>
+          </div>
+        </div>
+      <% end %>
+    <% else %>
+      <p class="empty-state mt-4"><%= t(from_advance ? ".no_sales" : ".no_advances") %></p>
+    <% end %>
+  <% end %>
+</div>

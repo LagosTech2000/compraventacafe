@@ -354,7 +354,11 @@ class Purchase < ApplicationRecord
     end
 
     def farm_belongs_to_producer
-      errors.add(:farm, :other_producer) if farm && farm.producer_id != producer_id
+      return unless farm && farm.producer_id != producer_id
+      # An owner of the business buys the coffee of its farms too (Fernando, 2026-11-16).
+      return if farm.producer_id.nil? && producer&.person&.business_owner?
+
+      errors.add(:farm, :other_producer)
     end
 
     def plot_belongs_to_farm

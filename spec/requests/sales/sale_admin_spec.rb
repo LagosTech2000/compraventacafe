@@ -47,8 +47,9 @@ RSpec.describe "Sales, administrators" do
   end
 
   it "voids a collected sale: its payments go, advances come back and its shipments are free" do
-    create(:buyer_advance, buyer:, amount: 1_000)
-    sale = sell(payment_status: "pending", advance_amount: "500")
+    advance = create(:buyer_advance, buyer:, amount: 1_000)
+    sale = sell(payment_status: "pending")
+    BuyerAdvanceSale.create!(buyer_advance: advance, sale:, percent: 50, applied_on: Time.zone.today, created_by: admin)
     sale.payments.create!(amount: 100, paid_on: Time.zone.today, payment_method: "cash", money_account: account, created_by: admin)
     expect(buyer.reload.advance_balance).to eq(500)
 
@@ -64,6 +65,7 @@ RSpec.describe "Sales, administrators" do
     expect(sale).to be_voided
     expect(sale.payments).to be_empty
     expect(buyer.reload.advance_balance).to eq(1_000)
+    expect(advance.reload.applications).to be_empty
     expect(AccountBalance.new.for(account)).to eq(0)
     expect(shipments.map { it.reload.sale }).to all(be_nil)
   end

@@ -47,8 +47,8 @@
               <tr id="<%= dom_id(supply_exit) %>">
                 <td class="whitespace-nowrap"><%= l(supply_exit.exited_on) %></td>
                 <td><span class="badge <%= supply_exit.sale? ? "badge-success" : "badge-neutral" %>"><%= supply_exit.human_kind %></span></td>
-                <td><%= supply_exit.supply.name %></td>
-                <td class="whitespace-nowrap text-right tabular-nums"><%= format_quantity(supply_exit.quantity, supply_exit.supply.unit) %></td>
+                <td><%= safe_join(supply_exit.lines.map { tag.span(it.supply.name, class: "block") }) %></td>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= safe_join(supply_exit.lines.map { tag.span(format_quantity(it.quantity, it.supply.unit), class: "block") }) %></td>
                 <td><%= supply_exit.person ? with_avatar(supply_exit.person) : "—" %></td>
                 <td class="whitespace-nowrap text-right tabular-nums"><%= supply_exit.amount ? format_money(supply_exit.amount) : "—" %></td>
                 <td class="cell-actions"><%= detail_button sales_supply_exit_path(supply_exit) %></td>

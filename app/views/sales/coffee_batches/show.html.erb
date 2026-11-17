@@ -36,6 +36,8 @@
 <p class="mt-3 text-sm" data-batch-shipment>
   <% if @batch.shipment %>
     <%= t("#{scope}.on_shipment") %> <%= link_to shipment_label(@batch.shipment), sales_shipment_path(@batch.shipment), class: "link", data: { turbo_frame: "_top" } %>
+  <% elsif @batch.processing %>
+    <%= t("#{scope}.on_process") %> <%= link_to @batch.processing.audit_label, sales_coffee_conversion_path(@batch.processing), class: "link", data: { turbo_frame: "_top" } %>
   <% else %>
     <span class="badge badge-neutral"><%= t("sales.coffee_batches.table.free") %></span> <%= t("#{scope}.free_help") %>
   <% end %>

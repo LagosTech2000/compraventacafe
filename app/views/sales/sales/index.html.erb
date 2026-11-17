@@ -37,6 +37,7 @@
                               payment_status: ->(value) { t("sales.sales.statuses.#{value}") }) %>
 
     <div class="mt-4"><%= render "sales/summary", summary: @summary %></div>
+    <%= render "sales/quintal_gain", summary: @summary, id: "list" %>
 
     <div class="mt-6">
       <% if @sales.any? %>

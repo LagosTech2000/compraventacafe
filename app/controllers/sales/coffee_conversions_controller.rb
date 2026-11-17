@@ -53,7 +53,7 @@ module Sales
 
       def conversion_params
         params.expect(coffee_conversion: [ :from_state, :warehouse_id, :processing_site_id, :weighed_at, :input_gross_weight, :estimated_yield_percent,
-                                                         :input_humidity_percent, :observations ])
+                                                         :input_humidity_percent, :observations, { batch_ids: [] } ])
       end
   end
 end

@@ -18,7 +18,7 @@ module OwnedRecord
   PARENTS = {
     "InvoicePayment" => :invoice, "LoanPayment" => :loan, "SalePayment" => :sale, "ShipmentCost" => :shipment,
     "ProcessingCost" => :coffee_conversion, "CoffeeBatchInvoice" => :coffee_batch, "CoffeeBatchConversion" => :coffee_batch, "PayrollPayment" => :payroll,
-    "PayrollExpense" => :payroll, "LoanSupply" => :loan, "SupplyEntryLine" => :supply_entry, "ShipmentWeighing" => :shipment,
+    "PayrollExpense" => :payroll, "LoanSupply" => :loan, "SupplyEntryLine" => :supply_entry, "SupplyExitLine" => :supply_exit, "BuyerAdvanceSale" => :buyer_advance, "BuyerAdvanceRefund" => :buyer_advance, "ShipmentWeighing" => :shipment,
     "SaleLine" => :sale, "PurchaseWeighing" => :purchase, "PayrollMember" => :payroll, "PayrollTask" => :payroll,
     "PayrollRole" => :payroll, "OwnerLoanPayment" => :owner_loan, "ExpenseReceipt" => :owner
   }.freeze

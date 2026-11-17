@@ -175,21 +175,6 @@ RSpec.describe "Sales screens", type: :system do
     expect(Sale.last).to have_attributes(quintal_pounds: 100, total: BigDecimal("28929.60"))
   end
 
-  it "says what the advance taken off is in coffee, net and gross, at the price typed" do
-    create(:buyer_advance, buyer:, amount: 5_000)
-    create(:shipment, :received, buyer:) # 482.16 lb net, 990 gross at the buyer's
-    visit new_sales_sale_path(buyer_id: buyer.id)
-
-    fill_in "sale_unit_price", with: "6000"
-    fill_in "sale_advance_amount", with: "3000"
-    # L 3,000 ÷ L 50 a pound (L 6,000 ÷ 120 lb)
-    expect(page).to have_text("Equivale a 60.00 lb netas y 123.20 lb brutas de café, a este precio.")
-
-    choose "Por libra"
-    fill_in "sale_unit_price", with: "60"
-    expect(page).to have_text("Equivale a 50.00 lb netas y 102.66 lb brutas de café, a este precio.")
-  end
-
   def dom_id(record, prefix) = ActionView::RecordIdentifier.dom_id(record, prefix)
 
   # Administrators may leave the local scale empty (Fernando, 2026-11-12).

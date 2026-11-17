@@ -75,19 +75,18 @@ module Sales
       end
 
       def set_sale
-        @sale = Sale.includes(:buyer, :created_by, :voided_by, payments: :created_by, lines: :shipment).find(params[:id])
+        @sale = Sale.includes(:buyer, :created_by, :voided_by, payments: [ :created_by, { buyer_advance_sale: { buyer_advance: :buyer } } ], lines: :shipment).find(params[:id])
         authorize @sale unless action_name == "void"
       end
 
       def issue_params
         permitted = params.expect(sale: [ :sold_on, :price_unit, :unit_price, :quintal_pounds, :buyer_document_number, :observations,
-                                          :payment_status, :payment_method, :paid_on, :amount, :money_account_id, :advance_amount, shipment_ids: [] ])
+                                          :payment_status, :payment_method, :paid_on, :amount, :money_account_id, shipment_ids: [] ])
         {
           shipment_ids: permitted[:shipment_ids],
           sale: permitted.slice(:sold_on, :price_unit, :unit_price, :quintal_pounds, :buyer_document_number, :observations).to_h,
           payment_status: permitted[:payment_status], payment_method: permitted[:payment_method],
-          paid_on: permitted[:paid_on], amount: permitted[:amount], money_account_id: permitted[:money_account_id],
-          advance_amount: permitted[:advance_amount]
+          paid_on: permitted[:paid_on], amount: permitted[:amount], money_account_id: permitted[:money_account_id]
         }
       end
   end

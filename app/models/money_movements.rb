@@ -18,12 +18,12 @@
 # 2026-10-25: «fechas con hora»), newest last.
 class MoneyMovements
   SOURCES = %w[invoices hauler_payments loans loan_payments payroll_payments payroll_expenses
-               sale_payments buyer_advances supply_sales processing_costs shipment_costs expenses investments staff_payments staff_advances other_incomes owner_loans owner_loan_payments transfers].freeze
+               sale_payments buyer_advances buyer_advance_refunds supply_sales processing_costs shipment_costs expenses investments staff_payments staff_advances other_incomes owner_loans owner_loan_payments transfers].freeze
   # Which submodule each source's records belong to (who may read it).
   MODULES = {
     "invoices" => "trading.invoices", "hauler_payments" => "trading.haulers", "loans" => "loans.loans", "loan_payments" => "loans.loans",
     "payroll_payments" => "farms.payrolls", "payroll_expenses" => "farms.payrolls", "sale_payments" => "sales.sales",
-    "buyer_advances" => "sales.buyers", "supply_sales" => "sales.supplies", "processing_costs" => "sales.coffee_conversions",
+    "buyer_advances" => "sales.buyers", "buyer_advance_refunds" => "sales.buyers", "supply_sales" => "sales.supplies", "processing_costs" => "sales.coffee_conversions",
     "shipment_costs" => "sales.shipments",
     "expenses" => "finance.expenses", "investments" => "finance.investments", "staff_payments" => "finance.staff",
     "staff_advances" => "finance.staff", "other_incomes" => "finance.incomes",
@@ -177,6 +177,20 @@ class MoneyMovements
         end
     end
 
+    # Advances given back in money (Fernando, 2026-11-16).
+    def buyer_advance_refunds
+      narrowed(BuyerAdvanceRefund.joins(buyer_advance: :buyer), "buyer_advance_refunds.refunded_on", "buyer_advance_refunds.money_account_id")
+        .pluck("buyer_advance_refunds.id", "buyer_advance_refunds.buyer_advance_id", "buyer_advances.buyer_id", "buyer_advance_refunds.refunded_on",
+               "buyer_advance_refunds.amount", "buyer_advance_refunds.payment_method", "buyers.name", "buyer_advance_refunds.money_account_id",
+               "buyer_advance_refunds.created_at")
+        .map do |id, advance_id, buyer_id, date, amount, method, name, account_id, created_at|
+          movement(id:, date:, created_at:, source: "buyer_advance_refunds",
+                   description: I18n.t("money_movements.buyer_advance_refund", number: format("%04d", advance_id)),
+                   person: name, payment_method: method_label(Invoice, method), amount_out: amount, account_id:,
+                   route: [ :sales_buyer_buyer_advance_path, buyer_id, advance_id ])
+        end
+    end
+
     def processing_costs
       narrowed(ProcessingCost.joins(:coffee_conversion), "processing_costs.paid_on", "processing_costs.money_account_id")
         .pluck("processing_costs.id", "processing_costs.paid_on", "processing_costs.payment_method", "processing_costs.concept",
@@ -249,8 +263,10 @@ class MoneyMovements
 
     # Supplies sold apart (Fernando, 2026-11-14).
     def supply_sales
-      narrowed(SupplyExit.sales.joins(:supply, :person), "supply_exits.exited_on", "supply_exits.money_account_id")
-        .pluck("supply_exits.id", "supply_exits.exited_on", "supplies.name", "supply_exits.payment_method", Arel.sql(NAME),
+      supplies = "(SELECT STRING_AGG(supplies.name, ', ' ORDER BY supply_exit_lines.id) FROM supply_exit_lines " \
+                 "JOIN supplies ON supplies.id = supply_exit_lines.supply_id WHERE supply_exit_lines.supply_exit_id = supply_exits.id)"
+      narrowed(SupplyExit.sales.joins(:person), "supply_exits.exited_on", "supply_exits.money_account_id")
+        .pluck("supply_exits.id", "supply_exits.exited_on", Arel.sql(supplies), "supply_exits.payment_method", Arel.sql(NAME),
                "supply_exits.amount", "supply_exits.money_account_id", "supply_exits.created_at")
         .map do |id, date, supply, method, name, amount, account_id, created_at|
           movement(id:, date:, created_at:, source: "supply_sales", description: I18n.t("money_movements.supply_sale", supply:),
