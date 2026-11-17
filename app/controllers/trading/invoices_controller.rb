@@ -86,6 +86,7 @@ module Trading
 
         lots = policy_scope(CoffeeBatch).includes(:warehouse, :shipment).newest_first.to_a
         lots.reject! { it.shipment&.sold? && it.id != share&.coffee_batch_id } unless Current.user.admin?
+        lots.reject! { it.processed? && it.id != share&.coffee_batch_id }
         totals = CoffeeBatch::Totals.by_batch(lots.map(&:id))
         @batches = lots.filter_map do |lot|
           room = lot.gross_limit.to_d - totals.fetch(lot.id, CoffeeBatch::Totals.zero).gross

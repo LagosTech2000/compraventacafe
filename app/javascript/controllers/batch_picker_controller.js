@@ -1,17 +1,20 @@
 import { Controller } from "@hotwired/stimulus"
 
-// The lots a shipment takes (Fernando, 2026-11-13): only the free lots of
-// the coffee state and warehouse chosen in the form show (one of another
-// is unmarked); «Nuevo lote» opens with them; a lot made in the window
-// ("coffee_batch:created") joins the list marked.
+// The lots a shipment or a process takes (Fernando, 2026-11-13; processes,
+// 2026-11-16): only the free lots of the coffee state and warehouse chosen
+// in the form show (one of another is unmarked); «Nuevo lote» opens with
+// them; a lot made in the window ("coffee_batch:created") joins the list
+// marked. With a `total` target (a process), it holds the gross pounds of
+// the marked lots.
 export default class extends Controller {
-  static targets = ["list", "item", "empty", "newLink"]
-  static values = { newUrl: String }
+  static targets = ["list", "item", "empty", "newLink", "total"]
+  static values = { newUrl: String, scope: { type: String, default: "shipment" }, stateField: { type: String, default: "coffee_state" } }
 
   connect() {
     this.form = this.element.closest("form")
     this.onChange = (event) => {
-      if (event.target.matches("[name='shipment[coffee_state]'], [name='shipment[warehouse_id]']")) this.filter()
+      if (event.target.matches(`[name='${this.scopeValue}[${this.stateFieldValue}]'], [name='${this.scopeValue}[warehouse_id]']`)) this.filter()
+      if (event.target.matches(`[name='${this.scopeValue}[batch_ids][]']`)) this.sum()
     }
     this.form?.addEventListener("change", this.onChange)
     this.filter()
@@ -22,10 +25,24 @@ export default class extends Controller {
   }
 
   current() {
+    const states = [ ...(this.form?.querySelectorAll(`[name='${this.scopeValue}[${this.stateFieldValue}]']`) || []) ]
+    const state = states.find((field) => field.type !== "radio" || field.checked)
     return {
-      state: this.form?.querySelector("[name='shipment[coffee_state]']")?.value || "",
-      warehouse: this.form?.querySelector("[name='shipment[warehouse_id]']")?.value || ""
+      state: state?.value || "",
+      warehouse: this.form?.querySelector(`[name='${this.scopeValue}[warehouse_id]']`)?.value || ""
     }
+  }
+
+  // The gross pounds of the marked lots, into the process's field.
+  sum() {
+    if (!this.hasTotalTarget) return
+
+    const marked = this.itemTargets.filter((item) => item.querySelector("input[type=checkbox]")?.checked)
+    const gross = marked.reduce((total, item) => total + (parseFloat(item.dataset.gross) || 0), 0)
+    const net = marked.reduce((total, item) => total + (parseFloat(item.dataset.net) || 0), 0)
+    this.totalTarget.value = gross > 0 ? (Math.round(gross * 100) / 100).toFixed(2) : ""
+    this.totalTarget.dataset.net = net > 0 ? String(net) : ""
+    this.totalTarget.dispatchEvent(new Event("input", { bubbles: true }))
   }
 
   filter() {
@@ -40,6 +57,7 @@ export default class extends Controller {
       if (fits) shown += 1
     })
     this.emptyTarget.hidden = shown > 0
+    this.sum()
     if (this.hasNewLinkTarget) {
       const url = new URL(this.newUrlValue, window.location.origin)
       url.searchParams.set("coffee_state", state)
@@ -48,14 +66,16 @@ export default class extends Controller {
     }
   }
 
-  add({ detail: { id, label, coffee_state: state, warehouse_id: warehouse, gross, net } }) {
+  add({ detail: { id, label, coffee_state: state, warehouse_id: warehouse, gross, net, gross_value: grossValue, net_value: netValue } }) {
     const item = document.createElement("li")
     item.dataset.batchPickerTarget = "item"
     item.dataset.coffeeState = state
     item.dataset.warehouseId = String(warehouse)
+    item.dataset.gross = String(grossValue ?? String(gross).replace(/,/g, ""))
+    item.dataset.net = String(netValue ?? String(net).replace(/,/g, ""))
     const box = document.createElement("input")
     box.type = "checkbox"
-    box.name = "shipment[batch_ids][]"
+    box.name = `${this.scopeValue}[batch_ids][]`
     box.value = String(id)
     box.checked = true
     box.className = "mt-1 size-4 accent-primary"

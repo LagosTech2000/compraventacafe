@@ -82,7 +82,10 @@ export default class extends Controller {
   update() {
     const state = this.currentState()
     const gross = parseFloat(this.grossTarget.value)
-    const net = this.hasHumidityTarget ? this.weighed(gross) : this.byRatio(gross, parseFloat(this.ratiosValue[state]))
+    // Taken from lots (Fernando, 2026-11-16), its net is theirs.
+    const lotsNet = parseFloat(this.grossTarget.dataset.net)
+    const net = this.hasHumidityTarget ? this.weighed(gross)
+      : lotsNet > 0 ? this.round(lotsNet) : this.byRatio(gross, parseFloat(this.ratiosValue[state]))
 
     this.netTarget.textContent = net === null ? "—" : `${this.pounds.format(net)} lb`
     this.quintalsTarget.textContent = net === null ? "—" : this.pounds.format(this.round(net / this.quintalWeightValue))

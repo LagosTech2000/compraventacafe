@@ -41,6 +41,11 @@ class CoffeeConversion < ApplicationRecord
   has_many :processing_costs, -> { chronological }, dependent: :restrict_with_error, inverse_of: :coffee_conversion
   # Lots that took a share of what came out (Fernando, 2026-11-16).
   has_many :batch_conversions, class_name: "CoffeeBatchConversion", dependent: :restrict_with_error
+  # The lots whose coffee went in (Fernando, 2026-11-16: «las lb brutas a
+  # procesar deben ser tomadas desde las facturas»): its gross and net
+  # pounds are theirs; a voided process lets them go.
+  has_many :input_batches, -> { order(:number) }, class_name: "CoffeeBatch", foreign_key: :coffee_conversion_id,
+                                                  dependent: :restrict_with_error, inverse_of: :processing
   belongs_to :created_by, class_name: "User"
   belongs_to :finished_by, class_name: "User", optional: true
   belongs_to :voided_by, class_name: "User", optional: true
@@ -53,7 +58,8 @@ class CoffeeConversion < ApplicationRecord
   before_validation { self.warehouse ||= Warehouse.main! if new_record? }
   before_validation { self.output_warehouse ||= warehouse if finishing }
   before_validation :set_to_state
-  before_validation :weigh_input, if: -> { new_record? || input_gross_weight_changed? || weighed_at_changed? }
+  before_validation :weigh_batches, if: -> { new_record? && @batch_ids }
+  before_validation :weigh_input, if: -> { (new_record? || input_gross_weight_changed? || weighed_at_changed?) && !@batch_ids }
   before_validation :weigh_output, if: :finishing
 
   validates :from_state, inclusion: { in: NEXT_STATE.keys }
@@ -76,6 +82,8 @@ class CoffeeConversion < ApplicationRecord
   validate :keeps_its_lots, if: -> { persisted? && (will_save_change_to_output_gross_weight? || will_save_change_to_output_net_weight? || will_save_change_to_output_warehouse_id?) }
   validate :warehouses_active
   validate :coffee_in_stock, on: :create
+  validate :batches_fit, on: :create
+  after_create :take_batches, if: -> { @batch_ids }
 
   before_create :assign_number
 
@@ -195,7 +203,17 @@ class CoffeeConversion < ApplicationRecord
     raise ActiveRecord::RecordInvalid, tap { errors.add(:base, :finished) } unless in_process?
     raise ActiveRecord::RecordInvalid, tap { errors.add(:base, :has_costs) } if processing_costs.exists?
 
-    update!(voided_at: Time.current, voided_by: user)
+    transaction do
+      input_batches.each { it.update!(processing: nil) }
+      update!(voided_at: Time.current, voided_by: user)
+    end
+  end
+
+  # The lots chosen in «Procesar café».
+  def batch_ids = @batch_ids || input_batch_ids
+
+  def batch_ids=(ids)
+    @batch_ids = Array(ids).compact_blank.map(&:to_i).uniq
   end
 
   # Takes the result off: back to in process.
@@ -224,6 +242,38 @@ class CoffeeConversion < ApplicationRecord
 
       self.input_ratio, self.input_ratio_source = self.class.ratio_for(from_state, weighed_at.to_date)
       self.input_net_weight = (input_gross_weight * input_ratio).round(2)
+    end
+
+    # Its pounds are its lots': gross and net as their invoices and processes give them.
+    def weigh_batches
+      chosen = CoffeeBatch.where(id: @batch_ids).to_a
+      totals = CoffeeBatch::Totals.by_batch(chosen.map(&:id))
+      gross = chosen.sum { totals.fetch(it.id, CoffeeBatch::Totals.zero).gross }
+      net = chosen.sum { totals.fetch(it.id, CoffeeBatch::Totals.zero).net }
+      self.input_gross_weight = gross.round(2)
+      self.input_net_weight = net.round(2)
+      self.input_ratio = gross.positive? ? (net / gross).round(6) : nil
+      self.input_ratio_source = "batches"
+    end
+
+    def batches_fit
+      return unless @batch_ids
+
+      chosen = CoffeeBatch.where(id: @batch_ids).to_a
+      errors.add(:base, :no_batches) if @batch_ids.empty?
+      errors.add(:base, :batches_gone) if chosen.size != @batch_ids.size
+      chosen.each do |batch|
+        if batch.taken?
+          errors.add(:base, :batch_taken, batch: batch.label)
+        elsif batch.coffee_state != from_state || batch.warehouse_id != warehouse&.id
+          errors.add(:base, :batch_other_coffee, batch: batch.label)
+        end
+      end
+    end
+
+    def take_batches
+      CoffeeBatch.where(id: @batch_ids, shipment_id: nil, coffee_conversion_id: nil).find_each { it.update!(processing: self) }
+      @batch_ids = nil
     end
 
     def weigh_output

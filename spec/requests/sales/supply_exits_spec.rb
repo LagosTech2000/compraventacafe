@@ -18,14 +18,15 @@ RSpec.describe "Supplies leaving without a loan" do
     create(:supply_entry, supply:, quantity: 10, amount: 8_000)
   end
 
-  def exit!(**attributes)
-    post sales_supply_exits_path, params: { supply_exit: { supply_id: supply.id, exited_on: Time.zone.today, quantity: "3", **attributes } }
+  def exit!(quantity: "3", unit_price: nil, lines: nil, **attributes)
+    lines ||= { "0" => { supply_id: supply.id, quantity:, unit_price: }.compact }
+    post sales_supply_exits_path, params: { supply_exit: { exited_on: Time.zone.today, lines_attributes: lines, **attributes } }
   end
 
   it "sells apart: takes it from the warehouse and what is left to lend, and its money comes into the account" do
     get new_sales_supply_exit_path(supply_id: supply.id)
-    expect(page.at_css("#supply_exit_unit_price")["value"]).to eq("950.0")
-    expect(page.at_css("#supply_exit_supply_id option[selected]")["data-stock"]).to eq("10.0")
+    expect(page.at_css("#supply_exit_lines_attributes_0_unit_price")["value"]).to eq("950.0")
+    expect(page.at_css("#supply_exit_lines_attributes_0_supply_id option[selected]")["data-stock"]).to eq("10.0")
 
     exit!(kind: "sale", person_id: person.id, unit_price: "1000", payment_method: "cash", money_account_id: account.id)
     supply_exit = SupplyExit.last
@@ -57,10 +58,33 @@ RSpec.describe "Supplies leaving without a loan" do
   it "never takes more than is in the warehouse, and asks a sale for its buyer, price and account" do
     expect { exit!(kind: "business_use", quantity: "11") }.not_to change(SupplyExit, :count)
     expect(response).to have_http_status(:unprocessable_content)
-    expect(response.body).to include("pasa de lo que hay en bodega (10 saco)")
+    expect(response.body).to include("«Urea» pasa de lo que hay en bodega (10 saco)")
 
     expect { exit!(kind: "sale") }.not_to change(SupplyExit, :count)
     expect(response.body).to include("Se le vendió a", "Precio por unidad (L)", "Cuenta")
+  end
+
+  it "takes several supplies at once, never more than there is of each adding its lines (Fernando, 2026-11-16)" do
+    fungicide = create(:supply, name: "Fungicida", unit: "litro", default_price: 300)
+    create(:supply_entry, supply: fungicide, quantity: 5, amount: 1_000)
+    lines = { "0" => { supply_id: supply.id, quantity: "6", unit_price: "1000" }, "1" => { supply_id: supply.id, quantity: "5", unit_price: "1000" } }
+    expect { exit!(kind: "sale", lines:, person_id: person.id, payment_method: "cash", money_account_id: account.id) }.not_to change(SupplyExit, :count)
+    expect(response.body).to include("«Urea» pasa de lo que hay en bodega (10 saco)")
+
+    lines = { "0" => { supply_id: supply.id, quantity: "6", unit_price: "1000" }, "1" => { supply_id: fungicide.id, quantity: "2", unit_price: "300" },
+              "2" => { supply_id: "", quantity: "" } }
+    exit!(kind: "sale", lines:, person_id: person.id, payment_method: "cash", money_account_id: account.id)
+    supply_exit = SupplyExit.last
+    expect(flash[:notice]).to eq("Venta registrada: Urea × 6 saco, Fungicida × 2 litro. El dinero entró a la cuenta.")
+    expect(supply_exit.lines.map { [ it.supply, it.quantity, it.amount ] }).to eq([ [ supply, 6, 6_000 ], [ fungicide, 2, 600 ] ])
+    expect(supply_exit.amount).to eq(6_600)
+    expect(SupplyStock.new.for(fungicide).in_warehouse).to eq(3)
+    expect(MoneyMovements.new.all.find { it.source == "supply_sales" }.description).to eq("Venta de insumo: Urea, Fungicida")
+
+    get sales_supply_exit_path(supply_exit)
+    expect(page.css("[data-supply-exit-lines] tbody tr").size).to eq(2)
+    get sales_supply_exits_path(supply_id: fungicide.id)
+    expect(page.css("[data-supply-exits] tbody tr").size).to eq(1)
   end
 
   it "is removed: what left goes back to the warehouse and the money out of the account" do

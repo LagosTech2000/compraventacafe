@@ -6,10 +6,11 @@
 # the buyer's balance), date, method, account or observations.
 # Each has its printable receipt (original and copy).
 #
-# A collection «con anticipo» (ADVANCE, Fernando, 2026-10-25) takes off
-# the buyer's advances (BuyerAdvance), never more than their balance: it
-# moves no money (the money came in with the advance), so it has no
-# account and stays out of the ledger and the balances.
+# A collection «con anticipo» (ADVANCE, Fernando, 2026-10-25) is made only
+# by applying an advance to the sale (BuyerAdvanceSale, Fernando,
+# 2026-11-16), which holds it: it moves no money (the money came in with
+# the advance), so it has no account and stays out of the ledger and the
+# balances. Removing it removes its application.
 class SalePayment < ApplicationRecord
   include Auditable
   include OwnedRecord
@@ -21,6 +22,7 @@ class SalePayment < ApplicationRecord
   METHODS = (Invoice::PAYMENT_METHODS + [ ADVANCE ]).freeze
 
   belongs_to :sale, inverse_of: :payments
+  belongs_to :buyer_advance_sale, optional: true, inverse_of: :payment
   belongs_to :created_by, class_name: "User"
 
   normalizes :observations, with: FieldFormats::STRIP
@@ -30,9 +32,8 @@ class SalePayment < ApplicationRecord
   validates :payment_method, inclusion: { in: METHODS }
   validates :observations, length: { maximum: 500 }
   validate :sale_active, :within_balance, :not_before_sale, :not_before_last_payment, on: :create
-  validate :within_advances, on: :create, if: :advance?
+  validate :from_an_application, if: :advance?
   validate :within_amount_due, :not_before_sale, on: :update
-  validate :advances_still_cover, on: :update, if: :advance?
 
   # An advance moves no money: no account.
   before_validation { self.money_account_id = nil if advance? }
@@ -40,6 +41,8 @@ class SalePayment < ApplicationRecord
   after_create :refresh_sale
   after_update :refresh_sale
   after_destroy :refresh_sale
+  # Removed on its own (from the sale): its application goes with it.
+  after_destroy { buyer_advance_sale.destroy! if buyer_advance_sale && !destroyed_by_association }
 
   scope :in_order, -> { order(:paid_on, :id) }
   scope :advance, -> { where(payment_method: ADVANCE) }
@@ -83,20 +86,10 @@ class SalePayment < ApplicationRecord
       errors.add(:amount, :over_balance, balance: ActiveSupport::NumberHelper.number_to_currency([ room, 0 ].max)) if amount > room
     end
 
-    # An advance raised or newly taken: the buyer's balance must cover it.
-    def advances_still_cover
-      return unless sale && amount.to_d.positive? && (will_save_change_to_amount? || will_save_change_to_payment_method?)
-
-      before = payment_method_in_database == ADVANCE ? amount_in_database.to_d : 0
-      balance = sale.buyer.advance_balance + before
-      errors.add(:amount, :over_advances, balance: ActiveSupport::NumberHelper.number_to_currency(balance)) if amount > balance
-    end
-
-    def within_advances
-      return unless sale && amount.to_d.positive?
-
-      balance = sale.buyer.advance_balance
-      errors.add(:amount, :over_advances, balance: ActiveSupport::NumberHelper.number_to_currency(balance)) if amount > balance
+    # Only an advance applied to the sale collects «con anticipo», and its
+    # amount is the application's.
+    def from_an_application
+      errors.add(:payment_method, :advance_only_applied) if buyer_advance_sale.nil? || amount != buyer_advance_sale.amount
     end
 
     def not_before_sale

@@ -44,6 +44,9 @@ class Farm < ApplicationRecord
     producer.farms.find_by("LOWER(name) = ?", name.downcase) || producer.farms.create!(name:)
   end
 
+  # In a purchase's farm list: the business's say so (an owner sees both).
+  def purchase_label = producer_id ? name : I18n.t("farms.purchase_label", name:)
+
   # In lists that mix both: a producer's farm says whose it is.
   def display_name = producer ? "#{name} · #{producer.full_name}" : name
 

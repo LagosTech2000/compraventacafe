@@ -33,7 +33,11 @@ RSpec.describe "Coffee conversions screens", type: :system do
     expect(find("a[data-conversion-preview-target=newSite]")[:href]).to include("from_state=wet_parchment")
   end
 
-  it "previews what leaves the stock, warns past it, and enters what came out" do
+  it "takes what goes in from the lots' invoices, previews it, and enters what came out (Fernando, 2026-11-16)" do
+    purchase = Purchase.sole
+    invoice = InvoiceIssuer.new(producer: purchase.producer, user:, purchase_ids: [ purchase.id ], payment_status: "pending").call.invoice
+    batch = create(:coffee_batch, warehouse: purchase.warehouse, coffee_state: "wet_parchment", gross_limit: 5_000)
+    batch.batch_invoices.create!(invoice:, percent: 50, created_by: user)
     visit sales_coffee_conversions_path
     click_link "Procesar café"
 
@@ -46,20 +50,18 @@ RSpec.describe "Coffee conversions screens", type: :system do
       select "Patio", from: "coffee_conversion_processing_site_id"
       expect(page).to have_css("[data-conversion-preview-target=available]", text: "2,000.00 lb")
       expect(page).to have_css("[data-conversion-preview-target=toState]", text: "Pergamino seco")
-      fill_in "coffee_conversion_input_gross_weight", with: "1000"
+      check batch.label, allow_label_click: true
+      expect(page).to have_field("coffee_conversion_input_gross_weight", with: "1000.00", readonly: true)
       expect(page).to have_css("[data-conversion-preview-target=net]", text: "486.82 lb")
       expect(page).to have_css("[data-conversion-preview-target=quintals]", text: "3.89")
       expect(page).to have_css("[data-conversion-preview-target=estimatedOutput]", text: "500.00 lb")
       expect(page).to have_no_text("roporción")
-
-      fill_in "coffee_conversion_input_gross_weight", with: "2500"
-      expect(page).to have_css("[data-conversion-preview-target=overStock]", visible: true)
-      fill_in "coffee_conversion_input_gross_weight", with: "1000"
-      expect(page).to have_css("[data-conversion-preview-target=overStock]", visible: :hidden)
       click_button "Pesar y mandar a procesar"
     end
     expect(page).to have_no_css("dialog[open]")
     conversion = CoffeeConversion.sole
+    expect(conversion).to have_attributes(input_gross_weight: 1_000, input_net_weight: BigDecimal("486.82"))
+    expect(batch.reload.processing).to eq(conversion)
 
     visit sales_coffee_conversion_path(conversion)
     click_link "Registrar resultado"

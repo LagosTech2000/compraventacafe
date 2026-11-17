@@ -38,6 +38,10 @@
       <% if policy(SalePayment.new(sale: @sale)).create? %>
         <%= modal_link_to t("sales.sales.show.new_payment"), new_sales_sale_payment_path(@sale), class: "btn btn-primary" %>
       <% end %>
+      <%# Any pending advance can pay it, by a % of it (Fernando, 2026-11-16). %>
+      <% if !@sale.paid? && policy(BuyerAdvanceSale).create? %>
+        <%= page_link_to t("sales.sales.show.apply_advance"), new_sales_advance_application_path(sale_id: @sale.id), class: "btn" %>
+      <% end %>
       <% if policy(@sale).settle? %>
         <%= modal_link_to t("sales.sales.show.settle"), edit_sales_sale_settlement_path(@sale), class: "btn" %>
       <% end %>

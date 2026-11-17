@@ -61,8 +61,10 @@ module Administration
         @person = authorize Person.find(params[:id])
       end
 
+      # Only an administrator marks the owners of the business (Fernando, 2026-11-16).
       def person_params
-        params.expect(person: [ :first_names, :last_names, :dni, :rtn, :phone, :email, :civil_status, :nationality, :zone_id, :department_id, :municipality_id,
+        attributes = Current.user.admin? ? [ :business_owner ] : []
+        params.expect(person: [ *attributes, :first_names, :last_names, :dni, :rtn, :phone, :email, :civil_status, :nationality, :zone_id, :department_id, :municipality_id,
                                 :address_line, :latitude, :longitude, :photo_upload, :remove_photo,
                                 :client_role, :collaborator_role, :producer_role, :producer_kind,
                                 :hauler_role, :hauler_price_per_pound ])

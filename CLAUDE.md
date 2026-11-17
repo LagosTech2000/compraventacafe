@@ -97,7 +97,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Préstamo / abono | `Loan` / `LoanPayment` |
 | Insumo / insumo del préstamo / entrada de insumos (con sus líneas) / inventario de insumos | `Supply` / `LoanSupply` / `SupplyEntry` + `SupplyEntryLine` / `SupplyStock` |
 | Insumo entregado / por entregar (del préstamo) | `LoanSupply#delivered_on`, `delivered_by` (`sales/supply_deliveries`) |
-| Salida de insumos (venta por aparte / uso del negocio) | `SupplyExit` (`kind`: `sale` / `business_use`, `sales/supply_exits`); en el libro, `supply_sales` |
+| Salida de insumos (venta por aparte / uso del negocio) y sus líneas | `SupplyExit` (`kind`: `sale` / `business_use`, `sales/supply_exits`) + `SupplyExitLine`; en el libro, `supply_sales` |
 | En bodega / disponible (insumos) | `SupplyStock::Row#in_warehouse` (entró − entregado − salió) / `#available` (entró − prestado − salió, puede ser negativo) |
 | Lo propio (cada usuario ve lo que registró) | `OwnedRecord` (`owned`, `visible_to`, `OwnedRecord.visible?`), `Current.owner` |
 | Lote de café comprado / factura del lote (parte en %) / proceso del lote | `CoffeeBatch` (`sales/coffee_batches`) / `CoffeeBatchInvoice` (`percent`) / `CoffeeBatchConversion` |
@@ -167,7 +167,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Pesadas de la salida (báscula local) | `ShipmentWeighing` (`Shipment#origin_weight_mode`: `single` / `weighings`) |
 | En camino / pesada sin vender / vendida | `Shipment#status`: `in_transit` / `received` / `sold` (+ `voided`) |
 | Venta / salida vendida / cobro de venta | `Sale` / `SaleLine` / `SalePayment` (`SaleIssuer`) |
-| Anticipo del comprador / cobro con anticipo | `BuyerAdvance` (`Buyer#advance_balance`) / `SalePayment` con `payment_method: "advance"` |
+| Anticipo (de comprador o banco) / aplicado a una venta (% del anticipo) / devolución en dinero / pendiente o cancelado | `BuyerAdvance` (`status`: `pending` / `cancelled`, `Buyer#advance_balance`) / `BuyerAdvanceSale` (`sales/buyer_advance_sales`, crea el `SalePayment` «con anticipo») / `BuyerAdvanceRefund` |
 | Precio por libra / por quintal / libras por quintal (120 por defecto) | `Sale#price_unit`: `pound` / `quintal`; `Sale#quintal_pounds` (`Sale::QUINTAL_POUNDS`) |
 | Tolerancia de diferencia de peso | `SiteSetting#weight_tolerance_percent` (`WeightTolerance`) |
 | Inventario / kárdex | `CoffeeStock` / `StockLedger` (`sales/stock#show`), reporte `CoffeeStockReport` |
@@ -1386,6 +1386,20 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   la proporción de hoy aunque la fecha sea otra (el servidor usa la de la
   fecha). A una fecha (fin
   del día); de lo que salió, «en camino» y «pesado sin vender».
+- **Lo que entra a procesar sale de las facturas** (Fernando, 2026-11-16)
+  [CONFIRMADO: por % de cada factura, como en lotes; un solo 100 % entre
+  lotes y procesos; húmedo → seco también toma procesos terminados; los
+  procesos de antes se quedan así]: «Procesar café» ya no pide las lb
+  brutas: se marcan **lotes** libres de ese estado y bodega (o «Nuevo
+  lote» con sus facturas, como en «Nueva salida»;
+  `sales/shipments/_batches_field` con `scope: "coffee_conversion"`) y
+  las lb brutas y netas que entran son las de los lotes
+  (`CoffeeConversion#batch_ids`, `input_ratio_source` «batches»). **Un lote
+  va a una salida o a un proceso** (`coffee_batches.coffee_conversion_id`,
+  `CoffeeBatch#processing`, `processed?`); en un proceso queda fijo (sus
+  facturas no cambian, no se borra) y anular el proceso lo deja libre. El
+  proceso saca del inventario el café de sus lotes (`CoffeeLots`, como una
+  salida con lotes).
 - **Procesar café** (cliente, 2026-10-26) [CONFIRMADO]: en la interfaz las
   conversiones se llaman **procesos** («Procesar café», Comercialización →
   Procesos; solo cambiaron los textos). Cada proceso nuevo lleva su
@@ -1657,6 +1671,17 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   «Nueva venta» bajo la diferencia en libras, al escribir el precio
   (`sale_builder_controller.js`), en el detalle de la venta («… lb menos:
   L … que no se cobraron») y en los resúmenes del día y de la temporada.
+- **QQ sobrantes** (Fernando, 2026-11-16, `SaleSummary#quintal_gain`,
+  `sales/_quintal_gain`): bajo las cifras de ventas del Resumen (hoy y la
+  temporada), de la lista de ventas (sigue los filtros) y del cierre
+  diario: el café vendido en **QQ de compra** (netas de la báscula local ÷
+  125) contra **QQ de venta** (netas del comprador ÷ las libras por
+  quintal de cada venta), los **QQ sobrantes** y su % (25 % al vender en
+  quintales de 100 lb), las **libras sobrantes** (comprador − local) y el
+  **dinero** de esos QQ al precio de cada venta, separado **por el tamaño
+  del quintal** y **por el peso**, y lo que se habría cobrado en QQ de
+  compra. Solo cuentan las ventas con báscula local en todas sus salidas.
+  No es la ganancia (pregunta 34).
 - **Liquidación del comprador** (Fernando, 2026-10-25): lo que el
   comprador dice que paga en su propia liquidación (`buyer_total`) y el
   motivo de la diferencia (`buyer_total_reason`, obligatorio si no
@@ -1693,23 +1718,31 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   camino, sin vender, ventas por cobrar). Reportería: `ShipmentsReport`,
   `SalesReport`, `CoffeeStockReport` y los cobros en «Entradas y salidas»
   (para quien ve Comercialización).
-- **Anticipos del comprador** (`BuyerAdvance`, Fernando, 2026-10-25)
-  [CONFIRMADO]: el comprador adelanta dinero que se le paga con café, **sin
-  intereses**. Entra a una cuenta al recibirlo (`MoneyMovements`:
-  `buyer_advances`; sale en Ingresos), con su recibo. El saldo
-  (`Buyer#advance_balance`) baja con cada **cobro «con anticipo»**
-  (`SalePayment#payment_method = "advance"`), que se elige cuánto: al
-  vender («Descontar de anticipos», `SaleIssuer`) o después como cobro;
-  no mueve dinero (no lleva cuenta ni sale en el libro) y no pasa del
-  saldo ni de lo que falta. **Cada descuento dice el café que equivale**
-  (Fernando, 2026-10-25): monto ÷ precio de la libra de esa venta = libras
-  netas, y × bruto ÷ neto del comprador en sus salidas = libras brutas
-  (`Sale#pounds_for`, `advance_pounds_text`), al venderlo (vista previa),
-  en los cobros y el recibo de la venta y en la pestaña «Anticipos» del
-  comprador. Regla **confirmadas** (Fernando, 2026-10-25): las
-  brutas salen en la proporción bruto/neto de esa venta. Quitar ese cobro devuelve el monto al saldo;
-  un anticipo ya descontado no se quita. Pestaña «Anticipos» del
-  comprador.
+- **Anticipos** (`BuyerAdvance`, Fernando, 2026-10-25; rehecho 2026-11-16)
+  [CONFIRMADO]: dinero que adelanta **un comprador o un banco** (comprador
+  de tipo «Banco», `Buyer::KINDS` `bank`), **sin intereses**. Entra a una
+  cuenta al recibirlo (`MoneyMovements` `buyer_advances`, Ingresos) y se
+  registra **sin venta** (Compradores → «Anticipos», `sales/buyer_advances
+  #index`, con filtros, orden y totales; o desde la ficha del comprador).
+  Después se **aplica a una o varias ventas por un % del anticipo**, como
+  las facturas en un lote (`BuyerAdvanceSale`, `sales/buyer_advance_sales`,
+  `advance_shares_controller.js`): desde el anticipo («Aplicar a ventas»:
+  ventas por cobrar de **cualquier comprador**) o desde la venta («Aplicar
+  anticipo»: anticipos pendientes); entre todas no pasa del 100 % (con lo
+  devuelto) y no pasa de lo que la venta debe; todo junto o nada. Cada
+  aplicación **crea el cobro «con anticipo»** de la venta (`SalePayment`
+  `advance`, sin cuenta, no mueve dinero; solo existe con su aplicación).
+  También se **devuelve en dinero** (`BuyerAdvanceRefund`: sale de la
+  cuenta, `MoneyMovements` `buyer_advance_refunds`, `AccountBalance`; solo
+  se quita la última). Queda **pendiente** mientras tenga saldo y
+  **cancelado** cuando ventas y devoluciones lo cubren (`status`,
+  `cancelled_on`); quitar una aplicación (o su cobro) o una devolución lo
+  vuelve a pendiente. Aplicar pide editar en Ventas y ver Compradores
+  (`BuyerAdvanceSalePolicy`; quitarla en una venta cobrada, solo
+  administradores). «Nueva venta» y «Registrar cobro» ya no descuentan
+  anticipos. Su detalle (`sales/buyer_advances#show`) muestra estado,
+  aplicaciones (con las libras que equivalen, `Sale#pounds_for`),
+  devoluciones y su recibo.
 - **Insumos** (Fernando, 2026-11-12/13) [CONFIRMADO]: pestaña propia de
   Comercialización (`sales.supplies`; **el catálogo pasó de Préstamos a
   aquí**, y quien tenía permiso de Préstamos → Insumos lo recibió aquí,
@@ -1755,9 +1788,10 @@ contado/crédito, forma de pago) [CONFIRMADO]:
     Baja «En bodega» y «Disponible» (columna «Salió sin préstamo»). Se
     registran o se quitan (vuelve a la bodega), no se editan; pasan a la
     principal al fusionar personas. `supply_exit_controller.js` (muestra u
-    oculta lo de la venta, precio, en bodega, total). Decisión de
-    implementación, **pendiente de confirmar**: una salida lleva un solo
-    insumo.
+    oculta lo de la venta, precio, en bodega, total). **Varios insumos por salida** (Fernando, 2026-11-16), como una
+    entrada: líneas `SupplyExitLine` (insumo, cantidad y, en una venta,
+    precio y monto) con «Agregar otro insumo»; nunca más de lo que hay en
+    bodega sumando las líneas del mismo insumo; total = suma de las líneas.
   - Solo cuentan los préstamos desde el día en que empezó el inventario
     (`SiteSetting#supply_stock_starts_on`, `SupplyStock.starts_on`); los
     de antes quedaron entregados con su préstamo (migración) y uno nuevo
@@ -2500,6 +2534,16 @@ Reglas decididas por Fernando el 2026-10-10 [CONFIRMADO]:
   su dirección, si no su municipio, si no la zona del productor;
   variedades leídas de las observaciones), pendiente de correr en
   producción.
+- **Dueños del negocio** (Fernando, 2026-11-16) [CONFIRMADO]: casilla
+  «Dueño del negocio» en la persona (`Person#business_owner`, solo la marca
+  un administrador, en Administración → Personas; insignia en su detalle).
+  Elegido como productor en «Nueva compra», la finca puede ser una suya o
+  **cualquiera de las fincas del negocio** («Niebla Dorada · del negocio»;
+  son de todos los dueños; `Producer#purchase_farms`, `Farm#purchase_label`,
+  `Purchase#farm_belongs_to_producer`). Es una **compra normal** (precio,
+  factura, abonos) y **suma a sus QQ de temporada**. La migración
+  `AddBusinessOwnerToPeople` marcó como dueño al productor «Finca propia» y
+  pasó su finca a las del negocio, con sus compras.
 - **Fincas propias** (Fernando, 2026-10-18): las listas de fincas (Fincas
   y Administración) filtran por dueño: todas, las del negocio («Fincas
   propias») o las de productores (`FarmFilter#owner`). La búsqueda encuentra

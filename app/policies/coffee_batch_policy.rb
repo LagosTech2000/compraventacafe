@@ -6,9 +6,9 @@ class CoffeeBatchPolicy < ApplicationPolicy
   self.submodule_key = "shipments"
 
   def update? = can?(:update) && open?
-  def destroy? = can?(:destroy) && !shipped?
+  def destroy? = can?(:destroy) && !taken?
 
   private
-    def shipped? = record.is_a?(CoffeeBatch) && record.shipped?
-    def open? = !record.is_a?(CoffeeBatch) || !record.shipment&.sold? || user.admin?
+    def taken? = record.is_a?(CoffeeBatch) && record.taken?
+    def open? = !record.is_a?(CoffeeBatch) || (!record.processed? && (!record.shipment&.sold? || user.admin?))
 end

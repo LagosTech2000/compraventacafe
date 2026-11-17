@@ -81,13 +81,14 @@ module Sales
         CoffeeBatchInvoice.eligible_invoices(@batch).merge(policy_scope(Invoice)).includes(:purchases, producer: :person)
       end
 
-      # From «Nueva salida»: the lot goes back to the shipment form.
+      # From «Nueva salida» or «Procesar café»: the lot goes back to that form.
       def finish(notice)
         @batch.reload
         if picker_request?
           close_modal_with notice:, fallback: sales_coffee_batch_path(@batch), event: "coffee_batch:created",
                            detail: { id: @batch.id, label: @batch.label, coffee_state: @batch.coffee_state, warehouse_id: @batch.warehouse_id,
-                                     gross: helpers.format_pounds(@batch.gross_weight), net: helpers.format_pounds(@batch.net_weight) }
+                                     gross: helpers.format_pounds(@batch.gross_weight), net: helpers.format_pounds(@batch.net_weight),
+                                     gross_value: @batch.gross_weight.to_f, net_value: @batch.net_weight.to_f }
         else
           redirect_to sales_coffee_batch_path(@batch), notice:
         end

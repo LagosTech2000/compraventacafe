@@ -1,0 +1,79 @@
+<% content_for :title, t(".title") %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= live_updates_from :sales %>
+<%= render "sales/nav" %>
+
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <%= help_guide_button HelpGuide.process(:buyer_advances), label: true %>
+    <% if policy(BuyerAdvance).create? %>
+      <%= modal_link_to t(".new"), new_sales_buyer_advance_path, class: "btn btn-primary" %>
+    <% end %>
+  </div>
+</div>
+
+<% buyers = Buyer.order(:name).pluck(:name, :id) %>
+<% statuses = BuyerAdvance::STATUSES.map { [ BuyerAdvance.human_attribute_name("status/#{it}"), it ] } %>
+<div class="mt-4" data-controller="live-filter">
+  <%= render layout: "shared/filters", locals: { filter: @filter, url: sales_buyer_advances_path, frame: "buyer-advances-list", live: true } do |form| %>
+    <%= filter_text_field form, :q, t("shared.filters.search"), value: @filter.q, placeholder: t("sales.buyer_advances.index.search_placeholder") %>
+    <%= filter_select form, :status, BuyerAdvance.human_attribute_name(:status), statuses, selected: @filter.status %>
+    <%= filter_select form, :buyer_id, BuyerAdvance.human_attribute_name(:buyer), buyers, selected: @filter.buyer_id %>
+    <%= filter_date_field form, :from, t("shared.filters.from"), value: @filter.from %>
+    <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
+  <% end %>
+
+  <%= list_frame "buyer-advances-list" do %>
+    <%= live_list_status @filter, status: statuses, buyer_id: buyers %>
+    <dl class="mt-4 flex flex-wrap gap-3" data-advance-totals>
+      <% @totals.each do |key, value| %>
+        <div class="stat min-w-0 flex-1 basis-36" data-advance-total="<%= key %>">
+          <dt><%= t("sales.buyer_advances.show.figures.#{key}") %></dt>
+          <dd data-live-value><%= format_money(value) %></dd>
+        </div>
+      <% end %>
+    </dl>
+    <% if @advances.any? %>
+      <% sorting = { filter: @filter, frame: "buyer-advances-list" } %>
+      <div class="mt-4 overflow-x-auto panel">
+        <table class="data-table data-table-compact" <%= tag.attributes(data: table_sort_data(sorting)) %> data-buyer-advances>
+          <thead>
+            <tr>
+              <%= sort_th t("sales.buyers.show.advance_number"), :number, sorting %>
+              <%= sort_th BuyerAdvance.human_attribute_name(:received_on), :received_on, sorting %>
+              <%= sort_th BuyerAdvance.human_attribute_name(:buyer), :buyer, sorting %>
+              <%= sort_th BuyerAdvance.human_attribute_name(:amount), :amount, sorting, class: "text-right" %>
+              <%= sort_th t("sales.buyer_advances.show.figures.applied"), :applied, sorting, class: "text-right" %>
+              <%= sort_th t("sales.buyer_advances.show.figures.refunded"), :refunded, sorting, class: "text-right" %>
+              <%= sort_th t("sales.buyer_advances.show.figures.balance"), :balance, sorting, class: "text-right" %>
+              <%= sort_th BuyerAdvance.human_attribute_name(:status), :status, sorting %>
+              <th class="cell-actions"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @advances.each do |advance| %>
+              <tr id="<%= dom_id(advance) %>">
+                <td class="tabular-nums"><%= advance.display_number %></td>
+                <td class="whitespace-nowrap"><%= l(advance.received_on) %></td>
+                <td><%= advance.buyer.name %><span class="block text-xs text-ink-muted"><%= advance.buyer.human_kind %></span></td>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(advance.amount) %></td>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(advance.applied_amount) %></td>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(advance.refunded_amount) %></td>
+                <td class="whitespace-nowrap text-right font-semibold tabular-nums"><%= format_money(advance.balance) %></td>
+                <td><span class="badge <%= advance.cancelled? ? "badge-success" : "badge-warning" %>"><%= advance.human_status %></span></td>
+                <td class="cell-actions"><%= link_to t("shared.detail"), sales_buyer_buyer_advance_path(advance.buyer, advance), class: "btn btn-sm", data: { row_link: true } %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <%= render "shared/pagination", filter: @filter, next_page: @next_page, frame: "buyer-advances-list" %>
+    <% else %>
+      <p class="empty-state mt-4"><%= t(".empty") %></p>
+    <% end %>
+  <% end %>
+</div>

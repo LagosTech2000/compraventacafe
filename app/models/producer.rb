@@ -38,6 +38,15 @@ class Producer < ApplicationRecord
     person.full_name
   end
 
+  # The farms its purchases can name: its own and, for an owner of the
+  # business, the business's too (Fernando, 2026-11-16: «de todos los
+  # dueños»). `business` lets a list load those once.
+  def purchase_farms(business: nil)
+    return farms.to_a unless person.business_owner?
+
+    farms.to_a + (business || Farm.of_business.order(:name).to_a)
+  end
+
   # How the purchase form's producer search lists this producer.
   # What a searchable picker types (PickerSearchesController): the person's
   # names, DNI or RTN (Person.picker_search), or the IHCAFE code.

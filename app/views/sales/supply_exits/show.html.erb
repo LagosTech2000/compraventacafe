@@ -13,9 +13,9 @@
 </div>
 
 <dl class="grid gap-3 panel p-4 text-sm sm:grid-cols-2" data-supply-exit>
-  <% details = { kind: @exit.human_kind, supply: @exit.supply.name, quantity: format_quantity(@exit.quantity, @exit.supply.unit) }
+  <% details = { kind: @exit.human_kind }
      if @exit.sale?
-       details.merge!(person: @exit.person.full_name, unit_price: format_money(@exit.unit_price), amount: format_money(@exit.amount),
+       details.merge!(person: @exit.person.full_name, amount: format_money(@exit.amount),
                       payment_method: @exit.human_payment_method, money_account: @exit.money_account.name)
      end
      details.merge!(observations: @exit.observations, created_by: @exit.created_by.name) %>
@@ -23,6 +23,34 @@
     <div><dt class="text-xs text-ink-muted"><%= SupplyExit.human_attribute_name(key) %></dt><dd><%= value.presence || "—" %></dd></div>
   <% end %>
 </dl>
+
+<%# Its supplies (Fernando, 2026-11-16). %>
+<div class="mt-4 overflow-x-auto panel">
+  <table class="data-table data-table-compact" data-controller="table-sort" data-supply-exit-lines>
+    <thead>
+      <tr>
+        <th><%= SupplyExitLine.human_attribute_name(:supply) %></th>
+        <th class="text-right"><%= SupplyExitLine.human_attribute_name(:quantity) %></th>
+        <% if @exit.sale? %>
+          <th class="text-right"><%= SupplyExitLine.human_attribute_name(:unit_price) %></th>
+          <th class="text-right"><%= SupplyExitLine.human_attribute_name(:amount) %></th>
+        <% end %>
+      </tr>
+    </thead>
+    <tbody>
+      <% @exit.lines.each do |line| %>
+        <tr id="<%= dom_id(line) %>">
+          <td><%= line.supply.name %></td>
+          <td class="whitespace-nowrap text-right tabular-nums"><%= format_quantity(line.quantity, line.supply.unit) %></td>
+          <% if @exit.sale? %>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(line.unit_price) %></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(line.amount) %></td>
+          <% end %>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
 <% if @exit.sale? %>
   <p class="mt-4 text-sm text-ink-muted"><%= t(".income", account: @exit.money_account.name) %></p>
 <% end %>

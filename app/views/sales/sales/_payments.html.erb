@@ -33,7 +33,13 @@
               <td class="whitespace-nowrap"><%= l(payment.paid_on) %></td>
               <td>
                 <%= payment.human_payment_method %>
-                <% if payment.advance? %><span class="block text-xs text-ink-muted" data-advance-pounds><%= sale.advance_pounds_text(payment.amount) %></span><% end %>
+                <% if payment.advance? %>
+                  <% if (application = payment.buyer_advance_sale) %>
+                    <%= link_to t("sales.sales.payments.from_advance", number: application.buyer_advance.display_number, buyer: application.buyer_advance.buyer.name),
+                          sales_buyer_buyer_advance_path(application.buyer_advance.buyer, application.buyer_advance), class: "link block text-xs" %>
+                  <% end %>
+                  <span class="block text-xs text-ink-muted" data-advance-pounds><%= sale.advance_pounds_text(payment.amount) %></span>
+                <% end %>
               </td>
               <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(payment.amount) %></td>
               <td class="cell-actions">

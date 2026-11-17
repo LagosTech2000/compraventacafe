@@ -42,6 +42,7 @@
     <h2 id="close-sales" class="mb-3 text-lg font-semibold"><%= t(".sales_title", count: close.sales.size) %></h2>
     <% if close.sales.any? %>
       <%= render "sales/summary", summary: close.summary %>
+      <%= render "sales/quintal_gain", summary: close.summary, id: "close" %>
       <div class="mt-4"><%= render "sales/sales/table", sales: close.sales %></div>
     <% else %>
       <p class="empty-state"><%= t(".sales_empty") %></p>

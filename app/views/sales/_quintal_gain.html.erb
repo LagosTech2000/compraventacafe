@@ -1,0 +1,80 @@
+<%# «QQ sobrantes» (Fernando, 2026-11-16): the coffee sold in purchase
+    quintals (÷ 125) against sale quintals (÷ each sale's pounds per
+    quintal), where the extra comes from (the quintal's size, the weight) and
+    what it is worth (SaleSummary#quintal_gain). `id` keeps the headings unique. %>
+<% gain = summary.quintal_gain %>
+<% scope = "sales.quintal_gain" %>
+<section class="panel mt-3 p-4" aria-labelledby="quintal-gain-<%= id %>" data-quintal-gain="<%= id %>">
+  <h3 id="quintal-gain-<%= id %>" class="text-sm font-semibold"><%= t("#{scope}.title") %></h3>
+  <p class="text-xs text-ink-muted"><%= t("#{scope}.help") %></p>
+  <% if gain.sales_count.zero? %>
+    <p class="mt-3 text-sm text-ink-muted"><%= t("#{scope}.empty") %></p>
+  <% else %>
+    <dl class="mt-3 flex flex-wrap gap-3">
+      <div class="stat min-w-0 flex-1 basis-40" data-gain="purchase_quintals">
+        <dt><%= t("#{scope}.purchase_quintals") %></dt>
+        <dd data-live-value><%= format_pounds(gain.purchase_quintals) %></dd>
+        <p class="text-xs text-ink-muted"><%= t("#{scope}.local_net", pounds: format_pounds(gain.local_net)) %></p>
+      </div>
+      <div class="stat min-w-0 flex-1 basis-40" data-gain="sale_quintals">
+        <dt><%= t("#{scope}.sale_quintals") %></dt>
+        <dd data-live-value><%= format_pounds(gain.sale_quintals) %></dd>
+        <p class="text-xs text-ink-muted"><%= t("#{scope}.buyer_net", pounds: format_pounds(gain.buyer_net)) %></p>
+      </div>
+      <div class="stat min-w-0 flex-1 basis-40 ring-2 ring-primary" data-gain="quintals">
+        <dt><%= t("#{scope}.quintals") %></dt>
+        <dd data-live-value class="<%= "text-danger" if gain.quintals.negative? %>"><%= signed_pounds(gain.quintals) %></dd>
+        <p class="text-xs text-ink-muted"><%= t("#{scope}.percent", percent: gain.percent ? format_percent(gain.percent) : "—") %></p>
+      </div>
+      <div class="stat min-w-0 flex-1 basis-40" data-gain="pounds">
+        <dt><%= t("#{scope}.pounds") %></dt>
+        <dd data-live-value class="<%= "text-danger" if gain.pounds.negative? %>"><%= signed_pounds(gain.pounds) %></dd>
+        <p class="text-xs text-ink-muted"><%= t("#{scope}.pounds_help") %></p>
+      </div>
+      <div class="stat min-w-0 flex-1 basis-40" data-gain="amount">
+        <dt><%= t("#{scope}.amount") %></dt>
+        <dd data-live-value class="<%= "text-danger" if gain.amount.negative? %>"><%= format_money(gain.amount) %></dd>
+        <p class="text-xs text-ink-muted"><%= t("#{scope}.amount_help") %></p>
+      </div>
+    </dl>
+
+    <div class="mt-4 overflow-x-auto">
+      <table class="data-table data-table-compact" data-quintal-gain-parts>
+        <thead>
+          <tr>
+            <th><%= t("#{scope}.parts.from") %></th>
+            <th class="text-right"><%= t("#{scope}.parts.quintals") %></th>
+            <th class="text-right"><%= t("#{scope}.parts.amount") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr data-gain-part="size">
+            <td><%= t("#{scope}.parts.size") %><span class="block text-xs text-ink-muted"><%= t("#{scope}.parts.size_help") %></span></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= signed_pounds(gain.size_quintals) %></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(gain.size_amount) %></td>
+          </tr>
+          <tr data-gain-part="weight">
+            <td><%= t("#{scope}.parts.weight") %><span class="block text-xs text-ink-muted"><%= t("#{scope}.parts.weight_help") %></span></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= signed_pounds(gain.weight_quintals) %></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(gain.weight_amount) %></td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <th><%= t("#{scope}.parts.total") %></th>
+            <th class="text-right tabular-nums"><%= signed_pounds(gain.quintals) %></th>
+            <th class="text-right tabular-nums"><%= format_money(gain.amount) %></th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <dl class="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+      <div><dt class="text-xs text-ink-muted"><%= t("#{scope}.total") %></dt><dd class="font-semibold tabular-nums"><%= format_money(gain.total) %></dd></div>
+      <div><dt class="text-xs text-ink-muted"><%= t("#{scope}.at_purchase_quintals") %></dt><dd class="font-semibold tabular-nums"><%= format_money(gain.at_purchase_quintals) %></dd></div>
+    </dl>
+    <% if gain.left_out.positive? %>
+      <p class="mt-2 text-xs text-ink-muted" data-gain-left-out><%= t("#{scope}.left_out", count: gain.left_out) %></p>
+    <% end %>
+  <% end %>
+</section>

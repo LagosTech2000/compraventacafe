@@ -16,6 +16,126 @@
   <% end %>
 </div>
 
+<%# Where it stands (Fernando, 2026-11-16): applied to sales by a % of it,
+    given back in money; pending while something is left. Not printed. %>
+<section class="mb-6 space-y-4 print:hidden" data-advance-detail>
+  <dl class="flex flex-wrap gap-3">
+    <div class="stat min-w-0 flex-1 basis-36" data-advance-figure="status">
+      <dt><%= BuyerAdvance.human_attribute_name(:status) %></dt>
+      <dd><span class="badge <%= @advance.cancelled? ? "badge-success" : "badge-warning" %>"><%= @advance.human_status %></span></dd>
+      <% if @advance.cancelled_on %><p class="text-xs text-ink-muted"><%= t(".cancelled_on", date: l(@advance.cancelled_on)) %></p><% end %>
+    </div>
+    <% { amount: @advance.amount, applied: @advance.applied_amount, refunded: @advance.refunded_amount, balance: @advance.balance }.each do |key, value| %>
+      <div class="stat min-w-0 flex-1 basis-36" data-advance-figure="<%= key %>">
+        <dt><%= t(".figures.#{key}") %></dt>
+        <dd data-live-value><%= format_money(value) %></dd>
+        <% if key == :balance %><p class="text-xs text-ink-muted"><%= t(".free_percent", percent: format_percent(@advance.free_percent)) %></p><% end %>
+      </div>
+    <% end %>
+  </dl>
+
+  <div class="panel p-4">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <h2 class="font-semibold"><%= t(".applications.title") %></h2>
+        <p class="text-xs text-ink-muted"><%= t(".applications.help") %></p>
+      </div>
+      <% if @advance.pending? && policy(BuyerAdvanceSale).create? %>
+        <%= page_link_to t(".applications.apply"), new_sales_advance_application_path(advance_id: @advance.id), class: "btn btn-sm btn-primary" %>
+      <% end %>
+    </div>
+    <% if @advance.applications.any? %>
+      <div class="mt-3 overflow-x-auto">
+        <table class="data-table data-table-compact" data-controller="table-sort" data-advance-applications>
+          <thead>
+            <tr>
+              <th><%= BuyerAdvanceSale.human_attribute_name(:applied_on) %></th>
+              <th><%= BuyerAdvanceSale.human_attribute_name(:sale) %></th>
+              <th class="text-right"><%= BuyerAdvanceSale.human_attribute_name(:percent) %></th>
+              <th class="text-right"><%= BuyerAdvanceSale.human_attribute_name(:amount) %></th>
+              <th class="cell-actions" data-sort="false"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @advance.applications.each do |application| %>
+              <% sale = application.sale %>
+              <tr id="<%= dom_id(application) %>">
+                <td class="whitespace-nowrap"><%= l(application.applied_on) %></td>
+                <td>
+                  <%= t("sales.sales.show.title", number: sale.display_number) %> · <%= sale.buyer.name %>
+                  <span class="block text-xs text-ink-muted" data-advance-pounds><%= sale.advance_pounds_text(application.amount) %></span>
+                </td>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= application.percent_text %></td>
+                <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(application.amount) %></td>
+                <td class="cell-actions">
+                  <div class="flex justify-end gap-2">
+                    <%= detail_button sales_sale_path(sale) %>
+                    <% if policy(application).destroy? %>
+                      <%= button_to t(".remove"), sales_advance_application_path(application, back: "advance"), method: :delete, class: "btn btn-sm",
+                            form: { data: { turbo_confirm: t(".applications.confirm_remove") } } %>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <p class="mt-2 text-sm text-ink-muted"><%= t(".applications.none") %></p>
+    <% end %>
+  </div>
+
+  <div class="panel p-4">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <h2 class="font-semibold"><%= t(".refunds.title") %></h2>
+        <p class="text-xs text-ink-muted"><%= t(".refunds.help") %></p>
+      </div>
+      <% if @advance.pending? && policy(BuyerAdvanceRefund).create? %>
+        <%= modal_link_to t(".refunds.new"), new_sales_buyer_buyer_advance_refund_path(@buyer, @advance), class: "btn btn-sm" %>
+      <% end %>
+    </div>
+    <% if @advance.refunds.any? %>
+      <div class="mt-3 overflow-x-auto">
+        <table class="data-table data-table-compact" data-controller="table-sort" data-advance-refunds>
+          <thead>
+            <tr>
+              <th><%= BuyerAdvanceRefund.human_attribute_name(:refunded_on) %></th>
+              <th><%= BuyerAdvanceRefund.human_attribute_name(:payment_method) %></th>
+              <th><%= MoneyAccount.model_name.human %></th>
+              <th class="text-right"><%= BuyerAdvanceRefund.human_attribute_name(:amount) %></th>
+              <th class="cell-actions" data-sort="false"><span class="sr-only"><%= t("sales.shipments.table.actions") %></span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @advance.refunds.each do |refund| %>
+              <tr id="<%= dom_id(refund) %>">
+                <td class="whitespace-nowrap"><%= l(refund.refunded_on) %></td>
+                <td><%= refund.human_payment_method %></td>
+                <td><%= refund.money_account.name %></td>
+                <td class="whitespace-nowrap text-right font-medium tabular-nums"><%= format_money(refund.amount) %></td>
+                <td class="cell-actions">
+                  <% if policy(refund).destroy? %>
+                    <%= button_to t(".remove"), sales_buyer_buyer_advance_refund_path(@buyer, @advance, refund), method: :delete, class: "btn btn-sm",
+                          form: { data: { turbo_confirm: t(".refunds.confirm_remove") } } %>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <p class="mt-2 text-sm text-ink-muted"><%= t(".refunds.none") %></p>
+    <% end %>
+  </div>
+  <% if policy(@advance).destroy? %>
+    <%= button_to t(".destroy"), sales_buyer_buyer_advance_path(@buyer, @advance), method: :delete, class: "btn btn-sm",
+          form: { data: { turbo_confirm: t("sales.buyers.show.confirm_remove_advance") } } %>
+  <% end %>
+</section>
+
 <%# Original and copy each on its own page: no cutting. %>
 <div class="space-y-6 print:space-y-0">
   <%= render "receipt", advance: @advance, label: t(".original") %>
@@ -27,5 +147,5 @@
 </div>
 
 <% unless modal_request? %>
-  <p class="mt-6 print:hidden"><%= link_to t(".back"), sales_buyer_path(@buyer, tab: "advances"), class: "text-sm link" %></p>
+  <p class="mt-6 print:hidden"><%= link_to t(".back"), sales_buyer_advances_path, class: "text-sm link" %></p>
 <% end %>

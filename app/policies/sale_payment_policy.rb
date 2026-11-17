@@ -10,8 +10,9 @@ class SalePaymentPolicy < ApplicationPolicy
     can?(:update) && !(record.is_a?(SalePayment) && (record.sale.paid? || record.sale.voided?))
   end
 
+  # An advance's collection is changed through its application.
   def update?
-    admin? && record.is_a?(SalePayment) && !record.sale.voided?
+    admin? && record.is_a?(SalePayment) && !record.sale.voided? && !record.advance?
   end
 
   def destroy?

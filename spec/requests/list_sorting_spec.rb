@@ -21,6 +21,7 @@ RSpec.describe "Sorting every list" do
     create(:loan, person: producer.person)
     create(:supply_entry, supply: create(:supply))
     create(:supply_exit)
+    create(:buyer_advance)
     CoffeeVariety.create!(name: "Parainema")
     PaidFeature.ensure_all!.each { it.update!(enabled: true) }
     OwnerLoan.create!(owner_name: "Don Rey", lender_name: "Banco", disbursed_on: Time.zone.today, principal: 1_000, created_by: admin)
@@ -88,6 +89,7 @@ RSpec.describe "Sorting every list" do
     SupplyExitFilter => -> { sales_supply_exits_path },
     CoffeeVarietyFilter => -> { farms_coffee_varieties_path },
     OwnerLoanFilter => -> { finance_owner_loans_path },
+    BuyerAdvanceFilter => -> { sales_buyer_advances_path },
     BatchInvoiceFilter => -> { new_sales_coffee_batch_invoice_path(CoffeeBatch.first) },
     CoffeeCollectionFilter => -> { loans_coffee_collection_path },
     SupplyEntryFilter => -> { sales_supply_stock_path },

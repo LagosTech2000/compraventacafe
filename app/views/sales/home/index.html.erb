@@ -88,7 +88,9 @@
 <% if can_read?("sales.sales") %>
   <h2 class="mt-8 mb-3 text-lg font-semibold"><%= t(".today", date: l(@daily_close.date, format: :long)) %></h2>
   <%= render "sales/summary", summary: @daily_close.summary %>
+  <%= render "sales/quintal_gain", summary: @daily_close.summary, id: "today" %>
 
   <h2 class="mt-8 mb-3 text-lg font-semibold"><%= format_season_dates(@season) %></h2>
   <%= render "sales/summary", summary: @season_summary %>
+  <%= render "sales/quintal_gain", summary: @season_summary, id: "season" %>
 <% end %>

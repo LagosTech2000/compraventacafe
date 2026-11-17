@@ -154,9 +154,17 @@ class CoffeeLots
 
     def conversion_events
       costs = CoffeeConversion.processing_costs_by_conversion
+      shares = batch_shares(:coffee_conversion_id)
       CoffeeConversion.active.where(weighed_at: ..at).flat_map do |conversion|
+        # With lots (Fernando, 2026-11-16), its lots' share of each purchase or
+        # process; without, its net, the oldest first.
+        own = shares.select { |(conversion_id, _), _| conversion_id == conversion.id }.to_h { |(_, source), net| [ source, net ] }
         input = [ conversion.weighed_at, ORDER[:input], conversion.id, lambda {
-          take(conversion, conversion.from_state, conversion.warehouse_id, conversion.input_net_weight)
+          if own.any?
+            take_from_purchases(conversion, conversion.from_state, conversion.warehouse_id, own)
+          else
+            take(conversion, conversion.from_state, conversion.warehouse_id, conversion.input_net_weight)
+          end
         } ]
         finished = conversion.finished_at && conversion.finished_at <= at
         @in_process << conversion unless finished
@@ -189,7 +197,7 @@ class CoffeeLots
     end
 
     def shipment_events
-      shares = batch_shares
+      shares = batch_shares(:shipment_id)
       with_batches = shares.keys.map(&:first).uniq
       # Without the local scale (and without lots) it takes nothing yet (Fernando, 2026-11-12).
       Shipment.active.where(departed_at: ..at).where.not(origin_net_weight: nil).or(Shipment.active.where(departed_at: ..at, id: with_batches))
@@ -204,24 +212,26 @@ class CoffeeLots
       end
     end
 
-    # { [shipment id, [source class, source id]] => net pounds } of the
-    # shipments' lots: each purchase of their invoices, and each process
-    # they took a share of (Fernando, 2026-11-16).
-    def batch_shares
+    # { [shipment or process id, [source class, source id]] => net pounds }
+    # of the lots of shipments (`column` :shipment_id) or of processes
+    # (:coffee_conversion_id): each purchase of their invoices, and each
+    # process they took a share of (Fernando, 2026-11-16).
+    def batch_shares(column)
+      owner = "coffee_batches.#{column}"
       purchases = CoffeeBatchInvoice.joins(:coffee_batch)
                                     .joins("JOIN purchases ON purchases.invoice_id = coffee_batch_invoices.invoice_id AND purchases.voided_at IS NULL")
-                                    .where.not(coffee_batches: { shipment_id: nil })
-                                    .group("coffee_batches.shipment_id", "purchases.id")
+                                    .where.not(coffee_batches: { column => nil })
+                                    .group(owner, "purchases.id")
                                     .sum(Arel.sql("COALESCE(purchases.net_weight * #{CoffeeBatchInvoice::NET_SHARE_SQL}, 0)"))
-                                    .to_h { |(shipment_id, purchase_id), net| [ [ shipment_id, [ "Purchase", purchase_id ] ], net.to_d.round(2) ] }
-      conversions = CoffeeBatchConversion.joins(:coffee_batch).where.not(coffee_batches: { shipment_id: nil })
-                                         .group("coffee_batches.shipment_id", "coffee_batch_conversions.coffee_conversion_id").sum(:net_weight)
-                                         .to_h { |(shipment_id, conversion_id), net| [ [ shipment_id, [ "CoffeeConversion", conversion_id ] ], net.to_d.round(2) ] }
+                                    .to_h { |(owner_id, purchase_id), net| [ [ owner_id, [ "Purchase", purchase_id ] ], net.to_d.round(2) ] }
+      conversions = CoffeeBatchConversion.joins(:coffee_batch).where.not(coffee_batches: { column => nil })
+                                         .group(owner, "coffee_batch_conversions.coffee_conversion_id").sum(:net_weight)
+                                         .to_h { |(owner_id, conversion_id), net| [ [ owner_id, [ "CoffeeConversion", conversion_id ] ], net.to_d.round(2) ] }
       purchases.merge(conversions)
     end
 
-    # What a shipment with lots takes: from each purchase or process, its
-    # share; what is no longer there of one, from the oldest lots.
+    # What a shipment or a process with lots takes: from each purchase or
+    # process, its share; what is no longer there of one, from the oldest lots.
     def take_from_purchases(record, coffee_state, warehouse_id, shares)
       queue = @queues[[ coffee_state, warehouse_id ]]
       portions = []

@@ -39,6 +39,8 @@ class Sale < ApplicationRecord
   # Saved on their own (SalePayment validates itself): one being typed never
   # stops the sale from refreshing its status.
   has_many :payments, -> { in_order }, class_name: "SalePayment", dependent: :restrict_with_error, inverse_of: :sale, validate: false
+  # Advances applied to it (Fernando, 2026-11-16).
+  has_many :advance_applications, class_name: "BuyerAdvanceSale", dependent: :restrict_with_error
 
   normalizes :buyer_document_number, :void_reason, :buyer_total_reason, with: ->(value) { value.squish.presence }
   normalizes :observations, with: FieldFormats::STRIP

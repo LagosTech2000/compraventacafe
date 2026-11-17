@@ -49,15 +49,25 @@ FactoryBot.define do
 
   # Supplies sold apart or used by the business (Fernando, 2026-11-14); a
   # sale by default, with what it takes already in the warehouse.
+  # One line (supply, quantity, unit_price) unless `lines` are given.
   factory :supply_exit do
-    supply { create(:supply_entry).lines.first.supply }
+    transient do
+      supply { create(:supply_entry).lines.first.supply }
+      quantity { 2 }
+      unit_price { 1_000 }
+    end
     kind { "sale" }
     exited_on { Time.zone.today }
-    quantity { 2 }
     person
-    unit_price { 1_000 }
     payment_method { "cash" }
     money_account
     created_by { SpecOwner.user || association(:user) }
+    lines { [ build(:supply_exit_line, supply:, quantity:, unit_price:, supply_exit: instance) ] }
+  end
+
+  factory :supply_exit_line do
+    supply
+    quantity { 2 }
+    unit_price { 1_000 }
   end
 end

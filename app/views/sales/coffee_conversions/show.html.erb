@@ -43,6 +43,22 @@
   <%= render "sales/coffee_conversions/side", conversion: @conversion, side: "output" %>
 </div>
 
+<%# The lots whose coffee went in (Fernando, 2026-11-16). %>
+<% batches = @conversion.input_batches.to_a %>
+<% if batches.any? %>
+  <% totals = CoffeeBatch::Totals.by_batch(batches.map(&:id)) %>
+  <section class="mt-4 panel p-4" aria-labelledby="conversion-batches" data-conversion-batches>
+    <h2 id="conversion-batches" class="font-semibold"><%= t(".batches") %></h2>
+    <ul class="mt-2 space-y-1 text-sm">
+      <% batches.each do |batch| %>
+        <% sums = totals.fetch(batch.id, CoffeeBatch::Totals.zero) %>
+        <li><%= link_to batch.label, sales_coffee_batch_path(batch), class: "link", data: { turbo_frame: "_top" } %> ·
+          <%= t("sales.shipments.form.batch_pounds", gross: format_pounds(sums.gross), net: format_pounds(sums.net)) %></li>
+      <% end %>
+    </ul>
+  </section>
+<% end %>
+
 <%# What it should have given against what it gave (client, 2026-10-26),
     the shrink, and what the processes of that state give on average. %>
 <% if @conversion.estimated_output_gross %>

@@ -8,7 +8,7 @@ class Buyer < ApplicationRecord
   include LiveUpdates
   live_updates :sales
 
-  KINDS = %w[exporter processor other].freeze
+  KINDS = %w[exporter processor bank other].freeze
 
   has_many :shipments, dependent: :restrict_with_error
   has_many :sales, dependent: :restrict_with_error
@@ -38,8 +38,9 @@ class Buyer < ApplicationRecord
   def human_kind = self.class.human_attribute_name("kind/#{kind}")
 
   # Advances given minus what was taken off its active sales «con anticipo».
+  # What is left of its pending advances (applied to sales or given back, Fernando, 2026-11-16).
   def advance_balance
-    advances.sum(:amount) - SalePayment.advance.joins(:sale).merge(Sale.active).where(sales: { buyer_id: id }).sum(:amount)
+    advances.pending.balance_sum
   end
 
   # What its active sales still owe.

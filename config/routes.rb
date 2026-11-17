@@ -142,8 +142,15 @@ Rails.application.routes.draw do
     end
     resources :buyers, except: :destroy do
       # Advances the buyer gives, paid back with coffee.
-      resources :buyer_advances, path: "advances", only: %i[ new create show destroy ]
+      resources :buyer_advances, path: "advances", only: %i[ new create show destroy ] do
+        # Given back in money (Fernando, 2026-11-16).
+        resources :refunds, controller: "buyer_advance_refunds", only: %i[ new create destroy ]
+      end
     end
+    # Every advance of buyers and banks, and a new one of any of them.
+    resources :buyer_advances, path: "advances", only: %i[ index new create ]
+    # An advance applied to sales by a % of it (from the advance or from the sale).
+    resources :advance_applications, controller: "buyer_advance_sales", only: %i[ new create destroy ]
     resources :carriers, except: :destroy
     resources :vehicles, except: :destroy
     # Camión, pick-up…: the kinds of vehicle.
