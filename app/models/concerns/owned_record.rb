@@ -20,7 +20,7 @@ module OwnedRecord
     "ProcessingCost" => :coffee_conversion, "CoffeeBatchInvoice" => :coffee_batch, "CoffeeBatchConversion" => :coffee_batch, "PayrollPayment" => :payroll,
     "PayrollExpense" => :payroll, "LoanSupply" => :loan, "SupplyEntryLine" => :supply_entry, "ShipmentWeighing" => :shipment,
     "SaleLine" => :sale, "PurchaseWeighing" => :purchase, "PayrollMember" => :payroll, "PayrollTask" => :payroll,
-    "PayrollRole" => :payroll, "OwnerLoanPayment" => :owner_loan
+    "PayrollRole" => :payroll, "OwnerLoanPayment" => :owner_loan, "ExpenseReceipt" => :owner
   }.freeze
 
   included do

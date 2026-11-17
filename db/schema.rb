@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_16_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_17_002519) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -258,14 +258,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_100000) do
   end
 
   create_table "expense_receipts", force: :cascade do |t|
-    t.bigint "expense_id", null: false
+    t.bigint "expense_id"
     t.binary "data", null: false
     t.string "content_type", null: false
     t.string "filename"
     t.integer "byte_size", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "shipment_cost_id"
     t.index ["expense_id"], name: "index_expense_receipts_on_expense_id", unique: true
+    t.index ["shipment_cost_id"], name: "index_expense_receipts_on_shipment_cost_id", unique: true
+    t.check_constraint "num_nonnulls(expense_id, shipment_cost_id) = 1", name: "expense_receipts_one_owner"
   end
 
   create_table "expenses", force: :cascade do |t|
@@ -1408,6 +1411,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_100000) do
   add_foreign_key "collaborators", "people"
   add_foreign_key "expense_categories", "expense_categories", column: "parent_id"
   add_foreign_key "expense_receipts", "expenses"
+  add_foreign_key "expense_receipts", "shipment_costs"
   add_foreign_key "expenses", "finance_categories"
   add_foreign_key "expenses", "money_accounts"
   add_foreign_key "expenses", "shipments"

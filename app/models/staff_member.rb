@@ -40,6 +40,11 @@ class StaffMember < ApplicationRecord
   validate :role_active, if: :will_save_change_to_staff_role_id?
   validate :ends_after_start, :keeps_paid_periods
 
+  # Deactivated without an end date: it ends on its last day worked or paid
+  # (Fernando, 2026-11-16: the sheet shows only the days each one was
+  # employed; the history keeps them).
+  before_validation :end_when_deactivated, if: -> { will_save_change_to_active?(to: false) && ends_on.nil? }
+
   scope :active, -> { where(active: true) }
   scope :newest_first, -> { joins(:person).merge(Person.alphabetical) }
 
@@ -117,6 +122,10 @@ class StaffMember < ApplicationRecord
 
     def person_is_collaborator
       errors.add(:person, :not_collaborator) if person && !person.collaborator?
+    end
+
+    def end_when_deactivated
+      self.ends_on = [ starts_on, payments.maximum(:period_ends_on), attendances.maximum(:worked_on) ].compact.max
     end
 
     def role_active

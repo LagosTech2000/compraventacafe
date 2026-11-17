@@ -32,7 +32,7 @@ module Sales
 
       def cost_params
         params.expect(shipment_cost: [ :concept, :description, :pricing, :weight_side, :weight_kind, :quintal_pounds, :unit_price, :amount,
-                                       :paid_on, :payment_method, :money_account_id ])
+                                       :paid_on, :payment_method, :money_account_id, :receipt_upload ])
       end
   end
 end

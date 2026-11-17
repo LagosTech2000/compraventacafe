@@ -1585,11 +1585,15 @@ contado/crédito, forma de pago) [CONFIRMADO]:
     libra o por quintal sobre el peso local o del comprador (este solo ya
     pesada en destino), brutas o netas; fecha, forma de pago y cuenta
     (`MoneyMovements` `shipment_costs`, `AccountBalance`, Consolidación).
-    Se registran o se quitan.
+    Se registran o se quitan. **Con comprobante opcional** (Fernando,
+    2026-11-16): la foto o el PDF, en la misma tabla que los de los gastos
+    (`ExpenseReceipt` con `expense_id` o `shipment_cost_id`, uno de los dos;
+    `HasReceipt`), y «Comprobante» en la lista de gastos de la salida.
   - **Gastos de Control financiero asignados** (`Expense#shipment_id`,
     `sales/shipment_expenses`): «Asignar gastos» lista los gastos (no
     inversiones) sin salida, con sus filtros (este mes por defecto); se
-    marcan y se asignan; un gasto a una sola salida; siguen siendo gastos de
+    marcan y se asignan (al asignar, a quien puede editar el gasto, se le
+    sube en su fila el comprobante que le falte); un gasto a una sola salida; siguen siendo gastos de
     Control financiero (no mueven dinero). Pide editar en Salidas y ver
     Gastos (`ShipmentExpensePolicy`).
   - Decisiones de implementación, **pendientes de confirmar**: anular la
@@ -1906,6 +1910,10 @@ salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
     le restaron el anticipo; aquí siempre se resta.
   - **Empleados** (`StaffMember`): una persona con rol Colaborador, una
     vez, en un rol, desde una fecha (fin opcional); se desactivan. Puede
+    **Al desactivarlo sin fecha de fin** (Fernando, 2026-11-16), su fin
+    queda en el último día que trabajó o se le pagó: la hoja de planilla
+    (Quincena y Mes) solo lo muestra mientras estuvo empleado y el Acumulado
+    lo conserva (migración `EndInactiveStaffMembers` para los de antes). Puede
     tener **salario propio** (`salary_override`, Fernando, 2026-10-24: dos
     choferes del mismo rol con pago distinto), que manda sobre el del rol;
     la frecuencia y la hora extra siguen siendo las del rol. Sus
