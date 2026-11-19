@@ -74,7 +74,7 @@
 
     <div>
       <%= form.label :purchased_at, class: "field-label" %>
-      <%= form.datetime_local_field :purchased_at, required: true, class: "field-input" %>
+      <%= form.datetime_local_field :purchased_at, max: latest_datetime, required: true, class: "field-input" %>
     </div>
 
     <div data-controller="option-picker" data-action="zone:created@window->option-picker#add">

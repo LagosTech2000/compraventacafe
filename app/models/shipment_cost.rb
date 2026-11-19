@@ -34,6 +34,7 @@ class ShipmentCost < ApplicationRecord
   validates :description, presence: true, if: -> { concept == "other" }
   validates :pricing, inclusion: { in: PRICINGS }
   validates :paid_on, presence: true
+  validates :paid_on, not_in_future: true
   validates :payment_method, inclusion: { in: Invoice::PAYMENT_METHODS }
   validates :amount, numericality: { greater_than: 0, less_than: MAX_AMOUNT }
   with_options unless: :total? do

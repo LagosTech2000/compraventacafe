@@ -42,7 +42,7 @@
       </div>
       <div>
         <%= form.label :transferred_at, class: "field-label" %>
-        <%= form.datetime_local_field :transferred_at, required: true, class: "field-input" %>
+        <%= form.datetime_local_field :transferred_at, max: latest_datetime, required: true, class: "field-input" %>
       </div>
       <div class="sm:col-span-2">
         <%= form.label :gross_weight, class: "field-label" %>

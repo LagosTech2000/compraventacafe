@@ -25,7 +25,7 @@
     <div class="grid min-w-0 gap-5 sm:grid-cols-2">
       <div>
         <%= form.label :finished_at, class: "field-label" %>
-        <%= form.datetime_local_field :finished_at, required: true, class: "field-input",
+        <%= form.datetime_local_field :finished_at, max: latest_datetime, required: true, class: "field-input",
               data: { missing_message: "#{CoffeeConversion.human_attribute_name(:finished_at)} #{t("errors.messages.blank")}" } %>
       </div>
       <div>

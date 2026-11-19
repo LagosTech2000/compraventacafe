@@ -31,7 +31,7 @@
         </div>
         <div>
           <%= form.label :departed_at, class: "field-label" %>
-          <%= form.datetime_local_field :departed_at, required: true, class: "field-input" %>
+          <%= form.datetime_local_field :departed_at, max: latest_datetime, required: true, class: "field-input" %>
         </div>
         <div>
           <%= form.label :coffee_state, class: "field-label" %>

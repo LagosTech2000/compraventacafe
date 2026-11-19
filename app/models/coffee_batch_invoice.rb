@@ -23,6 +23,7 @@ class CoffeeBatchInvoice < ApplicationRecord
   validates :percent, numericality: { greater_than: 0, less_than_or_equal_to: 100 }
   validates :invoice_id, uniqueness: { scope: :coffee_batch_id }
   validate :invoice_fits, :within_the_invoice, :within_the_limit, :lot_open
+  validate :coffee_in_before_it_left, if: -> { new_record? || will_save_change_to_invoice_id? }
 
   before_validation :take_pounds, if: -> { new_record? || will_save_change_to_percent? }
 
@@ -151,6 +152,15 @@ class CoffeeBatchInvoice < ApplicationRecord
 
       room = [ coffee_batch.gross_limit.to_d - others, 0 ].max
       errors.add(:percent, :over_limit, room: ActiveSupport::NumberHelper.number_to_rounded(room, precision: 2, delimiter: ","))
+    end
+
+    # A lot already on a shipment or in a process takes only coffee that was
+    # in the warehouse when it left (Fernando, 2026-11-18).
+    def coffee_in_before_it_left
+      return unless invoice && coffee_batch&.taken?
+
+      entered = Purchase.active.where(invoice_id: invoice.id).maximum(:purchased_at)&.in_time_zone
+      errors.add(:base, CoffeeBatch.late_message(coffee_batch, entered, coffee_batch.taker)) if CoffeeBatch.after?(entered, coffee_batch.taken_at)
     end
 
     def lot_open

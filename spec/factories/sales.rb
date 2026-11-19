@@ -83,7 +83,7 @@ FactoryBot.define do
     end
 
     trait :finished do
-      finished_at { weighed_at + 1.hour }
+      finished_at { [ weighed_at + 1.hour, Time.current ].min }
       output_gross_weight { 400 }
       output_sacks { 4 }
       output_humidity_percent { 51 }

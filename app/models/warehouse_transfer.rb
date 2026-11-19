@@ -25,6 +25,7 @@ class WarehouseTransfer < ApplicationRecord
   normalizes :observations, with: FieldFormats::STRIP
 
   validates :transferred_at, presence: true
+  validates :transferred_at, not_in_future: true
   validates :coffee_state, inclusion: { in: Purchase::COFFEE_STATES }
   validates :gross_weight, numericality: { greater_than: 0, less_than: MAX_WEIGHT }
   validates :observations, length: { maximum: 500 }

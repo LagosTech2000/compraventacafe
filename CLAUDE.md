@@ -695,6 +695,41 @@ los errores).
   opcional: "Sin … asignado" (`shared.select.*`). Campo obligatorio: "Selecciona
   …". Filtro: "Todos".
 
+**6. Todo debe cuadrar** (Fernando, 2026-11-18: «todo debe coincidir y no
+pasar los límites»; el cliente compara las compras del día con lo que
+dice la salida). Validaciones en el modelo, y en el formulario lo que el
+navegador puede revisar:
+
+- **Nada con fecha futura** (`NotInFutureValidator`, `validates :x,
+  not_in_future: true`; por día en Tegucigalpa; solo al crear o cambiar la
+  fecha, así lo guardado antes no bloquea otra edición): compras, salidas
+  y su llegada, ventas, facturas, abonos y cobros, pagos a carreros,
+  gastos de salida y de procesamiento, procesos, traslados, lotes, gastos,
+  otros ingresos y transferencias. Sus campos llevan `max: latest_date` /
+  `latest_datetime` (`DateLimitsHelper`).
+- **Un lote solo lleva café que ya estaba en la bodega cuando salió**
+  (`CoffeeBatch.latest_coffee`, `.late_for`, `.after?`, por minuto): no va
+  a una salida o proceso un lote con compras o resultados de proceso
+  posteriores a la salida o al pesaje del proceso; a un lote que ya salió
+  no entra una factura o un proceso posterior; la salida no se mueve antes
+  de su café, ni una compra o un resultado después de su lote.
+- **Nota de peso única por comprador** (sin espacios, mayúsculas ni ceros
+  a la izquierda: «073» es «73»).
+- **La venta va después de la llegada** de cada salida (báscula del
+  comprador), y la llegada no se mueve después de su venta.
+- **Un proceso no pesa más de lo que entró** (brutas).
+- Lo que ya estaba mal lo listan las revisiones de integridad
+  (`integrity:shipments`: lotes con café posterior y notas repetidas;
+  `integrity:sales`: ventas antes de la llegada, que `sales:recalculate`
+  no toca).
+- Plan siguiente (decisiones de Fernando, 2026-11-18, por fases): bloquear
+  lo cerrado para todos (factura cancelada, venta con cobros, compra
+  facturada, cobros y abonos, salida pesada o vendida; corregir = anular
+  con motivo, solo administradores, si nada posterior depende), bloquear
+  sacar más de lo que hay, motivo cuando una diferencia pasa la
+  tolerancia, conteo físico con ajuste de inventario, cuadre del día,
+  flujos en un paso y cierre del día para todo el negocio.
+
 ## Comandos
 
 ```bash

@@ -46,6 +46,8 @@ class Sale < ApplicationRecord
   normalizes :observations, with: FieldFormats::STRIP
 
   validates :sold_on, presence: true
+  validates :sold_on, not_in_future: true
+  validate :sold_after_arrival, if: -> { new_record? || will_save_change_to_sold_on? || @shipments_changed }
   validates :coffee_state, inclusion: { in: Purchase::COFFEE_STATES }
   validates :price_unit, inclusion: { in: PRICE_UNITS }
   validates :unit_price, numericality: { greater_than: 0, less_than: 10_000_000 }
@@ -228,6 +230,7 @@ class Sale < ApplicationRecord
       raise ActiveRecord::RecordInvalid, self if errors.any?
 
       assign_attributes(attributes.to_h.symbolize_keys.slice(:sold_on, :price_unit, :unit_price, :quintal_pounds, :buyer_document_number, :observations))
+      @shipments_changed = added.any? || lines.active.where.not(shipment_id: ids).exists?
       lines.active.where.not(shipment_id: ids).find_each(&:destroy!)
       added.each { |shipment| lines.create!(shipment:, net_weight: 0, origin_net_weight: 0, amount: 0) }
       price = { unit_price:, price_unit:, quintal_pounds: }
@@ -260,6 +263,16 @@ class Sale < ApplicationRecord
   end
 
   private
+    # Sold after the buyer weighed each of its shipments (Fernando, 2026-11-18).
+    def sold_after_arrival
+      return unless sold_on
+
+      shipments = new_record? ? lines.map(&:shipment) : Shipment.where(id: lines.active.select(:shipment_id)).order(:number).to_a
+      shipments.compact.select { it.received_on && it.received_on > sold_on }.each do |shipment|
+        errors.add(:sold_on, :before_arrival, number: shipment.display_number, date: I18n.l(shipment.received_on))
+      end
+    end
+
     def buyer_total_covers_payments
       return unless buyer_total
 

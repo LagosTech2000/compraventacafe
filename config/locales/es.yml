@@ -537,6 +537,8 @@ es:
           no_costs: "sin gastos ni precio del viaje"
           not_sold: "pesada y sin vender"
           unpaid: "venta por cobrar"
+          late_lots: "un lote lleva café que entró después de que salió"
+          repeated_note: "su nota de peso está también en otra salida del mismo comprador"
       integrity_shipment_expense_candidates:
         title: "Gastos que parecen de un viaje"
         what: "Busca gastos de Control financiero sin salida con fecha cerca de cada salida y los sugiere. No los asigna: alguien los confirma en «Asignar gastos» de la salida."
@@ -596,6 +598,7 @@ es:
         gaps:
           line_net: "la remisión %{shipment} pesa distinto en el comprador"
           line_origin: "la remisión %{shipment} pesa distinto en la báscula local"
+          before_arrival: "tiene fecha antes de que el comprador pesara la remisión %{shipment}"
           line_amount: "el monto de la remisión %{shipment} no es su peso por el precio"
           sale_net: "su peso no es la suma de sus líneas"
           sale_total: "su total no es su peso por el precio"
@@ -10227,6 +10230,8 @@ es:
               batch_other_coffee: "El %{batch} es de otro estado del café o de otra bodega."
             finished_at:
               before_weighed: "no puede ser antes de cuando se pesó lo que entró"
+            output_gross_weight:
+              heavier_than_input: "no puede pesar más que lo que entró (%{gross} lb brutas): al procesar el café solo pierde peso"
             warehouse:
               inactive: "está desactivada: elige otra"
             output_warehouse:
@@ -10440,6 +10445,8 @@ es:
               batches_gone: "Alguno de los lotes elegidos ya no existe."
               batch_taken: "El %{batch} ya está en otra salida."
               batch_other_coffee: "El %{batch} es de otro estado del café o de otra bodega."
+            weight_note_number:
+              taken_by: "ya está en la remisión %{number} de este comprador: cada nota de peso va en una sola salida"
             buyer:
               inactive: "está desactivado"
             warehouse:
@@ -10450,6 +10457,7 @@ es:
               inactive: "está desactivado"
             received_on:
               before_departure: "no puede ser antes de la salida"
+              after_sale: "no puede ser después de la venta %{number} (%{date}) que la cobra"
         vehicle:
           attributes:
             vehicle_type:
@@ -10462,6 +10470,7 @@ es:
               already_voided: "La venta ya está anulada."
             sold_on:
               after_payments: "no puede ser después del primer cobro (%{date})"
+              before_arrival: "no puede ser antes de que el comprador pesara la remisión %{number} (%{date})"
             buyer_total:
               below_paid: "no puede ser menos de lo ya cobrado (%{paid})"
             buyer_total_reason:
@@ -10637,6 +10646,8 @@ es:
               other_farm: "no es una parcela de esa finca"
             weighings:
               blank: "faltan: agrega al menos una pesada"
+            purchased_at:
+              after_its_lot_left: "no puede ser después de que su café salió con el %{batch} (%{left})"
         invoice:
           partial_not_less: "Un pago parcial debe ser menor que el total a pagar. Si se paga todo, elige «Cancelada»."
           attributes:
@@ -10786,6 +10797,9 @@ es:
       email_format: "no es un correo válido"
       password_format: "debe tener al menos 8 caracteres"
       not_in_department: "no pertenece al departamento seleccionado"
+      in_future: "no puede ser una fecha futura: registra solo lo que ya pasó"
+      coffee_after_shipment: "El %{batch} tiene café que entró el %{entered}, después de que salió la remisión %{number} (%{left}): un lote solo lleva café que ya estaba en la bodega."
+      coffee_after_process: "El %{batch} tiene café que entró el %{entered}, después de que se pesó el proceso %{number} (%{left}): un lote solo lleva café que ya estaba en la bodega."
       too_long:
         one: "es demasiado largo (1 carácter máximo)"
         other: "es demasiado largo (%{count} caracteres máximo)"

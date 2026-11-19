@@ -26,7 +26,7 @@
     <%= render "shared/money_account_field", form: %>
     <div>
       <%= form.label :paid_on, class: "field-label" %>
-      <%= form.date_field :paid_on, required: true, min: @invoice.issued_on, class: "field-input" %>
+      <%= form.date_field :paid_on, max: latest_date, required: true, min: @invoice.issued_on, class: "field-input" %>
     </div>
   </div>
 

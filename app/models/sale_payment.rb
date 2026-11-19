@@ -29,6 +29,7 @@ class SalePayment < ApplicationRecord
 
   validates :amount, numericality: { greater_than: 0, less_than: 100_000_000 }
   validates :paid_on, presence: true
+  validates :paid_on, not_in_future: true
   validates :payment_method, inclusion: { in: METHODS }
   validates :observations, length: { maximum: 500 }
   validate :sale_active, :within_balance, :not_before_sale, :not_before_last_payment, on: :create

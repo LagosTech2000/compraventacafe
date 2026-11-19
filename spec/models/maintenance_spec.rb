@@ -48,6 +48,20 @@ RSpec.describe Maintenance do
       expect(lines(result)).to include("Remisión #{shipment.display_number} · #{I18n.l(shipment.departed_at.to_date)} · Pergamino húmedo: " \
                                        "sin lotes (sin merma ni costo), sin báscula del comprador y sin gastos ni precio del viaje.")
     end
+
+    it "finds a lot with coffee that came in after its shipment left and a weight note on two shipments (Fernando, 2026-11-18)" do
+      shipment = create(:shipment, :received, departed_at: 3.days.ago, weight_note_number: "73")
+      twin = create(:shipment, :received, buyer: shipment.buyer)
+      twin.update_column(:weight_note_number, "073")
+      batch = create(:coffee_batch)
+      batch.batch_invoices.create!(invoice: invoice_for(create(:producer), gross: 300, at: 1.day.ago), percent: 100, created_by: admin)
+      batch.update_column(:shipment_id, shipment.id)
+
+      found = lines(run(Maintenance::Shipments))
+      expect(found).to include(a_string_including("Remisión #{shipment.display_number}", "un lote lleva café que entró después de que salió",
+                                                  "su nota de peso está también en otra salida del mismo comprador"))
+      expect(found).to include(a_string_including("Remisión #{twin.display_number}", "su nota de peso está también"))
+    end
   end
 
   describe "integrity:shipment_expense_candidates" do
@@ -93,7 +107,7 @@ RSpec.describe Maintenance do
       category = create(:finance_category, kind: "expense")
       twin = create(:expense, category:, amount: 250, payee: "Gasolinera")
       create(:expense, category:, amount: 250, payee: "Gasolinera")
-      create(:expense, spent_on: Time.zone.today + 3)
+      create(:expense).update_column(:spent_on, Time.zone.today + 3) # saved before dates in the future were refused
 
       result = run(Maintenance::Expenses)
       expect(result.status).to eq("bad")
@@ -227,6 +241,14 @@ RSpec.describe Maintenance do
 
       Maintenance::Runner.revert(applied, user: admin)
       expect(sale.reload.net_weight).to eq(sale.shipments.sole.destination_net_weight + 50)
+    end
+
+    it "lists a sale dated before the buyer weighed its shipment, without recalculating it (Fernando, 2026-11-18)" do
+      sale = create(:sale, user: admin)
+      sale.update_column(:sold_on, sale.shipments.sole.received_on - 1)
+
+      expect(lines(run(Maintenance::Sales))).to include("Venta #{sale.display_number}: tiene fecha antes de que el comprador pesara la remisión #{sale.shipments.sole.display_number}.")
+      expect(Maintenance::Sales.out_of_step).to be_empty
     end
   end
 end

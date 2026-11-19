@@ -40,6 +40,7 @@ class Purchase < ApplicationRecord
   normalizes :observations, with: FieldFormats::STRIP
 
   validates :purchased_at, presence: true
+  validates :purchased_at, not_in_future: true
   validates :coffee_state, inclusion: { in: COFFEE_STATES }
   validates :weight_mode, inclusion: { in: WEIGHT_MODES }
   validate :weighings_present, if: :by_weighings?
@@ -68,6 +69,7 @@ class Purchase < ApplicationRecord
   validate :warehouse_active, if: :will_save_change_to_warehouse_id?
   validate :hauler_commission_not_paid_out
   validate :keeps_its_lots, if: :lot_pounds_change?
+  validate :in_before_its_lots_left, if: -> { invoice_id && persisted? && (will_save_change_to_purchased_at? || will_save_change_to_invoice_id?) }
   after_update :rebase_lots, if: -> { saved_change_to_gross_weight? || saved_change_to_net_weight? || saved_change_to_voided_at? || saved_change_to_invoice_id? }
   validate :damage_types_chosen, if: -> { new_record? || will_save_change_to_damage_percent? || will_save_change_to_damage_types? }
 
@@ -391,6 +393,18 @@ class Purchase < ApplicationRecord
       gross, net = CoffeeBatchInvoice.invoice_pounds(invoice_id, without: id, with: (self if self.invoice_id == invoice_id))
       message = CoffeeBatchInvoice.shortfall(invoice_id, gross, net)
       errors.add(:base, message) if message
+    end
+
+    # Its invoice is in lots that already left (a shipment, a process): it
+    # cannot have come in after them (Fernando, 2026-11-18).
+    def in_before_its_lots_left
+      return unless purchased_at
+
+      CoffeeBatch.where(id: CoffeeBatchInvoice.where(invoice_id:).select(:coffee_batch_id)).includes(:shipment, :processing).find_each do |batch|
+        next unless batch.taken? && CoffeeBatch.after?(purchased_at, batch.taken_at)
+
+        errors.add(:purchased_at, :after_its_lot_left, batch: batch.label, left: I18n.l(batch.taken_at.in_time_zone))
+      end
     end
 
     # What it adds to its invoice stays out of every lot.

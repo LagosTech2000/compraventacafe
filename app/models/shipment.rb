@@ -65,14 +65,18 @@ class Shipment < ApplicationRecord
   normalizes :observations, with: FieldFormats::STRIP
 
   validates :departed_at, presence: true
+  validates :departed_at, :received_on, not_in_future: true
   validates :coffee_state, inclusion: { in: Purchase::COFFEE_STATES }
   validates :origin_weight_mode, inclusion: { in: WEIGHT_MODES }
   validate :weighings_present, if: :by_weighings?
   validates :weight_note_number, length: { maximum: 60 }
+  validate :weight_note_once_per_buyer, if: -> { weight_note_number.present? && (will_save_change_to_weight_note_number? || will_save_change_to_buyer_id?) }
+  validate :received_before_its_sale, if: -> { persisted? && received_on && will_save_change_to_received_on? }
   validates :driver_name, length: { maximum: 120 }
   validates :trip_price, numericality: { greater_than: 0, less_than: 100_000_000 }, allow_nil: true
   validate :keeps_its_batches, if: -> { persisted? && (will_save_change_to_coffee_state? || will_save_change_to_warehouse_id?) }
   validate :batches_fit, if: -> { @batch_ids }
+  validate :coffee_in_before_departure, if: -> { @batch_ids || (persisted? && will_save_change_to_departed_at?) }
   validate :carrier_or_driver, if: -> { will_save_change_to_carrier_id? || will_save_change_to_driver_id? || will_save_change_to_driver_name? }
   validate :carrier_and_vehicle_active
   validate :warehouse_active, if: :will_save_change_to_warehouse_id?
@@ -477,6 +481,32 @@ class Shipment < ApplicationRecord
           errors.add(:base, :batch_other_coffee, batch: batch.label)
         end
       end
+    end
+
+    # A buyer's weight note goes on one shipment only (Fernando, 2026-11-18:
+    # the note 73 was on two at once). Compared without spaces, case or
+    # leading zeros («073» is «73»).
+    def weight_note_once_per_buyer
+      normalized = "LTRIM(UPPER(REGEXP_REPLACE(shipments.weight_note_number, '\\s', '', 'g')), '0')"
+      note = weight_note_number.gsub(/\s/, "").upcase.sub(/\A0+/, "")
+      other = self.class.active.where(buyer_id:).where.not(id:).where("#{normalized} = ?", note).order(:number).first
+      errors.add(:weight_note_number, :taken_by, number: other.display_number) if other
+    end
+
+    # Weighed at the buyer's before the sale that charges it (Fernando, 2026-11-18).
+    def received_before_its_sale
+      sale = active_sale_line&.sale
+      errors.add(:received_on, :after_sale, number: sale.display_number, date: I18n.l(sale.sold_on)) if sale && received_on > sale.sold_on
+    end
+
+    # Its lots carry only coffee that was in the warehouse when it left
+    # (Fernando, 2026-11-18): a purchase or a process result after the
+    # departure does not go on it.
+    def coffee_in_before_departure
+      return unless departed_at
+
+      ids = @batch_ids || coffee_batches.ids
+      CoffeeBatch.late_for(ids, departed_at.in_time_zone).each { |batch, entered| errors.add(:base, CoffeeBatch.late_message(batch, entered, self)) }
     end
 
     # The lots chosen join it; the ones left out are free again.

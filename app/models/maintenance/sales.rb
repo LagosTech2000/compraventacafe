@@ -10,7 +10,8 @@ module Maintenance
     self.area = :sales
 
     def self.out_of_step
-      ::Sale.active.includes(lines: :shipment).order(:id).select { |sale| gaps_of(sale).any? }
+      # A date before the arrival is not fixed by recalculating: only listed.
+      ::Sale.active.includes(lines: :shipment).order(:id).select { |sale| gaps_of(sale).any? { |gap, _| gap != :before_arrival } }
     end
 
     # What does not match in a sale (empty when it matches).
@@ -23,6 +24,7 @@ module Maintenance
         shipment = line.shipment
         gaps << [ :line_net, shipment.display_number ] unless near?(line.net_weight, shipment.destination_net_weight)
         gaps << [ :line_origin, shipment.display_number ] unless near?(line.origin_net_weight, shipment.origin_net_weight)
+        gaps << [ :before_arrival, shipment.display_number ] if shipment.received_on && sale.sold_on < shipment.received_on
         gaps << [ :line_amount, shipment.display_number ] if priced && shipment.destination_net_weight && !near?(line.amount, ::Sale.amount_for(shipment.destination_net_weight, **price))
       end
       gaps << [ :sale_net, nil ] unless near?(sale.net_weight, lines.sum { it.net_weight.to_d })

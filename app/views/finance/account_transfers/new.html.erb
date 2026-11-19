@@ -20,7 +20,7 @@
     </div>
     <div>
       <%= form.label :transferred_on, class: "field-label" %>
-      <%= form.date_field :transferred_on, required: true, class: "field-input" %>
+      <%= form.date_field :transferred_on, max: latest_date, required: true, class: "field-input" %>
     </div>
     <div class="sm:col-span-2">
       <%= form.label :observations, class: "field-label" %>

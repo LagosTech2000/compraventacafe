@@ -41,6 +41,7 @@ class Invoice < ApplicationRecord
   normalizes :observations, with: FieldFormats::STRIP
 
   validates :issued_on, presence: true
+  validates :issued_on, not_in_future: true
   validates :void_reason, length: { maximum: 200 }
   validates :observations, length: { maximum: 500 }
   validate :not_after_payments, if: -> { persisted? && will_save_change_to_issued_on? }

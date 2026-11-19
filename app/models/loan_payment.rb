@@ -32,6 +32,7 @@ class LoanPayment < ApplicationRecord
   normalizes :observations, with: FieldFormats::STRIP
 
   validates :paid_on, presence: true
+  validates :paid_on, not_in_future: true
   validates :payment_method, inclusion: { in: PAYMENT_METHODS + [ COFFEE, PAYROLL ] }
   validates :amount, numericality: { greater_than: 0, less_than: Loan::MAX_AMOUNT }
   validates :observations, length: { maximum: 500 }

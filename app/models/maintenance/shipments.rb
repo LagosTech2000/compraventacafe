@@ -8,10 +8,12 @@ module Maintenance
     self.area = :sales
 
     # What blocks a figure (bad) and what is only incomplete (warn).
-    BLOCKING = %i[no_lots no_origin].freeze
+    BLOCKING = %i[no_lots no_origin late_lots repeated_note].freeze
 
     def sections
       shipments = Shipment.active.includes(:coffee_batches, :costs, :expenses, :warehouse, active_sale_line: :sale).order(:departed_at, :id).to_a
+      @late = CoffeeBatch.latest_coffee(shipments.flat_map { it.coffee_batches.map(&:id) })
+      @repeated = repeated_notes(shipments)
       counts = Hash.new(0)
       lines = shipments.filter_map do |shipment|
         gaps = gaps_of(shipment)
@@ -33,6 +35,9 @@ module Maintenance
       def gaps_of(shipment)
         gaps = []
         gaps << :no_lots if shipment.coffee_batches.empty?
+        # Coffee that came in after it left (Fernando, 2026-11-18).
+        gaps << :late_lots if shipment.coffee_batches.any? { CoffeeBatch.after?(@late[it.id], shipment.departed_at) }
+        gaps << :repeated_note if @repeated.include?(shipment.id)
         gaps << :no_origin if shipment.origin_missing?
         gaps << :not_received unless shipment.received?
         gaps << :no_costs if shipment.costs.empty? && shipment.expenses.empty? && shipment.trip_price.nil?
@@ -40,6 +45,14 @@ module Maintenance
         gaps << :not_sold if shipment.received? && sale.nil?
         gaps << :unpaid if sale && sale.balance_due.positive?
         gaps
+      end
+
+      # Shipments whose buyer's weight note is on another shipment of the same
+      # buyer (without spaces, case or leading zeros).
+      def repeated_notes(shipments)
+        shipments.select { it.weight_note_number.present? }
+                 .group_by { [ it.buyer_id, it.weight_note_number.gsub(/\s/, "").upcase.sub(/\A0+/, "") ] }
+                 .values.select(&:many?).flatten.map(&:id).to_set
       end
   end
 end

@@ -16,6 +16,7 @@ class InvoicePayment < ApplicationRecord
 
   validates :amount, numericality: { greater_than: 0, less_than: 100_000_000 }
   validates :paid_on, presence: true
+  validates :paid_on, not_in_future: true
   validates :payment_method, inclusion: { in: Invoice::PAYMENT_METHODS }
   validate :within_balance, on: :create
   validate :not_before_invoice, :not_before_last_payment, on: :create

@@ -11,7 +11,7 @@
   <div class="grid gap-5 sm:grid-cols-[14rem_minmax(0,1fr)]">
     <div>
       <%= form.label :issued_on, class: "field-label" %>
-      <%= form.date_field :issued_on, required: true, class: "field-input" %>
+      <%= form.date_field :issued_on, max: latest_date, required: true, class: "field-input" %>
     </div>
     <div>
       <%= form.label :observations, class: "field-label" %>

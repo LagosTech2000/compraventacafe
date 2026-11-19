@@ -21,6 +21,7 @@ class CoffeeBatchConversion < ApplicationRecord
   validates :percent, numericality: { greater_than: 0, less_than_or_equal_to: 100 }
   validates :coffee_conversion_id, uniqueness: { scope: :coffee_batch_id }
   validate :conversion_fits, :within_the_conversion, :within_the_limit, :lot_open
+  validate :coffee_in_before_it_left, if: -> { new_record? || will_save_change_to_coffee_conversion_id? }
 
   before_validation :take_pounds, if: -> { new_record? || will_save_change_to_percent? }
 
@@ -59,6 +60,15 @@ class CoffeeBatchConversion < ApplicationRecord
 
       self.gross_weight = (coffee_conversion.output_gross_weight.to_d * percent.to_d / 100).round(6)
       self.net_weight = (coffee_conversion.output_net_weight.to_d * percent.to_d / 100).round(6)
+    end
+
+    # A lot already on a shipment or in a process takes only a result that
+    # was in the warehouse when it left (Fernando, 2026-11-18).
+    def coffee_in_before_it_left
+      return unless coffee_conversion&.finished_at && coffee_batch&.taken?
+
+      entered = coffee_conversion.finished_at.in_time_zone
+      errors.add(:base, CoffeeBatch.late_message(coffee_batch, entered, coffee_batch.taker)) if CoffeeBatch.after?(entered, coffee_batch.taken_at)
     end
 
     def conversion_fits
