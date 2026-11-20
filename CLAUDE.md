@@ -1707,8 +1707,9 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   `shipment_coffee_controller.js`), con «Compras de hoy», «Desde la última
   salida» (de ese estado y bodega), «Todo» y «Ninguna», y lo que lleva
   (estas facturas y los lotes marcados) contra las brutas de la báscula
-  local. Al guardar, las marcadas forman **un lote solo** con lo que le
-  queda a cada una (`ShipmentLot#call`, mismas reglas de
+  local. Al guardar, las marcadas forman **un lote solo**, cada una con
+  el % escrito en su casilla «Lleva (%)» (empieza en lo que le queda y no
+  pasa de ahí; Fernando, 2026-11-20) (`ShipmentLot#call`, mismas reglas de
   `CoffeeBatchInvoice`), junto con la salida o nada
   (`ShipmentsController#save_with_lot`). Para quien puede armar lotes con
   facturas. La pantalla de Lotes queda para los casos especiales.

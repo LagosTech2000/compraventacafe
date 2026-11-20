@@ -5,6 +5,7 @@
     (ShipmentLot). Below, what it carries against the local scale. %>
 <% options = ShipmentLot.options(policy_scope(Invoice)) %>
 <% chosen = Array(@invoice_ids).map(&:to_i) %>
+<% written = params.dig(:shipment, :invoice_percents) || {} %>
 <% last_departures = Shipment.active.where.not(id: shipment.id).group(:coffee_state, :warehouse_id).maximum(:departed_at)
                              .to_h { |(state, warehouse), at| [ "#{state}|#{warehouse}", at.iso8601 ] } %>
 <section class="space-y-3" aria-labelledby="shipment-coffee-title" data-controller="shipment-coffee"
@@ -29,6 +30,7 @@
           <th><%= t(".invoice") %></th>
           <th><%= t(".entered") %></th>
           <th class="text-right"><%= t(".left") %></th>
+          <th class="w-28 text-right"><%= t(".percent") %></th>
         </tr>
       </thead>
       <tbody>
@@ -36,7 +38,8 @@
           <% invoice = option.invoice %>
           <tr id="<%= dom_id(invoice, :coffee) %>" data-shipment-coffee-target="item" data-coffee-state="<%= option.coffee_state %>"
               data-warehouse-id="<%= option.warehouse_id %>" data-entered="<%= option.entered_at.iso8601 %>"
-              data-day="<%= option.entered_at.in_time_zone.to_date.iso8601 %>" data-gross="<%= option.gross %>" data-net="<%= option.net %>">
+              data-day="<%= option.entered_at.in_time_zone.to_date.iso8601 %>" data-gross="<%= option.gross %>" data-net="<%= option.net %>"
+              data-invoice-gross="<%= option.invoice_gross %>" data-invoice-net="<%= option.invoice_net %>">
             <td><input type="checkbox" name="shipment[invoice_ids][]" value="<%= invoice.id %>" id="<%= dom_id(invoice, :carry) %>" class="size-4 accent-primary" <%= "checked" if chosen.include?(invoice.id) %>></td>
             <td>
               <label for="<%= dom_id(invoice, :carry) %>" class="cursor-pointer">
@@ -48,6 +51,14 @@
             </td>
             <td class="whitespace-nowrap"><%= l(option.entered_at, format: :short) %></td>
             <td class="whitespace-nowrap text-right tabular-nums"><%= format_gross_net(option.gross, option.net) %></td>
+            <%# The share it carries (Fernando, 2026-11-20): what is left unless written. %>
+            <td class="text-right">
+              <%= number_field_tag "shipment[invoice_percents][#{invoice.id}]", written[invoice.id.to_s].presence || option.percent_left.to_s("F").sub(/\.?0+\z/, ""),
+                    id: dom_id(invoice, :carry_percent), min: 0.0001, max: option.percent_left, step: 0.0001, inputmode: "decimal",
+                    class: "field-input w-24 text-right tabular-nums", disabled: !chosen.include?(invoice.id),
+                    data: { shipment_coffee_target: "percent", action: "input->shipment-coffee#sum" },
+                    aria: { label: t(".percent_of", number: invoice.display_number) } %>
+            </td>
           </tr>
         <% end %>
       </tbody>

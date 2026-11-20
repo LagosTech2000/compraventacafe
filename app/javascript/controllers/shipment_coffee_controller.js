@@ -6,7 +6,7 @@ import { Controller } from "@hotwired/stimulus"
 // shipment of that coffee, all or none; and what it carries (these invoices
 // and the lots marked below) shows against the local scale's gross pounds.
 export default class extends Controller {
-  static targets = ["item", "empty", "total"]
+  static targets = ["item", "empty", "total", "percent"]
   static values = { today: String, lastDepartures: Object, texts: Object }
 
   connect() {
@@ -66,14 +66,35 @@ export default class extends Controller {
     return item.querySelector("input[type=checkbox]")
   }
 
+  // Its % field goes with its box: sent only when marked.
+  percentOf(item) {
+    return item.querySelector("[data-shipment-coffee-target='percent']")
+  }
+
+  // What a marked invoice carries: its % of the invoice's pounds.
+  share(item) {
+    const field = this.percentOf(item)
+    const percent = parseFloat(field?.value)
+    if (!field || !(percent > 0)) return { gross: 0, net: 0 }
+    return {
+      gross: (parseFloat(item.dataset.invoiceGross) || 0) * percent / 100,
+      net: (parseFloat(item.dataset.invoiceNet) || 0) * percent / 100
+    }
+  }
+
   // These invoices and the lots marked in the form, against the local scale.
   sum() {
+    this.itemTargets.forEach((item) => {
+      const field = this.percentOf(item)
+      if (field) field.disabled = item.hidden || !this.box(item).checked
+    })
     const marked = this.shown().filter((item) => this.box(item).checked)
     const lots = [ ...(this.form?.querySelectorAll("[data-batch-picker-target='item']") || []) ]
       .filter((item) => !item.hidden && item.querySelector("input[type=checkbox]")?.checked)
-    const all = marked.concat(lots)
-    const gross = all.reduce((total, item) => total + (parseFloat(item.dataset.gross) || 0), 0)
-    const net = all.reduce((total, item) => total + (parseFloat(item.dataset.net) || 0), 0)
+    const shares = marked.map((item) => this.share(item))
+      .concat(lots.map((item) => ({ gross: parseFloat(item.dataset.gross) || 0, net: parseFloat(item.dataset.net) || 0 })))
+    const gross = shares.reduce((total, share) => total + share.gross, 0)
+    const net = shares.reduce((total, share) => total + share.net, 0)
     if (!(gross > 0)) {
       this.totalTarget.textContent = this.textsValue.nothing
       this.totalTarget.classList.remove("text-danger")

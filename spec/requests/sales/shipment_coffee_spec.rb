@@ -64,6 +64,22 @@ RSpec.describe "Shipment carrying invoices, its lot made on its own" do
     expect(Shipment.last.coffee_batches.count).to eq(2)
   end
 
+  # A % per invoice (Fernando, 2026-11-20): at most what is left of it.
+  it "takes the percent written for each invoice, never more than what is left" do
+    half = invoice_of(create(:purchase, producer:, gross_weight: 600, purchased_at: 2.days.ago))
+    whole = invoice_of(create(:purchase, producer:, gross_weight: 400, purchased_at: 1.hour.ago))
+    create(:coffee_batch, gross_limit: 300).batch_invoices.create!(invoice: half, percent: 50, created_by: admin)
+
+    expect { ship([ half.id ], invoice_percents: { half.id.to_s => "60" }) }.not_to change(CoffeeBatch, :count)
+    expect(response.body).to include("La factura #{half.display_number} lleva un porcentaje que no sirve: entre 0.0001 y 50")
+
+    ship([ half.id, whole.id ], invoice_percents: { half.id.to_s => "20", whole.id.to_s => "" })
+    lot = Shipment.last.coffee_batches.sole
+    expect(lot.batch_invoices.to_h { [ it.invoice_id, it.percent ] }).to eq(half.id => 20, whole.id => 100)
+    expect(lot.batch_invoices.sum(:gross_weight)).to eq(520)
+    expect(CoffeeBatchInvoice.used_by_invoice([ half.id ])[half.id]).to eq(70)
+  end
+
   it "is not offered to who cannot add invoices to lots" do
     clerk = create(:user).tap { create(:permission, user: it, module_key: "sales", submodule_key: "shipments", can_read: true, can_create: true, can_update: true) }
     sign_in clerk

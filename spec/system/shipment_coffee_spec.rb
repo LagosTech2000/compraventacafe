@@ -16,7 +16,7 @@ RSpec.describe "What coffee a shipment carries", type: :system do
   it "shows the invoices of its coffee, marks them with shortcuts and adds them up against the local scale" do
     create(:shipment, departed_at: 1.day.ago)
     old = invoice_of(create(:purchase, producer:, gross_weight: 600, purchased_at: 2.days.ago))
-    today = invoice_of(create(:purchase, producer:, gross_weight: 400, purchased_at: 1.hour.ago))
+    today = invoice_of(create(:purchase, producer:, gross_weight: 400, purchased_at: Time.current.beginning_of_day))
     dry = invoice_of(create(:purchase, producer:, coffee_state: "dry_parchment", humidity_percent: 12, purchased_at: 1.hour.ago))
     visit new_sales_shipment_path
 
@@ -35,6 +35,11 @@ RSpec.describe "What coffee a shipment carries", type: :system do
 
     fill_in "shipment_origin_gross_weight", with: "990"
     expect(page).to have_css("[data-shipment-coffee-target='total']", text: "−10.00 lb brutas (−1.00 %)")
+
+    # A % per invoice (Fernando, 2026-11-20): half of the old one.
+    fill_in "carry_percent_invoice_#{old.id}", with: "50"
+    expect(page).to have_css("[data-shipment-coffee-target='total']", text: "Lleva 700.00 lb brutas")
+    expect(page).to have_field("carry_percent_invoice_#{dry.id}", disabled: true, visible: :all)
 
     select "Pergamino seco", from: "shipment_coffee_state"
     within("[data-controller~='shipment-coffee']") do

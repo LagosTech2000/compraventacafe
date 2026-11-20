@@ -4,6 +4,10 @@ require "rails_helper"
 # administrators, each line opening where it is fixed.
 RSpec.describe "Daily check on the Inicio" do
   let(:admin) { create(:user, :admin) }
+  include ActiveSupport::Testing::TimeHelpers
+
+  # At noon: «1 hour ago» stays today, whatever the hour the suite runs.
+  around { |example| travel_to(Time.zone.now.change(hour: 12)) { example.run } }
 
   def page = Nokogiri::HTML(response.body)
   def line(key) = page.at_css("[data-daily-check='#{key}']")

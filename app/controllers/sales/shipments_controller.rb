@@ -77,7 +77,8 @@ module Sales
 
         chosen_lots = @shipment.batch_ids
         saved = Shipment.transaction do
-          lot = ShipmentLot.new(shipment: @shipment, invoice_ids: @invoice_ids, invoices: policy_scope(Invoice), user: Current.user).call
+          lot = ShipmentLot.new(shipment: @shipment, invoice_ids: @invoice_ids, invoices: policy_scope(Invoice), user: Current.user,
+                                percents: params.dig(:shipment, :invoice_percents)&.permit(*@invoice_ids)&.to_h || {}).call
           unless lot
             lot_errors = @shipment.errors.full_messages
             @shipment.valid?

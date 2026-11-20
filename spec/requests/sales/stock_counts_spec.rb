@@ -8,6 +8,10 @@ RSpec.describe "Stock counts and the day's reconciliation" do
     create(:user).tap { create(:permission, user: it, module_key: "sales", submodule_key: "stock", can_read: true, can_create: true, can_update: true, can_destroy: true) }
   end
   let(:warehouse) { Warehouse.main! }
+  include ActiveSupport::Testing::TimeHelpers
+
+  # At noon: «1 hour ago» stays today, whatever the hour the suite runs.
+  around { |example| travel_to(Time.zone.now.change(hour: 12)) { example.run } }
 
   def page = Nokogiri::HTML(response.body)
 
