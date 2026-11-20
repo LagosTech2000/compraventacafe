@@ -576,7 +576,7 @@ class Shipment < ApplicationRecord
     # The lots chosen join it; the ones left out are free again.
     def take_batches
       coffee_batches.where.not(id: @batch_ids).find_each { it.update!(shipment: nil) }
-      CoffeeBatch.where(id: @batch_ids).where(shipment_id: nil).find_each { it.update!(shipment: self) }
+      CoffeeBatch.where(id: @batch_ids).where(shipment_id: nil).includes(:shipment).find_each { it.update!(shipment: self) }
       coffee_batches.reset
       remove_instance_variable(:@batch_totals) if defined?(@batch_totals)
       @batch_ids = nil

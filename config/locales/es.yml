@@ -2550,6 +2550,26 @@ es:
       destroy:
         success: "Gasto quitado."
     shipments:
+      coffee_field:
+        title: "¿Qué café lleva?"
+        help: "Las facturas con café que todavía no está en un lote, de este estado y esta bodega, la compra más vieja primero. Al guardar, las marcadas forman un lote solo, con lo que le queda a cada una. Abajo puedes marcar además lotes ya armados."
+        shortcuts: "Marcar"
+        today: "Compras de hoy"
+        since_last: "Desde la última salida"
+        all: "Todo"
+        none: "Ninguna"
+        mark: "Llevar"
+        invoice: "Factura"
+        entered: "Compra"
+        left: "Lo que queda"
+        invoice_label: "Factura %{number} · %{producer}"
+        percent_left: "Queda el %{percent}: el resto ya está en lotes"
+        empty: "No hay facturas libres de este estado y esta bodega."
+        nothing: "Todavía no lleva café marcado."
+        carries: "Lleva %{gross} lb brutas · %{net} lb netas."
+        against: "La báscula local da %{gross} lb brutas (%{percent} %) contra eso."
+        lot_observations: "Armado al registrar la salida, con las facturas de «¿Qué café lleva?»."
+        lot_error: "No se pudo armar el lote: %{message}"
       table:
         number: "Remisión"
         sacks: "Sacos"
@@ -7024,6 +7044,7 @@ es:
               - "Si sale más café del que hay en inventario de ese estado, aparece un aviso; se puede guardar igual."
               - "Un administrador puede marcar «Sin báscula local»: la salida se guarda sin peso ni sacos locales, no saca café del inventario y no tiene diferencia entre básculas hasta que alguien escriba la báscula local editándola (también ya vendida)."
               - "Si las compras de sus lotes y la báscula local difieren más que la tolerancia de merma (Configuración del sitio), se pide «Motivo de la merma» antes de guardar."
+              - "En «¿Qué café lleva?» marca las facturas que van en el vehículo (o usa «Compras de hoy», «Desde la última salida» o «Todo»): al guardar se arma su lote solo. Abajo ves lo que lleva contra la báscula local."
         arrivals:
           form:
             title: "Peso en destino"
@@ -10643,6 +10664,7 @@ es:
               carrier_and_driver: "Lleva un transportista o un motorista, no los dos."
               has_batches: "La salida tiene lotes: su estado del café y su bodega no cambian. Quita sus lotes primero."
               batches_gone: "Alguno de los lotes elegidos ya no existe."
+              lot_invoices_unavailable: "Alguna de las facturas elegidas ya no está libre o es de otro estado del café o de otra bodega: revisa «¿Qué café lleva?»."
               batch_taken: "El %{batch} ya está en otra salida."
               batch_other_coffee: "El %{batch} es de otro estado del café o de otra bodega."
             weight_note_number:

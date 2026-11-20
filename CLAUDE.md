@@ -1661,6 +1661,18 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   están en la bodega del lote (el café trasladado no entra); anular la
   factura la saca de sus lotes; un lote en una salida no se borra; si a una compra del lote ya no le
   queda café, lo que falta sale de lo más viejo.
+- **«¿Qué café lleva?»** (Fernando, 2026-11-18: armar lotes por % les
+  costaba mucho): en «Nueva salida» (y al editarla en camino), las facturas
+  con parte libre de ese estado y bodega, la compra más vieja primero
+  (`ShipmentLot.options`, `sales/shipments/_coffee_field`,
+  `shipment_coffee_controller.js`), con «Compras de hoy», «Desde la última
+  salida» (de ese estado y bodega), «Todo» y «Ninguna», y lo que lleva
+  (estas facturas y los lotes marcados) contra las brutas de la báscula
+  local. Al guardar, las marcadas forman **un lote solo** con lo que le
+  queda a cada una (`ShipmentLot#call`, mismas reglas de
+  `CoffeeBatchInvoice`), junto con la salida o nada
+  (`ShipmentsController#save_with_lot`). Para quien puede armar lotes con
+  facturas. La pantalla de Lotes queda para los casos especiales.
 - **Merma** (Fernando, 2026-11-13) [CONFIRMADO]: **lo que dicen las compras
   de sus lotes − lo que pesó la báscula local**, en libras **brutas y
   netas** (brutas primero); positiva = se perdió peso, negativa = pesó

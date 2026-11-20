@@ -46,6 +46,10 @@
         </div>
       </section>
 
+      <%# «¿Qué café lleva?» (Fernando, 2026-11-18): its invoices, the lot made on its own. %>
+      <% if !shipment.received? && lots_from_invoices? %>
+        <%= render "sales/shipments/coffee_field", shipment: %>
+      <% end %>
       <% unless shipment.sold? %>
         <%= render "sales/shipments/batches_field", shipment: %>
       <% end %>
