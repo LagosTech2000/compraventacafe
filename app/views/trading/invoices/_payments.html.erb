@@ -45,9 +45,6 @@
               <td class="cell-actions">
                 <div class="flex justify-end gap-2">
                   <%= modal_link_to t("trading.invoices.payments.receipt"), trading_invoice_payment_path(invoice, payment), class: "btn btn-sm" %>
-                  <% if policy(payment).update? %>
-                    <%= modal_link_to t("trading.invoices.payments.edit"), edit_trading_invoice_payment_path(invoice, payment), class: "btn btn-sm" %>
-                  <% end %>
                   <% if policy(payment).destroy? %>
                     <%= button_to t("trading.invoices.payments.destroy"), trading_invoice_payment_path(invoice, payment), method: :delete,
                           class: "btn btn-sm", form: { data: { turbo_confirm: t("trading.invoices.payments.confirm_destroy") } } %>

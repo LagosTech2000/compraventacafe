@@ -69,11 +69,11 @@ class CoffeeBatch < ApplicationRecord
 
   def self.next_number = (maximum(:number) || 0) + 1
 
-  # A lot on a sold shipment changes only by an administrator (Fernando,
-  # 2026-11-13: «los lotes deberían poder ser actualizados retroactivamente
-  # por los administradores, aun después de la venta»). Outside a request,
-  # nothing is locked.
-  def self.sold_editable? = Current.user.nil? || Current.user.admin?
+  # A lot on a sold shipment does not change, administrators included
+  # (Fernando, 2026-11-18: closed records are not edited; before, since
+  # 2026-11-13, an administrator could). Outside a request and in a
+  # data-maintenance task, nothing is locked.
+  def self.sold_editable? = Current.user.nil? || Current.maintenance.present?
 
   # { batch id => the last moment coffee of it came in }: its invoices'
   # purchases (not voided) and its processes' results. A lot only carries

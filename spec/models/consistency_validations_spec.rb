@@ -53,9 +53,12 @@ RSpec.describe "Consistency validations", :all_records do
       expect(shipment.reload.update(departed_at: 6.days.ago)).to be(false)
       expect(shipment.errors.full_messages.join).to include(batch.label)
 
-      expect(early.reload.update(purchased_at: 2.days.ago)).to be(false)
-      expect(early.errors[:purchased_at].join).to include("después de que su café salió con el #{batch.label}")
-      expect(early.reload.update(purchased_at: 4.days.ago)).to be(true)
+      # An invoiced purchase only moves in a data-maintenance task (2026-11-18).
+      Current.set(maintenance: true) do
+        expect(early.reload.update(purchased_at: 2.days.ago)).to be(false)
+        expect(early.errors[:purchased_at].join).to include("después de que su café salió con el #{batch.label}")
+        expect(early.reload.update(purchased_at: 4.days.ago)).to be(true)
+      end
     end
 
     it "checks the lots chosen in the shipment form against its departure" do

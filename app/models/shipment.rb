@@ -89,7 +89,7 @@ class Shipment < ApplicationRecord
   validate :destination_complete, if: -> { receiving || destination_entered? }
   validate :received_after_departure
   validate :buyer_active, if: :will_save_change_to_buyer_id?
-  validate :not_sold, on: :update
+  validate :closed_once_weighed, on: :update
 
   # First: by weighings, the local gross weight and sacks come from them.
   before_validation { self.warehouse ||= Warehouse.main! if new_record? }
@@ -107,16 +107,12 @@ class Shipment < ApplicationRecord
 
   # Set when the destination weighing is saved: then it is required.
   attr_accessor :receiving
-  # An administrator's edit: the scales of a sold shipment may change (its sale follows).
-  attr_accessor :weights_by_admin
   # The form's «Sin báscula local», and whether whoever saves may use it
   # (administrators, set by the controller).
   attr_accessor :skip_origin, :origin_skippable
 
-  # Completed after it was sold: its sale's local net follows.
-  # Its sale follows its weights (Fernando, 2026-11-15: «para tener todo
-  # cuadrado en las ventas»): an administrator edits the scales of a sold
-  # shipment and the sale works its lines and total out again.
+  # A local scale left empty, completed after it was sold: its sale's local
+  # net follows.
   after_update :refresh_sale_weights, if: -> { sold? && (saved_change_to_origin_net_weight? || saved_change_to_destination_net_weight?) }
   # The lots the form chose (Nueva salida, Fernando, 2026-11-13).
   after_save :take_batches, if: -> { @batch_ids }
@@ -290,7 +286,10 @@ class Shipment < ApplicationRecord
     DESTINATION_COLUMNS.each { self[it] = nil }
     self.received_on = nil
     self.weight_note_number = nil
+    @removing_destination = true
     save!
+  ensure
+    @removing_destination = false
   end
 
   def destination_entered?
@@ -398,19 +397,21 @@ class Shipment < ApplicationRecord
       errors.add(:vehicle, :inactive) if will_save_change_to_vehicle_id? && vehicle && !vehicle.active?
     end
 
-    # In a sale its weights and buyer are what was charged. A local scale left
-    # empty can still be completed.
-    def not_sold
-      return unless sold?
+    # Weighed at destination or sold, it is closed for everyone (Fernando,
+    # 2026-11-18; from 2026-11-15 an administrator could change the scales
+    # of a sold one). Only its observations, who carried it and, before the
+    # sale, the trip price and voiding it change; a local scale left empty
+    # can still be completed. To correct it: weighed and not sold, its
+    # buyer's scale is removed (#remove_destination!); sold, the sale is
+    # voided first.
+    def closed_once_weighed
+      return if @removing_destination
+      return unless sold? || received_on_in_database.present?
 
-      free = %w[updated_at lock_version observations carrier_id vehicle_id driver_id driver_name trip_price weight_note_number]
-      free += ORIGIN_COLUMNS + %w[origin_weight_mode] if origin_net_weight_in_database.nil? || weights_by_admin
-      # An administrator changes its scales (not removes the buyer's: the sale charges it),
-      # and its departure date (Fernando, 2026-11-16: one registered late with the wrong day).
-      free += DESTINATION_COLUMNS + %w[received_on] if weights_by_admin && destination_net_weight.present?
-      free += %w[departed_at season_year] if weights_by_admin
-      changed_inputs = (changed - free)
-      errors.add(:base, :sold) if changed_inputs.any?
+      free = %w[updated_at lock_version observations carrier_id vehicle_id driver_id driver_name]
+      free += %w[trip_price voided_at voided_by_id] unless sold?
+      free += ORIGIN_COLUMNS + %w[origin_weight_mode] if origin_net_weight_in_database.nil?
+      errors.add(:base, sold? ? :sold : :received, sale: sale&.display_number) if (changed - free).any?
     end
 
     def skipping_origin? = ActiveModel::Type::Boolean.new.cast(skip_origin) && origin_skippable.present?

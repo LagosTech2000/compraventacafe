@@ -1,12 +1,13 @@
-# A sale is not deleted: it is collected in payments (SalePaymentPolicy) or
-# voided, with the delete permission, while it has no payments. An
-# administrator edits it and voids it even collected (Fernando, 2026-11-12).
+# A sale is not deleted nor edited, by anyone (Fernando, 2026-11-18): it is
+# collected in payments (SalePaymentPolicy) or voided, with the delete
+# permission, only while it has no payments (remove them first, the latest
+# one first).
 class SalePolicy < ApplicationPolicy
   self.module_key = "sales"
   self.submodule_key = "sales"
 
   def update?
-    admin? && open?
+    false
   end
 
   def destroy?
@@ -21,7 +22,7 @@ class SalePolicy < ApplicationPolicy
   def void?
     return can?(:destroy) unless record.is_a?(Sale)
 
-    open? && ((can?(:destroy) && record.voidable?) || admin?)
+    open? && can?(:destroy) && record.voidable?
   end
 
   private

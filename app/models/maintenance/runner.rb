@@ -23,9 +23,11 @@ module Maintenance
         changes = {}
         sections = nil
         if apply
-          ActiveRecord::Base.transaction do
-            changes = instance.apply!
-            sections = instance.sections_after_apply(changes)
+          Current.set(maintenance: true) do
+            ActiveRecord::Base.transaction do
+              changes = instance.apply!
+              sections = instance.sections_after_apply(changes)
+            end
           end
         else
           sections = instance.sections
@@ -39,12 +41,14 @@ module Maintenance
 
       record(mode: "revert", params: { "run_id" => run.id }, reverted_run: run) do
         count = nil
-        ActiveRecord::Base.transaction do
-          run.lock!
-          raise ActiveRecord::Rollback if run.reverted?
+        Current.set(maintenance: true) do
+          ActiveRecord::Base.transaction do
+            run.lock!
+            raise ActiveRecord::Rollback if run.reverted?
 
-          count = @task.revert!(run.changes_made)
-          run.update!(reverted_at: Time.current)
+            count = @task.revert!(run.changes_made)
+            run.update!(reverted_at: Time.current)
+          end
         end
         [ [ Section.new(title: I18n.t("maintenance.revert.title"), status: "ok",
                         lines: [ I18n.t("maintenance.revert.done", count: count.to_i) ]) ], {} ]

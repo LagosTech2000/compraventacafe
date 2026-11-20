@@ -17,6 +17,11 @@ class Purchase < ApplicationRecord
   # these changes, so a stored purchase keeps its numbers if the rule changes.
   # By weighings, the counted sacks are an input too.
   CALCULATION_INPUTS = %w[coffee_state weight_mode gross_weight humidity_percent damage_percent yield_factor price_per_pound].freeze
+  # What an invoiced purchase keeps as it was printed for the producer, for
+  # everyone (Fernando, 2026-11-18): weights, money, date and warehouse. Its
+  # farm, observations or a merged producer or hauler may still change.
+  INVOICED_LOCKED = (CALCULATION_INPUTS + %w[purchased_at sacks tare net_weight total damage_weight damage_amount
+                                             damage_types common_coffee warehouse_id hauler_price_per_pound hauler_commission]).freeze
 
   belongs_to :producer
   belongs_to :zone, optional: true
@@ -58,6 +63,7 @@ class Purchase < ApplicationRecord
   validate :farm_belongs_to_producer
   validate :plot_belongs_to_farm, if: -> { farm_plot_id && (will_save_change_to_farm_plot_id? || will_save_change_to_farm_id?) }
   validate :voided_not_invoiced
+  validate :invoiced_unchanged, on: :update, if: -> { invoice_id_in_database.present? && invoice_id == invoice_id_in_database && Current.maintenance.blank? }
   # «Café corriente» (Fernando, 2026-11-12): only wet parchment; it will not
   # count in the end-of-season retention (an open point, not built yet).
   before_validation { self.common_coffee = false unless coffee_state == "wet_parchment" }
@@ -405,6 +411,11 @@ class Purchase < ApplicationRecord
 
         errors.add(:purchased_at, :after_its_lot_left, batch: batch.label, left: I18n.l(batch.taken_at.in_time_zone))
       end
+    end
+
+    # Invoiced, it stays as it was printed: to correct it, its invoice is voided.
+    def invoiced_unchanged
+      errors.add(:base, :invoiced) if (changed & INVOICED_LOCKED).any?
     end
 
     # What it adds to its invoice stays out of every lot.

@@ -89,27 +89,6 @@ class CoffeeBatchInvoice < ApplicationRecord
            .where.not(id: group(:invoice_id).having("SUM(percent) >= 100").select(:invoice_id))
   end
 
-  # «Editar factura» (Fernando, 2026-11-13): the invoice goes in that lot
-  # with that percent, in no lot (nil), or moves from the one it was in.
-  # Only for an invoice in at most one lot; one split in several changes
-  # from each lot. Raises ActiveRecord::RecordInvalid.
-  def self.assign!(invoice:, batch:, percent:, user:)
-    shares = where(invoice:).lock.to_a
-    return if shares.many?
-
-    share = shares.first
-    return share&.destroy! unless batch
-
-    batch.lock!
-    percent = percent.presence || 100
-    if share&.coffee_batch_id == batch.id
-      share.update!(percent:)
-    else
-      share&.destroy!
-      batch.batch_invoices.create!(invoice:, percent:, created_by: user)
-    end
-  end
-
   def audit_label = "#{invoice&.display_number} · #{coffee_batch&.label}"
 
   # Its value: its net pounds' part of what the invoice's purchases cost.

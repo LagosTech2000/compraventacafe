@@ -88,11 +88,11 @@ Rails.application.routes.draw do
       # Pay the producer's loans with this purchase ("pago con café").
       resource :loan_settlement, only: %i[ new create ]
     end
-    resources :invoices, only: %i[ index show new create edit update ] do
+    resources :invoices, only: %i[ index show new create ] do
       # Administrators void it, even paid (Fernando, 2026-11-12).
       resource :void, only: %i[ new create ], controller: "invoice_voids"
       # Payments to the producer ("abonos"), each with its receipt.
-      resources :payments, only: %i[ new create show edit update destroy ], controller: "invoice_payments"
+      resources :payments, only: %i[ new create show destroy ], controller: "invoice_payments"
     end
     resources :producers, except: :destroy
     # The card beside the purchase form: the producer picked, at a glance.
@@ -133,12 +133,12 @@ Rails.application.routes.draw do
       resources :costs, only: %i[ new create destroy ], controller: "shipment_costs"
       resources :expenses, only: %i[ new create destroy ], controller: "shipment_expenses"
     end
-    resources :sales, only: %i[ index show new create edit update ] do
+    resources :sales, only: %i[ index show new create ] do
       patch :void, on: :member
       # The buyer's settlement: what it pays per its own liquidation.
       resource :settlement, only: %i[edit update], controller: "sale_settlements"
       # What the buyer pays ("cobros"), each with its receipt.
-      resources :payments, only: %i[ new create show edit update destroy ], controller: "sale_payments"
+      resources :payments, only: %i[ new create show destroy ], controller: "sale_payments"
     end
     resources :buyers, except: :destroy do
       # Advances the buyer gives, paid back with coffee.

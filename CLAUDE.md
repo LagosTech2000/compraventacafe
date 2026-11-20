@@ -722,13 +722,18 @@ navegador puede revisar:
   (`integrity:shipments`: lotes con café posterior y notas repetidas;
   `integrity:sales`: ventas antes de la llegada, que `sales:recalculate`
   no toca).
+- **Lo cerrado no se edita, para nadie, administradores incluidos**
+  (Fernando, 2026-11-18): factura (se anula, ver Compra de café), compra
+  facturada, abonos y cobros (solo se quita el último), venta (se anula
+  sin cobros), salida pesada en destino o vendida y lotes de una salida
+  vendida. Corregir = deshacer lo posterior y anular, y cada bloqueo dice
+  en español qué hacer primero («Para corregirla, primero anula la
+  venta»). Solo una tarea de Mantenimiento de datos pasa por encima
+  (`Current.maintenance`).
 - Plan siguiente (decisiones de Fernando, 2026-11-18, por fases): bloquear
-  lo cerrado para todos (factura cancelada, venta con cobros, compra
-  facturada, cobros y abonos, salida pesada o vendida; corregir = anular
-  con motivo, solo administradores, si nada posterior depende), bloquear
-  sacar más de lo que hay, motivo cuando una diferencia pasa la
-  tolerancia, conteo físico con ajuste de inventario, cuadre del día,
-  flujos en un paso y cierre del día para todo el negocio.
+  sacar más de lo que hay (tras el primer conteo), motivo cuando una
+  diferencia pasa la tolerancia, conteo físico con ajuste de inventario,
+  cuadre del día, flujos en un paso y cierre del día para todo el negocio.
 
 ## Comandos
 
@@ -1570,30 +1575,27 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   «Mostrar las que ya están en lotes» viene marcada y las oculta. **También
   desde «Facturar compras»** (Fernando, 2026-11-13): «Lote (opcional)» y la
   parte (%), 100 por defecto; solo se eligen los lotes del estado y la bodega
-  de las compras marcadas, con espacio y no en una salida vendida (salvo
-  administradores), y al marcar compras o cambiar el % sale lo que toma en
+  de las compras marcadas, con espacio y no en una salida vendida (para
+  nadie), y al marcar compras o cambiar el % sale lo que toma en
   brutas y netas y lo que le queda al lote; si pasa del límite, dice el % que
   cabe y no deja enviar (`invoice_batch_controller.js`). Factura y lote se
   guardan juntos o nada (`InvoiceIssuer`); pide lo mismo que agregar
-  facturas al lote (`CoffeeBatchInvoicePolicy#create?`). **Y en «Editar
-  factura»** (administradores, mismo parcial `trading/invoices/_lot_fields`):
-  sale su lote con su % (lo que ya tomó cuenta como espacio libre); cambiar
-  el %, pasarla a otro lote o «Sin lote» (`CoffeeBatchInvoice.assign!`),
-  todo con la edición o nada. Si no se tocan, el lote sigue con sus libras
-  aunque cambien las compras. Una factura repartida en varios lotes solo los
-  lista: el reparto se cambia desde cada lote. **El lote guarda las libras brutas
-  y netas que tomó de cada factura** (Fernando, 2026-11-13): si un
-  administrador edita una compra y la factura **sube** de peso, el lote se
+  facturas al lote (`CoffeeBatchInvoicePolicy#create?`). Después, el lote
+  de una factura se cambia desde el lote («Editar factura» se quitó el
+  2026-11-18). **El lote guarda las libras brutas
+  y netas que tomó de cada factura** (Fernando, 2026-11-13): si una compra
+  facturada cambia (desde el 2026-11-18, solo en una tarea de Mantenimiento
+  de datos) y la factura **sube** de peso, el lote se
   queda con sus libras, su % baja solo y lo que subió **queda libre**, sin
   lote, para que las salidas no cambien (`CoffeeBatchInvoice.rebase!`); si
   **baja** (brutas o netas) por debajo de lo que tomaron sus lotes, **no se
-  guarda** (`Purchase#keeps_its_lots`, también al quitar compras de la
-  factura en `Invoice#revise!`). **En una salida vendida, solo un
-  administrador cambia sus lotes** (Fernando, 2026-11-13: «aun después de
-  la venta»): editar el lote, sus facturas y su %, y agregar o quitar lotes
-  de la salida (`CoffeeBatch.sold_editable?`; políticas de lotes, facturas
-  del lote y lotes de la salida); la venta no cambia, sí el inventario, la
-  merma y el costo de la salida. Valor y comisión salen de las netas que
+  guarda** (`Purchase#keeps_its_lots`). **En una salida vendida los lotes
+  no cambian, para nadie** (Fernando, 2026-11-18; del 2026-11-13 al 18 un
+  administrador podía): ni el lote, ni sus facturas o su %, ni los lotes
+  de la salida (`CoffeeBatch.sold_editable?`: solo fuera de una solicitud
+  o dentro de una tarea de Mantenimiento de datos, `Current.maintenance`,
+  que pone `Maintenance::Runner`; políticas de lotes, facturas del lote y
+  lotes de la salida). Valor y comisión salen de las netas que
   tomó contra las de la factura (`NET_SHARE_SQL`). Ver sus facturas pide además ver
   Facturas. **Los lotes van en las salidas en vez de las facturas**: cada
   lote completo a una sola salida, una salida con uno o varios lotes, del
@@ -1660,23 +1662,26 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   (`Sale#origin_net_weight` vacío, `SaleSummary` compara solo las
   completas). **Se completa después** editando la salida, cualquiera con
   permiso de editar, **aunque ya esté vendida** (`ShipmentPolicy#open?`,
-  `not_sold`); entonces la venta toma su neto local (`Sale#refresh_origin!`).
+  `closed_once_weighed`); entonces la venta toma su neto local
+  (`Sale#recalculate_weights!`).
   Guardar otra cosa (el peso en destino) la deja vacía
   (`origin_left_empty?`). El detalle avisa con «Completar báscula local».
-- **Editar y quitar las pesadas** (Fernando, 2026-11-15, pedido del
-  cliente: «para tener todo cuadrado en las ventas») [CONFIRMADO: en una
-  salida vendida, solo administradores]. En el detalle, cada báscula tiene
-  «Editar» y «Quitar» (`sales/shipments/_weighing`). Sin vender, quien edita
-  Salidas (quitar la local, administradores, como «Sin báscula local»).
-  **Vendida**: un administrador edita las dos (`Shipment#weights_by_admin`,
-  `ShipmentPolicy#open?`) y **la venta se recalcula sola**
-  (`Sale#recalculate_weights!`, que usa `revise!` con sus mismas salidas y
-  precio: líneas, total, estado de cobro y «cobrado de más»). La báscula
-  del comprador **no se quita mientras la salida esté en una venta** (la
-  venta cobra con ese peso; `Shipment#remove_destination!`): quitarla vuelve
-  la salida a «En camino» (`sales/shipment_scales#destroy`). Para lo que ya
-  quedó descuadrado, `integrity:sales` y `sales:recalculate` en
-  Mantenimiento de datos.
+- **Pesadas: abiertas en camino, cerradas al pesar en destino** (Fernando,
+  2026-11-18: «que no se pueda editar ... ni salidas»; reemplaza lo del
+  2026-11-15, cuando un administrador editaba las pesadas de una vendida).
+  En camino, cada báscula tiene «Editar» y «Quitar»
+  (`sales/shipments/_weighing`; quitar la local, administradores, como «Sin
+  báscula local»). **Pesada en destino o vendida, la salida no cambia para
+  nadie** (`Shipment#closed_once_weighed`, `ShipmentPolicy#open?`): solo
+  observaciones, transportista, vehículo y motorista, y antes de la venta
+  el precio del viaje y anularla; una báscula local vacía se completa
+  igual. Para corregirla: sin vender, **«Quitar» la báscula del comprador**
+  (vuelve a «En camino», `Shipment#remove_destination!`,
+  `sales/shipment_scales#destroy`) y se pesa de nuevo; vendida, primero se
+  anula la venta. El detalle lo dice bajo la báscula del comprador
+  (`data-closed-scales`). Para lo que ya quedó descuadrado,
+  `integrity:sales` y `sales:recalculate` en Mantenimiento de datos
+  (`Sale#recalculate_weights!`).
 - **Diferencia entre básculas**: neto del comprador − neto local, en lb y
   %, en la salida, la venta, las listas y los reportes. Se **resalta** si
   pasa (más o menos) la **tolerancia** de Configuración del sitio
@@ -1731,16 +1736,15 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   cobro parcial → cobrada; contado = un abono por el total al crear la
   venta; cada cobro con recibo (original y copia). Registrar pide editar
   en `sales`.
-- **Anular**: una venta **solo sin cobros** (con motivo); sus salidas
-  quedan **libres** para otra venta y sus líneas quedan como registro. **Un
-  administrador** (Fernando, 2026-11-12) [CONFIRMADO] la **anula aunque
-  tenga cobros** (se quitan: dejan de contar en las cuentas y lo cobrado
-  con anticipo vuelve al saldo del comprador), la **edita** aunque esté
-  cobrada (`Sale#revise!`, `sales/sales#edit`, con la vista previa de
-  «Nueva venta»: fecha, precio, por libra o quintal, libras por quintal,
-  documento, observaciones y salidas; líneas y total se calculan de nuevo)
-  y **edita o quita cualquier cobro**. Con un total menor que lo cobrado se
-  guarda con el aviso de cobrado de más (`Sale#overpaid_amount`). Una
+- **Anular**: una venta **solo sin cobros** (con motivo, permiso de
+  borrar); sus salidas quedan **libres** para otra venta y sus líneas
+  quedan como registro. **Una venta no se edita y un cobro tampoco, para
+  nadie** (Fernando, 2026-11-18; del 2026-11-12 al 18 un administrador la
+  editaba, la anulaba con cobros y editaba cualquier cobro): para
+  corregirla se quitan sus cobros, del último al primero, se anula y se
+  registra de nuevo. Un cobro solo cambia de cuenta (Consolidación;
+  `SalePayment#unchanged`). Las editadas antes pueden salir con el aviso
+  de cobrado de más (`Sale#overpaid_amount`). Una
   salida se anula aparte, solo si no está en una venta activa: su café
   vuelve al inventario. Ninguna se borra.
 - **Comprador** (`Buyer`): catálogo propio para empresas (nombre o razón
@@ -1773,8 +1777,8 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   **cancelado** cuando ventas y devoluciones lo cubren (`status`,
   `cancelled_on`); quitar una aplicación (o su cobro) o una devolución lo
   vuelve a pendiente. Aplicar pide editar en Ventas y ver Compradores
-  (`BuyerAdvanceSalePolicy`; quitarla en una venta cobrada, solo
-  administradores). «Nueva venta» y «Registrar cobro» ya no descuentan
+  (`BuyerAdvanceSalePolicy`; quitarla, como cualquier cobro, solo mientras
+  su cobro es el último de la venta, para todos, Fernando 2026-11-18). «Nueva venta» y «Registrar cobro» ya no descuentan
   anticipos. Su detalle (`sales/buyer_advances#show`) muestra estado,
   aplicaciones (con las libras que equivalen, `Sale#pounds_for`),
   devoluciones y su recibo.
@@ -2149,30 +2153,28 @@ textos; la clave y el código siguen siendo `trading`.
 - Una factura agrupa compras sin facturar **del mismo productor**
   (`InvoiceIssuer`, con bloqueo de filas). Número correlativo con bloqueo
   consultivo (`Invoice::NUMBERING_LOCK_KEY`), mostrado con 4 dígitos.
-- Una compra facturada **no se edita ni se borra** (`PurchasePolicy`). Una
-  factura no se borra. **Solo un administrador** (Fernando, 2026-11-12)
-  [CONFIRMADO], aunque esté cancelada:
-  - **Anula la factura** (`Invoice#void!`, `trading/invoice_voids`, con
-    motivo): **sus compras quedan anuladas** (su café sale del inventario)
-    y **sus abonos se quitan** (dejan de contar en cuentas y Movimientos;
-    quedan en la auditoría); sale de su salida. Conserva su número, queda
-    como registro y sale de listas y totales (`Invoice.active`; `unpaid` y
-    `with_payment_status` ya la dejan fuera); en Facturas se ve con el
-    estado «Anulada» (`Invoice::LIST_STATUSES`). No se anula mientras una
-    compra abonó un préstamo (quitar el pago con café primero).
-  - **Edita la factura** (`Invoice#revise!`, `trading/invoices#edit`):
-    fecha (no después del primer abono), observaciones (nuevas, salen en el
-    impreso) y qué compras lleva (las desmarcadas quedan sin facturar;
-    entran otras sin facturar del productor). **Edita cada compra
-    facturada** (`PurchasePolicy#admin_revision?`, sin pago con café); la
-    factura sigue su nuevo total (`Purchase#refresh_invoice`).
-  - **Edita o quita cualquier abono** (monto sin pasar de lo que la factura
-    tiene por pagar con los otros, fecha, forma de pago y cuenta).
-  - Si el total queda **menor que lo pagado**, se guarda: queda cancelada
-    con el aviso **«Pagado de más»** (`Invoice#overpaid_amount`).
-  - Decisión de implementación, **pendiente de confirmar**: los abonos de
-    una factura anulada se borran (quedan solo en la auditoría), no se
-    guardan como anulados.
+- **Una factura, sus compras y sus abonos no se editan, para nadie**
+  (Fernando, 2026-11-18: «que no se pueda editar facturas ya canceladas, ni
+  ventas, ni compras»; del 2026-11-12 al 18 un administrador editaba la
+  factura, sus compras y cualquier abono). Una compra facturada no se edita
+  ni se borra (`PurchasePolicy`; en el modelo, `Purchase#invoiced_unchanged`
+  sobre `INVOICED_LOCKED`: pesos, dinero, fecha y bodega; su finca,
+  observaciones o una fusión de personas sí cambian, y una tarea de
+  Mantenimiento de datos también). Un abono solo cambia de cuenta
+  (`InvoicePayment#unchanged`) y solo se quita el último. Una factura no
+  se borra.
+  - **Corregir = anular** (`Invoice#void!`, `trading/invoice_voids`,
+    **solo administradores**, con motivo) **cuando nada posterior depende
+    de ella** (`Invoice#void_blockers`, que la ventana muestra antes y
+    apaga el botón): sin abonos (se quitan antes, del último al primero),
+    sin pago con café y sin un lote suyo que ya salió en una salida o un
+    proceso. **Sus compras quedan anuladas** (su café sale del inventario)
+    y sale de sus lotes libres; se registran de nuevo. Conserva su número,
+    queda como registro y sale de listas y totales (`Invoice.active`;
+    `unpaid` y `with_payment_status` ya la dejan fuera); en Facturas se ve
+    con el estado «Anulada» (`Invoice::LIST_STATUSES`).
+  - Las editadas antes pueden salir con el aviso **«Pagado de más»**
+    (`Invoice#overpaid_amount`).
 - **Abono o pago de una factura** (Fernando, 2026-11-15): mientras deja
   saldo se llama «abono» («Abono a la factura de compra de café 0012»,
   «Registrar abono», «Recibo de abono»); el que cancela la factura completa,
@@ -2759,8 +2761,8 @@ obligatoria en gastos e ingresos; presupuesto sin gastos de planilla; otros
 ingresos y transferencias se quitan y se registran de nuevo),
 Comercialización (un estado por salida y por venta; salir de más avisa;
 tolerancia en ambos sentidos; cobros en orden, sin pasar del saldo, quitando
-solo el último; la venta no se edita, salvo un administrador desde el
-2026-11-12), conversiones, anticipos y planilla
+solo el último; la venta no se edita, para nadie desde el 2026-11-18),
+conversiones, anticipos y planilla
 interna; **no hay recargo por mora**. Versión de Ruby (3.4.x), Ubuntu 24.04 LTS, ambiente WSL, regla del
 último administrador activo (se bloquea), idioma del código (inglés), campos de
 `Person`, personas/clientes/colaboradores en `administration`, formato,

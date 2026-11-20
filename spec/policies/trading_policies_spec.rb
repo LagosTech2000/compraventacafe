@@ -19,13 +19,12 @@ RSpec.describe "Trading policies", :all_records do
       expect(described_class.new(full, build(:purchase))).to permit_actions(%i[edit update destroy])
     end
 
-    # Only an administrator edits it, even paid (Fernando, 2026-11-12); it is
+    # Frozen for everyone, administrators too (Fernando, 2026-11-18); it is
     # voided with its invoice, never alone.
-    it "freezes an invoiced purchase, but an admin edits it" do
+    it "freezes an invoiced purchase, for an admin too" do
       purchase = create(:invoice).purchases.first
       expect(described_class.new(full, purchase)).to forbid_actions(%i[edit update destroy])
-      expect(described_class.new(create(:user, :admin), purchase)).to permit_actions(%i[edit update])
-      expect(described_class.new(create(:user, :admin), purchase)).to forbid_actions(%i[destroy void])
+      expect(described_class.new(create(:user, :admin), purchase)).to forbid_actions(%i[edit update destroy void])
     end
 
     it "voids with the delete permission, only what is neither invoiced nor voided" do
@@ -38,11 +37,12 @@ RSpec.describe "Trading policies", :all_records do
   end
 
   describe InvoicePolicy do
-    it "edits and voids invoices only for an admin, never once voided" do
+    it "never edits invoices, and voids them only for an admin, never once voided" do
       invoice = create(:invoice)
       expect(described_class.new(full, invoice)).to forbid_actions(%i[update void])
       admin = create(:user, :admin)
-      expect(described_class.new(admin, invoice)).to permit_actions(%i[update void])
+      expect(described_class.new(admin, invoice)).to forbid_action(:update)
+      expect(described_class.new(admin, invoice)).to permit_action(:void)
       invoice.update_columns(voided_at: Time.current)
       expect(described_class.new(admin, invoice)).to forbid_actions(%i[update void])
     end
@@ -71,6 +71,14 @@ RSpec.describe "Trading policies", :all_records do
       expect(described_class.new(full, last)).to permit_action(:destroy)
       expect(described_class.new(trader(can_read: true, can_update: true), last)).to forbid_action(:destroy)
       expect(described_class.new(full, last)).to forbid_action(:update)
+    end
+
+    # Closed records are not edited, by anyone (Fernando, 2026-11-18).
+    it "gives an administrator nothing more: no edits, only the latest removed" do
+      admin = create(:user, :admin)
+      first = payment(100)
+      payment(50)
+      expect(described_class.new(admin, first)).to forbid_actions(%i[update destroy])
     end
   end
 

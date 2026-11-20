@@ -136,7 +136,9 @@ RSpec.describe "Lots of purchased coffee" do
     expect(JSON.parse(result["data-modal-result-detail-value"])).to include("id" => batch.id, "label" => "Lote 0001", "coffee_state" => "wet_parchment")
   end
 
-  it "changes on a sold shipment only by an administrator (Fernando, 2026-11-13)", :all_records do
+  # Closed for everyone, administrators too (Fernando, 2026-11-18; from
+  # 2026-11-13 an administrator could). A data-maintenance task still may.
+  it "does not change on a sold shipment, for an administrator either", :all_records do
     shipment = create(:sale).shipments.first
     invoice = invoice_of(create(:purchase, producer:))
     other = invoice_of(create(:purchase, producer:))
@@ -145,30 +147,22 @@ RSpec.describe "Lots of purchased coffee" do
     batch.update!(shipment:)
     free = create(:coffee_batch, warehouse: shipment.warehouse, coffee_state: shipment.coffee_state)
 
-    seller = create(:user).tap { create(:permission, user: it, module_key: "sales", can_read: true, can_create: true, can_update: true, can_destroy: true) }
-    create(:permission, user: seller, module_key: "trading", submodule_key: "invoices", can_read: true)
-    sign_in seller
+    sign_in admin
+    Current.session = admin.sessions.last
     patch sales_coffee_batch_path(batch), params: { coffee_batch: { gross_limit: "9000" } }
     expect(batch.reload.gross_limit).to eq(10_000)
     post sales_coffee_batch_invoices_path(batch), params: { shares: { other.id => { chosen: "1", percent: "50" } } }
     expect(batch.reload.batch_invoices.size).to eq(1)
     post sales_shipment_batches_path(shipment), params: { batch_ids: [ free.id ] }
     expect(free.reload.shipment).to be_nil
-    Current.session = seller.sessions.last
-    expect(batch.batch_invoices.create(invoice: other, percent: 50, created_by: seller).errors.full_messages.join).to include("solo un administrador")
-
-    sign_in admin
-    Current.session = admin.sessions.last
-    patch sales_coffee_batch_path(batch), params: { coffee_batch: { gross_limit: "9000" } }
-    expect(batch.reload.gross_limit).to eq(9_000)
-    post sales_coffee_batch_invoices_path(batch), params: { shares: { other.id => { chosen: "1", percent: "50" } } }
-    expect(batch.reload.batch_invoices.map(&:invoice)).to contain_exactly(invoice, other)
-    post sales_shipment_batches_path(shipment), params: { batch_ids: [ free.id ] }
-    expect(free.reload.shipment).to eq(shipment)
-    delete sales_shipment_batch_path(shipment, free)
-    expect(free.reload.shipment).to be_nil
+    expect(batch.batch_invoices.create(invoice: other, percent: 50, created_by: admin).errors.full_messages.join).to include("primero anula la venta")
+    expect(free.update(shipment:)).to be(false)
     get sales_shipment_path(shipment)
-    expect(response.body).to include(new_sales_shipment_batch_path(shipment))
+    expect(response.body).not_to include(new_sales_shipment_batch_path(shipment))
+
+    Current.set(maintenance: true) do
+      expect(batch.batch_invoices.create(invoice: other, percent: 50, created_by: admin)).to be_persisted
+    end
   ensure
     Current.reset
   end

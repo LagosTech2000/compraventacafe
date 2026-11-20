@@ -1356,7 +1356,6 @@ es:
         number: "N.º"
         receipt: "Recibo"
         destroy: "Quitar"
-        edit: "Editar"
         confirm_destroy: "¿Quitar este abono? Su monto vuelve al saldo de la factura."
         none: "Todavía no se le ha pagado nada de esta factura."
         overpaid: "Pagado de más"
@@ -1417,10 +1416,9 @@ es:
         payment_full: "Pago %{number} · %{date} · %{method}"
         balance_due: "Saldo pendiente"
         settled: "Cancelada"
-        edit: "Editar factura"
         void: "Anular factura"
         voided: "Factura anulada el %{date} por %{name}: %{reason}. Sus compras quedaron anuladas y sus abonos se quitaron."
-        overpaid: "Se le pagó %{amount} de más: lo abonado pasa del total a pagar después de editar. Corrige o quita un abono."
+        overpaid: "Se le pagó %{amount} de más: lo abonado pasa del total a pagar. Quita el último abono y regístralo por lo que falta."
         observations: "Observaciones"
       lot_fields:
         legend: "Lote (opcional)"
@@ -1438,16 +1436,6 @@ es:
         error: "%{batch}: %{message}"
       create:
         success: "Factura creada."
-      edit:
-        title: "Editar factura %{number}"
-        help: "Solo administradores, aunque esté cancelada. Cambia la fecha, las observaciones y qué compras lleva; cada compra se edita con «Editar compra»."
-        purchases: "Compras de la factura"
-        purchases_help: "Las marcadas van en la factura; al desmarcar una, queda sin facturar. Abajo, las compras sin facturar de %{producer}."
-        uninvoiced: "Sin facturar"
-        edit_purchase: "Editar compra"
-        submit: "Guardar cambios"
-      update:
-        success: "Factura actualizada."
     invoice_voids:
       new:
         title: "Anular factura %{number}"
@@ -1455,9 +1443,7 @@ es:
         purchases:
           one: "Su compra queda anulada: su café sale del inventario."
           other: "Sus %{count} compras quedan anuladas: su café sale del inventario."
-        payments:
-          one: "Su abono de %{amount} se quita: deja de contar en la cuenta y en Movimientos (queda en la auditoría)."
-          other: "Sus %{count} abonos (%{amount}) se quitan: dejan de contar en las cuentas y en Movimientos (quedan en la auditoría)."
+        blocked: "Antes de anularla:"
         batches: "Sale de %{batches}."
         record: "La factura conserva su número y queda como registro anulado, con el motivo."
         submit: "Anular factura"
@@ -1476,13 +1462,6 @@ es:
         balance_due: "Saldo"
         amount_help: "El saldo completo o una parte: lo que falte queda pendiente."
         submit: "Registrar abono"
-      edit:
-        title: "Editar abono %{number}"
-        admin_only: "Solo administradores: el recibo y la factura cambian con el abono."
-        amount_help: "Hasta %{amount}: lo que la factura todavía tiene por pagar sin contar este abono."
-        submit: "Guardar abono"
-      update:
-        success: "Abono actualizado."
       show:
         title: "Recibo de pago %{number}"
         title_partial: "Recibo de abono %{number}"
@@ -2087,6 +2066,9 @@ es:
     # Lots of purchased coffee (Fernando, 2026-11-13).
     coffee_batches:
       label: "Lote %{number}"
+      taker:
+        shipment: "la remisión %{number}"
+        process: "el proceso %{number}"
       index:
         title: "Lotes"
         help: "El café comprado en lotes: cada uno con su bodega, su estado del café, su límite de libras brutas y una parte de facturas de compra. Los lotes van en las salidas o se mandan a procesar; los más recientes primero."
@@ -2609,7 +2591,8 @@ es:
         remove_scale: "Quitar"
         confirm_remove_origin: "¿Quitar la báscula local? La salida deja de sacar café del inventario hasta que se complete; si está vendida, la venta se queda sin neto local."
         confirm_remove_destination: "¿Quitar la báscula del comprador? La salida vuelve a «En camino»."
-        sold_scale_help: "Está vendida: al cambiar sus pesadas, la venta se recalcula sola (líneas, total y estado de cobro)."
+        closed_sold: "Vendida en la venta %{sale}: sus básculas ya no cambian. Para corregirlas, primero anula la venta."
+        closed_received: "Pesada en destino: sus básculas ya no cambian. Para corregirlas, quita la báscula del comprador y vuelve a pesar."
         sell: "Vender"
         see_sale: "Ver la venta"
         voided: "Salida anulada el %{date} por %{name}. No cuenta en el inventario ni se puede vender."
@@ -2715,20 +2698,9 @@ es:
         success: "Venta %{number} registrada."
       void:
         success: "Venta anulada: sus salidas quedan libres para otra venta."
-      edit:
-        title: "Editar venta %{number}"
-        crumb: "Editar"
-        help: "Solo administradores, aunque esté cobrada. Cambia la fecha, el precio, las libras por quintal, el documento, las observaciones y qué salidas lleva; el total se calcula de nuevo. Si queda menos de lo cobrado, se guarda con el aviso de cobrado de más."
-        submit: "Guardar cambios"
-      update:
-        success: "Venta actualizada."
       show:
         title: "Venta %{number}"
-        edit: "Editar venta"
-        overpaid: "Se cobró %{amount} de más: lo cobrado pasa de lo que se cobra después de editar. Corrige o quita un cobro."
-        void_with_payments:
-          one: "Tiene 1 cobro: al anularla (solo administradores) se quita, deja de contar en la cuenta y, si fue con anticipo, vuelve al saldo del comprador."
-          other: "Tiene %{count} cobros: al anularla (solo administradores) se quitan, dejan de contar en las cuentas y lo que fue con anticipo vuelve al saldo del comprador."
+        overpaid: "Se cobró %{amount} de más: lo cobrado pasa de lo que se cobra. Quita el último cobro y regístralo por lo que falta."
         print: "Imprimir"
         original: "ORIGINAL"
         copy: "COPIA"
@@ -2757,7 +2729,6 @@ es:
         number: "Recibo"
         receipt: "Recibo"
         destroy: "Quitar"
-        edit: "Editar"
         overpaid: "Cobrado de más"
         confirm_destroy: "¿Quitar este cobro? La venta vuelve a quedar por cobrar."
         none: "Todavía no hay cobros."
@@ -2881,13 +2852,6 @@ es:
         sale: "Venta %{number} · %{buyer}"
         amount_help: "Empieza con lo que falta por cobrar."
         submit: "Guardar cobro"
-      edit:
-        title: "Editar cobro %{number}"
-        admin_only: "Solo administradores: el recibo y la venta cambian con el cobro."
-        amount_help: "Hasta %{amount}: lo que la venta todavía tiene por cobrar sin contar este cobro."
-        submit: "Guardar cobro"
-      update:
-        success: "Cobro actualizado."
       create:
         success: "Cobro registrado."
       destroy:
@@ -6774,11 +6738,10 @@ es:
             tips:
               - "Si falta una compra, toca «Nueva compra para este productor»: se registra en una ventana y aparece en la lista."
               - "Si una compra no va, toca «Anular» en su fila: sale de la lista y de los totales."
-              - "Las compras facturadas ya no se pueden editar, anular ni borrar; solo un administrador, desde «Editar factura»."
+              - "Las compras facturadas ya no se editan, anulan ni borran, para nadie. Para corregir una, un administrador anula la factura y se registra de nuevo."
               - "La lista muestra cuánto restó el daño de cada compra, en libras y en lempiras."
               - "«Lote» solo muestra los lotes del estado del café y la bodega de las compras marcadas, con espacio bajo su límite; si la parte no cabe, no se crea la factura."
-              - "En «Editar factura» se cambia su lote o su parte, o se saca del lote con «Sin lote»; si no se tocan, el lote se queda con las libras que ya tomó."
-              - "«Editar factura» (solo administradores, aunque esté cancelada): cambia la fecha, las observaciones y qué compras lleva; las desmarcadas quedan sin facturar. Cada compra se edita con «Editar compra». Si el total baja de lo pagado, sale el aviso de «Pagado de más»."
+              - "Después, su lote o su parte se cambian desde el lote (Comercialización → Salidas → Lotes)."
           show:
             title: "Factura"
             summary: "El recibo para el productor, con original y copia."
@@ -6791,18 +6754,18 @@ es:
             tips:
               - "Desde la ventana de detalle, «Imprimir» abre la factura en página completa."
               - "En pergamino, «Daño (lb)» y «Daño (L)» muestran lo que el daño restó de cada compra, con su porcentaje; en uva no aplica."
-              - "Una factura no se borra. Solo un administrador la edita o la anula, aunque esté cancelada, y edita o quita cualquier abono."
+              - "Una factura no se edita ni se borra, y un abono no se edita: solo se quita el último. Para corregir la factura, se quitan sus abonos y un administrador la anula."
         invoice_voids:
           form:
             title: "Anular factura"
-            summary: "Solo administradores, aunque esté cancelada: la factura y sus compras quedan anuladas y sus abonos se quitan."
+            summary: "Una factura no se edita. Para corregirla, un administrador la anula con un motivo cuando nada posterior depende de ella: la factura y sus compras quedan anuladas y se registran de nuevo."
             steps:
-              - "Lee lo que pasa al anular: compras anuladas (su café sale del inventario), abonos quitados (dejan de contar en las cuentas) y la factura sale de su salida."
+              - "Si la pantalla dice qué hacer antes, hazlo primero: quitar sus abonos (del último al primero), el pago con café o sacar su lote de la salida o el proceso."
+              - "Lee lo que pasa al anular: compras anuladas (su café sale del inventario) y la factura sale de sus lotes libres."
               - "Escribe el motivo y toca «Anular factura»."
             tips:
               - "No se puede deshacer. La factura conserva su número y se ve en Facturas eligiendo el estado «Anulada»."
-              - "Si una compra abonó un préstamo (pago con café), quita ese abono antes."
-              - "Lo quitado queda en la auditoría."
+              - "Todo queda en la auditoría."
         producer_cards:
           show:
             title: "Ficha del productor en la compra"
@@ -7134,7 +7097,7 @@ es:
               - "Mientras no tenga cobros, puedes anularla con su motivo."
             tips:
               - "Al anular, sus salidas quedan libres para otra venta."
-              - "Un administrador edita la venta («Editar venta»: fecha, precio, libras por quintal, documento, observaciones y salidas) y la anula aunque tenga cobros: se quitan, dejan de contar en las cuentas y lo cobrado con anticipo vuelve al saldo del comprador. También edita o quita cualquier cobro."
+              - "Una venta no se edita, para nadie, y un cobro tampoco: solo se quita el último. Para corregir la venta, quita sus cobros (del último al primero), anúlala y regístrala de nuevo."
           form:
             title: "Nueva venta"
             summary: "Agrupa salidas de un comprador, ya pesadas en destino, en una venta."
@@ -7170,7 +7133,7 @@ es:
               - "Guarda: se abre el recibo listo para imprimir."
             tips:
               - "No puede pasar de lo que falta ni ir antes de la venta o del último cobro."
-              - "Un administrador puede editar un cobro ya registrado (monto, fecha, forma de pago, cuenta u observaciones), sin pasar de lo que la venta tiene por cobrar."
+              - "Un cobro no se edita, para nadie: si se registró mal, quita el último y regístralo de nuevo."
         buyers:
           index:
             title: "Clientes comerciales"
@@ -10285,7 +10248,7 @@ es:
               below_coffee: "no puede ser menor a lo que ya tiene (%{gross} lb brutas)"
             shipment:
               other_coffee: "es de otro estado del café o de otra bodega"
-              closed: "está anulada, o vendida y solo un administrador la cambia"
+              closed: "está anulada o vendida: ya no cambia. Para corregirla, primero anula la venta"
               taken: "ya tiene este lote"
             warehouse:
               inactive: "está desactivada"
@@ -10300,7 +10263,7 @@ es:
         coffee_batch_conversion:
           attributes:
             base:
-              lot_sold: "El lote está en una salida vendida: solo un administrador lo cambia."
+              lot_sold: "El lote está en una salida vendida: ya no cambia. Para corregirlo, primero anula la venta."
               lot_processed: "El lote ya se mandó a procesar con estas libras: no cambia."
             coffee_conversion:
               not_eligible: "no puede ir en este lote: debe estar terminado, ser de su estado del café, con su resultado en su bodega y una parte libre"
@@ -10312,7 +10275,7 @@ es:
         coffee_batch_invoice:
           attributes:
             base:
-              lot_sold: "El lote está en una salida vendida: solo un administrador lo cambia."
+              lot_sold: "El lote está en una salida vendida: ya no cambia. Para corregirlo, primero anula la venta."
               lot_processed: "El lote ya se mandó a procesar con estas libras: no cambia."
             invoice:
               not_eligible: "no puede ir en este lote: debe ser de su estado del café, con todas sus compras en su bodega y una parte libre"
@@ -10433,12 +10396,14 @@ es:
             category:
               not_first_level: "debe ser de primer nivel"
         shipment:
-          sold: "La salida ya está en una venta: no se cambian su comprador, estado ni pesos. Anula la venta primero."
+          sold: "La salida está en la venta %{sale}: ya no cambia. Para corregirla, primero anula la venta."
+          received: "La salida ya se pesó en destino: ya no cambia. Para corregirla, primero quita la báscula del comprador."
           attributes:
             weighings:
               blank: "faltan: agrega al menos una pesada"
             base:
-              sold: "La salida ya está en una venta: no se cambian su comprador, estado ni pesos. Anula la venta primero."
+              sold: "La salida está en la venta %{sale}: ya no cambia. Para corregirla, primero anula la venta."
+              received: "La salida ya se pesó en destino: ya no cambia. Para corregirla, primero quita la báscula del comprador."
               sold_destination: "La salida está en una venta, que cobra con la báscula del comprador: quítala de la venta o anula la venta antes de quitar esa báscula."
               carrier_and_driver: "Lleva un transportista o un motorista, no los dos."
               has_batches: "La salida tiene lotes: su estado del café y su bodega no cambian. Quita sus lotes primero."
@@ -10509,6 +10474,7 @@ es:
           attributes:
             base:
               sale_voided: "La venta está anulada."
+              closed: "Un cobro no se edita. Para corregirlo, quítalo (solo el último) y regístralo de nuevo."
             amount:
               over_balance: "es mayor que lo que falta por cobrar (%{balance})"
             payment_method:
@@ -10541,6 +10507,8 @@ es:
               before_last_payment: "no puede ser antes del último pago"
         invoice_payment:
           attributes:
+            base:
+              closed: "Un abono no se edita. Para corregirlo, quítalo (solo el último) y regístralo de nuevo."
             amount:
               over_balance: "es mayor que el saldo de la factura (%{balance})"
             paid_on:
@@ -10630,6 +10598,7 @@ es:
               not_an_image: "debe ser una imagen PNG, JPG, WebP o GIF"
         purchase:
           voided_invoiced: "Una compra facturada no se puede anular."
+          invoiced: "Una compra facturada no se edita: así se le imprimió al productor. Para corregirla, un administrador anula su factura y se registra de nuevo."
           hauler_paid: "No se puede: ya se le pagó al carrero %{hauler} la comisión de esta compra, y con el cambio quedaría debiendo. Quita primero su último pago."
           attributes:
             hauler:
@@ -10654,6 +10623,10 @@ es:
             base:
               already_voided: "La factura ya está anulada."
               has_loan_payments: "Una de sus compras abonó un préstamo (pago con café): quita ese abono antes de anular la factura."
+              has_payments:
+                one: "Tiene un abono: quítalo antes de anular la factura."
+                other: "Tiene %{count} abonos: quítalos antes de anular la factura, del último al primero."
+              lot_taken: "Su café va en el %{batch}, que ya salió en %{taker}: primero quita el lote de ahí."
               purchase_not_voided: "La compra %{number} no se puede anular: %{message}"
             issued_on:
               after_payments: "no puede ser después del primer abono (%{date})"

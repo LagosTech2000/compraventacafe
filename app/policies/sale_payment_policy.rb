@@ -1,7 +1,7 @@
 # Collecting a sale is changing it: it takes editing in Comercialización,
-# as paying an invoice does in Compra de café. Payments are not edited and
-# only the latest one can be removed, except by an administrator: any one,
-# edited or removed (Fernando, 2026-11-12).
+# as paying an invoice does in Compra de café. Payments are not edited, by
+# anyone, and only the latest one can be removed (Fernando, 2026-11-18).
+# An advance's collection is removed through its application.
 class SalePaymentPolicy < ApplicationPolicy
   self.module_key = "sales"
   self.submodule_key = "sales"
@@ -10,12 +10,11 @@ class SalePaymentPolicy < ApplicationPolicy
     can?(:update) && !(record.is_a?(SalePayment) && (record.sale.paid? || record.sale.voided?))
   end
 
-  # An advance's collection is changed through its application.
   def update?
-    admin? && record.is_a?(SalePayment) && !record.sale.voided? && !record.advance?
+    false
   end
 
   def destroy?
-    super && record.is_a?(SalePayment) && !record.sale.voided? && (record.latest? || admin?)
+    super && record.is_a?(SalePayment) && !record.sale.voided? && record.latest?
   end
 end

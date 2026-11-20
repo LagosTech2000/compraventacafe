@@ -1,6 +1,7 @@
 # Lots of purchased coffee (Fernando, 2026-11-13) go with Comercialización
 # → Salidas: they are made to go on shipments. One on a sold shipment
-# changes only by an administrator; one on a shipment is not removed.
+# does not change, by anyone (Fernando, 2026-11-18); one on a shipment is
+# not removed.
 class CoffeeBatchPolicy < ApplicationPolicy
   self.module_key = "sales"
   self.submodule_key = "shipments"
@@ -10,5 +11,5 @@ class CoffeeBatchPolicy < ApplicationPolicy
 
   private
     def taken? = record.is_a?(CoffeeBatch) && record.taken?
-    def open? = !record.is_a?(CoffeeBatch) || (!record.processed? && (!record.shipment&.sold? || user.admin?))
+    def open? = !record.is_a?(CoffeeBatch) || (!record.processed? && !record.shipment&.sold?)
 end

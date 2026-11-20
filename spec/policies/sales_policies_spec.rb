@@ -28,6 +28,17 @@ RSpec.describe "Sales policies", :all_records do
       voided = create(:shipment, voided_at: Time.current)
       expect(described_class.new(full, voided)).to forbid_actions(%i[edit update receive void])
     end
+
+    # Closed for everyone once weighed (Fernando, 2026-11-18).
+    it "closes a weighed or sold shipment to an administrator too, and corrects a weighed one by removing its buyer's scale" do
+      admin = create(:user, :admin)
+      weighed = create(:shipment, :received)
+      expect(described_class.new(admin, weighed)).to forbid_actions(%i[edit update receive remove_origin])
+      expect(described_class.new(admin, weighed)).to permit_actions(%i[remove_destination void])
+      sold = create(:sale).shipments.first
+      expect(described_class.new(admin, sold)).to forbid_actions(%i[edit update receive remove_origin remove_destination void])
+      expect(described_class.new(admin, create(:shipment))).to permit_actions(%i[edit update receive remove_origin])
+    end
   end
 
   describe SalePolicy do
@@ -57,6 +68,20 @@ RSpec.describe "Sales policies", :all_records do
       expect(described_class.new(seller(can_read: true, can_create: true), sale.payments.build)).to forbid_action(:create)
       expect(described_class.new(full, first)).to forbid_action(:destroy)
       expect(described_class.new(full, latest)).to permit_action(:destroy)
+      admin = create(:user, :admin)
+      expect(described_class.new(admin, first)).to forbid_actions(%i[update destroy])
+    end
+  end
+
+  describe BuyerAdvanceSalePolicy do
+    it "removes an advance applied to a sale only while its collection is the latest, for an administrator too" do
+      admin = create(:user, :admin)
+      sale = create(:sale)
+      advance = create(:buyer_advance, buyer: sale.buyer, amount: sale.total)
+      application = BuyerAdvanceSale.create!(buyer_advance: advance, sale:, percent: 10, applied_on: Time.zone.today, created_by: admin)
+      expect(described_class.new(admin, application)).to permit_action(:destroy)
+      create(:sale_payment, sale:, amount: 1)
+      expect(described_class.new(admin, application.reload)).to forbid_action(:destroy)
     end
   end
 end

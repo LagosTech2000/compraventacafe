@@ -1,9 +1,10 @@
 require "rails_helper"
 
-# Administrators void and edit purchase invoices, even paid ones (Fernando,
-# 2026-11-12): voiding voids its purchases and removes its payments; editing
-# changes its date, observations, purchases (and each purchase) and its
-# payments; a total below what was paid is saved and shows as overpaid.
+# A purchase invoice is never edited, by anyone (Fernando, 2026-11-18): an
+# administrator voids it, with a reason, once nothing after it depends on
+# it (its payments removed, no pago con café, no lot that left); its
+# purchases are voided with it. Before (2026-11-12) an administrator edited
+# it, its purchases and its payments, and voided it paid.
 RSpec.describe "Purchase invoices, administrators" do
   let(:admin) { create(:user, :admin) }
   let(:clerk) { create(:user).tap { create(:permission, user: it, module_key: "trading", can_read: true, can_create: true, can_update: true, can_destroy: true) } }
@@ -17,11 +18,20 @@ RSpec.describe "Purchase invoices, administrators" do
 
   def page = Nokogiri::HTML(response.body)
 
-  it "voids a paid invoice with its purchases and payments, with a reason, out of every list and total" do
+  it "voids a paid invoice only after its payments are removed, with a reason, out of every list and total" do
     expect(invoice).to be_paid
     expect(AccountBalance.new.for(account)).to eq(50_000 - invoice.total)
     sign_in admin
 
+    get new_trading_invoice_void_path(invoice)
+    expect(page.at_css("[data-void-blockers]").text).to include("Tiene un abono: quítalo antes de anular la factura.")
+    expect(page.at_css("input[type=submit][disabled]")).to be_present
+    post trading_invoice_void_path(invoice), params: { invoice: { void_reason: "Se facturó a otro productor" } }
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(invoice.reload).not_to be_voided
+
+    delete trading_invoice_payment_path(invoice, invoice.payments.sole)
+    expect(AccountBalance.new.for(account)).to eq(50_000)
     post trading_invoice_void_path(invoice), params: { invoice: { void_reason: "" } }
     expect(response).to have_http_status(:unprocessable_content)
     expect(invoice.reload).not_to be_voided
@@ -49,7 +59,7 @@ RSpec.describe "Purchase invoices, administrators" do
     expect(page.at_css("[data-invoice-voided]").text).to include("Se facturó a otro productor")
   end
 
-  it "does not void while a purchase paid a loan, and takes the invoice off its lots" do
+  it "does not void while a purchase paid a loan or a lot of it left, and takes the invoice off its free lots" do
     loan = create(:loan, person: producer.person, cash_amount: 100, monthly_interest_rate: 0)
     pending = InvoiceIssuer.new(producer:, user: admin, purchase_ids: purchases.map(&:id), payment_status: "pending").call.invoice
     create(:loan_payment, loan:, purchase: purchases.first, amount: 50, payment_method: "coffee")
@@ -61,78 +71,55 @@ RSpec.describe "Purchase invoices, administrators" do
     LoanPayment.delete_all
     batch = create(:coffee_batch, coffee_state: purchases.first.coffee_state)
     batch.batch_invoices.create!(invoice: pending, percent: 100, created_by: admin)
+    shipment = create(:shipment, coffee_state: batch.coffee_state, warehouse: batch.warehouse)
+    batch.update!(shipment:)
+    post trading_invoice_void_path(pending), params: { invoice: { void_reason: "Error" } }
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("ya salió en la remisión #{shipment.display_number}")
+
+    batch.update!(shipment: nil)
     post trading_invoice_void_path(pending), params: { invoice: { void_reason: "Error" } }
     expect(pending.reload).to be_voided
     expect(batch.batch_invoices.reload).to be_empty
   end
 
-  it "edits the date, observations and purchases of a paid invoice; a lower total shows as overpaid" do
-    extra = create(:purchase, producer:)
-    paid = invoice.paid_total
-    sign_in admin
-    get edit_trading_invoice_path(invoice)
-    expect(page.css("[data-invoice-purchases] tbody tr").size).to eq(3)
-
-    patch trading_invoice_path(invoice), params: { invoice: { issued_on: invoice.issued_on, observations: "Café de primera",
-                                                              purchase_ids: [ purchases.first.id, extra.id ] } }
-    expect(response).to redirect_to(trading_invoice_path(invoice))
-    invoice.reload
-    expect(invoice.purchases).to contain_exactly(purchases.first, extra)
-    expect(purchases.last.reload.invoice).to be_nil
-    expect(invoice.observations).to eq("Café de primera")
-
-    patch trading_invoice_path(invoice), params: { invoice: { issued_on: invoice.issued_on, purchase_ids: [ purchases.first.id ] } }
-    invoice.reload
-    expect(invoice).to be_paid
-    expect(invoice.overpaid_amount).to eq(paid - purchases.first.total)
-    get trading_invoice_path(invoice)
-    expect(page.at_css("[data-invoice-overpaid]")).to be_present
-
-    patch trading_invoice_path(invoice), params: { invoice: { issued_on: invoice.issued_on + 5, purchase_ids: [ purchases.first.id ] } }
-    expect(response).to have_http_status(:unprocessable_content)
-    patch trading_invoice_path(invoice), params: { invoice: { issued_on: invoice.issued_on, purchase_ids: [ "" ] } }
-    expect(response).to have_http_status(:unprocessable_content)
-    expect(invoice.reload.purchases).to eq([ purchases.first ])
-  end
-
-  it "edits an invoiced purchase and its invoice follows the new total" do
+  it "has no edit, and leaves invoiced purchases and payments as they were, for an administrator too" do
     invoice
     sign_in admin
+    get trading_invoice_path(invoice)
+    expect(page.css("a").map(&:text)).not_to include("Editar factura", "Editar")
+    expect(Invoice.method_defined?(:revise!)).to be(false)
+
     purchase = purchases.first.reload
     get edit_trading_purchase_path(purchase)
-    expect(response).to have_http_status(:ok)
-    patch trading_purchase_path(purchase), params: { purchase: { price_per_pound: "10", lock_version: purchase.lock_version } }
-    expect(purchase.reload.price_per_pound).to eq(10)
-    expect(invoice.reload).to be_paid
-    expect(invoice.overpaid?).to be(true)
+    expect(response).to redirect_to(root_path)
+    expect(purchase.update(price_per_pound: 10)).to be(false)
+    expect(purchase.errors.full_messages.join).to include("Una compra facturada no se edita")
+
+    payment = invoice.payments.sole
+    expect(payment.update(amount: 1)).to be(false)
+    expect(payment.errors.full_messages.join).to include("Un abono no se edita")
   end
 
-  it "edits or removes any payment" do
+  it "removes only the latest payment, for an administrator too" do
     pending = InvoiceIssuer.new(producer:, user: admin, purchase_ids: purchases.map(&:id), payment_status: "pending").call.invoice
     first = pending.payments.create!(amount: 100, paid_on: Time.zone.today, payment_method: "cash", created_by: admin)
-    pending.payments.create!(amount: 200, paid_on: Time.zone.today, payment_method: "cash", created_by: admin)
+    last = pending.payments.create!(amount: 200, paid_on: Time.zone.today, payment_method: "cash", created_by: admin)
     sign_in admin
 
-    patch trading_invoice_payment_path(pending, first), params: { invoice_payment: { amount: "150", paid_on: Time.zone.today, payment_method: "transfer" } }
-    expect(first.reload).to have_attributes(amount: 150, payment_method: "transfer")
-    expect(pending.reload.paid_total).to eq(350)
-
-    patch trading_invoice_payment_path(pending, first), params: { invoice_payment: { amount: pending.amount_to_pay.to_s, paid_on: Time.zone.today, payment_method: "cash" } }
-    expect(response).to have_http_status(:unprocessable_content)
-
     delete trading_invoice_payment_path(pending, first)
-    expect(pending.payments.reload.map(&:amount)).to eq([ 200 ])
+    expect(pending.payments.reload.size).to eq(2)
+    delete trading_invoice_payment_path(pending, last)
+    expect(pending.payments.reload.map(&:amount)).to eq([ 100 ])
   end
 
   it "is for administrators only, even with every permission of Compra de café" do
     sign_in clerk
-    get edit_trading_invoice_path(invoice)
-    expect(response).to redirect_to(root_path)
     post trading_invoice_void_path(invoice), params: { invoice: { void_reason: "x" } }
     expect(invoice.reload).not_to be_voided
     get edit_trading_purchase_path(purchases.first)
     expect(response).to redirect_to(root_path)
     get trading_invoice_path(invoice)
-    expect(page.css("a").map(&:text)).not_to include("Editar factura", "Anular factura")
+    expect(page.css("a").map(&:text)).not_to include("Anular factura")
   end
 end

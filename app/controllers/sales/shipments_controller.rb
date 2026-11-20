@@ -42,7 +42,6 @@ module Sales
 
     def update
       @shipment.origin_skippable = Current.user.admin?
-      @shipment.weights_by_admin = Current.user.admin?
       if @shipment.update(shipment_params)
         close_modal_with notice: t(".success"), fallback: sales_shipment_path(@shipment)
       else
