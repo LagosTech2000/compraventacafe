@@ -1033,6 +1033,14 @@ desplazamiento cuando llega una actualización. Su Inicio
 escucha `Presence::WATCH_STREAM` en vez de `presence`, y solo su página
 recibe ese stream firmado: a los demás no les llega ni la ruta. Vive en la memoria del proceso, como el adaptador `async`.
 
+**¿Cuadra hoy?** (`DailyCheck`, `dashboard/_daily_check`, Fernando,
+2026-11-18): tarjeta del Inicio **solo para administradores**, una línea
+por cosa que todavía no cuadra hoy, cada una abre donde se arregla: café
+(estado y bodega) con existencia sin conteo hoy, cajas sin arqueo hoy (o
+la diferencia del arqueo), compras de hoy sin facturar, salidas de hoy sin
+lotes, salidas del último mes que pasan una tolerancia sin motivo y
+cuentas en negativo. «Todo cuadra» cuando no falta nada.
+
 **Productores que no venden hace…** (`IdleProducers`, Fernando,
 2026-11-13): tarjeta del Inicio (frame `idle-producers`, para quien ve
 Productores) con una lista de 7 días, 15 días o un mes: los productores

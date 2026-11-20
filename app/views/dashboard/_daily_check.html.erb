@@ -1,0 +1,17 @@
+<%# «¿Cuadra hoy?»: what still keeps today from adding up, each line opening
+    where it is fixed (DailyCheck). %>
+<section class="panel mt-6 p-4 <%= "ring-2 ring-danger" unless check.ok? %>" id="dashboard-daily-check" aria-labelledby="dashboard-daily-check-title">
+  <div class="flex flex-wrap items-baseline justify-between gap-2">
+    <h2 id="dashboard-daily-check-title" class="font-semibold"><%= t(".title") %></h2>
+    <span class="badge <%= check.ok? ? "badge-success" : "badge-danger" %>" data-daily-check-status><%= t(check.ok? ? ".ok" : ".not_yet") %></span>
+  </div>
+  <ul class="mt-3 grid gap-x-6 gap-y-1 text-sm md:grid-cols-2">
+    <% check.lines.each do |line| %>
+      <li class="flex items-center justify-between gap-3 py-1" data-daily-check="<%= line.key %>">
+        <%= link_to t(".lines.#{line.key}.#{line.ok ? "ok" : "todo"}", count: line.count, amount: (format_money(line.amount.abs) if line.amount)),
+              public_send(*line.path), class: "link min-w-0" %>
+        <span class="shrink-0 <%= line.ok ? "text-success" : "text-danger" %>" aria-hidden="true"><%= line.ok ? "✓" : "!" %></span>
+      </li>
+    <% end %>
+  </ul>
+</section>

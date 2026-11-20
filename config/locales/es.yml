@@ -769,6 +769,42 @@ es:
       disclaimer: "Precio de referencia de la bolsa de Nueva York, con retraso de unos minutos. No es el precio que paga el negocio."
       unavailable: "El precio de la bolsa no está disponible en este momento. Intenta más tarde."
   dashboard:
+    daily_check:
+      title: "¿Cuadra hoy?"
+      ok: "Todo cuadra"
+      not_yet: "Falta"
+      lines:
+        stock_counts:
+          ok: "Inventario: todo el café está contado hoy"
+          todo:
+            one: "Inventario: 1 café (estado y bodega) sin contar hoy"
+            other: "Inventario: %{count} cafés (estado y bodega) sin contar hoy"
+        cash_counts:
+          ok: "Caja: el arqueo de hoy cuadra"
+          todo:
+            zero: "Caja: el arqueo de hoy difiere %{amount}"
+            one: "Caja: 1 caja sin arqueo hoy"
+            other: "Caja: %{count} cajas sin arqueo hoy"
+        uninvoiced:
+          ok: "Compras: todas las de hoy están facturadas"
+          todo:
+            one: "Compras: 1 de hoy sin facturar"
+            other: "Compras: %{count} de hoy sin facturar"
+        shipments_without_lots:
+          ok: "Salidas: todas las de hoy llevan lotes"
+          todo:
+            one: "Salidas: 1 de hoy sin lotes (no se sabe su merma)"
+            other: "Salidas: %{count} de hoy sin lotes (no se sabe su merma)"
+        missing_reasons:
+          ok: "Diferencias: todas las que pasan la tolerancia tienen motivo"
+          todo:
+            one: "Diferencias: 1 salida del último mes sin motivo"
+            other: "Diferencias: %{count} salidas del último mes sin motivo"
+        negative_accounts:
+          ok: "Cuentas: ninguna en negativo"
+          todo:
+            one: "Cuentas: 1 en negativo (revisa su saldo de apertura)"
+            other: "Cuentas: %{count} en negativo (revisa sus saldos de apertura)"
     active_users:
       title: "Conectados"
       label:

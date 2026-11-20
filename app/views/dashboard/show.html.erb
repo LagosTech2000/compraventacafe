@@ -202,6 +202,11 @@
   </section>
 <% end %>
 
+<%# «¿Cuadra hoy?» (Fernando, 2026-11-18): for administrators. %>
+<% if Current.user.admin? %>
+  <%= render "dashboard/daily_check", check: DailyCheck.new %>
+<% end %>
+
 <%# Producers that stopped selling, by 7, 15 days or a month (Fernando,
     2026-11-13), loaded apart; a live refresh loads it again with its days. %>
 <% if policy(Producer).index? %>
