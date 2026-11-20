@@ -712,6 +712,17 @@ es:
       unknown: "No se reconoce esa huella. Prueba otro dedo o búscala por nombre."
       found: "Huella de %{name}."
       open: "Abrir su panel"
+  person_duplicates:
+    show:
+      title: "¿Ya está registrada? Se parece a:"
+      dni: "DNI %{dni}"
+      view: "Ver"
+      help: "Es solo un aviso. Si es la misma persona, búscala y úsala en vez de registrarla de nuevo."
+      reasons:
+        dni: "mismo DNI"
+        rtn: "mismo RTN"
+        phone: "mismo teléfono"
+        name: "mismos nombres"
   person_panels:
     show:
       dni: "DNI %{dni}"
@@ -6350,6 +6361,15 @@ es:
             - "Toca tu nombre para abrir «Mi configuración»: ventanas o panel lateral, y el menú arriba o a la izquierda."
           tips:
             - "Si no ves ningún módulo, pídele a un administrador que te asigne permisos."
+      person_duplicates:
+        show:
+          title: "Personas parecidas"
+          summary: "Mientras escribes una persona, el sistema avisa quién ya está registrado con el mismo DNI, RTN o teléfono, o con los mismos nombres."
+          steps:
+            - "Escribe los nombres, los apellidos, el DNI o el teléfono: el aviso sale debajo de los campos."
+            - "Si es la misma persona, no la registres de nuevo: búscala y úsala. Si ya se registró dos veces, un administrador la fusiona en Administración → Fusionar personas."
+          tips:
+            - "Es solo un aviso: dos personas pueden llamarse igual."
       person_panels:
         show:
           title: "Panel de la persona"

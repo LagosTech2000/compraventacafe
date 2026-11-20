@@ -340,6 +340,14 @@ persona** (validación + índice único parcial). Se aceptan con guiones o
 espacios y se guardan solo los dígitos. **Ninguno es obligatorio**
 [CONFIRMADO]: pueden quedar en blanco.
 
+**Personas parecidas** (Fernando, 2026-11-18: ya iban 24 fusiones y 20
+productores borrados): bajo los campos de toda persona
+(`shared/_person_fields`), mientras se escribe, sale quién ya está
+registrado con el mismo DNI, RTN o teléfono, o con todas las palabras de
+los nombres (`PersonDuplicates`, `person_duplicates#show` en su frame,
+`person_duplicates_controller.js`; para quien crea o edita Personas,
+Productores o Carreros, `PersonDuplicatePolicy`). Solo avisa.
+
 Los roles se asignan con casillas en el formulario de la persona. Las pantallas
 de personas, clientes y colaboradores viven en el módulo `administration` y usan
 sus permisos (`PersonPolicy`).

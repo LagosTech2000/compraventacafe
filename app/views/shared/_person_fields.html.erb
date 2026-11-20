@@ -1,6 +1,12 @@
 <%# Identity, contact, zone and address of a Person. `form` builds a Person.
     A zone created here (in a modal on top) is added and selected. %>
 <% person = form.object %>
+<%# Who is already registered like this one (Fernando, 2026-11-18): a notice while typing. %>
+<% duplicates = PersonDuplicatePolicy.new(Current.user, Person).show? %>
+<% if duplicates %>
+<div class="contents" data-controller="person-duplicates" data-action="input->person-duplicates#changed"
+     data-person-duplicates-url-value="<%= person_duplicates_path %>" data-person-duplicates-except-value="<%= person.id %>">
+<% end %>
 <%= render "shared/photo_field", form: form %>
 <div>
   <%= form.label :first_names, class: "field-label" %>
@@ -29,6 +35,10 @@
   <%= form.label :email, class: "field-label" %>
   <%= form.email_field :email, class: "field-input", **field_format_attributes(Person, :email, :email) %>
 </div>
+<% if duplicates %>
+  <%= turbo_frame_tag "person-duplicates", class: "col-span-full block", data: { person_duplicates_target: "frame" } %>
+</div>
+<% end %>
 <%# Optional; the private loan contract prints them (Fernando, 2026-10-22). %>
 <div>
   <%= form.label :civil_status, class: "field-label" %>

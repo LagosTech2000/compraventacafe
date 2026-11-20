@@ -1,0 +1,21 @@
+<%= turbo_frame_tag "person-duplicates" do %>
+  <% if @duplicates.any? %>
+    <div class="flash-alert text-sm" role="status" data-person-duplicates>
+      <p class="font-semibold"><%= t(".title") %></p>
+      <ul class="mt-1 space-y-1">
+        <% @duplicates.matches.each do |match| %>
+          <% person = match.person %>
+          <li id="<%= dom_id(person, :duplicate) %>">
+            <span class="font-medium"><%= person.full_name %></span>
+            <span class="text-ink-muted">· <%= [ (t(".dni", dni: person.dni) if person.dni), (format_phone(person.phone) if person.phone), person.zone&.name ].compact.join(" · ") %></span>
+            <span class="badge badge-neutral"><%= match.reasons.map { t(".reasons.#{it}") }.to_sentence %></span>
+            <% if policy(person).show? %>
+              <%= link_to t(".view"), administration_person_path(person), class: "link", target: "_blank", rel: "noopener" %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+      <p class="mt-1 text-xs"><%= t(".help") %></p>
+    </div>
+  <% end %>
+<% end %>

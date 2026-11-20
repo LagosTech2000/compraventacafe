@@ -27,6 +27,8 @@ Rails.application.routes.draw do
   # A person's panel, opened by putting a finger on the reader (Fernando,
   # 2026-11-14), and what a page needs to fill its fields with that person.
   resources :person_panels, only: :show, path: "people/panel"
+  # Who looks like the person being written (Fernando, 2026-11-18).
+  resource :person_duplicates, only: :show, path: "people/duplicates"
   resources :fingerprint_matches, only: :show, defaults: { format: :json }
   # The fingerprint bridge of a PC (tools/fingerprint_bridge): pairing with
   # a one-time code and the templates it identifies with.
