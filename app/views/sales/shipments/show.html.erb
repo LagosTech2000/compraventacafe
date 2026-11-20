@@ -43,6 +43,9 @@
     <%= render layout: "shared/lifecycle", locals: { lifecycle: SalesLifecycle.for_shipment(@shipment), scope: "sales.lifecycle", guide: :sales_flow } do %>
       <% if !@shipment.received? && policy(@shipment).receive? %>
         <%= modal_link_to t("sales.shipments.show.receive"), edit_sales_shipment_arrival_path(@shipment), class: "btn btn-primary" %>
+        <% if policy(Sale).create? %>
+          <%= modal_link_to t("sales.shipments.show.settle"), edit_sales_shipment_arrival_path(@shipment, open_settle: 1), class: "btn" %>
+        <% end %>
       <% elsif @shipment.received? && !@shipment.sold? && policy(Sale).create? %>
         <%= page_link_to t("sales.shipments.show.sell"), new_sales_sale_path(buyer_id: @shipment.buyer_id), class: "btn btn-primary" %>
       <% elsif @shipment.sold? %>

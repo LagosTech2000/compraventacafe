@@ -2737,6 +2737,7 @@ es:
         no_tolerance: "Sin tolerancia configurada: un administrador la define en Configuración del sitio."
         details: "Datos de la salida"
         reasons: "Motivos de las diferencias"
+        settle: "Liquidar salida"
         missing_reason: "Falta: pasa la tolerancia"
         write_reasons: "Anotar motivo"
         edit_reasons: "Cambiar motivos"
@@ -2763,12 +2764,19 @@ es:
         weighing: "Báscula del comprador"
         weighing_help: "Copia lo que dice la nota de peso del comprador. Empieza con los sacos, la humedad y el daño de la salida."
         reason_help: "La diferencia pasa la tolerancia: anota por qué (humedad, báscula, café que se quedó…). No impide guardar si la anotas."
+        settle: "Guardar y liquidar"
         calculation: "Cálculo en destino"
         difference: "Diferencia con la báscula local"
         origin_net: "Neto local: %{net} lb"
         submit: "Guardar peso en destino"
+      settle_fields:
+        title: "Liquidar: vender y cobrar con este peso"
+        help: "Opcional. Con «Guardar y liquidar» se guarda el peso en destino y se registra su venta (con la fecha de la nota de peso) y el cobro, todo junto. Con «Guardar peso en destino», la venta queda para después."
+        unit_price: "Precio (por quintal o por libra)"
+        payment: "Cobro"
       update:
         success: "Peso en destino de la remisión %{number} guardado."
+        settled: "Remisión %{number} liquidada: quedó en la venta %{sale}."
     sales:
       voided: "Anulada"
       price_unit_quintal: "Por quintal de %{pounds} lb"
@@ -7053,6 +7061,7 @@ es:
               - "Escribe la fecha y el número de la nota de peso."
               - "Copia el peso bruto, los sacos, la humedad y el daño (o el rendimiento) de la nota."
               - "Revisa la diferencia con la báscula local y guarda."
+              - "Para venderla de una vez, abre «Liquidar: vender y cobrar con este peso», escribe el precio y el cobro y toca «Guardar y liquidar»: el peso, la venta y el cobro se guardan juntos."
             tips:
               - "La venta se cobra con este peso."
               - "Si la diferencia pasa la tolerancia, el recuadro se marca en rojo y sale «Motivo de la diferencia con el comprador»: escríbelo para guardar."

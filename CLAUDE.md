@@ -1763,6 +1763,14 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   Salidas, no anulada; **también pesada o vendida**, como las
   observaciones). Los motivos salen en el detalle y en el cuadre del día
   (`Shipment#missing_reasons`).
+- **«Liquidar salida»** (Fernando, 2026-11-18: cada venta lleva una sola
+  salida): en el peso en destino (`sales/arrivals`, sección «Liquidar:
+  vender y cobrar con este peso», `_settle_fields`,
+  `arrival_sale_controller.js` con el total al escribir) y en el detalle
+  («Liquidar salida», `open_settle`), para quien puede vender. «Guardar y
+  liquidar» (`settle_now`) guarda el peso, la venta con la fecha de la
+  nota de peso y su cobro, juntos o nada (`ArrivalsController#save_and_sell`,
+  `SaleIssuer`). La foto de la nota de peso sigue pendiente.
 - **Venta** (`Sale`, `SaleIssuer`, como «Facturar compras»): **salida
   primero, venta después**: agrupa salidas **del mismo comprador** ya
   pesadas en destino y libres (líneas `SaleLine`, con sus pesos y monto;

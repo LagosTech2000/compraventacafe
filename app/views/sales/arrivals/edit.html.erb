@@ -35,6 +35,9 @@
         </div>
         <%= render "sales/shipments/weighing_fields", form:, shipment: @shipment, side: "destination" %>
       </section>
+      <% if policy(Sale).create? %>
+        <%= render "sales/arrivals/settle_fields", shipment: @shipment %>
+      <% end %>
     </div>
 
     <aside class="space-y-4 @5xl:sticky @5xl:top-24">
@@ -56,6 +59,9 @@
       </div>
       <div class="flex flex-wrap gap-3">
         <%= form.submit t(".submit"), class: "btn btn-primary" %>
+        <% if policy(Sale).create? %>
+          <%= form.button t(".settle"), name: "settle_now", value: "1", class: "btn btn-primary", data: { settle_button: true } %>
+        <% end %>
         <%= cancel_button sales_shipment_path(@shipment) %>
       </div>
     </aside>
