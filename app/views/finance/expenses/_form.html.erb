@@ -73,7 +73,8 @@
     </div>
     <div>
       <%= form.label :receipt_upload, class: "field-label" %>
-      <%= form.file_field :receipt_upload, accept: ExpenseReceipt::SIGNATURES.keys.join(","), class: "field-input py-2" %>
+      <%= form.file_field :receipt_upload, accept: ExpenseReceipt::SIGNATURES.keys.join(","), class: "field-input py-2",
+            data: { controller: "receipt-input", action: "change->receipt-input#change" } %>
       <p class="mt-1 text-xs text-ink-muted"><%= t("finance.expenses.form.receipt_help", size: number_to_human_size(ExpenseReceipt::MAX_SIZE)) %></p>
       <% if expense.receipt_info %>
         <label class="mt-2 flex items-center gap-2 text-sm">

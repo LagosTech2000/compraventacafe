@@ -211,6 +211,9 @@ Rails.application.routes.draw do
     resources :investments, controller: "expenses", defaults: { kind: "investment" }
     # The receipt's photo or PDF of an expense.
     resources :expense_receipts, only: :show
+    # Before :money_accounts, so «opening» is not taken for an id.
+    # The opening balances, guided (Fernando, 2026-11-18).
+    resources :opening_balances, only: %i[ index update ], path: "money_accounts/opening"
     resources :money_accounts, except: :destroy
     resources :account_transfers, only: %i[ new create destroy ]
     resources :other_incomes, only: %i[ new create destroy ]

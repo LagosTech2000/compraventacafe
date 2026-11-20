@@ -1962,6 +1962,18 @@ salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
   `HasMoneyAccount`); `money_account_controller.js` sugiere la de la forma
   de pago hasta que el usuario elige otra. Lo viejo queda «sin cuenta» y
   se muestra aparte. Los recibos dicen la cuenta.
+- **Saldos de apertura** (Fernando, 2026-11-18: las cuentas estaban en
+  negativo sin su saldo inicial): Cuentas → «Saldos de apertura»
+  (`finance/opening_balances`, pide editar en Cuentas). Por cuenta activa,
+  día por día de todas las fuentes de `AccountBalance`
+  (`OpeningBalanceCheck`): saldo de apertura, primer movimiento, saldo más
+  bajo y desde cuándo quedó en negativo, el **mínimo** de apertura para
+  que nunca lo esté y si hay movimientos antes de la fecha de apertura; ahí
+  mismo se escribe la fecha y lo que había de verdad.
+- **Foto del comprobante con el celular** (Fernando, 2026-11-18): en
+  gastos, gastos de salida y entradas de insumos, una foto se achica en el
+  navegador a JPEG de 1600 px antes de enviarse
+  (`receipt_input_controller.js`), así cabe en el límite de 1 MB.
 - **Libro único** (`MoneyMovements`, «Movimientos»): todo lo que entra y
   sale de todos los módulos, **sin duplicar** (cada cosa se registra donde
   ocurre). Cada quien ve las fuentes de los módulos que puede ver. Las

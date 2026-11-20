@@ -3758,6 +3758,26 @@ es:
         no_receipt: "Sin comprobante adjunto."
     expense_receipts:
       audit_label: "Comprobante de %{expense}"
+    opening_balances:
+      index:
+        title: "Saldos de apertura"
+        help: "Lo que había en cada cuenta el día en que empezó a usarse el sistema. Sin él, una cuenta queda en negativo. Escribe lo que había de verdad ese día (el estado del banco o lo contado en caja)."
+        back: "Volver a cuentas"
+        negative:
+          one: "Una cuenta llega a quedar en negativo: falta su saldo de apertura o está corto."
+          other: "%{count} cuentas llegan a quedar en negativo: falta su saldo de apertura o está corto."
+        balance: "Saldo hoy: %{amount}"
+        opening: "Saldo de apertura"
+        first_movement: "Primer movimiento"
+        no_movements: "Sin movimientos"
+        lowest: "Saldo más bajo"
+        negative_since: "En negativo desde"
+        never: "Nunca"
+        suggestion: "Para que nunca quede en negativo, el saldo al %{date} debe ser de al menos %{amount}."
+        before_opening: "Tiene movimientos desde el %{date}, antes de su fecha de apertura: la fecha de apertura va en ese día o antes."
+        save: "Guardar"
+      update:
+        success: "Saldo de apertura de %{name} guardado."
     money_accounts:
       form:
         name_placeholder: "Por ejemplo: Caja de la bodega, Banco Atlántida"
@@ -3768,6 +3788,7 @@ es:
         bank_name: "Nombre del banco"
         bank_name_placeholder: "Por ejemplo: Banpaís, Davivienda, Lafise"
       index:
+        opening_balances: "Saldos de apertura"
         title: "Cuentas"
         help: "La caja y los bancos del negocio, con su saldo de hoy."
         new: "Nueva cuenta"
@@ -7792,6 +7813,17 @@ es:
             summary: "La foto o el PDF del comprobante de un gasto."
             steps:
               - "Se abre en el navegador; desde ahí se puede guardar o imprimir."
+        opening_balances:
+          index:
+            title: "Saldos de apertura"
+            summary: "Lo que había en cada cuenta cuando empezó a usarse el sistema, para que ninguna quede en negativo."
+            steps:
+              - "Cada cuenta dice su saldo de apertura, su primer movimiento, su saldo más bajo y desde cuándo quedó en negativo."
+              - "Si llega a quedar en negativo, dice cuánto debe ser como mínimo el saldo de apertura."
+              - "Escribe la fecha y lo que había de verdad ese día (el estado del banco o lo contado en caja) y toca «Guardar»."
+            tips:
+              - "La fecha de apertura va el día del primer movimiento o antes."
+              - "Cambiar el saldo de apertura cambia el saldo de la cuenta en todas las fechas."
         money_accounts:
           index:
             title: "Cuentas"
