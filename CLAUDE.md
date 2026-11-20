@@ -1975,6 +1975,11 @@ salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
   (validación + índice único parcial) y Nuevo préstamo y el abono a
   préstamo empiezan con ella (`MoneyAccount.for_loans`; cambiar la forma
   de pago no la mueve). Sin ella, el préstamo sigue con la de efectivo.
+  **Los abonos con café entran a ella** (Fernando, 2026-11-20, también
+  los de antes, migración `PutCoffeeLoanPaymentsInLoansAccount`):
+  `LoanPayment::IN_ACCOUNT`, en saldo, Movimientos, Ingresos y el cierre
+  de préstamos; los de planilla siguen sin cuenta. **No se desactiva**
+  mientras sea la de préstamos.
   Saldo = inicial + entradas − salidas (`AccountBalance`, sumas en SQL de
   todas las fuentes). Se desactivan; no se borran. Estado de cuenta
   imprimible con el saldo después de cada movimiento. **La lista son
@@ -2461,8 +2466,8 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
   propuesto, CONFIRMADO por Fernando el 2026-10-25]: desde el detalle de una compra se
   abonan o saldan los préstamos de la persona del productor
   (`PurchaseLoanSettlement`, pantalla `trading/loan_settlements`). Reglas:
-  - Cada abono es un `LoanPayment` normal con forma de pago "Con café" y
-    `purchase_id`: paga interés primero y luego capital, y salda el préstamo
+  - Cada abono es un `LoanPayment` normal con forma de pago "Con café",
+    `purchase_id` y la cuenta de préstamos (suma a su saldo): paga interés primero y luego capital, y salda el préstamo
     si cubre todo a esa fecha. Fecha del abono: hoy por defecto, editable.
   - La suma de abonos de una compra no pasa del total de la compra. Se puede
     abonar mientras la compra no esté anulada ni su factura pagada.

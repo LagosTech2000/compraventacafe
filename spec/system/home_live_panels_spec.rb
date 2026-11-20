@@ -64,7 +64,7 @@ RSpec.describe "Home page panels", type: :system do
     within("dialog[open]") do
       expect(page).to have_css("h1", text: "Tareas pendientes")
       expect(page).to have_css("#pending-unpaid_invoices", text: "Factura 0001")
-      click_link "Registrar abono"
+      click_link "Registrar pago/abono"
     end
     expect(page).to have_css("dialog[open]", count: 2)
     within(all("dialog[open]").last) { click_button "Atrás" }

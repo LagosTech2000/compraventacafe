@@ -115,7 +115,7 @@ RSpec.describe "Finance screens", type: :system do
   it "suggests the account when paying an invoice" do
     invoice = create(:invoice)
     visit trading_invoice_path(invoice)
-    click_link "Registrar abono"
+    click_link "Registrar pago/abono"
     select "Transferencia", from: "invoice_payment_payment_method"
     expect(page).to have_select("invoice_payment_money_account_id", selected: "Banco Atlántida")
   end
