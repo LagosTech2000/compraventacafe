@@ -86,6 +86,8 @@ class CoffeeConversion < ApplicationRecord
   validate :keeps_its_lots, if: -> { persisted? && (will_save_change_to_output_gross_weight? || will_save_change_to_output_net_weight? || will_save_change_to_output_warehouse_id?) }
   validate :warehouses_active
   validate :coffee_in_stock, on: :create
+  # After the first count, never more than there is (Fernando, 2026-11-18).
+  validate :within_stock, if: -> { new_record? || will_save_change_to_input_net_weight? || will_save_change_to_weighed_at? || will_save_change_to_warehouse_id? }
   validate :batches_fit, on: :create
   after_create :take_batches, if: -> { @batch_ids }
 
@@ -336,6 +338,11 @@ class CoffeeConversion < ApplicationRecord
     # With no coffee of that state in the warehouse, nothing goes to be
     # processed (client, 2026-10-30). Weighing more than there is still
     # only warns (Fernando, 2026-10-25).
+    def within_stock
+      before = [ weighed_at_in_database, input_net_weight_in_database ] if persisted? && voided_at.nil?
+      StockGuard.check(self, coffee_state: from_state, warehouse:, at: weighed_at, net: input_net_weight, before:)
+    end
+
     def coffee_in_stock
       return unless warehouse && from_state.in?(NEXT_STATE.keys) && weighed_at
 

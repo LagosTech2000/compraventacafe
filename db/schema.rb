@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_17_024718) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_19_180000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -1172,6 +1172,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_024718) do
     t.string "phone"
     t.string "secondary_phone"
     t.date "supply_stock_starts_on"
+    t.decimal "count_admin_percent", precision: 5, scale: 2, default: "2.0", null: false
   end
 
   create_table "staff_advances", force: :cascade do |t|
@@ -1269,6 +1270,34 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_024718) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index "lower((name)::text)", name: "index_staff_roles_on_lower_name", unique: true
+  end
+
+  create_table "stock_counts", force: :cascade do |t|
+    t.integer "number", null: false
+    t.bigint "warehouse_id", null: false
+    t.string "coffee_state", null: false
+    t.datetime "counted_at", null: false
+    t.decimal "counted_gross", precision: 12, scale: 2, null: false
+    t.integer "counted_sacks"
+    t.decimal "system_gross", precision: 12, scale: 2, null: false
+    t.decimal "system_net", precision: 12, scale: 2, null: false
+    t.decimal "gross_weight", precision: 12, scale: 2, null: false
+    t.decimal "net_weight", precision: 12, scale: 2, null: false
+    t.string "reason"
+    t.string "reason_detail"
+    t.text "observations"
+    t.bigint "created_by_id", null: false
+    t.datetime "voided_at"
+    t.bigint "voided_by_id"
+    t.string "void_reason"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["counted_at"], name: "index_stock_counts_on_counted_at"
+    t.index ["created_by_id"], name: "index_stock_counts_on_created_by_id"
+    t.index ["number"], name: "index_stock_counts_on_number", unique: true
+    t.index ["voided_by_id"], name: "index_stock_counts_on_voided_by_id"
+    t.index ["warehouse_id", "coffee_state", "counted_at"], name: "idx_on_warehouse_id_coffee_state_counted_at_63941e010e"
+    t.index ["warehouse_id"], name: "index_stock_counts_on_warehouse_id"
   end
 
   create_table "supplies", force: :cascade do |t|
@@ -1591,6 +1620,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_024718) do
   add_foreign_key "staff_payments", "staff_members"
   add_foreign_key "staff_payments", "staff_roles"
   add_foreign_key "staff_payments", "users", column: "created_by_id"
+  add_foreign_key "stock_counts", "users", column: "created_by_id"
+  add_foreign_key "stock_counts", "users", column: "voided_by_id"
+  add_foreign_key "stock_counts", "warehouses"
   add_foreign_key "supply_entries", "expenses"
   add_foreign_key "supply_entries", "users", column: "created_by_id"
   add_foreign_key "supply_entry_lines", "supplies"

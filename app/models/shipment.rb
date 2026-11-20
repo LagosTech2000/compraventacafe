@@ -90,6 +90,8 @@ class Shipment < ApplicationRecord
   validate :received_after_departure
   validate :buyer_active, if: :will_save_change_to_buyer_id?
   validate :closed_once_weighed, on: :update
+  # After the first count, never more than there is (Fernando, 2026-11-18).
+  validate :within_stock, if: :takes_other_coffee?
 
   # First: by weighings, the local gross weight and sacks come from them.
   before_validation { self.warehouse ||= Warehouse.main! if new_record? }
@@ -412,6 +414,22 @@ class Shipment < ApplicationRecord
       free += %w[trip_price voided_at voided_by_id] unless sold?
       free += ORIGIN_COLUMNS + %w[origin_weight_mode] if origin_net_weight_in_database.nil?
       errors.add(:base, sold? ? :sold : :received, sale: sale&.display_number) if (changed - free).any?
+    end
+
+    def takes_other_coffee?
+      return false if voided_at
+      return true if new_record? || @batch_ids
+
+      %w[origin_net_weight departed_at coffee_state warehouse_id].any? { will_save_change_to_attribute?(it) }
+    end
+
+    # What it takes: its lots' net (the ones the form chose, or its own), or
+    # its local net without lots.
+    def within_stock
+      ids = @batch_ids || (persisted? ? coffee_batches.ids : [])
+      net = ids.any? ? CoffeeBatch::Totals.by_batch(ids).values.sum(0.to_d, &:net) : origin_net_weight.to_d
+      before = (Shipment.stock_weights([ id ])[id]&.first.then { [ departed_at_in_database, it ] } if persisted?)
+      StockGuard.check(self, coffee_state:, warehouse:, at: departed_at, net:, before:)
     end
 
     def skipping_origin? = ActiveModel::Type::Boolean.new.cast(skip_origin) && origin_skippable.present?

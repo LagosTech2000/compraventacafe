@@ -6,8 +6,9 @@
 # at the warehouse's net/gross proportion of that state that day, kept so
 # the kardex does not change afterwards.
 #
-# Taking more than the warehouse has warns, it does not stop it (as the
-# shipments). Voided, never deleted: the coffee goes back.
+# Taking more than the warehouse has warns; once that state and warehouse
+# were counted, it does not save (StockGuard, Fernando, 2026-11-18).
+# Voided, never deleted: the coffee goes back.
 class WarehouseTransfer < ApplicationRecord
   include Auditable
   include OwnedRecord
@@ -31,6 +32,7 @@ class WarehouseTransfer < ApplicationRecord
   validates :observations, length: { maximum: 500 }
   validate :different_warehouses
   validate :warehouses_active, on: :create
+  validate :within_stock, on: :create
 
   before_validation :weigh, if: -> { new_record? || will_save_change_to_gross_weight? || will_save_change_to_transferred_at? }
   before_create :assign_number
@@ -65,6 +67,10 @@ class WarehouseTransfer < ApplicationRecord
 
       ratio = self.class.ratio_for(coffee_state, from_warehouse, transferred_at.to_date)
       self.net_weight = (gross_weight * ratio).round(2)
+    end
+
+    def within_stock
+      StockGuard.check(self, coffee_state:, warehouse: from_warehouse, at: transferred_at, net: net_weight)
     end
 
     def different_warehouses

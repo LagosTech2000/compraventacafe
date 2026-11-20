@@ -40,6 +40,8 @@ RSpec.describe "Sorting every list" do
     create(:coffee_conversion, :finished)
     create(:purchase, purchased_at: 20.days.ago) # a producer that stopped selling
     create(:coffee_batch)
+    # Last: from a count on, nothing takes more than there is.
+    create(:stock_count, created_by: admin, reason: "initial_count")
     sign_in admin
   end
 
@@ -81,6 +83,7 @@ RSpec.describe "Sorting every list" do
     WarehouseFilter => -> { sales_warehouses_path },
     ProcessingSiteFilter => -> { sales_processing_sites_path },
     WarehouseTransferFilter => -> { sales_warehouse_transfers_path },
+    StockCountFilter => -> { sales_stock_counts_path },
     StaffRoleFilter => -> { finance_staff_roles_path },
     ExpenseFilter => -> { finance_expenses_path(from: "", to: "") },
     FinanceCategoryFilter => -> { finance_categories_path },

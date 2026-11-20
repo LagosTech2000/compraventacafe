@@ -1792,6 +1792,90 @@ es:
         success: "Bodega actualizada."
       destroy:
         success: "Bodega «%{name}» borrada."
+    stock_counts:
+      label: "Conteo %{number}"
+      voided: "Anulado"
+      no_difference: "Sin diferencia"
+      table:
+        counted_line: "Contadas %{counted} lb brutas · ajuste %{adjustment}"
+      index:
+        title: "Conteos de bodega"
+        help: "Lo que se contó en cada bodega contra lo que decía el sistema, con el ajuste que dejó el inventario como se contó."
+        new: "Contar bodega"
+        show: "Mostrar"
+        active: "Vigentes"
+        voided: "Anulados"
+        empty: "No hay conteos con esos filtros."
+      new:
+        title: "Contar bodega"
+        help: "Pesa el café de un estado en una bodega y escribe las libras brutas que hay. El sistema ajusta el inventario a lo que contaste."
+        counted_help: "Todo el café de ese estado en esa bodega, en libras brutas."
+        pick_reason: "Selecciona el motivo"
+        reason_help: "Obligatorio si hay diferencia."
+        system: "El sistema dice ahora"
+        system_line: "%{gross} lb brutas · %{net} netas"
+        adjustment: "Ajuste"
+        gross_line: "%{pounds} lb brutas"
+        net_line: "%{pounds} lb netas"
+        how: "Si contaste menos, la diferencia sale de los lotes más viejos y su valor es merma. Si contaste más, entra como un lote sin costo. Desde el primer conteo, ese café ya no puede salir de más."
+        over_share: "Es un ajuste de más del %{percent} % de lo que dice el sistema: solo un administrador lo registra."
+        submit: "Guardar conteo"
+      create:
+        success: "Conteo %{number} registrado: el inventario quedó como se contó."
+      show:
+        system: "El sistema decía"
+        adjustment: "Ajuste"
+        adjustment_gross: "%{pounds} lb brutas"
+        adjustment_net: "%{pounds} lb netas"
+        percent: "%{percent} % de lo que decía el sistema"
+        sacks:
+          one: "1 saco"
+          other: "%{count} sacos"
+        loss: "Faltaba café: la merma vale %{amount} (lo que costó ese café, de los lotes más viejos)."
+        surplus: "Sobraba café: entró como un lote sin costo."
+        matches: "El conteo coincidió con el sistema: no hubo ajuste."
+        lots: "Lotes de donde salió la diferencia"
+        voided: "Anulado el %{date} por %{name}. Motivo: %{reason}"
+        void: "Anular conteo"
+        void_help: "Solo administradores. El ajuste se quita y el inventario vuelve a lo que decía el sistema."
+        void_blocked: "Ya se hizo el conteo %{number} sobre este: anula ese primero."
+        confirm_void: "¿Anular este conteo? Su ajuste se quita del inventario."
+      void:
+        success: "Conteo anulado: su ajuste se quitó del inventario."
+    stock_reconciliations:
+      show:
+        title: "Cuadre del día"
+        help: "Lo que había al empezar el día, lo que entró y salió y lo que quedó, contra el conteo físico; y cada salida del día contra sus compras y el comprador."
+        count: "Contar bodega"
+        previous: "← Día anterior"
+        next: "Día siguiente →"
+        date: "Fecha"
+        states:
+          title: "Por estado del café"
+          help: "Al empezar + lo que entró − lo que salió ± ajustes = al cerrar. Libras brutas arriba y netas abajo."
+          empty: "Ese día no hubo café ni movimientos."
+          opening: "Al empezar"
+          closing: "Al cerrar"
+          count: "Conteo físico"
+          net: "%{pounds} netas"
+          counted: "Conteo %{number} · %{warehouse}: %{counted} lb brutas (ajuste %{difference})"
+          not_counted: "Sin conteo ese día"
+          signs: "Positivo: entró café. Negativo: salió."
+        shipments:
+          title: "Por salida"
+          help: "Cada salida del día: lo que dicen las compras de sus lotes, lo que pesó la báscula local y lo que pesó el comprador."
+          empty: "Ese día no salió ningún vehículo."
+          shipment: "Salida"
+          lots: "Compras de sus lotes"
+          origin: "Báscula local"
+          shrink: "Compras → báscula local"
+          destination: "Báscula del comprador"
+          buyer_difference: "Báscula local → comprador"
+          no_lots: "Sin lotes"
+          in_transit: "En camino"
+          value: "%{amount} en café"
+          at_sale: "%{amount} al precio de la venta %{sale}"
+          signs: "Negativo: se perdió peso. Positivo: pesó más. La diferencia contra el comprador se resalta si pasa la tolerancia."
     warehouse_transfers:
       voided: "Anulado"
       index:
@@ -1808,7 +1892,7 @@ es:
         available: "En la bodega de salida hay (brutas)"
         net_preview: "Libras netas que se trasladan"
         oldest_first: "Salen primero los lotes más viejos de ese café en la bodega de salida, y cada uno conserva su fecha."
-        over_stock: "Es más de lo que hay de ese café en la bodega de salida. Se puede guardar igual."
+        over_stock: "Es más de lo que hay de ese café en la bodega de salida. Sin conteo de esa bodega se puede guardar; después del primer conteo, no."
         submit: "Trasladar"
       create:
         success: "Traslado %{number} registrado."
@@ -1831,6 +1915,7 @@ es:
         status: "Marcas"
         taken: "Libras brutas / netas"
       purchase: "Compra de %{producer}"
+      count: "Sobrante del conteo %{number} (sin costo)"
       conversion: "Proceso %{number} (de %{from})"
       transferred: "Llegó con el traslado %{number}"
       shortfall: "Sin lote: salió más café del que había registrado"
@@ -1876,6 +1961,7 @@ es:
             processes_out: "Café que se mandó a procesar"
             transfers_in: "Traslados que entraron a la bodega"
             transfers_out: "Traslados que salieron de la bodega"
+            counts: "Ajustes por conteo físico"
         purchases:
           title: "Las compras"
           tare: "Tara: %{pounds} lb · efecto %{effect} lb"
@@ -3046,13 +3132,16 @@ es:
       show:
         title: "Inventario"
         ledger: "Movimientos del inventario"
-        ledger_help: "Cada compra que entró, cada salida que se fue, cada proceso y, al elegir una bodega, cada traslado, con el saldo después de cada uno."
+        ledger_help: "Cada compra que entró, cada salida que se fue, cada proceso, cada ajuste por conteo y, al elegir una bodega, cada traslado, con el saldo después de cada uno."
         balance: "Saldo (lb netas)"
         balance_gross: "%{gross} lb brutas"
         card_line: "%{gross} lb brutas · %{net} lb netas · %{quintals} QQ de compra"
         convert: "Procesar café"
         transfer: "Trasladar café"
         warehouses: "Bodegas"
+        new_count: "Contar bodega"
+        counts: "Conteos"
+        reconciliation: "Cuadre del día"
         empty: "No hay movimientos en estas fechas."
         count:
           zero: "Ningún movimiento"
@@ -3077,6 +3166,7 @@ es:
           conversion_in: "De proceso"
           transfer_in: "Llegó por traslado"
           transfer_out: "Salió por traslado"
+          adjustment: "Ajuste por conteo"
     daily_closes:
       show:
         title: "Cierre de comercialización del %{date}"
@@ -5413,11 +5503,13 @@ es:
         shipment: "Remisión %{number} · %{name}"
         conversion_out: "Proceso %{number} · %{from} → %{to}"
         conversion_in: "Proceso %{number} · %{from} → %{to}"
+        adjustment: "Conteo %{number} · %{warehouse}"
         kinds:
           purchase: "Compra"
           shipment: "Salida"
           conversion_out: "A proceso"
           conversion_in: "De proceso"
+          adjustment: "Ajuste por conteo"
         columns:
           at: "Fecha"
           kind: "Movimiento"
@@ -7278,6 +7370,44 @@ es:
               - "Marca sus procesos: de uva a pergamino húmedo, de húmedo a seco, o los dos. Solo sale en la lista de los procesos marcados."
             tips:
               - "Uno con procesos no se borra: se desactiva y deja de salir en los procesos nuevos."
+        stock_counts:
+          index:
+            title: "Conteos de bodega"
+            summary: "Cada conteo físico de café con lo que decía el sistema y el ajuste que hizo."
+            steps:
+              - "Filtra por fechas, bodega o estado del café."
+              - "Toca un conteo para ver su ajuste, su motivo y de qué lotes salió la diferencia."
+              - "Toca «Contar bodega» para registrar uno."
+          show:
+            title: "Detalle del conteo"
+            summary: "Lo que se contó, lo que decía el sistema y el ajuste que dejó el inventario como se contó."
+            steps:
+              - "Si faltaba café, la diferencia salió de los lotes más viejos y su valor es la merma en lempiras."
+              - "Si sobraba, entró como un lote sin costo."
+            tips:
+              - "Un conteo no se edita. Un administrador lo anula con motivo, si no hay un conteo posterior de ese café en esa bodega."
+          form:
+            title: "Contar bodega"
+            summary: "Registrar lo que hay de verdad en una bodega."
+            steps:
+              - "Pesa todo el café de un estado en una bodega."
+              - "Elige la bodega, el estado del café y la hora del conteo, y escribe las libras brutas que hay (y los sacos, si los contaste)."
+              - "A la derecha sale lo que dice el sistema y el ajuste. Si hay diferencia, elige el motivo."
+              - "Toca «Guardar conteo»: el inventario queda como lo contaste."
+            tips:
+              - "Un ajuste grande (más del porcentaje de Configuración del sitio, 2 % al inicio) solo lo registra un administrador."
+              - "Desde el primer conteo de un café en una bodega, ninguna salida, proceso o traslado puede sacar más de lo que hay."
+        stock_reconciliations:
+          show:
+            title: "Cuadre del día"
+            summary: "Las cuentas del café de un día, como se hacen a mano: lo que había, lo que entró y salió, lo que quedó y el conteo; y cada salida contra sus compras y el comprador."
+            steps:
+              - "Elige el día (o usa «Día anterior» y «Día siguiente») y, si quieres, una bodega."
+              - "«Por estado del café»: al empezar, compras, procesos, salidas, traslados y ajustes, al cerrar y el conteo físico de ese día."
+              - "«Por salida»: lo que dicen las compras de sus lotes, la báscula local y la del comprador, con las diferencias en libras, % y lempiras."
+            tips:
+              - "Si no hay conteo ese día, «Contar bodega» registra uno."
+              - "Los traslados solo salen al elegir una bodega: entre bodegas, el café sigue en el negocio."
         warehouse_transfers:
           index:
             title: "Traslados entre bodegas"
@@ -7299,7 +7429,7 @@ es:
               - "Elige la bodega de donde sale y a la que entra, y el estado del café."
               - "Escribe las libras brutas que se trasladan; a la derecha se ven las netas que equivalen en esa bodega."
             tips:
-              - "Si es más de lo que hay en la bodega de salida, el sistema avisa pero deja guardar."
+              - "Si es más de lo que hay en la bodega de salida, el sistema avisa; después del primer conteo de ese café en esa bodega, no deja guardar."
         stock_checks:
           show:
             title: "Netas revisadas"
@@ -8413,6 +8543,7 @@ es:
         rtn_help: "Opcional. El RTN del negocio, que sale en las facturas debajo del nombre y la ubicación."
         owner_help: "Opcional. Sale en la remisión de las salidas («De: …» y «Enviadas por»)."
         phones_help: "Opcionales. Salen en la remisión de las salidas."
+        count_admin_percent_help: "Un conteo de bodega cuyo ajuste pasa este porcentaje de lo que dice el sistema solo lo registra un administrador. Empieza en 2 %."
         weight_tolerance_help: "Opcional. En Comercialización, una salida cuya báscula del comprador difiere de la local en más de este porcentaje (más o menos) sale resaltada. Vacía, no se resalta ninguna."
         cherry_alert: "Alerta de uva sin procesar (horas)"
         cherry_alert_help: "Comercialización avisa cuando un lote de uva lleva en bodega más de estas horas sin procesar: primero un aviso y después, urgente."
@@ -8494,6 +8625,7 @@ es:
         coffee_batch_invoice: "la factura del lote"
         coffee_batch_conversion: "el proceso del lote"
         warehouse_transfer: "el traslado entre bodegas"
+        stock_count: "el conteo de bodega"
         carrier: "el transportista"
         vehicle: "el vehículo"
         vehicle_type: "el tipo de vehículo"
@@ -8935,6 +9067,9 @@ es:
       warehouse_transfer:
         one: "Traslado entre bodegas"
         other: "Traslados entre bodegas"
+      stock_count:
+        one: "Conteo de bodega"
+        other: "Conteos de bodega"
       private_document:
         one: "Documento privado"
         other: "Documentos privados"
@@ -9652,6 +9787,33 @@ es:
         main: "Bodega por defecto"
         observations: "Observaciones"
         active: "Activa"
+      stock_count:
+        number: "Número"
+        warehouse: "Bodega"
+        warehouse_id: "Bodega"
+        coffee_state: "Estado del café"
+        counted_at: "Fecha y hora del conteo"
+        counted_gross: "Libras brutas contadas"
+        counted_sacks: "Sacos contados (opcional)"
+        system_gross: "Libras brutas según el sistema"
+        system_net: "Libras netas según el sistema"
+        gross_weight: "Ajuste (lb brutas)"
+        net_weight: "Ajuste (lb netas)"
+        reason: "Motivo de la diferencia"
+        reason/drying: "Secado u oreo"
+        reason/scale_error: "Error de báscula"
+        reason/loss: "Pérdida"
+        reason/surplus: "Sobrante"
+        reason/initial_count: "Conteo inicial"
+        reason/other: "Otro"
+        reason_detail: "Detalle del motivo"
+        observations: "Observaciones"
+        created_by: "Contó"
+        created_by_id: "Contó"
+        voided_at: "Anulado el"
+        voided_by: "Anuló"
+        voided_by_id: "Anuló"
+        void_reason: "Motivo de la anulación"
       warehouse_transfer:
         number: "Número"
         transferred_at: "Fecha y hora"
@@ -10144,6 +10306,7 @@ es:
         logo_content_type: "Tipo de imagen del logo"
         logo_byte_size: "Tamaño del logo (bytes)"
         weight_tolerance_percent: "Tolerancia de diferencia de peso (%)"
+        count_admin_percent: "Ajuste por conteo que solo registra un administrador (más del %)"
         cherry_warning_hours: "Aviso después de (horas)"
         cherry_yield_percent: "Uva a pergamino húmedo (%)"
         drying_yield_percent: "Secado: húmedo a pergamino seco (%)"
@@ -10292,6 +10455,21 @@ es:
               not_weighed: "no puede ser «Que salió» hasta que se registre el resultado"
             description:
               blank: "es obligatorio cuando el concepto es «Otro»"
+        stock_count:
+          attributes:
+            base:
+              already_voided: "El conteo ya está anulado."
+              later_count: "Ya se hizo el conteo %{number} sobre este: anula ese primero."
+            counted_gross:
+              over_share: "da un ajuste de más del %{percent} % de lo que dice el sistema: solo un administrador lo registra"
+            counted_at:
+              before_last_count: "no puede ser antes del último conteo de ese café en esa bodega (%{date})"
+            reason:
+              blank: "es obligatorio cuando el conteo no coincide con el sistema"
+            reason_detail:
+              blank: "es obligatorio cuando el motivo es «Otro»"
+            warehouse:
+              inactive: "está desactivada: elige otra"
         warehouse_transfer:
           attributes:
             base:
@@ -10770,6 +10948,7 @@ es:
       email_format: "no es un correo válido"
       password_format: "debe tener al menos 8 caracteres"
       not_in_department: "no pertenece al departamento seleccionado"
+      over_stock: "Solo hay %{available} lb netas de %{state} en %{warehouse} y esto saca %{net}: no puede salir más de lo que hay. Si hay más café, registra la compra que falta o haz un conteo."
       in_future: "no puede ser una fecha futura: registra solo lo que ya pasó"
       coffee_after_shipment: "El %{batch} tiene café que entró el %{entered}, después de que salió la remisión %{number} (%{left}): un lote solo lleva café que ya estaba en la bodega."
       coffee_after_process: "El %{batch} tiene café que entró el %{entered}, después de que se pesó el proceso %{number} (%{left}): un lote solo lleva café que ya estaba en la bodega."

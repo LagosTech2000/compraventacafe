@@ -163,6 +163,11 @@ Rails.application.routes.draw do
       patch :void, on: :member
     end
     resource :stock, only: :show
+    # Physical counts with their adjustment, and the day's reconciliation (Fernando, 2026-11-18).
+    resources :stock_counts, path: "counts", only: %i[ index show new create ] do
+      patch :void, on: :member
+    end
+    resource :stock_reconciliation, path: "reconciliation", only: :show
     # Insumos (Fernando, 2026-11-12/13): the inventory (what came in, what the
     # loans took and what was delivered), each entry with its investment,
     # what is still to deliver and the catalog (from Préstamos).

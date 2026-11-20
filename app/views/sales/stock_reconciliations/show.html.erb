@@ -1,0 +1,144 @@
+<% content_for :title, t(".title") %>
+<%= live_updates_from :sales %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= render "sales/nav" %>
+<%= render "shared/breadcrumbs", crumbs: [ [ t("sales.nav.stock"), sales_stock_path ], [ t(".title") ] ] %>
+
+<div class="mb-4 flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <% if policy(StockCount).create? %>
+    <%= modal_link_to t(".count"), new_sales_stock_count_path(warehouse_id: @warehouse&.id), class: "btn btn-primary" %>
+  <% end %>
+</div>
+
+<%= turbo_frame_tag "reconciliation", class: "query-frame block", target: "_top", data: { turbo_action: "advance", controller: "frame-scroll" } do %>
+  <% recon = @reconciliation %>
+  <% day_path = ->(date, warehouse_id = @warehouse&.id) { sales_stock_reconciliation_path(date: date.iso8601, warehouse_id:) } %>
+  <div class="mb-4 flex flex-wrap items-center gap-2" data-reconciliation-day>
+    <%= link_to t(".previous"), day_path.call(@date - 1), class: "btn btn-sm", data: { turbo_frame: "reconciliation", turbo_action: "advance" } %>
+    <%= form_with url: sales_stock_reconciliation_path, method: :get, class: "flex items-center gap-2", data: { controller: "auto-submit", turbo_frame: "reconciliation", turbo_action: "advance" } do |form| %>
+      <%= form.hidden_field :warehouse_id, value: @warehouse&.id %>
+      <%= form.label :date, t(".date"), class: "sr-only" %>
+      <%= form.date_field :date, value: @date, max: latest_date, class: "field-input", data: { action: "change->auto-submit#submit" } %>
+    <% end %>
+    <% if @date < Time.zone.today %>
+      <%= link_to t(".next"), day_path.call(@date + 1), class: "btn btn-sm", data: { turbo_frame: "reconciliation", turbo_action: "advance" } %>
+    <% end %>
+    <span class="text-sm font-medium"><%= l(@date, format: :long) %></span>
+  </div>
+  <div class="mb-4"><%= warehouse_tabs(@warehouses, @warehouse, frame: "reconciliation") { |id| day_path.call(@date, id) } %></div>
+
+  <%# By coffee state: what there was, what came and went, what is left, and the count. %>
+  <% kinds = %w[purchase conversion_in conversion_out shipment] + (@warehouse ? %w[transfer_in transfer_out] : []) + %w[adjustment] %>
+  <% rows = recon.rows.reject(&:quiet?) %>
+  <section class="panel p-4" aria-labelledby="reconciliation-states">
+    <h2 id="reconciliation-states" class="font-semibold"><%= t(".states.title") %></h2>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".states.help") %></p>
+    <% if rows.empty? %>
+      <p class="empty-state mt-4"><%= t(".states.empty") %></p>
+    <% else %>
+      <div class="mt-3 overflow-x-auto">
+        <table class="data-table data-table-compact" data-controller="table-sort" id="reconciliation-table">
+          <thead>
+            <tr>
+              <th><%= Purchase.human_attribute_name(:coffee_state) %></th>
+              <th class="text-right"><%= t(".states.opening") %></th>
+              <% kinds.each do |kind| %><th class="text-right"><%= t("sales.stocks.show.kinds.#{kind}") %></th><% end %>
+              <th class="text-right"><%= t(".states.closing") %></th>
+              <th><%= t(".states.count") %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% rows.each do |row| %>
+              <tr id="reconciliation_<%= row.coffee_state %>">
+                <td class="font-medium"><%= row.human_coffee_state %></td>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= format_gross_net(row.opening_gross, row.opening_net) %></td>
+                <% kinds.each do |kind| %>
+                  <% gross, net = row.move(kind) %>
+                  <td class="whitespace-nowrap text-right tabular-nums <%= "text-ink-muted" if gross.zero? && net.zero? %>" data-move="<%= kind %>">
+                    <span class="block"><%= signed_pounds(gross) %></span><span class="block text-xs text-ink-muted"><%= t(".states.net", pounds: signed_pounds(net)) %></span>
+                  </td>
+                <% end %>
+                <td class="whitespace-nowrap text-right font-semibold tabular-nums"><%= format_gross_net(row.closing_gross, row.closing_net) %></td>
+                <td class="text-sm" data-counts>
+                  <% if row.counts.any? %>
+                    <% row.counts.each do |count| %>
+                      <%= modal_link_to sales_stock_count_path(count), class: "link block" do %>
+                        <%= t(".states.counted", number: count.display_number, warehouse: count.warehouse.name, counted: format_pounds(count.counted_gross),
+                                                 difference: signed_pounds(count.gross_weight)) %>
+                      <% end %>
+                    <% end %>
+                  <% else %>
+                    <span class="text-ink-muted"><%= t(".states.not_counted") %></span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-2 text-xs text-ink-muted"><%= t(".states.signs") %></p>
+    <% end %>
+  </section>
+
+  <%# By shipment: its purchases (lots), the local scale and the buyer's. %>
+  <section class="mt-6 panel p-4" aria-labelledby="reconciliation-shipments">
+    <h2 id="reconciliation-shipments" class="font-semibold"><%= t(".shipments.title") %></h2>
+    <p class="mt-1 text-sm text-ink-muted"><%= t(".shipments.help") %></p>
+    <% if recon.shipments.empty? %>
+      <p class="empty-state mt-4"><%= t(".shipments.empty") %></p>
+    <% else %>
+      <% tolerance = WeightTolerance.percent %>
+      <div class="mt-3 overflow-x-auto">
+        <table class="data-table data-table-compact" data-controller="table-sort" id="reconciliation-shipments-table">
+          <thead>
+            <tr>
+              <th><%= t(".shipments.shipment") %></th>
+              <th class="text-right"><%= t(".shipments.lots") %></th>
+              <th class="text-right"><%= t(".shipments.origin") %></th>
+              <th class="text-right"><%= t(".shipments.shrink") %></th>
+              <th class="text-right"><%= t(".shipments.destination") %></th>
+              <th class="text-right"><%= t(".shipments.buyer_difference") %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% recon.shipments.each do |row| %>
+              <% shipment = row.shipment %>
+              <tr id="<%= dom_id(shipment, :reconciliation) %>">
+                <td>
+                  <%= modal_link_to t("sales.shipments.show.title", number: shipment.display_number), sales_shipment_path(shipment), class: "link font-medium" %>
+                  <span class="block text-xs text-ink-muted"><%= shipment.buyer.name %> · <%= shipment.human_coffee_state %></span>
+                </td>
+                <td class="whitespace-nowrap text-right tabular-nums">
+                  <%= row.lots? ? format_gross_net(row.lots_gross, row.lots_net) : tag.span(t(".shipments.no_lots"), class: "text-ink-muted") %>
+                </td>
+                <td class="whitespace-nowrap text-right tabular-nums">
+                  <%= row.origin_net ? format_gross_net(row.origin_gross, row.origin_net) : tag.span(t("sales.difference.no_origin"), class: "text-ink-muted") %>
+                </td>
+                <td class="whitespace-nowrap text-right tabular-nums" data-shrink>
+                  <% if row.shrink_net %>
+                    <span class="block"><%= t(".states.net", pounds: signed_pounds(-row.shrink_net)) %><% if row.shrink_percent %> · <%= number_with_precision(-row.shrink_percent, precision: 2) %> %<% end %></span>
+                    <% if row.shrink_value %><span class="block text-xs <%= row.shrink_value.positive? ? "text-danger" : "text-ink-muted" %>"><%= t(".shipments.value", amount: format_money(row.shrink_value.abs)) %></span><% end %>
+                  <% else %>—<% end %>
+                </td>
+                <td class="whitespace-nowrap text-right tabular-nums">
+                  <%= row.destination_net ? t("shared.pounds.net", pounds: format_pounds(row.destination_net)) : tag.span(t(".shipments.in_transit"), class: "text-ink-muted") %>
+                </td>
+                <td class="whitespace-nowrap text-right tabular-nums <%= "text-danger" if tolerance && row.buyer_percent && row.buyer_percent.abs > tolerance %>" data-buyer-difference>
+                  <% if row.buyer_difference %>
+                    <span class="block"><%= t(".states.net", pounds: signed_pounds(row.buyer_difference)) %><% if row.buyer_percent %> · <%= number_with_precision(row.buyer_percent, precision: 2) %> %<% end %></span>
+                    <% if row.buyer_amount %><span class="block text-xs text-ink-muted"><%= t(".shipments.at_sale", amount: format_money(row.buyer_amount), sale: row.sale.display_number) %></span><% end %>
+                  <% else %>—<% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-2 text-xs text-ink-muted"><%= t(".shipments.signs") %></p>
+    <% end %>
+  </section>
+<% end %>

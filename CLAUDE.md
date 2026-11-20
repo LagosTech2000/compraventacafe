@@ -171,6 +171,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Precio por libra / por quintal / libras por quintal (120 por defecto) | `Sale#price_unit`: `pound` / `quintal`; `Sale#quintal_pounds` (`Sale::QUINTAL_POUNDS`) |
 | Tolerancia de diferencia de peso | `SiteSetting#weight_tolerance_percent` (`WeightTolerance`) |
 | Inventario / kárdex | `CoffeeStock` / `StockLedger` (`sales/stock#show`), reporte `CoffeeStockReport` |
+| Conteo de bodega / ajuste por conteo / cuadre del día / no sacar más de lo que hay | `StockCount` (`sales/stock_counts`; `gross_weight`/`net_weight` = el ajuste) / kind `adjustment` del kárdex / `StockReconciliation` (`sales/stock_reconciliation#show`) / `StockGuard` |
 | Bodega (por defecto) / traslado entre bodegas | `Warehouse` (`main`) / `WarehouseTransfer` (`sales/warehouse_transfers`) |
 | Lote (lo que queda de una compra o de un proceso) / detalle de un inventario | `CoffeeLots` (`Lot`, `Portion`) / `sales/stock_states#show` (`/sales/stock/:coffee_state`, `total` = todo) |
 | Valor del inventario (valor de compra + costos acumulados) | `CoffeeLots::Totals#value`, `#cost_per_pound` |
@@ -730,10 +731,12 @@ navegador puede revisar:
   en español qué hacer primero («Para corregirla, primero anula la
   venta»). Solo una tarea de Mantenimiento de datos pasa por encima
   (`Current.maintenance`).
-- Plan siguiente (decisiones de Fernando, 2026-11-18, por fases): bloquear
-  sacar más de lo que hay (tras el primer conteo), motivo cuando una
-  diferencia pasa la tolerancia, conteo físico con ajuste de inventario,
-  cuadre del día, flujos en un paso y cierre del día para todo el negocio.
+- **No sale más café del que hay, desde el primer conteo** de ese estado
+  en esa bodega (`StockGuard`, ver «Conteo de bodega»).
+- Plan siguiente (decisiones de Fernando, 2026-11-18, por fases): motivo
+  cuando una diferencia pasa la tolerancia (dos tolerancias en
+  Configuración del sitio: compras ↔ báscula local y báscula local ↔
+  comprador), flujos en un paso y cierre del día para todo el negocio.
 
 ## Comandos
 
@@ -1367,7 +1370,8 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   «Bodega 1» (migración `CreateWarehouses`); en una base nueva,
   `Warehouse.main!` crea «Bodega 1» con la primera compra. Decisiones de
   implementación, **pendientes de confirmar**: pasar de lo que hay en un
-  traslado avisa sin bloquear; una bodega usada se desactiva (no se
+  traslado avisa sin bloquear (hasta el primer conteo, ver «Conteo de
+  bodega»); una bodega usada se desactiva (no se
   borra) y solo sin café adentro y si no es la de por defecto.
 - **Lotes** (`CoffeeLots`, cliente, 2026-10-26) [CONFIRMADO: «se priorizan
   las compras más viejas»]: cada compra (y cada resultado de conversión)
@@ -1389,6 +1393,41 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   resultado de un proceso, los costos del café que entró más **sus gastos
   de procesamiento**. Combustible, personal y mantenimiento del vehículo
   fuera de un proceso esperan la pregunta 23.
+- **Conteo de bodega y ajuste** (`StockCount`, Inventario → «Contar
+  bodega» y «Conteos», `sales/stock_counts`, Fernando 2026-11-18: «me
+  interesa lo del ajuste de inventario»): bodega, estado del café, fecha y
+  hora, **libras brutas contadas**, sacos (opcional), motivo y
+  observaciones. Guarda lo que decía el sistema en ese momento
+  (`system_gross`, `system_net`; `CoffeeStock.new(at:)`) y el **ajuste**
+  que deja el inventario como se contó: brutas = contadas − sistema; netas
+  = contadas × la proporción neto/bruto del estado en esa bodega (o
+  `CoffeeConversion.ratio_for` sin inventario) − netas del sistema. El
+  formulario lo muestra al escribir (`count_preview_controller.js`). **El
+  ajuste entra a todo**: inventario (`CoffeeStock`, `net_by_warehouse`),
+  lotes (`CoffeeLots#count_events`), kárdex y reporte de inventario (kind
+  `adjustment`, «Ajuste por conteo»), netas revisadas (`StockCheck`,
+  parte `counts`) y el cuadre del día. Decisiones de implementación,
+  **pendientes de confirmar con el cliente** (Fernando: «toma las mejores
+  decisiones y luego el cliente decide»):
+  - Motivos: secado u oreo, error de báscula, pérdida, sobrante, conteo
+    inicial u otro (con detalle), obligatorio si hay diferencia.
+  - Un ajuste de más del `SiteSetting#count_admin_percent` (2 % al inicio)
+    de lo que dice el sistema solo lo registra un administrador.
+  - **Faltante: sale de los lotes más viejos** y su valor es merma en
+    lempiras (en su detalle); **sobrante: entra como lote sin costo**.
+  - No se edita; un administrador lo anula con motivo si no hay un conteo
+    posterior de ese estado y bodega. Un conteo va después del último.
+  - **Desde el primer conteo** de un estado en una bodega, una salida, un
+    proceso o un traslado que saca más de lo que hay (en ese momento y hoy,
+    en netas) **no se guarda** (`StockGuard`, Fernando: «después del primer
+    conteo»); antes, solo avisa como siempre.
+- **Cuadre del día** (`StockReconciliation`, Inventario → «Cuadre del
+  día», `sales/stock_reconciliation#show`, por día y bodega): por estado
+  del café, al empezar + compras + procesos − salidas ± traslados (con
+  bodega) ± ajustes = al cerrar, en brutas y netas, junto a los conteos
+  del día; y por salida del día, las compras de sus lotes, la báscula
+  local y la del comprador, con las diferencias en libras, % y lempiras
+  (la merma al costo de sus lotes; la del comprador al precio de su venta).
 - **Uva sin procesar** (`CherryAlert`, cliente, 2026-10-26) [CONFIRMADO]:
   un lote de uva que lleva **12 horas** sale con aviso y a las **24**,
   urgente; las dos horas se cambian en Configuración del sitio. Sale en el

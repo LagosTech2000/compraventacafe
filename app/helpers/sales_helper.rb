@@ -45,6 +45,7 @@ module SalesHelper
     when "purchase" then (trading_purchase_path(entry.record) if policy(Purchase).show?)
     when "shipment" then sales_shipment_path(entry.record)
     when "transfer_in", "transfer_out" then sales_warehouse_transfer_path(entry.record)
+    when "adjustment" then sales_stock_count_path(entry.record)
     else sales_coffee_conversion_path(entry.record)
     end
   end

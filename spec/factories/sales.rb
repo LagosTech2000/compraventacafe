@@ -105,6 +105,16 @@ FactoryBot.define do
     gross_weight { 100 }
   end
 
+  # A physical count of wet parchment in the default warehouse: what the
+  # system says, unless told otherwise (no adjustment, no reason needed).
+  factory :stock_count do
+    warehouse { Warehouse.main! }
+    created_by { SpecOwner.user || association(:user, :admin) }
+    counted_at { Time.current }
+    coffee_state { "wet_parchment" }
+    counted_gross { [ CoffeeStock.new(warehouse:, at: counted_at).row(coffee_state).gross_stock.round(2), 0 ].max }
+  end
+
   # L 500 of freight, paid in cash.
   factory :processing_cost do
     coffee_conversion

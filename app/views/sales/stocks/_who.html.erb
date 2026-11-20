@@ -5,6 +5,8 @@
   <%= entry.record.producer.full_name %>
 <% when "shipment" %>
   <%= t("sales.shipments.show.title", number: entry.record.display_number) %> · <%= entry.record.buyer.name %>
+<% when "adjustment" %>
+  <%= entry.record.label %> · <%= entry.record.warehouse.name %> · <%= entry.record.human_reason %>
 <% when "transfer_in", "transfer_out" %>
   <%= t("sales.warehouse_transfers.show.title", number: entry.record.display_number) %> · <%= entry.record.from_warehouse.name %> → <%= entry.record.to_warehouse.name %>
 <% else %>

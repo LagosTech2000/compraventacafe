@@ -8,6 +8,16 @@
   <% if policy(Warehouse).index? %>
     <%= link_to t(".warehouses"), sales_warehouses_path, class: "btn" %>
   <% end %>
+  <%# Physical counts and the day's reconciliation (Fernando, 2026-11-18). %>
+  <% if policy([ :sales, :stock_reconciliation ]).show? %>
+    <%= link_to t(".reconciliation"), sales_stock_reconciliation_path(warehouse_id: @warehouse&.id), class: "btn" %>
+  <% end %>
+  <% if policy(StockCount).index? %>
+    <%= link_to t(".counts"), sales_stock_counts_path, class: "btn" %>
+  <% end %>
+  <% if policy(StockCount).create? %>
+    <%= modal_link_to t(".new_count"), new_sales_stock_count_path(warehouse_id: @warehouse&.id), class: "btn" %>
+  <% end %>
   <% if policy(WarehouseTransfer).create? %>
     <%= modal_link_to t(".transfer"), new_sales_warehouse_transfer_path(from_warehouse_id: @warehouse&.id), class: "btn" %>
   <% end %>

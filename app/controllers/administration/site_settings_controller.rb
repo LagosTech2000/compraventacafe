@@ -23,7 +23,7 @@ module Administration
       end
 
       def site_setting_params
-        params.expect(site_setting: [ :business_name, :location, :rtn, :owner_name, :phone, :secondary_phone, :weight_tolerance_percent, :cherry_warning_hours, :cherry_critical_hours, :cherry_yield_percent, :drying_yield_percent, :logo, :remove_logo ])
+        params.expect(site_setting: [ :business_name, :location, :rtn, :owner_name, :phone, :secondary_phone, :weight_tolerance_percent, :count_admin_percent, :cherry_warning_hours, :cherry_critical_hours, :cherry_yield_percent, :drying_yield_percent, :logo, :remove_logo ])
       end
   end
 end
