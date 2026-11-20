@@ -1293,8 +1293,12 @@ es:
         add_weighing: "Agregar pesada"
         remove_weighing: "Quitar pesada"
         gross_from_weighings: "Suma de las pesadas: se cambia en las pesadas."
+        settle: "Guardar, facturar y pagar"
+        settle_title: "Facturar y pagar ahora"
+        settle_help: "«Guardar, facturar y pagar» guarda la compra, le hace su factura y la paga completa con esta forma de pago. Si el productor debe y quieres abonar con este café, usa «Crear Compra»: una factura pagada ya no abona préstamos."
       create:
         success: "Compra de %{producer} registrada."
+        settled: "Quedó en la factura %{number}, pagada."
         zone_given: "%{producer} no tenía zona: quedó en %{zone}."
         owes: "Debe %{amount} en préstamos: en la compra, «Abonar con esta compra» lo descuenta de este café."
       update:
@@ -6728,7 +6732,7 @@ es:
               - "Elige la forma de pesar: «Peso bruto directo» o «Por pesadas»."
               - "Peso bruto directo: escribe el peso bruto. Por pesadas: toca «Agregar pesada» por cada una y escribe su peso y los sacos contados; el peso bruto se llena solo con la suma."
               - "Escribe el precio por libra. En pergamino, revisa la humedad y el daño; en uva, el rendimiento."
-              - "Revisa el cálculo y toca el botón de guardar."
+              - "Revisa el cálculo y toca «Crear Compra», o «Guardar, facturar y pagar» con la forma de pago y la cuenta para dejarla facturada y pagada de una vez."
             tips:
               - "Al cambiar el estado del café se ponen sus valores iniciales: humedad 51 % en pergamino húmedo, 12 % en pergamino seco; rendimiento 0.186 en uva. Puedes cambiarlos."
               - "Tara con peso bruto directo: 1 libra por cada saco de 165 libras, redondeado hacia arriba."

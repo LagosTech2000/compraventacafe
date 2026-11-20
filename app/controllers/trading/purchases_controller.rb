@@ -26,16 +26,17 @@ module Trading
     def create
       @purchase = authorize Purchase.new(purchase_params.merge(created_by: Current.user))
 
-      if @purchase.save
+      if settling? ? save_invoiced_and_paid : @purchase.save
         # On the page: back to an empty form, with the saved purchase open in
         # the modal. In a modal: closes it and refreshes the page behind.
         notice = t(".success", producer: @purchase.producer.full_name)
         if (zone = @purchase.zone_given_to_producer)
           notice = "#{notice} #{t(".zone_given", zone: zone.name, producer: @purchase.producer.full_name)}"
         end
-        if (owed = owed_with_coffee(@purchase))
+        if !@purchase.invoice && (owed = owed_with_coffee(@purchase))
           notice = "#{notice} #{t(".owes", amount: helpers.format_money(owed))}"
         end
+        notice = "#{notice} #{t(".settled", number: @purchase.invoice.display_number)}" if @purchase.invoice
         close_modal_with notice:,
                          fallback: new_trading_purchase_path(detail: @purchase.id)
       else
@@ -78,6 +79,36 @@ module Trading
 
         loans = purchase.producer.person.loans.unpaid.includes(:payments)
         loans.sum { it.balance.total_owed }.then { it.positive? ? it : nil }
+      end
+
+      # «Guardar, facturar y pagar» (Fernando, 2026-11-18): they buy, invoice
+      # and pay at once. The purchase, its invoice and a payment for all of
+      # it are saved together or none (InvoiceIssuer's rules).
+      def settling?
+        params[:settle_now].present? && policy(Invoice).create?
+      end
+
+      def save_invoiced_and_paid
+        settle = params.fetch(:settle, {}).permit(:payment_method, :money_account_id)
+        Purchase.transaction do
+          raise ActiveRecord::Rollback unless @purchase.save
+
+          result = InvoiceIssuer.new(producer: @purchase.producer, purchase_ids: [ @purchase.id ], user: Current.user, payment_status: "paid",
+                                     payment_method: settle[:payment_method], money_account_id: settle[:money_account_id]).call
+          next @purchase.reload if result.success?
+
+          result.invoice.errors.full_messages.each { @purchase.errors.add(:base, it) }
+          raise ActiveRecord::Rollback
+        end.tap { |saved| restore_new_purchase unless saved }
+      end
+
+      # After a rollback the purchase looks saved: back to a new one, with
+      # what was written and its errors.
+      def restore_new_purchase
+        errors = @purchase.errors.dup
+        @purchase = Purchase.new(purchase_params.merge(created_by: Current.user))
+        @purchase.valid?
+        errors.each { |error| @purchase.errors.add(error.attribute, error.message) unless @purchase.errors.added?(error.attribute, error.message) }
       end
 
       def set_purchase

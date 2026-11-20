@@ -294,8 +294,35 @@
       </dl>
       <p class="mt-2 text-xs text-ink-muted"><%= t(".hauler_paid_apart") %></p>
     </div>
+    <%# «Guardar, facturar y pagar» (Fernando, 2026-11-18): they buy, invoice
+        and pay at once; a new purchase only. %>
+    <% if purchase.new_record? && policy(Invoice).create? %>
+      <fieldset class="panel grid gap-3 p-4" data-controller="money-account" data-money-account-defaults-value="<%= MoneyAccount.defaults_by_method.to_json %>" data-settle-fields>
+        <legend class="sr-only"><%= t(".settle_title") %></legend>
+        <p class="text-sm font-semibold"><%= t(".settle_title") %></p>
+        <div>
+          <%= label_tag "settle_payment_method", Invoice.human_attribute_name(:payment_method), class: "field-label" %>
+          <%= select_tag "settle[payment_method]", options_for_select(enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS), params.dig(:settle, :payment_method)),
+                id: "settle_payment_method", include_blank: t("shared.select.pick_payment_method"), class: "field-input",
+                data: { money_account_target: "method", action: "money-account#suggest" } %>
+        </div>
+        <div>
+          <%= label_tag "settle_money_account_id", MoneyAccount.model_name.human, class: "field-label" %>
+          <%= select_tag "settle[money_account_id]", options_from_collection_for_select(MoneyAccount.active.alphabetical, :id, :name, params.dig(:settle, :money_account_id)),
+                id: "settle_money_account_id", include_blank: t("shared.select.no_account"), class: "field-input",
+                data: { money_account_target: "account", action: "money-account#pick" } %>
+        </div>
+        <p class="text-xs text-ink-muted"><%= t(".settle_help") %></p>
+      </fieldset>
+    <% end %>
     <div class="flex flex-wrap gap-3">
-      <%= form.submit class: "btn btn-primary" %>
+      <% if purchase.new_record? && policy(Invoice).create? %>
+        <%# Plain saving first: Enter in a field never pays. %>
+        <%= form.submit class: "btn btn-primary" %>
+        <%= form.button t(".settle"), name: "settle_now", value: "1", class: "btn btn-primary", data: { settle_button: true } %>
+      <% else %>
+        <%= form.submit class: "btn btn-primary" %>
+      <% end %>
       <%= cancel_button trading_purchases_path %>
     </div>
     <% if policy(Producer).show? %>

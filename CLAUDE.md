@@ -2230,6 +2230,14 @@ textos; la clave y el código siguen siendo `trading`.
     con el estado «Anulada» (`Invoice::LIST_STATUSES`).
   - Las editadas antes pueden salir con el aviso **«Pagado de más»**
     (`Invoice#overpaid_amount`).
+- **«Guardar, facturar y pagar»** (Fernando, 2026-11-18: compran, facturan
+  y pagan al instante): en «Nueva compra», junto a «Crear Compra» (que va
+  primero: Enter nunca paga), para quien puede facturar. Con la forma de
+  pago y la cuenta de «Facturar y pagar ahora», guarda la compra, su
+  factura y un pago por todo, juntos o nada (`InvoiceIssuer`,
+  `PurchasesController#save_invoiced_and_paid`, botón `settle_now`). Quien
+  va a abonar préstamos con ese café usa «Crear Compra» (una factura
+  pagada ya no abona).
 - **Abono o pago de una factura** (Fernando, 2026-11-15): mientras deja
   saldo se llama «abono» («Abono a la factura de compra de café 0012»,
   «Registrar abono», «Recibo de abono»); el que cancela la factura completa,
