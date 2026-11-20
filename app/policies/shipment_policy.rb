@@ -27,6 +27,10 @@ class ShipmentPolicy < ApplicationPolicy
   # weighed shipment is corrected.
   def remove_destination? = can?(:update) && (!record.is_a?(Shipment) || (!record.voided? && record.received? && !record.sold?))
 
+  # Writes why a difference passes its tolerance: like its observations,
+  # also once weighed or sold; not voided.
+  def explain? = can?(:update) && (!record.is_a?(Shipment) || !record.voided?)
+
   def destroy?
     false
   end

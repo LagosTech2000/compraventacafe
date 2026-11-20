@@ -169,7 +169,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Venta / salida vendida / cobro de venta | `Sale` / `SaleLine` / `SalePayment` (`SaleIssuer`) |
 | Anticipo (de comprador o banco) / aplicado a una venta (% del anticipo) / devolución en dinero / pendiente o cancelado | `BuyerAdvance` (`status`: `pending` / `cancelled`, `Buyer#advance_balance`) / `BuyerAdvanceSale` (`sales/buyer_advance_sales`, crea el `SalePayment` «con anticipo») / `BuyerAdvanceRefund` |
 | Precio por libra / por quintal / libras por quintal (120 por defecto) | `Sale#price_unit`: `pound` / `quintal`; `Sale#quintal_pounds` (`Sale::QUINTAL_POUNDS`) |
-| Tolerancia de diferencia de peso | `SiteSetting#weight_tolerance_percent` (`WeightTolerance`) |
+| Tolerancia de diferencia de peso / de merma / motivo de cada una | `SiteSetting#weight_tolerance_percent` / `#shrink_tolerance_percent` (`WeightTolerance.percent` / `.shrink_percent`) / `Shipment#difference_reason` / `#shrink_reason` (`sales/shipment_reasons`) |
 | Inventario / kárdex | `CoffeeStock` / `StockLedger` (`sales/stock#show`), reporte `CoffeeStockReport` |
 | Conteo de bodega / ajuste por conteo / cuadre del día / no sacar más de lo que hay | `StockCount` (`sales/stock_counts`; `gross_weight`/`net_weight` = el ajuste) / kind `adjustment` del kárdex / `StockReconciliation` (`sales/stock_reconciliation#show`) / `StockGuard` |
 | Bodega (por defecto) / traslado entre bodegas | `Warehouse` (`main`) / `WarehouseTransfer` (`sales/warehouse_transfers`) |
@@ -733,10 +733,11 @@ navegador puede revisar:
   (`Current.maintenance`).
 - **No sale más café del que hay, desde el primer conteo** de ese estado
   en esa bodega (`StockGuard`, ver «Conteo de bodega»).
-- Plan siguiente (decisiones de Fernando, 2026-11-18, por fases): motivo
-  cuando una diferencia pasa la tolerancia (dos tolerancias en
-  Configuración del sitio: compras ↔ báscula local y báscula local ↔
-  comprador), flujos en un paso y cierre del día para todo el negocio.
+- **Motivo cuando una diferencia pasa su tolerancia** (Fernando,
+  2026-11-18: pedir motivo, no bloquear): ver «Motivos de las
+  diferencias» en Comercialización.
+- Plan siguiente (decisiones de Fernando, 2026-11-18, por fases): flujos
+  en un paso y cierre del día para todo el negocio.
 
 ## Comandos
 
@@ -1727,6 +1728,21 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   (`weight_tolerance_percent`, **vacía al inicio**: sin ella no se resalta
   nada; `WeightTolerance`). Anular la venta antes de cobrarla lo decide el
   usuario.
+- **Motivos de las diferencias** (Fernando, 2026-11-18) [CONFIRMADO: pedir
+  motivo, no bloquear]: dos tolerancias en Configuración del sitio, la de
+  **merma** (`shrink_tolerance_percent`: compras de sus lotes ↔ báscula
+  local, sobre `shrink_percent`) y la de **diferencia de peso** (báscula
+  local ↔ comprador). Vacías, no se pide nada. Pasada una (más o menos),
+  el formulario que la entra pide el motivo (`Shipment#asking_reasons`,
+  `#reasons_given`): «Nueva salida»/editar pide «Motivo de la merma» (al
+  cambiar lotes o báscula local) y el peso en destino «Motivo de la
+  diferencia con el comprador» (sale al pasar la tolerancia,
+  `weighing_calculator_controller.js`). Si pasa sin formulario (lotes
+  agregados después), el detalle lo marca en rojo («Falta») con «Anotar
+  motivo» (`sales/shipment_reasons`, `ShipmentPolicy#explain?`: editar en
+  Salidas, no anulada; **también pesada o vendida**, como las
+  observaciones). Los motivos salen en el detalle y en el cuadre del día
+  (`Shipment#missing_reasons`).
 - **Venta** (`Sale`, `SaleIssuer`, como «Facturar compras»): **salida
   primero, venta después**: agrupa salidas **del mismo comprador** ya
   pesadas en destino y libres (líneas `SaleLine`, con sus pesos y monto;

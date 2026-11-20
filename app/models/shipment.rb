@@ -81,6 +81,11 @@ class Shipment < ApplicationRecord
   validate :carrier_and_vehicle_active
   validate :warehouse_active, if: :will_save_change_to_warehouse_id?
   validates :observations, length: { maximum: 500 }
+  validates :shrink_reason, :difference_reason, length: { maximum: 500 }
+  # A difference over its tolerance asks for a reason in the forms that
+  # enter it (Fernando, 2026-11-18): never blocks otherwise; the detail
+  # says what is missing (#missing_reasons).
+  validate :reasons_given, if: :asking_reasons
   with_options unless: :origin_left_empty? do
     validates :origin_gross_weight, numericality: { greater_than: 0, less_than: MAX_WEIGHT }
     validates :origin_sacks, numericality: { only_integer: true, greater_than: 0, less_than: MAX_SACKS }
@@ -109,6 +114,9 @@ class Shipment < ApplicationRecord
 
   # Set when the destination weighing is saved: then it is required.
   attr_accessor :receiving
+  # Set by the forms that enter its weights or lots: then a difference over
+  # its tolerance needs its reason.
+  attr_accessor :asking_reasons
   # The form's «Sin báscula local», and whether whoever saves may use it
   # (administrators, set by the controller).
   attr_accessor :skip_origin, :origin_skippable
@@ -213,6 +221,18 @@ class Shipment < ApplicationRecord
   # Over the tolerance either way (more or less). No tolerance set: never.
   def over_tolerance?(tolerance = WeightTolerance.percent)
     tolerance.present? && difference_percent.present? && difference_percent.abs > tolerance
+  end
+
+  # Its shrink over the purchases ↔ local scale tolerance (either way).
+  def shrink_over_tolerance?(tolerance = WeightTolerance.shrink_percent)
+    tolerance.present? && shrink_percent.present? && shrink_percent.abs > tolerance
+  end
+
+  # The differences over their tolerance without a reason: :shrink, :difference.
+  def missing_reasons
+    return [] if voided?
+
+    [ (:shrink if shrink_over_tolerance? && shrink_reason.blank?), (:difference if over_tolerance? && difference_reason.blank?) ].compact
   end
 
   # What left the stock of some shipments, in one query: { id => [net, gross] }.
@@ -410,7 +430,7 @@ class Shipment < ApplicationRecord
       return if @removing_destination
       return unless sold? || received_on_in_database.present?
 
-      free = %w[updated_at lock_version observations carrier_id vehicle_id driver_id driver_name]
+      free = %w[updated_at lock_version observations carrier_id vehicle_id driver_id driver_name shrink_reason difference_reason]
       free += %w[trip_price voided_at voided_by_id] unless sold?
       free += ORIGIN_COLUMNS + %w[origin_weight_mode] if origin_net_weight_in_database.nil?
       errors.add(:base, sold? ? :sold : :received, sale: sale&.display_number) if (changed - free).any?
@@ -430,6 +450,31 @@ class Shipment < ApplicationRecord
       net = ids.any? ? CoffeeBatch::Totals.by_batch(ids).values.sum(0.to_d, &:net) : origin_net_weight.to_d
       before = (Shipment.stock_weights([ id ])[id]&.first.then { [ departed_at_in_database, it ] } if persisted?)
       StockGuard.check(self, coffee_state:, warehouse:, at: departed_at, net:, before:)
+    end
+
+    # Its shrink as it is about to be saved: the lots the form chose (or
+    # its own) against its local net.
+    def pending_shrink_percent
+      ids = @batch_ids || (persisted? ? coffee_batches.ids : [])
+      return unless ids.any? && origin_net_weight
+
+      net = CoffeeBatch::Totals.by_batch(ids).values.sum(0.to_d, &:net)
+      ((net - origin_net_weight) * 100 / net).round(2) if net.positive?
+    end
+
+    def shrink_inputs_changed?
+      new_record? || will_save_change_to_origin_net_weight? || (@batch_ids && @batch_ids.sort != coffee_batch_ids.sort)
+    end
+
+    def reasons_given
+      percent = ->(value) { ActiveSupport::NumberHelper.number_to_percentage(value.abs, precision: 2, strip_insignificant_zeros: true, format: "%n %") }
+      if shrink_reason.blank? && shrink_inputs_changed? && (tolerance = WeightTolerance.shrink_percent) &&
+         (shrink = pending_shrink_percent) && shrink.abs > tolerance
+        errors.add(:shrink_reason, :over_tolerance, percent: percent.(shrink), tolerance: percent.(tolerance))
+      end
+      return unless receiving && difference_reason.blank? && over_tolerance?
+
+      errors.add(:difference_reason, :over_tolerance, percent: percent.(difference_percent), tolerance: percent.(WeightTolerance.percent))
     end
 
     def skipping_origin? = ActiveModel::Type::Boolean.new.cast(skip_origin) && origin_skippable.present?

@@ -113,10 +113,17 @@ RSpec.describe "Sales screens", type: :system do
     # (980 − 6) × 0.49 × 0.99 = 472.49: 14.57 lb (2.99 %) less than 487.06
     expect(page).to have_css("[data-weighing-calculator-target='difference']", text: "−14.57 lb (−2.99 %)")
     expect(page).to have_css("[data-weighing-calculator-target='differenceBox'][data-over-tolerance='true']")
+    # Over the tolerance, its reason (Fernando, 2026-11-18).
+    expect(page).to have_field("shipment_difference_reason", visible: true)
+    fill_in "shipment_destination_gross_weight", with: "1000"
+    expect(page).to have_no_field("shipment_difference_reason", visible: true)
+    fill_in "shipment_destination_gross_weight", with: "980"
+    fill_in "shipment_difference_reason", with: "Su báscula pesa de menos"
 
     click_button "Guardar peso en destino"
     expect(page).to have_text("Peso en destino de la remisión 0001 guardado")
     expect(shipment.reload.destination_net_weight).to eq(BigDecimal("472.49"))
+    expect(shipment.difference_reason).to eq("Su báscula pesa de menos")
   end
 
   it "adds up the chosen shipments, warns when their states mix, and sells" do

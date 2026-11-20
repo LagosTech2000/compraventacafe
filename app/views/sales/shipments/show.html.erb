@@ -74,6 +74,28 @@
   </section>
 <% end %>
 
+<%# Why its differences pass their tolerance (Fernando, 2026-11-18). %>
+<% missing = @shipment.missing_reasons %>
+<% if missing.any? || @shipment.shrink_reason.present? || @shipment.difference_reason.present? %>
+  <section class="mt-4 panel p-4 <%= "ring-2 ring-danger" if missing.any? %>" aria-labelledby="shipment-reasons" data-shipment-reasons>
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h2 id="shipment-reasons" class="font-semibold"><%= t(".reasons") %></h2>
+      <% if policy(@shipment).explain? %>
+        <%= modal_link_to t(missing.any? ? ".write_reasons" : ".edit_reasons"), edit_sales_shipment_reasons_path(@shipment), class: "btn btn-sm #{"btn-primary" if missing.any?}" %>
+      <% end %>
+    </div>
+    <dl class="mt-2 grid gap-2 text-sm sm:grid-cols-2">
+      <% { shrink: @shipment.shrink_reason, difference: @shipment.difference_reason }.each do |kind, reason| %>
+        <% next unless reason.present? || missing.include?(kind) %>
+        <div>
+          <dt class="text-xs text-ink-muted"><%= Shipment.human_attribute_name("#{kind}_reason") %></dt>
+          <dd data-reason="<%= kind %>"><%= reason.presence || tag.span(t(".missing_reason"), class: "font-semibold text-danger") %></dd>
+        </div>
+      <% end %>
+    </dl>
+  </section>
+<% end %>
+
 <section class="mt-4 panel p-4" aria-labelledby="shipment-details">
   <h2 id="shipment-details" class="font-semibold"><%= t(".details") %></h2>
   <dl class="mt-3 grid grid-cols-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-3">

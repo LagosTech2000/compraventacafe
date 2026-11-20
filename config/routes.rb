@@ -127,6 +127,8 @@ Rails.application.routes.draw do
       delete "scales/:side", to: "shipment_scales#destroy", as: :scale, constraints: { side: /origin|destination/ }
       # Its remission, to print (as the client's booklet).
       resource :remission, only: :show
+      # Why a difference passes its tolerance (Fernando, 2026-11-18): also closed.
+      resource :reasons, only: %i[ edit update ], controller: "shipment_reasons"
       # What it cost (Fernando, 2026-11-12): its lots (2026-11-13), costs
       # registered from it and expenses of Control financiero assigned to it.
       resources :batches, only: %i[ new create destroy ], controller: "shipment_batches"

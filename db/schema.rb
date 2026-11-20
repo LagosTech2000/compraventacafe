@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_19_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_19_190000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -1141,6 +1141,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_180000) do
     t.string "driver_name"
     t.bigint "warehouse_id", null: false
     t.decimal "trip_price", precision: 12, scale: 2
+    t.string "shrink_reason", limit: 500
+    t.string "difference_reason", limit: 500
     t.index ["buyer_id"], name: "index_shipments_on_buyer_id"
     t.index ["carrier_id"], name: "index_shipments_on_carrier_id"
     t.index ["created_by_id"], name: "index_shipments_on_created_by_id"
@@ -1173,6 +1175,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_180000) do
     t.string "secondary_phone"
     t.date "supply_stock_starts_on"
     t.decimal "count_admin_percent", precision: 5, scale: 2, default: "2.0", null: false
+    t.decimal "shrink_tolerance_percent", precision: 5, scale: 2
   end
 
   create_table "staff_advances", force: :cascade do |t|

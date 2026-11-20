@@ -17,6 +17,7 @@ module Sales
     def update
       @shipment.assign_attributes(arrival_params)
       @shipment.receiving = true
+      @shipment.asking_reasons = true
 
       if @shipment.save
         close_modal_with notice: t(".success", number: @shipment.display_number), fallback: sales_shipment_path(@shipment)
@@ -33,7 +34,7 @@ module Sales
 
       def arrival_params
         params.expect(shipment: [ :received_on, :weight_note_number, :destination_gross_weight, :destination_sacks,
-                                  :destination_humidity_percent, :destination_damage_percent, :destination_yield_factor, :lock_version ])
+                                  :destination_humidity_percent, :destination_damage_percent, :destination_yield_factor, :difference_reason, :lock_version ])
       end
   end
 end

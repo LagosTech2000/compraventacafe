@@ -186,6 +186,15 @@
         </fieldset>
       </section>
 
+      <%# The shrink's reason (Fernando, 2026-11-18): the server asks it when
+          its lots and local scale differ over the tolerance. %>
+      <% if shipment.errors.include?(:shrink_reason) || shipment.shrink_reason.present? %>
+        <div data-shrink-reason-field>
+          <%= form.label :shrink_reason, class: "field-label" %>
+          <%= form.text_area :shrink_reason, rows: 2, maxlength: 500, class: "field-input" %>
+        </div>
+      <% end %>
+
       <div>
         <%= form.label :observations, class: "field-label" %>
         <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>

@@ -1875,6 +1875,7 @@ es:
           in_transit: "En camino"
           value: "%{amount} en café"
           at_sale: "%{amount} al precio de la venta %{sale}"
+          reason: "Motivo: %{reason}"
           signs: "Negativo: se perdió peso. Positivo: pesó más. La diferencia contra el comprador se resalta si pasa la tolerancia."
     warehouse_transfers:
       voided: "Anulado"
@@ -2700,6 +2701,21 @@ es:
         tolerance: "Se resalta si pasa del %{tolerance} (Configuración del sitio)."
         no_tolerance: "Sin tolerancia configurada: un administrador la define en Configuración del sitio."
         details: "Datos de la salida"
+        reasons: "Motivos de las diferencias"
+        missing_reason: "Falta: pasa la tolerancia"
+        write_reasons: "Anotar motivo"
+        edit_reasons: "Cambiar motivos"
+    shipment_reasons:
+      edit:
+        title: "Motivos de las diferencias · remisión %{number}"
+        subtitle: "Por qué la merma (compras de sus lotes contra la báscula local) o la diferencia con el comprador pasan su tolerancia de Configuración del sitio."
+        shrink: "La báscula local difiere %{percent} de las compras de sus lotes; la tolerancia es %{tolerance}."
+        no_shrink: "Sin merma: le faltan lotes o la báscula local."
+        difference: "La báscula del comprador difiere %{percent} de la local; la tolerancia es %{tolerance}."
+        no_difference: "Sin diferencia: todavía no se pesa en destino o le falta la báscula local."
+        submit: "Guardar motivos"
+      update:
+        success: "Motivos de la remisión %{number} guardados."
     shipment_scales:
       destroy:
         success:
@@ -2711,6 +2727,7 @@ es:
         subtitle: "%{buyer} · %{state} · salió con %{net} lb netas"
         weighing: "Báscula del comprador"
         weighing_help: "Copia lo que dice la nota de peso del comprador. Empieza con los sacos, la humedad y el daño de la salida."
+        reason_help: "La diferencia pasa la tolerancia: anota por qué (humedad, báscula, café que se quedó…). No impide guardar si la anotas."
         calculation: "Cálculo en destino"
         difference: "Diferencia con la báscula local"
         origin_net: "Neto local: %{net} lb"
@@ -6982,6 +6999,7 @@ es:
               - "Tara: 1 libra por saco contado. Neto: como en las compras."
               - "Si sale más café del que hay en inventario de ese estado, aparece un aviso; se puede guardar igual."
               - "Un administrador puede marcar «Sin báscula local»: la salida se guarda sin peso ni sacos locales, no saca café del inventario y no tiene diferencia entre básculas hasta que alguien escriba la báscula local editándola (también ya vendida)."
+              - "Si las compras de sus lotes y la báscula local difieren más que la tolerancia de merma (Configuración del sitio), se pide «Motivo de la merma» antes de guardar."
         arrivals:
           form:
             title: "Peso en destino"
@@ -6992,7 +7010,17 @@ es:
               - "Revisa la diferencia con la báscula local y guarda."
             tips:
               - "La venta se cobra con este peso."
-              - "Si la diferencia pasa la tolerancia, el recuadro se marca en rojo."
+              - "Si la diferencia pasa la tolerancia, el recuadro se marca en rojo y sale «Motivo de la diferencia con el comprador»: escríbelo para guardar."
+        shipment_reasons:
+          form:
+            title: "Motivos de las diferencias"
+            summary: "Por qué una salida pasa su tolerancia: la merma (las compras de sus lotes contra la báscula local) o la diferencia entre la báscula local y la del comprador."
+            steps:
+              - "Ábrela con «Anotar motivo» en el detalle de la salida, que avisa en rojo lo que falta."
+              - "Escribe el motivo de cada diferencia que pasa la tolerancia y guarda."
+            tips:
+              - "Las tolerancias se cambian en Configuración del sitio. El motivo nunca impide guardar la salida: solo se pide."
+              - "Se puede escribir aunque la salida ya esté pesada en destino o vendida."
         remissions:
           show:
             title: "Remisión de la salida"
@@ -8545,7 +8573,8 @@ es:
         owner_help: "Opcional. Sale en la remisión de las salidas («De: …» y «Enviadas por»)."
         phones_help: "Opcionales. Salen en la remisión de las salidas."
         count_admin_percent_help: "Un conteo de bodega cuyo ajuste pasa este porcentaje de lo que dice el sistema solo lo registra un administrador. Empieza en 2 %."
-        weight_tolerance_help: "Opcional. En Comercialización, una salida cuya báscula del comprador difiere de la local en más de este porcentaje (más o menos) sale resaltada. Vacía, no se resalta ninguna."
+        weight_tolerance_help: "Opcional. En Comercialización, una salida cuya báscula del comprador difiere de la local en más de este porcentaje (más o menos) sale resaltada y pide el motivo al pesarla en destino (no impide guardar). Vacía, no se resalta ninguna."
+        shrink_tolerance_help: "Opcional. Una salida cuya báscula local difiere de las compras de sus lotes (la merma) en más de este porcentaje (más o menos) sale resaltada y pide el motivo (no impide guardar). Vacía, no se pide."
         cherry_alert: "Alerta de uva sin procesar (horas)"
         cherry_alert_help: "Comercialización avisa cuando un lote de uva lleva en bodega más de estas horas sin procesar: primero un aviso y después, urgente."
         yields: "Rendimiento estimado al procesar (%)"
@@ -9439,6 +9468,8 @@ es:
         active: "Activo"
       shipment:
         active_sale_line: "Venta activa"
+        shrink_reason: "Motivo de la merma"
+        difference_reason: "Motivo de la diferencia con el comprador"
         warehouse: "Bodega"
         warehouse_id: "Bodega"
         buyer_id: "Comprador"
@@ -10307,6 +10338,7 @@ es:
         logo_content_type: "Tipo de imagen del logo"
         logo_byte_size: "Tamaño del logo (bytes)"
         weight_tolerance_percent: "Tolerancia de diferencia de peso (%)"
+        shrink_tolerance_percent: "Tolerancia de merma: compras contra báscula local (%)"
         count_admin_percent: "Ajuste por conteo que solo registra un administrador (más del %)"
         cherry_warning_hours: "Aviso después de (horas)"
         cherry_yield_percent: "Uva a pergamino húmedo (%)"
@@ -10591,6 +10623,10 @@ es:
               batch_other_coffee: "El %{batch} es de otro estado del café o de otra bodega."
             weight_note_number:
               taken_by: "ya está en la remisión %{number} de este comprador: cada nota de peso va en una sola salida"
+            shrink_reason:
+              over_tolerance: "falta: la báscula local difiere %{percent} de las compras de sus lotes y la tolerancia es %{tolerance}"
+            difference_reason:
+              over_tolerance: "falta: la báscula del comprador difiere %{percent} de la local y la tolerancia es %{tolerance}"
             buyer:
               inactive: "está desactivado"
             warehouse:

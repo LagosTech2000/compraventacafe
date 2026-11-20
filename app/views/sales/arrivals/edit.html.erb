@@ -47,6 +47,13 @@
           <%= WeightTolerance.percent ? t("sales.shipments.show.tolerance", tolerance: format_percent(WeightTolerance.percent)) : t("sales.shipments.show.no_tolerance") %>
         </p>
       </div>
+      <%# Over the tolerance, the reason (Fernando, 2026-11-18): asked, never blocks. %>
+      <div data-weighing-calculator-target="reasonField" data-keep="<%= @shipment.errors.include?(:difference_reason) || @shipment.difference_reason.present? %>"
+           <%= "hidden" unless @shipment.errors.include?(:difference_reason) || @shipment.difference_reason.present? %>>
+        <%= form.label :difference_reason, class: "field-label" %>
+        <%= form.text_area :difference_reason, rows: 2, maxlength: 500, class: "field-input" %>
+        <p class="mt-1 text-xs text-ink-muted"><%= t(".reason_help") %></p>
+      </div>
       <div class="flex flex-wrap gap-3">
         <%= form.submit t(".submit"), class: "btn btn-primary" %>
         <%= cancel_button sales_shipment_path(@shipment) %>

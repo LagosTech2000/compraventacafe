@@ -1,0 +1,28 @@
+<% content_for :title, t(".title", number: @shipment.display_number) %>
+<%= render "sales/nav" %>
+
+<h1 class="text-2xl font-bold"><%= t(".title", number: @shipment.display_number) %></h1>
+<p class="mt-1 text-sm text-ink-muted"><%= t(".subtitle") %></p>
+
+<%= form_with model: @shipment, url: sales_shipment_reasons_path(@shipment), method: :patch,
+      class: form_surface_class("mt-6"), data: { controller: "form-validation" } do |form| %>
+  <%= render "shared/form_errors", record: @shipment %>
+  <div>
+    <%= form.label :shrink_reason, class: "field-label" %>
+    <p class="mb-1 text-xs text-ink-muted" data-reason-shrink>
+      <%= @shipment.shrink_percent ? t(".shrink", percent: format_percent(@shipment.shrink_percent.abs), tolerance: WeightTolerance.shrink_percent ? format_percent(WeightTolerance.shrink_percent) : "—") : t(".no_shrink") %>
+    </p>
+    <%= form.text_area :shrink_reason, rows: 2, maxlength: 500, class: "field-input" %>
+  </div>
+  <div class="mt-5">
+    <%= form.label :difference_reason, class: "field-label" %>
+    <p class="mb-1 text-xs text-ink-muted" data-reason-difference>
+      <%= @shipment.difference_percent ? t(".difference", percent: format_percent(@shipment.difference_percent.abs), tolerance: WeightTolerance.percent ? format_percent(WeightTolerance.percent) : "—") : t(".no_difference") %>
+    </p>
+    <%= form.text_area :difference_reason, rows: 2, maxlength: 500, class: "field-input" %>
+  </div>
+  <div class="mt-6 flex flex-wrap gap-3">
+    <%= form.submit t(".submit"), class: "btn btn-primary" %>
+    <%= cancel_button sales_shipment_path(@shipment) %>
+  </div>
+<% end %>
