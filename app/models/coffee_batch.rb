@@ -60,6 +60,8 @@ class CoffeeBatch < ApplicationRecord
   validate :keeps_its_invoices, if: -> { persisted? && (will_save_change_to_coffee_state? || will_save_change_to_warehouse_id?) }
   validate :fits_its_shipment, if: -> { shipment && will_save_change_to_shipment_id? }
   validate :warehouse_active, if: :will_save_change_to_warehouse_id?
+  # Into or out of a shipment or a process of a closed day: no (DayLock).
+  validate :taker_day_open, if: -> { will_save_change_to_shipment_id? || will_save_change_to_coffee_conversion_id? }
 
   before_create :assign_number
   before_destroy :not_shipped, prepend: true
@@ -124,6 +126,10 @@ class CoffeeBatch < ApplicationRecord
   # What took it (its shipment or its process) and when its coffee left.
   def taker = shipment || processing
   def taken_at = shipment ? shipment.departed_at : processing&.weighed_at
+
+  # Taken by a shipment or a process of a closed day (BusinessDayClose):
+  # its invoices and shares no longer change.
+  def closed_day? = !Current.maintenance && BusinessDayClose.locked?(DayLock.day(taken_at))
 
   # Its purchases' pounds and value, in its share (a voided purchase does not count).
   def totals = @totals ||= Totals.for(self)
@@ -220,5 +226,14 @@ class CoffeeBatch < ApplicationRecord
 
       errors.add(:base, :shipped)
       throw :abort
+    end
+
+    def taker_day_open
+      return if Current.maintenance || BusinessDayClose.locked_through.nil?
+
+      takers = [ Shipment.find_by(id: shipment_id_in_database)&.departed_at, shipment&.departed_at,
+                 CoffeeConversion.find_by(id: coffee_conversion_id_in_database)&.weighed_at, processing&.weighed_at ]
+      closed = takers.compact.map { DayLock.day(it) }.find { BusinessDayClose.locked?(it) }
+      errors.add(:base, I18n.t("activerecord.errors.messages.closed_day", date: I18n.l(BusinessDayClose.locked_through), day: I18n.l(closed))) if closed
     end
 end

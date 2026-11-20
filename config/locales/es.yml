@@ -773,6 +773,7 @@ es:
       title: "¿Cuadra hoy?"
       ok: "Todo cuadra"
       not_yet: "Falta"
+      close_day: "Cerrar el día"
       lines:
         stock_counts:
           ok: "Inventario: todo el café está contado hoy"
@@ -790,6 +791,11 @@ es:
           todo:
             one: "Compras: 1 de hoy sin facturar"
             other: "Compras: %{count} de hoy sin facturar"
+        unpaid:
+          ok: "Facturas: las compras de hoy están pagadas"
+          todo:
+            one: "Facturas: 1 compra de hoy sin pagar completa"
+            other: "Facturas: %{count} compras de hoy sin pagar completas"
         shipments_without_lots:
           ok: "Salidas: todas las de hoy llevan lotes"
           todo:
@@ -6551,6 +6557,17 @@ es:
               - "Una variable se borra entera, como una sola letra."
               - "«Código fuente» (</>) muestra el HTML: sirve para copiar el documento completo, con sus variables, de un sistema a otro."
               - "Si sales con cambios sin guardar, el sistema pregunta antes."
+        business_day_closes:
+          index:
+            title: "Cierre del día"
+            summary: "Cierra un día para todo el negocio: desde ahí, nada de esa fecha o antes se registra, cambia ni anula, para nadie."
+            steps:
+              - "Revisa la lista del día: conteos, arqueos, compras facturadas y pagadas, salidas con lotes y motivos, cuentas. Cada línea abre donde se arregla."
+              - "Si algo falta y quieres cerrar igual, marca que lo revisaste."
+              - "Toca «Cerrar» y confirma. Cerrar un día cierra también los anteriores."
+            tips:
+              - "Lo que pasa después sobre algo del día cerrado sí entra: el pago de hoy de una factura vieja o el peso en destino de una salida que salió ese día."
+              - "Solo el usuario principal reabre el último día cerrado, con motivo; queda en la auditoría."
         control_centers:
           show:
             title: "Centro de control"
@@ -8514,10 +8531,37 @@ es:
       users: "Usuarios"
       audit_events: "Auditoría"
       site_setting: "Configuración del sitio"
+      day_closes: "Cierre del día"
       backup: "Respaldo"
       fingerprint_stations: "Lectores de huella"
       control_center: "Centro de control"
     # Centro de control (Fernando, 2026-11-15; only User::DATA_EXPORTER_ID).
+    business_day_closes:
+      index:
+        title: "Cierre del día"
+        help: "Al cerrar un día, ya no se registra, cambia ni anula nada de esa fecha o antes, en todo el negocio y para nadie: compras, facturas, pagos, salidas, ventas, cobros, procesos, traslados, conteos, arqueos, gastos y préstamos. Lo que entra después (el pago de hoy de una factura vieja, el peso en destino de una salida que ya salió) sí se registra."
+        locked_through: "El negocio está cerrado hasta el %{date}."
+        nothing_closed: "Todavía no se ha cerrado ningún día."
+        close_title: "Cerrar el %{date}"
+        other_day: "Otro día"
+        see: "Ver"
+        today_note: "La lista es la de «¿Cuadra hoy?» para el día elegido: cada línea abre donde se arregla."
+        reviewed: "Revisé lo que falta y quiero cerrar el día así."
+        submit: "Cerrar el %{date}"
+        confirm: "¿Cerrar el %{date}? Ya no se podrá registrar, cambiar ni anular nada de esa fecha o antes."
+        list: "Días cerrados"
+        empty: "Todavía no hay días cerrados."
+        state: "Estado"
+        actions: "Acciones"
+        closed: "Cerrado"
+        reopened: "Reabierto"
+        reopened_by: "%{name}, %{date}: %{reason}"
+        reason_placeholder: "Motivo para reabrir"
+        reopen: "Reabrir"
+      create:
+        success: "Día %{date} cerrado."
+      reopen:
+        success: "Día %{date} reabierto."
     control_centers:
       tabs:
         label: "Partes del Centro de control"
@@ -9231,6 +9275,9 @@ es:
       stock_count:
         one: "Conteo de bodega"
         other: "Conteos de bodega"
+      business_day_close:
+        one: "Cierre del día"
+        other: "Cierres del día"
       private_document:
         one: "Documento privado"
         other: "Documentos privados"
@@ -9950,6 +9997,15 @@ es:
         main: "Bodega por defecto"
         observations: "Observaciones"
         active: "Activa"
+      business_day_close:
+        closed_on: "Día cerrado"
+        notes: "Notas"
+        closed_by: "Cerró"
+        closed_by_id: "Cerró"
+        reopened_at: "Reabierto"
+        reopened_by: "Reabrió"
+        reopened_by_id: "Reabrió"
+        reopen_reason: "Motivo para reabrir"
       stock_count:
         number: "Número"
         warehouse: "Bodega"
@@ -10592,6 +10648,7 @@ es:
             base:
               lot_sold: "El lote está en una salida vendida: ya no cambia. Para corregirlo, primero anula la venta."
               lot_processed: "El lote ya se mandó a procesar con estas libras: no cambia."
+              lot_closed_day: "El lote salió en un día cerrado: ya no cambia."
             coffee_conversion:
               not_eligible: "no puede ir en este lote: debe estar terminado, ser de su estado del café, con su resultado en su bodega y una parte libre"
             coffee_conversion_id:
@@ -10604,6 +10661,7 @@ es:
             base:
               lot_sold: "El lote está en una salida vendida: ya no cambia. Para corregirlo, primero anula la venta."
               lot_processed: "El lote ya se mandó a procesar con estas libras: no cambia."
+              lot_closed_day: "El lote salió en un día cerrado: ya no cambia."
             invoice:
               not_eligible: "no puede ir en este lote: debe ser de su estado del café, con todas sus compras en su bodega y una parte libre"
             invoice_id:
@@ -10619,6 +10677,13 @@ es:
               not_weighed: "no puede ser «Que salió» hasta que se registre el resultado"
             description:
               blank: "es obligatorio cuando el concepto es «Otro»"
+        business_day_close:
+          attributes:
+            base:
+              not_latest: "Solo se reabre el último día cerrado."
+              review_first: "Falta algo de la lista: marca que lo revisaste para cerrar el día así."
+            closed_on:
+              already_closed: "ya está cerrado: el negocio está cerrado hasta el %{date}"
         stock_count:
           attributes:
             base:
@@ -11015,6 +11080,7 @@ es:
             password_challenge:
               invalid: "no es la que tienes ahora"
       messages:
+        closed_day: "El día %{day} está cerrado (el negocio está cerrado hasta el %{date}): ya no se registra, cambia ni anula nada de esa fecha o antes. Solo el usuario principal reabre un día, con motivo."
         below_lots: "Sus lotes tomaron de esta factura %{taken_gross} lb brutas y %{taken_net} lb netas, y quedaría con %{gross} lb brutas y %{net} lb netas. Quita la factura de un lote o bájale el porcentaje primero."
         record_invalid: "La validación falló: %{errors}"
         restrict_dependent_destroy:

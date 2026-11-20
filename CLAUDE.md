@@ -94,6 +94,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Cancelada / pago parcial / pendiente de pago (PXP) | `paid` / `partial` / `pending` (`Invoice::PAYMENT_STATUSES`; filtro `unpaid` = pendiente o parcial) |
 | Abono a factura (pago al productor) / recibo de pago | `InvoicePayment` / `trading/invoice_payments#show` |
 | Cierre diario | `DailyClose` |
+| Cierre del día (todo el negocio, con candado) / día cerrado | `BusinessDayClose` (`administration/day_closes`) / `DayLock` (`locks_day`) |
 | Préstamo / abono | `Loan` / `LoanPayment` |
 | Insumo / insumo del préstamo / entrada de insumos (con sus líneas) / inventario de insumos | `Supply` / `LoanSupply` / `SupplyEntry` + `SupplyEntryLine` / `SupplyStock` |
 | Insumo entregado / por entregar (del préstamo) | `LoanSupply#delivered_on`, `delivered_by` (`sales/supply_deliveries`) |
@@ -748,8 +749,34 @@ navegador puede revisar:
 - **Motivo cuando una diferencia pasa su tolerancia** (Fernando,
   2026-11-18: pedir motivo, no bloquear): ver «Motivos de las
   diferencias» en Comercialización.
-- Plan siguiente (decisiones de Fernando, 2026-11-18, por fases): flujos
-  en un paso y cierre del día para todo el negocio.
+- **Cierre del día con candado** (Fernando, 2026-11-18: uno para todo el
+  negocio): Administración → «Cierre del día»
+  (`administration/day_closes`, `BusinessDayClose`,
+  `BusinessDayClosePolicy`). Un administrador revisa la lista del día (la
+  de «¿Cuadra hoy?» para ese día, `DailyCheck`, más «compras sin pagar
+  completas»; si falta algo, marca que lo revisó) y lo cierra; cerrar un
+  día cierra los anteriores. **Desde ahí nada con esa fecha o antes se
+  registra, cambia, anula ni borra, para nadie** (`DayLock`, `locks_day
+  :columna, free: [...]` en compras, facturas, abonos, pagos a carreros,
+  salidas y su llegada, ventas, cobros, procesos y su resultado,
+  traslados, conteos, arqueos, gastos, otros ingresos, transferencias,
+  gastos de salida y de procesamiento, préstamos y abonos, anticipos y
+  devoluciones, pagos y gastos de planilla, planilla interna, salidas de
+  insumos y préstamos de los dueños; y los lotes de una salida o un
+  proceso de un día cerrado, `CoffeeBatch#closed_day?`). `free` son las
+  columnas que cambian por algo de un día abierto: el estado de pago de una
+  factura o venta, `paid_off_on` de un préstamo, la báscula del comprador
+  de una salida que salió antes, la factura de una compra, el dueño al
+  fusionar personas, el gasto asignado a una salida, los motivos. La
+  cuenta de lo de un día cerrado ya no cambia (Consolidación: antes del
+  primer cierre). Solo el usuario principal (`data_exporter?`) **reabre el
+  último día cerrado, con motivo**; todo queda en la auditoría. Una tarea
+  de Mantenimiento de datos pasa por encima (`Current.maintenance`). El
+  Inicio («¿Cuadra hoy?») lleva «Cerrar el día».
+- Decisiones de implementación, **pendientes de confirmar**: el cierre no
+  exige que la lista esté completa (basta marcar que se revisó); lo
+  registrado después sobre algo de un día cerrado (pago, llegada, cobro)
+  sí entra con la fecha de hoy.
 
 ## Comandos
 

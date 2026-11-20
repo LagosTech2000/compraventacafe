@@ -12,7 +12,7 @@ class DailyCheck
   end
 
   def lines
-    @lines ||= [ stock_counts, cash_counts, uninvoiced, shipments_without_lots, missing_reasons, negative_accounts ]
+    @lines ||= [ stock_counts, cash_counts, uninvoiced, unpaid, shipments_without_lots, missing_reasons, negative_accounts ]
   end
 
   def ok? = lines.all?(&:ok)
@@ -38,6 +38,12 @@ class DailyCheck
     def uninvoiced
       count = Purchase.uninvoiced.on(@day).count
       Line.new(key: :uninvoiced, ok: count.zero?, count:, amount: nil, path: [ :trading_purchases_path, { status: "uninvoiced" } ])
+    end
+
+    # Purchases of the day invoiced and not paid in full.
+    def unpaid
+      count = Purchase.active.on(@day).where(invoice_id: Invoice.active.where.not(payment_status: "paid").select(:id)).count
+      Line.new(key: :unpaid, ok: count.zero?, count:, amount: nil, path: [ :trading_purchases_path, { status: "pending" } ])
     end
 
     def shipments_without_lots

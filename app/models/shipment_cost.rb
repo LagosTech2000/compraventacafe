@@ -12,6 +12,8 @@ class ShipmentCost < ApplicationRecord
   include LiveUpdates
   # The photo or PDF of its receipt, optional (Fernando, 2026-11-16).
   include HasReceipt
+  include DayLock
+  locks_day :paid_on
   live_updates :sales, :finance
 
   # The ones of the processes that apply to a trip (pending confirmation).

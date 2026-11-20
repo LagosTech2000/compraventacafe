@@ -13,6 +13,8 @@ class Loan < ApplicationRecord
   include OwnedRecord
   include HasMoneyAccount
   include LiveUpdates
+  include DayLock
+  locks_day :disbursed_on, free: %w[paid_off_on person_id]
   live_updates :loans
 
   STATUSES = %w[active overdue paid_off].freeze

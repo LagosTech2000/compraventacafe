@@ -8,6 +8,8 @@ class HaulerPayment < ApplicationRecord
   include OwnedRecord
   include HasMoneyAccount
   include LiveUpdates
+  include DayLock
+  locks_day :paid_on, free: %w[hauler_id]
   live_updates :trading
 
   belongs_to :hauler

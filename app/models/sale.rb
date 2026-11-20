@@ -20,6 +20,8 @@ class Sale < ApplicationRecord
   include Auditable
   include OwnedRecord
   include LiveUpdates
+  include DayLock
+  locks_day :sold_on, free: %w[payment_status payment_method paid_on]
   live_updates :sales
 
   NUMBERING_LOCK_KEY = 7_301_003

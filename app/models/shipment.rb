@@ -21,6 +21,7 @@ class Shipment < ApplicationRecord
   include Auditable
   include OwnedRecord
   include LiveUpdates
+  include DayLock
   live_updates :sales
 
   NUMBERING_LOCK_KEY = 7_301_002
@@ -32,6 +33,10 @@ class Shipment < ApplicationRecord
   INPUTS = %w[gross_weight sacks humidity_percent damage_percent yield_factor].freeze
   ORIGIN_COLUMNS = (INPUTS + %w[tare net_weight]).map { "origin_#{it}" }.freeze
   DESTINATION_COLUMNS = (INPUTS + %w[tare net_weight]).map { "destination_#{it}" }.freeze
+  # A closed day (DayLock): what left that day no longer changes; the buyer's
+  # scale of one that left before still comes in on an open day.
+  locks_day :departed_at, free: DESTINATION_COLUMNS + %w[received_on weight_note_number shrink_reason difference_reason observations]
+  locks_day :received_on, free: %w[shrink_reason difference_reason observations]
   # The local scale: the gross weight and sacks typed, or the sums of
   # weighings (ShipmentWeighing), as in the purchases.
   WEIGHT_MODES = Purchase::WEIGHT_MODES

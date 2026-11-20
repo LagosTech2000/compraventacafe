@@ -13,6 +13,8 @@ class WarehouseTransfer < ApplicationRecord
   include Auditable
   include OwnedRecord
   include LiveUpdates
+  include DayLock
+  locks_day :transferred_at
   live_updates :sales
 
   NUMBERING_LOCK_KEY = 7_301_006

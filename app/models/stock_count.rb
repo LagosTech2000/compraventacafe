@@ -28,6 +28,8 @@ class StockCount < ApplicationRecord
   include Auditable
   include OwnedRecord
   include LiveUpdates
+  include DayLock
+  locks_day :counted_at
   live_updates :sales
 
   NUMBERING_LOCK_KEY = 7_301_007

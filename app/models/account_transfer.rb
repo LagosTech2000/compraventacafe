@@ -5,6 +5,8 @@ class AccountTransfer < ApplicationRecord
   include Auditable
   include OwnedRecord
   include LiveUpdates
+  include DayLock
+  locks_day :transferred_on
   live_updates :finance
 
   belongs_to :from_account, class_name: "MoneyAccount"

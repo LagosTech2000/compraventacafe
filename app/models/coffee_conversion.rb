@@ -21,6 +21,9 @@ class CoffeeConversion < ApplicationRecord
   include Auditable
   include OwnedRecord
   include LiveUpdates
+  include DayLock
+  locks_day :weighed_at, free: %w[finished_at finished_by_id output_gross_weight output_net_weight output_ratio output_ratio_source output_sacks output_tare output_humidity_percent output_damage_percent output_warehouse_id]
+  locks_day :finished_at
   live_updates :sales
 
   NUMBERING_LOCK_KEY = 7_301_005

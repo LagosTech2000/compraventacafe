@@ -15,6 +15,8 @@ class ProcessingCost < ApplicationRecord
   include OwnedRecord
   include HasMoneyAccount
   include LiveUpdates
+  include DayLock
+  locks_day :paid_on
   live_updates :sales, :finance
 
   CONCEPTS = %w[freight drying labor loading rental fuel other].freeze

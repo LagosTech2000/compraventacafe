@@ -16,6 +16,8 @@ class Invoice < ApplicationRecord
   include Auditable
   include OwnedRecord
   include LiveUpdates
+  include DayLock
+  locks_day :issued_on, free: %w[payment_status payment_method paid_on producer_id]
   live_updates :trading
 
   PAYMENT_STATUSES = %w[pending partial paid].freeze

@@ -4,6 +4,8 @@ class Purchase < ApplicationRecord
   include Auditable
   include OwnedRecord
   include LiveUpdates
+  include DayLock
+  locks_day :purchased_at, free: %w[invoice_id producer_id farm_id farm_plot_id hauler_id zone_id]
   live_updates :trading, :sales
 
   COFFEE_STATES = %w[cherry wet_parchment dry_parchment].freeze

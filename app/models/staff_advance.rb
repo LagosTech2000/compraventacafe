@@ -7,6 +7,8 @@ class StaffAdvance < ApplicationRecord
   include Auditable
   include OwnedRecord
   include LiveUpdates
+  include DayLock
+  locks_day :given_on, free: %w[staff_payment_id]
   live_updates :finance
 
   belongs_to :member, class_name: "StaffMember", foreign_key: :staff_member_id, inverse_of: :advances

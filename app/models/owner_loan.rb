@@ -13,6 +13,8 @@ class OwnerLoan < ApplicationRecord
   include OwnedRecord
   include LiveUpdates
   include HasMoneyAccount
+  include DayLock
+  locks_day :disbursed_on, free: %w[paid_off_on]
   live_updates :finance
 
   MAX_AMOUNT = 100_000_000

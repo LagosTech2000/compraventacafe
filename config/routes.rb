@@ -64,6 +64,10 @@ Rails.application.routes.draw do
     # Centro de control (only User::DATA_EXPORTER_ID): the developments
     # quoted apart (PaidFeature) and the data maintenance tasks.
     resource :control_center, only: :show
+    # The day closed for the whole business (Fernando, 2026-11-18).
+    resources :day_closes, only: %i[ index create ], controller: "business_day_closes" do
+      member { patch :reopen }
+    end
     resource :control_setting, only: :update
     resources :paid_features, only: :update
     # Data maintenance tasks (Maintenance, only User::DATA_EXPORTER_ID).

@@ -15,6 +15,8 @@ class LoanPayment < ApplicationRecord
   include OwnedRecord
   include HasMoneyAccount
   include LiveUpdates
+  include DayLock
+  locks_day :paid_on
   # Paid with coffee, it also changes the purchase and its invoice.
   live_updates :loans, :trading
 

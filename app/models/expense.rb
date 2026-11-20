@@ -8,6 +8,8 @@ class Expense < ApplicationRecord
   include OwnedRecord
   include LiveUpdates
   include HasReceipt
+  include DayLock
+  locks_day :spent_on, free: %w[shipment_id]
   live_updates :finance
 
   KINDS = FinanceCategory::KINDS

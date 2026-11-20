@@ -7,6 +7,8 @@ class CashCount < ApplicationRecord
   include Auditable
   include OwnedRecord
   include LiveUpdates
+  include DayLock
+  locks_day :counted_on
   live_updates :finance
 
   belongs_to :money_account

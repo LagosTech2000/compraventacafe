@@ -9,6 +9,8 @@ class InvoicePayment < ApplicationRecord
   include OwnedRecord
   include HasMoneyAccount
   include LiveUpdates
+  include DayLock
+  locks_day :paid_on
   live_updates :trading
 
   belongs_to :invoice

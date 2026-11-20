@@ -7,6 +7,8 @@ class OwnerLoanPayment < ApplicationRecord
   include OwnedRecord
   include LiveUpdates
   include HasMoneyAccount
+  include DayLock
+  locks_day :paid_on
   live_updates :finance
 
   PAYMENT_METHODS = Invoice::PAYMENT_METHODS

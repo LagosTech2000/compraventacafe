@@ -12,6 +12,8 @@ class StaffPayment < ApplicationRecord
   include Auditable
   include OwnedRecord
   include LiveUpdates
+  include DayLock
+  locks_day :paid_on
   live_updates :finance
 
   belongs_to :member, class_name: "StaffMember", foreign_key: :staff_member_id, inverse_of: :payments
