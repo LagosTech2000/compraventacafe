@@ -23,6 +23,7 @@ class CoffeeBatchInvoice < ApplicationRecord
   validates :percent, numericality: { greater_than: 0, less_than_or_equal_to: 100 }
   validates :invoice_id, uniqueness: { scope: :coffee_batch_id }
   validate :invoice_fits, :within_the_invoice, :within_the_limit, :lot_open
+  validate :coffee_in_before_it_left, if: -> { new_record? || will_save_change_to_invoice_id? }
 
   before_validation :take_pounds, if: -> { new_record? || will_save_change_to_percent? }
 
@@ -88,27 +89,6 @@ class CoffeeBatchInvoice < ApplicationRecord
            .where.not(id: group(:invoice_id).having("SUM(percent) >= 100").select(:invoice_id))
   end
 
-  # «Editar factura» (Fernando, 2026-11-13): the invoice goes in that lot
-  # with that percent, in no lot (nil), or moves from the one it was in.
-  # Only for an invoice in at most one lot; one split in several changes
-  # from each lot. Raises ActiveRecord::RecordInvalid.
-  def self.assign!(invoice:, batch:, percent:, user:)
-    shares = where(invoice:).lock.to_a
-    return if shares.many?
-
-    share = shares.first
-    return share&.destroy! unless batch
-
-    batch.lock!
-    percent = percent.presence || 100
-    if share&.coffee_batch_id == batch.id
-      share.update!(percent:)
-    else
-      share&.destroy!
-      batch.batch_invoices.create!(invoice:, percent:, created_by: user)
-    end
-  end
-
   def audit_label = "#{invoice&.display_number} · #{coffee_batch&.label}"
 
   # Its value: its net pounds' part of what the invoice's purchases cost.
@@ -153,9 +133,20 @@ class CoffeeBatchInvoice < ApplicationRecord
       errors.add(:percent, :over_limit, room: ActiveSupport::NumberHelper.number_to_rounded(room, precision: 2, delimiter: ","))
     end
 
+    # A lot already on a shipment or in a process takes only coffee that was
+    # in the warehouse when it left (Fernando, 2026-11-18).
+    def coffee_in_before_it_left
+      return unless invoice && coffee_batch&.taken?
+
+      entered = Purchase.active.where(invoice_id: invoice.id).maximum(:purchased_at)&.in_time_zone
+      errors.add(:base, CoffeeBatch.late_message(coffee_batch, entered, coffee_batch.taker)) if CoffeeBatch.after?(entered, coffee_batch.taken_at)
+    end
+
     def lot_open
       errors.add(:base, :lot_sold) if coffee_batch&.shipment&.sold? && !CoffeeBatch.sold_editable?
       # Its coffee went to be processed with these pounds (Fernando, 2026-11-16).
       errors.add(:base, :lot_processed) if coffee_batch&.processed?
+      # Its shipment or process is of a closed day (BusinessDayClose).
+      errors.add(:base, :lot_closed_day) if coffee_batch&.closed_day?
     end
 end

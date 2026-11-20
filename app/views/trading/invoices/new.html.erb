@@ -137,7 +137,7 @@
       </div>
       <div data-invoice-payment-choice-target="paidField">
         <%= form.label :paid_on, class: "field-label" %>
-        <%= form.date_field :paid_on, value: params.dig(:invoice, :paid_on) || Time.zone.today, class: "field-input" %>
+        <%= form.date_field :paid_on, max: latest_date, value: params.dig(:invoice, :paid_on) || Time.zone.today, class: "field-input" %>
       </div>
     </fieldset>
 

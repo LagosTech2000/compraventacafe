@@ -1,0 +1,91 @@
+<% content_for :title, @count.label %>
+<%= live_updates_from :sales %>
+<%= render "sales/nav" %>
+<%= render "shared/breadcrumbs", crumbs: [ [ t("sales.nav.stock"), sales_stock_path ], [ t("sales.stock_counts.index.title"), sales_stock_counts_path ], [ @count.label ] ] %>
+
+<div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= @count.label %></h1>
+    <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
+      <% if @count.voided? %><span class="badge badge-neutral"><%= t("sales.stock_counts.voided") %></span><% end %>
+      <span><%= @count.warehouse.name %> · <%= @count.human_coffee_state %> · <%= l(@count.counted_at) %></span>
+    </p>
+  </div>
+  <% if modal_request? %>
+    <%= page_link_to t("sales.buyers.show.full_page"), sales_stock_count_path(@count), class: "btn" %>
+  <% end %>
+</div>
+
+<% if @count.voided? %>
+  <p class="flash-alert mb-6" role="status"><%= t(".voided", date: l(@count.voided_at), name: @count.voided_by&.name, reason: @count.void_reason) %></p>
+<% end %>
+
+<%# The count against what the system said then, and the adjustment it made. %>
+<dl class="grid gap-3 panel p-4 text-sm sm:grid-cols-3" id="count-figures">
+  <div>
+    <dt class="text-xs text-ink-muted"><%= StockCount.human_attribute_name(:counted_gross) %></dt>
+    <dd class="text-lg font-bold tabular-nums"><%= t("sales.stock.pounds", pounds: format_pounds(@count.counted_gross)) %></dd>
+    <% if @count.counted_sacks %><dd class="text-xs text-ink-muted"><%= t(".sacks", count: @count.counted_sacks) %></dd><% end %>
+  </div>
+  <div>
+    <dt class="text-xs text-ink-muted"><%= t(".system") %></dt>
+    <dd class="text-lg font-bold tabular-nums"><%= format_gross_net(@count.system_gross, @count.system_net) %></dd>
+  </div>
+  <div data-count-adjustment>
+    <dt class="text-xs text-ink-muted"><%= t(".adjustment") %></dt>
+    <dd class="text-lg font-bold tabular-nums <%= "text-danger" if @count.shortage? %>"><%= t(".adjustment_gross", pounds: signed_pounds(@count.gross_weight)) %></dd>
+    <dd class="text-xs text-ink-muted tabular-nums">
+      <%= t(".adjustment_net", pounds: signed_pounds(@count.net_weight)) %>
+      <% if (percent = @count.difference_percent) %> · <%= t(".percent", percent: number_with_precision(percent, precision: 2)) %><% end %>
+    </dd>
+  </div>
+</dl>
+
+<% if @count.difference? && !@count.voided? %>
+  <% if @count.shortage? %>
+    <% loss = @portions.sum(0.to_d, &:value) %>
+    <p class="flash-alert mt-4" role="status" data-count-loss><%= t(".loss", amount: format_money(loss)) %></p>
+  <% else %>
+    <p class="flash-notice mt-4" role="status" data-count-surplus><%= t(".surplus") %></p>
+  <% end %>
+<% elsif !@count.difference? %>
+  <p class="flash-notice mt-4" role="status"><%= t(".matches") %></p>
+<% end %>
+
+<dl class="mt-4 grid gap-3 panel p-4 text-sm sm:grid-cols-3" id="count-details">
+  <% [ [ StockCount.human_attribute_name(:reason), @count.human_reason || t("sales.stock_counts.no_difference") ],
+       ([ StockCount.human_attribute_name(:reason_detail), @count.reason_detail ] if @count.reason_detail),
+       [ StockCount.human_attribute_name(:created_by), @count.created_by.name ] ].compact.each do |label, value| %>
+    <div><dt class="text-xs text-ink-muted"><%= label %></dt><dd class="font-medium"><%= value %></dd></div>
+  <% end %>
+  <% if @count.observations %>
+    <div class="sm:col-span-3">
+      <dt class="text-xs text-ink-muted"><%= StockCount.human_attribute_name(:observations) %></dt>
+      <dd class="whitespace-pre-line"><%= @count.observations %></dd>
+    </div>
+  <% end %>
+</dl>
+
+<% if @count.shortage? && @portions.any? %>
+  <div class="mt-4"><%= render "sales/portions", portions: @portions, id: "count-lots", title: t(".lots") %></div>
+<% end %>
+
+<%# An administrator voids it, with a reason, while no later count was made on it. %>
+<% if policy(@count).void? %>
+  <details class="mt-6 panel p-4">
+    <summary class="cursor-pointer font-semibold"><%= t(".void") %></summary>
+    <% if (later = @count.later_count) %>
+      <p class="flash-alert mt-2 text-sm" data-void-blockers><%= t(".void_blocked", number: later.display_number) %></p>
+    <% else %>
+      <p class="mt-2 text-sm text-ink-muted"><%= t(".void_help") %></p>
+      <%= form_with model: @count, url: void_sales_stock_count_path(@count), method: :patch, class: "mt-3 flex flex-wrap items-end gap-3",
+            data: { turbo_confirm: t(".confirm_void") } do |form| %>
+        <div class="min-w-0 flex-1">
+          <%= form.label :void_reason, class: "field-label" %>
+          <%= form.text_field :void_reason, maxlength: 200, required: true, class: "field-input" %>
+        </div>
+        <%= form.submit t(".void"), class: "btn" %>
+      <% end %>
+    <% end %>
+  </details>
+<% end %>

@@ -30,9 +30,21 @@
     <% end %>
   </div>
 
-  <section>
+  <%# «Copiar permisos de otro usuario» (Fernando, 2026-11-18): marks the
+      same boxes as the user chosen; nothing is saved until «Guardar». %>
+  <% others = User.where(active: true).where.not(id: user.id).includes(:permissions).order(:name).to_a %>
+  <section data-controller="permission-copy"
+           data-permission-copy-users-value="<%= others.to_h { |other| [ other.id, other.permissions.to_h { |permission| [ permission.permission_key, AppModule::ACTIONS.select { permission.public_send("can_#{it}") } ] } ] }.to_json %>">
     <h2 class="text-lg font-semibold"><%= t(".permissions") %></h2>
     <p class="mt-1 text-sm text-ink-muted"><%= t(".permissions_help") %></p>
+    <% if others.any? %>
+      <div class="mt-3 max-w-md">
+        <%= label_tag "copy_permissions_from", t(".copy_from"), class: "field-label" %>
+        <%= select_tag "copy_permissions_from", options_for_select(others.map { [ it.name, it.id ] }), include_blank: t(".copy_pick"), class: "field-input",
+              data: { action: "permission-copy#copy" } %>
+        <p class="mt-1 text-xs text-ink-muted"><%= t(".copy_help") %></p>
+      </div>
+    <% end %>
 
     <%# One row per submodule (a tab of the module's bar), grouped by module;
         the module's row marks or clears each action in all of them. %>
@@ -75,7 +87,8 @@
                   <% AppModule::ACTIONS.each do |action| %>
                     <td class="text-center">
                       <%= permission_form.check_box "can_#{action}", class: "size-4 accent-primary",
-                            data: { permission_matrix_target: "flag", permission_action: action, action: "permission-matrix#update" },
+                            data: { permission_matrix_target: "flag", permission_action: action, action: "permission-matrix#update",
+                                    permission_key: permission.permission_key },
                             aria: { label: "#{permission.human_name}: #{AppModule.human_action(action)}" } %>
                     </td>
                   <% end %>

@@ -7,10 +7,11 @@
 #
 # Of one warehouse when given (client, 2026-10-26): then transfers in and
 # out of it are moves too; of all of them they are not (the coffee stays).
+# A physical count's adjustment is a move in or out (StockCount, 2026-11-18).
 class StockLedger
-  KINDS = %w[purchase shipment conversion_out conversion_in transfer_in transfer_out].freeze
-  # Same moment: what comes in first.
-  ORDER = { "purchase" => 0, "conversion_in" => 1, "transfer_in" => 2, "transfer_out" => 3, "conversion_out" => 4, "shipment" => 5 }.freeze
+  KINDS = %w[purchase shipment conversion_out conversion_in transfer_in transfer_out adjustment].freeze
+  # Same moment: what comes in first; a count's adjustment after all of it.
+  ORDER = { "purchase" => 0, "conversion_in" => 1, "transfer_in" => 2, "transfer_out" => 3, "conversion_out" => 4, "shipment" => 5, "adjustment" => 6 }.freeze
 
   Entry = Data.define(:kind, :record, :at, :coffee_state, :pounds_in, :pounds_out, :gross_in, :gross_out, :balance, :gross_balance) do
     def human_coffee_state = Purchase.human_attribute_name("coffee_state/#{coffee_state}")
@@ -75,6 +76,7 @@ class StockLedger
       weighed = CoffeeConversion.active.where(weighed_at: range)
       came_out = CoffeeConversion.active.where(finished_at: range)
       transfers_in = transfers_out = WarehouseTransfer.none
+      counts = StockCount.active.where(counted_at: range).where.not(net_weight: 0).includes(:warehouse)
       if warehouse
         purchases = purchases.where(warehouse:)
         shipments = shipments.where(warehouse:)
@@ -83,6 +85,7 @@ class StockLedger
         moved = WarehouseTransfer.active.where(transferred_at: range).includes(:from_warehouse, :to_warehouse)
         transfers_in = moved.where(to_warehouse: warehouse)
         transfers_out = moved.where(from_warehouse: warehouse)
+        counts = counts.where(warehouse:)
       end
       if coffee_state
         purchases = purchases.where(coffee_state:)
@@ -91,6 +94,7 @@ class StockLedger
         came_out = came_out.where(to_state: coffee_state)
         transfers_in = transfers_in.where(coffee_state:)
         transfers_out = transfers_out.where(coffee_state:)
+        counts = counts.where(coffee_state:)
       end
       # What each shipment took (its lots, or its local scale; Fernando, 2026-11-13).
       shipped = Shipment.stock_weights(shipments.map(&:id))
@@ -102,7 +106,9 @@ class StockLedger
         weighed.map { |conversion| move("conversion_out", conversion, conversion.weighed_at, conversion.from_state, net_out: conversion.input_net_weight, gross_out: conversion.input_gross_weight) } +
         came_out.map { |conversion| move("conversion_in", conversion, conversion.finished_at, conversion.to_state, net_in: conversion.output_net_weight, gross_in: conversion.output_gross_weight) } +
         transfers_in.map { |transfer| move("transfer_in", transfer, transfer.transferred_at, transfer.coffee_state, net_in: transfer.net_weight, gross_in: transfer.gross_weight) } +
-        transfers_out.map { |transfer| move("transfer_out", transfer, transfer.transferred_at, transfer.coffee_state, net_out: transfer.net_weight, gross_out: transfer.gross_weight) }
+        transfers_out.map { |transfer| move("transfer_out", transfer, transfer.transferred_at, transfer.coffee_state, net_out: transfer.net_weight, gross_out: transfer.gross_weight) } +
+        counts.map { |count| move("adjustment", count, count.counted_at, count.coffee_state, net_in: [ count.net_weight, 0 ].max, net_out: [ -count.net_weight, 0 ].max,
+                                                                                            gross_in: [ count.gross_weight, 0 ].max, gross_out: [ -count.gross_weight, 0 ].max) }
     end
 
     def move(kind, record, at, state, net_in: 0, net_out: 0, gross_in: 0, gross_out: 0)

@@ -20,7 +20,7 @@ export default class extends Controller {
   static targets = ["coffeeState", "gross", "sacks", "humidity", "damage", "yield", "parchmentField", "cherryField",
                     "tare", "net", "quintals", "difference", "differenceBox", "stockNotice",
                     "weightMode", "weighingsSection", "weighings", "weighingTemplate", "weighing",
-                    "weighingGross", "weighingSacks", "weighingDestroy", "sumHelp", "warehouse"]
+                    "weighingGross", "weighingSacks", "weighingDestroy", "sumHelp", "warehouse", "reasonField"]
   static values = { tarePerSack: Number, quintalWeight: Number, defaults: Object, coffeeState: String,
                     originNet: Number, tolerance: Number, stock: Object, stockMessage: String }
 
@@ -118,6 +118,7 @@ export default class extends Controller {
     if (net === null || !(this.originNetValue > 0)) {
       this.differenceTarget.textContent = "—"
       this.differenceBoxTarget.dataset.overTolerance = "false"
+      this.showReason(false)
       return
     }
     const difference = Math.round((net - this.originNetValue) * 100) / 100
@@ -127,6 +128,16 @@ export default class extends Controller {
       `${sign(difference)}${this.pounds.format(Math.abs(difference))} lb (${sign(percent)}${this.pounds.format(Math.abs(percent))} %)`
     const over = this.hasToleranceValue && this.toleranceValue > 0 && Math.abs(percent) > this.toleranceValue
     this.differenceBoxTarget.dataset.overTolerance = over ? "true" : "false"
+    this.showReason(over)
+  }
+
+  // Over the tolerance, the reason (Fernando, 2026-11-18); one already
+  // written or asked by the server stays in sight.
+  showReason(over) {
+    if (!this.hasReasonFieldTarget) return
+    const field = this.reasonFieldTarget
+    const keep = field.dataset.keep === "true" || field.querySelector("textarea")?.value.trim()
+    field.hidden = !(over || keep)
   }
 
   checkStock() {

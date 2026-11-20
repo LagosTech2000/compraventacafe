@@ -10,6 +10,11 @@ class ShipmentsReport < Report
   SOLD = "EXISTS (SELECT 1 FROM sale_lines WHERE sale_lines.shipment_id = shipments.id AND sale_lines.active)".freeze
   STATUS_TONES = { "in_transit" => "warning", "received" => "neutral", "sold" => "success" }.freeze
   STATUSES = %w[in_transit received sold].freeze
+  # What the purchases of its lots say (Fernando, 2026-11-18: «Cuadre por
+  # salida»): against its local scale, the shrink.
+  LOTS_GROSS = Shipment.batches_sql(:gross_weight)
+  LOTS_NET = Shipment.batches_sql(:net_weight)
+  SHRINK_PERCENT = "SUM(#{Shipment::SHRINK_NET_SQL}) * 100 / NULLIF(SUM(#{LOTS_NET}) FILTER (WHERE #{Shipment::SHRINK_NET_SQL} IS NOT NULL), 0)".freeze
 
   self.module_key = "sales"
   def self.permission_keys = %w[sales.shipments]
@@ -34,8 +39,15 @@ class ShipmentsReport < Report
   column(:weight_note_number, :text, sort: "shipments.weight_note_number", priority: 3)
   column(:sacks, :integer, sort: "shipments.origin_sacks", priority: 3, &:origin_sacks)
   # Gross first, net beside (Fernando, 2026-11-13).
+  column(:lots_gross, :pounds, sort: LOTS_GROSS, priority: 3) { |shipment| shipment[:lots_gross]&.to_d&.round(2) }
+  column(:lots_net, :pounds, sort: LOTS_NET, priority: 2) { |shipment| shipment[:lots_net]&.to_d&.round(2) }
   column(:origin_gross, :pounds, sort: "shipments.origin_gross_weight", priority: 2, &:origin_gross_weight)
   column(:origin_net, :pounds, sort: "shipments.origin_net_weight", &:origin_net_weight)
+  column(:shrink_net, :pounds, sort: Shipment::SHRINK_NET_SQL, priority: 2) { |shipment| shrink(shipment) }
+  column(:shrink_percent, :percent, sort: "#{Shipment::SHRINK_NET_SQL} / NULLIF(#{LOTS_NET}, 0)", priority: 2) do |shipment|
+    lots = shipment[:lots_net]&.to_d
+    (shrink(shipment) * 100 / lots).round(2) if shrink(shipment) && lots&.positive?
+  end
   column(:destination_gross, :pounds, sort: "shipments.destination_gross_weight", priority: 2, &:destination_gross_weight)
   column(:destination_net, :pounds, sort: "shipments.destination_net_weight", &:destination_net_weight)
   column(:difference, :pounds, sort: DIFFERENCE, priority: 2, &:net_difference)
@@ -52,6 +64,8 @@ class ShipmentsReport < Report
   # Shrink (Fernando, 2026-11-13): its lots' purchases − its local scale.
   measure :shrink_gross, :pounds, "SUM(#{Shipment::SHRINK_GROSS_SQL})"
   measure :shrink_net, :pounds, "SUM(#{Shipment::SHRINK_NET_SQL})"
+  measure :shrink_percent, :percent, SHRINK_PERCENT
+  measure :lots_net, :pounds, "SUM(#{LOTS_NET})"
 
   group :day, unit: "day"
   group :week, unit: "week"
@@ -67,6 +81,13 @@ class ShipmentsReport < Report
   kpi :in_transit, :integer, "COUNT(*) FILTER (WHERE shipments.received_on IS NULL)", good: :down, compare: false
   kpi :shrink_gross, :pounds, "SUM(#{Shipment::SHRINK_GROSS_SQL})", good: :down
   kpi :shrink_net, :pounds, "SUM(#{Shipment::SHRINK_NET_SQL})", good: :down
+  kpi :shrink_percent, :percent, SHRINK_PERCENT, good: :down
+
+  # Its lots' net − its local net (nil without lots or local scale).
+  def self.shrink(shipment)
+    lots = shipment[:lots_net]&.to_d
+    (lots - shipment.origin_net_weight).round(2) if lots && shipment.origin_net_weight
+  end
 
   def scope
     Shipment.visible_to(user).active.joins(:buyer)
@@ -114,6 +135,6 @@ class ShipmentsReport < Report
 
   private
     def preload(relation)
-      relation.includes(:buyer, :active_sale_line)
+      relation.includes(:buyer, :active_sale_line).select("shipments.*", "#{LOTS_GROSS} AS lots_gross", "#{LOTS_NET} AS lots_net")
     end
 end

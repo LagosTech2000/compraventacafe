@@ -1,0 +1,92 @@
+<% content_for :title, t(".title") %>
+<%= render "sales/nav" %>
+<% unless modal_request? %>
+  <%= render "shared/breadcrumbs", crumbs: [ [ t("sales.nav.stock"), sales_stock_path ], [ t("sales.stock_counts.index.title"), sales_stock_counts_path ], [ t(".title") ] ] %>
+<% end %>
+
+<h1 class="mb-2 text-2xl font-bold"><%= t(".title") %></h1>
+<p class="mb-4 text-sm text-ink-muted"><%= t(".help") %></p>
+
+<%# What the system says now of each state in each active warehouse (gross and
+    net), for the preview; the server reads it again at the count's moment. %>
+<% warehouses = Warehouse.active.alphabetical %>
+<% fallback = Hash.new { |ratios, state| ratios[state] = CoffeeConversion.ratio_for(state, Time.zone.today).first.to_f } %>
+<% stock = warehouses.to_h do |warehouse|
+     rows = CoffeeStock.new(warehouse:)
+     [ warehouse.id, Purchase::COFFEE_STATES.index_with do |state|
+         row = rows.row(state)
+         ratio = row.stock.positive? && row.gross_stock.positive? ? (row.stock / row.gross_stock).round(6).to_f : fallback[state]
+         { gross: row.gross_stock.to_f, net: row.stock.to_f, ratio: }
+       end ]
+   end %>
+<% limit = Current.user.admin? ? nil : SiteSetting.current.count_admin_percent.to_f %>
+<%= form_with model: @count, url: sales_stock_counts_path, class: form_surface_class("@container max-w-none"),
+      data: { controller: "form-validation unsaved-changes count-preview", action: unsaved_changes_actions,
+              unsaved_changes_message_value: t("shared.unsaved_changes.leave"),
+              count_preview_stock_value: stock.to_json, count_preview_limit_value: limit,
+              count_preview_texts_value: { system: t(".system_line"), gross: t(".gross_line"), net: t(".net_line") }.to_json } do |form| %>
+  <%= render "shared/form_errors", record: @count %>
+  <div class="grid items-start gap-6 @5xl:grid-cols-[minmax(0,1fr)_22rem]">
+    <div class="min-w-0 grid gap-5 sm:grid-cols-2">
+      <div>
+        <%= form.label :warehouse_id, class: "field-label" %>
+        <%= form.collection_select :warehouse_id, warehouses, :id, :name, { prompt: t("shared.select.pick_warehouse") }, required: true, class: "field-input",
+              data: { count_preview_target: "warehouse", action: "count-preview#update" } %>
+      </div>
+      <div>
+        <%= form.label :coffee_state, class: "field-label" %>
+        <%= form.select :coffee_state, enum_options(Purchase, :coffee_state, Purchase::COFFEE_STATES), {}, required: true, class: "field-input",
+              data: { count_preview_target: "state", action: "count-preview#update" } %>
+      </div>
+      <div>
+        <%= form.label :counted_at, class: "field-label" %>
+        <%= form.datetime_local_field :counted_at, max: latest_datetime, required: true, class: "field-input" %>
+      </div>
+      <div>
+        <%= form.label :counted_sacks, class: "field-label" %>
+        <%= form.number_field :counted_sacks, min: 0, step: 1, inputmode: "numeric", class: "field-input" %>
+      </div>
+      <div class="sm:col-span-2">
+        <%= form.label :counted_gross, class: "field-label" %>
+        <%= form.number_field :counted_gross, required: true, min: 0, step: 0.01, inputmode: "decimal", class: "field-input text-lg", autofocus: true,
+              data: { count_preview_target: "counted", action: "count-preview#update",
+                      missing_message: "#{StockCount.human_attribute_name(:counted_gross)} #{t("errors.messages.blank")}" } %>
+        <p class="mt-1 text-xs text-ink-muted"><%= t(".counted_help") %></p>
+      </div>
+      <div>
+        <%= form.label :reason, class: "field-label" %>
+        <%= form.select :reason, enum_options(StockCount, :reason, StockCount::REASONS), { prompt: t(".pick_reason") }, class: "field-input",
+              data: { count_preview_target: "reason" } %>
+        <p class="mt-1 text-xs text-ink-muted"><%= t(".reason_help") %></p>
+      </div>
+      <div>
+        <%= form.label :reason_detail, class: "field-label" %>
+        <%= form.text_field :reason_detail, maxlength: 200, class: "field-input" %>
+      </div>
+      <div class="sm:col-span-2">
+        <%= form.label :observations, class: "field-label" %>
+        <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>
+      </div>
+    </div>
+
+    <aside class="space-y-4 @5xl:sticky @5xl:top-24">
+      <dl class="clay grid gap-3 p-4 text-sm">
+        <div>
+          <dt class="text-xs text-ink-muted"><%= t(".system") %></dt>
+          <dd class="text-lg font-bold tabular-nums" data-count-preview-target="system">—</dd>
+        </div>
+        <div>
+          <dt class="text-xs text-ink-muted"><%= t(".adjustment") %></dt>
+          <dd class="text-2xl font-bold tabular-nums" data-count-preview-target="difference">—</dd>
+          <dd class="text-xs text-ink-muted tabular-nums" data-count-preview-target="net"></dd>
+        </div>
+      </dl>
+      <p class="text-sm text-ink-muted"><%= t(".how") %></p>
+      <p class="flash-alert" role="status" hidden data-count-preview-target="overShare"><%= t(".over_share", percent: limit) %></p>
+      <div class="flex flex-wrap gap-3">
+        <%= form.submit t(".submit"), class: "btn btn-primary" %>
+        <%= cancel_button sales_stock_counts_path %>
+      </div>
+    </aside>
+  </div>
+<% end %>

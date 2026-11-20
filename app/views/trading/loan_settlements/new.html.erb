@@ -33,7 +33,7 @@
 
   <div class="max-w-xs">
     <%= form.label :paid_on, t(".paid_on"), class: "field-label" %>
-    <%= form.date_field :paid_on, value: @settlement.paid_on, required: true, class: "field-input",
+    <%= form.date_field :paid_on, max: latest_date, value: @settlement.paid_on, required: true, class: "field-input",
           data: { action: "loan-settlement#reload" } %>
     <p class="mt-1 text-xs text-ink-muted"><%= t(".paid_on_help") %></p>
   </div>

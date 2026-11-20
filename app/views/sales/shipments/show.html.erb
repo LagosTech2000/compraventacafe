@@ -43,6 +43,9 @@
     <%= render layout: "shared/lifecycle", locals: { lifecycle: SalesLifecycle.for_shipment(@shipment), scope: "sales.lifecycle", guide: :sales_flow } do %>
       <% if !@shipment.received? && policy(@shipment).receive? %>
         <%= modal_link_to t("sales.shipments.show.receive"), edit_sales_shipment_arrival_path(@shipment), class: "btn btn-primary" %>
+        <% if policy(Sale).create? %>
+          <%= modal_link_to t("sales.shipments.show.settle"), edit_sales_shipment_arrival_path(@shipment, open_settle: 1), class: "btn" %>
+        <% end %>
       <% elsif @shipment.received? && !@shipment.sold? && policy(Sale).create? %>
         <%= page_link_to t("sales.shipments.show.sell"), new_sales_sale_path(buyer_id: @shipment.buyer_id), class: "btn btn-primary" %>
       <% elsif @shipment.sold? %>
@@ -71,6 +74,28 @@
       </p>
     </div>
     <p class="text-2xl"><%= weight_difference(@shipment) %></p>
+  </section>
+<% end %>
+
+<%# Why its differences pass their tolerance (Fernando, 2026-11-18). %>
+<% missing = @shipment.missing_reasons %>
+<% if missing.any? || @shipment.shrink_reason.present? || @shipment.difference_reason.present? %>
+  <section class="mt-4 panel p-4 <%= "ring-2 ring-danger" if missing.any? %>" aria-labelledby="shipment-reasons" data-shipment-reasons>
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h2 id="shipment-reasons" class="font-semibold"><%= t(".reasons") %></h2>
+      <% if policy(@shipment).explain? %>
+        <%= modal_link_to t(missing.any? ? ".write_reasons" : ".edit_reasons"), edit_sales_shipment_reasons_path(@shipment), class: "btn btn-sm #{"btn-primary" if missing.any?}" %>
+      <% end %>
+    </div>
+    <dl class="mt-2 grid gap-2 text-sm sm:grid-cols-2">
+      <% { shrink: @shipment.shrink_reason, difference: @shipment.difference_reason }.each do |kind, reason| %>
+        <% next unless reason.present? || missing.include?(kind) %>
+        <div>
+          <dt class="text-xs text-ink-muted"><%= Shipment.human_attribute_name("#{kind}_reason") %></dt>
+          <dd data-reason="<%= kind %>"><%= reason.presence || tag.span(t(".missing_reason"), class: "font-semibold text-danger") %></dd>
+        </div>
+      <% end %>
+    </dl>
   </section>
 <% end %>
 

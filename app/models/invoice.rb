@@ -4,16 +4,20 @@
 # pay it is paid ("cancelada"). Status, payment date and method are kept on
 # the invoice from its payments (#refresh_payment_status!).
 #
-# Administrators void it and edit it, even paid (Fernando, 2026-11-12):
-# voiding voids its purchases too (their coffee leaves the stock) and
-# removes its payments (their money no longer counts); it keeps its number
-# and stays as a record, out of every list and total. Edited, its total can
-# fall below what was paid: it is saved and shows as overpaid
-# (#overpaid_amount).
+# Never edited, by anyone (Fernando, 2026-11-18: «que no se pueda editar
+# facturas ya canceladas»). An administrator voids it, with a reason, once
+# nothing after it depends on it: no payments (removed first, the latest
+# one first), no purchase that paid a loan and no lot that took it gone to
+# a shipment or a process. Voiding voids its purchases too (their coffee
+# leaves the stock); it keeps its number and stays as a record, out of
+# every list and total. One edited before (2026-11-12 to 2026-11-18) may
+# show as overpaid (#overpaid_amount).
 class Invoice < ApplicationRecord
   include Auditable
   include OwnedRecord
   include LiveUpdates
+  include DayLock
+  locks_day :issued_on, free: %w[payment_status payment_method paid_on producer_id]
   live_updates :trading
 
   PAYMENT_STATUSES = %w[pending partial paid].freeze
@@ -41,6 +45,7 @@ class Invoice < ApplicationRecord
   normalizes :observations, with: FieldFormats::STRIP
 
   validates :issued_on, presence: true
+  validates :issued_on, not_in_future: true
   validates :void_reason, length: { maximum: 200 }
   validates :observations, length: { maximum: 500 }
   validate :not_after_payments, if: -> { persisted? && will_save_change_to_issued_on? }
@@ -137,19 +142,19 @@ class Invoice < ApplicationRecord
     self.class.human_attribute_name("payment_status/#{state}")
   end
 
-  # Voids it with its purchases and removes its payments (Fernando,
-  # 2026-11-12). Not while a purchase paid a loan (remove the pago con café
-  # first), nor if voiding a purchase leaves a hauler owing what was paid.
-  # All of it or nothing.
+  # Voids it with its purchases (Fernando, 2026-11-12). Only once nothing
+  # after it depends on it (Fernando, 2026-11-18): no payments, no purchase
+  # that paid a loan, no lot of it gone to a shipment or a process; nor if
+  # voiding a purchase leaves a hauler owing what was paid. Its share of
+  # lots still free leaves them. All of it or nothing.
   def void!(user, reason:)
     transaction do
       lock!
       errors.add(:base, :already_voided) if voided?
       errors.add(:void_reason, :blank) if reason.to_s.squish.empty?
-      errors.add(:base, :has_loan_payments) if LoanPayment.where(purchase_id: purchases.select(:id)).exists?
+      void_blockers.each { |key, options| errors.add(:base, key, **options) }
       raise ActiveRecord::RecordInvalid, self if errors.any?
 
-      payments.each(&:destroy!)
       batch_invoices.each(&:destroy!)
       update!(voided_at: Time.current, voided_by: user, void_reason: reason)
       purchases.each do |purchase|
@@ -162,26 +167,19 @@ class Invoice < ApplicationRecord
     end
   end
 
-  # An administrator's edit (Fernando, 2026-11-12): its date, observations
-  # and purchases (the ones taken off are uninvoiced again; others of the
-  # producer still uninvoiced can come in). All of it or nothing.
-  def revise!(issued_on:, observations:, purchase_ids:)
-    transaction do
-      lock!
-      ids = Array(purchase_ids).compact_blank.map(&:to_i)
-      chosen = Purchase.active.where(producer_id:, id: ids).where(invoice_id: [ nil, id ]).lock.includes(:hauler, :farm, :producer, :invoice).to_a
-      errors.add(:purchases, :unavailable) if chosen.size != ids.uniq.size
-      errors.add(:purchases, :blank) if ids.empty?
-      shortfall = CoffeeBatchInvoice.shortfall(id, chosen.sum { it.gross_weight.to_d }, chosen.sum { it.net_weight.to_d })
-      errors.add(:base, shortfall) if shortfall
-      raise ActiveRecord::RecordInvalid, self if errors.any?
-
-      purchases.where.not(id: ids).includes(:hauler, :farm, :producer, :invoice).each { it.update!(invoice: nil) }
-      chosen.each { it.update!(invoice: self) unless it.invoice_id == id }
-      update!(issued_on:, observations:)
-      purchases.reset
-      refresh_payment_status!
+  # What has to be undone before voiding it (Fernando, 2026-11-18):
+  # [[error key, options]]; empty when it can be voided.
+  def void_blockers
+    blockers = []
+    blockers << [ :has_payments, { count: payments.count } ] if payments.exists?
+    blockers << [ :has_loan_payments, {} ] if LoanPayment.where(purchase_id: purchases.select(:id)).exists?
+    coffee_batches.includes(:shipment, :processing).select(&:taken?).each do |batch|
+      taker = if batch.shipment then I18n.t("sales.coffee_batches.taker.shipment", number: batch.shipment.display_number)
+      else I18n.t("sales.coffee_batches.taker.process", number: batch.processing.display_number)
+      end
+      blockers << [ :lot_taken, { batch: batch.label, taker: } ]
     end
+    blockers
   end
 
   # "Varias formas" when its payments used more than one.

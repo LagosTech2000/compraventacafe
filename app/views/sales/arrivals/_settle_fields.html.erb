@@ -1,0 +1,68 @@
+<%# «Liquidar salida» (Fernando, 2026-11-18): every sale has one shipment,
+    so the sale and its collection go with the buyer's weight, on the same
+    day. Only with «Guardar y liquidar»; «Guardar peso en destino» leaves
+    the sale for later. %>
+<% settle = params.fetch(:settle, {}) %>
+<% unit = settle[:price_unit].presence_in(Sale::PRICE_UNITS) || "quintal" %>
+<details class="panel p-4" id="settle" <%= "open" if params[:settle_now].present? || params[:settle].present? || params[:open_settle].present? %>
+         data-controller="arrival-sale" data-arrival-sale-quintal-pounds-default-value="<%= Sale::QUINTAL_POUNDS %>">
+  <summary class="cursor-pointer text-lg font-semibold"><%= t(".title") %></summary>
+  <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
+  <div class="mt-4 grid gap-5 sm:grid-cols-2">
+    <div class="sm:col-span-2">
+      <span class="field-label"><%= Sale.human_attribute_name(:price_unit) %></span>
+      <div class="flex flex-wrap gap-x-5 gap-y-2">
+        <% Sale::PRICE_UNITS.reverse_each do |price_unit| %>
+          <label class="flex min-h-11 cursor-pointer items-center gap-2 text-sm font-medium">
+            <%= radio_button_tag "settle[price_unit]", price_unit, unit == price_unit, class: "size-4 accent-primary",
+                  data: { arrival_sale_target: "unit", action: "arrival-sale#update" } %>
+            <%= Sale.human_attribute_name("price_unit/#{price_unit}") %>
+          </label>
+        <% end %>
+      </div>
+    </div>
+    <div data-arrival-sale-target="quintalField">
+      <%= label_tag "settle_quintal_pounds", Sale.human_attribute_name(:quintal_pounds), class: "field-label" %>
+      <%= number_field_tag "settle[quintal_pounds]", settle[:quintal_pounds] || Sale::QUINTAL_POUNDS, id: "settle_quintal_pounds", min: 1, max: 999.99, step: 0.01,
+            inputmode: "decimal", class: "field-input", data: { arrival_sale_target: "quintalPounds", action: "input->arrival-sale#update" } %>
+    </div>
+    <div>
+      <%= label_tag "settle_unit_price", t(".unit_price"), class: "field-label" %>
+      <%= number_field_tag "settle[unit_price]", settle[:unit_price], id: "settle_unit_price", min: 0.01, max: 9_999_999.99, step: 0.01, inputmode: "decimal",
+            class: "field-input text-lg", data: { arrival_sale_target: "price", action: "input->arrival-sale#update" } %>
+    </div>
+    <div>
+      <%= label_tag "settle_buyer_document_number", Sale.human_attribute_name(:buyer_document_number), class: "field-label" %>
+      <%= text_field_tag "settle[buyer_document_number]", settle[:buyer_document_number], id: "settle_buyer_document_number", maxlength: 60, class: "field-input" %>
+    </div>
+    <div>
+      <p class="field-label"><%= Sale.human_attribute_name(:total) %></p>
+      <p class="text-2xl font-bold tabular-nums" data-arrival-sale-target="total">—</p>
+    </div>
+  </div>
+  <fieldset class="mt-5 grid gap-5 sm:grid-cols-2" data-controller="invoice-payment-choice money-account" data-money-account-defaults-value="<%= MoneyAccount.defaults_by_method.to_json %>">
+    <legend class="mb-2 font-semibold"><%= t(".payment") %></legend>
+    <div>
+      <%= label_tag "settle_payment_status", Sale.human_attribute_name(:payment_status), class: "field-label" %>
+      <%= select_tag "settle[payment_status]",
+            options_for_select(SaleIssuer::PAYMENT_CHOICES.map { [ t("sales.sales.new.choices.#{it}"), it ] }, settle[:payment_status] || "pending"),
+            id: "settle_payment_status", class: "field-input", data: { invoice_payment_choice_target: "status", action: "invoice-payment-choice#update" } %>
+    </div>
+    <div data-invoice-payment-choice-target="partialField">
+      <%= label_tag "settle_amount", t("sales.sales.new.amount"), class: "field-label" %>
+      <%= number_field_tag "settle[amount]", settle[:amount], id: "settle_amount", min: 0.01, step: 0.01, inputmode: "decimal", class: "field-input" %>
+    </div>
+    <div data-invoice-payment-choice-target="paidField">
+      <%= label_tag "settle_payment_method", SalePayment.human_attribute_name(:payment_method), class: "field-label" %>
+      <%= select_tag "settle[payment_method]", options_for_select(enum_options(Invoice, :payment_method, Invoice::PAYMENT_METHODS), settle[:payment_method]),
+            id: "settle_payment_method", include_blank: t("shared.select.pick_payment_method"), class: "field-input",
+            data: { money_account_target: "method", action: "money-account#suggest" } %>
+    </div>
+    <div data-invoice-payment-choice-target="optionalPaidField">
+      <%= label_tag "settle_money_account_id", MoneyAccount.model_name.human, class: "field-label" %>
+      <%= select_tag "settle[money_account_id]", options_from_collection_for_select(MoneyAccount.active.alphabetical, :id, :name, settle[:money_account_id]),
+            id: "settle_money_account_id", include_blank: t("shared.select.no_account"), class: "field-input",
+            data: { money_account_target: "account", action: "money-account#pick" } %>
+    </div>
+  </fieldset>
+</details>

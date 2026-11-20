@@ -11,10 +11,7 @@
 <div class="mb-6 flex flex-wrap items-start justify-between gap-4 print:hidden">
   <h1 class="text-2xl font-bold"><%= t(".title", number: @invoice.display_number) %></h1>
   <div class="flex flex-wrap gap-2">
-    <%# Administrators edit or void it, even paid (Fernando, 2026-11-12). %>
-    <% if policy(@invoice).update? %>
-      <%= page_link_to t(".edit"), edit_trading_invoice_path(@invoice), class: "btn" %>
-    <% end %>
+    <%# Never edited; an administrator voids it once nothing depends on it (Fernando, 2026-11-18). %>
     <% if policy(@invoice).void? %>
       <%= modal_link_to t(".void"), new_trading_invoice_void_path(@invoice), class: "btn" %>
     <% end %>

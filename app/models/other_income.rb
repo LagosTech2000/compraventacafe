@@ -5,6 +5,8 @@ class OtherIncome < ApplicationRecord
   include Auditable
   include OwnedRecord
   include LiveUpdates
+  include DayLock
+  locks_day :received_on
   live_updates :finance
 
   belongs_to :money_account
@@ -14,6 +16,7 @@ class OtherIncome < ApplicationRecord
   normalizes :observations, with: FieldFormats::STRIP
 
   validates :received_on, presence: true
+  validates :received_on, not_in_future: true
   validates :concept, presence: true, length: { maximum: 200 }
   validates :amount, numericality: { greater_than: 0, less_than: Expense::MAX_AMOUNT }
   validates :payment_method, inclusion: { in: Invoice::PAYMENT_METHODS }

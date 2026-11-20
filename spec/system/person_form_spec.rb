@@ -45,4 +45,24 @@ RSpec.describe "Person form", type: :system do
     expect(page).to have_text("Productor creado")
     expect(Producer.last.person).to have_attributes(client?: true, collaborator?: false)
   end
+
+  # Who is already registered (Fernando, 2026-11-18): a notice while typing.
+  it "warns about a person that looks alike while typing, and lets save" do
+    create(:person, first_names: "Rosa Amelia", last_names: "Díaz Mejía", phone: "99990000")
+    visit new_administration_person_path
+    fill_in "person_first_names", with: "rosa"
+    fill_in "person_last_names", with: "diaz"
+    expect(page).to have_css("[data-person-duplicates]", text: "Rosa Amelia Díaz Mejía")
+    expect(page).to have_css("[data-person-duplicates]", text: "mismos nombres")
+
+    fill_in "person_last_names", with: "Pérez"
+    expect(page).to have_no_css("[data-person-duplicates]")
+    fill_in "person_phone", with: "9999-0000"
+    expect(page).to have_css("[data-person-duplicates]", text: "mismo teléfono")
+
+    check "person_client_role"
+    find("main form [type=submit]").click
+    expect(page).to have_text("Persona creada.")
+    expect(Person.count).to eq(2)
+  end
 end

@@ -25,9 +25,9 @@ module Sales
     end
 
     def create
-      @shipment = authorize Shipment.new(shipment_params.merge(created_by: Current.user, origin_skippable: Current.user.admin?))
+      @shipment = authorize Shipment.new(shipment_params.merge(created_by: Current.user, origin_skippable: Current.user.admin?, asking_reasons: true))
 
-      if @shipment.save
+      if save_with_lot
         close_modal_with notice: t(".success", number: @shipment.display_number, buyer: @shipment.buyer.name),
                          fallback: sales_shipment_path(@shipment)
       else
@@ -42,8 +42,9 @@ module Sales
 
     def update
       @shipment.origin_skippable = Current.user.admin?
-      @shipment.weights_by_admin = Current.user.admin?
-      if @shipment.update(shipment_params)
+      @shipment.asking_reasons = true
+      @shipment.assign_attributes(shipment_params)
+      if save_with_lot
         close_modal_with notice: t(".success"), fallback: sales_shipment_path(@shipment)
       else
         @stock = CoffeeStock.new
@@ -68,8 +69,34 @@ module Sales
         authorize @shipment unless action_name == "void"
       end
 
+      # «¿Qué café lleva?» (Fernando, 2026-11-18): the invoices chosen make
+      # a lot of their own, saved with the shipment or not at all.
+      def save_with_lot
+        @invoice_ids = Array(params.dig(:shipment, :invoice_ids)).compact_blank
+        return @shipment.save if @invoice_ids.empty? || !lots_from_invoices?
+
+        chosen_lots = @shipment.batch_ids
+        saved = Shipment.transaction do
+          lot = ShipmentLot.new(shipment: @shipment, invoice_ids: @invoice_ids, invoices: policy_scope(Invoice), user: Current.user,
+                                percents: params.dig(:shipment, :invoice_percents)&.permit(*@invoice_ids)&.to_h || {}).call
+          unless lot
+            lot_errors = @shipment.errors.full_messages
+            @shipment.valid?
+            lot_errors.each { @shipment.errors.add(:base, it) }
+            raise ActiveRecord::Rollback
+          end
+          @shipment.batch_ids = chosen_lots + [ lot.id ]
+          @shipment.save || raise(ActiveRecord::Rollback)
+        end
+        @shipment.batch_ids = chosen_lots unless saved
+        saved
+      end
+
+      def lots_from_invoices? = policy(CoffeeBatch).create? && policy(CoffeeBatchInvoice.new).create?
+      helper_method :lots_from_invoices?
+
       def shipment_params
-        params.expect(shipment: [ :skip_origin, :departed_at, :buyer_id, :warehouse_id, :coffee_state, :transport_mode, :carrier_id, :trip_price, :vehicle_id, :driver_id, :driver_name, :observations, { batch_ids: [] },
+        params.expect(shipment: [ :skip_origin, :departed_at, :buyer_id, :warehouse_id, :coffee_state, :transport_mode, :carrier_id, :trip_price, :vehicle_id, :driver_id, :driver_name, :observations, :shrink_reason, { batch_ids: [] },
                                   :origin_gross_weight, :origin_sacks, :origin_humidity_percent, :origin_damage_percent,
                                   :origin_yield_factor, :origin_weight_mode, :lock_version,
                                   weighings_attributes: [ [ :id, :gross_weight, :sacks, :_destroy ] ] ])

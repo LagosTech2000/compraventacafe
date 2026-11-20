@@ -71,76 +71,19 @@ RSpec.describe "Invoicing into a lot" do
     expect(lot.batch_invoices).to be_empty
   end
 
-  describe "editing the invoice (an administrator)" do
-    let(:admin) { create(:user, :admin) }
-    let(:invoice) { InvoiceIssuer.new(producer:, user: admin, purchase_ids: [ purchase.id ], payment_status: "pending").call.invoice }
+  # An invoice is never edited (Fernando, 2026-11-18): its lot changes from the lot.
+  it "offers no lot of a sold shipment, to an administrator either" do
+    purchase
+    admin = create(:user, :admin)
+    lot = create(:coffee_batch)
+    sale_shipment = create(:shipment, :received, coffee_state: lot.coffee_state, warehouse: lot.warehouse)
+    lot.update!(shipment: sale_shipment)
+    SaleIssuer.new(buyer: sale_shipment.buyer, user: admin, shipment_ids: [ sale_shipment.id ],
+                   sale: { price_unit: "pound", unit_price: "50", quintal_pounds: "120" }, payment_status: "pending").call
+    expect(sale_shipment.reload).to be_sold
+    sign_in admin
 
-    before { sign_in admin }
-
-    def edit!(**lot)
-      patch trading_invoice_path(invoice), params: { invoice: { issued_on: invoice.issued_on, observations: "", purchase_ids: invoice.purchase_ids, **lot } }
-    end
-
-    it "shows its lot with its percent and the room counting what it took" do
-      lot = create(:coffee_batch, gross_limit: 600)
-      lot.batch_invoices.create!(invoice:, percent: 50, created_by: admin)
-
-      get edit_trading_invoice_path(invoice)
-      expect(response.body).to include(%(value="#{lot.id}" data-state="wet_parchment"), %(data-room="600.0"), %(value="50"))
-      expect(response.body).to include(%(name="invoice[lot_was]"))
-    end
-
-    it "puts it in a lot, changes its percent, moves it and takes it out" do
-      lot = create(:coffee_batch)
-      other = create(:coffee_batch)
-
-      edit!(coffee_batch_id: lot.id, batch_percent: "40", lot_was: ":")
-      expect(response).to redirect_to(trading_invoice_path(invoice))
-      expect(invoice.batch_invoices.sole).to have_attributes(coffee_batch: lot, percent: 40, gross_weight: 400)
-
-      edit!(coffee_batch_id: lot.id, batch_percent: "60", lot_was: "#{lot.id}:#{40.to_d}")
-      expect(invoice.batch_invoices.sole).to have_attributes(coffee_batch: lot, percent: 60, gross_weight: 600)
-
-      edit!(coffee_batch_id: other.id, batch_percent: "60", lot_was: "#{lot.id}:#{60.to_d}")
-      expect(invoice.batch_invoices.sole).to have_attributes(coffee_batch: other, percent: 60)
-
-      edit!(coffee_batch_id: "", lot_was: "#{other.id}:#{60.to_d}")
-      expect(invoice.batch_invoices).to be_empty
-    end
-
-    it "leaves the lot's pounds alone when the lot was not touched and a purchase is added" do
-      lot = create(:coffee_batch)
-      lot.batch_invoices.create!(invoice:, percent: 50, created_by: admin)
-      extra = create(:purchase, producer:, gross_weight: 1_000)
-
-      patch trading_invoice_path(invoice), params: { invoice: { issued_on: invoice.issued_on, purchase_ids: [ purchase.id, extra.id ],
-                                                                coffee_batch_id: lot.id, batch_percent: "50", lot_was: "#{lot.id}:#{50.to_d}" } }
-      expect(invoice.batch_invoices.sole).to have_attributes(percent: 25, gross_weight: 500)
-    end
-
-    it "saves nothing when the new percent passes the lot's limit" do
-      lot = create(:coffee_batch, gross_limit: 500)
-      lot.batch_invoices.create!(invoice:, percent: 50, created_by: admin)
-
-      edit!(coffee_batch_id: lot.id, batch_percent: "80", lot_was: "#{lot.id}:#{50.to_d}", observations: "nuevo")
-      expect(response).to have_http_status(:unprocessable_content)
-      expect(response.body).to include(lot.label)
-      expect(invoice.reload.observations).to be_blank
-      expect(invoice.batch_invoices.sole.percent).to eq(50)
-    end
-
-    it "lists the lots of an invoice split in several and changes none from here" do
-      lot = create(:coffee_batch)
-      other = create(:coffee_batch)
-      lot.batch_invoices.create!(invoice:, percent: 40, created_by: admin)
-      other.batch_invoices.create!(invoice:, percent: 60, created_by: admin)
-
-      get edit_trading_invoice_path(invoice)
-      expect(response.body).to include("repartida en #{lot.label} (40 %) y #{other.label} (60 %)")
-      expect(response.body).not_to include("invoice[coffee_batch_id]")
-
-      edit!(coffee_batch_id: "")
-      expect(invoice.batch_invoices.count).to eq(2)
-    end
+    get new_trading_invoice_path(producer_id: producer.id)
+    expect(response.body).not_to include(%(value="#{lot.id}" data-state))
   end
 end

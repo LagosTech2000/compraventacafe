@@ -8,6 +8,8 @@ class Expense < ApplicationRecord
   include OwnedRecord
   include LiveUpdates
   include HasReceipt
+  include DayLock
+  locks_day :spent_on, free: %w[shipment_id]
   live_updates :finance
 
   KINDS = FinanceCategory::KINDS
@@ -27,6 +29,7 @@ class Expense < ApplicationRecord
 
   validates :kind, inclusion: { in: KINDS }
   validates :spent_on, presence: true
+  validates :spent_on, not_in_future: true
   validates :description, presence: true, length: { maximum: 200 }
   validates :payee, :receipt_number, length: { maximum: 120 }
   validates :amount, numericality: { greater_than: 0, less_than: MAX_AMOUNT }

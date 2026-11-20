@@ -11,15 +11,17 @@
 # payments) its shipments are free for another sale, and its lines stay as
 # a record.
 #
-# Administrators edit it and void it even collected (Fernando, 2026-11-12):
-# its date, price, quintal, buyer's document, observations and shipments
-# (#revise!); voided with payments, these are removed (their money no
-# longer counts; what was taken off advances goes back to them). A total
-# below what was collected is saved and shows as overpaid.
+# Never edited, by anyone (Fernando, 2026-11-18: closed records are not
+# edited; from 2026-11-12 an administrator could): to correct it, its
+# payments are removed (the latest first) and it is voided. Only a
+# data-maintenance task works its lines out again (#recalculate_weights!).
+# One edited before may show as overpaid.
 class Sale < ApplicationRecord
   include Auditable
   include OwnedRecord
   include LiveUpdates
+  include DayLock
+  locks_day :sold_on, free: %w[payment_status payment_method paid_on]
   live_updates :sales
 
   NUMBERING_LOCK_KEY = 7_301_003
@@ -46,6 +48,8 @@ class Sale < ApplicationRecord
   normalizes :observations, with: FieldFormats::STRIP
 
   validates :sold_on, presence: true
+  validates :sold_on, not_in_future: true
+  validate :sold_after_arrival, if: -> { new_record? || will_save_change_to_sold_on? }
   validates :coffee_state, inclusion: { in: Purchase::COFFEE_STATES }
   validates :price_unit, inclusion: { in: PRICE_UNITS }
   validates :unit_price, numericality: { greater_than: 0, less_than: 10_000_000 }
@@ -189,47 +193,26 @@ class Sale < ApplicationRecord
   end
 
   # Voids it and frees its shipments for another sale. Only without
-  # payments, unless `with_payments` (an administrator): they are removed.
-  def void!(user, reason: nil, with_payments: false)
+  # payments, for everyone (Fernando, 2026-11-18).
+  def void!(user, reason: nil)
     transaction do
       lock!
-      if voided? || (payments.any? && !with_payments)
+      if voided? || payments.any?
         errors.add(:base, voided? ? :already_voided : :has_payments)
         raise ActiveRecord::RecordInvalid, self
       end
 
-      payments.each(&:destroy!)
       lines.each { |line| line.update!(active: false) }
       update!(voided_at: Time.current, voided_by: user, void_reason: reason)
     end
   end
 
-  # An administrator's edit (Fernando, 2026-11-12): its date, price, the
-  # quintal's pounds, the buyer's document, observations and shipments (the
-  # ones taken off are free again; other shipments of the buyer weighed at
-  # destination and free can come in, of its coffee state). Weights, line
-  # amounts and total are worked out again. All of it or nothing.
-  # After a shipment's scales changed (Fernando, 2026-11-15): the same
-  # shipments, price and dates, its weights, lines and total again.
+  # Its shipments' weights, lines and total again, with its same shipments,
+  # price and dates: after a local scale left empty was completed, or from
+  # a data-maintenance task (sales:recalculate). All of it or nothing.
   def recalculate_weights!
-    revise!({ sold_on:, price_unit:, unit_price:, quintal_pounds:, buyer_document_number:, observations: },
-            shipment_ids: lines.active.pluck(:shipment_id))
-  end
-
-  def revise!(attributes, shipment_ids:)
     transaction do
       lock!
-      ids = Array(shipment_ids).compact_blank.map(&:to_i).uniq
-      kept = lines.active.where(shipment_id: ids).includes(:shipment).to_a
-      added = buyer.shipments.unsold.where(id: ids - kept.map(&:shipment_id)).lock.to_a
-      errors.add(:lines, :blank) if ids.empty?
-      errors.add(:lines, :unavailable) if kept.size + added.size != ids.size
-      errors.add(:lines, :mixed_states) if added.any? { it.coffee_state != coffee_state }
-      raise ActiveRecord::RecordInvalid, self if errors.any?
-
-      assign_attributes(attributes.to_h.symbolize_keys.slice(:sold_on, :price_unit, :unit_price, :quintal_pounds, :buyer_document_number, :observations))
-      lines.active.where.not(shipment_id: ids).find_each(&:destroy!)
-      added.each { |shipment| lines.create!(shipment:, net_weight: 0, origin_net_weight: 0, amount: 0) }
       price = { unit_price:, price_unit:, quintal_pounds: }
       valid_price = unit_price.to_d.positive? && price_unit.in?(PRICE_UNITS) && quintal_pounds.to_d.positive?
       current = lines.active.includes(:shipment).to_a
@@ -241,9 +224,6 @@ class Sale < ApplicationRecord
       self.net_weight = current.sum { it.shipment.destination_net_weight }
       self.origin_net_weight = (current.sum { it.shipment.origin_net_weight } if current.all? { it.shipment.origin_net_weight })
       self.total = valid_price ? self.class.amount_for(net_weight, **price) : 0
-      errors.add(:sold_on, :after_payments, date: I18n.l(payments.minimum(:paid_on))) if payments.exists? && sold_on && sold_on > payments.minimum(:paid_on)
-      raise ActiveRecord::RecordInvalid, self if errors.any?
-
       save!
       lines.reset
       refresh_payment_status!
@@ -260,6 +240,16 @@ class Sale < ApplicationRecord
   end
 
   private
+    # Sold after the buyer weighed each of its shipments (Fernando, 2026-11-18).
+    def sold_after_arrival
+      return unless sold_on
+
+      shipments = new_record? ? lines.map(&:shipment) : Shipment.where(id: lines.active.select(:shipment_id)).order(:number).to_a
+      shipments.compact.select { it.received_on && it.received_on > sold_on }.each do |shipment|
+        errors.add(:sold_on, :before_arrival, number: shipment.display_number, date: I18n.l(shipment.received_on))
+      end
+    end
+
     def buyer_total_covers_payments
       return unless buyer_total
 

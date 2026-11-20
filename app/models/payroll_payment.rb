@@ -6,6 +6,8 @@ class PayrollPayment < ApplicationRecord
   include Auditable
   include OwnedRecord
   include HasMoneyAccount
+  include DayLock
+  locks_day :paid_on
 
   belongs_to :payroll
   belongs_to :created_by, class_name: "User"

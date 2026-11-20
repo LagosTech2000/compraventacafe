@@ -23,7 +23,7 @@ class SiteSetting < ApplicationRecord
   MAX_LOGO_SIZE = 1.megabyte
   # Every column but the logo's bytes, for pages that only need to know
   # whether there is a logo.
-  LIGHT_COLUMNS = %w[id business_name location rtn owner_name phone secondary_phone supply_stock_starts_on weight_tolerance_percent cherry_warning_hours cherry_critical_hours cherry_yield_percent drying_yield_percent logo_content_type logo_filename logo_byte_size created_at updated_at].freeze
+  LIGHT_COLUMNS = %w[id business_name location rtn owner_name phone secondary_phone supply_stock_starts_on weight_tolerance_percent shrink_tolerance_percent cherry_warning_hours cherry_critical_hours cherry_yield_percent drying_yield_percent count_admin_percent logo_content_type logo_filename logo_byte_size created_at updated_at].freeze
 
   self.audit_skipped_attributes = %w[logo_data]
 
@@ -41,7 +41,9 @@ class SiteSetting < ApplicationRecord
   validates :owner_name, field_format: :person_name, length: { maximum: 100 }
   validates :phone, :secondary_phone, field_format: :phone
   # Comercialización: from what difference between scales a shipment stands out.
-  validates :weight_tolerance_percent, numericality: { greater_than: 0, less_than: 100 }, allow_nil: true
+  validates :weight_tolerance_percent, :shrink_tolerance_percent, numericality: { greater_than: 0, less_than: 100 }, allow_nil: true
+  # Physical counts that adjust more than this share of the stock are for administrators (StockCount).
+  validates :count_admin_percent, numericality: { greater_than: 0, less_than: 100 }
   # Hours cherry may wait before a warning, and before a critical alert.
   validates :cherry_warning_hours, :cherry_critical_hours, numericality: { only_integer: true, greater_than: 0, less_than_or_equal_to: 720 }
   validate :critical_after_warning

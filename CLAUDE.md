@@ -94,6 +94,7 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Cancelada / pago parcial / pendiente de pago (PXP) | `paid` / `partial` / `pending` (`Invoice::PAYMENT_STATUSES`; filtro `unpaid` = pendiente o parcial) |
 | Abono a factura (pago al productor) / recibo de pago | `InvoicePayment` / `trading/invoice_payments#show` |
 | Cierre diario | `DailyClose` |
+| Cierre del día (todo el negocio, con candado) / día cerrado | `BusinessDayClose` (`administration/day_closes`) / `DayLock` (`locks_day`) |
 | Préstamo / abono | `Loan` / `LoanPayment` |
 | Insumo / insumo del préstamo / entrada de insumos (con sus líneas) / inventario de insumos | `Supply` / `LoanSupply` / `SupplyEntry` + `SupplyEntryLine` / `SupplyStock` |
 | Insumo entregado / por entregar (del préstamo) | `LoanSupply#delivered_on`, `delivered_by` (`sales/supply_deliveries`) |
@@ -169,8 +170,9 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Venta / salida vendida / cobro de venta | `Sale` / `SaleLine` / `SalePayment` (`SaleIssuer`) |
 | Anticipo (de comprador o banco) / aplicado a una venta (% del anticipo) / devolución en dinero / pendiente o cancelado | `BuyerAdvance` (`status`: `pending` / `cancelled`, `Buyer#advance_balance`) / `BuyerAdvanceSale` (`sales/buyer_advance_sales`, crea el `SalePayment` «con anticipo») / `BuyerAdvanceRefund` |
 | Precio por libra / por quintal / libras por quintal (120 por defecto) | `Sale#price_unit`: `pound` / `quintal`; `Sale#quintal_pounds` (`Sale::QUINTAL_POUNDS`) |
-| Tolerancia de diferencia de peso | `SiteSetting#weight_tolerance_percent` (`WeightTolerance`) |
+| Tolerancia de diferencia de peso / de merma / motivo de cada una | `SiteSetting#weight_tolerance_percent` / `#shrink_tolerance_percent` (`WeightTolerance.percent` / `.shrink_percent`) / `Shipment#difference_reason` / `#shrink_reason` (`sales/shipment_reasons`) |
 | Inventario / kárdex | `CoffeeStock` / `StockLedger` (`sales/stock#show`), reporte `CoffeeStockReport` |
+| Conteo de bodega / ajuste por conteo / cuadre del día / no sacar más de lo que hay | `StockCount` (`sales/stock_counts`; `gross_weight`/`net_weight` = el ajuste) / kind `adjustment` del kárdex / `StockReconciliation` (`sales/stock_reconciliation#show`) / `StockGuard` |
 | Bodega (por defecto) / traslado entre bodegas | `Warehouse` (`main`) / `WarehouseTransfer` (`sales/warehouse_transfers`) |
 | Lote (lo que queda de una compra o de un proceso) / detalle de un inventario | `CoffeeLots` (`Lot`, `Portion`) / `sales/stock_states#show` (`/sales/stock/:coffee_state`, `total` = todo) |
 | Valor del inventario (valor de compra + costos acumulados) | `CoffeeLots::Totals#value`, `#cost_per_pound` |
@@ -279,6 +281,10 @@ la barra de cada módulo), permisos separados de ver, crear, editar y borrar
   o quita una columna en todas sus pestañas y se ve a medias si solo algunas
   la tienen (`permission_matrix_controller.js`). En los specs,
   `create(:permission, module_key:)` sin `submodule_key` da el módulo entero.
+- **«Copiar permisos de otro usuario»** (Fernando, 2026-11-18): en el
+  formulario del usuario, elegir a otro usuario activo marca las mismas
+  casillas y quita las demás (`permission_copy_controller.js`); no se
+  guarda hasta «Guardar».
 - `ApplicationController` tiene `after_action :verify_authorized`: una acción
   que olvide autorizar **falla**. Eso es intencional.
 
@@ -338,6 +344,14 @@ tiene compras, facturas o fincas. En el formulario del productor la casilla
 persona** (validación + índice único parcial). Se aceptan con guiones o
 espacios y se guardan solo los dígitos. **Ninguno es obligatorio**
 [CONFIRMADO]: pueden quedar en blanco.
+
+**Personas parecidas** (Fernando, 2026-11-18: ya iban 24 fusiones y 20
+productores borrados): bajo los campos de toda persona
+(`shared/_person_fields`), mientras se escribe, sale quién ya está
+registrado con el mismo DNI, RTN o teléfono, o con todas las palabras de
+los nombres (`PersonDuplicates`, `person_duplicates#show` en su frame,
+`person_duplicates_controller.js`; para quien crea o edita Personas,
+Productores o Carreros, `PersonDuplicatePolicy`). Solo avisa.
 
 Los roles se asignan con casillas en el formulario de la persona. Las pantallas
 de personas, clientes y colaboradores viven en el módulo `administration` y usan
@@ -695,6 +709,75 @@ los errores).
   opcional: "Sin … asignado" (`shared.select.*`). Campo obligatorio: "Selecciona
   …". Filtro: "Todos".
 
+**6. Todo debe cuadrar** (Fernando, 2026-11-18: «todo debe coincidir y no
+pasar los límites»; el cliente compara las compras del día con lo que
+dice la salida). Validaciones en el modelo, y en el formulario lo que el
+navegador puede revisar:
+
+- **Nada con fecha futura** (`NotInFutureValidator`, `validates :x,
+  not_in_future: true`; por día en Tegucigalpa; solo al crear o cambiar la
+  fecha, así lo guardado antes no bloquea otra edición): compras, salidas
+  y su llegada, ventas, facturas, abonos y cobros, pagos a carreros,
+  gastos de salida y de procesamiento, procesos, traslados, lotes, gastos,
+  otros ingresos y transferencias. Sus campos llevan `max: latest_date` /
+  `latest_datetime` (`DateLimitsHelper`).
+- **Un lote solo lleva café que ya estaba en la bodega cuando salió**
+  (`CoffeeBatch.latest_coffee`, `.late_for`, `.after?`, por minuto): no va
+  a una salida o proceso un lote con compras o resultados de proceso
+  posteriores a la salida o al pesaje del proceso; a un lote que ya salió
+  no entra una factura o un proceso posterior; la salida no se mueve antes
+  de su café, ni una compra o un resultado después de su lote.
+- **Nota de peso única por comprador** (sin espacios, mayúsculas ni ceros
+  a la izquierda: «073» es «73»).
+- **La venta va después de la llegada** de cada salida (báscula del
+  comprador), y la llegada no se mueve después de su venta.
+- **Un proceso no pesa más de lo que entró** (brutas).
+- Lo que ya estaba mal lo listan las revisiones de integridad
+  (`integrity:shipments`: lotes con café posterior y notas repetidas;
+  `integrity:sales`: ventas antes de la llegada, que `sales:recalculate`
+  no toca).
+- **Lo cerrado no se edita, para nadie, administradores incluidos**
+  (Fernando, 2026-11-18): factura (se anula, ver Compra de café), compra
+  facturada, abonos y cobros (solo se quita el último), venta (se anula
+  sin cobros), salida pesada en destino o vendida y lotes de una salida
+  vendida. Corregir = deshacer lo posterior y anular, y cada bloqueo dice
+  en español qué hacer primero («Para corregirla, primero anula la
+  venta»). Solo una tarea de Mantenimiento de datos pasa por encima
+  (`Current.maintenance`).
+- **No sale más café del que hay, desde el primer conteo** de ese estado
+  en esa bodega (`StockGuard`, ver «Conteo de bodega»).
+- **Motivo cuando una diferencia pasa su tolerancia** (Fernando,
+  2026-11-18: pedir motivo, no bloquear): ver «Motivos de las
+  diferencias» en Comercialización.
+- **Cierre del día con candado** (Fernando, 2026-11-18: uno para todo el
+  negocio): Administración → «Cierre del día»
+  (`administration/day_closes`, `BusinessDayClose`,
+  `BusinessDayClosePolicy`). Un administrador revisa la lista del día (la
+  de «¿Cuadra hoy?» para ese día, `DailyCheck`, más «compras sin pagar
+  completas»; si falta algo, marca que lo revisó) y lo cierra; cerrar un
+  día cierra los anteriores. **Desde ahí nada con esa fecha o antes se
+  registra, cambia, anula ni borra, para nadie** (`DayLock`, `locks_day
+  :columna, free: [...]` en compras, facturas, abonos, pagos a carreros,
+  salidas y su llegada, ventas, cobros, procesos y su resultado,
+  traslados, conteos, arqueos, gastos, otros ingresos, transferencias,
+  gastos de salida y de procesamiento, préstamos y abonos, anticipos y
+  devoluciones, pagos y gastos de planilla, planilla interna, salidas de
+  insumos y préstamos de los dueños; y los lotes de una salida o un
+  proceso de un día cerrado, `CoffeeBatch#closed_day?`). `free` son las
+  columnas que cambian por algo de un día abierto: el estado de pago de una
+  factura o venta, `paid_off_on` de un préstamo, la báscula del comprador
+  de una salida que salió antes, la factura de una compra, el dueño al
+  fusionar personas, el gasto asignado a una salida, los motivos. La
+  cuenta de lo de un día cerrado ya no cambia (Consolidación: antes del
+  primer cierre). Solo el usuario principal (`data_exporter?`) **reabre el
+  último día cerrado, con motivo**; todo queda en la auditoría. Una tarea
+  de Mantenimiento de datos pasa por encima (`Current.maintenance`). El
+  Inicio («¿Cuadra hoy?») lleva «Cerrar el día».
+- Decisiones de implementación, **pendientes de confirmar**: el cierre no
+  exige que la lista esté completa (basta marcar que se revisó); lo
+  registrado después sobre algo de un día cerrado (pago, llegada, cobro)
+  sí entra con la fecha de hoy.
+
 ## Comandos
 
 ```bash
@@ -980,6 +1063,14 @@ propias de la app (nunca `//otro-sitio`). El panel se reemplaza con
 desplazamiento cuando llega una actualización. Su Inicio
 escucha `Presence::WATCH_STREAM` en vez de `presence`, y solo su página
 recibe ese stream firmado: a los demás no les llega ni la ruta. Vive en la memoria del proceso, como el adaptador `async`.
+
+**¿Cuadra hoy?** (`DailyCheck`, `dashboard/_daily_check`, Fernando,
+2026-11-18): tarjeta del Inicio **solo para administradores**, una línea
+por cosa que todavía no cuadra hoy, cada una abre donde se arregla: café
+(estado y bodega) con existencia sin conteo hoy, cajas sin arqueo hoy (o
+la diferencia del arqueo), compras de hoy sin facturar, salidas de hoy sin
+lotes, salidas del último mes que pasan una tolerancia sin motivo y
+cuentas en negativo. «Todo cuadra» cuando no falta nada.
 
 **Productores que no venden hace…** (`IdleProducers`, Fernando,
 2026-11-13): tarjeta del Inicio (frame `idle-producers`, para quien ve
@@ -1327,7 +1418,8 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   «Bodega 1» (migración `CreateWarehouses`); en una base nueva,
   `Warehouse.main!` crea «Bodega 1» con la primera compra. Decisiones de
   implementación, **pendientes de confirmar**: pasar de lo que hay en un
-  traslado avisa sin bloquear; una bodega usada se desactiva (no se
+  traslado avisa sin bloquear (hasta el primer conteo, ver «Conteo de
+  bodega»); una bodega usada se desactiva (no se
   borra) y solo sin café adentro y si no es la de por defecto.
 - **Lotes** (`CoffeeLots`, cliente, 2026-10-26) [CONFIRMADO: «se priorizan
   las compras más viejas»]: cada compra (y cada resultado de conversión)
@@ -1349,6 +1441,41 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   resultado de un proceso, los costos del café que entró más **sus gastos
   de procesamiento**. Combustible, personal y mantenimiento del vehículo
   fuera de un proceso esperan la pregunta 23.
+- **Conteo de bodega y ajuste** (`StockCount`, Inventario → «Contar
+  bodega» y «Conteos», `sales/stock_counts`, Fernando 2026-11-18: «me
+  interesa lo del ajuste de inventario»): bodega, estado del café, fecha y
+  hora, **libras brutas contadas**, sacos (opcional), motivo y
+  observaciones. Guarda lo que decía el sistema en ese momento
+  (`system_gross`, `system_net`; `CoffeeStock.new(at:)`) y el **ajuste**
+  que deja el inventario como se contó: brutas = contadas − sistema; netas
+  = contadas × la proporción neto/bruto del estado en esa bodega (o
+  `CoffeeConversion.ratio_for` sin inventario) − netas del sistema. El
+  formulario lo muestra al escribir (`count_preview_controller.js`). **El
+  ajuste entra a todo**: inventario (`CoffeeStock`, `net_by_warehouse`),
+  lotes (`CoffeeLots#count_events`), kárdex y reporte de inventario (kind
+  `adjustment`, «Ajuste por conteo»), netas revisadas (`StockCheck`,
+  parte `counts`) y el cuadre del día. Decisiones de implementación,
+  **pendientes de confirmar con el cliente** (Fernando: «toma las mejores
+  decisiones y luego el cliente decide»):
+  - Motivos: secado u oreo, error de báscula, pérdida, sobrante, conteo
+    inicial u otro (con detalle), obligatorio si hay diferencia.
+  - Un ajuste de más del `SiteSetting#count_admin_percent` (2 % al inicio)
+    de lo que dice el sistema solo lo registra un administrador.
+  - **Faltante: sale de los lotes más viejos** y su valor es merma en
+    lempiras (en su detalle); **sobrante: entra como lote sin costo**.
+  - No se edita; un administrador lo anula con motivo si no hay un conteo
+    posterior de ese estado y bodega. Un conteo va después del último.
+  - **Desde el primer conteo** de un estado en una bodega, una salida, un
+    proceso o un traslado que saca más de lo que hay (en ese momento y hoy,
+    en netas) **no se guarda** (`StockGuard`, Fernando: «después del primer
+    conteo»); antes, solo avisa como siempre.
+- **Cuadre del día** (`StockReconciliation`, Inventario → «Cuadre del
+  día», `sales/stock_reconciliation#show`, por día y bodega): por estado
+  del café, al empezar + compras + procesos − salidas ± traslados (con
+  bodega) ± ajustes = al cerrar, en brutas y netas, junto a los conteos
+  del día; y por salida del día, las compras de sus lotes, la báscula
+  local y la del comprador, con las diferencias en libras, % y lempiras
+  (la merma al costo de sus lotes; la del comprador al precio de su venta).
 - **Uva sin procesar** (`CherryAlert`, cliente, 2026-10-26) [CONFIRMADO]:
   un lote de uva que lleva **12 horas** sale con aviso y a las **24**,
   urgente; las dos horas se cambian en Configuración del sitio. Sale en el
@@ -1535,30 +1662,27 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   «Mostrar las que ya están en lotes» viene marcada y las oculta. **También
   desde «Facturar compras»** (Fernando, 2026-11-13): «Lote (opcional)» y la
   parte (%), 100 por defecto; solo se eligen los lotes del estado y la bodega
-  de las compras marcadas, con espacio y no en una salida vendida (salvo
-  administradores), y al marcar compras o cambiar el % sale lo que toma en
+  de las compras marcadas, con espacio y no en una salida vendida (para
+  nadie), y al marcar compras o cambiar el % sale lo que toma en
   brutas y netas y lo que le queda al lote; si pasa del límite, dice el % que
   cabe y no deja enviar (`invoice_batch_controller.js`). Factura y lote se
   guardan juntos o nada (`InvoiceIssuer`); pide lo mismo que agregar
-  facturas al lote (`CoffeeBatchInvoicePolicy#create?`). **Y en «Editar
-  factura»** (administradores, mismo parcial `trading/invoices/_lot_fields`):
-  sale su lote con su % (lo que ya tomó cuenta como espacio libre); cambiar
-  el %, pasarla a otro lote o «Sin lote» (`CoffeeBatchInvoice.assign!`),
-  todo con la edición o nada. Si no se tocan, el lote sigue con sus libras
-  aunque cambien las compras. Una factura repartida en varios lotes solo los
-  lista: el reparto se cambia desde cada lote. **El lote guarda las libras brutas
-  y netas que tomó de cada factura** (Fernando, 2026-11-13): si un
-  administrador edita una compra y la factura **sube** de peso, el lote se
+  facturas al lote (`CoffeeBatchInvoicePolicy#create?`). Después, el lote
+  de una factura se cambia desde el lote («Editar factura» se quitó el
+  2026-11-18). **El lote guarda las libras brutas
+  y netas que tomó de cada factura** (Fernando, 2026-11-13): si una compra
+  facturada cambia (desde el 2026-11-18, solo en una tarea de Mantenimiento
+  de datos) y la factura **sube** de peso, el lote se
   queda con sus libras, su % baja solo y lo que subió **queda libre**, sin
   lote, para que las salidas no cambien (`CoffeeBatchInvoice.rebase!`); si
   **baja** (brutas o netas) por debajo de lo que tomaron sus lotes, **no se
-  guarda** (`Purchase#keeps_its_lots`, también al quitar compras de la
-  factura en `Invoice#revise!`). **En una salida vendida, solo un
-  administrador cambia sus lotes** (Fernando, 2026-11-13: «aun después de
-  la venta»): editar el lote, sus facturas y su %, y agregar o quitar lotes
-  de la salida (`CoffeeBatch.sold_editable?`; políticas de lotes, facturas
-  del lote y lotes de la salida); la venta no cambia, sí el inventario, la
-  merma y el costo de la salida. Valor y comisión salen de las netas que
+  guarda** (`Purchase#keeps_its_lots`). **En una salida vendida los lotes
+  no cambian, para nadie** (Fernando, 2026-11-18; del 2026-11-13 al 18 un
+  administrador podía): ni el lote, ni sus facturas o su %, ni los lotes
+  de la salida (`CoffeeBatch.sold_editable?`: solo fuera de una solicitud
+  o dentro de una tarea de Mantenimiento de datos, `Current.maintenance`,
+  que pone `Maintenance::Runner`; políticas de lotes, facturas del lote y
+  lotes de la salida). Valor y comisión salen de las netas que
   tomó contra las de la factura (`NET_SHARE_SQL`). Ver sus facturas pide además ver
   Facturas. **Los lotes van en las salidas en vez de las facturas**: cada
   lote completo a una sola salida, una salida con uno o varios lotes, del
@@ -1576,6 +1700,19 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   están en la bodega del lote (el café trasladado no entra); anular la
   factura la saca de sus lotes; un lote en una salida no se borra; si a una compra del lote ya no le
   queda café, lo que falta sale de lo más viejo.
+- **«¿Qué café lleva?»** (Fernando, 2026-11-18: armar lotes por % les
+  costaba mucho): en «Nueva salida» (y al editarla en camino), las facturas
+  con parte libre de ese estado y bodega, la compra más vieja primero
+  (`ShipmentLot.options`, `sales/shipments/_coffee_field`,
+  `shipment_coffee_controller.js`), con «Compras de hoy», «Desde la última
+  salida» (de ese estado y bodega), «Todo» y «Ninguna», y lo que lleva
+  (estas facturas y los lotes marcados) contra las brutas de la báscula
+  local. Al guardar, las marcadas forman **un lote solo**, cada una con
+  el % escrito en su casilla «Lleva (%)» (empieza en lo que le queda y no
+  pasa de ahí; Fernando, 2026-11-20) (`ShipmentLot#call`, mismas reglas de
+  `CoffeeBatchInvoice`), junto con la salida o nada
+  (`ShipmentsController#save_with_lot`). Para quien puede armar lotes con
+  facturas. La pantalla de Lotes queda para los casos especiales.
 - **Merma** (Fernando, 2026-11-13) [CONFIRMADO]: **lo que dicen las compras
   de sus lotes − lo que pesó la báscula local**, en libras **brutas y
   netas** (brutas primero); positiva = se perdió peso, negativa = pesó
@@ -1625,29 +1762,55 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   (`Sale#origin_net_weight` vacío, `SaleSummary` compara solo las
   completas). **Se completa después** editando la salida, cualquiera con
   permiso de editar, **aunque ya esté vendida** (`ShipmentPolicy#open?`,
-  `not_sold`); entonces la venta toma su neto local (`Sale#refresh_origin!`).
+  `closed_once_weighed`); entonces la venta toma su neto local
+  (`Sale#recalculate_weights!`).
   Guardar otra cosa (el peso en destino) la deja vacía
   (`origin_left_empty?`). El detalle avisa con «Completar báscula local».
-- **Editar y quitar las pesadas** (Fernando, 2026-11-15, pedido del
-  cliente: «para tener todo cuadrado en las ventas») [CONFIRMADO: en una
-  salida vendida, solo administradores]. En el detalle, cada báscula tiene
-  «Editar» y «Quitar» (`sales/shipments/_weighing`). Sin vender, quien edita
-  Salidas (quitar la local, administradores, como «Sin báscula local»).
-  **Vendida**: un administrador edita las dos (`Shipment#weights_by_admin`,
-  `ShipmentPolicy#open?`) y **la venta se recalcula sola**
-  (`Sale#recalculate_weights!`, que usa `revise!` con sus mismas salidas y
-  precio: líneas, total, estado de cobro y «cobrado de más»). La báscula
-  del comprador **no se quita mientras la salida esté en una venta** (la
-  venta cobra con ese peso; `Shipment#remove_destination!`): quitarla vuelve
-  la salida a «En camino» (`sales/shipment_scales#destroy`). Para lo que ya
-  quedó descuadrado, `integrity:sales` y `sales:recalculate` en
-  Mantenimiento de datos.
+- **Pesadas: abiertas en camino, cerradas al pesar en destino** (Fernando,
+  2026-11-18: «que no se pueda editar ... ni salidas»; reemplaza lo del
+  2026-11-15, cuando un administrador editaba las pesadas de una vendida).
+  En camino, cada báscula tiene «Editar» y «Quitar»
+  (`sales/shipments/_weighing`; quitar la local, administradores, como «Sin
+  báscula local»). **Pesada en destino o vendida, la salida no cambia para
+  nadie** (`Shipment#closed_once_weighed`, `ShipmentPolicy#open?`): solo
+  observaciones, transportista, vehículo y motorista, y antes de la venta
+  el precio del viaje y anularla; una báscula local vacía se completa
+  igual. Para corregirla: sin vender, **«Quitar» la báscula del comprador**
+  (vuelve a «En camino», `Shipment#remove_destination!`,
+  `sales/shipment_scales#destroy`) y se pesa de nuevo; vendida, primero se
+  anula la venta. El detalle lo dice bajo la báscula del comprador
+  (`data-closed-scales`). Para lo que ya quedó descuadrado,
+  `integrity:sales` y `sales:recalculate` en Mantenimiento de datos
+  (`Sale#recalculate_weights!`).
 - **Diferencia entre básculas**: neto del comprador − neto local, en lb y
   %, en la salida, la venta, las listas y los reportes. Se **resalta** si
   pasa (más o menos) la **tolerancia** de Configuración del sitio
   (`weight_tolerance_percent`, **vacía al inicio**: sin ella no se resalta
   nada; `WeightTolerance`). Anular la venta antes de cobrarla lo decide el
   usuario.
+- **Motivos de las diferencias** (Fernando, 2026-11-18) [CONFIRMADO: pedir
+  motivo, no bloquear]: dos tolerancias en Configuración del sitio, la de
+  **merma** (`shrink_tolerance_percent`: compras de sus lotes ↔ báscula
+  local, sobre `shrink_percent`) y la de **diferencia de peso** (báscula
+  local ↔ comprador). Vacías, no se pide nada. Pasada una (más o menos),
+  el formulario que la entra pide el motivo (`Shipment#asking_reasons`,
+  `#reasons_given`): «Nueva salida»/editar pide «Motivo de la merma» (al
+  cambiar lotes o báscula local) y el peso en destino «Motivo de la
+  diferencia con el comprador» (sale al pasar la tolerancia,
+  `weighing_calculator_controller.js`). Si pasa sin formulario (lotes
+  agregados después), el detalle lo marca en rojo («Falta») con «Anotar
+  motivo» (`sales/shipment_reasons`, `ShipmentPolicy#explain?`: editar en
+  Salidas, no anulada; **también pesada o vendida**, como las
+  observaciones). Los motivos salen en el detalle y en el cuadre del día
+  (`Shipment#missing_reasons`).
+- **«Liquidar salida»** (Fernando, 2026-11-18: cada venta lleva una sola
+  salida): en el peso en destino (`sales/arrivals`, sección «Liquidar:
+  vender y cobrar con este peso», `_settle_fields`,
+  `arrival_sale_controller.js` con el total al escribir) y en el detalle
+  («Liquidar salida», `open_settle`), para quien puede vender. «Guardar y
+  liquidar» (`settle_now`) guarda el peso, la venta con la fecha de la
+  nota de peso y su cobro, juntos o nada (`ArrivalsController#save_and_sell`,
+  `SaleIssuer`). La foto de la nota de peso sigue pendiente.
 - **Venta** (`Sale`, `SaleIssuer`, como «Facturar compras»): **salida
   primero, venta después**: agrupa salidas **del mismo comprador** ya
   pesadas en destino y libres (líneas `SaleLine`, con sus pesos y monto;
@@ -1696,16 +1859,15 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   cobro parcial → cobrada; contado = un abono por el total al crear la
   venta; cada cobro con recibo (original y copia). Registrar pide editar
   en `sales`.
-- **Anular**: una venta **solo sin cobros** (con motivo); sus salidas
-  quedan **libres** para otra venta y sus líneas quedan como registro. **Un
-  administrador** (Fernando, 2026-11-12) [CONFIRMADO] la **anula aunque
-  tenga cobros** (se quitan: dejan de contar en las cuentas y lo cobrado
-  con anticipo vuelve al saldo del comprador), la **edita** aunque esté
-  cobrada (`Sale#revise!`, `sales/sales#edit`, con la vista previa de
-  «Nueva venta»: fecha, precio, por libra o quintal, libras por quintal,
-  documento, observaciones y salidas; líneas y total se calculan de nuevo)
-  y **edita o quita cualquier cobro**. Con un total menor que lo cobrado se
-  guarda con el aviso de cobrado de más (`Sale#overpaid_amount`). Una
+- **Anular**: una venta **solo sin cobros** (con motivo, permiso de
+  borrar); sus salidas quedan **libres** para otra venta y sus líneas
+  quedan como registro. **Una venta no se edita y un cobro tampoco, para
+  nadie** (Fernando, 2026-11-18; del 2026-11-12 al 18 un administrador la
+  editaba, la anulaba con cobros y editaba cualquier cobro): para
+  corregirla se quitan sus cobros, del último al primero, se anula y se
+  registra de nuevo. Un cobro solo cambia de cuenta (Consolidación;
+  `SalePayment#unchanged`). Las editadas antes pueden salir con el aviso
+  de cobrado de más (`Sale#overpaid_amount`). Una
   salida se anula aparte, solo si no está en una venta activa: su café
   vuelve al inventario. Ninguna se borra.
 - **Comprador** (`Buyer`): catálogo propio para empresas (nombre o razón
@@ -1738,8 +1900,8 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   **cancelado** cuando ventas y devoluciones lo cubren (`status`,
   `cancelled_on`); quitar una aplicación (o su cobro) o una devolución lo
   vuelve a pendiente. Aplicar pide editar en Ventas y ver Compradores
-  (`BuyerAdvanceSalePolicy`; quitarla en una venta cobrada, solo
-  administradores). «Nueva venta» y «Registrar cobro» ya no descuentan
+  (`BuyerAdvanceSalePolicy`; quitarla, como cualquier cobro, solo mientras
+  su cobro es el último de la venta, para todos, Fernando 2026-11-18). «Nueva venta» y «Registrar cobro» ya no descuentan
   anticipos. Su detalle (`sales/buyer_advances#show`) muestra estado,
   aplicaciones (con las libras que equivalen, `Sale#pounds_for`),
   devoluciones y su recibo.
@@ -1840,6 +2002,18 @@ salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
   `HasMoneyAccount`); `money_account_controller.js` sugiere la de la forma
   de pago hasta que el usuario elige otra. Lo viejo queda «sin cuenta» y
   se muestra aparte. Los recibos dicen la cuenta.
+- **Saldos de apertura** (Fernando, 2026-11-18: las cuentas estaban en
+  negativo sin su saldo inicial): Cuentas → «Saldos de apertura»
+  (`finance/opening_balances`, pide editar en Cuentas). Por cuenta activa,
+  día por día de todas las fuentes de `AccountBalance`
+  (`OpeningBalanceCheck`): saldo de apertura, primer movimiento, saldo más
+  bajo y desde cuándo quedó en negativo, el **mínimo** de apertura para
+  que nunca lo esté y si hay movimientos antes de la fecha de apertura; ahí
+  mismo se escribe la fecha y lo que había de verdad.
+- **Foto del comprobante con el celular** (Fernando, 2026-11-18): en
+  gastos, gastos de salida y entradas de insumos, una foto se achica en el
+  navegador a JPEG de 1600 px antes de enviarse
+  (`receipt_input_controller.js`), así cabe en el límite de 1 MB.
 - **Libro único** (`MoneyMovements`, «Movimientos»): todo lo que entra y
   sale de todos los módulos, **sin duplicar** (cada cosa se registra donde
   ocurre). Cada quien ve las fuentes de los módulos que puede ver. Las
@@ -2114,30 +2288,36 @@ textos; la clave y el código siguen siendo `trading`.
 - Una factura agrupa compras sin facturar **del mismo productor**
   (`InvoiceIssuer`, con bloqueo de filas). Número correlativo con bloqueo
   consultivo (`Invoice::NUMBERING_LOCK_KEY`), mostrado con 4 dígitos.
-- Una compra facturada **no se edita ni se borra** (`PurchasePolicy`). Una
-  factura no se borra. **Solo un administrador** (Fernando, 2026-11-12)
-  [CONFIRMADO], aunque esté cancelada:
-  - **Anula la factura** (`Invoice#void!`, `trading/invoice_voids`, con
-    motivo): **sus compras quedan anuladas** (su café sale del inventario)
-    y **sus abonos se quitan** (dejan de contar en cuentas y Movimientos;
-    quedan en la auditoría); sale de su salida. Conserva su número, queda
-    como registro y sale de listas y totales (`Invoice.active`; `unpaid` y
-    `with_payment_status` ya la dejan fuera); en Facturas se ve con el
-    estado «Anulada» (`Invoice::LIST_STATUSES`). No se anula mientras una
-    compra abonó un préstamo (quitar el pago con café primero).
-  - **Edita la factura** (`Invoice#revise!`, `trading/invoices#edit`):
-    fecha (no después del primer abono), observaciones (nuevas, salen en el
-    impreso) y qué compras lleva (las desmarcadas quedan sin facturar;
-    entran otras sin facturar del productor). **Edita cada compra
-    facturada** (`PurchasePolicy#admin_revision?`, sin pago con café); la
-    factura sigue su nuevo total (`Purchase#refresh_invoice`).
-  - **Edita o quita cualquier abono** (monto sin pasar de lo que la factura
-    tiene por pagar con los otros, fecha, forma de pago y cuenta).
-  - Si el total queda **menor que lo pagado**, se guarda: queda cancelada
-    con el aviso **«Pagado de más»** (`Invoice#overpaid_amount`).
-  - Decisión de implementación, **pendiente de confirmar**: los abonos de
-    una factura anulada se borran (quedan solo en la auditoría), no se
-    guardan como anulados.
+- **Una factura, sus compras y sus abonos no se editan, para nadie**
+  (Fernando, 2026-11-18: «que no se pueda editar facturas ya canceladas, ni
+  ventas, ni compras»; del 2026-11-12 al 18 un administrador editaba la
+  factura, sus compras y cualquier abono). Una compra facturada no se edita
+  ni se borra (`PurchasePolicy`; en el modelo, `Purchase#invoiced_unchanged`
+  sobre `INVOICED_LOCKED`: pesos, dinero, fecha y bodega; su finca,
+  observaciones o una fusión de personas sí cambian, y una tarea de
+  Mantenimiento de datos también). Un abono solo cambia de cuenta
+  (`InvoicePayment#unchanged`) y solo se quita el último. Una factura no
+  se borra.
+  - **Corregir = anular** (`Invoice#void!`, `trading/invoice_voids`,
+    **solo administradores**, con motivo) **cuando nada posterior depende
+    de ella** (`Invoice#void_blockers`, que la ventana muestra antes y
+    apaga el botón): sin abonos (se quitan antes, del último al primero),
+    sin pago con café y sin un lote suyo que ya salió en una salida o un
+    proceso. **Sus compras quedan anuladas** (su café sale del inventario)
+    y sale de sus lotes libres; se registran de nuevo. Conserva su número,
+    queda como registro y sale de listas y totales (`Invoice.active`;
+    `unpaid` y `with_payment_status` ya la dejan fuera); en Facturas se ve
+    con el estado «Anulada» (`Invoice::LIST_STATUSES`).
+  - Las editadas antes pueden salir con el aviso **«Pagado de más»**
+    (`Invoice#overpaid_amount`).
+- **«Guardar, facturar y pagar»** (Fernando, 2026-11-18: compran, facturan
+  y pagan al instante): en «Nueva compra», junto a «Crear Compra» (que va
+  primero: Enter nunca paga), para quien puede facturar. Con la forma de
+  pago y la cuenta de «Facturar y pagar ahora», guarda la compra, su
+  factura y un pago por todo, juntos o nada (`InvoiceIssuer`,
+  `PurchasesController#save_invoiced_and_paid`, botón `settle_now`). Quien
+  va a abonar préstamos con ese café usa «Crear Compra» (una factura
+  pagada ya no abona).
 - **Abono o pago de una factura** (Fernando, 2026-11-15): mientras deja
   saldo se llama «abono» («Abono a la factura de compra de café 0012»,
   «Registrar abono», «Recibo de abono»); el que cancela la factura completa,
@@ -2683,6 +2863,11 @@ sistema ya guarda**; no agregan reglas de negocio.
   planillas (lo entregado) y gastos; entran los abonos en efectivo,
   transferencia o cheque (con café o por planilla no se mueve dinero). Las
   ventas de café todavía no existen en el sistema.
+- **Cuadre por salida y merma por semana** (Fernando, 2026-11-18): el
+  reporte de salidas trae lo que dicen las compras de sus lotes (brutas y
+  netas, `LOTS_GROSS`/`LOTS_NET`), la merma neta y su % por salida, la
+  merma (%) como cifra y medida, y dos sugeridos: «Cuadre por salida» y
+  «Merma por semana» (agrupado por semana).
 - `config/brakeman.ignore` marca como falsos positivos el SQL de la base de
   reportes: el orden y las columnas salen de lo que el reporte declara en
   código, nunca de un parámetro.
@@ -2724,8 +2909,8 @@ obligatoria en gastos e ingresos; presupuesto sin gastos de planilla; otros
 ingresos y transferencias se quitan y se registran de nuevo),
 Comercialización (un estado por salida y por venta; salir de más avisa;
 tolerancia en ambos sentidos; cobros en orden, sin pasar del saldo, quitando
-solo el último; la venta no se edita, salvo un administrador desde el
-2026-11-12), conversiones, anticipos y planilla
+solo el último; la venta no se edita, para nadie desde el 2026-11-18),
+conversiones, anticipos y planilla
 interna; **no hay recargo por mora**. Versión de Ruby (3.4.x), Ubuntu 24.04 LTS, ambiente WSL, regla del
 último administrador activo (se bloquea), idioma del código (inglés), campos de
 `Person`, personas/clientes/colaboradores en `administration`, formato,

@@ -113,10 +113,36 @@ RSpec.describe "Sales screens", type: :system do
     # (980 − 6) × 0.49 × 0.99 = 472.49: 14.57 lb (2.99 %) less than 487.06
     expect(page).to have_css("[data-weighing-calculator-target='difference']", text: "−14.57 lb (−2.99 %)")
     expect(page).to have_css("[data-weighing-calculator-target='differenceBox'][data-over-tolerance='true']")
+    # Over the tolerance, its reason (Fernando, 2026-11-18).
+    expect(page).to have_field("shipment_difference_reason", visible: true)
+    fill_in "shipment_destination_gross_weight", with: "1000"
+    expect(page).to have_no_field("shipment_difference_reason", visible: true)
+    fill_in "shipment_destination_gross_weight", with: "980"
+    fill_in "shipment_difference_reason", with: "Su báscula pesa de menos"
 
     click_button "Guardar peso en destino"
     expect(page).to have_text("Peso en destino de la remisión 0001 guardado")
     expect(shipment.reload.destination_net_weight).to eq(BigDecimal("472.49"))
+    expect(shipment.difference_reason).to eq("Su báscula pesa de menos")
+  end
+
+  # «Liquidar salida» (Fernando, 2026-11-18): the sale's total as it is typed.
+  it "shows the sale's total while settling at the buyer's, and settles" do
+    shipment = create(:shipment, buyer:)
+    visit edit_sales_shipment_arrival_path(shipment, open_settle: 1)
+    fill_in "shipment_destination_gross_weight", with: "980"
+    fill_in "shipment_destination_damage_percent", with: "1"
+    fill_in "settle_unit_price", with: "6000"
+    # 472.49 lb ÷ 120 × L 6,000
+    expect(page).to have_css("[data-arrival-sale-target='total']", text: "L 23,624.50")
+    choose "settle_price_unit_pound"
+    expect(page).to have_no_field("settle_quintal_pounds")
+    fill_in "settle_unit_price", with: "50"
+    expect(page).to have_css("[data-arrival-sale-target='total']", text: "L 23,624.50")
+
+    click_button "Guardar y liquidar"
+    expect(page).to have_text("liquidada: quedó en la venta 0001")
+    expect(Sale.last).to have_attributes(price_unit: "pound", total: BigDecimal("23624.50"))
   end
 
   it "adds up the chosen shipments, warns when their states mix, and sells" do

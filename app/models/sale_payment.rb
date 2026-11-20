@@ -1,9 +1,7 @@
 # A payment the buyer makes on a sale ("cobro", Fernando, 2026-10-23), like
 # an invoice's payments: never over what is owed, in date order, never
-# before the sale; not edited and only the latest one can be removed,
-# except by an administrator (Fernando, 2026-11-12): any one, its amount
-# (never over what the sale is due with the others, nor an advance over
-# the buyer's balance), date, method, account or observations.
+# before the sale; not edited, by anyone, and only the latest one can be
+# removed (Fernando, 2026-11-18). Only its account changes (Consolidación).
 # Each has its printable receipt (original and copy).
 #
 # A collection «con anticipo» (ADVANCE, Fernando, 2026-10-25) is made only
@@ -16,6 +14,8 @@ class SalePayment < ApplicationRecord
   include OwnedRecord
   include HasMoneyAccount
   include LiveUpdates
+  include DayLock
+  locks_day :paid_on
   live_updates :sales
 
   ADVANCE = "advance".freeze
@@ -29,11 +29,12 @@ class SalePayment < ApplicationRecord
 
   validates :amount, numericality: { greater_than: 0, less_than: 100_000_000 }
   validates :paid_on, presence: true
+  validates :paid_on, not_in_future: true
   validates :payment_method, inclusion: { in: METHODS }
   validates :observations, length: { maximum: 500 }
   validate :sale_active, :within_balance, :not_before_sale, :not_before_last_payment, on: :create
   validate :from_an_application, if: :advance?
-  validate :within_amount_due, :not_before_sale, on: :update
+  validate :unchanged, on: :update
 
   # An advance moves no money: no account.
   before_validation { self.money_account_id = nil if advance? }
@@ -78,12 +79,9 @@ class SalePayment < ApplicationRecord
       errors.add(:amount, :over_balance, balance: ActiveSupport::NumberHelper.number_to_currency(balance)) if amount > balance
     end
 
-    # Edited: with the others, never over what the sale is due.
-    def within_amount_due
-      return unless sale && amount.to_d.positive? && will_save_change_to_amount?
-
-      room = sale.amount_due - sale.payments.where.not(id:).sum(:amount)
-      errors.add(:amount, :over_balance, balance: ActiveSupport::NumberHelper.number_to_currency([ room, 0 ].max)) if amount > room
+    # What was collected stays as it was collected.
+    def unchanged
+      errors.add(:base, :closed) if (changed & %w[amount paid_on payment_method sale_id]).any?
     end
 
     # Only an advance applied to the sale collects «con anticipo», and its

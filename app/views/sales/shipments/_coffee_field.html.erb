@@ -1,0 +1,69 @@
+<%# «¿Qué café lleva?» (Fernando, 2026-11-18): the invoices with coffee left
+    out of the lots, of the shipment's coffee state and warehouse
+    (shipment_coffee_controller.js shows only those), the oldest first,
+    with shortcuts; the marked ones make a lot of their own when saving
+    (ShipmentLot). Below, what it carries against the local scale. %>
+<% options = ShipmentLot.options(policy_scope(Invoice)) %>
+<% chosen = Array(@invoice_ids).map(&:to_i) %>
+<% written = params.dig(:shipment, :invoice_percents) || {} %>
+<% last_departures = Shipment.active.where.not(id: shipment.id).group(:coffee_state, :warehouse_id).maximum(:departed_at)
+                             .to_h { |(state, warehouse), at| [ "#{state}|#{warehouse}", at.iso8601 ] } %>
+<section class="space-y-3" aria-labelledby="shipment-coffee-title" data-controller="shipment-coffee"
+         data-shipment-coffee-today-value="<%= Time.zone.today.iso8601 %>"
+         data-shipment-coffee-last-departures-value="<%= last_departures.to_json %>"
+         data-shipment-coffee-texts-value="<%= { carries: t(".carries", gross: "%{gross}", net: "%{net}"), against: t(".against", gross: "%{gross}", percent: "%{percent}"), nothing: t(".nothing") }.to_json %>">
+  <div>
+    <h2 id="shipment-coffee-title" class="text-lg font-semibold"><%= t(".title") %></h2>
+    <p class="text-xs text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <div class="flex flex-wrap gap-2" role="group" aria-label="<%= t(".shortcuts") %>">
+    <% %w[today since_last all none].each do |shortcut| %>
+      <button type="button" class="btn btn-sm" data-action="shipment-coffee#pick" data-shortcut="<%= shortcut %>"><%= t(".#{shortcut}") %></button>
+    <% end %>
+  </div>
+  <%= hidden_field_tag "shipment[invoice_ids][]", "", id: nil %>
+  <div class="max-h-96 overflow-y-auto rounded-xl border border-line">
+    <table class="data-table data-table-compact">
+      <thead>
+        <tr>
+          <th class="w-8"><span class="sr-only"><%= t(".mark") %></span></th>
+          <th><%= t(".invoice") %></th>
+          <th><%= t(".entered") %></th>
+          <th class="text-right"><%= t(".left") %></th>
+          <th class="w-28 text-right"><%= t(".percent") %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% options.each do |option| %>
+          <% invoice = option.invoice %>
+          <tr id="<%= dom_id(invoice, :coffee) %>" data-shipment-coffee-target="item" data-coffee-state="<%= option.coffee_state %>"
+              data-warehouse-id="<%= option.warehouse_id %>" data-entered="<%= option.entered_at.iso8601 %>"
+              data-day="<%= option.entered_at.in_time_zone.to_date.iso8601 %>" data-gross="<%= option.gross %>" data-net="<%= option.net %>"
+              data-invoice-gross="<%= option.invoice_gross %>" data-invoice-net="<%= option.invoice_net %>">
+            <td><input type="checkbox" name="shipment[invoice_ids][]" value="<%= invoice.id %>" id="<%= dom_id(invoice, :carry) %>" class="size-4 accent-primary" <%= "checked" if chosen.include?(invoice.id) %>></td>
+            <td>
+              <label for="<%= dom_id(invoice, :carry) %>" class="cursor-pointer">
+                <span class="block font-medium"><%= t(".invoice_label", number: invoice.display_number, producer: option.producer_name) %></span>
+                <% if option.percent_left < 100 %>
+                  <span class="block text-xs text-ink-muted"><%= t(".percent_left", percent: format_percent(option.percent_left)) %></span>
+                <% end %>
+              </label>
+            </td>
+            <td class="whitespace-nowrap"><%= l(option.entered_at, format: :short) %></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= format_gross_net(option.gross, option.net) %></td>
+            <%# The share it carries (Fernando, 2026-11-20): what is left unless written. %>
+            <td class="text-right">
+              <%= number_field_tag "shipment[invoice_percents][#{invoice.id}]", written[invoice.id.to_s].presence || option.percent_left.to_s("F").sub(/\.?0+\z/, ""),
+                    id: dom_id(invoice, :carry_percent), min: 0.0001, max: option.percent_left, step: 0.0001, inputmode: "decimal",
+                    class: "field-input w-24 text-right tabular-nums", disabled: !chosen.include?(invoice.id),
+                    data: { shipment_coffee_target: "percent", action: "input->shipment-coffee#sum" },
+                    aria: { label: t(".percent_of", number: invoice.display_number) } %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <p class="empty-state" data-shipment-coffee-target="empty" hidden><%= t(".empty") %></p>
+  </div>
+  <p class="panel p-3 text-sm" data-shipment-coffee-target="total" aria-live="polite"><%= t(".nothing") %></p>
+</section>

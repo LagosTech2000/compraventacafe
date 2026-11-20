@@ -537,6 +537,8 @@ es:
           no_costs: "sin gastos ni precio del viaje"
           not_sold: "pesada y sin vender"
           unpaid: "venta por cobrar"
+          late_lots: "un lote lleva café que entró después de que salió"
+          repeated_note: "su nota de peso está también en otra salida del mismo comprador"
       integrity_shipment_expense_candidates:
         title: "Gastos que parecen de un viaje"
         what: "Busca gastos de Control financiero sin salida con fecha cerca de cada salida y los sugiere. No los asigna: alguien los confirma en «Asignar gastos» de la salida."
@@ -596,6 +598,7 @@ es:
         gaps:
           line_net: "la remisión %{shipment} pesa distinto en el comprador"
           line_origin: "la remisión %{shipment} pesa distinto en la báscula local"
+          before_arrival: "tiene fecha antes de que el comprador pesara la remisión %{shipment}"
           line_amount: "el monto de la remisión %{shipment} no es su peso por el precio"
           sale_net: "su peso no es la suma de sus líneas"
           sale_total: "su total no es su peso por el precio"
@@ -709,6 +712,17 @@ es:
       unknown: "No se reconoce esa huella. Prueba otro dedo o búscala por nombre."
       found: "Huella de %{name}."
       open: "Abrir su panel"
+  person_duplicates:
+    show:
+      title: "¿Ya está registrada? Se parece a:"
+      dni: "DNI %{dni}"
+      view: "Ver"
+      help: "Es solo un aviso. Si es la misma persona, búscala y úsala en vez de registrarla de nuevo."
+      reasons:
+        dni: "mismo DNI"
+        rtn: "mismo RTN"
+        phone: "mismo teléfono"
+        name: "mismos nombres"
   person_panels:
     show:
       dni: "DNI %{dni}"
@@ -755,6 +769,48 @@ es:
       disclaimer: "Precio de referencia de la bolsa de Nueva York, con retraso de unos minutos. No es el precio que paga el negocio."
       unavailable: "El precio de la bolsa no está disponible en este momento. Intenta más tarde."
   dashboard:
+    daily_check:
+      title: "¿Cuadra hoy?"
+      ok: "Todo cuadra"
+      not_yet: "Falta"
+      close_day: "Cerrar el día"
+      lines:
+        stock_counts:
+          ok: "Inventario: todo el café está contado hoy"
+          todo:
+            one: "Inventario: 1 café (estado y bodega) sin contar hoy"
+            other: "Inventario: %{count} cafés (estado y bodega) sin contar hoy"
+        cash_counts:
+          ok: "Caja: el arqueo de hoy cuadra"
+          todo:
+            zero: "Caja: el arqueo de hoy difiere %{amount}"
+            one: "Caja: 1 caja sin arqueo hoy"
+            other: "Caja: %{count} cajas sin arqueo hoy"
+        uninvoiced:
+          ok: "Compras: todas las de hoy están facturadas"
+          todo:
+            one: "Compras: 1 de hoy sin facturar"
+            other: "Compras: %{count} de hoy sin facturar"
+        unpaid:
+          ok: "Facturas: las compras de hoy están pagadas"
+          todo:
+            one: "Facturas: 1 compra de hoy sin pagar completa"
+            other: "Facturas: %{count} compras de hoy sin pagar completas"
+        shipments_without_lots:
+          ok: "Salidas: todas las de hoy llevan lotes"
+          todo:
+            one: "Salidas: 1 de hoy sin lotes (no se sabe su merma)"
+            other: "Salidas: %{count} de hoy sin lotes (no se sabe su merma)"
+        missing_reasons:
+          ok: "Diferencias: todas las que pasan la tolerancia tienen motivo"
+          todo:
+            one: "Diferencias: 1 salida del último mes sin motivo"
+            other: "Diferencias: %{count} salidas del último mes sin motivo"
+        negative_accounts:
+          ok: "Cuentas: ninguna en negativo"
+          todo:
+            one: "Cuentas: 1 en negativo (revisa su saldo de apertura)"
+            other: "Cuentas: %{count} en negativo (revisa sus saldos de apertura)"
     active_users:
       title: "Conectados"
       label:
@@ -1290,8 +1346,12 @@ es:
         add_weighing: "Agregar pesada"
         remove_weighing: "Quitar pesada"
         gross_from_weighings: "Suma de las pesadas: se cambia en las pesadas."
+        settle: "Guardar, facturar y pagar"
+        settle_title: "Facturar y pagar ahora"
+        settle_help: "«Guardar, facturar y pagar» guarda la compra, le hace su factura y la paga completa con esta forma de pago. Si el productor debe y quieres abonar con este café, usa «Crear Compra»: una factura pagada ya no abona préstamos."
       create:
         success: "Compra de %{producer} registrada."
+        settled: "Quedó en la factura %{number}, pagada."
         zone_given: "%{producer} no tenía zona: quedó en %{zone}."
         owes: "Debe %{amount} en préstamos: en la compra, «Abonar con esta compra» lo descuenta de este café."
       update:
@@ -1353,7 +1413,6 @@ es:
         number: "N.º"
         receipt: "Recibo"
         destroy: "Quitar"
-        edit: "Editar"
         confirm_destroy: "¿Quitar este abono? Su monto vuelve al saldo de la factura."
         none: "Todavía no se le ha pagado nada de esta factura."
         overpaid: "Pagado de más"
@@ -1414,10 +1473,9 @@ es:
         payment_full: "Pago %{number} · %{date} · %{method}"
         balance_due: "Saldo pendiente"
         settled: "Cancelada"
-        edit: "Editar factura"
         void: "Anular factura"
         voided: "Factura anulada el %{date} por %{name}: %{reason}. Sus compras quedaron anuladas y sus abonos se quitaron."
-        overpaid: "Se le pagó %{amount} de más: lo abonado pasa del total a pagar después de editar. Corrige o quita un abono."
+        overpaid: "Se le pagó %{amount} de más: lo abonado pasa del total a pagar. Quita el último abono y regístralo por lo que falta."
         observations: "Observaciones"
       lot_fields:
         legend: "Lote (opcional)"
@@ -1435,16 +1493,6 @@ es:
         error: "%{batch}: %{message}"
       create:
         success: "Factura creada."
-      edit:
-        title: "Editar factura %{number}"
-        help: "Solo administradores, aunque esté cancelada. Cambia la fecha, las observaciones y qué compras lleva; cada compra se edita con «Editar compra»."
-        purchases: "Compras de la factura"
-        purchases_help: "Las marcadas van en la factura; al desmarcar una, queda sin facturar. Abajo, las compras sin facturar de %{producer}."
-        uninvoiced: "Sin facturar"
-        edit_purchase: "Editar compra"
-        submit: "Guardar cambios"
-      update:
-        success: "Factura actualizada."
     invoice_voids:
       new:
         title: "Anular factura %{number}"
@@ -1452,9 +1500,7 @@ es:
         purchases:
           one: "Su compra queda anulada: su café sale del inventario."
           other: "Sus %{count} compras quedan anuladas: su café sale del inventario."
-        payments:
-          one: "Su abono de %{amount} se quita: deja de contar en la cuenta y en Movimientos (queda en la auditoría)."
-          other: "Sus %{count} abonos (%{amount}) se quitan: dejan de contar en las cuentas y en Movimientos (quedan en la auditoría)."
+        blocked: "Antes de anularla:"
         batches: "Sale de %{batches}."
         record: "La factura conserva su número y queda como registro anulado, con el motivo."
         submit: "Anular factura"
@@ -1473,13 +1519,6 @@ es:
         balance_due: "Saldo"
         amount_help: "El saldo completo o una parte: lo que falte queda pendiente."
         submit: "Registrar abono"
-      edit:
-        title: "Editar abono %{number}"
-        admin_only: "Solo administradores: el recibo y la factura cambian con el abono."
-        amount_help: "Hasta %{amount}: lo que la factura todavía tiene por pagar sin contar este abono."
-        submit: "Guardar abono"
-      update:
-        success: "Abono actualizado."
       show:
         title: "Recibo de pago %{number}"
         title_partial: "Recibo de abono %{number}"
@@ -1810,6 +1849,91 @@ es:
         success: "Bodega actualizada."
       destroy:
         success: "Bodega «%{name}» borrada."
+    stock_counts:
+      label: "Conteo %{number}"
+      voided: "Anulado"
+      no_difference: "Sin diferencia"
+      table:
+        counted_line: "Contadas %{counted} lb brutas · ajuste %{adjustment}"
+      index:
+        title: "Conteos de bodega"
+        help: "Lo que se contó en cada bodega contra lo que decía el sistema, con el ajuste que dejó el inventario como se contó."
+        new: "Contar bodega"
+        show: "Mostrar"
+        active: "Vigentes"
+        voided: "Anulados"
+        empty: "No hay conteos con esos filtros."
+      new:
+        title: "Contar bodega"
+        help: "Pesa el café de un estado en una bodega y escribe las libras brutas que hay. El sistema ajusta el inventario a lo que contaste."
+        counted_help: "Todo el café de ese estado en esa bodega, en libras brutas."
+        pick_reason: "Selecciona el motivo"
+        reason_help: "Obligatorio si hay diferencia."
+        system: "El sistema dice ahora"
+        system_line: "%{gross} lb brutas · %{net} netas"
+        adjustment: "Ajuste"
+        gross_line: "%{pounds} lb brutas"
+        net_line: "%{pounds} lb netas"
+        how: "Si contaste menos, la diferencia sale de los lotes más viejos y su valor es merma. Si contaste más, entra como un lote sin costo. Desde el primer conteo, ese café ya no puede salir de más."
+        over_share: "Es un ajuste de más del %{percent} % de lo que dice el sistema: solo un administrador lo registra."
+        submit: "Guardar conteo"
+      create:
+        success: "Conteo %{number} registrado: el inventario quedó como se contó."
+      show:
+        system: "El sistema decía"
+        adjustment: "Ajuste"
+        adjustment_gross: "%{pounds} lb brutas"
+        adjustment_net: "%{pounds} lb netas"
+        percent: "%{percent} % de lo que decía el sistema"
+        sacks:
+          one: "1 saco"
+          other: "%{count} sacos"
+        loss: "Faltaba café: la merma vale %{amount} (lo que costó ese café, de los lotes más viejos)."
+        surplus: "Sobraba café: entró como un lote sin costo."
+        matches: "El conteo coincidió con el sistema: no hubo ajuste."
+        lots: "Lotes de donde salió la diferencia"
+        voided: "Anulado el %{date} por %{name}. Motivo: %{reason}"
+        void: "Anular conteo"
+        void_help: "Solo administradores. El ajuste se quita y el inventario vuelve a lo que decía el sistema."
+        void_blocked: "Ya se hizo el conteo %{number} sobre este: anula ese primero."
+        confirm_void: "¿Anular este conteo? Su ajuste se quita del inventario."
+      void:
+        success: "Conteo anulado: su ajuste se quitó del inventario."
+    stock_reconciliations:
+      show:
+        title: "Cuadre del día"
+        help: "Lo que había al empezar el día, lo que entró y salió y lo que quedó, contra el conteo físico; y cada salida del día contra sus compras y el comprador."
+        count: "Contar bodega"
+        previous: "← Día anterior"
+        next: "Día siguiente →"
+        date: "Fecha"
+        states:
+          title: "Por estado del café"
+          help: "Al empezar + lo que entró − lo que salió ± ajustes = al cerrar. Libras brutas arriba y netas abajo."
+          empty: "Ese día no hubo café ni movimientos."
+          opening: "Al empezar"
+          closing: "Al cerrar"
+          count: "Conteo físico"
+          net: "%{pounds} netas"
+          counted: "Conteo %{number} · %{warehouse}: %{counted} lb brutas (ajuste %{difference})"
+          not_counted: "Sin conteo ese día"
+          signs: "Positivo: entró café. Negativo: salió."
+        shipments:
+          title: "Por salida"
+          help: "Cada salida del día: lo que dicen las compras de sus lotes, lo que pesó la báscula local y lo que pesó el comprador."
+          empty: "Ese día no salió ningún vehículo."
+          shipment: "Salida"
+          lots: "Compras de sus lotes"
+          origin: "Báscula local"
+          shrink: "Compras → báscula local"
+          destination: "Báscula del comprador"
+          buyer_difference: "Báscula local → comprador"
+          no_lots: "Sin lotes"
+          in_transit: "En camino"
+          value: "%{amount} en café"
+          at_sale: "%{amount} al precio de la venta %{sale}"
+          reason: "Motivo: %{reason}"
+          signs: "Negativo: se perdió peso. Positivo: pesó más. La diferencia contra el comprador se resalta si pasa la tolerancia."
     warehouse_transfers:
       voided: "Anulado"
       index:
@@ -1826,7 +1950,7 @@ es:
         available: "En la bodega de salida hay (brutas)"
         net_preview: "Libras netas que se trasladan"
         oldest_first: "Salen primero los lotes más viejos de ese café en la bodega de salida, y cada uno conserva su fecha."
-        over_stock: "Es más de lo que hay de ese café en la bodega de salida. Se puede guardar igual."
+        over_stock: "Es más de lo que hay de ese café en la bodega de salida. Sin conteo de esa bodega se puede guardar; después del primer conteo, no."
         submit: "Trasladar"
       create:
         success: "Traslado %{number} registrado."
@@ -1849,6 +1973,7 @@ es:
         status: "Marcas"
         taken: "Libras brutas / netas"
       purchase: "Compra de %{producer}"
+      count: "Sobrante del conteo %{number} (sin costo)"
       conversion: "Proceso %{number} (de %{from})"
       transferred: "Llegó con el traslado %{number}"
       shortfall: "Sin lote: salió más café del que había registrado"
@@ -1894,6 +2019,7 @@ es:
             processes_out: "Café que se mandó a procesar"
             transfers_in: "Traslados que entraron a la bodega"
             transfers_out: "Traslados que salieron de la bodega"
+            counts: "Ajustes por conteo físico"
         purchases:
           title: "Las compras"
           tare: "Tara: %{pounds} lb · efecto %{effect} lb"
@@ -2084,6 +2210,9 @@ es:
     # Lots of purchased coffee (Fernando, 2026-11-13).
     coffee_batches:
       label: "Lote %{number}"
+      taker:
+        shipment: "la remisión %{number}"
+        process: "el proceso %{number}"
       index:
         title: "Lotes"
         help: "El café comprado en lotes: cada uno con su bodega, su estado del café, su límite de libras brutas y una parte de facturas de compra. Los lotes van en las salidas o se mandan a procesar; los más recientes primero."
@@ -2463,6 +2592,29 @@ es:
       destroy:
         success: "Gasto quitado."
     shipments:
+      coffee_field:
+        title: "¿Qué café lleva?"
+        help: "Las facturas con café que todavía no está en un lote, de este estado y esta bodega, la compra más vieja primero. Al guardar, las marcadas forman un lote solo, con el % que escribas de cada una (empieza en lo que le queda). Abajo puedes marcar además lotes ya armados."
+        shortcuts: "Marcar"
+        today: "Compras de hoy"
+        since_last: "Desde la última salida"
+        all: "Todo"
+        none: "Ninguna"
+        mark: "Llevar"
+        invoice: "Factura"
+        entered: "Compra"
+        left: "Lo que queda"
+        percent: "Lleva (%)"
+        percent_of: "Porcentaje de la factura %{number} que lleva"
+        percent_error: "La factura %{number} lleva un porcentaje que no sirve: entre 0.0001 y %{left} (lo que le queda)."
+        invoice_label: "Factura %{number} · %{producer}"
+        percent_left: "Queda el %{percent}: el resto ya está en lotes"
+        empty: "No hay facturas libres de este estado y esta bodega."
+        nothing: "Todavía no lleva café marcado."
+        carries: "Lleva %{gross} lb brutas · %{net} lb netas."
+        against: "La báscula local da %{gross} lb brutas (%{percent} %) contra eso."
+        lot_observations: "Armado al registrar la salida, con las facturas de «¿Qué café lleva?»."
+        lot_error: "No se pudo armar el lote: %{message}"
       table:
         number: "Remisión"
         sacks: "Sacos"
@@ -2606,7 +2758,8 @@ es:
         remove_scale: "Quitar"
         confirm_remove_origin: "¿Quitar la báscula local? La salida deja de sacar café del inventario hasta que se complete; si está vendida, la venta se queda sin neto local."
         confirm_remove_destination: "¿Quitar la báscula del comprador? La salida vuelve a «En camino»."
-        sold_scale_help: "Está vendida: al cambiar sus pesadas, la venta se recalcula sola (líneas, total y estado de cobro)."
+        closed_sold: "Vendida en la venta %{sale}: sus básculas ya no cambian. Para corregirlas, primero anula la venta."
+        closed_received: "Pesada en destino: sus básculas ya no cambian. Para corregirlas, quita la báscula del comprador y vuelve a pesar."
         sell: "Vender"
         see_sale: "Ver la venta"
         voided: "Salida anulada el %{date} por %{name}. No cuenta en el inventario ni se puede vender."
@@ -2628,6 +2781,22 @@ es:
         tolerance: "Se resalta si pasa del %{tolerance} (Configuración del sitio)."
         no_tolerance: "Sin tolerancia configurada: un administrador la define en Configuración del sitio."
         details: "Datos de la salida"
+        reasons: "Motivos de las diferencias"
+        settle: "Liquidar salida"
+        missing_reason: "Falta: pasa la tolerancia"
+        write_reasons: "Anotar motivo"
+        edit_reasons: "Cambiar motivos"
+    shipment_reasons:
+      edit:
+        title: "Motivos de las diferencias · remisión %{number}"
+        subtitle: "Por qué la merma (compras de sus lotes contra la báscula local) o la diferencia con el comprador pasan su tolerancia de Configuración del sitio."
+        shrink: "La báscula local difiere %{percent} de las compras de sus lotes; la tolerancia es %{tolerance}."
+        no_shrink: "Sin merma: le faltan lotes o la báscula local."
+        difference: "La báscula del comprador difiere %{percent} de la local; la tolerancia es %{tolerance}."
+        no_difference: "Sin diferencia: todavía no se pesa en destino o le falta la báscula local."
+        submit: "Guardar motivos"
+      update:
+        success: "Motivos de la remisión %{number} guardados."
     shipment_scales:
       destroy:
         success:
@@ -2639,12 +2808,20 @@ es:
         subtitle: "%{buyer} · %{state} · salió con %{net} lb netas"
         weighing: "Báscula del comprador"
         weighing_help: "Copia lo que dice la nota de peso del comprador. Empieza con los sacos, la humedad y el daño de la salida."
+        reason_help: "La diferencia pasa la tolerancia: anota por qué (humedad, báscula, café que se quedó…). No impide guardar si la anotas."
+        settle: "Guardar y liquidar"
         calculation: "Cálculo en destino"
         difference: "Diferencia con la báscula local"
         origin_net: "Neto local: %{net} lb"
         submit: "Guardar peso en destino"
+      settle_fields:
+        title: "Liquidar: vender y cobrar con este peso"
+        help: "Opcional. Con «Guardar y liquidar» se guarda el peso en destino y se registra su venta (con la fecha de la nota de peso) y el cobro, todo junto. Con «Guardar peso en destino», la venta queda para después."
+        unit_price: "Precio (por quintal o por libra)"
+        payment: "Cobro"
       update:
         success: "Peso en destino de la remisión %{number} guardado."
+        settled: "Remisión %{number} liquidada: quedó en la venta %{sale}."
     sales:
       voided: "Anulada"
       price_unit_quintal: "Por quintal de %{pounds} lb"
@@ -2712,20 +2889,9 @@ es:
         success: "Venta %{number} registrada."
       void:
         success: "Venta anulada: sus salidas quedan libres para otra venta."
-      edit:
-        title: "Editar venta %{number}"
-        crumb: "Editar"
-        help: "Solo administradores, aunque esté cobrada. Cambia la fecha, el precio, las libras por quintal, el documento, las observaciones y qué salidas lleva; el total se calcula de nuevo. Si queda menos de lo cobrado, se guarda con el aviso de cobrado de más."
-        submit: "Guardar cambios"
-      update:
-        success: "Venta actualizada."
       show:
         title: "Venta %{number}"
-        edit: "Editar venta"
-        overpaid: "Se cobró %{amount} de más: lo cobrado pasa de lo que se cobra después de editar. Corrige o quita un cobro."
-        void_with_payments:
-          one: "Tiene 1 cobro: al anularla (solo administradores) se quita, deja de contar en la cuenta y, si fue con anticipo, vuelve al saldo del comprador."
-          other: "Tiene %{count} cobros: al anularla (solo administradores) se quitan, dejan de contar en las cuentas y lo que fue con anticipo vuelve al saldo del comprador."
+        overpaid: "Se cobró %{amount} de más: lo cobrado pasa de lo que se cobra. Quita el último cobro y regístralo por lo que falta."
         print: "Imprimir"
         original: "ORIGINAL"
         copy: "COPIA"
@@ -2754,7 +2920,6 @@ es:
         number: "Recibo"
         receipt: "Recibo"
         destroy: "Quitar"
-        edit: "Editar"
         overpaid: "Cobrado de más"
         confirm_destroy: "¿Quitar este cobro? La venta vuelve a quedar por cobrar."
         none: "Todavía no hay cobros."
@@ -2878,13 +3043,6 @@ es:
         sale: "Venta %{number} · %{buyer}"
         amount_help: "Empieza con lo que falta por cobrar."
         submit: "Guardar cobro"
-      edit:
-        title: "Editar cobro %{number}"
-        admin_only: "Solo administradores: el recibo y la venta cambian con el cobro."
-        amount_help: "Hasta %{amount}: lo que la venta todavía tiene por cobrar sin contar este cobro."
-        submit: "Guardar cobro"
-      update:
-        success: "Cobro actualizado."
       create:
         success: "Cobro registrado."
       destroy:
@@ -3079,13 +3237,17 @@ es:
       show:
         title: "Inventario"
         ledger: "Movimientos del inventario"
-        ledger_help: "Cada compra que entró, cada salida que se fue, cada proceso y, al elegir una bodega, cada traslado, con el saldo después de cada uno."
+        ledger_help: "Cada compra que entró, cada salida que se fue, cada proceso, cada ajuste por conteo y, al elegir una bodega, cada traslado, con el saldo después de cada uno."
         balance: "Saldo (lb netas)"
         balance_gross: "%{gross} lb brutas"
         card_line: "%{gross} lb brutas · %{net} lb netas · %{quintals} QQ de compra"
         convert: "Procesar café"
         transfer: "Trasladar café"
         warehouses: "Bodegas"
+        new_count: "Contar bodega"
+        batches: "Lotes"
+        counts: "Conteos"
+        reconciliation: "Cuadre del día"
         empty: "No hay movimientos en estas fechas."
         count:
           zero: "Ningún movimiento"
@@ -3110,6 +3272,7 @@ es:
           conversion_in: "De proceso"
           transfer_in: "Llegó por traslado"
           transfer_out: "Salió por traslado"
+          adjustment: "Ajuste por conteo"
     daily_closes:
       show:
         title: "Cierre de comercialización del %{date}"
@@ -3640,6 +3803,26 @@ es:
         no_receipt: "Sin comprobante adjunto."
     expense_receipts:
       audit_label: "Comprobante de %{expense}"
+    opening_balances:
+      index:
+        title: "Saldos de apertura"
+        help: "Lo que había en cada cuenta el día en que empezó a usarse el sistema. Sin él, una cuenta queda en negativo. Escribe lo que había de verdad ese día (el estado del banco o lo contado en caja)."
+        back: "Volver a cuentas"
+        negative:
+          one: "Una cuenta llega a quedar en negativo: falta su saldo de apertura o está corto."
+          other: "%{count} cuentas llegan a quedar en negativo: falta su saldo de apertura o está corto."
+        balance: "Saldo hoy: %{amount}"
+        opening: "Saldo de apertura"
+        first_movement: "Primer movimiento"
+        no_movements: "Sin movimientos"
+        lowest: "Saldo más bajo"
+        negative_since: "En negativo desde"
+        never: "Nunca"
+        suggestion: "Para que nunca quede en negativo, el saldo al %{date} debe ser de al menos %{amount}."
+        before_opening: "Tiene movimientos desde el %{date}, antes de su fecha de apertura: la fecha de apertura va en ese día o antes."
+        save: "Guardar"
+      update:
+        success: "Saldo de apertura de %{name} guardado."
     money_accounts:
       form:
         name_placeholder: "Por ejemplo: Caja de la bodega, Banco Atlántida"
@@ -3650,6 +3833,7 @@ es:
         bank_name: "Nombre del banco"
         bank_name_placeholder: "Por ejemplo: Banpaís, Davivienda, Lafise"
       index:
+        opening_balances: "Saldos de apertura"
         title: "Cuentas"
         help: "La caja y los bancos del negocio, con su saldo de hoy."
         new: "Nueva cuenta"
@@ -5165,6 +5349,8 @@ es:
       people_season: "Cada persona con el negocio esta temporada"
       shipments_in_transit: "Salidas que esperan su peso en destino"
       shipments_over_tolerance: "Salidas con diferencia de peso fuera de tolerancia"
+      shipments_reconciliation: "Cuadre por salida: compras, báscula local y comprador"
+      shipments_shrink_by_week: "Merma por semana"
       shipments_season_by_buyer: "Café enviado a cada comprador esta temporada"
       sales_unpaid: "Ventas por cobrar (las más viejas primero)"
       sales_season_by_buyer: "Ventas de la temporada por comprador"
@@ -5365,7 +5551,11 @@ es:
           count: "Salidas"
           shrink_gross: "Merma bruta (lb)"
           shrink_net: "Merma neta (lb)"
+          shrink_percent: "Merma (%)"
+          lots_gross: "Bruto de las compras (lb)"
+          lots_net: "Neto de las compras (lb)"
         kpis:
+          shrink_percent: "Merma (%)"
           count: "Salidas"
           origin_net: "Neto que salió (lb)"
           destination_net: "Neto del comprador (lb)"
@@ -5446,11 +5636,13 @@ es:
         shipment: "Remisión %{number} · %{name}"
         conversion_out: "Proceso %{number} · %{from} → %{to}"
         conversion_in: "Proceso %{number} · %{from} → %{to}"
+        adjustment: "Conteo %{number} · %{warehouse}"
         kinds:
           purchase: "Compra"
           shipment: "Salida"
           conversion_out: "A proceso"
           conversion_in: "De proceso"
+          adjustment: "Ajuste por conteo"
         columns:
           at: "Fecha"
           kind: "Movimiento"
@@ -6269,6 +6461,15 @@ es:
             - "Toca tu nombre para abrir «Mi configuración»: ventanas o panel lateral, y el menú arriba o a la izquierda."
           tips:
             - "Si no ves ningún módulo, pídele a un administrador que te asigne permisos."
+      person_duplicates:
+        show:
+          title: "Personas parecidas"
+          summary: "Mientras escribes una persona, el sistema avisa quién ya está registrado con el mismo DNI, RTN o teléfono, o con los mismos nombres."
+          steps:
+            - "Escribe los nombres, los apellidos, el DNI o el teléfono: el aviso sale debajo de los campos."
+            - "Si es la misma persona, no la registres de nuevo: búscala y úsala. Si ya se registró dos veces, un administrador la fusiona en Administración → Fusionar personas."
+          tips:
+            - "Es solo un aviso: dos personas pueden llamarse igual."
       person_panels:
         show:
           title: "Panel de la persona"
@@ -6359,6 +6560,17 @@ es:
               - "Una variable se borra entera, como una sola letra."
               - "«Código fuente» (</>) muestra el HTML: sirve para copiar el documento completo, con sus variables, de un sistema a otro."
               - "Si sales con cambios sin guardar, el sistema pregunta antes."
+        business_day_closes:
+          index:
+            title: "Cierre del día"
+            summary: "Cierra un día para todo el negocio: desde ahí, nada de esa fecha o antes se registra, cambia ni anula, para nadie."
+            steps:
+              - "Revisa la lista del día: conteos, arqueos, compras facturadas y pagadas, salidas con lotes y motivos, cuentas. Cada línea abre donde se arregla."
+              - "Si algo falta y quieres cerrar igual, marca que lo revisaste."
+              - "Toca «Cerrar» y confirma. Cerrar un día cierra también los anteriores."
+            tips:
+              - "Lo que pasa después sobre algo del día cerrado sí entra: el pago de hoy de una factura vieja o el peso en destino de una salida que salió ese día."
+              - "Solo el usuario principal reabre el último día cerrado, con motivo; queda en la auditoría."
         control_centers:
           show:
             title: "Centro de control"
@@ -6651,7 +6863,7 @@ es:
               - "Elige la forma de pesar: «Peso bruto directo» o «Por pesadas»."
               - "Peso bruto directo: escribe el peso bruto. Por pesadas: toca «Agregar pesada» por cada una y escribe su peso y los sacos contados; el peso bruto se llena solo con la suma."
               - "Escribe el precio por libra. En pergamino, revisa la humedad y el daño; en uva, el rendimiento."
-              - "Revisa el cálculo y toca el botón de guardar."
+              - "Revisa el cálculo y toca «Crear Compra», o «Guardar, facturar y pagar» con la forma de pago y la cuenta para dejarla facturada y pagada de una vez."
             tips:
               - "Al cambiar el estado del café se ponen sus valores iniciales: humedad 51 % en pergamino húmedo, 12 % en pergamino seco; rendimiento 0.186 en uva. Puedes cambiarlos."
               - "Tara con peso bruto directo: 1 libra por cada saco de 165 libras, redondeado hacia arriba."
@@ -6771,11 +6983,10 @@ es:
             tips:
               - "Si falta una compra, toca «Nueva compra para este productor»: se registra en una ventana y aparece en la lista."
               - "Si una compra no va, toca «Anular» en su fila: sale de la lista y de los totales."
-              - "Las compras facturadas ya no se pueden editar, anular ni borrar; solo un administrador, desde «Editar factura»."
+              - "Las compras facturadas ya no se editan, anulan ni borran, para nadie. Para corregir una, un administrador anula la factura y se registra de nuevo."
               - "La lista muestra cuánto restó el daño de cada compra, en libras y en lempiras."
               - "«Lote» solo muestra los lotes del estado del café y la bodega de las compras marcadas, con espacio bajo su límite; si la parte no cabe, no se crea la factura."
-              - "En «Editar factura» se cambia su lote o su parte, o se saca del lote con «Sin lote»; si no se tocan, el lote se queda con las libras que ya tomó."
-              - "«Editar factura» (solo administradores, aunque esté cancelada): cambia la fecha, las observaciones y qué compras lleva; las desmarcadas quedan sin facturar. Cada compra se edita con «Editar compra». Si el total baja de lo pagado, sale el aviso de «Pagado de más»."
+              - "Después, su lote o su parte se cambian desde el lote (Comercialización → Salidas → Lotes)."
           show:
             title: "Factura"
             summary: "El recibo para el productor, con original y copia."
@@ -6788,18 +6999,18 @@ es:
             tips:
               - "Desde la ventana de detalle, «Imprimir» abre la factura en página completa."
               - "En pergamino, «Daño (lb)» y «Daño (L)» muestran lo que el daño restó de cada compra, con su porcentaje; en uva no aplica."
-              - "Una factura no se borra. Solo un administrador la edita o la anula, aunque esté cancelada, y edita o quita cualquier abono."
+              - "Una factura no se edita ni se borra, y un abono no se edita: solo se quita el último. Para corregir la factura, se quitan sus abonos y un administrador la anula."
         invoice_voids:
           form:
             title: "Anular factura"
-            summary: "Solo administradores, aunque esté cancelada: la factura y sus compras quedan anuladas y sus abonos se quitan."
+            summary: "Una factura no se edita. Para corregirla, un administrador la anula con un motivo cuando nada posterior depende de ella: la factura y sus compras quedan anuladas y se registran de nuevo."
             steps:
-              - "Lee lo que pasa al anular: compras anuladas (su café sale del inventario), abonos quitados (dejan de contar en las cuentas) y la factura sale de su salida."
+              - "Si la pantalla dice qué hacer antes, hazlo primero: quitar sus abonos (del último al primero), el pago con café o sacar su lote de la salida o el proceso."
+              - "Lee lo que pasa al anular: compras anuladas (su café sale del inventario) y la factura sale de sus lotes libres."
               - "Escribe el motivo y toca «Anular factura»."
             tips:
               - "No se puede deshacer. La factura conserva su número y se ve en Facturas eligiendo el estado «Anulada»."
-              - "Si una compra abonó un préstamo (pago con café), quita ese abono antes."
-              - "Lo quitado queda en la auditoría."
+              - "Todo queda en la auditoría."
         producer_cards:
           show:
             title: "Ficha del productor en la compra"
@@ -6923,6 +7134,8 @@ es:
               - "Tara: 1 libra por saco contado. Neto: como en las compras."
               - "Si sale más café del que hay en inventario de ese estado, aparece un aviso; se puede guardar igual."
               - "Un administrador puede marcar «Sin báscula local»: la salida se guarda sin peso ni sacos locales, no saca café del inventario y no tiene diferencia entre básculas hasta que alguien escriba la báscula local editándola (también ya vendida)."
+              - "Si las compras de sus lotes y la báscula local difieren más que la tolerancia de merma (Configuración del sitio), se pide «Motivo de la merma» antes de guardar."
+              - "En «¿Qué café lleva?» marca las facturas que van en el vehículo (o usa «Compras de hoy», «Desde la última salida» o «Todo»): al guardar se arma su lote solo. Abajo ves lo que lleva contra la báscula local."
         arrivals:
           form:
             title: "Peso en destino"
@@ -6931,9 +7144,20 @@ es:
               - "Escribe la fecha y el número de la nota de peso."
               - "Copia el peso bruto, los sacos, la humedad y el daño (o el rendimiento) de la nota."
               - "Revisa la diferencia con la báscula local y guarda."
+              - "Para venderla de una vez, abre «Liquidar: vender y cobrar con este peso», escribe el precio y el cobro y toca «Guardar y liquidar»: el peso, la venta y el cobro se guardan juntos."
             tips:
               - "La venta se cobra con este peso."
-              - "Si la diferencia pasa la tolerancia, el recuadro se marca en rojo."
+              - "Si la diferencia pasa la tolerancia, el recuadro se marca en rojo y sale «Motivo de la diferencia con el comprador»: escríbelo para guardar."
+        shipment_reasons:
+          form:
+            title: "Motivos de las diferencias"
+            summary: "Por qué una salida pasa su tolerancia: la merma (las compras de sus lotes contra la báscula local) o la diferencia entre la báscula local y la del comprador."
+            steps:
+              - "Ábrela con «Anotar motivo» en el detalle de la salida, que avisa en rojo lo que falta."
+              - "Escribe el motivo de cada diferencia que pasa la tolerancia y guarda."
+            tips:
+              - "Las tolerancias se cambian en Configuración del sitio. El motivo nunca impide guardar la salida: solo se pide."
+              - "Se puede escribir aunque la salida ya esté pesada en destino o vendida."
         remissions:
           show:
             title: "Remisión de la salida"
@@ -7131,7 +7355,7 @@ es:
               - "Mientras no tenga cobros, puedes anularla con su motivo."
             tips:
               - "Al anular, sus salidas quedan libres para otra venta."
-              - "Un administrador edita la venta («Editar venta»: fecha, precio, libras por quintal, documento, observaciones y salidas) y la anula aunque tenga cobros: se quitan, dejan de contar en las cuentas y lo cobrado con anticipo vuelve al saldo del comprador. También edita o quita cualquier cobro."
+              - "Una venta no se edita, para nadie, y un cobro tampoco: solo se quita el último. Para corregir la venta, quita sus cobros (del último al primero), anúlala y regístrala de nuevo."
           form:
             title: "Nueva venta"
             summary: "Agrupa salidas de un comprador, ya pesadas en destino, en una venta."
@@ -7167,7 +7391,7 @@ es:
               - "Guarda: se abre el recibo listo para imprimir."
             tips:
               - "No puede pasar de lo que falta ni ir antes de la venta o del último cobro."
-              - "Un administrador puede editar un cobro ya registrado (monto, fecha, forma de pago, cuenta u observaciones), sin pasar de lo que la venta tiene por cobrar."
+              - "Un cobro no se edita, para nadie: si se registró mal, quita el último y regístralo de nuevo."
         buyers:
           index:
             title: "Clientes comerciales"
@@ -7312,6 +7536,44 @@ es:
               - "Marca sus procesos: de uva a pergamino húmedo, de húmedo a seco, o los dos. Solo sale en la lista de los procesos marcados."
             tips:
               - "Uno con procesos no se borra: se desactiva y deja de salir en los procesos nuevos."
+        stock_counts:
+          index:
+            title: "Conteos de bodega"
+            summary: "Cada conteo físico de café con lo que decía el sistema y el ajuste que hizo."
+            steps:
+              - "Filtra por fechas, bodega o estado del café."
+              - "Toca un conteo para ver su ajuste, su motivo y de qué lotes salió la diferencia."
+              - "Toca «Contar bodega» para registrar uno."
+          show:
+            title: "Detalle del conteo"
+            summary: "Lo que se contó, lo que decía el sistema y el ajuste que dejó el inventario como se contó."
+            steps:
+              - "Si faltaba café, la diferencia salió de los lotes más viejos y su valor es la merma en lempiras."
+              - "Si sobraba, entró como un lote sin costo."
+            tips:
+              - "Un conteo no se edita. Un administrador lo anula con motivo, si no hay un conteo posterior de ese café en esa bodega."
+          form:
+            title: "Contar bodega"
+            summary: "Registrar lo que hay de verdad en una bodega."
+            steps:
+              - "Pesa todo el café de un estado en una bodega."
+              - "Elige la bodega, el estado del café y la hora del conteo, y escribe las libras brutas que hay (y los sacos, si los contaste)."
+              - "A la derecha sale lo que dice el sistema y el ajuste. Si hay diferencia, elige el motivo."
+              - "Toca «Guardar conteo»: el inventario queda como lo contaste."
+            tips:
+              - "Un ajuste grande (más del porcentaje de Configuración del sitio, 2 % al inicio) solo lo registra un administrador."
+              - "Desde el primer conteo de un café en una bodega, ninguna salida, proceso o traslado puede sacar más de lo que hay."
+        stock_reconciliations:
+          show:
+            title: "Cuadre del día"
+            summary: "Las cuentas del café de un día, como se hacen a mano: lo que había, lo que entró y salió, lo que quedó y el conteo; y cada salida contra sus compras y el comprador."
+            steps:
+              - "Elige el día (o usa «Día anterior» y «Día siguiente») y, si quieres, una bodega."
+              - "«Por estado del café»: al empezar, compras, procesos, salidas, traslados y ajustes, al cerrar y el conteo físico de ese día."
+              - "«Por salida»: lo que dicen las compras de sus lotes, la báscula local y la del comprador, con las diferencias en libras, % y lempiras."
+            tips:
+              - "Si no hay conteo ese día, «Contar bodega» registra uno."
+              - "Los traslados solo salen al elegir una bodega: entre bodegas, el café sigue en el negocio."
         warehouse_transfers:
           index:
             title: "Traslados entre bodegas"
@@ -7333,7 +7595,7 @@ es:
               - "Elige la bodega de donde sale y a la que entra, y el estado del café."
               - "Escribe las libras brutas que se trasladan; a la derecha se ven las netas que equivalen en esa bodega."
             tips:
-              - "Si es más de lo que hay en la bodega de salida, el sistema avisa pero deja guardar."
+              - "Si es más de lo que hay en la bodega de salida, el sistema avisa; después del primer conteo de ese café en esa bodega, no deja guardar."
         stock_checks:
           show:
             title: "Netas revisadas"
@@ -7613,6 +7875,17 @@ es:
             summary: "La foto o el PDF del comprobante de un gasto."
             steps:
               - "Se abre en el navegador; desde ahí se puede guardar o imprimir."
+        opening_balances:
+          index:
+            title: "Saldos de apertura"
+            summary: "Lo que había en cada cuenta cuando empezó a usarse el sistema, para que ninguna quede en negativo."
+            steps:
+              - "Cada cuenta dice su saldo de apertura, su primer movimiento, su saldo más bajo y desde cuándo quedó en negativo."
+              - "Si llega a quedar en negativo, dice cuánto debe ser como mínimo el saldo de apertura."
+              - "Escribe la fecha y lo que había de verdad ese día (el estado del banco o lo contado en caja) y toca «Guardar»."
+            tips:
+              - "La fecha de apertura va el día del primer movimiento o antes."
+              - "Cambiar el saldo de apertura cambia el saldo de la cuenta en todas las fechas."
         money_accounts:
           index:
             title: "Cuentas"
@@ -8261,10 +8534,37 @@ es:
       users: "Usuarios"
       audit_events: "Auditoría"
       site_setting: "Configuración del sitio"
+      day_closes: "Cierre del día"
       backup: "Respaldo"
       fingerprint_stations: "Lectores de huella"
       control_center: "Centro de control"
     # Centro de control (Fernando, 2026-11-15; only User::DATA_EXPORTER_ID).
+    business_day_closes:
+      index:
+        title: "Cierre del día"
+        help: "Al cerrar un día, ya no se registra, cambia ni anula nada de esa fecha o antes, en todo el negocio y para nadie: compras, facturas, pagos, salidas, ventas, cobros, procesos, traslados, conteos, arqueos, gastos y préstamos. Lo que entra después (el pago de hoy de una factura vieja, el peso en destino de una salida que ya salió) sí se registra."
+        locked_through: "El negocio está cerrado hasta el %{date}."
+        nothing_closed: "Todavía no se ha cerrado ningún día."
+        close_title: "Cerrar el %{date}"
+        other_day: "Otro día"
+        see: "Ver"
+        today_note: "La lista es la de «¿Cuadra hoy?» para el día elegido: cada línea abre donde se arregla."
+        reviewed: "Revisé lo que falta y quiero cerrar el día así."
+        submit: "Cerrar el %{date}"
+        confirm: "¿Cerrar el %{date}? Ya no se podrá registrar, cambiar ni anular nada de esa fecha o antes."
+        list: "Días cerrados"
+        empty: "Todavía no hay días cerrados."
+        state: "Estado"
+        actions: "Acciones"
+        closed: "Cerrado"
+        reopened: "Reabierto"
+        reopened_by: "%{name}, %{date}: %{reason}"
+        reason_placeholder: "Motivo para reabrir"
+        reopen: "Reabrir"
+      create:
+        success: "Día %{date} cerrado."
+      reopen:
+        success: "Día %{date} reabierto."
     control_centers:
       tabs:
         label: "Partes del Centro de control"
@@ -8447,7 +8747,9 @@ es:
         rtn_help: "Opcional. El RTN del negocio, que sale en las facturas debajo del nombre y la ubicación."
         owner_help: "Opcional. Sale en la remisión de las salidas («De: …» y «Enviadas por»)."
         phones_help: "Opcionales. Salen en la remisión de las salidas."
-        weight_tolerance_help: "Opcional. En Comercialización, una salida cuya báscula del comprador difiere de la local en más de este porcentaje (más o menos) sale resaltada. Vacía, no se resalta ninguna."
+        count_admin_percent_help: "Un conteo de bodega cuyo ajuste pasa este porcentaje de lo que dice el sistema solo lo registra un administrador. Empieza en 2 %."
+        weight_tolerance_help: "Opcional. En Comercialización, una salida cuya báscula del comprador difiere de la local en más de este porcentaje (más o menos) sale resaltada y pide el motivo al pesarla en destino (no impide guardar). Vacía, no se resalta ninguna."
+        shrink_tolerance_help: "Opcional. Una salida cuya báscula local difiere de las compras de sus lotes (la merma) en más de este porcentaje (más o menos) sale resaltada y pide el motivo (no impide guardar). Vacía, no se pide."
         cherry_alert: "Alerta de uva sin procesar (horas)"
         cherry_alert_help: "Comercialización avisa cuando un lote de uva lleva en bodega más de estas horas sin procesar: primero un aviso y después, urgente."
         yields: "Rendimiento estimado al procesar (%)"
@@ -8528,6 +8830,7 @@ es:
         coffee_batch_invoice: "la factura del lote"
         coffee_batch_conversion: "el proceso del lote"
         warehouse_transfer: "el traslado entre bodegas"
+        stock_count: "el conteo de bodega"
         carrier: "el transportista"
         vehicle: "el vehículo"
         vehicle_type: "el tipo de vehículo"
@@ -8845,6 +9148,9 @@ es:
       form:
         permissions: "Permisos"
         permissions_help: "Un administrador tiene acceso completo. A los demás se les da, en cada módulo, ver, crear, editar y borrar por separado en cada pestaña. La fila del módulo marca o quita esa columna en todas sus pestañas."
+        copy_from: "Copiar permisos de otro usuario"
+        copy_pick: "Elige a quién copiar"
+        copy_help: "Marca las mismas casillas que tiene ese usuario. No se guarda hasta que guardes este usuario."
         module: "Módulo y pestaña"
         whole_module: "Todo el módulo"
         whole_module_action: "%{module}: %{action} en todo el módulo"
@@ -8969,6 +9275,12 @@ es:
       warehouse_transfer:
         one: "Traslado entre bodegas"
         other: "Traslados entre bodegas"
+      stock_count:
+        one: "Conteo de bodega"
+        other: "Conteos de bodega"
+      business_day_close:
+        one: "Cierre del día"
+        other: "Cierres del día"
       private_document:
         one: "Documento privado"
         other: "Documentos privados"
@@ -9337,6 +9649,8 @@ es:
         active: "Activo"
       shipment:
         active_sale_line: "Venta activa"
+        shrink_reason: "Motivo de la merma"
+        difference_reason: "Motivo de la diferencia con el comprador"
         warehouse: "Bodega"
         warehouse_id: "Bodega"
         buyer_id: "Comprador"
@@ -9686,6 +10000,42 @@ es:
         main: "Bodega por defecto"
         observations: "Observaciones"
         active: "Activa"
+      business_day_close:
+        closed_on: "Día cerrado"
+        notes: "Notas"
+        closed_by: "Cerró"
+        closed_by_id: "Cerró"
+        reopened_at: "Reabierto"
+        reopened_by: "Reabrió"
+        reopened_by_id: "Reabrió"
+        reopen_reason: "Motivo para reabrir"
+      stock_count:
+        number: "Número"
+        warehouse: "Bodega"
+        warehouse_id: "Bodega"
+        coffee_state: "Estado del café"
+        counted_at: "Fecha y hora del conteo"
+        counted_gross: "Libras brutas contadas"
+        counted_sacks: "Sacos contados (opcional)"
+        system_gross: "Libras brutas según el sistema"
+        system_net: "Libras netas según el sistema"
+        gross_weight: "Ajuste (lb brutas)"
+        net_weight: "Ajuste (lb netas)"
+        reason: "Motivo de la diferencia"
+        reason/drying: "Secado u oreo"
+        reason/scale_error: "Error de báscula"
+        reason/loss: "Pérdida"
+        reason/surplus: "Sobrante"
+        reason/initial_count: "Conteo inicial"
+        reason/other: "Otro"
+        reason_detail: "Detalle del motivo"
+        observations: "Observaciones"
+        created_by: "Contó"
+        created_by_id: "Contó"
+        voided_at: "Anulado el"
+        voided_by: "Anuló"
+        voided_by_id: "Anuló"
+        void_reason: "Motivo de la anulación"
       warehouse_transfer:
         number: "Número"
         transferred_at: "Fecha y hora"
@@ -10178,6 +10528,8 @@ es:
         logo_content_type: "Tipo de imagen del logo"
         logo_byte_size: "Tamaño del logo (bytes)"
         weight_tolerance_percent: "Tolerancia de diferencia de peso (%)"
+        shrink_tolerance_percent: "Tolerancia de merma: compras contra báscula local (%)"
+        count_admin_percent: "Ajuste por conteo que solo registra un administrador (más del %)"
         cherry_warning_hours: "Aviso después de (horas)"
         cherry_yield_percent: "Uva a pergamino húmedo (%)"
         drying_yield_percent: "Secado: húmedo a pergamino seco (%)"
@@ -10227,6 +10579,8 @@ es:
               batch_other_coffee: "El %{batch} es de otro estado del café o de otra bodega."
             finished_at:
               before_weighed: "no puede ser antes de cuando se pesó lo que entró"
+            output_gross_weight:
+              heavier_than_input: "no puede pesar más que lo que entró (%{gross} lb brutas): al procesar el café solo pierde peso"
             warehouse:
               inactive: "está desactivada: elige otra"
             output_warehouse:
@@ -10280,7 +10634,7 @@ es:
               below_coffee: "no puede ser menor a lo que ya tiene (%{gross} lb brutas)"
             shipment:
               other_coffee: "es de otro estado del café o de otra bodega"
-              closed: "está anulada, o vendida y solo un administrador la cambia"
+              closed: "está anulada o vendida: ya no cambia. Para corregirla, primero anula la venta"
               taken: "ya tiene este lote"
             warehouse:
               inactive: "está desactivada"
@@ -10295,8 +10649,9 @@ es:
         coffee_batch_conversion:
           attributes:
             base:
-              lot_sold: "El lote está en una salida vendida: solo un administrador lo cambia."
+              lot_sold: "El lote está en una salida vendida: ya no cambia. Para corregirlo, primero anula la venta."
               lot_processed: "El lote ya se mandó a procesar con estas libras: no cambia."
+              lot_closed_day: "El lote salió en un día cerrado: ya no cambia."
             coffee_conversion:
               not_eligible: "no puede ir en este lote: debe estar terminado, ser de su estado del café, con su resultado en su bodega y una parte libre"
             coffee_conversion_id:
@@ -10307,8 +10662,9 @@ es:
         coffee_batch_invoice:
           attributes:
             base:
-              lot_sold: "El lote está en una salida vendida: solo un administrador lo cambia."
+              lot_sold: "El lote está en una salida vendida: ya no cambia. Para corregirlo, primero anula la venta."
               lot_processed: "El lote ya se mandó a procesar con estas libras: no cambia."
+              lot_closed_day: "El lote salió en un día cerrado: ya no cambia."
             invoice:
               not_eligible: "no puede ir en este lote: debe ser de su estado del café, con todas sus compras en su bodega y una parte libre"
             invoice_id:
@@ -10324,6 +10680,28 @@ es:
               not_weighed: "no puede ser «Que salió» hasta que se registre el resultado"
             description:
               blank: "es obligatorio cuando el concepto es «Otro»"
+        business_day_close:
+          attributes:
+            base:
+              not_latest: "Solo se reabre el último día cerrado."
+              review_first: "Falta algo de la lista: marca que lo revisaste para cerrar el día así."
+            closed_on:
+              already_closed: "ya está cerrado: el negocio está cerrado hasta el %{date}"
+        stock_count:
+          attributes:
+            base:
+              already_voided: "El conteo ya está anulado."
+              later_count: "Ya se hizo el conteo %{number} sobre este: anula ese primero."
+            counted_gross:
+              over_share: "da un ajuste de más del %{percent} % de lo que dice el sistema: solo un administrador lo registra"
+            counted_at:
+              before_last_count: "no puede ser antes del último conteo de ese café en esa bodega (%{date})"
+            reason:
+              blank: "es obligatorio cuando el conteo no coincide con el sistema"
+            reason_detail:
+              blank: "es obligatorio cuando el motivo es «Otro»"
+            warehouse:
+              inactive: "está desactivada: elige otra"
         warehouse_transfer:
           attributes:
             base:
@@ -10428,18 +10806,27 @@ es:
             category:
               not_first_level: "debe ser de primer nivel"
         shipment:
-          sold: "La salida ya está en una venta: no se cambian su comprador, estado ni pesos. Anula la venta primero."
+          sold: "La salida está en la venta %{sale}: ya no cambia. Para corregirla, primero anula la venta."
+          received: "La salida ya se pesó en destino: ya no cambia. Para corregirla, primero quita la báscula del comprador."
           attributes:
             weighings:
               blank: "faltan: agrega al menos una pesada"
             base:
-              sold: "La salida ya está en una venta: no se cambian su comprador, estado ni pesos. Anula la venta primero."
+              sold: "La salida está en la venta %{sale}: ya no cambia. Para corregirla, primero anula la venta."
+              received: "La salida ya se pesó en destino: ya no cambia. Para corregirla, primero quita la báscula del comprador."
               sold_destination: "La salida está en una venta, que cobra con la báscula del comprador: quítala de la venta o anula la venta antes de quitar esa báscula."
               carrier_and_driver: "Lleva un transportista o un motorista, no los dos."
               has_batches: "La salida tiene lotes: su estado del café y su bodega no cambian. Quita sus lotes primero."
               batches_gone: "Alguno de los lotes elegidos ya no existe."
+              lot_invoices_unavailable: "Alguna de las facturas elegidas ya no está libre o es de otro estado del café o de otra bodega: revisa «¿Qué café lleva?»."
               batch_taken: "El %{batch} ya está en otra salida."
               batch_other_coffee: "El %{batch} es de otro estado del café o de otra bodega."
+            weight_note_number:
+              taken_by: "ya está en la remisión %{number} de este comprador: cada nota de peso va en una sola salida"
+            shrink_reason:
+              over_tolerance: "falta: la báscula local difiere %{percent} de las compras de sus lotes y la tolerancia es %{tolerance}"
+            difference_reason:
+              over_tolerance: "falta: la báscula del comprador difiere %{percent} de la local y la tolerancia es %{tolerance}"
             buyer:
               inactive: "está desactivado"
             warehouse:
@@ -10450,6 +10837,7 @@ es:
               inactive: "está desactivado"
             received_on:
               before_departure: "no puede ser antes de la salida"
+              after_sale: "no puede ser después de la venta %{number} (%{date}) que la cobra"
         vehicle:
           attributes:
             vehicle_type:
@@ -10462,6 +10850,7 @@ es:
               already_voided: "La venta ya está anulada."
             sold_on:
               after_payments: "no puede ser después del primer cobro (%{date})"
+              before_arrival: "no puede ser antes de que el comprador pesara la remisión %{number} (%{date})"
             buyer_total:
               below_paid: "no puede ser menos de lo ya cobrado (%{paid})"
             buyer_total_reason:
@@ -10500,6 +10889,7 @@ es:
           attributes:
             base:
               sale_voided: "La venta está anulada."
+              closed: "Un cobro no se edita. Para corregirlo, quítalo (solo el último) y regístralo de nuevo."
             amount:
               over_balance: "es mayor que lo que falta por cobrar (%{balance})"
             payment_method:
@@ -10532,6 +10922,8 @@ es:
               before_last_payment: "no puede ser antes del último pago"
         invoice_payment:
           attributes:
+            base:
+              closed: "Un abono no se edita. Para corregirlo, quítalo (solo el último) y regístralo de nuevo."
             amount:
               over_balance: "es mayor que el saldo de la factura (%{balance})"
             paid_on:
@@ -10621,6 +11013,7 @@ es:
               not_an_image: "debe ser una imagen PNG, JPG, WebP o GIF"
         purchase:
           voided_invoiced: "Una compra facturada no se puede anular."
+          invoiced: "Una compra facturada no se edita: así se le imprimió al productor. Para corregirla, un administrador anula su factura y se registra de nuevo."
           hauler_paid: "No se puede: ya se le pagó al carrero %{hauler} la comisión de esta compra, y con el cambio quedaría debiendo. Quita primero su último pago."
           attributes:
             hauler:
@@ -10637,12 +11030,18 @@ es:
               other_farm: "no es una parcela de esa finca"
             weighings:
               blank: "faltan: agrega al menos una pesada"
+            purchased_at:
+              after_its_lot_left: "no puede ser después de que su café salió con el %{batch} (%{left})"
         invoice:
           partial_not_less: "Un pago parcial debe ser menor que el total a pagar. Si se paga todo, elige «Cancelada»."
           attributes:
             base:
               already_voided: "La factura ya está anulada."
               has_loan_payments: "Una de sus compras abonó un préstamo (pago con café): quita ese abono antes de anular la factura."
+              has_payments:
+                one: "Tiene un abono: quítalo antes de anular la factura."
+                other: "Tiene %{count} abonos: quítalos antes de anular la factura, del último al primero."
+              lot_taken: "Su café va en el %{batch}, que ya salió en %{taker}: primero quita el lote de ahí."
               purchase_not_voided: "La compra %{number} no se puede anular: %{message}"
             issued_on:
               after_payments: "no puede ser después del primer abono (%{date})"
@@ -10684,6 +11083,7 @@ es:
             password_challenge:
               invalid: "no es la que tienes ahora"
       messages:
+        closed_day: "El día %{day} está cerrado (el negocio está cerrado hasta el %{date}): ya no se registra, cambia ni anula nada de esa fecha o antes. Solo el usuario principal reabre un día, con motivo."
         below_lots: "Sus lotes tomaron de esta factura %{taken_gross} lb brutas y %{taken_net} lb netas, y quedaría con %{gross} lb brutas y %{net} lb netas. Quita la factura de un lote o bájale el porcentaje primero."
         record_invalid: "La validación falló: %{errors}"
         restrict_dependent_destroy:
@@ -10786,6 +11186,10 @@ es:
       email_format: "no es un correo válido"
       password_format: "debe tener al menos 8 caracteres"
       not_in_department: "no pertenece al departamento seleccionado"
+      over_stock: "Solo hay %{available} lb netas de %{state} en %{warehouse} y esto saca %{net}: no puede salir más de lo que hay. Si hay más café, registra la compra que falta o haz un conteo."
+      in_future: "no puede ser una fecha futura: registra solo lo que ya pasó"
+      coffee_after_shipment: "El %{batch} tiene café que entró el %{entered}, después de que salió la remisión %{number} (%{left}): un lote solo lleva café que ya estaba en la bodega."
+      coffee_after_process: "El %{batch} tiene café que entró el %{entered}, después de que se pesó el proceso %{number} (%{left}): un lote solo lleva café que ya estaba en la bodega."
       too_long:
         one: "es demasiado largo (1 carácter máximo)"
         other: "es demasiado largo (%{count} caracteres máximo)"

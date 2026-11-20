@@ -66,7 +66,7 @@ class StockCheck
   def explanation(state)
     factor = self.class.factor(state)
     parts = [ purchases_part(state, factor), shipments_part(state, factor), processes_part(state, factor, :in),
-              processes_part(state, factor, :out), transfers_part(state, factor, :in), transfers_part(state, factor, :out) ]
+              processes_part(state, factor, :out), transfers_part(state, factor, :in), transfers_part(state, factor, :out), counts_part(state, factor) ]
     parts.compact.reject { it.gross.zero? && it.net.zero? }
   end
 
@@ -123,6 +123,13 @@ class StockCheck
         gross, net = scope.pick(Arel.sql("COALESCE(SUM(input_gross_weight), 0)"), Arel.sql("COALESCE(SUM(input_net_weight), 0)")).map(&:to_d)
         Part.new(key: :processes_out, gross: -gross, net: -net, effect: -(net - (gross * factor)).round(2), items: [])
       end
+    end
+
+    # Physical counts' adjustments (StockCount): signed, as they came.
+    def counts_part(state, factor)
+      scope = in_warehouse(StockCount.active.where(coffee_state: state, counted_at: ..until_moment))
+      gross, net = scope.pick(Arel.sql("COALESCE(SUM(gross_weight), 0)"), Arel.sql("COALESCE(SUM(net_weight), 0)")).map(&:to_d)
+      Part.new(key: :counts, gross:, net:, effect: (net - (gross * factor)).round(2), items: [])
     end
 
     # Transfers only count within one warehouse.

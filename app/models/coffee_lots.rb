@@ -18,6 +18,11 @@
 # Taking more than there is leaves a part without a lot (`shortfall`), as
 # the stock may go below zero.
 #
+# A physical count's adjustment (StockCount, Fernando, 2026-11-18): less
+# than the system said takes from the oldest lots (its value is the loss in
+# lempiras); more comes in as a lot of its own, with no cost. Decisions of
+# implementation, pending the client's confirmation.
+#
 # Value (client, 2026-10-26, «Valor del inventario»): what was paid to the
 # producers (the purchase's total) plus what was added to it: the hauler's
 # commission of the purchase and, on a conversion's result, the cost of
@@ -26,7 +31,7 @@
 class CoffeeLots
   EPSILON = BigDecimal("0.005")
   # Same moment: what comes in first.
-  ORDER = { purchase: 0, result: 1, transfer: 2, input: 3, shipment: 4, late_result: 5 }.freeze
+  ORDER = { purchase: 0, result: 1, transfer: 2, input: 3, shipment: 4, late_result: 5, count: 6 }.freeze
 
   class Lot
     attr_reader :source, :coffee_state, :warehouse_id, :entered_at, :net_in, :gross_in, :transfer
@@ -49,6 +54,7 @@ class CoffeeLots
     end
 
     def purchase? = source.is_a?(Purchase)
+    def count? = source.is_a?(StockCount)
     def value = purchase_value + costs
     def quintals = PurchaseCalculation.quintals(net)
     def left? = net > EPSILON
@@ -137,7 +143,7 @@ class CoffeeLots
     end
 
     def events
-      purchase_events + conversion_events + transfer_events + shipment_events
+      purchase_events + conversion_events + transfer_events + shipment_events + count_events
     end
 
     def purchase_events
@@ -209,6 +215,21 @@ class CoffeeLots
           -> { take(shipment, shipment.coffee_state, shipment.warehouse_id, shipment.origin_net_weight) }
         end
         [ shipment.departed_at, ORDER[:shipment], shipment.id, apply ]
+      end
+    end
+
+    # A count's adjustment: more comes in as a lot with no cost; less takes
+    # from the oldest lots.
+    def count_events
+      StockCount.active.where(counted_at: ..at).where.not(net_weight: 0).map do |count|
+        [ count.counted_at, ORDER[:count], count.id, lambda {
+          if count.net_weight.positive?
+            add(Lot.new(source: count, coffee_state: count.coffee_state, warehouse_id: count.warehouse_id, entered_at: count.counted_at,
+                        net: count.net_weight, gross: [ count.gross_weight, 0 ].max, sacks: 0, damage: 0, purchase_value: 0, costs: 0))
+          else
+            take(count, count.coffee_state, count.warehouse_id, -count.net_weight)
+          end
+        } ]
       end
     end
 

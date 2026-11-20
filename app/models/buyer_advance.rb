@@ -10,6 +10,8 @@ class BuyerAdvance < ApplicationRecord
   include Auditable
   include OwnedRecord
   include LiveUpdates
+  include DayLock
+  locks_day :received_on, free: %w[status cancelled_on buyer_id]
   live_updates :sales
 
   belongs_to :buyer

@@ -4,6 +4,8 @@ class PayrollExpense < ApplicationRecord
   include Auditable
   include OwnedRecord
   include HasMoneyAccount
+  include DayLock
+  locks_day :spent_on
 
   belongs_to :payroll
   belongs_to :category, class_name: "ExpenseCategory", foreign_key: :expense_category_id, inverse_of: :expenses

@@ -54,11 +54,14 @@ class CoffeeBatch < ApplicationRecord
   validates :coffee_state, inclusion: { in: Purchase::COFFEE_STATES }
   validates :gross_limit, numericality: { greater_than: 0, less_than: MAX_POUNDS }
   validates :batched_on, presence: true
+  validates :batched_on, not_in_future: true
   validates :observations, length: { maximum: 500 }
   validate :limit_holds_its_coffee, if: -> { persisted? && will_save_change_to_gross_limit? }
   validate :keeps_its_invoices, if: -> { persisted? && (will_save_change_to_coffee_state? || will_save_change_to_warehouse_id?) }
   validate :fits_its_shipment, if: -> { shipment && will_save_change_to_shipment_id? }
   validate :warehouse_active, if: :will_save_change_to_warehouse_id?
+  # Into or out of a shipment or a process of a closed day: no (DayLock).
+  validate :taker_day_open, if: -> { will_save_change_to_shipment_id? || will_save_change_to_coffee_conversion_id? }
 
   before_create :assign_number
   before_destroy :not_shipped, prepend: true
@@ -68,11 +71,49 @@ class CoffeeBatch < ApplicationRecord
 
   def self.next_number = (maximum(:number) || 0) + 1
 
-  # A lot on a sold shipment changes only by an administrator (Fernando,
-  # 2026-11-13: «los lotes deberían poder ser actualizados retroactivamente
-  # por los administradores, aun después de la venta»). Outside a request,
-  # nothing is locked.
-  def self.sold_editable? = Current.user.nil? || Current.user.admin?
+  # A lot on a sold shipment does not change, administrators included
+  # (Fernando, 2026-11-18: closed records are not edited; before, since
+  # 2026-11-13, an administrator could). Outside a request and in a
+  # data-maintenance task, nothing is locked.
+  def self.sold_editable? = Current.user.nil? || Current.maintenance.present?
+
+  # { batch id => the last moment coffee of it came in }: its invoices'
+  # purchases (not voided) and its processes' results. A lot only carries
+  # coffee that was already in the warehouse when it left (Fernando,
+  # 2026-11-18: a purchase of November went on a shipment of September).
+  def self.latest_coffee(ids)
+    ids = Array(ids).compact
+    return {} if ids.empty?
+
+    purchases = CoffeeBatchInvoice.where(coffee_batch_id: ids)
+                                  .joins("JOIN purchases ON purchases.invoice_id = coffee_batch_invoices.invoice_id AND purchases.voided_at IS NULL")
+                                  .group(:coffee_batch_id).maximum("purchases.purchased_at")
+    results = CoffeeBatchConversion.where(coffee_batch_id: ids).joins(:coffee_conversion)
+                                   .group(:coffee_batch_id).maximum("coffee_conversions.finished_at")
+    purchases.merge(results) { |_, one, other| [ one, other ].compact.max }.compact.transform_values(&:in_time_zone)
+  end
+
+  # The lots (of `ids`) with coffee that came in after `moment`, each with
+  # that last moment: [[batch, time]].
+  def self.late_for(ids, moment)
+    return [] if moment.nil?
+
+    latest = latest_coffee(ids)
+    where(id: latest.select { |_, time| after?(time, moment) }.keys).order(:number).map { [ it, latest[it.id] ] }
+  end
+
+  # Whether coffee that came in at `entered` was too late for `moment`: by
+  # the minute, as the forms write them (the same minute is in time).
+  def self.after?(entered, moment) = entered.present? && moment.present? && entered.in_time_zone.beginning_of_minute > moment.in_time_zone.beginning_of_minute
+
+  # The message for a lot whose coffee came in after it left: the lot, when
+  # its last coffee came in and what took it (a shipment or a process).
+  def self.late_message(batch, entered, taker)
+    key = taker.is_a?(Shipment) ? :coffee_after_shipment : :coffee_after_process
+    moment = taker.is_a?(Shipment) ? taker.departed_at : taker.weighed_at
+    I18n.t("errors.messages.#{key}", batch: batch.label, entered: I18n.l(entered.in_time_zone),
+                                                  number: format("%04d", taker.number || (taker.class.maximum(:number).to_i + 1)), left: I18n.l(moment.in_time_zone))
+  end
 
   def display_number = format("%04d", number.to_i)
   def label = I18n.t("sales.coffee_batches.label", number: display_number)
@@ -82,6 +123,13 @@ class CoffeeBatch < ApplicationRecord
   def processed? = coffee_conversion_id.present?
   # Gone to a shipment or a process.
   def taken? = shipped? || processed?
+  # What took it (its shipment or its process) and when its coffee left.
+  def taker = shipment || processing
+  def taken_at = shipment ? shipment.departed_at : processing&.weighed_at
+
+  # Taken by a shipment or a process of a closed day (BusinessDayClose):
+  # its invoices and shares no longer change.
+  def closed_day? = !Current.maintenance && BusinessDayClose.locked?(DayLock.day(taken_at))
 
   # Its purchases' pounds and value, in its share (a voided purchase does not count).
   def totals = @totals ||= Totals.for(self)
@@ -166,6 +214,7 @@ class CoffeeBatch < ApplicationRecord
       errors.add(:shipment, :other_coffee) unless shipment.coffee_state == coffee_state && shipment.warehouse_id == warehouse_id
       errors.add(:shipment, :closed) if shipment.voided? || (shipment.sold? && !self.class.sold_editable?)
       errors.add(:shipment, :taken) if shipment_id_in_database && shipment_id_in_database != shipment_id
+      self.class.late_for([ id ], shipment.departed_at).each { |batch, entered| errors.add(:base, self.class.late_message(batch, entered, shipment)) }
     end
 
     def warehouse_active
@@ -177,5 +226,14 @@ class CoffeeBatch < ApplicationRecord
 
       errors.add(:base, :shipped)
       throw :abort
+    end
+
+    def taker_day_open
+      return if Current.maintenance || BusinessDayClose.locked_through.nil?
+
+      takers = [ Shipment.find_by(id: shipment_id_in_database)&.departed_at, shipment&.departed_at,
+                 CoffeeConversion.find_by(id: coffee_conversion_id_in_database)&.weighed_at, processing&.weighed_at ]
+      closed = takers.compact.map { DayLock.day(it) }.find { BusinessDayClose.locked?(it) }
+      errors.add(:base, I18n.t("activerecord.errors.messages.closed_day", date: I18n.l(BusinessDayClose.locked_through), day: I18n.l(closed))) if closed
     end
 end

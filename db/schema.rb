@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_17_024718) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_20_050000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -55,6 +55,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_024718) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["finance_category_id", "month"], name: "index_budgets_on_finance_category_id_and_month", unique: true
+  end
+
+  create_table "business_day_closes", force: :cascade do |t|
+    t.date "closed_on", null: false
+    t.string "notes", limit: 500
+    t.bigint "closed_by_id", null: false
+    t.datetime "reopened_at"
+    t.bigint "reopened_by_id"
+    t.string "reopen_reason", limit: 500
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["closed_by_id"], name: "index_business_day_closes_on_closed_by_id"
+    t.index ["closed_on"], name: "index_business_day_closes_active", unique: true, where: "(reopened_at IS NULL)"
+    t.index ["reopened_by_id"], name: "index_business_day_closes_on_reopened_by_id"
   end
 
   create_table "buyer_advance_refunds", force: :cascade do |t|
@@ -1141,6 +1155,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_024718) do
     t.string "driver_name"
     t.bigint "warehouse_id", null: false
     t.decimal "trip_price", precision: 12, scale: 2
+    t.string "shrink_reason", limit: 500
+    t.string "difference_reason", limit: 500
     t.index ["buyer_id"], name: "index_shipments_on_buyer_id"
     t.index ["carrier_id"], name: "index_shipments_on_carrier_id"
     t.index ["created_by_id"], name: "index_shipments_on_created_by_id"
@@ -1172,6 +1188,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_024718) do
     t.string "phone"
     t.string "secondary_phone"
     t.date "supply_stock_starts_on"
+    t.decimal "count_admin_percent", precision: 5, scale: 2, default: "2.0", null: false
+    t.decimal "shrink_tolerance_percent", precision: 5, scale: 2
   end
 
   create_table "staff_advances", force: :cascade do |t|
@@ -1269,6 +1287,34 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_024718) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index "lower((name)::text)", name: "index_staff_roles_on_lower_name", unique: true
+  end
+
+  create_table "stock_counts", force: :cascade do |t|
+    t.integer "number", null: false
+    t.bigint "warehouse_id", null: false
+    t.string "coffee_state", null: false
+    t.datetime "counted_at", null: false
+    t.decimal "counted_gross", precision: 12, scale: 2, null: false
+    t.integer "counted_sacks"
+    t.decimal "system_gross", precision: 12, scale: 2, null: false
+    t.decimal "system_net", precision: 12, scale: 2, null: false
+    t.decimal "gross_weight", precision: 12, scale: 2, null: false
+    t.decimal "net_weight", precision: 12, scale: 2, null: false
+    t.string "reason"
+    t.string "reason_detail"
+    t.text "observations"
+    t.bigint "created_by_id", null: false
+    t.datetime "voided_at"
+    t.bigint "voided_by_id"
+    t.string "void_reason"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["counted_at"], name: "index_stock_counts_on_counted_at"
+    t.index ["created_by_id"], name: "index_stock_counts_on_created_by_id"
+    t.index ["number"], name: "index_stock_counts_on_number", unique: true
+    t.index ["voided_by_id"], name: "index_stock_counts_on_voided_by_id"
+    t.index ["warehouse_id", "coffee_state", "counted_at"], name: "idx_on_warehouse_id_coffee_state_counted_at_63941e010e"
+    t.index ["warehouse_id"], name: "index_stock_counts_on_warehouse_id"
   end
 
   create_table "supplies", force: :cascade do |t|
@@ -1432,6 +1478,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_024718) do
   add_foreign_key "account_transfers", "users", column: "created_by_id"
   add_foreign_key "audit_events", "users", on_delete: :nullify
   add_foreign_key "budgets", "finance_categories"
+  add_foreign_key "business_day_closes", "users", column: "closed_by_id"
+  add_foreign_key "business_day_closes", "users", column: "reopened_by_id"
   add_foreign_key "buyer_advance_refunds", "buyer_advances"
   add_foreign_key "buyer_advance_refunds", "money_accounts"
   add_foreign_key "buyer_advance_refunds", "users", column: "created_by_id"
@@ -1591,6 +1639,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_024718) do
   add_foreign_key "staff_payments", "staff_members"
   add_foreign_key "staff_payments", "staff_roles"
   add_foreign_key "staff_payments", "users", column: "created_by_id"
+  add_foreign_key "stock_counts", "users", column: "created_by_id"
+  add_foreign_key "stock_counts", "users", column: "voided_by_id"
+  add_foreign_key "stock_counts", "warehouses"
   add_foreign_key "supply_entries", "expenses"
   add_foreign_key "supply_entries", "users", column: "created_by_id"
   add_foreign_key "supply_entry_lines", "supplies"

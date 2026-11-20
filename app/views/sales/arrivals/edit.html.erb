@@ -21,7 +21,7 @@
       <section class="grid gap-5 sm:grid-cols-2">
         <div>
           <%= form.label :received_on, class: "field-label" %>
-          <%= form.date_field :received_on, required: true, min: @shipment.departed_at.to_date, class: "field-input" %>
+          <%= form.date_field :received_on, max: latest_date, required: true, min: @shipment.departed_at.to_date, class: "field-input" %>
         </div>
         <div>
           <%= form.label :weight_note_number, class: "field-label" %>
@@ -35,6 +35,9 @@
         </div>
         <%= render "sales/shipments/weighing_fields", form:, shipment: @shipment, side: "destination" %>
       </section>
+      <% if policy(Sale).create? %>
+        <%= render "sales/arrivals/settle_fields", shipment: @shipment %>
+      <% end %>
     </div>
 
     <aside class="space-y-4 @5xl:sticky @5xl:top-24">
@@ -47,8 +50,18 @@
           <%= WeightTolerance.percent ? t("sales.shipments.show.tolerance", tolerance: format_percent(WeightTolerance.percent)) : t("sales.shipments.show.no_tolerance") %>
         </p>
       </div>
+      <%# Over the tolerance, the reason (Fernando, 2026-11-18): asked, never blocks. %>
+      <div data-weighing-calculator-target="reasonField" data-keep="<%= @shipment.errors.include?(:difference_reason) || @shipment.difference_reason.present? %>"
+           <%= "hidden" unless @shipment.errors.include?(:difference_reason) || @shipment.difference_reason.present? %>>
+        <%= form.label :difference_reason, class: "field-label" %>
+        <%= form.text_area :difference_reason, rows: 2, maxlength: 500, class: "field-input" %>
+        <p class="mt-1 text-xs text-ink-muted"><%= t(".reason_help") %></p>
+      </div>
       <div class="flex flex-wrap gap-3">
         <%= form.submit t(".submit"), class: "btn btn-primary" %>
+        <% if policy(Sale).create? %>
+          <%= form.button t(".settle"), name: "settle_now", value: "1", class: "btn btn-primary", data: { settle_button: true } %>
+        <% end %>
         <%= cancel_button sales_shipment_path(@shipment) %>
       </div>
     </aside>

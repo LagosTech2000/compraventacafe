@@ -83,7 +83,7 @@ FactoryBot.define do
     end
 
     trait :finished do
-      finished_at { weighed_at + 1.hour }
+      finished_at { [ weighed_at + 1.hour, Time.current ].min }
       output_gross_weight { 400 }
       output_sacks { 4 }
       output_humidity_percent { 51 }
@@ -103,6 +103,16 @@ FactoryBot.define do
     transferred_at { Time.current }
     coffee_state { "wet_parchment" }
     gross_weight { 100 }
+  end
+
+  # A physical count of wet parchment in the default warehouse: what the
+  # system says, unless told otherwise (no adjustment, no reason needed).
+  factory :stock_count do
+    warehouse { Warehouse.main! }
+    created_by { SpecOwner.user || association(:user, :admin) }
+    counted_at { Time.current }
+    coffee_state { "wet_parchment" }
+    counted_gross { [ CoffeeStock.new(warehouse:, at: counted_at).row(coffee_state).gross_stock.round(2), 0 ].max }
   end
 
   # L 500 of freight, paid in cash.

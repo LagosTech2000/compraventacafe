@@ -1,6 +1,7 @@
 # The coffee's kardex in a period (Comercialización): every purchase that
 # came in (its net), every truck that left (its net on the local scale) and
 # every conversion (what went into it, what came out of it),
+# and every physical count's adjustment (StockCount, 2026-11-18),
 # by coffee state, with the stock before, after and in between. Voided ones
 # are left out, as in the stock. Purchases and shipments are put together
 # in Ruby (InMemoryReport).
@@ -25,7 +26,7 @@ class CoffeeStockReport < Report
   filter :coffee_state, :choice, in: Purchase::COFFEE_STATES
   filter :kind, :choice, in: KINDS
 
-  detail { |entry| entry.route && (entry.kind == "shipment" || policy(Purchase).show?) ? public_send(*entry.route) : nil }
+  detail { |entry| entry.route && (entry.kind != "purchase" || policy(Purchase).show?) ? public_send(*entry.route) : nil }
 
   column(:at, :datetime, sort: :at)
   column(:kind, :text, sort: :kind) { |entry| I18n.t("reports.types.coffee_stock.kinds.#{entry.kind}") }
@@ -88,7 +89,18 @@ class CoffeeStockReport < Report
     end
 
     def load(in_period)
-      purchases(in_period) + shipments(in_period) + conversions(in_period)
+      purchases(in_period) + shipments(in_period) + conversions(in_period) + counts(in_period)
+    end
+
+    # A count's adjustment: in when it found more, out when less.
+    def counts(in_period)
+      within(StockCount.active.where.not(net_weight: 0).joins(:warehouse), in_period, column: "stock_counts.counted_at", type: :datetime)
+        .pluck("stock_counts.id", "stock_counts.number", "stock_counts.counted_at", "stock_counts.coffee_state", "stock_counts.net_weight", "warehouses.name")
+        .map do |id, number, at, state, net, warehouse|
+          Entry.new(id: "adjustment-#{id}", date: at.in_time_zone.to_date, at:, kind: "adjustment",
+                    description: I18n.t("reports.types.coffee_stock.adjustment", number: format("%04d", number), warehouse:),
+                    coffee_state: state, pounds_in: [ net.to_d, 0 ].max, pounds_out: [ -net.to_d, 0 ].max, route: [ :sales_stock_count_path, id ])
+        end
     end
 
     # A conversion moves coffee twice: out of its state when weighed, into

@@ -21,6 +21,7 @@ class Shipment < ApplicationRecord
   include Auditable
   include OwnedRecord
   include LiveUpdates
+  include DayLock
   live_updates :sales
 
   NUMBERING_LOCK_KEY = 7_301_002
@@ -32,6 +33,10 @@ class Shipment < ApplicationRecord
   INPUTS = %w[gross_weight sacks humidity_percent damage_percent yield_factor].freeze
   ORIGIN_COLUMNS = (INPUTS + %w[tare net_weight]).map { "origin_#{it}" }.freeze
   DESTINATION_COLUMNS = (INPUTS + %w[tare net_weight]).map { "destination_#{it}" }.freeze
+  # A closed day (DayLock): what left that day no longer changes; the buyer's
+  # scale of one that left before still comes in on an open day.
+  locks_day :departed_at, free: DESTINATION_COLUMNS + %w[received_on weight_note_number shrink_reason difference_reason observations]
+  locks_day :received_on, free: %w[shrink_reason difference_reason observations]
   # The local scale: the gross weight and sacks typed, or the sums of
   # weighings (ShipmentWeighing), as in the purchases.
   WEIGHT_MODES = Purchase::WEIGHT_MODES
@@ -65,18 +70,27 @@ class Shipment < ApplicationRecord
   normalizes :observations, with: FieldFormats::STRIP
 
   validates :departed_at, presence: true
+  validates :departed_at, :received_on, not_in_future: true
   validates :coffee_state, inclusion: { in: Purchase::COFFEE_STATES }
   validates :origin_weight_mode, inclusion: { in: WEIGHT_MODES }
   validate :weighings_present, if: :by_weighings?
   validates :weight_note_number, length: { maximum: 60 }
+  validate :weight_note_once_per_buyer, if: -> { weight_note_number.present? && (will_save_change_to_weight_note_number? || will_save_change_to_buyer_id?) }
+  validate :received_before_its_sale, if: -> { persisted? && received_on && will_save_change_to_received_on? }
   validates :driver_name, length: { maximum: 120 }
   validates :trip_price, numericality: { greater_than: 0, less_than: 100_000_000 }, allow_nil: true
   validate :keeps_its_batches, if: -> { persisted? && (will_save_change_to_coffee_state? || will_save_change_to_warehouse_id?) }
   validate :batches_fit, if: -> { @batch_ids }
+  validate :coffee_in_before_departure, if: -> { @batch_ids || (persisted? && will_save_change_to_departed_at?) }
   validate :carrier_or_driver, if: -> { will_save_change_to_carrier_id? || will_save_change_to_driver_id? || will_save_change_to_driver_name? }
   validate :carrier_and_vehicle_active
   validate :warehouse_active, if: :will_save_change_to_warehouse_id?
   validates :observations, length: { maximum: 500 }
+  validates :shrink_reason, :difference_reason, length: { maximum: 500 }
+  # A difference over its tolerance asks for a reason in the forms that
+  # enter it (Fernando, 2026-11-18): never blocks otherwise; the detail
+  # says what is missing (#missing_reasons).
+  validate :reasons_given, if: :asking_reasons
   with_options unless: :origin_left_empty? do
     validates :origin_gross_weight, numericality: { greater_than: 0, less_than: MAX_WEIGHT }
     validates :origin_sacks, numericality: { only_integer: true, greater_than: 0, less_than: MAX_SACKS }
@@ -85,7 +99,9 @@ class Shipment < ApplicationRecord
   validate :destination_complete, if: -> { receiving || destination_entered? }
   validate :received_after_departure
   validate :buyer_active, if: :will_save_change_to_buyer_id?
-  validate :not_sold, on: :update
+  validate :closed_once_weighed, on: :update
+  # After the first count, never more than there is (Fernando, 2026-11-18).
+  validate :within_stock, if: :takes_other_coffee?
 
   # First: by weighings, the local gross weight and sacks come from them.
   before_validation { self.warehouse ||= Warehouse.main! if new_record? }
@@ -103,16 +119,15 @@ class Shipment < ApplicationRecord
 
   # Set when the destination weighing is saved: then it is required.
   attr_accessor :receiving
-  # An administrator's edit: the scales of a sold shipment may change (its sale follows).
-  attr_accessor :weights_by_admin
+  # Set by the forms that enter its weights or lots: then a difference over
+  # its tolerance needs its reason.
+  attr_accessor :asking_reasons
   # The form's «Sin báscula local», and whether whoever saves may use it
   # (administrators, set by the controller).
   attr_accessor :skip_origin, :origin_skippable
 
-  # Completed after it was sold: its sale's local net follows.
-  # Its sale follows its weights (Fernando, 2026-11-15: «para tener todo
-  # cuadrado en las ventas»): an administrator edits the scales of a sold
-  # shipment and the sale works its lines and total out again.
+  # A local scale left empty, completed after it was sold: its sale's local
+  # net follows.
   after_update :refresh_sale_weights, if: -> { sold? && (saved_change_to_origin_net_weight? || saved_change_to_destination_net_weight?) }
   # The lots the form chose (Nueva salida, Fernando, 2026-11-13).
   after_save :take_batches, if: -> { @batch_ids }
@@ -213,6 +228,18 @@ class Shipment < ApplicationRecord
     tolerance.present? && difference_percent.present? && difference_percent.abs > tolerance
   end
 
+  # Its shrink over the purchases ↔ local scale tolerance (either way).
+  def shrink_over_tolerance?(tolerance = WeightTolerance.shrink_percent)
+    tolerance.present? && shrink_percent.present? && shrink_percent.abs > tolerance
+  end
+
+  # The differences over their tolerance without a reason: :shrink, :difference.
+  def missing_reasons
+    return [] if voided?
+
+    [ (:shrink if shrink_over_tolerance? && shrink_reason.blank?), (:difference if over_tolerance? && difference_reason.blank?) ].compact
+  end
+
   # What left the stock of some shipments, in one query: { id => [net, gross] }.
   def self.stock_weights(ids)
     return {} if ids.empty?
@@ -286,7 +313,10 @@ class Shipment < ApplicationRecord
     DESTINATION_COLUMNS.each { self[it] = nil }
     self.received_on = nil
     self.weight_note_number = nil
+    @removing_destination = true
     save!
+  ensure
+    @removing_destination = false
   end
 
   def destination_entered?
@@ -394,19 +424,62 @@ class Shipment < ApplicationRecord
       errors.add(:vehicle, :inactive) if will_save_change_to_vehicle_id? && vehicle && !vehicle.active?
     end
 
-    # In a sale its weights and buyer are what was charged. A local scale left
-    # empty can still be completed.
-    def not_sold
-      return unless sold?
+    # Weighed at destination or sold, it is closed for everyone (Fernando,
+    # 2026-11-18; from 2026-11-15 an administrator could change the scales
+    # of a sold one). Only its observations, who carried it and, before the
+    # sale, the trip price and voiding it change; a local scale left empty
+    # can still be completed. To correct it: weighed and not sold, its
+    # buyer's scale is removed (#remove_destination!); sold, the sale is
+    # voided first.
+    def closed_once_weighed
+      return if @removing_destination
+      return unless sold? || received_on_in_database.present?
 
-      free = %w[updated_at lock_version observations carrier_id vehicle_id driver_id driver_name trip_price weight_note_number]
-      free += ORIGIN_COLUMNS + %w[origin_weight_mode] if origin_net_weight_in_database.nil? || weights_by_admin
-      # An administrator changes its scales (not removes the buyer's: the sale charges it),
-      # and its departure date (Fernando, 2026-11-16: one registered late with the wrong day).
-      free += DESTINATION_COLUMNS + %w[received_on] if weights_by_admin && destination_net_weight.present?
-      free += %w[departed_at season_year] if weights_by_admin
-      changed_inputs = (changed - free)
-      errors.add(:base, :sold) if changed_inputs.any?
+      free = %w[updated_at lock_version observations carrier_id vehicle_id driver_id driver_name shrink_reason difference_reason]
+      free += %w[trip_price voided_at voided_by_id] unless sold?
+      free += ORIGIN_COLUMNS + %w[origin_weight_mode] if origin_net_weight_in_database.nil?
+      errors.add(:base, sold? ? :sold : :received, sale: sale&.display_number) if (changed - free).any?
+    end
+
+    def takes_other_coffee?
+      return false if voided_at
+      return true if new_record? || @batch_ids
+
+      %w[origin_net_weight departed_at coffee_state warehouse_id].any? { will_save_change_to_attribute?(it) }
+    end
+
+    # What it takes: its lots' net (the ones the form chose, or its own), or
+    # its local net without lots.
+    def within_stock
+      ids = @batch_ids || (persisted? ? coffee_batches.ids : [])
+      net = ids.any? ? CoffeeBatch::Totals.by_batch(ids).values.sum(0.to_d, &:net) : origin_net_weight.to_d
+      before = (Shipment.stock_weights([ id ])[id]&.first.then { [ departed_at_in_database, it ] } if persisted?)
+      StockGuard.check(self, coffee_state:, warehouse:, at: departed_at, net:, before:)
+    end
+
+    # Its shrink as it is about to be saved: the lots the form chose (or
+    # its own) against its local net.
+    def pending_shrink_percent
+      ids = @batch_ids || (persisted? ? coffee_batches.ids : [])
+      return unless ids.any? && origin_net_weight
+
+      net = CoffeeBatch::Totals.by_batch(ids).values.sum(0.to_d, &:net)
+      ((net - origin_net_weight) * 100 / net).round(2) if net.positive?
+    end
+
+    def shrink_inputs_changed?
+      new_record? || will_save_change_to_origin_net_weight? || (@batch_ids && @batch_ids.sort != coffee_batch_ids.sort)
+    end
+
+    def reasons_given
+      percent = ->(value) { ActiveSupport::NumberHelper.number_to_percentage(value.abs, precision: 2, strip_insignificant_zeros: true, format: "%n %") }
+      if shrink_reason.blank? && shrink_inputs_changed? && (tolerance = WeightTolerance.shrink_percent) &&
+         (shrink = pending_shrink_percent) && shrink.abs > tolerance
+        errors.add(:shrink_reason, :over_tolerance, percent: percent.(shrink), tolerance: percent.(tolerance))
+      end
+      return unless receiving && difference_reason.blank? && over_tolerance?
+
+      errors.add(:difference_reason, :over_tolerance, percent: percent.(difference_percent), tolerance: percent.(WeightTolerance.percent))
     end
 
     def skipping_origin? = ActiveModel::Type::Boolean.new.cast(skip_origin) && origin_skippable.present?
@@ -479,10 +552,36 @@ class Shipment < ApplicationRecord
       end
     end
 
+    # A buyer's weight note goes on one shipment only (Fernando, 2026-11-18:
+    # the note 73 was on two at once). Compared without spaces, case or
+    # leading zeros («073» is «73»).
+    def weight_note_once_per_buyer
+      normalized = "LTRIM(UPPER(REGEXP_REPLACE(shipments.weight_note_number, '\\s', '', 'g')), '0')"
+      note = weight_note_number.gsub(/\s/, "").upcase.sub(/\A0+/, "")
+      other = self.class.active.where(buyer_id:).where.not(id:).where("#{normalized} = ?", note).order(:number).first
+      errors.add(:weight_note_number, :taken_by, number: other.display_number) if other
+    end
+
+    # Weighed at the buyer's before the sale that charges it (Fernando, 2026-11-18).
+    def received_before_its_sale
+      sale = active_sale_line&.sale
+      errors.add(:received_on, :after_sale, number: sale.display_number, date: I18n.l(sale.sold_on)) if sale && received_on > sale.sold_on
+    end
+
+    # Its lots carry only coffee that was in the warehouse when it left
+    # (Fernando, 2026-11-18): a purchase or a process result after the
+    # departure does not go on it.
+    def coffee_in_before_departure
+      return unless departed_at
+
+      ids = @batch_ids || coffee_batches.ids
+      CoffeeBatch.late_for(ids, departed_at.in_time_zone).each { |batch, entered| errors.add(:base, CoffeeBatch.late_message(batch, entered, self)) }
+    end
+
     # The lots chosen join it; the ones left out are free again.
     def take_batches
       coffee_batches.where.not(id: @batch_ids).find_each { it.update!(shipment: nil) }
-      CoffeeBatch.where(id: @batch_ids).where(shipment_id: nil).find_each { it.update!(shipment: self) }
+      CoffeeBatch.where(id: @batch_ids).where(shipment_id: nil).includes(:shipment).find_each { it.update!(shipment: self) }
       coffee_batches.reset
       remove_instance_variable(:@batch_totals) if defined?(@batch_totals)
       @batch_ids = nil

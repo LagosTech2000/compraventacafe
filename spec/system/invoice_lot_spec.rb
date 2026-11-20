@@ -48,33 +48,5 @@ RSpec.describe "Invoicing into a lot", type: :system do
     expect(cherry.reload.invoice).to be_nil
   end
 
-  it "edits the invoice's lot with the same live calculation, counting what it took as room" do
-    producer = create(:producer)
-    purchase = create(:purchase, producer:, gross_weight: 1_000)
-    extra = create(:purchase, producer:, gross_weight: 400)
-    invoice = InvoiceIssuer.new(producer:, user: admin, purchase_ids: [ purchase.id ], payment_status: "pending").call.invoice
-    lot = create(:coffee_batch, gross_limit: 700)
-    lot.batch_invoices.create!(invoice:, percent: 50, created_by: admin)
-    sign_in_as(admin)
-    visit edit_trading_invoice_path(invoice)
-
-    expect(page).to have_select("invoice_coffee_batch_id", selected: "#{lot.label} · Pergamino húmedo · Bodega 1 · caben 700.00 lb brutas")
-    expect(page).to have_field("invoice_batch_percent", with: "50")
-    expect(page).to have_css("output", text: "El lote tiene 700.00 lb brutas libres; con esta factura le quedan 200.00.")
-
-    # The extra purchase marked: the same percent takes more.
-    find("input[name='invoice[purchase_ids][]'][value='#{extra.id}']").check
-    expect(page).to have_css("output", text: "Toma 700.00 lb brutas")
-    expect(page).to have_css("output", text: "le quedan 0.00")
-
-    fill_in "invoice_batch_percent", with: "60"
-    expect(page).to have_css("output.text-danger", text: "Con 50.00 % o menos cabe.")
-
-    fill_in "invoice_batch_percent", with: "40"
-    click_button "Guardar cambios"
-    expect(page).to have_content("Factura actualizada")
-    expect(invoice.batch_invoices.sole).to have_attributes(percent: 40, gross_weight: 560)
-  end
-
   def dom_id(record, prefix) = ActionView::RecordIdentifier.dom_id(record, prefix)
 end

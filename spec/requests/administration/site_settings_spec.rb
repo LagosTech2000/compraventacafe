@@ -101,6 +101,20 @@ RSpec.describe "Site settings" do
     expect(response).to have_http_status(:not_found)
   end
 
+  # The two tolerances that ask a shipment's reasons (Fernando, 2026-11-18).
+  it "keeps the shrink tolerance next to the weight tolerance, optional and under 100 %" do
+    sign_in admin
+    patch administration_site_setting_path, params: { site_setting: { business_name: "Rey David", shrink_tolerance_percent: "1.5", weight_tolerance_percent: "2" } }
+    expect(SiteSetting.current).to have_attributes(shrink_tolerance_percent: 1.5, weight_tolerance_percent: 2)
+    get administration_site_setting_path
+    expect(Nokogiri::HTML(response.body).at_css("[data-shrink-tolerance]").text).to eq("1.5 %")
+
+    patch administration_site_setting_path, params: { site_setting: { business_name: "Rey David", shrink_tolerance_percent: "100" } }
+    expect(response).to have_http_status(:unprocessable_content)
+    patch administration_site_setting_path, params: { site_setting: { business_name: "Rey David", shrink_tolerance_percent: "" } }
+    expect(SiteSetting.current.shrink_tolerance_percent).to be_nil
+  end
+
   it "is for admins only" do
     user = create(:user)
     create(:permission, user:, module_key: "administration", can_read: true, can_create: true, can_update: true, can_destroy: true)

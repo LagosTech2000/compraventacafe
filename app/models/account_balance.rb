@@ -30,7 +30,10 @@ class AccountBalance
 
   private
     # [relation, date column, amount column, account column, direction]
-    def sources
+    # (also read day by day by OpeningBalanceCheck).
+    public def sources = source_list
+
+    def source_list
       [
         [ InvoicePayment.all, "paid_on", "amount", "money_account_id", :out ],
         [ HaulerPayment.all, "paid_on", "amount", "money_account_id", :out ],

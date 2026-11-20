@@ -1,14 +1,16 @@
 # A payment of an invoice to its producer ("abono"). An invoice is paid in
 # one or more of them: while they do not cover what it has to pay it is
 # "partial", and once they do it is "paid" (Invoice#refresh_payment_status!).
-# Payments are not edited and only the latest one can be removed, except by
-# an administrator (Fernando, 2026-11-12): any one, its amount (never over
-# what the invoice has to pay with the others), date, method or account.
+# Payments are not edited, by anyone, and only the latest one can be removed
+# (Fernando, 2026-11-18: closed records are not edited). Only its account
+# changes (Consolidación).
 class InvoicePayment < ApplicationRecord
   include Auditable
   include OwnedRecord
   include HasMoneyAccount
   include LiveUpdates
+  include DayLock
+  locks_day :paid_on
   live_updates :trading
 
   belongs_to :invoice
@@ -16,10 +18,11 @@ class InvoicePayment < ApplicationRecord
 
   validates :amount, numericality: { greater_than: 0, less_than: 100_000_000 }
   validates :paid_on, presence: true
+  validates :paid_on, not_in_future: true
   validates :payment_method, inclusion: { in: Invoice::PAYMENT_METHODS }
   validate :within_balance, on: :create
   validate :not_before_invoice, :not_before_last_payment, on: :create
-  validate :within_amount_to_pay, :not_before_invoice, on: :update
+  validate :unchanged, on: :update
 
   after_create :refresh_invoice
   after_update :refresh_invoice
@@ -57,12 +60,9 @@ class InvoicePayment < ApplicationRecord
       errors.add(:amount, :over_balance, balance: ActiveSupport::NumberHelper.number_to_currency(balance)) if amount > balance
     end
 
-    # Edited: with the others, never over what the invoice has to pay.
-    def within_amount_to_pay
-      return unless invoice && amount.to_d.positive? && will_save_change_to_amount?
-
-      room = invoice.amount_to_pay - invoice.payments.where.not(id:).sum(:amount)
-      errors.add(:amount, :over_balance, balance: ActiveSupport::NumberHelper.number_to_currency([ room, 0 ].max)) if amount > room
+    # What was paid stays as it was paid.
+    def unchanged
+      errors.add(:base, :closed) if (changed & %w[amount paid_on payment_method invoice_id]).any?
     end
 
     def not_before_invoice

@@ -4,6 +4,8 @@ class Purchase < ApplicationRecord
   include Auditable
   include OwnedRecord
   include LiveUpdates
+  include DayLock
+  locks_day :purchased_at, free: %w[invoice_id producer_id farm_id farm_plot_id hauler_id zone_id]
   live_updates :trading, :sales
 
   COFFEE_STATES = %w[cherry wet_parchment dry_parchment].freeze
@@ -17,6 +19,11 @@ class Purchase < ApplicationRecord
   # these changes, so a stored purchase keeps its numbers if the rule changes.
   # By weighings, the counted sacks are an input too.
   CALCULATION_INPUTS = %w[coffee_state weight_mode gross_weight humidity_percent damage_percent yield_factor price_per_pound].freeze
+  # What an invoiced purchase keeps as it was printed for the producer, for
+  # everyone (Fernando, 2026-11-18): weights, money, date and warehouse. Its
+  # farm, observations or a merged producer or hauler may still change.
+  INVOICED_LOCKED = (CALCULATION_INPUTS + %w[purchased_at sacks tare net_weight total damage_weight damage_amount
+                                             damage_types common_coffee warehouse_id hauler_price_per_pound hauler_commission]).freeze
 
   belongs_to :producer
   belongs_to :zone, optional: true
@@ -40,6 +47,7 @@ class Purchase < ApplicationRecord
   normalizes :observations, with: FieldFormats::STRIP
 
   validates :purchased_at, presence: true
+  validates :purchased_at, not_in_future: true
   validates :coffee_state, inclusion: { in: COFFEE_STATES }
   validates :weight_mode, inclusion: { in: WEIGHT_MODES }
   validate :weighings_present, if: :by_weighings?
@@ -57,6 +65,7 @@ class Purchase < ApplicationRecord
   validate :farm_belongs_to_producer
   validate :plot_belongs_to_farm, if: -> { farm_plot_id && (will_save_change_to_farm_plot_id? || will_save_change_to_farm_id?) }
   validate :voided_not_invoiced
+  validate :invoiced_unchanged, on: :update, if: -> { invoice_id_in_database.present? && invoice_id == invoice_id_in_database && Current.maintenance.blank? }
   # «Café corriente» (Fernando, 2026-11-12): only wet parchment; it will not
   # count in the end-of-season retention (an open point, not built yet).
   before_validation { self.common_coffee = false unless coffee_state == "wet_parchment" }
@@ -68,6 +77,7 @@ class Purchase < ApplicationRecord
   validate :warehouse_active, if: :will_save_change_to_warehouse_id?
   validate :hauler_commission_not_paid_out
   validate :keeps_its_lots, if: :lot_pounds_change?
+  validate :in_before_its_lots_left, if: -> { invoice_id && persisted? && (will_save_change_to_purchased_at? || will_save_change_to_invoice_id?) }
   after_update :rebase_lots, if: -> { saved_change_to_gross_weight? || saved_change_to_net_weight? || saved_change_to_voided_at? || saved_change_to_invoice_id? }
   validate :damage_types_chosen, if: -> { new_record? || will_save_change_to_damage_percent? || will_save_change_to_damage_types? }
 
@@ -391,6 +401,23 @@ class Purchase < ApplicationRecord
       gross, net = CoffeeBatchInvoice.invoice_pounds(invoice_id, without: id, with: (self if self.invoice_id == invoice_id))
       message = CoffeeBatchInvoice.shortfall(invoice_id, gross, net)
       errors.add(:base, message) if message
+    end
+
+    # Its invoice is in lots that already left (a shipment, a process): it
+    # cannot have come in after them (Fernando, 2026-11-18).
+    def in_before_its_lots_left
+      return unless purchased_at
+
+      CoffeeBatch.where(id: CoffeeBatchInvoice.where(invoice_id:).select(:coffee_batch_id)).includes(:shipment, :processing).find_each do |batch|
+        next unless batch.taken? && CoffeeBatch.after?(purchased_at, batch.taken_at)
+
+        errors.add(:purchased_at, :after_its_lot_left, batch: batch.label, left: I18n.l(batch.taken_at.in_time_zone))
+      end
+    end
+
+    # Invoiced, it stays as it was printed: to correct it, its invoice is voided.
+    def invoiced_unchanged
+      errors.add(:base, :invoiced) if (changed & INVOICED_LOCKED).any?
     end
 
     # What it adds to its invoice stays out of every lot.

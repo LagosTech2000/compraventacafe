@@ -119,4 +119,34 @@ RSpec.describe "Finance screens", type: :system do
     select "Transferencia", from: "invoice_payment_payment_method"
     expect(page).to have_select("invoice_payment_money_account_id", selected: "Banco Atlántida")
   end
+
+  # A phone's photo as the receipt (Fernando, 2026-11-18): shrunk in the
+  # browser so it fits the 1 MB limit (receipt_input_controller.js).
+  it "shrinks a big photo of the receipt before sending it" do
+    photo = Rails.root.join("tmp/receipt-photo.png")
+    File.binwrite(photo, big_png(2400, 1800))
+    expect(File.size(photo)).to be > 1.megabyte
+    create(:finance_category, name: "Transporte")
+    visit new_finance_expense_path
+    fill_in "expense_description", with: "Diésel con foto"
+    select "Transporte", from: "expense_finance_category_id"
+    fill_in "expense_amount", with: "500"
+    attach_file "expense_receipt_upload", photo
+    expect(page).to have_css("#expense_receipt_upload[data-shrunk='true']")
+    click_button "Registrar gasto"
+    expect(page).to have_text("Gasto registrado")
+    receipt = Expense.last.receipt
+    expect(receipt).to have_attributes(content_type: "image/jpeg")
+    expect(receipt.byte_size).to be < 1.megabyte
+  ensure
+    FileUtils.rm_f(photo)
+  end
+
+  # A noisy RGB picture (does not compress), as a PNG.
+  def big_png(width, height)
+    chunk = ->(type, data) { [ data.bytesize ].pack("N") + type + data + [ Zlib.crc32(type + data) ].pack("N") }
+    random = Random.new(1)
+    rows = Array.new(height) { "\x00".b + random.bytes(width * 3) }.join
+    "\x89PNG\r\n\x1a\n".b + chunk.("IHDR", [ width, height, 8, 2, 0, 0, 0 ].pack("NNCCCCC")) + chunk.("IDAT", Zlib::Deflate.deflate(rows, Zlib::BEST_SPEED)) + chunk.("IEND", "")
+  end
 end

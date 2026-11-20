@@ -1,0 +1,99 @@
+<% content_for :title, t(".title") %>
+<%= render "administration/nav" %>
+
+<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+<p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t(".help") %></p>
+<p class="mt-2 text-sm font-medium" data-locked-through>
+  <%= @locked_through ? t(".locked_through", date: l(@locked_through, format: :long)) : t(".nothing_closed") %>
+</p>
+
+<section class="panel mt-6 p-4" aria-labelledby="day-close-title">
+  <div class="flex flex-wrap items-end justify-between gap-3">
+    <h2 id="day-close-title" class="text-lg font-semibold"><%= t(".close_title", date: l(@close.closed_on || Time.zone.today, format: :long)) %></h2>
+    <%= form_with url: administration_day_closes_path, method: :get, class: "flex items-end gap-2" do |form| %>
+      <div>
+        <%= form.label :day, t(".other_day"), class: "field-label" %>
+        <%= form.date_field :day, value: @close.closed_on, max: Time.zone.today, min: (@locked_through + 1 if @locked_through), class: "field-input" %>
+      </div>
+      <%= form.submit t(".see"), class: "btn", name: nil %>
+    <% end %>
+  </div>
+
+  <ul class="mt-4 grid gap-x-6 gap-y-1 text-sm md:grid-cols-2" data-close-checklist>
+    <% @check.lines.each do |line| %>
+      <li class="flex items-center justify-between gap-3 py-1" data-daily-check="<%= line.key %>">
+        <%= link_to t("dashboard.daily_check.lines.#{line.key}.#{line.ok ? "ok" : "todo"}", count: line.count, amount: (format_money(line.amount.abs) if line.amount)),
+              public_send(*line.path), class: "link min-w-0" %>
+        <span class="shrink-0 <%= line.ok ? "text-success" : "text-danger" %>" aria-hidden="true"><%= line.ok ? "✓" : "!" %></span>
+      </li>
+    <% end %>
+  </ul>
+  <p class="mt-2 text-xs text-ink-muted"><%= t(".today_note") %></p>
+
+  <%= form_with model: @close, url: administration_day_closes_path, class: "mt-4 grid max-w-xl gap-3", data: { controller: "form-validation" } do |form| %>
+    <%= render "shared/form_errors", record: @close %>
+    <%= form.hidden_field :closed_on %>
+    <div>
+      <%= form.label :notes, class: "field-label" %>
+      <%= form.text_area :notes, rows: 2, maxlength: 500, class: "field-input" %>
+    </div>
+    <% unless @check.ok? %>
+      <label class="flex items-start gap-2 text-sm">
+        <%= check_box_tag :reviewed, "1", false, class: "mt-1 size-4 accent-primary", required: true %>
+        <span><%= t(".reviewed") %></span>
+      </label>
+    <% end %>
+    <div>
+      <%= form.submit t(".submit", date: l(@close.closed_on || Time.zone.today)), class: "btn btn-primary",
+            data: { turbo_confirm: t(".confirm", date: l(@close.closed_on || Time.zone.today)) } %>
+    </div>
+  <% end %>
+</section>
+
+<section class="panel mt-6 p-4" aria-labelledby="day-closes-list">
+  <h2 id="day-closes-list" class="text-lg font-semibold"><%= t(".list") %></h2>
+  <% if @closes.empty? %>
+    <p class="empty-state mt-3"><%= t(".empty") %></p>
+  <% else %>
+    <div class="mt-3 overflow-x-auto">
+      <table class="data-table" data-controller="table-sort">
+        <thead>
+          <tr>
+            <th><%= BusinessDayClose.human_attribute_name(:closed_on) %></th>
+            <th><%= BusinessDayClose.human_attribute_name(:closed_by) %></th>
+            <th><%= BusinessDayClose.human_attribute_name(:notes) %></th>
+            <th><%= t(".state") %></th>
+            <th class="cell-actions" data-sort="false"><span class="sr-only"><%= t(".actions") %></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% latest = BusinessDayClose.latest %>
+          <% @closes.each do |close| %>
+            <tr id="<%= dom_id(close) %>">
+              <td><%= l(close.closed_on) %></td>
+              <td><%= close.closed_by.name %> · <%= l(close.created_at, format: :short) %></td>
+              <td><%= close.notes %></td>
+              <td>
+                <% if close.reopened? %>
+                  <span class="badge badge-neutral"><%= t(".reopened") %></span>
+                  <span class="block text-xs text-ink-muted"><%= t(".reopened_by", name: close.reopened_by&.name, date: l(close.reopened_at, format: :short), reason: close.reopen_reason) %></span>
+                <% else %>
+                  <span class="badge badge-success"><%= t(".closed") %></span>
+                <% end %>
+              </td>
+              <td class="cell-actions">
+                <% if close == latest && policy(close).reopen? %>
+                  <%= form_with model: close, url: reopen_administration_day_close_path(close), method: :patch, class: "flex items-center gap-2" do |form| %>
+                    <%= form.text_field :reopen_reason, required: true, maxlength: 500, placeholder: t(".reason_placeholder"), class: "field-input w-56",
+                          aria: { label: BusinessDayClose.human_attribute_name(:reopen_reason) } %>
+                    <%= form.submit t(".reopen"), class: "btn btn-sm" %>
+                  <% end %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</section>

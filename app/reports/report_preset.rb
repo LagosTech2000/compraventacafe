@@ -35,6 +35,9 @@ class ReportPreset
     shipments_in_transit: [ "shipments", { period: "all", status: "in_transit", sort: "departed_at", dir: "asc" } ],
     shipments_over_tolerance: [ "shipments", { period: "this_season", over_tolerance: "1", sort: "difference_percent", dir: "asc" } ],
     shipments_season_by_buyer: [ "shipments", { period: "this_season", group: "buyer" } ],
+    # Fernando, 2026-11-18: the comparison they make by hand.
+    shipments_reconciliation: [ "shipments", { period: "this_month", sort: "departed_at", dir: "desc" } ],
+    shipments_shrink_by_week: [ "shipments", { period: "this_season", group: "week" } ],
     sales_unpaid: [ "sales", { period: "all", payment_status: "unpaid", sort: "sold_on", dir: "asc" } ],
     sales_season_by_buyer: [ "sales", { period: "this_season", group: "buyer" } ],
     sales_season_by_month: [ "sales", { period: "this_season", group: "month" } ],

@@ -37,4 +37,26 @@ RSpec.describe "User permissions", type: :system do
     expect(user.can?("trading.invoices", :create)).to be(true)
     expect(user.can?("trading.purchases", :create)).to be(false)
   end
+
+  # «Copiar permisos de otro usuario» (Fernando, 2026-11-18).
+  it "copies another user's permissions into the table, and saves them" do
+    create(:user, name: "Ana Zelaya").tap do |model|
+      create(:permission, user: model, module_key: "trading", submodule_key: "purchases", can_read: true, can_create: true)
+      create(:permission, user: model, module_key: "sales", submodule_key: "stock", can_read: true)
+    end
+    create(:permission, user:, module_key: "loans", submodule_key: "loans", can_read: true)
+    sign_in_as(admin)
+    visit edit_administration_user_path(user)
+
+    select "Ana Zelaya", from: "copy_permissions_from"
+    expect(flag("Compras", "create")).to be_checked
+    expect(page.evaluate_script("document.querySelector(\"tbody[data-permission-module='trading'] input[data-permission-matrix-target='all'][data-permission-action='read']\").indeterminate")).to be(true)
+    click_button "Guardar cambios"
+    expect(page).to have_css(".toast", text: "Usuario actualizado.")
+
+    user.reload
+    expect(user.can?("trading.purchases", :create)).to be(true)
+    expect(user.can?("sales.stock", :read)).to be(true)
+    expect(user.can?("loans.loans", :read)).to be(false)
+  end
 end

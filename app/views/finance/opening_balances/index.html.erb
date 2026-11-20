@@ -1,0 +1,66 @@
+<% content_for :title, t(".title") %>
+<%= render "finance/nav" %>
+
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <%= link_to t(".back"), finance_money_accounts_path, class: "btn" %>
+</div>
+
+<% if @check.negative.any? %>
+  <p class="flash-alert mt-4" role="status" data-opening-negative><%= t(".negative", count: @check.negative.size) %></p>
+<% end %>
+
+<div class="mt-6 grid gap-4 lg:grid-cols-2">
+  <% @check.rows.each do |row| %>
+    <% account = @failed&.id == row.account.id ? @failed : row.account %>
+    <section id="<%= dom_id(row.account, :opening) %>" class="panel p-4 <%= "ring-2 ring-danger" if row.negative? %>" data-opening-account>
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 class="font-semibold"><%= row.account.name %></h2>
+        <span class="text-sm tabular-nums"><%= t(".balance", amount: format_money(row.balance)) %></span>
+      </div>
+      <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+        <div>
+          <dt class="text-xs text-ink-muted"><%= t(".opening") %></dt>
+          <dd class="tabular-nums"><%= format_money(row.account.opening_balance) %> · <%= l(row.account.opening_on) %></dd>
+        </div>
+        <div>
+          <dt class="text-xs text-ink-muted"><%= t(".first_movement") %></dt>
+          <dd><%= row.first_movement_on ? l(row.first_movement_on) : t(".no_movements") %></dd>
+        </div>
+        <div>
+          <dt class="text-xs text-ink-muted"><%= t(".lowest") %></dt>
+          <dd class="tabular-nums <%= "font-semibold text-danger" if row.negative? %>" data-opening-lowest>
+            <%= format_money(row.lowest) %><% if row.lowest_on %> · <%= l(row.lowest_on) %><% end %>
+          </dd>
+        </div>
+        <div>
+          <dt class="text-xs text-ink-muted"><%= t(".negative_since") %></dt>
+          <dd><%= row.negative_on ? l(row.negative_on) : t(".never") %></dd>
+        </div>
+      </dl>
+      <% if row.negative? %>
+        <p class="mt-3 text-sm" data-opening-suggestion><%= t(".suggestion", amount: format_money(row.suggested_minimum), date: l(row.account.opening_on)) %></p>
+      <% end %>
+      <% if row.movements_before_opening? %>
+        <p class="mt-2 text-sm text-danger" data-opening-before><%= t(".before_opening", date: l(row.first_movement_on)) %></p>
+      <% end %>
+      <%= form_with model: account, url: finance_opening_balance_path(row.account), method: :patch, class: "mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end" do |form| %>
+        <% if @failed&.id == row.account.id %>
+          <div class="sm:col-span-3"><%= render "shared/form_errors", record: account %></div>
+        <% end %>
+        <div>
+          <%= form.label :opening_on, class: "field-label", for: dom_id(row.account, :opening_on) %>
+          <%= form.date_field :opening_on, id: dom_id(row.account, :opening_on), max: latest_date, required: true, class: "field-input" %>
+        </div>
+        <div>
+          <%= form.label :opening_balance, class: "field-label", for: dom_id(row.account, :opening_balance) %>
+          <%= form.number_field :opening_balance, id: dom_id(row.account, :opening_balance), step: 0.01, inputmode: "decimal", required: true, class: "field-input" %>
+        </div>
+        <%= form.submit t(".save"), class: "btn btn-primary" %>
+      <% end %>
+    </section>
+  <% end %>
+</div>

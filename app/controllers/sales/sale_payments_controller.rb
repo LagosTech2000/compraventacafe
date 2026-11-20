@@ -23,21 +23,6 @@ module Sales
       end
     end
 
-    # An administrator's correction (Fernando, 2026-11-12).
-    def edit
-      @payment = authorize @sale.payments.find(params[:id])
-    end
-
-    def update
-      @payment = authorize @sale.payments.find(params[:id])
-
-      if @payment.update(payment_params)
-        close_modal_with notice: t(".success"), fallback: sales_sale_path(@sale)
-      else
-        render :edit, status: :unprocessable_content
-      end
-    end
-
     def destroy
       payment = authorize @sale.payments.find(params[:id])
       payment.destroy!

@@ -12,6 +12,8 @@ class SupplyExit < ApplicationRecord
   include Auditable
   include OwnedRecord
   include LiveUpdates
+  include DayLock
+  locks_day :exited_on, free: %w[person_id]
   live_updates :sales, :finance
 
   KINDS = %w[sale business_use].freeze

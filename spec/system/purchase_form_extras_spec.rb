@@ -71,11 +71,11 @@ RSpec.describe "Purchase form extras", type: :system do
     fill_in "purchase_gross_weight", with: "330"
     fill_in "purchase_price_per_pound", with: "58"
     # The carrero must be chosen (Fernando, 2026-11-13): the browser stops it first.
-    within("main form") { find("[type=submit]").click }
+    within("main form") { click_button "Crear Compra" }
     expect(page).to have_css("#purchase_hauler_choice:invalid")
     expect(find("#purchase_hauler_choice").evaluate_script("this.validationMessage")).to eq("Elige el carrero que la trajo, o «Sin carrero».")
     select "Sin carrero", from: "purchase_hauler_choice"
-    within("main form") { find("[type=submit]").click }
+    within("main form") { click_button "Crear Compra" }
 
     expect(page).to have_text("Ana Zelaya no tenía zona: quedó en El Rosario.")
     expect(producer.person.reload.zone).to eq(zone)

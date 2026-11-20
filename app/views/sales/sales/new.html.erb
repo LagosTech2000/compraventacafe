@@ -96,7 +96,7 @@
           <legend class="mb-3 text-lg font-semibold"><%= t(".price") %></legend>
           <div>
             <%= form.label :sold_on, class: "field-label" %>
-            <%= form.date_field :sold_on, required: true, class: "field-input" %>
+            <%= form.date_field :sold_on, max: latest_date, required: true, class: "field-input" %>
           </div>
           <div>
             <span class="field-label"><%= Sale.human_attribute_name(:price_unit) %></span>

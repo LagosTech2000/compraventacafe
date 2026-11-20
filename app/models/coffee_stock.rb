@@ -15,21 +15,26 @@
 # Of one warehouse (client, 2026-10-26) when given: what came into it and
 # left it, transfers included. Of all of them, transfers do not count (the
 # coffee stays in the business).
+#
+# A physical count's adjustment (StockCount, Fernando, 2026-11-18) adds or
+# takes what the count found of more or less. At a moment (`at:`) instead
+# of the end of the day, for a count or a check of what is there.
 class CoffeeStock
   Row = Data.define(:coffee_state, :purchased, :shipped, :in_transit, :unsold, :gross_purchased, :gross_shipped,
                     :converted_in, :converted_out, :gross_converted_in, :gross_converted_out,
-                    :transferred_in, :transferred_out, :gross_transferred_in, :gross_transferred_out) do
-    def stock = purchased - shipped + converted_in - converted_out + transferred_in - transferred_out
-    def gross_stock = gross_purchased - gross_shipped + gross_converted_in - gross_converted_out + gross_transferred_in - gross_transferred_out
+                    :transferred_in, :transferred_out, :gross_transferred_in, :gross_transferred_out, :adjusted, :gross_adjusted) do
+    def stock = purchased - shipped + converted_in - converted_out + transferred_in - transferred_out + adjusted
+    def gross_stock = gross_purchased - gross_shipped + gross_converted_in - gross_converted_out + gross_transferred_in - gross_transferred_out + gross_adjusted
     def quintals = PurchaseCalculation.quintals(stock)
     def human_coffee_state = Purchase.human_attribute_name("coffee_state/#{coffee_state}")
   end
 
   attr_reader :date, :warehouse
 
-  def initialize(date = Time.zone.today, warehouse: nil)
-    @date = date
+  def initialize(date = Time.zone.today, warehouse: nil, at: nil)
+    @date = at ? at.in_time_zone.to_date : date
     @warehouse = warehouse
+    @at = at
   end
 
   # One row per coffee state, every state (zero ones too).
@@ -59,6 +64,9 @@ class CoffeeStock
       gross_transferred_in = moved_in.sum(:gross_weight)
       transferred_out = moved_out.sum(:net_weight)
       gross_transferred_out = moved_out.sum(:gross_weight)
+      counts = in_warehouse(StockCount.active.where(counted_at: ..until_moment)).group(:coffee_state)
+      adjusted = counts.sum(:net_weight)
+      gross_adjusted = counts.sum(:gross_weight)
       Purchase::COFFEE_STATES.map do |state|
         Row.new(coffee_state: state, purchased: purchased[state] || 0, shipped: shipped[state] || 0,
                 in_transit: in_transit[state] || 0, unsold: unsold[state] || 0,
@@ -66,7 +74,8 @@ class CoffeeStock
                 converted_in: converted_in[state] || 0, converted_out: converted_out[state] || 0,
                 gross_converted_in: gross_converted_in[state] || 0, gross_converted_out: gross_converted_out[state] || 0,
                 transferred_in: transferred_in[state] || 0, transferred_out: transferred_out[state] || 0,
-                gross_transferred_in: gross_transferred_in[state] || 0, gross_transferred_out: gross_transferred_out[state] || 0)
+                gross_transferred_in: gross_transferred_in[state] || 0, gross_transferred_out: gross_transferred_out[state] || 0,
+                adjusted: adjusted[state] || 0, gross_adjusted: gross_adjusted[state] || 0)
       end
     end
   end
@@ -86,6 +95,7 @@ class CoffeeStock
     moved = WarehouseTransfer.active.where(transferred_at: ..until_moment)
     add.call(moved.group(:to_warehouse_id, :coffee_state).sum(:net_weight), 1)
     add.call(moved.group(:from_warehouse_id, :coffee_state).sum(:net_weight), -1)
+    add.call(StockCount.active.where(counted_at: ..until_moment).group(:warehouse_id, :coffee_state).sum(:net_weight), 1)
     totals
   end
 
@@ -102,7 +112,7 @@ class CoffeeStock
   def unsold = rows.sum(&:unsold)
 
   private
-    def until_moment = date.in_time_zone.end_of_day
+    def until_moment = @at || date.in_time_zone.end_of_day
     def conversions = in_warehouse(CoffeeConversion.active.where(weighed_at: ..until_moment))
     def in_warehouse(scope) = warehouse ? scope.where(warehouse_id: warehouse.id) : scope
 

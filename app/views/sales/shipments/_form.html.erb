@@ -31,7 +31,7 @@
         </div>
         <div>
           <%= form.label :departed_at, class: "field-label" %>
-          <%= form.datetime_local_field :departed_at, required: true, class: "field-input" %>
+          <%= form.datetime_local_field :departed_at, max: latest_datetime, required: true, class: "field-input" %>
         </div>
         <div>
           <%= form.label :coffee_state, class: "field-label" %>
@@ -46,6 +46,10 @@
         </div>
       </section>
 
+      <%# «¿Qué café lleva?» (Fernando, 2026-11-18): its invoices, the lot made on its own. %>
+      <% if !shipment.received? && lots_from_invoices? %>
+        <%= render "sales/shipments/coffee_field", shipment: %>
+      <% end %>
       <% unless shipment.sold? %>
         <%= render "sales/shipments/batches_field", shipment: %>
       <% end %>
@@ -185,6 +189,15 @@
         <%= render "sales/shipments/weighing_fields", form:, shipment:, side: "origin" %>
         </fieldset>
       </section>
+
+      <%# The shrink's reason (Fernando, 2026-11-18): the server asks it when
+          its lots and local scale differ over the tolerance. %>
+      <% if shipment.errors.include?(:shrink_reason) || shipment.shrink_reason.present? %>
+        <div data-shrink-reason-field>
+          <%= form.label :shrink_reason, class: "field-label" %>
+          <%= form.text_area :shrink_reason, rows: 2, maxlength: 500, class: "field-input" %>
+        </div>
+      <% end %>
 
       <div>
         <%= form.label :observations, class: "field-label" %>

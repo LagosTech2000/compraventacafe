@@ -7,6 +7,8 @@ class BuyerAdvanceRefund < ApplicationRecord
   include Auditable
   include OwnedRecord
   include LiveUpdates
+  include DayLock
+  locks_day :refunded_on
   live_updates :sales, :finance
 
   belongs_to :buyer_advance, inverse_of: :refunds

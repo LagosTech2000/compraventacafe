@@ -27,6 +27,8 @@ Rails.application.routes.draw do
   # A person's panel, opened by putting a finger on the reader (Fernando,
   # 2026-11-14), and what a page needs to fill its fields with that person.
   resources :person_panels, only: :show, path: "people/panel"
+  # Who looks like the person being written (Fernando, 2026-11-18).
+  resource :person_duplicates, only: :show, path: "people/duplicates"
   resources :fingerprint_matches, only: :show, defaults: { format: :json }
   # The fingerprint bridge of a PC (tools/fingerprint_bridge): pairing with
   # a one-time code and the templates it identifies with.
@@ -62,6 +64,10 @@ Rails.application.routes.draw do
     # Centro de control (only User::DATA_EXPORTER_ID): the developments
     # quoted apart (PaidFeature) and the data maintenance tasks.
     resource :control_center, only: :show
+    # The day closed for the whole business (Fernando, 2026-11-18).
+    resources :day_closes, only: %i[ index create ], controller: "business_day_closes" do
+      member { patch :reopen }
+    end
     resource :control_setting, only: :update
     resources :paid_features, only: :update
     # Data maintenance tasks (Maintenance, only User::DATA_EXPORTER_ID).
@@ -88,11 +94,11 @@ Rails.application.routes.draw do
       # Pay the producer's loans with this purchase ("pago con café").
       resource :loan_settlement, only: %i[ new create ]
     end
-    resources :invoices, only: %i[ index show new create edit update ] do
+    resources :invoices, only: %i[ index show new create ] do
       # Administrators void it, even paid (Fernando, 2026-11-12).
       resource :void, only: %i[ new create ], controller: "invoice_voids"
       # Payments to the producer ("abonos"), each with its receipt.
-      resources :payments, only: %i[ new create show edit update destroy ], controller: "invoice_payments"
+      resources :payments, only: %i[ new create show destroy ], controller: "invoice_payments"
     end
     resources :producers, except: :destroy
     # The card beside the purchase form: the producer picked, at a glance.
@@ -127,18 +133,20 @@ Rails.application.routes.draw do
       delete "scales/:side", to: "shipment_scales#destroy", as: :scale, constraints: { side: /origin|destination/ }
       # Its remission, to print (as the client's booklet).
       resource :remission, only: :show
+      # Why a difference passes its tolerance (Fernando, 2026-11-18): also closed.
+      resource :reasons, only: %i[ edit update ], controller: "shipment_reasons"
       # What it cost (Fernando, 2026-11-12): its lots (2026-11-13), costs
       # registered from it and expenses of Control financiero assigned to it.
       resources :batches, only: %i[ new create destroy ], controller: "shipment_batches"
       resources :costs, only: %i[ new create destroy ], controller: "shipment_costs"
       resources :expenses, only: %i[ new create destroy ], controller: "shipment_expenses"
     end
-    resources :sales, only: %i[ index show new create edit update ] do
+    resources :sales, only: %i[ index show new create ] do
       patch :void, on: :member
       # The buyer's settlement: what it pays per its own liquidation.
       resource :settlement, only: %i[edit update], controller: "sale_settlements"
       # What the buyer pays ("cobros"), each with its receipt.
-      resources :payments, only: %i[ new create show edit update destroy ], controller: "sale_payments"
+      resources :payments, only: %i[ new create show destroy ], controller: "sale_payments"
     end
     resources :buyers, except: :destroy do
       # Advances the buyer gives, paid back with coffee.
@@ -163,6 +171,11 @@ Rails.application.routes.draw do
       patch :void, on: :member
     end
     resource :stock, only: :show
+    # Physical counts with their adjustment, and the day's reconciliation (Fernando, 2026-11-18).
+    resources :stock_counts, path: "counts", only: %i[ index show new create ] do
+      patch :void, on: :member
+    end
+    resource :stock_reconciliation, path: "reconciliation", only: :show
     # Insumos (Fernando, 2026-11-12/13): the inventory (what came in, what the
     # loans took and what was delivered), each entry with its investment,
     # what is still to deliver and the catalog (from Préstamos).
@@ -202,6 +215,9 @@ Rails.application.routes.draw do
     resources :investments, controller: "expenses", defaults: { kind: "investment" }
     # The receipt's photo or PDF of an expense.
     resources :expense_receipts, only: :show
+    # Before :money_accounts, so «opening» is not taken for an id.
+    # The opening balances, guided (Fernando, 2026-11-18).
+    resources :opening_balances, only: %i[ index update ], path: "money_accounts/opening"
     resources :money_accounts, except: :destroy
     resources :account_transfers, only: %i[ new create destroy ]
     resources :other_incomes, only: %i[ new create destroy ]

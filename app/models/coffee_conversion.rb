@@ -21,6 +21,9 @@ class CoffeeConversion < ApplicationRecord
   include Auditable
   include OwnedRecord
   include LiveUpdates
+  include DayLock
+  locks_day :weighed_at, free: %w[finished_at finished_by_id output_gross_weight output_net_weight output_ratio output_ratio_source output_sacks output_tare output_humidity_percent output_damage_percent output_warehouse_id]
+  locks_day :finished_at
   live_updates :sales
 
   NUMBERING_LOCK_KEY = 7_301_005
@@ -64,6 +67,7 @@ class CoffeeConversion < ApplicationRecord
 
   validates :from_state, inclusion: { in: NEXT_STATE.keys }
   validates :weighed_at, presence: true
+  validates :weighed_at, :finished_at, not_in_future: true
   validates :input_gross_weight, numericality: { greater_than: 0, less_than: MAX_WEIGHT }
   # What it should give, in gross pounds of the new state per 100 that go
   # in: only a projection (client, 2026-10-26); the real one is weighed.
@@ -79,9 +83,14 @@ class CoffeeConversion < ApplicationRecord
     validates :output_damage_percent, numericality: { greater_than_or_equal_to: 0, less_than: 100 }
   end
   validate :finished_after_weighed, if: :finishing
+  validate :output_not_heavier, if: -> { finishing || (persisted? && (will_save_change_to_output_gross_weight? || will_save_change_to_input_gross_weight?)) }
+  validate :lots_in_before_weighed, if: -> { @batch_ids || (persisted? && will_save_change_to_weighed_at?) }
+  validate :result_in_before_its_lots_left, if: -> { persisted? && will_save_change_to_finished_at? && finished_at }
   validate :keeps_its_lots, if: -> { persisted? && (will_save_change_to_output_gross_weight? || will_save_change_to_output_net_weight? || will_save_change_to_output_warehouse_id?) }
   validate :warehouses_active
   validate :coffee_in_stock, on: :create
+  # After the first count, never more than there is (Fernando, 2026-11-18).
+  validate :within_stock, if: -> { new_record? || will_save_change_to_input_net_weight? || will_save_change_to_weighed_at? || will_save_change_to_warehouse_id? }
   validate :batches_fit, on: :create
   after_create :take_batches, if: -> { @batch_ids }
 
@@ -256,6 +265,32 @@ class CoffeeConversion < ApplicationRecord
       self.input_ratio_source = "batches"
     end
 
+    # Drying only loses weight (Fernando, 2026-11-18): what comes out never
+    # weighs more than what went in, in gross pounds.
+    def output_not_heavier
+      return unless output_gross_weight && input_gross_weight
+      return if output_gross_weight.to_d <= input_gross_weight.to_d
+
+      errors.add(:output_gross_weight, :heavier_than_input, gross: ActiveSupport::NumberHelper.number_to_rounded(input_gross_weight, precision: 2, delimiter: ","))
+    end
+
+    # Its lots carry only coffee that was in the warehouse when it was weighed.
+    def lots_in_before_weighed
+      return unless weighed_at
+
+      ids = @batch_ids || input_batches.ids
+      CoffeeBatch.late_for(ids, weighed_at.in_time_zone).each { |batch, entered| errors.add(:base, CoffeeBatch.late_message(batch, entered, self)) }
+    end
+
+    # A result already in lots that left cannot come out after they left.
+    def result_in_before_its_lots_left
+      CoffeeBatch.where(id: batch_conversions.select(:coffee_batch_id)).includes(:shipment, :processing).find_each do |batch|
+        next unless batch.taken? && CoffeeBatch.after?(finished_at, batch.taken_at)
+
+        errors.add(:base, CoffeeBatch.late_message(batch, finished_at, batch.taker))
+      end
+    end
+
     def batches_fit
       return unless @batch_ids
 
@@ -306,6 +341,11 @@ class CoffeeConversion < ApplicationRecord
     # With no coffee of that state in the warehouse, nothing goes to be
     # processed (client, 2026-10-30). Weighing more than there is still
     # only warns (Fernando, 2026-10-25).
+    def within_stock
+      before = [ weighed_at_in_database, input_net_weight_in_database ] if persisted? && voided_at.nil?
+      StockGuard.check(self, coffee_state: from_state, warehouse:, at: weighed_at, net: input_net_weight, before:)
+    end
+
     def coffee_in_stock
       return unless warehouse && from_state.in?(NEXT_STATE.keys) && weighed_at
 

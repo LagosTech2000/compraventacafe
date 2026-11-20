@@ -4,6 +4,8 @@
 <% if lot.purchase? %>
   <% label = t("sales.lots.purchase", producer: source.producer.full_name) %>
   <%= policy(Purchase).show? ? modal_link_to(label, trading_purchase_path(source), class: "link") : label %>
+<% elsif lot.count? %>
+  <%= modal_link_to t("sales.lots.count", number: source.display_number), sales_stock_count_path(source), class: "link" %>
 <% else %>
   <%= modal_link_to t("sales.lots.conversion", number: source.display_number, from: source.human_from_state), sales_coffee_conversion_path(source), class: "link" %>
 <% end %>

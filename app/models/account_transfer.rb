@@ -5,6 +5,8 @@ class AccountTransfer < ApplicationRecord
   include Auditable
   include OwnedRecord
   include LiveUpdates
+  include DayLock
+  locks_day :transferred_on
   live_updates :finance
 
   belongs_to :from_account, class_name: "MoneyAccount"
@@ -14,6 +16,7 @@ class AccountTransfer < ApplicationRecord
   normalizes :observations, with: FieldFormats::STRIP
 
   validates :transferred_on, presence: true
+  validates :transferred_on, not_in_future: true
   validates :amount, numericality: { greater_than: 0, less_than: Expense::MAX_AMOUNT }
   validates :observations, length: { maximum: 500 }
   validate { errors.add(:to_account, :same_account) if from_account_id && from_account_id == to_account_id }
