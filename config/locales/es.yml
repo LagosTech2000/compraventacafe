@@ -9095,6 +9095,9 @@ es:
       form:
         permissions: "Permisos"
         permissions_help: "Un administrador tiene acceso completo. A los demás se les da, en cada módulo, ver, crear, editar y borrar por separado en cada pestaña. La fila del módulo marca o quita esa columna en todas sus pestañas."
+        copy_from: "Copiar permisos de otro usuario"
+        copy_pick: "Elige a quién copiar"
+        copy_help: "Marca las mismas casillas que tiene ese usuario. No se guarda hasta que guardes este usuario."
         module: "Módulo y pestaña"
         whole_module: "Todo el módulo"
         whole_module_action: "%{module}: %{action} en todo el módulo"

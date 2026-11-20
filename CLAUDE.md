@@ -280,6 +280,10 @@ la barra de cada módulo), permisos separados de ver, crear, editar y borrar
   o quita una columna en todas sus pestañas y se ve a medias si solo algunas
   la tienen (`permission_matrix_controller.js`). En los specs,
   `create(:permission, module_key:)` sin `submodule_key` da el módulo entero.
+- **«Copiar permisos de otro usuario»** (Fernando, 2026-11-18): en el
+  formulario del usuario, elegir a otro usuario activo marca las mismas
+  casillas y quita las demás (`permission_copy_controller.js`); no se
+  guarda hasta «Guardar».
 - `ApplicationController` tiene `after_action :verify_authorized`: una acción
   que olvide autorizar **falla**. Eso es intencional.
 
