@@ -8,6 +8,10 @@
   <% if policy(Warehouse).index? %>
     <%= link_to t(".warehouses"), sales_warehouses_path, class: "btn" %>
   <% end %>
+  <%# The purchased-coffee lots, from the stock too (Fernando, 2026-11-19). %>
+  <% if policy(CoffeeBatch).index? %>
+    <%= link_to t(".batches"), sales_coffee_batches_path, class: "btn" %>
+  <% end %>
   <%# Physical counts and the day's reconciliation (Fernando, 2026-11-18). %>
   <% if policy([ :sales, :stock_reconciliation ]).show? %>
     <%= link_to t(".reconciliation"), sales_stock_reconciliation_path(warehouse_id: @warehouse&.id), class: "btn" %>

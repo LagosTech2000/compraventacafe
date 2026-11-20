@@ -78,6 +78,17 @@ RSpec.describe "Stock counts and the day's reconciliation" do
     expect(page.at_css("#reconciliation_wet_parchment [data-counts]").text).to include("Sin conteo")
   end
 
+  # «Lotes» from Inventario too (Fernando, 2026-11-19), for who sees Salidas.
+  it "links the lots from Inventario only to who sees them" do
+    sign_in seller
+    get sales_stock_path
+    expect(page.css("a").map(&:text)).not_to include("Lotes")
+
+    sign_in admin
+    get sales_stock_path
+    expect(page.css("a").find { it.text == "Lotes" }["href"]).to eq(sales_coffee_batches_path)
+  end
+
   it "keeps both screens to who sees Inventario" do
     other = create(:user).tap { create(:permission, user: it, module_key: "sales", submodule_key: "shipments", can_read: true) }
     sign_in other

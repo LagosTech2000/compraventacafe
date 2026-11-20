@@ -3140,6 +3140,7 @@ es:
         transfer: "Trasladar café"
         warehouses: "Bodegas"
         new_count: "Contar bodega"
+        batches: "Lotes"
         counts: "Conteos"
         reconciliation: "Cuadre del día"
         empty: "No hay movimientos en estas fechas."
