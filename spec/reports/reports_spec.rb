@@ -227,6 +227,30 @@ RSpec.describe "Reports (data)" do
     expect(run(ShipmentsReport, period: "today", status: "in_transit").total_count).to eq(1)
   end
 
+  # «Cuadre por salida» and «Merma por semana» (Fernando, 2026-11-18).
+  it "puts the purchases of the shipment's lots beside its local scale, with the shrink" do
+    admin = create(:user, :admin)
+    purchase = create(:purchase, gross_weight: 1_000, purchased_at: 1.hour.ago) # 486.57 net
+    invoice = InvoiceIssuer.new(producer: purchase.producer, user: admin, purchase_ids: [ purchase.id ], payment_status: "pending").call.invoice
+    lot = create(:coffee_batch, gross_limit: 1_000).tap { it.batch_invoices.create!(invoice:, percent: 100, created_by: admin) }
+    shipment = create(:shipment, origin_gross_weight: 990)                 # 482.16 net
+    shipment.update!(batch_ids: [ lot.id ])
+    create(:shipment)
+
+    report = run(ShipmentsReport, period: "today", sort: "shrink_net")
+    rows, = report.page
+    columns = report.table_columns.index_by(&:key)
+    row = rows.find { it == shipment }
+    expect(columns[:lots_net].value.call(row)).to eq(BigDecimal("486.57"))
+    expect(columns[:shrink_net].value.call(row)).to eq(BigDecimal("4.41"))
+    expect(columns[:shrink_percent].value.call(row)).to eq(BigDecimal("0.91"))
+    expect(kpi(report, :shrink_percent).value.round(2)).to eq(BigDecimal("0.91"))
+
+    weekly = run(ShipmentsReport, period: "this_season", group: "week")
+    expect(weekly.page.first.first["shrink_net"].to_d.round(2)).to eq(BigDecimal("4.41"))
+    expect(ReportPreset.all.map(&:key)).to include(:shipments_reconciliation, :shipments_shrink_by_week)
+  end
+
   it "sums sales, what was collected and what is owed, by the quintal of 120 lb" do
     sale = create(:sale)                                 # 482.16 lb ÷ 120 × L 6,000 = 24,108.00
     create(:sale_payment, sale:, amount: 10_000)

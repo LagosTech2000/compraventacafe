@@ -2835,6 +2835,11 @@ sistema ya guarda**; no agregan reglas de negocio.
   planillas (lo entregado) y gastos; entran los abonos en efectivo,
   transferencia o cheque (con café o por planilla no se mueve dinero). Las
   ventas de café todavía no existen en el sistema.
+- **Cuadre por salida y merma por semana** (Fernando, 2026-11-18): el
+  reporte de salidas trae lo que dicen las compras de sus lotes (brutas y
+  netas, `LOTS_GROSS`/`LOTS_NET`), la merma neta y su % por salida, la
+  merma (%) como cifra y medida, y dos sugeridos: «Cuadre por salida» y
+  «Merma por semana» (agrupado por semana).
 - `config/brakeman.ignore` marca como falsos positivos el SQL de la base de
   reportes: el orden y las columnas salen de lo que el reporte declara en
   código, nunca de un parámetro.

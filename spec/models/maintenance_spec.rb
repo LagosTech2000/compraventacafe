@@ -146,8 +146,9 @@ RSpec.describe Maintenance do
       producer = create(:producer)
       older = invoice_for(producer, gross: 1_000, at: 3.days.ago)
       newer = invoice_for(producer, gross: 1_000, at: 2.days.ago)
-      later = invoice_for(producer, gross: 1_000, at: 1.hour.from_now)
-      shipment = create(:shipment, departed_at: Time.current.beginning_of_day + 1.hour, origin_gross_weight: 1_500)
+      # Yesterday, so «later» is never in the future, whatever the hour.
+      later = invoice_for(producer, gross: 1_000, at: 1.day.ago.beginning_of_day + 2.hours)
+      shipment = create(:shipment, departed_at: 1.day.ago.beginning_of_day + 1.hour, origin_gross_weight: 1_500)
 
       preview = run(Maintenance::BatchesBackfill)
       expect(lines(preview)).to include("Se armaría 1 lote, de 1 salidas sin lote con báscula local.",
