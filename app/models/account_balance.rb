@@ -38,7 +38,7 @@ class AccountBalance
         [ InvoicePayment.all, "paid_on", "amount", "money_account_id", :out ],
         [ HaulerPayment.all, "paid_on", "amount", "money_account_id", :out ],
         [ Loan.where("cash_amount > 0"), "disbursed_on", "cash_amount", "money_account_id", :out ],
-        [ LoanPayment.where(payment_method: LoanPayment::PAYMENT_METHODS), "paid_on", "amount", "money_account_id", :in ],
+        [ LoanPayment.where(payment_method: LoanPayment::IN_ACCOUNT), "paid_on", "amount", "money_account_id", :in ],
         [ PayrollPayment.all, "paid_on", "net_total", "money_account_id", :out ],
         [ PayrollExpense.all, "spent_on", "amount", "money_account_id", :out ],
         [ SalePayment.in_money, "paid_on", "amount", "money_account_id", :in ],

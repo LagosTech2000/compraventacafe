@@ -353,7 +353,7 @@ es:
             zero: "emitida hoy"
             one: "emitida hace 1 día"
             other: "emitida hace %{count} días"
-          action: "Registrar abono"
+          action: "Registrar pago/abono"
         shipments_in_transit:
           title: "Salidas en camino"
           help: "Vehículos que salieron y todavía no tienen el peso de la báscula del comprador."
@@ -1302,7 +1302,7 @@ es:
         view_hauler: "Ver carrero"
         view_invoice: "Ver factura %{number}"
         invoice_now: "Facturar ahora"
-        register_payment: "Registrar abono a la factura %{number}"
+        register_payment: "Registrar pago/abono a la factura %{number}"
         another_purchase: "Registrar otra compra"
         back: "Volver a compras"
       new:
@@ -1452,7 +1452,7 @@ es:
       show:
         title: "Factura %{number}"
         print: "Imprimir"
-        new_payment: "Registrar abono"
+        new_payment: "Registrar pago/abono"
         back: "Volver a facturas"
         original: "ORIGINAL"
         copy: "COPIA"
@@ -1508,7 +1508,7 @@ es:
         success: "Factura %{number} anulada."
     invoice_payments:
       new:
-        title: "Registrar abono"
+        title: "Registrar pago/abono"
         # «Abono» while it leaves a balance; «Pago» when it cancels the invoice (Fernando, 2026-11-15).
         title_partial: "Abono a la factura de compra de café %{number}"
         title_full: "Pago de la factura de compra de café %{number}"
@@ -10761,6 +10761,7 @@ es:
               inclusion: "tiene una forma de pago que no existe"
             base:
               one_for_loans: "Solo una cuenta puede ser la de préstamos, y ya lo es %{account}: quítaselo ahí primero."
+              loans_stays_active: "La cuenta de préstamos no se desactiva: a ella entran los abonos con café."
         expense_category:
           attributes:
             parent:

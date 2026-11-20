@@ -36,11 +36,12 @@ class LoanDailyClose
     end.sort_by { LoanPayment::PAYMENT_METHODS.index(it.method) || LoanPayment::PAYMENT_METHODS.size }
   end
 
-  # Money out (cash lent) and in (money payments) by account; nil = without one.
+  # Money out (cash lent) and in (money payments, and the ones with coffee,
+  # which enter the loans' account) by account; nil = without one.
   def by_account
     @by_account ||= begin
       out = loans.select { it.cash_amount.positive? }.group_by(&:money_account)
-      came = payments.reject { it.with_coffee? || it.from_payroll? }.group_by(&:money_account)
+      came = payments.reject(&:from_payroll?).group_by(&:money_account)
       (out.keys | came.keys).map do |account|
         AccountRow.new(account:, lent: out.fetch(account, []).sum(0.to_d, &:cash_amount),
                        collected: came.fetch(account, []).sum(0.to_d, &:amount))

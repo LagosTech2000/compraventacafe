@@ -36,7 +36,7 @@ class MoneyAccount < ApplicationRecord
   validates :opening_on, presence: true
   validates :observations, length: { maximum: 500 }
   validate :known_methods
-  validate :one_for_loans
+  validate :one_for_loans, :loans_stays_active
 
   scope :active, -> { where(active: true) }
   scope :alphabetical, -> { order(:name) }
@@ -106,6 +106,12 @@ class MoneyAccount < ApplicationRecord
 
     def known_methods
       errors.add(:default_for, :inclusion) if (default_for - SUGGESTIONS).any?
+    end
+
+    # The loans' account is not deactivated (Fernando, 2026-11-20): the
+    # payments with coffee enter it.
+    def loans_stays_active
+      errors.add(:base, :loans_stays_active) if for_loans? && !active
     end
 
     def one_for_loans

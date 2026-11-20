@@ -437,7 +437,7 @@ RSpec.describe "Trading purchase flow" do
 
     invoice = InvoiceIssuer.new(producer: purchase.producer, user:, purchase_ids: [ purchase.id ], payment_status: "pending").call.invoice
     get trading_purchase_path(purchase)
-    expect(response.body).to include("Registrar abono a la factura #{invoice.display_number}")
+    expect(response.body).to include("Registrar pago/abono a la factura #{invoice.display_number}")
 
     get trading_invoice_path(invoice)
     expect(Nokogiri::HTML(response.body).at_css("[aria-current=step]").text).to include("Cancelada")

@@ -5,14 +5,15 @@
 #   out  payments to producers on invoices, payments to haulers, cash lent,
 #        payroll payments, payroll expenses, expenses and investments, the
 #        Planilla interna's payments and advances, and processing costs
-#   in   loan payments in cash, transfer or check, collections of coffee
+#   in   loan payments in cash, transfer, check or coffee, collections of coffee
 #        sales (not the ones «con anticipo»: that money came in with the
 #        buyer's advance), buyers' advances, supplies sold apart and other
 #        income
 #   both transfers between accounts: out of one, into the other (the
 #        business's totals leave them out: the money stays home)
 #
-# Loan payments with coffee or from a payroll move no money: not here.
+# Loan payments from a payroll move no money: not here. With coffee, they
+# enter the loans' account (Fernando, 2026-11-20).
 # Each movement says its account (nil when it was registered without one)
 # and its moment: its date at the hour it was registered (Fernando,
 # 2026-10-25: «fechas con hora»), newest last.
@@ -123,7 +124,7 @@ class MoneyMovements
     end
 
     def loan_payments
-      narrowed(LoanPayment.where(payment_method: LoanPayment::PAYMENT_METHODS).joins(loan: :person), "loan_payments.paid_on",
+      narrowed(LoanPayment.where(payment_method: LoanPayment::IN_ACCOUNT).joins(loan: :person), "loan_payments.paid_on",
                "loan_payments.money_account_id")
         .pluck("loan_payments.id", "loan_payments.loan_id", "loan_payments.paid_on", "loan_payments.amount", "loan_payments.payment_method",
                Arel.sql(NAME), "loan_payments.money_account_id", "loan_payments.created_at")

@@ -35,7 +35,7 @@ RSpec.describe "Invoice payments", type: :system do
     invoice = InvoiceIssuer.new(producer:, user:, purchase_ids: [ create(:purchase, producer:).id ], payment_status: "pending").call.invoice
     visit trading_invoice_path(invoice)
 
-    click_link "Registrar abono"
+    click_link "Registrar pago/abono"
     within("dialog[open]") do
       expect(page).to have_field("invoice_payment_amount", with: "4120.9")
       # The whole balance cancels the invoice: a «pago»; less is an «abono» (Fernando, 2026-11-15).
