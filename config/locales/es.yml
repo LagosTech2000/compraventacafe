@@ -704,6 +704,7 @@ es:
     staff_payment: "Planilla interna %{number} · %{role} (%{period})"
     staff_advance: "Anticipo %{number} de planilla interna"
     transfer: "De %{from} a %{to}"
+    cash_count: "Ajuste por arqueo"
   fingerprints:
     client:
       ready: "Lector listo"
@@ -3888,18 +3889,18 @@ es:
     cash_counts:
       new:
         title: "Arqueo de caja"
-        help: "Cuenta el dinero que hay de verdad y escríbelo. Se compara con el saldo que el sistema tiene para esa cuenta al final de ese día."
+        help: "Cuenta el dinero que hay de verdad y escríbelo. Se compara con el saldo que el sistema tiene para esa cuenta al final de ese día, y la diferencia entra como «Ajuste por arqueo»: la cuenta queda con lo que contaste."
         account_prompt: "Selecciona la cuenta"
         amount_hint: "Lo que contaste (o lo que dice el banco), en lempiras."
         observations_placeholder: "Quién estuvo presente, de qué es la diferencia…"
         submit: "Guardar arqueo"
       create:
-        success: "Arqueo guardado. Diferencia: %{difference}."
+        success: "Arqueo guardado. Diferencia: %{difference}, que entró como ajuste: la cuenta quedó con lo contado."
       destroy:
         success: "Arqueo quitado."
       list:
         title: "Arqueos"
-        help: "Lo que se contó contra el saldo del sistema ese día. Si falta dinero, la diferencia sale en rojo."
+        help: "Lo que se contó contra el saldo del sistema ese día. La diferencia entra a la cuenta como ajuste (desde el 20/11/2026); si faltó dinero, sale en rojo. Solo se quita el último."
         new: "Hacer arqueo"
         difference: "Diferencia"
         matches: "Cuadra"
@@ -3977,9 +3978,11 @@ es:
         category_help: "La categoría solo se cambia en lo que la lleva (los gastos de planilla); al resto no se le toca."
         amount_min: "Monto desde (L)"
         amount_max: "Monto hasta (L)"
+        in_account: "En la cuenta"
         chips:
           amount_min: "Desde L %{amount}"
           amount_max: "Hasta L %{amount}"
+          in_account: "En %{account}"
         empty: "No hay movimientos sin cuenta con estos filtros. ¡Todo consolidado!"
       update:
         pick_account: "Elige la cuenta o la categoría que les vas a asignar."
@@ -6073,6 +6076,7 @@ es:
           owner_loans: "Préstamo de los dueños"
           owner_loan_payments: "Abono a préstamo de los dueños"
           transfers: "Transferencia entre cuentas"
+          cash_counts: "Ajuste por arqueo"
         no_account: "Sin cuenta"
         directions:
           in: "Entrada"
@@ -7925,7 +7929,8 @@ es:
               - "Guarda: la cuenta muestra el arqueo con el saldo del sistema de ese día y la diferencia."
             tips:
               - "Si falta dinero, la diferencia sale en rojo: revisa que estén registrados todos los pagos y cobros de ese día, y que tengan su cuenta."
-              - "Un arqueo no cambia el saldo de la cuenta: solo lo compara."
+              - "La diferencia entra a la cuenta como «Ajuste por arqueo»: después del arqueo, la cuenta dice lo que contaste."
+              - "Antes de contar, registra todo lo de ese día con su cuenta: lo que registres después con esa fecha o antes la vuelve a descuadrar."
         other_incomes:
           form:
             title: "Otro ingreso"
@@ -9576,6 +9581,7 @@ es:
         counted_on: "Fecha del arqueo"
         counted_amount: "Contado (L)"
         system_balance: "Saldo del sistema (L)"
+        adjustment: "Ajuste (L)"
         observations: "Observaciones"
         created_by: "Contó"
         created_by_id: "Contó"
@@ -10795,6 +10801,8 @@ es:
               inactive: "está desactivada"
             counted_on:
               future: "no puede ser en el futuro"
+            base:
+              not_latest: "Solo se quita el último arqueo de la cuenta: los de después tomaron su ajuste."
         account_transfer:
           attributes:
             to_account:

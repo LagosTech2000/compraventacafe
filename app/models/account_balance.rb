@@ -54,7 +54,9 @@ class AccountBalance
         [ OwnerLoan.all, "disbursed_on", "principal", "money_account_id", :in ],
         [ OwnerLoanPayment.all, "paid_on", "amount", "money_account_id", :out ],
         [ AccountTransfer.all, "transferred_on", "amount", "from_account_id", :out ],
-        [ AccountTransfer.all, "transferred_on", "amount", "to_account_id", :in ]
+        [ AccountTransfer.all, "transferred_on", "amount", "to_account_id", :in ],
+        # Over (+) or short (−) at a count: the account says what was counted.
+        [ CashCount.where.not(adjustment: 0), "counted_on", "adjustment", "money_account_id", :in ]
       ]
     end
 

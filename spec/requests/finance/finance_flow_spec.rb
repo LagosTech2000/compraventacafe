@@ -126,6 +126,13 @@ RSpec.describe "Finance flow" do
     expect(flash[:notice]).to eq("Se asignó la cuenta a 1 movimiento.")
     expect(payment.reload.money_account).to eq(bank)
     expect(AuditEvent.where(auditable: payment, action: "update").last.changeset).to include("money_account_id" => [ box.id, bank.id ])
+
+    # Only the ones of one account (Fernando, 2026-11-20).
+    other = invoice.payments.create!(amount: 5, paid_on: Time.zone.today, payment_method: "cash", created_by: user, money_account: box)
+    get finance_consolidation_path(in_account: box.id)
+    rows = Nokogiri::HTML(response.body).css("tbody tr").map { it["id"] }
+    expect(rows).to eq([ "consolidation_invoices-#{other.id}-out" ])
+    expect(response.body).to include("En Caja")
   end
 
   it "changes the category only of what has one, and filters by method, direction and amount" do

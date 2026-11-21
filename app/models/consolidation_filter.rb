@@ -14,6 +14,9 @@ class ConsolidationFilter < ListFilter
   field :amount_min, :text
   field :amount_max, :text
   field :with_account, :choice, in: %w[1]
+  # Only the ones in this account (Fernando, 2026-11-20: loan payments
+  # registered in the office's cash box).
+  field :in_account, :id
 
   sorts date: { ruby: ->(movement) { movement.at } },
         source: { ruby: ->(movement) { I18n.t("reports.types.cash_movements.sources.#{movement.source}") } },
@@ -31,7 +34,7 @@ class ConsolidationFilter < ListFilter
 
   def movements
     @movements ||= begin
-      list = MoneyMovements.new(range: from || to ? (from..to) : nil, account: with_account ? nil : :none, owner: Current.owner, sources: source ? [ source ] & sources : sources).all
+      list = MoneyMovements.new(range: from || to ? (from..to) : nil, account: in_account || (with_account ? nil : :none), owner: Current.owner, sources: source ? [ source ] & sources : sources).all
       if q
         text = I18n.transliterate(q).downcase
         list = list.select { |movement| [ movement.description, movement.person ].compact.any? { I18n.transliterate(it).downcase.include?(text) } }

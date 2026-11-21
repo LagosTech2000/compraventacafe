@@ -13,7 +13,9 @@ module Maintenance
       return [ section(t(:title), "warn", [ t(:none) ]) ] if counts.empty?
 
       results = counts.map do |count|
-        now = AccountBalance.new(as_of: count.counted_on).for(count.money_account)
+        # Without its own adjustment, nor the ones of that day made after it.
+        now = AccountBalance.new(as_of: count.counted_on).for(count.money_account) -
+              counts.select { it.money_account_id == count.money_account_id && it.counted_on == count.counted_on && it.id >= count.id }.sum(&:adjustment)
         kept = count.system_balance.to_d
         moved = !same?(now, kept)
         [ t(moved ? :moved : :holds, id: count.id, account: count.money_account.name, date: day(count.counted_on),
