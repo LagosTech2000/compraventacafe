@@ -19,7 +19,7 @@
 # 2026-10-25: «fechas con hora»), newest last.
 class MoneyMovements
   SOURCES = %w[invoices hauler_payments loans loan_payments payroll_payments payroll_expenses
-               sale_payments buyer_advances buyer_advance_refunds supply_sales processing_costs shipment_costs expenses investments staff_payments staff_advances other_incomes owner_loans owner_loan_payments transfers].freeze
+               sale_payments buyer_advances buyer_advance_refunds supply_sales processing_costs shipment_costs expenses investments staff_payments staff_advances other_incomes owner_loans owner_loan_payments transfers cash_counts].freeze
   # Which submodule each source's records belong to (who may read it).
   MODULES = {
     "invoices" => "trading.invoices", "hauler_payments" => "trading.haulers", "loans" => "loans.loans", "loan_payments" => "loans.loans",
@@ -28,7 +28,8 @@ class MoneyMovements
     "shipment_costs" => "sales.shipments",
     "expenses" => "finance.expenses", "investments" => "finance.investments", "staff_payments" => "finance.staff",
     "staff_advances" => "finance.staff", "other_incomes" => "finance.incomes",
-    "owner_loans" => "finance.owner_loans", "owner_loan_payments" => "finance.owner_loans", "transfers" => "finance.accounts"
+    "owner_loans" => "finance.owner_loans", "owner_loan_payments" => "finance.owner_loans", "transfers" => "finance.accounts",
+    "cash_counts" => "finance.accounts"
   }.freeze
   NAME = "people.first_names || ' ' || people.last_names".freeze
 
@@ -305,6 +306,16 @@ class MoneyMovements
         .map do |id, date, concept, method, amount, account_id, created_at|
           movement(id:, date:, created_at:, source: "other_incomes", description: concept, payment_method: method_label(Invoice, method),
                    amount_in: amount, account_id:, route: [ :finance_money_account_path, account_id ])
+        end
+    end
+
+    # What a count found over (in) or short (out), Fernando 2026-11-20.
+    def cash_counts
+      narrowed(CashCount.where.not(adjustment: 0), "cash_counts.counted_on", "cash_counts.money_account_id")
+        .pluck(:id, :counted_on, :adjustment, :money_account_id, :created_at)
+        .map do |id, date, adjustment, account_id, created_at|
+          movement(id:, date:, created_at:, source: "cash_counts", description: I18n.t("money_movements.cash_count"),
+                   amount_in: [ adjustment, 0 ].max, amount_out: [ -adjustment, 0 ].max, account_id:, route: [ :finance_money_account_path, account_id ])
         end
     end
 

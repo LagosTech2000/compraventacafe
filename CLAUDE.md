@@ -2042,7 +2042,9 @@ salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
   casilla «Incluir los que ya tienen cuenta» (`ConsolidationFilter#with_account`)
   lista también esos, con su cuenta en una columna; marcarlos y asignar
   cambia la cuenta (y el saldo pasa de una a otra). Sin la casilla, solo
-  salen los sin cuenta. `consolidation:revert` solo deshace cuentas que
+  salen los sin cuenta. «En la cuenta» (`ConsolidationFilter#in_account`,
+  Fernando, 2026-11-20) lista solo los de una cuenta, p. ej. los abonos a
+  préstamos que quedaron en la caja. `consolidation:revert` solo deshace cuentas que
   estaban vacías.
 - **Gastos e inversiones** (`Expense`): categoría **propia, de dos
   niveles** (`FinanceCategory`; las de Fincas siguen aparte), detalle,
@@ -2063,7 +2065,12 @@ salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
   (`system_balance`), con quién contó y observaciones. Desde la cuenta
   («Arqueo», `finance/cash_counts`, pide crear en `finance`; se quita con
   borrar, no se edita; auditado). La cuenta lista sus arqueos con la
-  diferencia (en rojo si falta). No mueve el saldo.
+  diferencia (en rojo si falta). **Desde el 2026-11-20 la diferencia
+  entra al saldo** (Fernando: «dejar cuadrada la caja desde hoy en
+  adelante», todas las cuentas): `CashCount#adjustment` = contado −
+  sistema, en `AccountBalance` y en Movimientos como «Ajuste por arqueo»;
+  tras el arqueo la cuenta dice lo contado y el siguiente parte de ahí.
+  Los de antes quedaron en 0. Solo se quita el último de cada cuenta.
 - **Presupuesto** (`Budget`, `BudgetSheet`): por categoría de primer nivel
   y mes de la temporada, contra los gastos e inversiones de esa categoría
   y sus subcategorías. Resaltado al pasarse; en el Inicio y en Tareas
