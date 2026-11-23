@@ -6,9 +6,11 @@ import { Controller } from "@hotwired/stimulus"
 // from a <template>, as in an entry. Picking a supply puts its default price
 // and says how much is in the warehouse; taking more than there is, adding
 // the lines of the same supply, warns (the server refuses it). Each line's
-// amount is quantity × price and the total their sum.
+// amount is quantity × price and the total their sum. A use of the business
+// says the vehicle (asked for fuel or oil of the business) and the purchase
+// it went for (Fernando, 2026-11-22).
 export default class extends Controller {
-  static targets = [ "kind", "sale", "lines", "line", "template", "empty", "destroy", "total" ]
+  static targets = [ "kind", "sale", "lines", "line", "template", "empty", "destroy", "total", "use", "vehicle", "purchase" ]
   static values = { stockText: String, overText: String }
 
   connect() {
@@ -21,7 +23,18 @@ export default class extends Controller {
     this.saleTarget.disabled = !sale
     this.saleTarget.hidden = !sale
     this.element.querySelectorAll("[data-sale-only]").forEach((cell) => this.setSaleCell(cell, sale))
+    if (this.hasUseTarget) {
+      this.useTarget.disabled = sale
+      this.useTarget.hidden = sale
+    }
     this.update()
+  }
+
+  // A use of the business takes the vehicle of the purchase it went for
+  // (Fernando, 2026-11-22), unless one is chosen already.
+  pickPurchase() {
+    const vehicle = this.purchaseTarget.selectedOptions[0]?.dataset.vehicleId
+    if (vehicle && !this.vehicleTarget.value) this.vehicleTarget.value = vehicle
   }
 
   setSaleCell(cell, sale) {
@@ -84,6 +97,8 @@ export default class extends Controller {
     })
     this.emptyTarget.hidden = lines.length > 0
     this.totalTarget.textContent = `L ${this.number(total, 2)}`
+    // Fuel or oil of the business goes to a vehicle.
+    if (this.hasVehicleTarget) this.vehicleTarget.required = !this.isSale && lines.some((line) => this.option(line)?.dataset.business === "true")
   }
 
   get isSale() {

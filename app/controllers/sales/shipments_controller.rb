@@ -73,12 +73,15 @@ module Sales
       # a lot of their own, saved with the shipment or not at all.
       def save_with_lot
         @invoice_ids = Array(params.dig(:shipment, :invoice_ids)).compact_blank
-        return @shipment.save if @invoice_ids.empty? || !lots_from_invoices?
+        @conversion_ids = lots_from_processes? ? Array(params.dig(:shipment, :conversion_ids)).compact_blank : []
+        return @shipment.save if (@invoice_ids.empty? && @conversion_ids.empty?) || !lots_from_invoices?
 
         chosen_lots = @shipment.batch_ids
         saved = Shipment.transaction do
           lot = ShipmentLot.new(shipment: @shipment, invoice_ids: @invoice_ids, invoices: policy_scope(Invoice), user: Current.user,
-                                percents: params.dig(:shipment, :invoice_percents)&.permit(*@invoice_ids)&.to_h || {}).call
+                                percents: params.dig(:shipment, :invoice_percents)&.permit(*@invoice_ids)&.to_h || {},
+                                conversion_ids: @conversion_ids, conversions: policy_scope(CoffeeConversion),
+                                conversion_percents: params.dig(:shipment, :conversion_percents)&.permit(*@conversion_ids)&.to_h || {}).call
           unless lot
             lot_errors = @shipment.errors.full_messages
             @shipment.valid?
@@ -93,6 +96,8 @@ module Sales
       end
 
       def lots_from_invoices? = policy(CoffeeBatch).create? && policy(CoffeeBatchInvoice.new).create?
+      def lots_from_processes? = lots_from_invoices? && policy(CoffeeBatchConversion.new).create?
+      helper_method :lots_from_processes?
       helper_method :lots_from_invoices?
 
       def shipment_params

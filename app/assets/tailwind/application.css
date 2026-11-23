@@ -189,6 +189,16 @@
     line-height: 1.75rem;
   }
 
+  /* Smaller figures (Préstamos → Resumen, Fernando 2026-11-22). */
+  .stat-compact {
+    @apply p-3;
+  }
+
+  .stat-compact dd {
+    font-size: clamp(0.75rem, 9cqi, 1.05rem);
+    line-height: 1.4rem;
+  }
+
   /* Gross and net pounds (format_gross_net): side by side with a dot, or the
      net below when they do not fit. Every half has the dot in its left
      padding; the box starts that far to the left and clips it, so a line

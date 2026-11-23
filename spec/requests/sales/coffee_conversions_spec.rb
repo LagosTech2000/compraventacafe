@@ -64,6 +64,29 @@ RSpec.describe "Coffee conversions" do
     expect(response.body).not_to include("roporción") # the net/gross proportion is not shown: it confuses
   end
 
+  # «¿Qué café lleva?» in «Procesar café» (Fernando, 2026-11-22): the
+  # invoices marked make a lot of their own, saved with the process or not.
+  it "processes the invoices marked, through a lot of their own" do
+    purchase = Purchase.sole
+    invoice = InvoiceIssuer.new(producer: purchase.producer, user: admin, purchase_ids: [ purchase.id ], payment_status: "pending").call.invoice
+    site = create(:processing_site, name: "Secadora El Pino")
+    get new_sales_coffee_conversion_path(from_state: "wet_parchment")
+    expect(page.at_css("#carry_invoice_#{invoice.id}[name='coffee_conversion[invoice_ids][]']")).to be_present
+
+    params = { from_state: "wet_parchment", weighed_at: Time.current.change(sec: 0), processing_site_id: site.id, estimated_yield_percent: "50",
+               batch_ids: [ "" ], invoice_ids: [ "", invoice.id.to_s ], invoice_percents: { invoice.id.to_s => "50" } }
+    expect { post sales_coffee_conversions_path, params: { coffee_conversion: params.merge(processing_site_id: "") } }
+      .not_to change(CoffeeBatch, :count)
+    expect(response).to have_http_status(:unprocessable_content)
+
+    post sales_coffee_conversions_path, params: { coffee_conversion: params }
+    conversion = CoffeeConversion.sole
+    lot = conversion.input_batches.sole
+    expect(lot.batch_invoices.sole).to have_attributes(invoice:, percent: 50)
+    expect(lot.observations).to include("Armado al procesar café")
+    expect(conversion.input_gross_weight).to eq(1_000)
+  end
+
   it "voids one in process and takes a result off" do
     conversion = create(:coffee_conversion, from_state: "wet_parchment", input_gross_weight: 500)
     patch void_sales_coffee_conversion_path(conversion)

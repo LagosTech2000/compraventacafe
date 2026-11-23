@@ -237,8 +237,13 @@ class CoffeeLots
     # of the lots of shipments (`column` :shipment_id) or of processes
     # (:coffee_conversion_id): each purchase of their invoices, and each
     # process they took a share of (Fernando, 2026-11-16).
+    BATCH_OWNERS = %i[shipment_id coffee_conversion_id].freeze
+
     def batch_shares(column)
-      owner = "coffee_batches.#{column}"
+      raise ArgumentError, "unknown lot owner #{column}" unless BATCH_OWNERS.include?(column.to_sym)
+
+      # An Arel column, never text: the owner never goes into the SQL as a string.
+      owner = CoffeeBatch.arel_table[column.to_sym]
       purchases = CoffeeBatchInvoice.joins(:coffee_batch)
                                     .joins("JOIN purchases ON purchases.invoice_id = coffee_batch_invoices.invoice_id AND purchases.voided_at IS NULL")
                                     .where.not(coffee_batches: { column => nil })

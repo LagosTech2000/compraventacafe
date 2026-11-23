@@ -21,6 +21,10 @@ class SupplyExit < ApplicationRecord
 
   belongs_to :person, optional: true
   belongs_to :money_account, optional: true
+  # A dispatch of the business's fuel or oil (Fernando, 2026-11-22): the
+  # vehicle it went into and, optional, the purchase that vehicle went for.
+  belongs_to :vehicle, optional: true
+  belongs_to :purchase, optional: true
   belongs_to :created_by, class_name: "User"
   has_many :lines, -> { order(:id) }, class_name: "SupplyExitLine", dependent: :destroy, inverse_of: :supply_exit
   has_many :supplies, through: :lines
@@ -38,18 +42,24 @@ class SupplyExit < ApplicationRecord
     validates :payment_method, inclusion: { in: Invoice::PAYMENT_METHODS }
   end
   validate :in_warehouse, on: :create
+  validate :vehicle_for_the_business
   validate { errors.add(:money_account, :inactive) if will_save_change_to_money_account_id? && money_account && !money_account.active? }
 
   before_validation :settle_kind
 
   scope :newest_first, -> { order(exited_on: :desc, id: :desc) }
   scope :sales, -> { where(kind: "sale") }
+  # What went into the vehicles: uses of the business with a vehicle.
+  scope :dispatches, -> { where(kind: "business_use").where.not(vehicle_id: nil) }
 
   def sale? = kind == "sale"
   def human_kind = self.class.human_attribute_name("kind/#{kind}")
   def human_payment_method = payment_method && Invoice.human_attribute_name("payment_method/#{payment_method}")
 
   def kept_lines = lines.reject(&:marked_for_destruction?)
+
+  # It takes fuel or oil of the business: it goes to a vehicle.
+  def business_supplies? = kept_lines.any? { it.supply&.business_use? }
 
   # «Urea × 3 saco, Fungicida × 5 litro».
   def summary = kept_lines.map(&:summary).join(", ")
@@ -75,6 +85,19 @@ class SupplyExit < ApplicationRecord
         self.amount = self.payment_method = nil
         kept_lines.each { it.unit_price = it.amount = nil }
       end
+      # Only a use by the business goes to a vehicle; it takes the purchase's.
+      self.vehicle = self.purchase = nil if sale?
+      self.vehicle ||= purchase&.vehicle
+    end
+
+    # Fuel or oil of the business goes to a vehicle (Fernando, 2026-11-22),
+    # active; the purchase, one that is not voided.
+    def vehicle_for_the_business
+      return if sale?
+
+      errors.add(:vehicle, :blank) if vehicle.nil? && business_supplies?
+      errors.add(:vehicle, :inactive) if will_save_change_to_vehicle_id? && vehicle && !vehicle.active?
+      errors.add(:purchase, :voided) if will_save_change_to_purchase_id? && purchase&.voided?
     end
 
     # Never more than is in the warehouse, adding the lines of each supply.

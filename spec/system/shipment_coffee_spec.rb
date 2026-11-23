@@ -48,4 +48,22 @@ RSpec.describe "What coffee a shipment carries", type: :system do
       expect(page).to have_css("[data-shipment-coffee-target='total']", text: "Todavía no lleva café marcado.")
     end
   end
+
+  # Finished processes below the invoices (Fernando, 2026-11-22).
+  it "adds the marked processes to what it carries and hides them for another coffee" do
+    invoice = invoice_of(create(:purchase, producer:, gross_weight: 600, purchased_at: 2.days.ago))
+    process = create(:coffee_conversion, :finished, weighed_at: 3.hours.ago)
+    visit new_sales_shipment_path
+
+    within("[data-controller~='shipment-coffee']") do
+      expect(page).to have_text("Procesos terminados")
+      check "carry_invoice_#{invoice.id}"
+      check "carry_coffee_conversion_#{process.id}"
+      fill_in "carry_percent_coffee_conversion_#{process.id}", with: "50"
+      expect(page).to have_css("[data-shipment-coffee-target='total']", text: "Lleva 800.00 lb brutas")
+    end
+
+    select "Pergamino seco", from: "shipment_coffee_state"
+    expect(page).to have_no_text("Procesos terminados")
+  end
 end

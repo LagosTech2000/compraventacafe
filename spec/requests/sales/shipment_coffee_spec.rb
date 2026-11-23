@@ -80,6 +80,30 @@ RSpec.describe "Shipment carrying invoices, its lot made on its own" do
     expect(CoffeeBatchInvoice.used_by_invoice([ half.id ])[half.id]).to eq(70)
   end
 
+  # Finished processes too (Fernando, 2026-11-22), after the invoices: the lot takes the invoices first.
+  it "lists the finished processes below the invoices and puts the marked ones in the lot" do
+    invoice = invoice_of(create(:purchase, producer:, gross_weight: 600, purchased_at: 2.days.ago))
+    process = create(:coffee_conversion, :finished, weighed_at: 3.hours.ago)
+    running = create(:coffee_conversion, weighed_at: 3.hours.ago)
+
+    get new_sales_shipment_path
+    ids = page.css("[data-controller~='shipment-coffee'] tbody tr").map { it["id"] }
+    expect(ids).to eq([ "coffee_invoice_#{invoice.id}", "coffee_coffee_conversion_#{process.id}" ])
+    expect(ids).not_to include("coffee_coffee_conversion_#{running.id}")
+
+    expect { ship([ invoice.id ], conversion_ids: [ "", process.id.to_s ], conversion_percents: { process.id.to_s => "120" }) }.not_to change(CoffeeBatch, :count)
+    expect(response.body).to include("El proceso #{process.display_number} lleva un porcentaje que no sirve: entre 0.0001 y 100")
+
+    ship([ invoice.id ], conversion_ids: [ "", process.id.to_s ], conversion_percents: { process.id.to_s => "25" })
+    lot = Shipment.last.coffee_batches.sole
+    expect(lot.batch_invoices.sole.invoice).to eq(invoice)
+    expect(lot.batch_conversions.sole).to have_attributes(coffee_conversion_id: process.id, percent: 25, gross_weight: 100)
+
+    get new_sales_shipment_path
+    row = page.at_css("#coffee_coffee_conversion_#{process.id}")
+    expect(row.text).to include("Queda el 75 %")
+  end
+
   it "is not offered to who cannot add invoices to lots" do
     clerk = create(:user).tap { create(:permission, user: it, module_key: "sales", submodule_key: "shipments", can_read: true, can_create: true, can_update: true) }
     sign_in clerk

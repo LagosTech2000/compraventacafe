@@ -65,6 +65,14 @@ RSpec.describe PurchaseCalculation do
     expect(described_class.quintals(BigDecimal("71.05"))).to eq(BigDecimal("0.57"))
   end
 
+  # The inventory's sacks (Fernando, 2026-11-22): gross ÷ 165, rounded down.
+  it "counts whole sacks of 165 lb, rounded down" do
+    expect(described_class.whole_sacks(BigDecimal("11863.5"))).to eq(71) # 71.9
+    expect(described_class.whole_sacks(165)).to eq(1)
+    expect(described_class.whole_sacks(164.99)).to eq(0)
+    expect(described_class.whole_sacks(-10)).to eq(0)
+  end
+
   it "rounds money and pounds to cents" do
     result = calculate(100.33, 51.5, 57.25)
     expect(result.net_weight).to eq(((BigDecimal("100.33") - 1) * BigDecimal("0.485")).round(2))

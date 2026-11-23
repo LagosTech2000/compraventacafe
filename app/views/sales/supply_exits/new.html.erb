@@ -7,7 +7,7 @@
 <% stock = SupplyStock.new %>
 <% supplies = Supply.active.or(Supply.where(id: @exit.lines.map(&:supply_id))).ordered.map do |supply|
      row = stock.for(supply)
-     [ supply.name, supply.id, { data: { price: supply.default_price.to_s, stock: (row&.in_warehouse || 0).to_s, unit: supply.unit } } ]
+     [ supply.name, supply.id, { data: { price: supply.default_price.to_s, stock: (row&.in_warehouse || 0).to_s, unit: supply.unit, business: supply.business_use?.to_s } } ]
    end %>
 <%= form_with model: @exit, url: sales_supply_exits_path, class: form_surface_class("mt-6 space-y-6"),
       data: { controller: "form-validation unsaved-changes supply-exit", action: unsaved_changes_actions,
@@ -50,6 +50,31 @@
       <% end %>
     </template>
   </section>
+
+  <%# A use of the business: the vehicle it went into and, optional, the
+      purchase it went for (Fernando, 2026-11-22: fuel of the business). The
+      vehicle is asked when a supply of the business goes. %>
+  <% vehicles = Vehicle.active.or(Vehicle.where(id: @exit.vehicle_id)).includes(:vehicle_type).order(own: :desc, plate: :asc) %>
+  <% purchases = Purchase.active.owned.where(purchased_at: 15.days.ago..).or(Purchase.where(id: @exit.purchase_id))
+                         .includes(:vehicle, producer: :person).order(purchased_at: :desc).limit(200) %>
+  <fieldset class="grid gap-5 sm:grid-cols-2" data-supply-exit-target="use">
+    <legend class="sr-only"><%= t(".use") %></legend>
+    <div>
+      <%= form.label :vehicle_id, class: "field-label" %>
+      <%= form.select :vehicle_id, vehicles.map { [ it.label, it.id ] }, { include_blank: t("shared.select.no_vehicle") }, class: "field-input",
+            data: { supply_exit_target: "vehicle", missing_message: t(".vehicle_missing") } %>
+      <p class="mt-1 text-xs text-ink-muted"><%= t(".vehicle_help") %></p>
+    </div>
+    <div>
+      <%= form.label :purchase_id, class: "field-label" %>
+      <%= form.select :purchase_id, purchases.map { |purchase|
+            [ t(".purchase_option", producer: purchase.producer.full_name, date: l(purchase.purchased_at, format: :short), vehicle: purchase.vehicle&.plate || t(".no_vehicle_short")),
+              purchase.id, { data: { vehicle_id: purchase.vehicle_id } } ] },
+            { include_blank: t(".no_purchase") }, class: "field-input",
+            data: { supply_exit_target: "purchase", action: "supply-exit#pickPurchase" } %>
+      <p class="mt-1 text-xs text-ink-muted"><%= t(".purchase_help") %></p>
+    </div>
+  </fieldset>
 
   <%# A sale's buyer, price and where its money came in; off for a use of the business. %>
   <fieldset class="space-y-5" data-supply-exit-target="sale">

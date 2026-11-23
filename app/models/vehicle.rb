@@ -12,6 +12,9 @@ class Vehicle < ApplicationRecord
 
   belongs_to :vehicle_type
   has_many :shipments, dependent: :restrict_with_error
+  # The purchases it went for and the fuel it took (Fernando, 2026-11-22).
+  has_many :purchases, dependent: :restrict_with_error
+  has_many :supply_exits, dependent: :restrict_with_error
 
   # "haa  1234" → "HAA 1234".
   normalizes :plate, with: ->(value) { value.squish.upcase.presence }

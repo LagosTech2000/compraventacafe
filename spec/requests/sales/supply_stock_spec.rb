@@ -134,7 +134,7 @@ RSpec.describe "Supplies' inventory" do
     sign_in admin
     get sales_supplies_path
     expect(response).to have_http_status(:ok)
-    expect(page.css("[data-supply-tabs] a").map { it.text.squish }).to eq([ "Inventario y entradas", "Por entregar", "Salidas", "Catálogo de insumos" ])
+    expect(page.css("[data-supply-tabs] a").map { it.text.squish }).to eq([ "Inventario y entradas", "Por entregar", "Salidas", "Combustible", "Catálogo de insumos" ])
     expect(AppModule.submodules("loans")).not_to include("supplies")
   end
 end

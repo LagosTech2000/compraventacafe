@@ -99,6 +99,8 @@ El único lugar donde vive el español es `config/locales/es.yml`.
 | Insumo / insumo del préstamo / entrada de insumos (con sus líneas) / inventario de insumos | `Supply` / `LoanSupply` / `SupplyEntry` + `SupplyEntryLine` / `SupplyStock` |
 | Insumo entregado / por entregar (del préstamo) | `LoanSupply#delivered_on`, `delivered_by` (`sales/supply_deliveries`) |
 | Salida de insumos (venta por aparte / uso del negocio) y sus líneas | `SupplyExit` (`kind`: `sale` / `business_use`, `sales/supply_exits`) + `SupplyExitLine`; en el libro, `supply_sales` |
+| Insumo de la empresa (combustible, aceite: no se presta) / despacho a un vehículo / pantalla «Combustible» | `Supply#business_use` / `SupplyExit` «Uso del negocio» con `vehicle_id` (y `purchase_id` opcional; `SupplyExit.dispatches`) / `sales/fuel_dispatches#show` (`FuelDispatchFilter`) |
+| Vehículo que fue por el café | `Purchase#vehicle` |
 | En bodega / disponible (insumos) | `SupplyStock::Row#in_warehouse` (entró − entregado − salió) / `#available` (entró − prestado − salió, puede ser negativo) |
 | Lo propio (cada usuario ve lo que registró) | `OwnedRecord` (`owned`, `visible_to`, `OwnedRecord.visible?`), `Current.owner` |
 | Lote de café comprado / factura del lote (parte en %) / proceso del lote | `CoffeeBatch` (`sales/coffee_batches`) / `CoffeeBatchInvoice` (`percent`) / `CoffeeBatchConversion` |
@@ -1388,7 +1390,10 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   todos esos números»; reemplaza las tres cifras del 2026-10-25) y **abre
   el detalle de su estado** (`sales/stock_states#show`; la del total, de
   todos): libras netas, brutas (`CoffeeStock#gross_stock`), QQ, sacos,
-  daño aplicado, «Valor del inventario» y sus **lotes**. El kárdex sigue
+  daño aplicado, «Valor del inventario» y sus **lotes** (**los sacos son
+  brutas ÷ 165, enteros hacia abajo**: 71.9 son 71;
+  `PurchaseCalculation.whole_sacks`, Fernando 2026-11-22; también en cada
+  lote y en «sacos esperados»). El kárdex sigue
   debajo en Inventario («Ver movimientos» desde el detalle) y lleva
   brutas, netas y quintales de cada movimiento y de los saldos.
 - **Netas y sacos, revisados** (`StockCheck`, `sales/_net_check`,
@@ -1459,6 +1464,11 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   decisiones y luego el cliente decide»):
   - Motivos: secado u oreo, error de báscula, pérdida, sobrante, conteo
     inicial u otro (con detalle), obligatorio si hay diferencia.
+  - **Contar 0 deja las netas en 0** (Fernando, 2026-11-22: la uva quedó
+    en −0.05 lb netas por el redondeo de los procesos viejos): con brutas
+    iguales a las del sistema el ajuste de netas es 0, salvo si se contó
+    0; si el sistema tampoco tenía brutas, no es una diferencia (sin
+    motivo, cualquier usuario).
   - Un ajuste de más del `SiteSetting#count_admin_percent` (2 % al inicio)
     de lo que dice el sistema solo lo registra un administrador.
   - **Faltante: sale de los lotes más viejos** y su valor es merma en
@@ -1526,7 +1536,16 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   `CoffeeBatch#processing`, `processed?`); en un proceso queda fijo (sus
   facturas no cambian, no se borra) y anular el proceso lo deja libre. El
   proceso saca del inventario el café de sus lotes (`CoffeeLots`, como una
-  salida con lotes).
+  salida con lotes). **También «¿Qué café lleva?»** (Fernando, 2026-11-22:
+  «seleccionar facturas para procesar»): el mismo de «Nueva salida»
+  (`sales/shipments/_coffee_field` con `scope: "coffee_conversion"`); las
+  facturas marcadas forman un lote solo junto con el proceso o nada
+  (`CoffeeConversionsController#save_with_lot`, `ShipmentLot` con el
+  proceso) y su parte se suma a las lb brutas que entran
+  (`batch_picker_controller.js` oye `shipment-coffee:summed`). **El proceso
+  de uva se revisa contra las brutas** del inventario (`StockGuard`
+  `side: :gross`, Fernando 2026-11-22: «solo deberían ser las brutas para
+  poder procesar»); húmedo → seco sigue en netas.
 - **Procesar café** (cliente, 2026-10-26) [CONFIRMADO]: en la interfaz las
   conversiones se llaman **procesos** («Procesar café», Comercialización →
   Procesos; solo cambiaron los textos). Cada proceso nuevo lleva su
@@ -1700,6 +1719,20 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   están en la bodega del lote (el café trasladado no entra); anular la
   factura la saca de sus lotes; un lote en una salida no se borra; si a una compra del lote ya no le
   queda café, lo que falta sale de lo más viejo.
+- **Cerrar un lote sin salida** (Fernando, 2026-11-22: las facturas del
+  Lote 0027 nunca se registraron en una salida, por mala gestión): un
+  **administrador** lo cierra desde su detalle con un **motivo**
+  (`CoffeeBatchClosing`, `sales/coffee_batch_closings`,
+  `CoffeeBatchPolicy#close?`). Deja de salir en «Nueva salida», «Procesar
+  café», «¿Qué café lleva?» y «Facturar compras» (`CoffeeBatch.free` excluye
+  `closed_at`); sus facturas y procesos se quedan en él (no se agregan ni
+  quitan, la factura no se anula) y **las compras siguen activas: los QQ de
+  los productores no cambian**. Con **«Su café ya no está en la bodega»**,
+  un ajuste por conteo (`StockCount`, motivo «Otro») deja ese estado y
+  bodega en lo de hoy − las brutas del lote (`coffee_batches.stock_count_id`);
+  sin marcarla, el inventario no cambia. «Reabrir lote» lo deja libre y
+  anula el ajuste, mientras no haya un conteo después. Filtro «Cerrados sin
+  salida» en Lotes.
 - **«¿Qué café lleva?»** (Fernando, 2026-11-18: armar lotes por % les
   costaba mucho): en «Nueva salida» (y al editarla en camino), las facturas
   con parte libre de ese estado y bodega, la compra más vieja primero
@@ -1707,7 +1740,11 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   `shipment_coffee_controller.js`), con «Compras de hoy», «Desde la última
   salida» (de ese estado y bodega), «Todo» y «Ninguna», y lo que lleva
   (estas facturas y los lotes marcados) contra las brutas de la báscula
-  local. Al guardar, las marcadas forman **un lote solo**, cada una con
+  local. **También los procesos terminados** (Fernando, 2026-11-22: «en
+  salida seleccionar procesos»), en su propia tabla debajo de las facturas,
+  del estado y la bodega de la salida, con su «Lleva (%)»
+  (`ShipmentLot.process_options`, `CoffeeBatchConversion`); **el lote toma
+  primero las facturas** y después los procesos. Al guardar, las marcadas forman **un lote solo**, cada una con
   el % escrito en su casilla «Lleva (%)» (empieza en lo que le queda y no
   pasa de ahí; Fernando, 2026-11-20) (`ShipmentLot#call`, mismas reglas de
   `CoffeeBatchInvoice`), junto con la salida o nada
@@ -1954,6 +1991,22 @@ contado/crédito, forma de pago) [CONFIRMADO]:
     entrada: líneas `SupplyExitLine` (insumo, cantidad y, en una venta,
     precio y monto) con «Agregar otro insumo»; nunca más de lo que hay en
     bodega sumando las líneas del mismo insumo; total = suma de las líneas.
+  - **Combustible de la empresa** (Fernando, 2026-11-22) [CONFIRMADO: como
+    insumo con inventario; el despacho va al vehículo y a la compra; litros
+    por día y por vehículo, lo que queda y el costo; el aceite igual]: la
+    casilla **«De la empresa»** del catálogo (`Supply#business_use`) lo
+    saca de los préstamos (`Supply.lendable`, `LoanSupply` lo rechaza). Entra
+    con las entradas de siempre. Cada **despacho** es una salida «Uso del
+    negocio» con su **vehículo** (obligatorio si lleva un insumo de la
+    empresa) y, opcional, **la compra** a la que fue (de los últimos 15
+    días; toma su vehículo). «Nueva compra» lleva el **vehículo** que fue
+    por el café (opcional, los del negocio primero), y su detalle dice lo
+    despachado para ella. Insumos → **«Combustible»**
+    (`sales/fuel_dispatches#show`, `FuelDispatchFilter`, permiso de
+    Insumos): lo que queda en bodega, lo despachado en el período (este mes
+    por defecto), su costo y tablas por día y por vehículo. **El costo es lo
+    despachado al costo promedio de todo lo que ha entrado de ese insumo**
+    (`Supply.average_costs`; CONFIRMADO por Fernando el 2026-11-22).
   - Solo cuentan los préstamos desde el día en que empezó el inventario
     (`SiteSetting#supply_stock_starts_on`, `SupplyStock.starts_on`); los
     de antes quedaron entregados con su préstamo (migración) y uno nuevo
@@ -2018,7 +2071,13 @@ salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
 - **Foto del comprobante con el celular** (Fernando, 2026-11-18): en
   gastos, gastos de salida y entradas de insumos, una foto se achica en el
   navegador a JPEG de 1600 px antes de enviarse
-  (`receipt_input_controller.js`), así cabe en el límite de 1 MB.
+  (`receipt_input_controller.js`), así cabe en el límite de 1 MB. **«Tomar
+  foto»** (Fernando, 2026-11-22: «en todo lugar donde se sube archivo»): el
+  mismo controlador pone el botón, que abre la cámara (un campo con
+  `capture`, sin nombre) y pasa la foto al campo; todo campo de
+  comprobante usa `receipt_input_data` (`FormFieldsHelper`), también
+  «Asignar gastos». La foto de perfil tiene el suyo (`shared/_photo_field`,
+  cámara frontal).
 - **Libro único** (`MoneyMovements`, «Movimientos»): todo lo que entra y
   sale de todos los módulos, **sin duplicar** (cada cosa se registra donde
   ocurre). Cada quien ve las fuentes de los módulos que puede ver. Las
@@ -2474,7 +2533,8 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
   abonan o saldan los préstamos de la persona del productor
   (`PurchaseLoanSettlement`, pantalla `trading/loan_settlements`). Reglas:
   - Cada abono es un `LoanPayment` normal con forma de pago "Con café",
-    `purchase_id` y la cuenta de préstamos (suma a su saldo): paga interés primero y luego capital, y salda el préstamo
+    `purchase_id` y **la cuenta que se elija** (empieza en la de préstamos;
+    Fernando, 2026-11-22, `PurchaseLoanSettlement#money_account_id`): paga interés primero y luego capital, y salda el préstamo
     si cubre todo a esa fecha. Fecha del abono: hoy por defecto, editable.
   - La suma de abonos de una compra no pasa del total de la compra. Se puede
     abonar mientras la compra no esté anulada ni su factura pagada.
@@ -2503,6 +2563,11 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
   no solo a los productores intermediarios (Fernando, el mismo día). Los
   días 1–10 nunca cobran; desde el día 11 corre normal (`LoanBalance`
   cuenta desde `Loan#interest_starts_on`).
+- **Pendientes del Resumen** (Fernando, 2026-11-22): a la izquierda, una
+  tarjeta vertical (`loans/home/_pending`) con **vencidos**, **vencen
+  pronto** (7 días), **insumos por entregar** y **con café para abonar**
+  (solo si ve Cobrar con café), los primeros 5 de cada uno y «Ver los N»;
+  a la derecha las cifras, más pequeñas (`.stat-compact`).
 - **Resumen de Préstamos** (Fernando, 2026-11-12): además de lo que se
   debe, **capital cobrado** e **interés cobrado** de todos los abonos (lo
   que cada abono guardó en `principal_amount` / `interest_amount`, de

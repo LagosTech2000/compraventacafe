@@ -44,6 +44,8 @@
               <%= link_to shipment_label(batch.shipment), sales_shipment_path(batch.shipment), class: "link", data: { turbo_frame: "_top" } %>
             <% elsif batch.processing %>
               <%= link_to t("sales.coffee_batches.table.process", number: batch.processing.display_number), sales_coffee_conversion_path(batch.processing), class: "link", data: { turbo_frame: "_top" } %>
+            <% elsif batch.closed? %>
+              <span class="badge badge-warning"><%= t("#{scope}.closed") %></span>
             <% else %>
               <span class="badge badge-neutral"><%= t("#{scope}.free") %></span>
             <% end %>

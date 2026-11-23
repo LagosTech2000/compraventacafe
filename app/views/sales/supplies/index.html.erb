@@ -37,7 +37,12 @@
               <%= modal_link_to t(".edit"), edit_sales_supply_path(supply), class: "btn btn-sm" %>
             <% end %>
           </div>
-          <% unless supply.active? %><p class="mt-2"><span class="badge badge-neutral"><%= t(".badges.inactive") %></span></p><% end %>
+          <% if !supply.active? || supply.business_use? %>
+            <p class="mt-2 flex flex-wrap gap-1">
+              <% unless supply.active? %><span class="badge badge-neutral"><%= t(".badges.inactive") %></span><% end %>
+              <% if supply.business_use? %><span class="badge badge-neutral"><%= t(".badges.business_use") %></span><% end %>
+            </p>
+          <% end %>
         </li>
       <% end %>
     </ul>
@@ -56,7 +61,10 @@
         <tbody>
           <% @supplies.each do |supply| %>
             <tr id="<%= dom_id(supply) %>">
-              <td class="font-medium"><%= supply.name %></td>
+              <td class="font-medium">
+                <%= supply.name %>
+                <% if supply.business_use? %><span class="badge badge-neutral ml-1"><%= t(".badges.business_use") %></span><% end %>
+              </td>
               <td><%= supply.unit %></td>
               <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(supply.default_price) %></td>
               <td>

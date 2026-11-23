@@ -8,6 +8,13 @@ module Loans
       open_loans = loans.unpaid.includes(:payments, :supply_items, person: :photo_info)
       @balances = open_loans.to_h { |loan| [ loan, loan.balance ] }
       @overdue = open_loans.select(&:overdue?).sort_by(&:due_on)
+      # Pendientes, in a vertical card on the left (Fernando, 2026-11-22):
+      # overdue, due soon, supplies to deliver and who can pay with coffee.
+      today = Time.zone.today
+      @due_soon = open_loans.reject(&:overdue?).select { it.due_on.between?(today, today + Dashboard::DUE_SOON_DAYS) }.sort_by { [ it.due_on, it.id ] }
+      @to_deliver = SupplyStock.counted_lines.to_deliver.where(loan_id: loans.select(:id))
+                               .includes(:supply, loan: { person: :photo_info }).order("loans.disbursed_on", :id).to_a
+      @coffee_rows = (CoffeeCollectionFilter.rows.sort_by { -it.available } if policy([ :loans, :coffee_collection ]).show?)
       # Lent and collected of all time (Fernando, 2026-11-12): principal in
       # cash and in supplies (each loan's proportion), interest apart.
       principal, @lent_cash = loans.pick(Arel.sql("COALESCE(SUM(principal), 0)"), Arel.sql("COALESCE(SUM(cash_amount), 0)"))

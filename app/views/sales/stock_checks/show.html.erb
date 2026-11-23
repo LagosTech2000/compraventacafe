@@ -113,7 +113,7 @@
   <section class="panel p-4" aria-labelledby="check-sacks">
     <h2 id="check-sacks" class="font-semibold"><%= t(".sacks.title") %></h2>
     <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
-      <div><dt class="text-xs text-ink-muted"><%= t("sales.net_check.expected_sacks") %></dt><dd class="font-semibold tabular-nums"><%= number_with_precision(@row.expected_sacks, precision: 2) %></dd></div>
+      <div><dt class="text-xs text-ink-muted"><%= t("sales.net_check.expected_sacks") %></dt><dd class="font-semibold tabular-nums"><%= number_with_delimiter(@row.expected_sacks) %></dd></div>
       <div><dt class="text-xs text-ink-muted"><%= t("sales.net_check.sacks") %></dt><dd class="font-semibold tabular-nums"><%= number_with_precision(@row.sacks, precision: 2) %></dd></div>
     </dl>
     <p class="mt-3 text-sm"><%= t(".sacks.help", counted: @purchases[:counted], estimated: @purchases[:estimated]) %></p>

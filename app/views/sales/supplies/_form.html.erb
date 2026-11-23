@@ -25,6 +25,12 @@
       <p class="mt-1 text-xs text-ink-muted"><%= t(".price_help") %></p>
     </div>
   </div>
+  <%# Fuel, oil… of the business (Fernando, 2026-11-22): not lent; it goes to the vehicles. %>
+  <label class="flex items-center gap-2 text-sm font-medium">
+    <%= form.check_box :business_use, class: "size-4 accent-primary" %>
+    <%= Supply.human_attribute_name(:business_use) %>
+  </label>
+  <p class="-mt-3 text-xs text-ink-muted"><%= t(".business_use_help") %></p>
   <% if supply.persisted? %>
     <label class="flex items-center gap-2 text-sm font-medium">
       <%= form.check_box :active, class: "size-4 accent-primary" %>

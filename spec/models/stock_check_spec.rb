@@ -14,7 +14,7 @@ RSpec.describe StockCheck do
     expect(row.gross).to eq(1_169)
     expect(row.expected_net).to eq((1_169 * 0.49).round(2))
     expect(row.net).to eq(CoffeeStock.new.row("wet_parchment").stock)
-    expect(row.expected_sacks).to eq((1_169 / 165.0).round(2))
+    expect(row.expected_sacks).to eq(7) # 1,169 ÷ 165 = 7.08, whole sacks
 
     parts = check.explanation("wet_parchment")
     expect(parts.map(&:key)).to eq(%i[purchases shipments])

@@ -546,6 +546,8 @@ class Shipment < ApplicationRecord
       chosen.each do |batch|
         if batch.shipment_id && batch.shipment_id != id
           errors.add(:base, :batch_taken, batch: batch.label)
+        elsif batch.closed?
+          errors.add(:base, :batch_closed, batch: batch.label)
         elsif batch.coffee_state != coffee_state || batch.warehouse_id != warehouse_id
           errors.add(:base, :batch_other_coffee, batch: batch.label)
         end

@@ -33,7 +33,7 @@
       <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
         <% [ [ t("sales.stock.gross"), t("sales.stock.pounds", pounds: format_pounds(gross)) ],
              [ t("sales.stock.quintals_label"), format_pounds(PurchaseCalculation.quintals(net)) ],
-             [ t(".sacks"), number_with_precision(@totals.sacks, precision: 0, delimiter: ",") ],
+             [ t(".sacks"), number_with_delimiter(PurchaseCalculation.whole_sacks(gross)) ],
              [ t(".damage"), t("sales.stock.pounds", pounds: format_pounds(@totals.damage)) ] ].each do |label, value| %>
           <div><dt class="text-xs text-ink-muted"><%= label %></dt><dd class="font-semibold tabular-nums"><%= value %></dd></div>
         <% end %>
@@ -116,7 +116,7 @@
                   <td class="whitespace-nowrap" data-sort-value="<%= lot.hours %>"><%= stock_age(lot) %></td>
                   <td class="whitespace-nowrap text-right tabular-nums" data-sort-value="<%= lot.gross_in %>"><%= format_pounds(lot.gross_in) %><span class="block text-xs text-ink-muted"><%= t("sales.shipments.table.net_line", net: format_pounds(lot.net_in)) %></span></td>
                   <td class="whitespace-nowrap text-right font-semibold tabular-nums" data-sort-value="<%= lot.gross %>"><%= format_pounds(lot.gross) %><span class="block text-xs font-normal text-ink-muted"><%= t("sales.shipments.table.net_line", net: format_pounds(lot.net)) %></span></td>
-                  <td class="whitespace-nowrap text-right tabular-nums"><%= number_with_precision(lot.sacks, precision: 1) %></td>
+                  <td class="whitespace-nowrap text-right tabular-nums"><%= number_with_delimiter(PurchaseCalculation.whole_sacks(lot.gross)) %></td>
                   <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(lot.value) %></td>
                   <td><%= render "sales/lots/badges", lot:, first: @first_out.include?(lot), thresholds: %></td>
                 </tr>

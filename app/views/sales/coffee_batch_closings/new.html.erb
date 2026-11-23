@@ -1,0 +1,36 @@
+<% content_for :title, t(".title", batch: @batch.label) %>
+<h1 class="text-2xl font-bold"><%= t(".title", batch: @batch.label) %></h1>
+<p class="mt-1 max-w-2xl text-sm text-ink-muted"><%= t(".help") %></p>
+
+<% there = CoffeeStock.new(warehouse: @batch.warehouse).row(@batch.coffee_state).gross_stock.to_d %>
+<% left = CoffeeBatchClosing.counted_without(@batch) %>
+<%= form_with url: sales_coffee_batch_closing_path(@batch), method: :post, class: form_surface_class("mt-6 max-w-2xl space-y-5"),
+      data: { controller: "form-validation" } do |form| %>
+  <% if @errors.present? %>
+    <div class="flash-alert" role="alert"><%= @errors.to_sentence %></div>
+  <% end %>
+  <dl class="grid gap-3 panel p-4 text-sm sm:grid-cols-2" data-closing-figures>
+    <div><dt class="text-xs text-ink-muted"><%= t(".lot") %></dt><dd><%= format_gross_net(@batch.gross_weight, @batch.net_weight) %></dd></div>
+    <div><dt class="text-xs text-ink-muted"><%= t(".stock", state: @batch.human_coffee_state, warehouse: @batch.warehouse.name) %></dt><dd><%= t(".gross_pounds", pounds: format_pounds(there)) %></dd></div>
+  </dl>
+
+  <div>
+    <%= label_tag :close_reason, t(".reason"), class: "field-label" %>
+    <%= text_field_tag :close_reason, params[:close_reason], required: true, maxlength: 200, class: "field-input",
+          placeholder: t(".reason_placeholder"), data: { missing_message: t(".reason_missing") } %>
+  </div>
+
+  <label class="flex cursor-pointer items-start gap-2 text-sm">
+    <%= check_box_tag :gone, "1", params[:gone] == "1", class: "mt-0.5 size-4 accent-primary" %>
+    <span>
+      <span class="font-medium"><%= t(".gone") %></span>
+      <span class="block text-xs text-ink-muted"><%= t(".gone_help", left: format_pounds(left)) %></span>
+    </span>
+  </label>
+  <p class="text-xs text-ink-muted"><%= t(".not_gone_help") %></p>
+
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit t(".submit"), class: "btn btn-primary", data: { turbo_confirm: t(".confirm") } %>
+    <%= cancel_button sales_coffee_batch_path(@batch) %>
+  </div>
+<% end %>

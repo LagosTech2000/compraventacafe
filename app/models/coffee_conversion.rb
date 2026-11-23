@@ -90,7 +90,7 @@ class CoffeeConversion < ApplicationRecord
   validate :warehouses_active
   validate :coffee_in_stock, on: :create
   # After the first count, never more than there is (Fernando, 2026-11-18).
-  validate :within_stock, if: -> { new_record? || will_save_change_to_input_net_weight? || will_save_change_to_weighed_at? || will_save_change_to_warehouse_id? }
+  validate :within_stock, if: -> { new_record? || will_save_change_to_input_net_weight? || will_save_change_to_input_gross_weight? || will_save_change_to_weighed_at? || will_save_change_to_warehouse_id? }
   validate :batches_fit, on: :create
   after_create :take_batches, if: -> { @batch_ids }
 
@@ -300,6 +300,8 @@ class CoffeeConversion < ApplicationRecord
       chosen.each do |batch|
         if batch.taken?
           errors.add(:base, :batch_taken, batch: batch.label)
+        elsif batch.closed?
+          errors.add(:base, :batch_closed, batch: batch.label)
         elsif batch.coffee_state != from_state || batch.warehouse_id != warehouse&.id
           errors.add(:base, :batch_other_coffee, batch: batch.label)
         end
@@ -341,9 +343,16 @@ class CoffeeConversion < ApplicationRecord
     # With no coffee of that state in the warehouse, nothing goes to be
     # processed (client, 2026-10-30). Weighing more than there is still
     # only warns (Fernando, 2026-10-25).
+    # Cherry is checked in gross pounds (Fernando, 2026-11-22), as the form
+    # already warns (conversion_preview_controller.js).
     def within_stock
-      before = [ weighed_at_in_database, input_net_weight_in_database ] if persisted? && voided_at.nil?
-      StockGuard.check(self, coffee_state: from_state, warehouse:, at: weighed_at, net: input_net_weight, before:)
+      if from_state == "cherry"
+        before = [ weighed_at_in_database, input_gross_weight_in_database ] if persisted? && voided_at.nil?
+        StockGuard.check(self, coffee_state: from_state, warehouse:, at: weighed_at, net: input_gross_weight, before:, side: :gross)
+      else
+        before = [ weighed_at_in_database, input_net_weight_in_database ] if persisted? && voided_at.nil?
+        StockGuard.check(self, coffee_state: from_state, warehouse:, at: weighed_at, net: input_net_weight, before:)
+      end
     end
 
     def coffee_in_stock

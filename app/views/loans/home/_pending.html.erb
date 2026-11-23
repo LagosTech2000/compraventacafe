@@ -1,0 +1,48 @@
+<%# Pendientes of the loans (Fernando, 2026-11-22: «a la izquierda en
+    tarjeta vertical»): overdue, due within Dashboard::DUE_SOON_DAYS,
+    supplies still to deliver and who can pay with coffee (only for who
+    sees Cobrar con café). The first 5 of each, and «Ver todos». %>
+<% limit = 5 %>
+<% today = Time.zone.today %>
+<% deliveries = (sales_supply_deliveries_path if SupplyDeliveryPolicy.new(Current.user, LoanSupply).index?) %>
+<% sections = [
+     [ :overdue, overdue, loans_loans_path(status: "overdue") ],
+     [ :due_soon, due_soon, loans_loans_path(status: "unpaid", due_from: today, due_to: today + Dashboard::DUE_SOON_DAYS) ],
+     [ :to_deliver, to_deliver, deliveries ],
+     ([ :coffee, coffee_rows, loans_coffee_collection_path ] if coffee_rows)
+   ].compact %>
+<aside class="panel space-y-4 p-4 lg:sticky lg:top-24" aria-labelledby="loans-pending" data-loans-pending>
+  <h2 id="loans-pending" class="text-sm font-semibold tracking-wide text-ink-muted uppercase"><%= t(".title") %></h2>
+  <% sections.each do |key, items, path| %>
+    <section class="space-y-1.5 border-t border-line pt-3 first-of-type:border-0 first-of-type:pt-0" aria-labelledby="loans-pending-<%= key %>" data-pending-section="<%= key %>">
+      <div class="flex items-center justify-between gap-2">
+        <h3 id="loans-pending-<%= key %>" class="text-sm font-semibold"><%= t(".sections.#{key}") %></h3>
+        <span class="badge <%= items.any? ? (key == :overdue ? "badge-danger" : "badge-neutral") : "badge-success" %>" data-live-value><%= items.size %></span>
+      </div>
+      <% if items.empty? %>
+        <p class="text-xs text-ink-muted"><%= t(".empty.#{key}") %></p>
+      <% else %>
+        <ul class="space-y-1 text-sm">
+          <% items.first(limit).each do |item| %>
+            <li class="flex items-baseline justify-between gap-2" id="<%= "pending_#{key}_#{item.id}" %>">
+              <% case key
+                 when :overdue, :due_soon %>
+                <%= link_to item.person.full_name, loans_loan_path(item), class: "link min-w-0 truncate" %>
+                <span class="shrink-0 text-xs text-ink-muted tabular-nums"><%= t(".#{key}_detail", owed: format_money(balances[item].total_owed), date: l(item.due_on, format: :short)) %></span>
+              <% when :to_deliver %>
+                <%= link_to item.loan.person.full_name, loans_loan_path(item.loan), class: "link min-w-0 truncate" %>
+                <span class="shrink-0 text-xs text-ink-muted tabular-nums"><%= t(".to_deliver_detail", quantity: number_with_delimiter(item.quantity.to_d.to_s("F").sub(/\.0\z/, "")), unit: item.supply.unit, supply: item.supply.name) %></span>
+              <% when :coffee %>
+                <%= link_to item.person.full_name, loans_coffee_collection_path(q: item.person.full_name), class: "link min-w-0 truncate" %>
+                <span class="shrink-0 text-xs text-ink-muted tabular-nums"><%= t(".coffee_detail", available: format_money(item.available)) %></span>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+        <% if path %>
+          <%= link_to t(".see_all", count: items.size), path, class: "link text-xs" %>
+        <% end %>
+      <% end %>
+    </section>
+  <% end %>
+</aside>

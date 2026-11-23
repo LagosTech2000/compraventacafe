@@ -2,7 +2,7 @@
 # mostrar por fecha»): the newest first, by date, coffee state, warehouse,
 # whether they went on a shipment, and number.
 class CoffeeBatchFilter < ListFilter
-  STATUSES = %w[free shipped].freeze
+  STATUSES = %w[free shipped closed].freeze
 
   field :q, :text
   field :from, :date
@@ -26,7 +26,12 @@ class CoffeeBatchFilter < ListFilter
     scope = scope.where(batched_on: ..to) if to
     scope = scope.where(coffee_state:) if coffee_state
     scope = scope.where(warehouse_id:) if warehouse_id
-    scope = status == "free" ? scope.free : scope.where.not(shipment_id: nil).or(scope.where.not(coffee_conversion_id: nil)) if status
+    scope = case status
+    when "free" then scope.free
+    when "shipped" then scope.where.not(shipment_id: nil).or(scope.where.not(coffee_conversion_id: nil))
+    when "closed" then scope.closed
+    else scope
+    end
     scope = search(scope) if q
     scope.includes(:warehouse, :shipment, :processing).newest_first
   end

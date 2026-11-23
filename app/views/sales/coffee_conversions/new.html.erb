@@ -88,6 +88,11 @@
           <p class="mt-1 text-xs text-ink-muted"><%= t(".humidity_help") %></p>
         </div>
       </div>
+      <%# The invoices themselves (Fernando, 2026-11-22: «al procesar café se
+          deberían poder seleccionar facturas»): they make a lot when saving. %>
+      <% if lots_from_invoices? %>
+        <%= render "sales/shipments/coffee_field", record: @conversion, scope: "coffee_conversion", state_field: "from_state" %>
+      <% end %>
       <%# What goes in is taken from invoices, through lots (Fernando, 2026-11-16). %>
       <%= render "sales/shipments/batches_field", record: @conversion, scope: "coffee_conversion", state_field: "from_state",
                                                   help: t(".batches_help"), gross_form: form %>

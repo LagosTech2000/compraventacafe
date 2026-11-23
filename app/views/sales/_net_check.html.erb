@@ -33,7 +33,7 @@
               </td>
               <td class="whitespace-nowrap text-right font-semibold tabular-nums"><%= format_pounds(row.net) %></td>
               <td class="whitespace-nowrap text-right tabular-nums <%= "text-danger" if row.difference.negative? %>"><%= signed_pounds(row.difference) %></td>
-              <td class="whitespace-nowrap text-right tabular-nums"><%= number_with_precision(row.expected_sacks, precision: 2) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= number_with_delimiter(row.expected_sacks) %></td>
               <td class="whitespace-nowrap text-right tabular-nums"><%= number_with_precision(row.sacks, precision: 2) %></td>
               <% if policy(:"sales/stock_check").show? %>
                 <td class="cell-actions"><%= modal_link_to t("sales.net_check.why"), sales_stock_check_path(row.coffee_state, warehouse_id: warehouse&.id), class: "btn btn-sm" %></td>

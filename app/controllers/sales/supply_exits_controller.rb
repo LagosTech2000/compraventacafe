@@ -10,9 +10,11 @@ module Sales
     end
 
     def new
-      @exit = authorize SupplyExit.new(kind: "sale", exited_on: Time.zone.today, payment_method: "cash",
-                                       money_account_id: MoneyAccount.default_for("cash")&.id)
       supply = Supply.active.find_by(id: params[:supply_id])
+      # Fuel or oil of the business starts as a use of the business (to a vehicle).
+      @exit = authorize SupplyExit.new(kind: supply&.business_use? || params[:kind] == "business_use" ? "business_use" : "sale",
+                                       exited_on: Time.zone.today, payment_method: "cash",
+                                       money_account_id: MoneyAccount.default_for("cash")&.id, vehicle_id: params[:vehicle_id])
       @exit.lines.build(supply:, unit_price: supply&.default_price)
     end
 
@@ -27,7 +29,7 @@ module Sales
     end
 
     def show
-      @exit = authorize SupplyExit.includes({ lines: :supply }, :person, :money_account, :created_by).find(params[:id])
+      @exit = authorize SupplyExit.includes({ lines: :supply }, :person, :money_account, :created_by, { vehicle: :vehicle_type }, { purchase: { producer: :person } }).find(params[:id])
     end
 
     def destroy
@@ -38,7 +40,7 @@ module Sales
 
     private
       def exit_params
-        params.expect(supply_exit: [ :kind, :exited_on, :person_id, :payment_method, :money_account_id, :observations,
+        params.expect(supply_exit: [ :kind, :exited_on, :person_id, :payment_method, :money_account_id, :vehicle_id, :purchase_id, :observations,
                                      { lines_attributes: [ %i[supply_id quantity unit_price _destroy] ] } ])
       end
   end

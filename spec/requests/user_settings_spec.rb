@@ -74,6 +74,10 @@ RSpec.describe "User settings" do
       expect(page.at_css("input[name='user[name]']")["value"]).to eq(user.name)
       expect(page.at_css("input[name='user[email_address]']")["value"]).to eq(user.email_address)
       expect(page.at_css("input[type=file][name='user[photo_upload]']")).to be_present
+      # «Tomar foto» (Fernando, 2026-11-22): the camera, never sent itself.
+      camera = page.at_css("input[type=file][capture=user]")
+      expect(camera["name"]).to be_nil
+      expect(page.at_css("label[for='#{camera["id"]}']").text.squish).to eq("Tomar foto")
       expect(page.css("input[type=password]").map { it["name"] }).to eq(%w[user[current_password] user[password] user[password_confirmation]])
       expect(page.at_css("[data-controller=passkey]").text).to include("Huella digital", "Todavía no registras ninguna huella")
     end

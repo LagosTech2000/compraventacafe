@@ -6,7 +6,7 @@
 # - Expected net: the gross in stock × the usual factor of its coffee state
 #   (1 − the purchase's starting humidity, or the cherry's starting yield).
 # - Calculated net: what the stock says (CoffeeStock), purchase by purchase.
-# - Expected sacks: gross ÷ 165 (PurchaseCalculation::SACK_WEIGHT).
+# - Expected sacks: gross ÷ 165, whole sacks (PurchaseCalculation.whole_sacks).
 # - Calculated sacks: what is left of each purchase's sacks (CoffeeLots).
 #
 # Why they differ (#explanation, administrators): every movement's net − its
@@ -19,7 +19,7 @@ class StockCheck
     def factor = StockCheck.factor(coffee_state)
     def expected_net = (gross * factor).round(2)
     def difference = (net - expected_net).round(2)
-    def expected_sacks = (gross / PurchaseCalculation::SACK_WEIGHT).round(2)
+    def expected_sacks = PurchaseCalculation.whole_sacks(gross)
     def sacks = lots_sacks.round(2)
     def human_coffee_state = Purchase.human_attribute_name("coffee_state/#{coffee_state}")
     def factor_percent = (factor * 100).round(2)
@@ -57,7 +57,7 @@ class StockCheck
   def total
     Data.define(:gross, :net, :expected_net, :difference, :expected_sacks, :sacks).new(
       gross: rows.sum(&:gross), net: rows.sum(&:net), expected_net: rows.sum(&:expected_net), difference: rows.sum(&:difference),
-      expected_sacks: rows.sum(&:expected_sacks), sacks: rows.sum(&:sacks)
+      expected_sacks: PurchaseCalculation.whole_sacks(rows.sum(&:gross)), sacks: rows.sum(&:sacks)
     )
   end
 

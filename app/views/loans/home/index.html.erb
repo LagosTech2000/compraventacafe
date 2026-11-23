@@ -33,6 +33,10 @@
        [ :interest_collected, format_money(@interest_collected), payments ]
      ]
    } %>
+<%# Pendientes on the left in a vertical card, smaller figures on the
+    right (Fernando, 2026-11-22); stacked on a narrow screen. %>
+<div class="grid gap-5 lg:grid-cols-[19rem_minmax(0,1fr)] lg:items-start">
+<%= render "loans/home/pending", overdue: @overdue, due_soon: @due_soon, to_deliver: @to_deliver, coffee_rows: @coffee_rows, balances: @balances %>
 <div class="space-y-5">
   <% groups.each do |group, figures| %>
     <section aria-labelledby="loans-<%= group %>">
@@ -40,13 +44,13 @@
       <dl class="flex flex-wrap gap-3">
         <% figures.each do |key, value, path| %>
           <% if path %>
-            <%= link_to path, class: "stat block min-w-0 flex-1 basis-40 transition hover:ring-primary/40", data: { loans_stat: key } do %>
+            <%= link_to path, class: "stat stat-compact block min-w-0 flex-1 basis-36 transition hover:ring-primary/40", data: { loans_stat: key } do %>
               <dt><%= t(".stats.#{key}") %></dt>
               <dd data-live-value><%= value %></dd>
               <p class="mt-1 text-xs text-ink-muted"><%= t(".stats_go.#{key}") %></p>
             <% end %>
           <% else %>
-            <div class="stat min-w-0 flex-1 basis-40" data-loans-stat="<%= key %>">
+            <div class="stat stat-compact min-w-0 flex-1 basis-36" data-loans-stat="<%= key %>">
               <dt><%= t(".stats.#{key}") %></dt>
               <dd data-live-value><%= value %></dd>
             </div>
@@ -55,6 +59,7 @@
       </dl>
     </section>
   <% end %>
+</div>
 </div>
 
 <h2 class="mt-8 mb-1 text-lg font-semibold"><%= t(".overdue") %></h2>

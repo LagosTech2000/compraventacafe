@@ -59,6 +59,7 @@
                       <%= link_to t(".see_receipt"), finance_expense_receipt_path(receipt, v: receipt.version), class: "link text-sm", target: "_blank", rel: "noopener" %>
                     <% elsif policy(expense).update? %>
                       <input type="file" name="receipts[<%= expense.id %>]" accept="<%= ExpenseReceipt::SIGNATURES.keys.join(",") %>" class="field-input max-w-56 py-1 text-xs"
+                             <%= tag.attributes(data: receipt_input_data) %>
                              aria-label="<%= t(".upload_receipt", description: expense.description) %>">
                     <% else %>
                       <span class="text-xs text-ink-muted"><%= t(".no_receipt") %></span>

@@ -142,6 +142,27 @@ RSpec.describe "Finance screens", type: :system do
     FileUtils.rm_f(photo)
   end
 
+  # «Tomar foto» (Fernando, 2026-11-22): the camera's picture goes into the
+  # receipt's field, shrunk, and the camera's input is never sent.
+  it "takes the receipt's photo with the camera" do
+    photo = Rails.root.join("tmp/receipt-camera.png")
+    File.binwrite(photo, big_png(2400, 1800))
+    create(:finance_category, name: "Transporte")
+    visit new_finance_expense_path
+    expect(page).to have_button("Tomar foto")
+    expect(page).to have_css("input[data-receipt-camera][capture='environment']:not([name])", visible: :hidden)
+    fill_in "expense_description", with: "Diésel desde la cámara"
+    select "Transporte", from: "expense_finance_category_id"
+    fill_in "expense_amount", with: "500"
+    find("input[data-receipt-camera]", visible: :hidden).attach_file(photo, make_visible: true)
+    expect(page).to have_css("#expense_receipt_upload[data-shrunk='true']")
+    click_button "Registrar gasto"
+    expect(page).to have_text("Gasto registrado")
+    expect(Expense.last.receipt).to have_attributes(content_type: "image/jpeg")
+  ensure
+    FileUtils.rm_f(photo)
+  end
+
   # A noisy RGB picture (does not compress), as a PNG.
   def big_png(width, height)
     chunk = ->(type, data) { [ data.bytesize ].pack("N") + type + data + [ Zlib.crc32(type + data) ].pack("N") }

@@ -5,8 +5,20 @@ import { Controller } from "@hotwired/stimulus"
 // before sending it, so a phone's photo (several MB) fits ProfilePhoto's
 // limit. If the browser can't, the original goes and the server decides.
 export default class extends Controller {
-  static targets = ["input", "preview", "initials", "remove"]
+  static targets = ["input", "camera", "preview", "initials", "remove"]
   static values = { size: { type: Number, default: 512 } }
+
+  // «Tomar foto»: the camera's picture goes into the field that is sent.
+  async takePicture() {
+    const file = this.cameraTarget.files[0]
+    if (!file) return
+
+    const transfer = new DataTransfer()
+    transfer.items.add(file)
+    this.inputTarget.files = transfer.files
+    this.cameraTarget.value = ""
+    await this.change()
+  }
 
   async change() {
     const file = this.inputTarget.files[0]

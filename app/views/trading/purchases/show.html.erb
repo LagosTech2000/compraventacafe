@@ -55,6 +55,17 @@
 
 <%= render "trading/purchases/loans", purchase: @purchase, settlement: @settlement, loan_payments: @loan_payments %>
 
+<%# The vehicle that went for it and the fuel dispatched to this purchase (Fernando, 2026-11-22). %>
+<% if (vehicle = @purchase.vehicle) %>
+  <% fuel = SupplyExitLine.joins(:supply_exit, :supply).where(supply_exits: { purchase_id: @purchase.id }).group("supplies.name", "supplies.unit").sum(:quantity) %>
+  <section class="mt-6 panel p-4" aria-labelledby="purchase-vehicle" data-purchase-vehicle>
+    <h2 id="purchase-vehicle" class="text-sm font-semibold"><%= t(".vehicle", vehicle: vehicle.label) %></h2>
+    <p class="mt-1 text-sm text-ink-muted">
+      <%= fuel.any? ? t(".vehicle_fuel", fuel: fuel.map { |(name, unit), quantity| t(".vehicle_fuel_item", quantity: number_with_delimiter(quantity.to_d.to_s("F").sub(/\.0\z/, "")), unit:, supply: name) }.to_sentence) : t(".vehicle_no_fuel") %>
+    </p>
+  </section>
+<% end %>
+
 <%# Hauled by a carrero: their commission, paid by the business apart. %>
 <% if (hauler = @purchase.hauler) %>
   <section class="mt-6 panel flex flex-wrap items-center justify-between gap-4 p-4" aria-labelledby="purchase-hauler">

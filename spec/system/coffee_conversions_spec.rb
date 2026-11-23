@@ -33,6 +33,28 @@ RSpec.describe "Coffee conversions screens", type: :system do
     expect(find("a[data-conversion-preview-target=newSite]")[:href]).to include("from_state=wet_parchment")
   end
 
+  # The invoices marked add to the gross that goes in (Fernando, 2026-11-22).
+  it "adds the invoices marked to what goes in" do
+    purchase = Purchase.sole
+    invoice = InvoiceIssuer.new(producer: purchase.producer, user:, purchase_ids: [ purchase.id ], payment_status: "pending").call.invoice
+    visit new_sales_coffee_conversion_path(from_state: "wet_parchment")
+
+    within("[data-controller~='shipment-coffee']") do
+      expect(page).to have_button("Desde el último proceso")
+      click_button "Todo"
+      expect(find("#carry_invoice_#{invoice.id}")).to be_checked
+    end
+    expect(page).to have_field("coffee_conversion_input_gross_weight", with: "2000.00", readonly: true)
+    fill_in "carry_percent_invoice_#{invoice.id}", with: "25"
+    expect(page).to have_field("coffee_conversion_input_gross_weight", with: "500.00", readonly: true)
+    expect(page).to have_css("[data-conversion-preview-target=net]", text: "243.41 lb")
+
+    select "Patio", from: "coffee_conversion_processing_site_id"
+    click_button "Pesar y mandar a procesar"
+    expect(page).to have_text("Proceso")
+    expect(CoffeeConversion.sole.input_gross_weight).to eq(500)
+  end
+
   it "takes what goes in from the lots' invoices, previews it, and enters what came out (Fernando, 2026-11-16)" do
     purchase = Purchase.sole
     invoice = InvoiceIssuer.new(producer: purchase.producer, user:, purchase_ids: [ purchase.id ], payment_status: "pending").call.invoice

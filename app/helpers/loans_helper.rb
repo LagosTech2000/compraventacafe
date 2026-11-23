@@ -16,7 +16,7 @@ module LoansHelper
   # [[name, id], ...] for a supply line: the active supplies, plus the
   # line's own supply if it was deactivated after being lent.
   def supply_options_for(item)
-    @active_supplies ||= Supply.active.ordered.to_a
+    @active_supplies ||= Supply.active.lendable.ordered.to_a
     supplies = @active_supplies
     supplies += [ item.supply ] if item.supply && !item.supply.active?
     # With what is left to lend (Fernando, 2026-11-12); it may be below zero:
