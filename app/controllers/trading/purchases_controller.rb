@@ -116,7 +116,7 @@ module Trading
       end
 
       def purchase_params
-        params.expect(purchase: [ :purchased_at, :producer_id, :zone_id, :farm_id, :farm_plot_id, :hauler_choice, :warehouse_id, :coffee_state, :common_coffee, :weight_mode, :gross_weight,
+        params.expect(purchase: [ :purchased_at, :producer_id, :zone_id, :farm_id, :farm_plot_id, :hauler_choice, :vehicle_id, :warehouse_id, :coffee_state, :common_coffee, :weight_mode, :gross_weight,
                                   :humidity_percent, :damage_percent, :yield_factor, :price_per_pound, :observations, :lock_version, damage_types: [],
                                   weighings_attributes: [ [ :id, :gross_weight, :sacks, :_destroy ] ] ])
       end

@@ -67,7 +67,7 @@
     <div class="sm:col-span-2">
       <%= form.label :receipt_upload, class: "field-label" %>
       <%= form.file_field :receipt_upload, accept: ExpenseReceipt::SIGNATURES.keys.join(","), class: "field-input py-2",
-            data: { controller: "receipt-input", action: "change->receipt-input#change" } %>
+            data: receipt_input_data %>
       <p class="mt-1 text-xs text-ink-muted"><%= t(".receipt_help", size: number_to_human_size(ExpenseReceipt::MAX_SIZE)) %></p>
     </div>
     <div class="sm:col-span-2">

@@ -15,6 +15,13 @@
     <% if policy(@batch).update? %>
       <%= modal_link_to t("#{scope}.edit"), edit_sales_coffee_batch_path(@batch), class: "btn" %>
     <% end %>
+    <% if policy(@batch).close? %>
+      <%= modal_link_to t("#{scope}.close"), new_sales_coffee_batch_closing_path(@batch), class: "btn" %>
+    <% end %>
+    <% if policy(@batch).reopen? %>
+      <%= button_to t("#{scope}.reopen"), sales_coffee_batch_closing_path(@batch), method: :delete, class: "btn",
+            form: { data: { turbo_confirm: t("#{scope}.confirm_reopen") } } %>
+    <% end %>
     <% if policy(@batch).destroy? %>
       <%= button_to t("#{scope}.destroy"), sales_coffee_batch_path(@batch), method: :delete, class: "btn",
             form: { data: { turbo_confirm: t("#{scope}.confirm_destroy") } } %>
@@ -38,6 +45,13 @@
     <%= t("#{scope}.on_shipment") %> <%= link_to shipment_label(@batch.shipment), sales_shipment_path(@batch.shipment), class: "link", data: { turbo_frame: "_top" } %>
   <% elsif @batch.processing %>
     <%= t("#{scope}.on_process") %> <%= link_to @batch.processing.audit_label, sales_coffee_conversion_path(@batch.processing), class: "link", data: { turbo_frame: "_top" } %>
+  <% elsif @batch.closed? %>
+    <%# Closed without a shipment (Fernando, 2026-11-22). %>
+    <span class="badge badge-warning"><%= t("sales.coffee_batches.table.closed") %></span>
+    <%= t(@batch.stock_count ? "#{scope}.closed_gone" : "#{scope}.closed_kept", date: l(@batch.closed_at, format: :short), name: @batch.closed_by&.name, reason: @batch.close_reason) %>
+    <% if @batch.stock_count %>
+      <%= link_to @batch.stock_count.label, sales_stock_count_path(@batch.stock_count), class: "link", data: { turbo_frame: "_top" } %>
+    <% end %>
   <% else %>
     <span class="badge badge-neutral"><%= t("sales.coffee_batches.table.free") %></span> <%= t("#{scope}.free_help") %>
   <% end %>

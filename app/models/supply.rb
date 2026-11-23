@@ -11,6 +11,14 @@ class Supply < ApplicationRecord
   has_many :entries, class_name: "SupplyEntry", dependent: :restrict_with_error
   has_many :exit_lines, class_name: "SupplyExitLine", dependent: :restrict_with_error
 
+  # What one unit cost, on average, of everything that came in (the cost of
+  # a dispatch to a vehicle); nil without entries.
+  def self.average_costs(ids = nil)
+    lines = SupplyEntryLine.where("quantity > 0")
+    lines = lines.where(supply_id: ids) if ids
+    lines.group(:supply_id).pluck(:supply_id, Arel.sql("SUM(amount) / NULLIF(SUM(quantity), 0)")).to_h
+  end
+
   normalizes :name, with: ->(value) { value.squish.presence }
   normalizes :unit, with: ->(value) { value.squish.downcase.presence }
 
@@ -20,6 +28,10 @@ class Supply < ApplicationRecord
 
   scope :ordered, -> { order(:name) }
   scope :active, -> { where(active: true) }
+  # Fuel, oil… of the business (Fernando, 2026-11-22): never lent; it goes
+  # to the vehicles (SupplyExit, use of the business).
+  scope :lendable, -> { where(business_use: false) }
+  scope :of_the_business, -> { where(business_use: true) }
 
   def audit_label = name
 

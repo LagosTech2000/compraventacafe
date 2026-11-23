@@ -27,11 +27,14 @@ export default class extends Controller {
     }
 
     const gross = Math.round((counted - row.gross) * 100) / 100
-    const net = Math.round((Math.round(counted * row.ratio * 100) / 100 - row.net) * 100) / 100
+    // As the server (StockCount): nothing counted leaves no net pounds;
+    // counted as the system said, nothing to adjust.
+    const net = counted === 0 ? Math.round(-row.net * 100) / 100
+      : gross === 0 ? 0 : Math.round((Math.round(counted * row.ratio * 100) / 100 - row.net) * 100) / 100
     this.differenceTarget.textContent = this.textsValue.gross.replace("%{pounds}", this.signed(gross))
     this.differenceTarget.classList.toggle("text-danger", gross < 0)
     this.netTarget.textContent = this.textsValue.net.replace("%{pounds}", this.signed(net))
-    this.reasonTarget.required = gross !== 0 || net !== 0
+    this.reasonTarget.required = gross !== 0 || (net !== 0 && counted !== 0)
     const percent = row.gross > 0 ? Math.abs(gross) * 100 / row.gross : (gross === 0 ? 0 : Infinity)
     this.overShareTarget.hidden = !(this.hasLimitValue && this.limitValue > 0 && percent > this.limitValue)
   }

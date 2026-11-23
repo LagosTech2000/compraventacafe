@@ -1,7 +1,7 @@
 <%# The parts of Comercialización → Insumos (Fernando, 2026-11-13): the
     inventory with its entries, what is still to deliver, what left without a
     loan (Fernando, 2026-11-14) and the catalog. %>
-<% tabs = { stock: sales_supply_stock_path, deliveries: sales_supply_deliveries_path, exits: sales_supply_exits_path, catalog: sales_supplies_path } %>
+<% tabs = { stock: sales_supply_stock_path, deliveries: sales_supply_deliveries_path, exits: sales_supply_exits_path, fuel: sales_fuel_dispatches_path, catalog: sales_supplies_path } %>
 <nav class="mt-4 flex flex-wrap gap-2 print:hidden" aria-label="<%= t("sales.supply_stocks.tabs.label") %>" data-supply-tabs>
   <% tabs.each do |key, path| %>
     <% current = current_page?(path) %>

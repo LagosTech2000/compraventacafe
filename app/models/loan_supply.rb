@@ -18,6 +18,8 @@ class LoanSupply < ApplicationRecord
   validates :quantity, numericality: { greater_than: 0, less_than: 100_000 }
   validates :unit_price, numericality: { greater_than: 0, less_than: Supply::MAX_PRICE }
   validate :delivered_from_warehouse, if: :delivery_counts?
+  # Fuel and oil of the business are not lent (Fernando, 2026-11-22).
+  validate { errors.add(:supply, :business_use) if (new_record? || will_save_change_to_supply_id?) && supply&.business_use? }
 
   before_validation :compute_total
   before_validation :delivered_with_loan, on: :create

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_20_210000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_22_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -218,11 +218,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_210000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "coffee_conversion_id"
+    t.datetime "closed_at"
+    t.bigint "closed_by_id"
+    t.string "close_reason"
+    t.bigint "stock_count_id"
     t.index ["batched_on"], name: "index_coffee_batches_on_batched_on"
+    t.index ["closed_by_id"], name: "index_coffee_batches_on_closed_by_id"
     t.index ["coffee_conversion_id"], name: "index_coffee_batches_on_coffee_conversion_id"
     t.index ["created_by_id"], name: "index_coffee_batches_on_created_by_id"
     t.index ["number"], name: "index_coffee_batches_on_number", unique: true
     t.index ["shipment_id"], name: "index_coffee_batches_on_shipment_id"
+    t.index ["stock_count_id"], name: "index_coffee_batches_on_stock_count_id"
     t.index ["warehouse_id"], name: "index_coffee_batches_on_warehouse_id"
     t.check_constraint "shipment_id IS NULL OR coffee_conversion_id IS NULL", name: "coffee_batches_one_destination"
   end
@@ -984,6 +990,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_210000) do
     t.bigint "warehouse_id", null: false
     t.boolean "common_coffee", default: false, null: false
     t.bigint "farm_plot_id"
+    t.bigint "vehicle_id"
     t.index ["created_by_id"], name: "index_purchases_on_created_by_id"
     t.index ["farm_id"], name: "index_purchases_on_farm_id"
     t.index ["farm_plot_id"], name: "index_purchases_on_farm_plot_id"
@@ -992,6 +999,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_210000) do
     t.index ["producer_id"], name: "index_purchases_on_producer_id"
     t.index ["purchased_at"], name: "index_purchases_on_purchased_at"
     t.index ["season_year"], name: "index_purchases_on_season_year"
+    t.index ["vehicle_id"], name: "index_purchases_on_vehicle_id"
     t.index ["voided_at"], name: "index_purchases_on_voided_at"
     t.index ["voided_by_id"], name: "index_purchases_on_voided_by_id"
     t.index ["warehouse_id"], name: "index_purchases_on_warehouse_id"
@@ -1325,6 +1333,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_210000) do
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "business_use", default: false, null: false
     t.index "lower((name)::text)", name: "index_supplies_on_lower_name", unique: true
   end
 
@@ -1377,10 +1386,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_210000) do
     t.bigint "created_by_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "vehicle_id"
+    t.bigint "purchase_id"
     t.index ["created_by_id"], name: "index_supply_exits_on_created_by_id"
     t.index ["exited_on"], name: "index_supply_exits_on_exited_on"
     t.index ["money_account_id"], name: "index_supply_exits_on_money_account_id"
     t.index ["person_id"], name: "index_supply_exits_on_person_id"
+    t.index ["purchase_id"], name: "index_supply_exits_on_purchase_id"
+    t.index ["vehicle_id"], name: "index_supply_exits_on_vehicle_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -1503,6 +1516,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_210000) do
   add_foreign_key "coffee_batch_invoices", "users", column: "created_by_id"
   add_foreign_key "coffee_batches", "coffee_conversions"
   add_foreign_key "coffee_batches", "shipments"
+  add_foreign_key "coffee_batches", "stock_counts"
+  add_foreign_key "coffee_batches", "users", column: "closed_by_id"
   add_foreign_key "coffee_batches", "users", column: "created_by_id"
   add_foreign_key "coffee_batches", "warehouses"
   add_foreign_key "coffee_conversions", "processing_sites"
@@ -1602,6 +1617,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_210000) do
   add_foreign_key "purchases", "producers"
   add_foreign_key "purchases", "users", column: "created_by_id"
   add_foreign_key "purchases", "users", column: "voided_by_id"
+  add_foreign_key "purchases", "vehicles"
   add_foreign_key "purchases", "warehouses"
   add_foreign_key "purchases", "zones"
   add_foreign_key "sale_lines", "sales"
@@ -1651,7 +1667,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_210000) do
   add_foreign_key "supply_exit_lines", "supply_exits"
   add_foreign_key "supply_exits", "money_accounts"
   add_foreign_key "supply_exits", "people"
+  add_foreign_key "supply_exits", "purchases"
   add_foreign_key "supply_exits", "users", column: "created_by_id"
+  add_foreign_key "supply_exits", "vehicles"
   add_foreign_key "vehicles", "vehicle_types"
   add_foreign_key "warehouse_transfers", "users", column: "created_by_id"
   add_foreign_key "warehouse_transfers", "users", column: "voided_by_id"

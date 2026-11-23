@@ -32,6 +32,17 @@ RSpec.describe StockGuard, :all_records do
     expect(conversion.errors.full_messages.join).to include("no puede salir más de lo que hay")
   end
 
+  # Processing cherry is checked in gross pounds (Fernando, 2026-11-22).
+  it "checks a cherry process against the gross pounds" do
+    create(:purchase, coffee_state: "cherry", gross_weight: 1_000, purchased_at: 3.days.ago)
+    create(:stock_count, coffee_state: "cherry", counted_at: 2.days.ago)
+
+    conversion = build(:coffee_conversion, from_state: "cherry", input_gross_weight: 1_200)
+    expect(conversion).not_to be_valid
+    expect(conversion.errors.full_messages.join).to include("Solo hay 1,000.00 lb brutas de Uva", "esto procesa 1,200.00")
+    expect(build(:coffee_conversion, from_state: "cherry", input_gross_weight: 1_000)).to be_valid
+  end
+
   it "does not let a move dated back take what later moves already took" do
     create(:stock_count, counted_at: 2.days.ago)
     create(:shipment, origin_gross_weight: 900, origin_sacks: 6, departed_at: 1.hour.ago)

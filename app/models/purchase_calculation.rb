@@ -30,6 +30,12 @@ class PurchaseCalculation
     (BigDecimal(net_weight.to_s) / QUINTAL_WEIGHT).round(2)
   end
 
+  # The sacks the inventory shows (Fernando, 2026-11-22): gross ÷ 165,
+  # whole sacks only, rounded down (71.9 is 71).
+  def self.whole_sacks(gross_weight)
+    [ (BigDecimal(gross_weight.to_s) / SACK_WEIGHT).floor, 0 ].max
+  end
+
   # counted_sacks: the sacks counted in the weighings; without them the sacks
   # come from the gross weight.
   def initialize(coffee_state:, gross_weight:, price_per_pound:, humidity_percent: nil, damage_percent: nil, yield_factor: nil,

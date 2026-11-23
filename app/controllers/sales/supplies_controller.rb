@@ -40,7 +40,7 @@ module Sales
       end
 
       def supply_params
-        params.expect(supply: [ :name, :unit, :default_price, :active ])
+        params.expect(supply: [ :name, :unit, :default_price, :business_use, :active ])
       end
   end
 end

@@ -31,11 +31,18 @@
               loan_settlement_reload_url_value: new_trading_purchase_loan_settlement_path(purchase) } do |form| %>
   <%= render "shared/form_errors", record: @settlement %>
 
-  <div class="max-w-xs">
-    <%= form.label :paid_on, t(".paid_on"), class: "field-label" %>
-    <%= form.date_field :paid_on, max: latest_date, value: @settlement.paid_on, required: true, class: "field-input",
-          data: { action: "loan-settlement#reload" } %>
-    <p class="mt-1 text-xs text-ink-muted"><%= t(".paid_on_help") %></p>
+  <div class="grid max-w-2xl gap-5 sm:grid-cols-2">
+    <div>
+      <%= form.label :paid_on, t(".paid_on"), class: "field-label" %>
+      <%= form.date_field :paid_on, max: latest_date, value: @settlement.paid_on, required: true, class: "field-input",
+            data: { action: "loan-settlement#reload" } %>
+      <p class="mt-1 text-xs text-ink-muted"><%= t(".paid_on_help") %></p>
+    </div>
+    <%# Where the money goes (Fernando, 2026-11-22), the loans' account at first. %>
+    <div>
+      <%= render "shared/money_account_field", form:, required: MoneyAccount.active.exists? %>
+      <p class="mt-1 text-xs text-ink-muted"><%= t(".account_help") %></p>
+    </div>
   </div>
 
   <section aria-labelledby="open-loans">

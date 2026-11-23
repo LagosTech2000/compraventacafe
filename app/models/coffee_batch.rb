@@ -44,6 +44,10 @@ class CoffeeBatch < ApplicationRecord
   # goes to a shipment or to a process, never both.
   belongs_to :processing, class_name: "CoffeeConversion", foreign_key: :coffee_conversion_id, optional: true, inverse_of: :input_batches
   belongs_to :created_by, class_name: "User"
+  # Closed without a shipment or a process (Fernando, 2026-11-22), and the
+  # count adjustment that took its coffee out, when it was no longer there.
+  belongs_to :closed_by, class_name: "User", optional: true
+  belongs_to :stock_count, optional: true
   has_many :batch_invoices, -> { order(:id) }, class_name: "CoffeeBatchInvoice", dependent: :destroy, inverse_of: :coffee_batch
   has_many :invoices, through: :batch_invoices
   has_many :batch_conversions, -> { order(:id) }, class_name: "CoffeeBatchConversion", dependent: :destroy, inverse_of: :coffee_batch
@@ -66,7 +70,8 @@ class CoffeeBatch < ApplicationRecord
   before_create :assign_number
   before_destroy :not_shipped, prepend: true
 
-  scope :free, -> { where(shipment_id: nil, coffee_conversion_id: nil) }
+  scope :free, -> { where(shipment_id: nil, coffee_conversion_id: nil, closed_at: nil) }
+  scope :closed, -> { where.not(closed_at: nil) }
   scope :newest_first, -> { order(batched_on: :desc, id: :desc) }
 
   def self.next_number = (maximum(:number) || 0) + 1
@@ -123,6 +128,7 @@ class CoffeeBatch < ApplicationRecord
   def processed? = coffee_conversion_id.present?
   # Gone to a shipment or a process.
   def taken? = shipped? || processed?
+  def closed? = closed_at.present?
   # What took it (its shipment or its process) and when its coffee left.
   def taker = shipment || processing
   def taken_at = shipment ? shipment.departed_at : processing&.weighed_at

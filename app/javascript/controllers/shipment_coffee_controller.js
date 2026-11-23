@@ -5,14 +5,20 @@ import { Controller } from "@hotwired/stimulus"
 // unmarked); shortcuts mark today's purchases, the ones since the last
 // shipment of that coffee, all or none; and what it carries (these invoices
 // and the lots marked below) shows against the local scale's gross pounds.
+// In «Procesar café» (Fernando, 2026-11-22) `scope` is "coffee_conversion"
+// and `stateField` "from_state"; after each sum it tells the lots' picker
+// ("shipment-coffee:summed"), which puts the invoices' pounds in the gross
+// that goes in. A shipment also lists finished processes, below the
+// invoices (Fernando, 2026-11-22).
 export default class extends Controller {
-  static targets = ["item", "empty", "total", "percent"]
-  static values = { today: String, lastDepartures: Object, texts: Object }
+  static targets = ["item", "empty", "total", "percent", "processes"]
+  static values = { today: String, lastDepartures: Object, texts: Object,
+                    scope: { type: String, default: "shipment" }, stateField: { type: String, default: "coffee_state" } }
 
   connect() {
     this.form = this.element.closest("form")
     this.onChange = (event) => {
-      if (event.target.matches("[name='shipment[coffee_state]'], [name='shipment[warehouse_id]']")) this.filter()
+      if (event.target.matches(`[name='${this.scopeValue}[${this.stateFieldValue}]'], [name='${this.scopeValue}[warehouse_id]']`)) this.filter()
       else this.sum()
     }
     this.form?.addEventListener("change", this.onChange)
@@ -27,9 +33,9 @@ export default class extends Controller {
   }
 
   current() {
-    const states = [ ...(this.form?.querySelectorAll("[name='shipment[coffee_state]']") || []) ]
+    const states = [ ...(this.form?.querySelectorAll(`[name='${this.scopeValue}[${this.stateFieldValue}]']`) || []) ]
     const state = states.find((field) => field.type !== "radio" || field.checked)
-    return { state: state?.value || "", warehouse: this.form?.querySelector("[name='shipment[warehouse_id]']")?.value || "" }
+    return { state: state?.value || "", warehouse: this.form?.querySelector(`[name='${this.scopeValue}[warehouse_id]']`)?.value || "" }
   }
 
   shown() {
@@ -45,7 +51,10 @@ export default class extends Controller {
       if (!fits) box.checked = false
       box.disabled = !fits
     })
-    this.emptyTarget.hidden = this.shown().length > 0
+    // The finished processes (a shipment's, Fernando 2026-11-22) go in their own table.
+    const processes = this.hasProcessesTarget ? this.processesTarget : null
+    this.emptyTarget.hidden = this.shown().some((item) => !processes?.contains(item))
+    if (processes) processes.hidden = !this.shown().some((item) => processes.contains(item))
     this.sum()
   }
 
@@ -82,8 +91,20 @@ export default class extends Controller {
     }
   }
 
+  // What the marked invoices carry, gross and net (the lots' picker adds
+  // them to a process's gross).
+  invoiceShares() {
+    return this.shown().filter((item) => this.box(item).checked).map((item) => this.share(item))
+      .reduce((total, share) => ({ gross: total.gross + share.gross, net: total.net + share.net }), { gross: 0, net: 0 })
+  }
+
   // These invoices and the lots marked in the form, against the local scale.
   sum() {
+    this.summing()
+    this.dispatch("summed", { bubbles: true })
+  }
+
+  summing() {
     this.itemTargets.forEach((item) => {
       const field = this.percentOf(item)
       if (field) field.disabled = item.hidden || !this.box(item).checked
@@ -101,7 +122,7 @@ export default class extends Controller {
       return
     }
     let text = this.textsValue.carries.replace("%{gross}", this.pounds.format(gross)).replace("%{net}", this.pounds.format(net))
-    const local = parseFloat(this.form?.querySelector("[name='shipment[origin_gross_weight]']")?.value)
+    const local = parseFloat(this.form?.querySelector(`[name='${this.scopeValue}[origin_gross_weight]']`)?.value)
     if (local > 0) {
       const difference = Math.round((local - gross) * 100) / 100
       const percent = Math.round((difference * 10000) / gross) / 100

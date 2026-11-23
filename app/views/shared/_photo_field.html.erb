@@ -14,10 +14,20 @@
     <p class="field-label"><%= record.class.human_attribute_name(:photo_upload) %></p>
     <%# The browser's own picker speaks its language: a button in Spanish
         opens it (the label), the input stays for screen readers only. %>
-    <%= form.file_field :photo_upload, accept: "image/jpeg,image/png,image/webp", class: "peer sr-only",
-          data: { photo_input_target: "input", action: "photo-input#change" } %>
-    <%= form.label :photo_upload, t(record.photo_info ? "shared.photo_field.change" : "shared.photo_field.choose"),
-          class: "btn btn-sm cursor-pointer peer-focus-visible:ring-2 peer-focus-visible:ring-primary" %>
+    <div class="flex flex-wrap gap-2">
+      <%= form.file_field :photo_upload, accept: "image/jpeg,image/png,image/webp", class: "peer sr-only",
+            data: { photo_input_target: "input", action: "photo-input#change" } %>
+      <%= form.label :photo_upload, t(record.photo_info ? "shared.photo_field.change" : "shared.photo_field.choose"),
+            class: "btn btn-sm cursor-pointer peer-focus-visible:ring-2 peer-focus-visible:ring-primary" %>
+      <%# «Tomar foto» (Fernando, 2026-11-22): the phone's camera. No name:
+          the picture moves into the field above (photo-input#takePicture). %>
+      <% camera_id = "#{form.field_id(:photo_upload)}_camera" %>
+      <input type="file" id="<%= camera_id %>" accept="image/*" capture="user" class="peer/camera sr-only"
+             data-photo-input-target="camera" data-action="photo-input#takePicture">
+      <label for="<%= camera_id %>" class="btn btn-sm cursor-pointer peer-focus-visible/camera:ring-2 peer-focus-visible/camera:ring-primary">
+        <%= t("shared.photo_field.take") %>
+      </label>
+    </div>
     <p class="text-xs text-ink-muted"><%= t("shared.photo_field.hint") %></p>
     <% if record.photo_info %>
       <label class="flex items-center gap-2 text-sm">

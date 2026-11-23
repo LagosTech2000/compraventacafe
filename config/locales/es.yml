@@ -177,8 +177,11 @@ es:
       rtn: "RTN %{rtn}"
       owner: "De: %{name}"
       phones: "Teléfonos: %{phones}"
+    receipt_camera:
+      take: "Tomar foto"
     photo_field:
       choose: "Elegir foto"
+      take: "Tomar foto"
       change: "Cambiar foto"
       hint: "JPG, PNG o WebP. Se achica sola antes de guardarse."
       remove: "Quitar la foto"
@@ -1298,6 +1301,10 @@ es:
         voided_notice: "Compra anulada el %{date} por %{name}. No cuenta en listas, totales ni facturación."
         invoiced_notice: "Esta compra ya está en la factura %{number} y no se puede modificar."
         hauled_by: "Carreada por %{name}"
+        vehicle: "Fue el vehículo %{vehicle}"
+        vehicle_fuel: "Se le despachó para esta compra: %{fuel}."
+        vehicle_fuel_item: "%{quantity} %{unit} de %{supply}"
+        vehicle_no_fuel: "Todavía no se le despacha combustible para esta compra."
         hauler_commission: "Comisión: %{terms} ="
         hauler_paid_apart: "La paga el negocio aparte: no cambia lo que se le paga al productor."
         view_hauler: "Ver carrero"
@@ -1324,6 +1331,7 @@ es:
         complete_farm: "Completar datos de la finca"
         new_hauler: "Nuevo carrero"
         hauler_help: "Si la trajo un carrero, gana su comisión por esta compra. Si no, elige «Sin carrero»."
+        vehicle_help: "El vehículo del negocio que fue por el café (opcional). La gasolina que se le despache puede ir a esta compra."
         hauler_missing: "Elige el carrero que la trajo, o «Sin carrero»."
         hauler_terms: "%{price} por libra neta"
         hauler_commission: "Comisión del carrero"
@@ -1387,6 +1395,7 @@ es:
         over_available: "Los abonos no pueden pasar de %{available}, lo que le queda a la compra."
         paid_on: "Fecha del abono"
         paid_on_help: "El interés se calcula hasta esta fecha. Al cambiarla se actualiza lo que debe."
+        account_help: "Ahí entra el dinero de los abonos. Empieza con la cuenta de préstamos."
         open_loans: "Préstamos por cobrar"
         fill_all: "Abonar todo lo posible"
         loan: "Préstamo %{number}"
@@ -2223,6 +2232,7 @@ es:
         statuses:
           free: "Libres"
           shipped: "En una salida o un proceso"
+          closed: "Cerrados sin salida"
         empty: "No hay lotes con estos filtros."
       table:
         number: "Lote"
@@ -2234,6 +2244,7 @@ es:
         shipment: "Salida"
         actions: "Acciones"
         free: "Libre"
+        closed: "Cerrado"
         process: "Proceso %{number}"
         mark_all: "Marcar todos"
         mark: "Marcar el %{batch}"
@@ -2252,6 +2263,11 @@ es:
         edit: "Editar"
         destroy: "Quitar lote"
         confirm_destroy: "¿Quitar este lote? Sus facturas quedan libres."
+        close: "Cerrar lote"
+        reopen: "Reabrir lote"
+        confirm_reopen: "¿Reabrir el lote? Vuelve a estar libre para una salida o un proceso y, si su café se sacó del inventario, el ajuste se anula y el café vuelve."
+        closed_kept: "Cerrado sin salida el %{date} por %{name}: «%{reason}». Su café sigue en el inventario."
+        closed_gone: "Cerrado sin salida el %{date} por %{name}: «%{reason}». Su café salió del inventario con el"
         figures:
           gross: "Brutas (lb)"
           net: "Netas (lb)"
@@ -2388,6 +2404,7 @@ es:
         badges:
           active: "Activo"
           inactive: "Inactivo"
+          business_use: "De la empresa"
         per_unit: "%{price} por %{unit}"
         edit: "Editar"
         actions: "Acciones"
@@ -2402,6 +2419,7 @@ es:
         unit_suggestions: [saco, quintal, bolsa, libra, galón, litro, unidad]
         price_help: "Se pone solo al agregarlo a un préstamo; ahí se puede cambiar."
         active_help: "Un insumo inactivo ya no aparece al prestar. Los préstamos que ya lo tienen no cambian."
+        business_use_help: "Combustible, aceite y lo que usa la empresa: no se presta. Entra con las entradas de insumos y sale a los vehículos (salida «Uso del negocio» con su vehículo); se ve en «Combustible»."
       create:
         success: "Insumo creado."
       update:
@@ -2412,6 +2430,7 @@ es:
         stock: "Inventario y entradas"
         deliveries: "Por entregar"
         exits: "Salidas"
+        fuel: "Combustible"
         catalog: "Catálogo de insumos"
       show:
         title: "Insumos"
@@ -2461,6 +2480,13 @@ es:
         person_placeholder: "Escribe 3 letras del nombre o el DNI"
         person_missing: "Elige a quién se le vende."
         new_person: "Nueva persona"
+        use: "A qué vehículo"
+        vehicle_help: "Obligatorio para el combustible y el aceite de la empresa: el vehículo al que se le despachó."
+        vehicle_missing: "Elige el vehículo al que se le despachó."
+        purchase_help: "Opcional: la compra a la que fue el vehículo (las de los últimos 15 días). Si la compra tiene vehículo, lo toma."
+        purchase_option: "%{producer} · %{date} · %{vehicle}"
+        no_vehicle_short: "sin vehículo"
+        no_purchase: "Sin compra"
         submit: "Registrar salida"
       create:
         success:
@@ -2471,8 +2497,59 @@ es:
         destroy: "Quitar salida"
         confirm_destroy: "¿Quitar esta salida? Lo que salió vuelve a la bodega y, si fue venta, su dinero sale de la cuenta."
         income: "Su dinero entró a «%{account}»: sale en Ingresos y en Movimientos."
+        purchase: "Compra de %{producer} · %{date}"
       destroy:
         success: "Se quitó la salida: lo que salió volvió a la bodega."
+    # A lot closed without a shipment or a process (Fernando, 2026-11-22).
+    coffee_batch_closings:
+      new:
+        title: "Cerrar el %{batch}"
+        help: "Para un lote cuyo café no va a ir en una salida ni en un proceso del sistema (p. ej. salió sin registrarse). Deja de salir en «Nueva salida», «Procesar café» y «Facturar compras», y sus facturas se quedan en él. Las compras siguen activas: los QQ de los productores no cambian."
+        lot: "Lo que lleva el lote"
+        stock: "%{state} en %{warehouse}, hoy"
+        gross_pounds: "%{pounds} lb brutas"
+        reason: "Motivo"
+        reason_placeholder: "Ej.: salió sin registrarse en una salida"
+        reason_missing: "Escribe por qué se cierra el lote."
+        gone: "Su café ya no está en la bodega: sacarlo del inventario"
+        gone_help: "Se registra un ajuste por conteo que deja %{left} lb brutas de este estado en esta bodega (lo de hoy menos lo del lote)."
+        not_gone_help: "Sin marcarla, el lote solo se cierra: el inventario no cambia (por ejemplo, si un conteo ya lo corrigió)."
+        submit: "Cerrar lote"
+        confirm: "¿Cerrar este lote?"
+      create:
+        success: "%{batch} cerrado."
+      destroy:
+        success: "%{batch} reabierto: está libre otra vez."
+      errors:
+        reason: "Escribe el motivo."
+        taken: "El lote ya está en una salida, en un proceso o cerrado."
+      count_detail: "Cierre del %{batch}: %{reason}"
+      reopen_reason: "Se reabrió el %{batch}"
+    # Fuel and oil of the business to the vehicles (Fernando, 2026-11-22).
+    fuel_dispatches:
+      show:
+        title: "Combustible de la empresa"
+        help: "Lo que se despacha a los vehículos de los insumos «De la empresa» (gasolina, aceite…): por día y por vehículo, en su unidad y en lempiras, y lo que queda en bodega. Cada despacho es una salida «Uso del negocio» con su vehículo."
+        new: "Registrar despacho"
+        stock: "Queda en bodega (hoy)"
+        no_supplies: "No hay insumos «De la empresa»: márcalos en el Catálogo de insumos."
+        totals: "Despachado en el período"
+        quantity: "%{quantity} %{unit}"
+        cost_line:
+          one: "%{cost} · 1 despacho"
+          other: "%{cost} · %{count} despachos"
+        total_cost: "Costo despachado"
+        cost_help: "El costo es lo despachado al costo promedio de lo que ha entrado de cada insumo."
+        empty: "No hay despachos con estos filtros."
+        tables:
+          by_day: "Por día"
+          by_vehicle: "Por vehículo"
+        columns:
+          by_day: "Día"
+          by_vehicle: "Vehículo"
+          quantity: "Cantidad"
+          dispatches: "Despachos"
+          cost: "Costo"
     # What the loans lent and whether it was handed out (Fernando, 2026-11-13).
     supply_deliveries:
       status:
@@ -2595,10 +2672,12 @@ es:
     shipments:
       coffee_field:
         title: "¿Qué café lleva?"
-        help: "Las facturas con café que todavía no está en un lote, de este estado y esta bodega, la compra más vieja primero. Al guardar, las marcadas forman un lote solo, con el % que escribas de cada una (empieza en lo que le queda). Abajo puedes marcar además lotes ya armados."
+        help: "Las facturas con café que todavía no está en un lote, de este estado y esta bodega, la compra más vieja primero, y después los procesos terminados. Al guardar, las marcadas forman un lote solo, con el % que escribas de cada una (empieza en lo que le queda). Abajo puedes marcar además lotes ya armados."
+        process_help: "Las facturas con café que todavía no está en un lote, de este estado y esta bodega, la compra más vieja primero. Al guardar, las marcadas forman un lote solo que entra a procesar, con el % que escribas de cada una (empieza en lo que le queda). Abajo puedes marcar además lotes ya armados."
         shortcuts: "Marcar"
         today: "Compras de hoy"
         since_last: "Desde la última salida"
+        since_last_process: "Desde el último proceso"
         all: "Todo"
         none: "Ninguna"
         mark: "Llevar"
@@ -2608,6 +2687,13 @@ es:
         percent: "Lleva (%)"
         percent_of: "Porcentaje de la factura %{number} que lleva"
         percent_error: "La factura %{number} lleva un porcentaje que no sirve: entre 0.0001 y %{left} (lo que le queda)."
+        process_percent_error: "El proceso %{number} lleva un porcentaje que no sirve: entre 0.0001 y %{left} (lo que le queda)."
+        processes: "Procesos terminados"
+        processes_help: "Lo que salió de procesos terminados, de este estado y esta bodega. El lote toma primero las facturas y después los procesos."
+        process: "Proceso"
+        finished: "Terminó"
+        process_label: "Proceso %{number} · %{states}"
+        process_percent_of: "Porcentaje del proceso %{number} que lleva"
         invoice_label: "Factura %{number} · %{producer}"
         percent_left: "Queda el %{percent}: el resto ya está en lotes"
         empty: "No hay facturas libres de este estado y esta bodega."
@@ -2615,6 +2701,7 @@ es:
         carries: "Lleva %{gross} lb brutas · %{net} lb netas."
         against: "La báscula local da %{gross} lb brutas (%{percent} %) contra eso."
         lot_observations: "Armado al registrar la salida, con las facturas de «¿Qué café lleva?»."
+        process_lot_observations: "Armado al procesar café, con las facturas de «¿Qué café lleva?»."
         lot_error: "No se pudo armar el lote: %{message}"
       table:
         number: "Remisión"
@@ -4102,6 +4189,25 @@ es:
         overdue: "Préstamos vencidos"
         overdue_help: "Pasaron su fecha límite y todavía deben. Los más atrasados primero."
         no_overdue: "No hay préstamos vencidos."
+      pending:
+        title: "Pendientes"
+        sections:
+          overdue: "Vencidos"
+          due_soon: "Vencen pronto (7 días)"
+          to_deliver: "Insumos por entregar"
+          coffee: "Con café para abonar"
+        empty:
+          overdue: "Ninguno vencido."
+          due_soon: "Ninguno vence esta semana."
+          to_deliver: "Nada por entregar."
+          coffee: "Nadie con café para abonar."
+        overdue_detail: "%{owed} · venció %{date}"
+        due_soon_detail: "%{owed} · vence %{date}"
+        to_deliver_detail: "%{quantity} %{unit} de %{supply}"
+        coffee_detail: "Café: %{available}"
+        see_all:
+          one: "Ver 1"
+          other: "Ver los %{count}"
     loans:
       print_buttons:
         promissory_note: "Pagaré"
@@ -6149,7 +6255,7 @@ es:
         summary: "Pasar café de uva a pergamino húmedo, o de húmedo a pergamino seco, en dos pasos: pesar lo que entra y registrar lo que salió."
         steps:
           - "En Comercialización → Procesos (o en Inventario), toca «Procesar café»."
-          - "Elige qué se procesa, la bodega, el lugar (cada proceso tiene su propia lista de lugares) y marca los lotes cuyo café entra (o crea uno con «Nuevo lote» y elige sus facturas): las lb brutas a procesar son las de los lotes. Ese café sale de su estado y queda «En proceso»."
+          - "Elige qué se procesa, la bodega, el lugar (cada proceso tiene su propia lista de lugares) y marca en «¿Qué café lleva?» las facturas que entran (con el % de cada una; al guardar forman un lote solo) o lotes ya armados: las lb brutas a procesar son las de las facturas y los lotes. Ese café sale de su estado y queda «En proceso»."
           - "Cuando salga, abre el proceso y toca «Registrar resultado»: pesa lo que salió como una compra (libras brutas, sacos, humedad y daño). Se suma a su inventario."
           - "Al mandar a procesar se ve cuánto debería salir según el rendimiento estimado (37.95 % de la uva, 50 % al secar, o el que escribas)."
           - "El detalle compara lo estimado con lo que salió, la merma y las libras netas que entraron con las que salieron."
@@ -7210,12 +7316,25 @@ es:
               - "Toca «Registrar salida»."
             tips:
               - "El uso del negocio no mueve dinero: solo baja la bodega."
+              - "El combustible y el aceite «De la empresa» salen como «Uso del negocio» y piden el vehículo; opcional, la compra a la que fue (toma su vehículo)."
               - "Una salida no se edita: se quita y se registra de nuevo."
           show:
             title: "Salida de insumos"
             summary: "Qué salió, por qué y, si fue venta, a quién, por cuánto y a qué cuenta entró."
             steps:
               - "«Quitar salida» devuelve lo que salió a la bodega y, si fue venta, saca su dinero de la cuenta."
+        fuel_dispatches:
+          show:
+            title: "Combustible de la empresa"
+            summary: "La gasolina, el aceite y lo demás «De la empresa» que se despacha a los vehículos: por día, por vehículo, su costo y lo que queda en bodega."
+            steps:
+              - "Marca el insumo como «De la empresa» en el Catálogo de insumos (no se presta)."
+              - "Registra lo que entra con «Registrar entrada», como cualquier insumo."
+              - "Cada despacho: «Registrar despacho», el insumo, los litros, el vehículo y, opcional, la compra a la que fue."
+              - "Filtra por fechas, vehículo o insumo para ver lo despachado."
+            tips:
+              - "El costo es lo despachado al costo promedio de lo que ha entrado de ese insumo."
+              - "En «Nueva compra» se elige el vehículo que fue por el café."
         supply_deliveries:
           index:
             title: "Insumos por entregar"
@@ -7265,6 +7384,17 @@ es:
               - "«Ver la inversión» la abre en Control financiero."
               - "«Ver la factura» abre la foto o el PDF que se subió."
               - "«Quitar entrada» la saca del inventario junto con su inversión, si lo que trajo no se entregó todavía en préstamos."
+        coffee_batch_closings:
+          form:
+            title: "Cerrar un lote"
+            summary: "Para un lote cuyo café no va a ir en una salida ni en un proceso del sistema. Solo administradores."
+            steps:
+              - "Escribe el motivo."
+              - "Marca «Su café ya no está en la bodega» si salió sin registrarse: se saca del inventario con un ajuste por conteo. Sin marcarla, solo se cierra."
+              - "Toca «Cerrar lote»."
+            tips:
+              - "Las compras siguen activas: los QQ de los productores no cambian."
+              - "«Reabrir lote» lo deja libre otra vez y anula su ajuste, mientras no haya un conteo después."
         coffee_batches:
           index:
             title: "Lotes"
@@ -9874,6 +10004,10 @@ es:
         person_id: "Se le vendió a"
         unit_price: "Precio por unidad (L)"
         amount: "Total (L)"
+        vehicle: "Vehículo"
+        vehicle_id: "Vehículo"
+        purchase: "Para la compra"
+        purchase_id: "Para la compra"
         payment_method: "Forma de pago"
         money_account: "Cuenta"
         money_account_id: "Cuenta"
@@ -9896,6 +10030,12 @@ es:
         quantity: "Cantidad"
         amount: "Costo (L)"
       coffee_batch:
+        closed_at: "Cerrado el"
+        closed_by: "Cerrado por"
+        closed_by_id: "Cerrado por"
+        close_reason: "Motivo del cierre"
+        stock_count: "Ajuste por conteo"
+        stock_count_id: "Ajuste por conteo"
         coffee_conversion: "Proceso"
         coffee_conversion_id: "Proceso"
         processing: "Proceso"
@@ -10169,6 +10309,8 @@ es:
         person: "Persona"
         person_id: "Persona"
       purchase:
+        vehicle: "Vehículo"
+        vehicle_id: "Vehículo"
         common_coffee: "Café corriente"
         farm_plot: "Parcela"
         farm_plot_id: "Parcela"
@@ -10379,6 +10521,7 @@ es:
         unit: "Unidad"
         default_price: "Precio predeterminado (L)"
         active: "Activo"
+        business_use: "De la empresa"
       farm_plot:
         farm: "Finca"
         farm_id: "Finca"
@@ -10579,9 +10722,11 @@ es:
               output_costs: "El proceso tiene gastos cobrados sobre lo que salió: quítalos primero para quitar el resultado."
               in_lots: "Lo que salió de este proceso está en lotes: sácalo de los lotes antes de cambiar o quitar su resultado."
               no_stock: "No hay %{state} en %{warehouse}: no se puede mandar a procesar. Registra primero las compras o elige otra bodega."
-              no_batches: "Marca al menos un lote: lo que se procesa sale de sus facturas."
+              no_batches: "Marca al menos un lote o una factura: lo que se procesa sale de sus facturas."
+              lot_invoices_unavailable: "Alguna de las facturas elegidas ya no está libre o es de otro estado del café o de otra bodega: revisa «¿Qué café lleva?»."
               batches_gone: "Uno de los lotes marcados ya no existe."
               batch_taken: "El %{batch} ya está en una salida o en otro proceso."
+              batch_closed: "El %{batch} está cerrado sin salida."
               batch_other_coffee: "El %{batch} es de otro estado del café o de otra bodega."
             finished_at:
               before_weighed: "no puede ser antes de cuando se pesó lo que entró"
@@ -10614,11 +10759,19 @@ es:
               not_in_warehouse: "«%{supply}» pasa de lo que hay en bodega (%{available})"
             lines:
               blank: "debe tener al menos un insumo"
+            vehicle:
+              blank: "falta: el combustible o el aceite de la empresa va a un vehículo"
+              inactive: "está desactivado: elige otro"
+            purchase:
+              voided: "está anulada: elige otra"
         supply_exit_line:
           attributes:
             supply:
               inactive: "está desactivado"
         loan_supply:
+          attributes:
+            supply:
+              business_use: "es de la empresa: no se presta"
           not_in_warehouse: "No hay suficiente «%{supply}» en bodega para entregarlo: hay %{there} %{unit}. Registra primero su entrada."
         shipment_cost:
           attributes:
@@ -10657,6 +10810,7 @@ es:
             base:
               lot_sold: "El lote está en una salida vendida: ya no cambia. Para corregirlo, primero anula la venta."
               lot_processed: "El lote ya se mandó a procesar con estas libras: no cambia."
+              lot_closed: "El lote está cerrado sin salida: reábrelo primero."
               lot_closed_day: "El lote salió en un día cerrado: ya no cambia."
             coffee_conversion:
               not_eligible: "no puede ir en este lote: debe estar terminado, ser de su estado del café, con su resultado en su bodega y una parte libre"
@@ -10670,6 +10824,7 @@ es:
             base:
               lot_sold: "El lote está en una salida vendida: ya no cambia. Para corregirlo, primero anula la venta."
               lot_processed: "El lote ya se mandó a procesar con estas libras: no cambia."
+              lot_closed: "El lote está cerrado sin salida: reábrelo primero."
               lot_closed_day: "El lote salió en un día cerrado: ya no cambia."
             invoice:
               not_eligible: "no puede ir en este lote: debe ser de su estado del café, con todas sus compras en su bodega y una parte libre"
@@ -10828,7 +10983,9 @@ es:
               has_batches: "La salida tiene lotes: su estado del café y su bodega no cambian. Quita sus lotes primero."
               batches_gone: "Alguno de los lotes elegidos ya no existe."
               lot_invoices_unavailable: "Alguna de las facturas elegidas ya no está libre o es de otro estado del café o de otra bodega: revisa «¿Qué café lleva?»."
+              lot_processes_unavailable: "Alguno de los procesos elegidos ya no está libre o su resultado es de otro estado del café o de otra bodega: revisa «¿Qué café lleva?»."
               batch_taken: "El %{batch} ya está en otra salida."
+              batch_closed: "El %{batch} está cerrado sin salida."
               batch_other_coffee: "El %{batch} es de otro estado del café o de otra bodega."
             weight_note_number:
               taken_by: "ya está en la remisión %{number} de este comprador: cada nota de peso va en una sola salida"
@@ -11025,6 +11182,8 @@ es:
           invoiced: "Una compra facturada no se edita: así se le imprimió al productor. Para corregirla, un administrador anula su factura y se registra de nuevo."
           hauler_paid: "No se puede: ya se le pagó al carrero %{hauler} la comisión de esta compra, y con el cambio quedaría debiendo. Quita primero su último pago."
           attributes:
+            vehicle:
+              inactive: "está desactivado: elige otro"
             hauler:
               inactive: "está desactivado: elige otro o actívalo en su ficha"
             hauler_choice:
@@ -11051,6 +11210,7 @@ es:
                 one: "Tiene un abono: quítalo antes de anular la factura."
                 other: "Tiene %{count} abonos: quítalos antes de anular la factura, del último al primero."
               lot_taken: "Su café va en el %{batch}, que ya salió en %{taker}: primero quita el lote de ahí."
+              lot_closed: "Su café va en el %{batch}, que está cerrado sin salida: primero reábrelo."
               purchase_not_voided: "La compra %{number} no se puede anular: %{message}"
             issued_on:
               after_payments: "no puede ser después del primer abono (%{date})"
@@ -11141,6 +11301,7 @@ es:
           negative_amount: "Los montos no pueden ser negativos."
           over_purchase: "Los abonos suman más de lo que le queda a la compra (%{available})."
           unknown_loan: "Uno de los préstamos ya no está por cobrar. Cierra la ventana y vuelve a abrirla."
+          unknown_account: "Esa cuenta ya no está activa: elige otra."
           loan_error: "Préstamo %{loan}: %{detail}"
 
   errors:
@@ -11196,6 +11357,7 @@ es:
       password_format: "debe tener al menos 8 caracteres"
       not_in_department: "no pertenece al departamento seleccionado"
       over_stock: "Solo hay %{available} lb netas de %{state} en %{warehouse} y esto saca %{net}: no puede salir más de lo que hay. Si hay más café, registra la compra que falta o haz un conteo."
+      over_gross_stock: "Solo hay %{available} lb brutas de %{state} en %{warehouse} y esto procesa %{net}: no puede salir más de lo que hay. Si hay más café, registra la compra que falta o haz un conteo."
       in_future: "no puede ser una fecha futura: registra solo lo que ya pasó"
       coffee_after_shipment: "El %{batch} tiene café que entró el %{entered}, después de que salió la remisión %{number} (%{left}): un lote solo lleva café que ya estaba en la bodega."
       coffee_after_process: "El %{batch} tiene café que entró el %{entered}, después de que se pesó el proceso %{number} (%{left}): un lote solo lleva café que ya estaba en la bodega."

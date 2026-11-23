@@ -5,7 +5,8 @@ import { Controller } from "@hotwired/stimulus"
 // in the form show (one of another is unmarked); «Nuevo lote» opens with
 // them; a lot made in the window ("coffee_batch:created") joins the list
 // marked. With a `total` target (a process), it holds the gross pounds of
-// the marked lots.
+// the marked lots, and of the invoices marked in «¿Qué café lleva?»
+// (shipment_coffee_controller.js, Fernando 2026-11-22).
 export default class extends Controller {
   static targets = ["list", "item", "empty", "newLink", "total"]
   static values = { newUrl: String, scope: { type: String, default: "shipment" }, stateField: { type: String, default: "coffee_state" } }
@@ -16,12 +17,15 @@ export default class extends Controller {
       if (event.target.matches(`[name='${this.scopeValue}[${this.stateFieldValue}]'], [name='${this.scopeValue}[warehouse_id]']`)) this.filter()
       if (event.target.matches(`[name='${this.scopeValue}[batch_ids][]']`)) this.sum()
     }
+    this.onInvoices = () => this.sum()
     this.form?.addEventListener("change", this.onChange)
+    this.form?.addEventListener("shipment-coffee:summed", this.onInvoices)
     this.filter()
   }
 
   disconnect() {
     this.form?.removeEventListener("change", this.onChange)
+    this.form?.removeEventListener("shipment-coffee:summed", this.onInvoices)
   }
 
   current() {
@@ -38,11 +42,21 @@ export default class extends Controller {
     if (!this.hasTotalTarget) return
 
     const marked = this.itemTargets.filter((item) => item.querySelector("input[type=checkbox]")?.checked)
-    const gross = marked.reduce((total, item) => total + (parseFloat(item.dataset.gross) || 0), 0)
-    const net = marked.reduce((total, item) => total + (parseFloat(item.dataset.net) || 0), 0)
-    this.totalTarget.value = gross > 0 ? (Math.round(gross * 100) / 100).toFixed(2) : ""
-    this.totalTarget.dataset.net = net > 0 ? String(net) : ""
+    const invoices = this.invoicesController()?.invoiceShares() || { gross: 0, net: 0 }
+    const gross = marked.reduce((total, item) => total + (parseFloat(item.dataset.gross) || 0), invoices.gross)
+    const net = marked.reduce((total, item) => total + (parseFloat(item.dataset.net) || 0), invoices.net)
+    const value = gross > 0 ? (Math.round(gross * 100) / 100).toFixed(2) : ""
+    const netValue = net > 0 ? String(net) : ""
+    // Only when it changed: the invoices' picker listens to this field too.
+    if (this.totalTarget.value === value && (this.totalTarget.dataset.net || "") === netValue) return
+    this.totalTarget.value = value
+    this.totalTarget.dataset.net = netValue
     this.totalTarget.dispatchEvent(new Event("input", { bubbles: true }))
+  }
+
+  invoicesController() {
+    const element = this.form?.querySelector("[data-controller~='shipment-coffee']")
+    return element && this.application.getControllerForElementAndIdentifier(element, "shipment-coffee")
   }
 
   filter() {

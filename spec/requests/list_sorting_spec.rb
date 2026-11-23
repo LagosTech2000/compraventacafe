@@ -103,7 +103,8 @@ RSpec.describe "Sorting every list" do
 
   it "covers every list filter" do
     names = Dir[Rails.root.join("app/models/*_filter.rb")].map { File.basename(it, ".rb").camelize } -
-            %w[ListFilter MoneyAccountFilter] # cards only, no table
+            %w[ListFilter MoneyAccountFilter] - # cards only, no table
+            %w[FuelDispatchFilter] # sums, every row shown: sorted in the browser (table-sort)
     expect(LISTS.keys.map(&:name)).to match_array(names)
   end
 

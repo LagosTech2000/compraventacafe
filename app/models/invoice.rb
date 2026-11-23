@@ -179,6 +179,8 @@ class Invoice < ApplicationRecord
       end
       blockers << [ :lot_taken, { batch: batch.label, taker: } ]
     end
+    # A lot closed without a shipment keeps its invoices (Fernando, 2026-11-22).
+    coffee_batches.closed.each { blockers << [ :lot_closed, { batch: it.label } ] }
     blockers
   end
 

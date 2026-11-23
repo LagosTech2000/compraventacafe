@@ -27,4 +27,25 @@ RSpec.describe "Counting a warehouse", type: :system do
     expect(page).to have_css(".toast", text: "Conteo 0001 registrado")
     expect(StockCount.sole.gross_weight).to eq(-10)
   end
+
+  # A count of 0 clears the net pounds left of rounding (Fernando, 2026-11-22), with no reason.
+  it "counts nothing without a reason when only the rounding of net pounds is left" do
+    admin = create(:user, :admin)
+    process = create(:coffee_conversion, from_state: "wet_parchment", weighed_at: 1.day.ago, input_gross_weight: 1_000)
+    process.update_columns(input_net_weight: process.input_net_weight + 0.05)
+    sign_in_as(admin)
+    visit sales_stock_path
+    click_link "Contar bodega"
+
+    within("dialog[open]") do
+      select "Pergamino húmedo", from: "Estado del café"
+      fill_in "Libras brutas contadas", with: "0"
+      expect(page).to have_css("[data-count-preview-target=net]", text: "+0.05")
+      expect(find_field("Motivo de la diferencia")[:required]).to be_falsey
+      click_button "Guardar conteo"
+    end
+
+    expect(page).to have_css(".toast", text: "registrado")
+    expect(CoffeeStock.new.row("wet_parchment").stock).to eq(0)
+  end
 end

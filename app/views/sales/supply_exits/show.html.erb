@@ -18,6 +18,9 @@
        details.merge!(person: @exit.person.full_name, amount: format_money(@exit.amount),
                       payment_method: @exit.human_payment_method, money_account: @exit.money_account.name)
      end
+     # Its vehicle and purchase (Fernando, 2026-11-22: fuel of the business).
+     details[:vehicle] = @exit.vehicle.label if @exit.vehicle
+     details[:purchase] = t(".purchase", producer: @exit.purchase.producer.full_name, date: l(@exit.purchase.purchased_at, format: :short)) if @exit.purchase
      details.merge!(observations: @exit.observations, created_by: @exit.created_by.name) %>
   <% details.each do |key, value| %>
     <div><dt class="text-xs text-ink-muted"><%= SupplyExit.human_attribute_name(key) %></dt><dd><%= value.presence || "—" %></dd></div>

@@ -40,7 +40,7 @@ class StockCount < ApplicationRecord
   belongs_to :created_by, class_name: "User"
   belongs_to :voided_by, class_name: "User", optional: true
 
-  normalizes :reason_detail, :void_reason, with: ->(value) { value.squish.presence }
+  normalizes :reason, :reason_detail, :void_reason, with: ->(value) { value.squish.presence }
   normalizes :observations, with: FieldFormats::STRIP
 
   validates :counted_at, presence: true
@@ -77,7 +77,9 @@ class StockCount < ApplicationRecord
   def human_coffee_state = Purchase.human_attribute_name("coffee_state/#{coffee_state}")
   def human_reason = reason && self.class.human_attribute_name("reason/#{reason}")
   def voided? = voided_at.present?
-  def difference? = gross_weight.to_d.nonzero? || net_weight.to_d.nonzero?
+  # Nothing counted where the system had nothing either only clears its
+  # rounding of net pounds: not a difference (no reason, any user).
+  def difference? = gross_weight.to_d.nonzero? || (net_weight.to_d.nonzero? && counted_gross.to_d.nonzero?)
   def surplus? = net_weight.to_d.positive?
   def shortage? = net_weight.to_d.negative?
 
@@ -123,7 +125,13 @@ class StockCount < ApplicationRecord
       end
       self.gross_weight = (counted_gross.to_d - system_gross).round(2)
       # Counted as the system said: nothing to adjust (not a cent of rounding).
-      self.net_weight = gross_weight.zero? ? 0 : ((counted_gross.to_d * ratio).round(2) - system_net).round(2)
+      # Except nothing counted: with no coffee there are no net pounds either,
+      # so what the system kept of rounding goes (Fernando, 2026-11-22: a
+      # count of 0 left uva at −0.05 lb netas).
+      self.net_weight = if counted_gross.to_d.zero? then -system_net
+      elsif gross_weight.zero? then 0
+      else ((counted_gross.to_d * ratio).round(2) - system_net).round(2)
+      end
     end
 
     def warehouse_active

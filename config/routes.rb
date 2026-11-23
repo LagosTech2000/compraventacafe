@@ -124,6 +124,8 @@ Rails.application.routes.draw do
     resources :coffee_batches, path: "shipments/lots" do
       resources :invoices, only: %i[ new create destroy ], controller: "coffee_batch_invoices"
       resources :conversions, only: :destroy, controller: "coffee_batch_conversions"
+      # Closed without a shipment or a process (Fernando, 2026-11-22).
+      resource :closing, only: %i[ new create destroy ], controller: "coffee_batch_closings"
     end
     resources :shipments, except: :destroy do
       patch :void, on: :member
@@ -185,6 +187,8 @@ Rails.application.routes.draw do
       resources :supply_deliveries, path: "deliveries", only: %i[ index update destroy ]
       resources :supply_exits, path: "exits", only: %i[ index new create show destroy ]
       resources :supplies, path: "catalog", only: %i[ index new create edit update ]
+      # Fuel and oil of the business dispatched to the vehicles (Fernando, 2026-11-22).
+      resource :fuel_dispatches, path: "fuel", only: :show
     end
     # One coffee state of the stock (or all: "total"), lot by lot.
     get "stock/:coffee_state", to: "stock_states#show", as: :stock_state,

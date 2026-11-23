@@ -24,6 +24,19 @@ RSpec.describe StockCount, :all_records do
     expect(count.difference_percent).to eq(-10)
   end
 
+  # A count of 0 leaves no net pounds (Fernando, 2026-11-22: uva stayed at
+  # −0.05 lb netas of the old processes' rounding).
+  it "leaves no net pounds when nothing was counted, without a reason when the system had nothing either" do
+    process = create(:coffee_conversion, from_state: "wet_parchment", warehouse:, weighed_at: 1.day.ago, input_gross_weight: 1_000)
+    process.update_columns(input_net_weight: process.input_net_weight + 0.05)
+    expect(CoffeeStock.new(warehouse:).row("wet_parchment").stock.round(2)).to eq(-0.05)
+
+    count = StockCount.create!(warehouse:, coffee_state: "wet_parchment", counted_at: 1.hour.ago, counted_gross: 0, created_by: clerk)
+    expect(count).to have_attributes(gross_weight: 0, net_weight: 0.05, reason: nil)
+    expect(count).not_to be_difference
+    expect(CoffeeStock.new(warehouse:).row("wet_parchment").stock).to eq(0)
+  end
+
   it "needs a reason with a difference, and its detail when it is «Otro»" do
     expect { count!(950) }.to raise_error(ActiveRecord::RecordInvalid, /Motivo de la diferencia es obligatorio/)
     expect { count!(950, reason: "other") }.to raise_error(ActiveRecord::RecordInvalid, /Detalle del motivo es obligatorio/)

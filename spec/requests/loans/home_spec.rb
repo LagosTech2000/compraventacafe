@@ -42,4 +42,32 @@ RSpec.describe "Loans summary" do
     get loans_daily_close_path
     expect(response.body).to include(I18n.t("loans.daily_closes.show.stats.principal_collected"))
   end
+
+  # Pendientes on the left in a vertical card (Fernando, 2026-11-22).
+  it "lists the overdue, the due soon, the supplies to deliver and who can pay with coffee" do
+    soon = create(:loan, cash_amount: 300, disbursed_on: Time.zone.today - 10, due_on: Time.zone.today + 3)
+    supply = create(:supply, name: "Urea", unit: "saco")
+    lent = create(:loan, cash_amount: 0, disbursed_on: Time.zone.today, due_on: Time.zone.today + 60,
+                         supply_items_attributes: [ { supply_id: supply.id, quantity: 2, unit_price: 100 } ])
+    producer = create(:producer, person: soon.person)
+    create(:purchase, producer:, gross_weight: 500, price_per_pound: 10)
+
+    sign_in admin
+    get loans_root_path
+    section = ->(key) { page.at_css("[data-loans-pending] [data-pending-section='#{key}']") }
+    expect(section.(:overdue).at_css(".badge").text.strip).to eq("1")
+    expect(section.(:due_soon).text).to include(soon.person.full_name, "vence")
+    expect(section.(:to_deliver).text).to include(lent.person.full_name, "2 saco de Urea")
+    expect(section.(:coffee).text).to include(soon.person.full_name, "Café:")
+    expect(section.(:coffee).at_css("a[href='#{loans_coffee_collection_path}']")).to be_present
+    expect(page.at_css("[data-loans-stat='open_loans']")["class"]).to include("stat-compact")
+  end
+
+  it "leaves out «Con café para abonar» for who does not see Cobrar con café", :all_records do
+    user = create(:user).tap { create(:permission, user: it, module_key: "loans", can_read: true) }
+    sign_in user
+    get loans_root_path
+    expect(page.at_css("[data-pending-section='overdue']")).to be_present
+    expect(page.at_css("[data-pending-section='coffee']")).to be_nil
+  end
 end

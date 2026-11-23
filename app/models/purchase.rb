@@ -36,6 +36,10 @@ class Purchase < ApplicationRecord
   # Optional: the carrero who hauled it (Hauler). Their commission is
   # calculated with their price per pound of that moment, kept here.
   belongs_to :hauler, optional: true
+  # The vehicle of the business that went for the coffee (Fernando,
+  # 2026-11-22: «por cada compra pueden usar un carro diferente»).
+  belongs_to :vehicle, optional: true
+  has_many :supply_exits, dependent: :restrict_with_error
   belongs_to :invoice, optional: true
   belongs_to :created_by, class_name: "User"
   belongs_to :voided_by, class_name: "User", optional: true
@@ -73,6 +77,7 @@ class Purchase < ApplicationRecord
   before_validation { self.farm_plot_id = nil if farm_id.nil? }
   after_update :refresh_invoice, if: -> { saved_change_to_total? && invoice_id && invoice_id_before_last_save == invoice_id }
   validate :hauler_active, if: :will_save_change_to_hauler_id?
+  validate { errors.add(:vehicle, :inactive) if will_save_change_to_vehicle_id? && vehicle && !vehicle.active? }
   validate :hauler_chosen, unless: -> { @hauler_choice.nil? }
   validate :warehouse_active, if: :will_save_change_to_warehouse_id?
   validate :hauler_commission_not_paid_out

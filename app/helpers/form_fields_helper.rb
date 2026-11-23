@@ -19,6 +19,19 @@ module FormFieldsHelper
     }.compact
   end
 
+  # The data of a receipt's file field (receipt_input_controller.js): it
+  # shrinks a photo before sending and adds «Tomar foto», which opens the
+  # phone's camera and puts the picture in the field (Fernando, 2026-11-22:
+  # «que se pueda poner la cámara para tomar foto»).
+  #   form.file_field :receipt_upload, data: receipt_input_data
+  def receipt_input_data
+    {
+      controller: "receipt-input",
+      action: "change->receipt-input#change",
+      receipt_input_camera_label_value: t("shared.receipt_camera.take")
+    }
+  end
+
   # A confirmation field that must equal another field of the same form.
   #   form.password_field :password_confirmation, **confirmation_attributes(User, :password_confirmation, form.field_id(:password))
   def confirmation_attributes(model_class, attribute, confirms_field_id)

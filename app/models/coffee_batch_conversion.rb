@@ -101,5 +101,6 @@ class CoffeeBatchConversion < ApplicationRecord
       errors.add(:base, :lot_processed) if coffee_batch&.processed?
       # Its shipment or process is of a closed day (BusinessDayClose).
       errors.add(:base, :lot_closed_day) if coffee_batch&.closed_day?
+      errors.add(:base, :lot_closed) if coffee_batch&.closed? && !Current.maintenance
     end
 end

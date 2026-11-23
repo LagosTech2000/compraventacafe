@@ -1,0 +1,101 @@
+<% content_for :title, t(".title") %>
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<%= live_updates_from :sales %>
+<%= render "sales/nav" %>
+
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <% if policy(SupplyExit).create? %>
+    <%= page_link_to t(".new"), new_sales_supply_exit_path(kind: "business_use"), class: "btn btn-primary" %>
+  <% end %>
+</div>
+<%= render "sales/supply_stocks/tabs" %>
+
+<% vehicles = Vehicle.includes(:vehicle_type).order(own: :desc, plate: :asc).map { [ it.label, it.id ] } %>
+<% supplies = Supply.of_the_business.ordered.pluck(:name, :id) %>
+<% number = ->(value) { number_with_delimiter(value.to_d.round(2).to_s("F").sub(/\.0\z/, "")) } %>
+<div class="mt-4" data-controller="live-filter">
+  <%= render layout: "shared/filters", locals: { filter: @filter, url: sales_fuel_dispatches_path, frame: "fuel-dispatches", live: true } do |form| %>
+    <%= filter_date_field form, :from, t("shared.filters.from"), value: @filter.from %>
+    <%= filter_date_field form, :to, t("shared.filters.to"), value: @filter.to %>
+    <%= filter_select form, :vehicle_id, Vehicle.model_name.human, vehicles, selected: @filter.vehicle_id %>
+    <%= filter_select form, :supply_id, Supply.model_name.human, supplies, selected: @filter.supply_id %>
+  <% end %>
+
+  <%= turbo_frame_tag "fuel-dispatches", target: "_top", data: { turbo_action: "advance" } do %>
+    <%# What is left in the warehouse, and what went out in the period. %>
+    <section class="mt-4" aria-labelledby="fuel-stock">
+      <h2 id="fuel-stock" class="mb-2 text-sm font-semibold tracking-wide text-ink-muted uppercase"><%= t(".stock") %></h2>
+      <% stock = @filter.stock %>
+      <% if stock.empty? %>
+        <p class="empty-state"><%= t(".no_supplies") %></p>
+      <% else %>
+        <dl class="flex flex-wrap gap-3">
+          <% stock.each do |supply, quantity| %>
+            <div class="stat stat-compact min-w-0 flex-1 basis-40" data-fuel-stock="<%= supply.id %>">
+              <dt><%= supply.name %></dt>
+              <dd data-live-value><%= t(".quantity", quantity: number.(quantity), unit: supply.unit) %></dd>
+            </div>
+          <% end %>
+        </dl>
+      <% end %>
+    </section>
+
+    <section class="mt-5" aria-labelledby="fuel-totals">
+      <h2 id="fuel-totals" class="mb-2 text-sm font-semibold tracking-wide text-ink-muted uppercase"><%= t(".totals") %></h2>
+      <dl class="flex flex-wrap gap-3">
+        <% @filter.totals.each do |row| %>
+          <div class="stat stat-compact min-w-0 flex-1 basis-40" data-fuel-total="<%= row.supply.id %>">
+            <dt><%= row.supply.name %></dt>
+            <dd data-live-value><%= t(".quantity", quantity: number.(row.quantity), unit: row.supply.unit) %></dd>
+            <p class="mt-1 text-xs text-ink-muted"><%= t(".cost_line", cost: format_money(row.cost), count: row.dispatches) %></p>
+          </div>
+        <% end %>
+        <div class="stat stat-compact min-w-0 flex-1 basis-40" data-fuel-total="cost">
+          <dt><%= t(".total_cost") %></dt>
+          <dd data-live-value><%= format_money(@filter.total_cost) %></dd>
+        </div>
+      </dl>
+      <p class="mt-2 text-xs text-ink-muted"><%= t(".cost_help") %></p>
+    </section>
+
+    <% if @filter.lines.empty? %>
+      <p class="mt-5 empty-state"><%= t(".empty") %></p>
+    <% else %>
+      <div class="mt-5 grid gap-5 xl:grid-cols-2">
+        <% { by_day: @filter.by_day, by_vehicle: @filter.by_vehicle }.each do |table, rows| %>
+          <section aria-labelledby="fuel-<%= table %>">
+            <h2 id="fuel-<%= table %>" class="mb-2 text-lg font-semibold"><%= t(".tables.#{table}") %></h2>
+            <div class="overflow-x-auto panel">
+              <table class="data-table data-table-compact" data-controller="table-sort" data-fuel-table="<%= table %>">
+                <thead>
+                  <tr>
+                    <th><%= t(".columns.#{table}") %></th>
+                    <th><%= Supply.model_name.human %></th>
+                    <th class="text-right"><%= t(".columns.quantity") %></th>
+                    <th class="text-right"><%= t(".columns.dispatches") %></th>
+                    <th class="text-right"><%= t(".columns.cost") %></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% rows.each do |row| %>
+                    <tr>
+                      <td class="whitespace-nowrap"><%= table == :by_day ? l(row.key.first, format: :short) : row.key.first.label %></td>
+                      <td><%= row.supply.name %></td>
+                      <td class="whitespace-nowrap text-right tabular-nums" data-sort-value="<%= row.quantity %>"><%= t(".quantity", quantity: number.(row.quantity), unit: row.supply.unit) %></td>
+                      <td class="text-right tabular-nums"><%= row.dispatches %></td>
+                      <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(row.cost) %></td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+</div>

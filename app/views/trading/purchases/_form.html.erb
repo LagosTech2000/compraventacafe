@@ -137,6 +137,15 @@
       <% end %>
     </div>
 
+    <%# The vehicle that went for the coffee, optional (Fernando, 2026-11-22):
+        its fuel dispatches can name this purchase. The business's own first. %>
+    <% vehicles = Vehicle.active.or(Vehicle.where(id: purchase.vehicle_id)).includes(:vehicle_type).order(own: :desc, plate: :asc) %>
+    <div>
+      <%= form.label :vehicle_id, class: "field-label" %>
+      <%= form.select :vehicle_id, vehicles.map { [ it.label, it.id ] }, { include_blank: t("shared.select.no_vehicle") }, class: "field-input" %>
+      <p class="mt-1 text-xs text-ink-muted"><%= t(".vehicle_help") %></p>
+    </div>
+
     <div>
       <%= form.label :coffee_state, class: "field-label" %>
       <%= form.select :coffee_state, enum_options(Purchase, :coffee_state, Purchase::COFFEE_STATES), {}, required: true, class: "field-input",
