@@ -25,7 +25,7 @@ module Sales
         else
           render :edit, status: :unprocessable_content
         end
-      elsif @shipment.save
+      elsif save_and_recalculate
         close_modal_with notice: t(".success", number: @shipment.display_number), fallback: sales_shipment_path(@shipment)
       else
         render :edit, status: :unprocessable_content
@@ -33,6 +33,17 @@ module Sales
     end
 
     private
+      # A sold shipment weighed again (the main user, Fernando 2026-11-23):
+      # its sale takes the new weight.
+      def save_and_recalculate
+        Shipment.transaction do
+          raise ActiveRecord::Rollback unless @shipment.save
+
+          @shipment.sale&.recalculate_weights! if @shipment.sold?
+          true
+        end
+      end
+
       # «Liquidar salida» (Fernando, 2026-11-18: every sale has one
       # shipment): the buyer's scale, the sale on that weight and its
       # collection, saved together or none (SaleIssuer's rules). Sold and

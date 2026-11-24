@@ -22,6 +22,10 @@
 class PurchaseCalculation
   SACK_WEIGHT = 165
   TARE_PER_SACK = 1
+  # The buyers take off half a pound per sack on their scale (Fernando,
+  # 2026-11-23: «siempre en todos los compradores restan media libra por
+  # saco»): a shipment's buyer scale uses it.
+  BUYER_TARE_PER_SACK = BigDecimal("0.5")
   QUINTAL_WEIGHT = 125
 
   attr_reader :sacks, :tare, :net_weight, :damage_weight, :damage_amount, :quintals, :total
@@ -39,13 +43,13 @@ class PurchaseCalculation
   # counted_sacks: the sacks counted in the weighings; without them the sacks
   # come from the gross weight.
   def initialize(coffee_state:, gross_weight:, price_per_pound:, humidity_percent: nil, damage_percent: nil, yield_factor: nil,
-                 counted_sacks: nil)
+                 counted_sacks: nil, tare_per_sack: TARE_PER_SACK)
     gross = BigDecimal(gross_weight.to_s)
     price = BigDecimal(price_per_pound.to_s)
 
     if counted_sacks
       @sacks = BigDecimal(counted_sacks.to_s)
-      @tare = @sacks * TARE_PER_SACK
+      @tare = (@sacks * BigDecimal(tare_per_sack.to_s)).round(2)
     else
       @sacks = (gross / SACK_WEIGHT).round(4)
       @tare = BigDecimal((gross / SACK_WEIGHT).ceil * TARE_PER_SACK)

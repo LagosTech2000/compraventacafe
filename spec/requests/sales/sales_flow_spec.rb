@@ -30,7 +30,7 @@ RSpec.describe "Sales flow" do
     get edit_sales_shipment_arrival_path(shipment)
     expect(response).to have_http_status(:ok)
     patch sales_shipment_arrival_path(shipment), params: { shipment: {
-      received_on: Time.zone.today, weight_note_number: "EPNP43275", destination_gross_weight: "980", destination_sacks: "6",
+      received_on: Time.zone.today, weight_note_number: "EPNP43275", destination_gross_weight: "980", destination_sacks: "12",
       destination_humidity_percent: "51", destination_damage_percent: "1"
     } }
     shipment.reload

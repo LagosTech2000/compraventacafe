@@ -9,7 +9,7 @@
 <%= form_with model: @shipment, url: sales_shipment_arrival_path(@shipment), method: :patch,
       class: form_surface_class("@container mt-6 max-w-none"),
       data: { controller: "form-validation weighing-calculator",
-              weighing_calculator_tare_per_sack_value: PurchaseCalculation::TARE_PER_SACK,
+              weighing_calculator_tare_per_sack_value: PurchaseCalculation::BUYER_TARE_PER_SACK,
               weighing_calculator_quintal_weight_value: PurchaseCalculation::QUINTAL_WEIGHT,
               weighing_calculator_coffee_state_value: @shipment.coffee_state,
               weighing_calculator_origin_net_value: @shipment.origin_net_weight.to_f,

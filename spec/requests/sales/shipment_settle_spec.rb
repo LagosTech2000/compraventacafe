@@ -9,7 +9,7 @@ RSpec.describe "Shipment settled at the buyer's" do
   let(:account) { create(:money_account, opening_balance: 0) }
   let(:shipment) { create(:shipment, buyer:, departed_at: 1.day.ago) }
   let(:arrival) do
-    { received_on: Time.zone.today, weight_note_number: "N-77", destination_gross_weight: "980", destination_sacks: "6",
+    { received_on: Time.zone.today, weight_note_number: "N-77", destination_gross_weight: "980", destination_sacks: "12",
       destination_humidity_percent: "51", destination_damage_percent: "1" }
   end
 

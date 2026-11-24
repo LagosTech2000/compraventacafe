@@ -2813,6 +2813,7 @@ es:
         origin_help: "El peso del vehículo antes de salir."
         calculation: "Cálculo de la salida"
         sacks_help: "Los sacos contados: se descuenta 1 lb por saco."
+        buyer_sacks_help: "Los sacos reales. El comprador resta ½ lb de tara por saco (54 sacos = 27 lb)."
         from_weighings: "Suma de las pesadas."
         weighings_help: "Cada pesada con su peso y los sacos contados; el peso bruto y los sacos son la suma."
         tare: "Tara (lb)"

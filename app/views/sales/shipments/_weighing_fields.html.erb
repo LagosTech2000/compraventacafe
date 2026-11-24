@@ -19,7 +19,7 @@
     <%= form.number_field :"#{side}_sacks", required: true, min: 1, max: Shipment::MAX_SACKS - 1, step: 1, inputmode: "numeric",
           readonly: summed, class: "field-input text-lg read-only:bg-surface-2",
           data: { weighing_calculator_target: "sacks", action: "weighing-calculator#update" } %>
-    <p class="mt-1 text-xs text-ink-muted"><%= t("sales.shipments.form.sacks_help") %></p>
+    <p class="mt-1 text-xs text-ink-muted"><%= t(side == "destination" ? "sales.shipments.form.buyer_sacks_help" : "sales.shipments.form.sacks_help") %></p>
   </div>
   <div data-weighing-calculator-target="parchmentField" <%= "hidden" if cherry %>>
     <%= form.label :"#{side}_humidity_percent", class: "field-label" %>

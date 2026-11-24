@@ -15,8 +15,10 @@ class ShipmentPolicy < ApplicationPolicy
     super && open?
   end
 
+  # The main user edits the buyer's scale of a weighed or sold shipment too
+  # (Fernando, 2026-11-23); its sale is recalculated.
   def receive?
-    can?(:update) && (!record.is_a?(Shipment) || !(record.voided? || record.received?))
+    can?(:update) && (!record.is_a?(Shipment) || !(record.voided? || (record.received? && !unlocked?)))
   end
 
   # Empties the local scale: an administrator (like «Sin báscula local»),

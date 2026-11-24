@@ -21,7 +21,7 @@ FactoryBot.define do
     trait :received do
       received_on { departed_at.to_date }
       destination_gross_weight { 990 }
-      destination_sacks { 6 }
+      destination_sacks { 12 } # ½ lb each on the buyer's scale: 6 lb of tare
       destination_humidity_percent { coffee_state == "cherry" ? nil : 51 }
       destination_damage_percent { coffee_state == "cherry" ? nil : 0 }
       destination_yield_factor { coffee_state == "cherry" ? 0.186 : nil }
