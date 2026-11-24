@@ -7,9 +7,8 @@
   <div class="flex flex-wrap items-end justify-between gap-4">
     <h1 class="text-2xl font-bold"><%= t(".title", date: l(close.date, format: :long)) %></h1>
     <div class="flex flex-wrap gap-2">
-      <%= form_with url: sales_daily_close_path, method: :get, class: "flex gap-2", data: { controller: "auto-submit" } do |form| %>
-        <%= form.date_field :date, value: close.date, aria: { label: t(".date") }, class: "field-input", data: { action: "change->auto-submit#submit" } %>
-      <% end %>
+      <%= render "shared/day_picker", date: close.date, url: ->(date) { sales_daily_close_path(date:) } %>
+    <%= render "shared/daily_close_confirmation", module_key: :sales, date: close.date %>
       <div data-controller="print"><button type="button" class="btn" data-action="print#print"><%= t(".print") %></button></div>
     </div>
   </div>
@@ -82,6 +81,7 @@
       <p class="empty-state"><%= t(".payments_empty") %></p>
     <% end %>
   </section>
+  <%= render "shared/fuel_day", date: close.date %>
 </div>
 
 <%= render "report", daily_close: close %>

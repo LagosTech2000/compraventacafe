@@ -1,0 +1,53 @@
+<% content_for :title, t(".title") %>
+<%= render "sales/nav" %>
+
+<h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+<p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t(".help", at: l(@square.counted_at, format: :short)) %></p>
+
+<% reasons = StockCount::REASONS.map { [ StockCount.human_attribute_name("reason/#{it}"), it ] } %>
+<% entries = params.fetch(:entries, {}) %>
+<%= form_with url: sales_stock_square_path, method: :post, class: "mt-6 space-y-6", data: { controller: "form-validation unsaved-changes", action: unsaved_changes_actions } do |form| %>
+  <% @square.rows.group_by(&:warehouse).each do |warehouse, rows| %>
+    <section aria-labelledby="square-<%= warehouse.id %>">
+      <h2 id="square-<%= warehouse.id %>" class="mb-2 text-lg font-semibold"><%= warehouse.name %></h2>
+      <div class="overflow-x-auto panel">
+        <table class="data-table data-table-compact" data-stock-square="<%= warehouse.id %>">
+          <thead>
+            <tr>
+              <th><%= t(".state") %></th>
+              <th class="text-right"><%= t(".system") %></th>
+              <th class="w-40"><%= t(".counted") %></th>
+              <th class="w-28"><%= t(".sacks") %></th>
+              <th class="w-48"><%= t(".reason") %></th>
+              <th><%= t(".reason_detail") %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% rows.each do |row| %>
+              <% entry = entries[row.key] || {} %>
+              <tr id="square_<%= row.key %>">
+                <td class="font-medium"><%= Purchase.human_attribute_name("coffee_state/#{row.coffee_state}") %></td>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= format_gross_net(row.gross, row.net) %></td>
+                <td>
+                  <%= number_field_tag "entries[#{row.key}][counted_gross]", entry[:counted_gross], min: 0, step: 0.01, inputmode: "decimal",
+                        class: "field-input text-right", aria: { label: t(".counted_of", state: Purchase.human_attribute_name("coffee_state/#{row.coffee_state}"), warehouse: warehouse.name) } %>
+                  <% if row.count&.errors&.any? %>
+                    <p class="mt-1 text-xs font-semibold text-danger" role="alert"><%= row.count.errors.full_messages.to_sentence %></p>
+                  <% end %>
+                </td>
+                <td><%= number_field_tag "entries[#{row.key}][counted_sacks]", entry[:counted_sacks], min: 0, step: 1, class: "field-input text-right", aria: { label: t(".sacks") } %></td>
+                <td><%= select_tag "entries[#{row.key}][reason]", options_for_select(reasons, entry[:reason]), include_blank: t(".no_reason"), class: "field-input", aria: { label: t(".reason") } %></td>
+                <td><%= text_field_tag "entries[#{row.key}][reason_detail]", entry[:reason_detail], maxlength: 200, class: "field-input", aria: { label: t(".reason_detail") } %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  <% end %>
+  <p class="text-xs text-ink-muted"><%= t(".footer") %></p>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit t(".submit"), class: "btn btn-primary" %>
+    <%= cancel_button sales_stock_path %>
+  </div>
+<% end %>

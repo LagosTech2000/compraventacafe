@@ -11,6 +11,7 @@
   <div class="flex flex-wrap gap-2">
     <%= help_guide_button HelpGuide.process(:finance_money), label: true %>
     <% if policy(MoneyAccount).update? %><%= link_to t(".opening_balances"), finance_opening_balances_path, class: "btn" %><% end %>
+    <% if policy(CashCount).create? %><%= link_to t(".square"), new_finance_account_square_path, class: "btn" %><% end %>
     <% if policy(AccountTransfer).create? %><%= modal_link_to t("finance.home.index.transfer"), new_finance_account_transfer_path, class: "btn" %><% end %>
     <% if policy(MoneyAccount).create? %><%= modal_link_to t(".new"), new_finance_money_account_path, class: "btn btn-primary" %><% end %>
   </div>

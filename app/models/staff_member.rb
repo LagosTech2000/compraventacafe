@@ -46,6 +46,12 @@ class StaffMember < ApplicationRecord
   before_validation :end_when_deactivated, if: -> { will_save_change_to_active?(to: false) && ends_on.nil? }
 
   scope :active, -> { where(active: true) }
+  # Who may drive a shipment (Fernando, 2026-11-23): the roles «Chofer» or
+  # «Conductor», and whoever is marked «Maneja».
+  DRIVER_ROLES = %w[chofer conductor].freeze
+  scope :drivers, -> { left_joins(:role).where(drives: true).or(left_joins(:role).where("LOWER(staff_roles.name) IN (?)", DRIVER_ROLES)) }
+
+  def driver? = drives? || role&.name.to_s.downcase.in?(DRIVER_ROLES)
   scope :newest_first, -> { joins(:person).merge(Person.alphabetical) }
 
   delegate :full_name, to: :person

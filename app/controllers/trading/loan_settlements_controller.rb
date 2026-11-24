@@ -25,9 +25,8 @@ module Trading
       end
 
       def settlement_params
-        permitted = params.expect(purchase_loan_settlement: [ :paid_on, :observations, :money_account_id, amounts: {} ])
-        { paid_on: permitted[:paid_on], observations: permitted[:observations], amounts: permitted[:amounts].to_h,
-          money_account_id: permitted.fetch(:money_account_id, :default) }
+        permitted = params.expect(purchase_loan_settlement: [ :paid_on, :observations, amounts: {} ])
+        { paid_on: permitted[:paid_on], observations: permitted[:observations], amounts: permitted[:amounts].to_h }
       end
   end
 end

@@ -26,6 +26,14 @@
        [ :lent_cash, format_money(@lent_cash), loans_loans_path(composition: "with_cash") ],
        [ :lent_supplies, format_money(@lent_supplies), loans_loans_path(composition: "with_supplies") ]
      ],
+     # The money of the loans (Fernando, 2026-11-23), instead of a loans' account.
+     money: [
+       [ :cash_out, format_money(@money[:cash_out]), loans_loans_path(composition: "with_cash") ],
+       [ :money_in, format_money(@money[:money_in]), payments ],
+       [ :coffee_in, format_money(@money[:coffee_in]), payments ],
+       [ :payroll_in, format_money(@money[:payroll_in]), payments ],
+       [ :net, format_money(@money[:net]), nil ]
+     ],
      collected: [
        [ :principal_collected, format_money(@cash_collected + @supplies_collected), payments ],
        [ :cash_collected, format_money(@cash_collected), loans_loans_path(composition: "with_cash") ],
@@ -43,18 +51,22 @@
       <h2 id="loans-<%= group %>" class="mb-2 text-sm font-semibold tracking-wide text-ink-muted uppercase"><%= t(".groups.#{group}") %></h2>
       <dl class="flex flex-wrap gap-3">
         <% figures.each do |key, value, path| %>
-          <% if path %>
-            <%= link_to path, class: "stat stat-compact block min-w-0 flex-1 basis-36 transition hover:ring-primary/40", data: { loans_stat: key } do %>
-              <dt><%= t(".stats.#{key}") %></dt>
-              <dd data-live-value><%= value %></dd>
-              <p class="mt-1 text-xs text-ink-muted"><%= t(".stats_go.#{key}") %></p>
+          <%# Each figure with its ⓘ: how it is computed, where it comes from and why (Fernando, 2026-11-23). %>
+          <div class="relative min-w-0 flex-1 basis-36">
+            <% if path %>
+              <%= link_to path, class: "stat stat-compact block h-full pr-8 transition hover:ring-primary/40", data: { loans_stat: key } do %>
+                <dt><%= t(".stats.#{key}") %></dt>
+                <dd data-live-value><%= value %></dd>
+                <p class="mt-1 text-xs text-ink-muted"><%= t(".stats_go.#{key}") %></p>
+              <% end %>
+            <% else %>
+              <div class="stat stat-compact h-full pr-8" data-loans-stat="<%= key %>">
+                <dt><%= t(".stats.#{key}") %></dt>
+                <dd data-live-value><%= value %></dd>
+              </div>
             <% end %>
-          <% else %>
-            <div class="stat stat-compact min-w-0 flex-1 basis-36" data-loans-stat="<%= key %>">
-              <dt><%= t(".stats.#{key}") %></dt>
-              <dd data-live-value><%= value %></dd>
-            </div>
-          <% end %>
+            <span class="absolute right-2.5 top-2.5"><%= info_tip t(".stats_info.#{key}"), label: t(".stats_info_label", figure: t(".stats.#{key}")) %></span>
+          </div>
         <% end %>
       </dl>
     </section>

@@ -70,4 +70,19 @@ RSpec.describe "Loans summary" do
     expect(page.at_css("[data-pending-section='overdue']")).to be_present
     expect(page.at_css("[data-pending-section='coffee']")).to be_nil
   end
+
+  # The loans' money instead of a loans' account, and an ⓘ on every figure (Fernando, 2026-11-23).
+  it "shows the loans' money and explains every figure" do
+    box = create(:money_account, name: "Caja", default_for: %w[cash])
+    loan = create(:loan, cash_amount: 2_000, monthly_interest_rate: 0, disbursed_on: Time.zone.today - 5, due_on: Time.zone.today + 30, money_account: box)
+    create(:loan_payment, loan:, amount: 300, paid_on: Time.zone.today, payment_method: "cash", money_account: box)
+    sign_in admin
+    get loans_root_path
+    expect(stat(:cash_out).at_css("dd").text.strip).to eq("L 2,000.00")
+    expect(stat(:money_in).at_css("dd").text.strip).to eq("L 430.00")
+    expect(stat(:net).at_css("dd").text.strip).to eq("−L 1,570.00").or eq("-L 1,570.00")
+    tips = page.css(".info-tip [role=tooltip]")
+    expect(tips.size).to eq(page.css("[data-loans-stat]").size)
+    expect(tips.map(&:text)).to all(be_present)
+  end
 end

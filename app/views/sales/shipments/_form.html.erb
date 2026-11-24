@@ -93,7 +93,7 @@
           </div>
           <div data-transport-choice-target="panel" data-mode="driver" <%= "hidden" unless mode == "driver" %>>
             <%= form.label :driver_id, class: "field-label" %>
-            <% drivers = StaffMember.active.or(StaffMember.where(id: shipment.driver_id)).includes(:person, :role).newest_first %>
+            <% drivers = StaffMember.active.drivers.or(StaffMember.where(id: shipment.driver_id)).includes(:person, :role).newest_first %>
             <%# «Editar» to the right opens the driver's person; their identity
                 and phone show below (Fernando, 2026-11-13). %>
             <% can_edit_people = policy(Person).update? %>

@@ -7,7 +7,7 @@ RSpec.describe "Shipment driver", type: :system do
   let(:admin) { create(:user, :admin) }
 
   it "shows the driver's identity and phone, and completes them in the modal without losing the shipment" do
-    driver = create(:staff_member, person: create(:person, :collaborator, first_names: "Roberto", last_names: "Gallardo", phone: "99887766"))
+    driver = create(:staff_member, :driver, person: create(:person, :collaborator, first_names: "Roberto", last_names: "Gallardo", phone: "99887766"))
     sign_in_as(admin)
     visit new_sales_shipment_path
     choose "Un motorista"

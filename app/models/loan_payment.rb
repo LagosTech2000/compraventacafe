@@ -28,7 +28,9 @@ class LoanPayment < ApplicationRecord
   # The ones that enter an account: by hand, and with coffee, which goes to
   # the loans' account (Fernando, 2026-11-20: «todos esos abonos deberían
   # sumar a la cuenta de préstamos»). From a payroll, still none.
-  IN_ACCOUNT = (PAYMENT_METHODS + [ COFFEE ]).freeze
+  # Only the payments in money move money (Fernando, 2026-11-23: with coffee,
+  # the invoice paid less; by payroll, the pay was less).
+  IN_ACCOUNT = PAYMENT_METHODS
 
   belongs_to :loan
   belongs_to :created_by, class_name: "User"
@@ -46,10 +48,9 @@ class LoanPayment < ApplicationRecord
   validate :coffee_comes_from_purchase, :payroll_comes_from_payroll
 
   before_validation :split, on: :create
-  # From a payroll no money moves: no account. With coffee, the loans'
-  # account (Consolidación can change it, like any other).
-  before_validation { self.money_account = nil if from_payroll? }
-  before_validation(on: :create) { self.money_account ||= MoneyAccount.for_loans if with_coffee? }
+  # From a payroll or with coffee no money moves: no account (Fernando,
+  # 2026-11-23; with coffee it went to the loans' account until then).
+  before_validation { self.money_account = nil if from_payroll? || with_coffee? }
   after_create :settle_loan
   after_destroy :reopen_loan
   # Paid with coffee: what the purchase's invoice has to pay changed.

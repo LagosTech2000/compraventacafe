@@ -22,6 +22,14 @@ module Loans
       payments = LoanPayment.where(loan_id: loans.select(:id))
       @interest_collected = payments.sum(:interest_amount)
       @cash_collected, @supplies_collected = collected_by_part(payments)
+      # The money of the loans (Fernando, 2026-11-23: no loans' account; its
+      # numbers here): the cash lent from an account, what came in money and
+      # what was paid with coffee or by payroll (no money moved).
+      by_method = payments.group(:payment_method).sum(:amount)
+      @money = { cash_out: loans.where.not(money_account_id: nil).sum(:cash_amount),
+                 money_in: LoanPayment::PAYMENT_METHODS.sum { by_method.fetch(it, 0) },
+                 coffee_in: by_method.fetch(LoanPayment::COFFEE, 0), payroll_in: by_method.fetch(LoanPayment::PAYROLL, 0) }
+      @money[:net] = @money[:money_in] - @money[:cash_out]
     end
 
     private

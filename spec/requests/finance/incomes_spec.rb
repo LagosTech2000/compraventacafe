@@ -15,13 +15,13 @@ RSpec.describe "Finance incomes" do
     create(:expense, amount: 30)
   end
 
-  it "lists what came in, by source, with the coffee payments and without transfers nor expenses" do
+  it "lists what came in, by source, without the coffee payments, transfers nor expenses" do
     sign_in create(:user, :admin)
     get finance_incomes_path
     expect(response).to have_http_status(:ok)
     stats = page.css(".stat").to_h { [ it.at_css("dt").text.squish, it.at_css("dd").text.squish ] }
-    expect(stats).to include("Total ingresado" => "L 1,770.00", "Cobro de venta" => "L 700.00", "Abono a préstamo" => "L 70.00", "Otro ingreso" => "L 1,000.00")
-    expect(page.css("tbody tr").size).to eq(4)
+    expect(stats).to include("Total ingresado" => "L 1,750.00", "Cobro de venta" => "L 700.00", "Abono a préstamo" => "L 50.00", "Otro ingreso" => "L 1,000.00")
+    expect(page.css("tbody tr").size).to eq(3)
     expect(page.at_css("a[href='#{new_finance_other_income_path}']")).to be_present
 
     get finance_incomes_path(source: "other_incomes")

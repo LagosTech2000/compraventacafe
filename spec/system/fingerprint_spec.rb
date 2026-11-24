@@ -71,7 +71,7 @@ RSpec.describe "Fingerprint reader", type: :system do
   end
 
   it "picks the driver of a new shipment" do
-    member = create(:staff_member, person: create(:person, :collaborator, first_names: "Luis", last_names: "Mejía"))
+    member = create(:staff_member, :driver, person: create(:person, :collaborator, first_names: "Luis", last_names: "Mejía"))
     fingerprint = create(:fingerprint, person: member.person)
     sign_in_as(admin)
     station = link_station

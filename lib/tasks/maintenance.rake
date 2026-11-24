@@ -42,7 +42,8 @@ MAINTENANCE_TASKS = {
   "integrity:cash_counts" => "Arqueos que ya no cuadran (solo revisa)",
   "integrity:expenses" => "Gastos por revisar (solo revisa)",
   "purchases:assign_single_farm" => "Finca de las compras de productores con una sola finca (CONFIRM=1 aplica)",
-  "farms:plots_from_lots" => "Los «Lote 1», «Lote 2»… pasan a ser parcelas de una finca con el nombre de su lugar (CONFIRM=1 aplica)"
+  "farms:plots_from_lots" => "Los «Lote 1», «Lote 2»… pasan a ser parcelas de una finca con el nombre de su lugar (CONFIRM=1 aplica)",
+  "loans:to_cash_box" => "Quitar la cuenta de préstamos: lo prestado y cobrado pasa a la caja (CONFIRM=1 aplica)"
 }.freeze
 
 MAINTENANCE_TASKS.each do |key, description|

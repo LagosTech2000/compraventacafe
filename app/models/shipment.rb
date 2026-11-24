@@ -78,6 +78,8 @@ class Shipment < ApplicationRecord
   validate :weight_note_once_per_buyer, if: -> { weight_note_number.present? && (will_save_change_to_weight_note_number? || will_save_change_to_buyer_id?) }
   validate :received_before_its_sale, if: -> { persisted? && received_on && will_save_change_to_received_on? }
   validates :driver_name, length: { maximum: 120 }
+  # Only who drives (StaffMember.drivers, Fernando 2026-11-23); one already on it stays.
+  validate { errors.add(:driver, :not_a_driver) if will_save_change_to_driver_id? && driver && !driver.driver? }
   validates :trip_price, numericality: { greater_than: 0, less_than: 100_000_000 }, allow_nil: true
   validate :keeps_its_batches, if: -> { persisted? && (will_save_change_to_coffee_state? || will_save_change_to_warehouse_id?) }
   validate :batches_fit, if: -> { @batch_ids }

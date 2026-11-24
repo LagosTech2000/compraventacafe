@@ -13,7 +13,7 @@ module Sales
       supply = Supply.active.find_by(id: params[:supply_id])
       # Fuel or oil of the business starts as a use of the business (to a vehicle).
       @exit = authorize SupplyExit.new(kind: supply&.business_use? || params[:kind] == "business_use" ? "business_use" : "sale",
-                                       exited_on: Time.zone.today, payment_method: "cash",
+                                       exited_on: requested_day || Time.zone.today, payment_method: "cash",
                                        money_account_id: MoneyAccount.default_for("cash")&.id, vehicle_id: params[:vehicle_id])
       @exit.lines.build(supply:, unit_price: supply&.default_price)
     end
@@ -39,6 +39,14 @@ module Sales
     end
 
     private
+      # A dispatch from a daily close comes with its day (Fernando, 2026-11-23).
+      def requested_day
+        day = Date.iso8601(params[:exited_on].to_s)
+        day if day <= Time.zone.today
+      rescue Date::Error
+        nil
+      end
+
       def exit_params
         params.expect(supply_exit: [ :kind, :exited_on, :person_id, :payment_method, :money_account_id, :vehicle_id, :purchase_id, :observations,
                                      { lines_attributes: [ %i[supply_id quantity unit_price _destroy] ] } ])

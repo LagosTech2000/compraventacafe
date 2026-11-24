@@ -56,6 +56,13 @@
     <% end %>
   </div>
 
+  <%# Shows among a shipment's drivers (Fernando, 2026-11-23); «Chofer» and «Conductor» always do. %>
+  <label class="flex cursor-pointer items-start gap-2 text-sm">
+    <%= form.check_box :drives, class: "mt-0.5 size-4 accent-primary" %>
+    <span><span class="font-medium"><%= StaffMember.human_attribute_name(:drives) %></span>
+      <span class="block text-xs text-ink-muted"><%= t("finance.staff_members.form.drives_help") %></span></span>
+  </label>
+
   <div>
     <%= form.label :observations, class: "field-label" %>
     <%= form.text_area :observations, rows: 2, maxlength: 500, class: "field-input" %>

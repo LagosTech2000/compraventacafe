@@ -29,6 +29,17 @@ RSpec.describe "Finance cash counts" do
     expect(CashCount.count).to eq(0)
   end
 
+  # Movimientos leaves the adjustments out (Fernando, 2026-11-23); the balance keeps them.
+  it "keeps its adjustment in the balance but out of Movimientos" do
+    post finance_cash_counts_path, params: { cash_count: { money_account_id: box.id, counted_on: Time.zone.today, counted_amount: "1950" } }
+    expect(AccountBalance.new.for(box)).to eq(1_950)
+    expect(MoneyMovements.new(account: box.id).all.map(&:source)).to include("cash_counts")
+
+    get finance_movements_path
+    expect(response.body).not_to include(I18n.t("money_movements.cash_count"))
+    expect(page.css("select#source option").map { it["value"] }).not_to include("cash_counts")
+  end
+
   it "keeps the form when the date is in the future" do
     post finance_cash_counts_path, params: { cash_count: { money_account_id: box.id, counted_on: Time.zone.today + 1, counted_amount: "10" } }
     expect(response).to have_http_status(:unprocessable_content)

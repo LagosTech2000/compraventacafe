@@ -1306,6 +1306,28 @@ de la solicitud (hoy tardan menos de 1 s). Correr `batches:backfill` y
 `purchases:assign_single_farm` en producción espera la aprobación del
 cliente.
 
+**Cierres diarios** (Compra de café, Comercialización y Préstamos;
+Fernando, 2026-11-23): flechas al día anterior y siguiente junto a la fecha
+(`shared/_day_picker`, nunca después de hoy); **«Confirmar cierre»**
+(`DailyCloseConfirmation`, uno por módulo y día, quién y cuándo, **sin
+candado**; lo confirma quien ve ese cierre y solo un administrador lo
+quita); y en los de Compra de café y Comercialización, **«Combustible del
+día»** (`shared/_fuel_day`): los despachos de combustible de la empresa a
+los vehículos ese día, «Registrar despacho» y **«Cerrar combustible del
+día»** (`FuelDayClose`, **uno por día para todo el negocio**: hecho en un
+cierre sale hecho en el otro y no se hace dos veces; un administrador lo
+reabre).
+
+**Cuadrar** (Fernando, 2026-11-23: «facilitar lo de inventario y cuentas
+para que puedan cuadrar fácilmente»): **«Cuadrar inventario»**
+(`sales/stock_squares`, `StockSquare`, desde Inventario) pone cada estado
+de cada bodega activa en una página con lo que dice el sistema y lo
+contado, y guarda un conteo por fila escrita; **«Cuadrar cuentas»**
+(`finance/account_squares`, `AccountSquare`, desde Cuentas) hace lo mismo
+con un arqueo por cuenta activa, al día elegido. Todo o nada; lo vacío no
+se cuenta. **Movimientos no lista los ajustes por arqueo**
+(`MovementFilter::SOURCES`); siguen en saldos y estados de cuenta.
+
 **Inicio** (`Dashboard`, `dashboard/show`), **sin huecos** (Fernando,
 2026-10-12): cifras y módulos llenan cada fila (`flex-wrap` con
 `flex-1`), y en pantallas anchas «Actividad reciente» va a la derecha con
@@ -1620,7 +1642,10 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   otro; el vehículo va con cualquiera. Con transportista, opcional, el
   **precio del viaje** (`trip_price`, lo que se le paga por ese viaje), en
   el detalle y sumado en su ficha. Las salidas de antes con los dos se
-  quedan así. «Nueva salida» dice el número que tendrá
+  quedan así. **Motoristas** (Fernando, 2026-11-23): solo los empleados
+  de rol «Chofer» o «Conductor» y los marcados **«Maneja»** en la planilla
+  interna (`StaffMember#drives`, `StaffMember.drivers`; la migración marcó a
+  David Espinal Díaz y Emanuel Espinal); el servidor rechaza a otro. «Nueva salida» dice el número que tendrá
   (`Shipment.next_number`; el real se da al guardar). **Remisión impresa**
   (Fernando, 2026-11-12, con la foto del talonario del cliente) [CONFIRMADO]:
   «Imprimir remisión» en el detalle y «Remisión» en la lista (no en una
@@ -2008,8 +2033,10 @@ contado/crédito, forma de pago) [CONFIRMADO]:
     saca de los préstamos (`Supply.lendable`, `LoanSupply` lo rechaza). Entra
     con las entradas de siempre. Cada **despacho** es una salida «Uso del
     negocio» con su **vehículo** (obligatorio si lleva un insumo de la
-    empresa) y, opcional, **la compra** a la que fue (de los últimos 15
-    días; toma su vehículo). «Nueva compra» lleva el **vehículo** que fue
+    empresa) y, opcional, **la compra** a la que fue: solo las de **ese
+    día con vehículo** (Fernando, 2026-11-23; toma su vehículo); sin compra,
+    queda como lo despachado ese día. Su **costo** (al costo promedio)
+    sale en el formulario, en su detalle y en «Combustible del día». «Nueva compra» lleva el **vehículo** que fue
     por el café (opcional, los del negocio primero), y su detalle dice lo
     despachado para ella. Insumos → **«Combustible»**
     (`sales/fuel_dispatches#show`, `FuelDispatchFilter`, permiso de
@@ -2032,17 +2059,24 @@ salidas de dinero (gastos, inversiones y similares). Reglas [CONFIRMADO]:
 
 - **Cuentas** (`MoneyAccount`): caja o banco, con saldo inicial y su
   fecha; cada una dice para qué formas de pago se sugiere (`default_for`).
-  **«Préstamos»** (Fernando, 2026-11-01) la hace la cuenta de los
-  préstamos: **va sola** (quita las formas de pago; en el formulario,
-  `exclusive_choice_controller.js`), **solo una cuenta** la tiene
-  (validación + índice único parcial) y Nuevo préstamo y el abono a
-  préstamo empiezan con ella (`MoneyAccount.for_loans`; cambiar la forma
-  de pago no la mueve). Sin ella, el préstamo sigue con la de efectivo.
-  **Los abonos con café entran a ella** (Fernando, 2026-11-20, también
-  los de antes, migración `PutCoffeeLoanPaymentsInLoansAccount`):
-  `LoanPayment::IN_ACCOUNT`, en saldo, Movimientos, Ingresos y el cierre
-  de préstamos; los de planilla siguen sin cuenta. **No se desactiva**
-  mientras sea la de préstamos.
+  **Ya no hay cuenta de préstamos** (Fernando, 2026-11-23: «los
+  préstamos en efectivo salen de la caja principal … no quieren tener las
+  cuentas en negativo»; antes, desde el 2026-11-01, «Préstamos» llevaba lo
+  prestado y quedaba en negativo): la tarea de Mantenimiento
+  `loans:to_cash_box` (`Maintenance::LoansToCashBox`) pasa los préstamos
+  en efectivo desde la apertura de la caja y los abonos en dinero a la
+  caja (la cuenta sugerida para efectivo); los préstamos de antes de su
+  apertura quedan **cartera previa** (`Loan#outside_cash`: sin cuenta,
+  fuera de Movimientos, Consolidación y saldos; darle una cuenta lo
+  quita) y la cuenta de préstamos se desactiva. Préstamos y abonos nuevos
+  sugieren la cuenta de su forma de pago (`MoneyAccount.for_loans` solo si
+  alguien vuelve a marcar una). **Los abonos con café y por planilla no
+  llevan cuenta**: no mueven dinero (`LoanPayment::IN_ACCOUNT` = las formas
+  de pago en dinero). Las cifras de dinero de los préstamos están en el
+  **Resumen de Préstamos** («Dinero de los préstamos»: efectivo que salió
+  de las cuentas, abonos en dinero, con café, por planilla y el neto),
+  cada cifra con su ⓘ que explica cómo se calcula (`info_tip`). Tras
+  aplicar la tarea, la caja necesita un arqueo real («Cuadrar cuentas»).
   Saldo = inicial + entradas − salidas (`AccountBalance`, sumas en SQL de
   todas las fuentes). Se desactivan; no se borran. Estado de cuenta
   imprimible con el saldo después de cada movimiento. **La lista son
@@ -2542,9 +2576,9 @@ Reglas decididas por Fernando el 2026-09-28 [CONFIRMADO]:
   propuesto, CONFIRMADO por Fernando el 2026-10-25]: desde el detalle de una compra se
   abonan o saldan los préstamos de la persona del productor
   (`PurchaseLoanSettlement`, pantalla `trading/loan_settlements`). Reglas:
-  - Cada abono es un `LoanPayment` normal con forma de pago "Con café",
-    `purchase_id` y **la cuenta que se elija** (empieza en la de préstamos;
-    Fernando, 2026-11-22, `PurchaseLoanSettlement#money_account_id`): paga interés primero y luego capital, y salda el préstamo
+  - Cada abono es un `LoanPayment` normal con forma de pago "Con café" y
+    `purchase_id`, **sin cuenta** (no entra dinero: la factura paga menos;
+    Fernando, 2026-11-23): paga interés primero y luego capital, y salda el préstamo
     si cubre todo a esa fecha. Fecha del abono: hoy por defecto, editable.
   - La suma de abonos de una compra no pasa del total de la compra. Se puede
     abonar mientras la compra no esté anulada ni su factura pagada.

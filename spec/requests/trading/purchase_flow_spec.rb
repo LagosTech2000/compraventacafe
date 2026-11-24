@@ -272,16 +272,13 @@ RSpec.describe "Trading purchase flow" do
       expect(invoice.balance_due).to eq(0)
     end
 
-    # The account the coffee's money goes to (Fernando, 2026-11-22).
-    it "asks the account for the payment with coffee, the loans' one first" do
+    # The payment with coffee moves no money (Fernando, 2026-11-23): it asks no account.
+    it "asks no account for the payment with coffee" do
       create(:permission, user:, module_key: "loans", can_read: true, can_create: true)
       create(:loan, person: producer.person, cash_amount: 10_000, monthly_interest_rate: 0)
-      loans = create(:money_account, name: "Préstamos", default_for: [ MoneyAccount::LOANS ])
       purchase = invoice.purchases.first
       get new_trading_purchase_loan_settlement_path(purchase)
-      select = Nokogiri::HTML(response.body).at_css("select[name='purchase_loan_settlement[money_account_id]']")
-      expect(select["required"]).to be_present
-      expect(select.at_css("option[selected]")["value"]).to eq(loans.id.to_s)
+      expect(Nokogiri::HTML(response.body).at_css("[name='purchase_loan_settlement[money_account_id]']")).to be_nil
     end
   end
 

@@ -1,0 +1,70 @@
+<%# The day's fuel (Fernando, 2026-11-23): what went into the vehicles of
+    the business's fuel and oil, and the fuel close of the day, one for
+    the whole business (it shows the same in Compra de café and in
+    Comercialización, and is not made twice). %>
+<% dispatches = FuelDayClose.dispatches(date).to_a %>
+<% close = FuelDayClose.for(date) %>
+<% costs = Supply.average_costs(dispatches.flat_map { it.lines.map(&:supply_id) }.uniq) %>
+<% cost_of = ->(line) { (line.quantity.to_d * costs.fetch(line.supply_id, 0).to_d).round(2) } %>
+<% number = ->(value) { number_with_delimiter(value.to_d.round(2).to_s("F").sub(/\.0\z/, "")) } %>
+<section class="mt-8" aria-labelledby="fuel-day-title" data-fuel-day="<%= close ? "closed" : "open" %>">
+  <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+    <h2 id="fuel-day-title" class="text-lg font-semibold"><%= t("shared.fuel_day.title") %></h2>
+    <div class="flex flex-wrap items-center gap-2 print:hidden">
+      <% if !close && date <= Time.zone.today && policy(SupplyExit).create? %>
+        <%= modal_link_to t("shared.fuel_day.add"), new_sales_supply_exit_path(kind: "business_use", exited_on: date), class: "btn btn-sm" %>
+      <% end %>
+      <% if close %>
+        <span class="badge badge-success"><%= t("shared.fuel_day.closed", name: close.closed_by.name, at: l(close.created_at, format: :short)) %></span>
+        <% if policy(close).destroy? %>
+          <%= button_to t("shared.fuel_day.reopen"), fuel_day_close_path(close), method: :delete, class: "btn btn-sm",
+                form: { data: { turbo_confirm: t("shared.fuel_day.confirm_reopen") } } %>
+        <% end %>
+      <% elsif date <= Time.zone.today && policy(FuelDayClose.new).create? %>
+        <%= button_to t("shared.fuel_day.close"), fuel_day_closes_path(day: date), class: "btn btn-primary",
+              form: { data: { turbo_confirm: t("shared.fuel_day.confirm_close", date: l(date, format: :long)) } } %>
+      <% end %>
+    </div>
+  </div>
+  <% if dispatches.empty? %>
+    <p class="empty-state"><%= t("shared.fuel_day.empty") %></p>
+  <% else %>
+    <div class="overflow-x-auto panel">
+      <table class="data-table data-table-compact" data-controller="table-sort" data-fuel-day-table>
+        <thead>
+          <tr>
+            <th><%= Vehicle.model_name.human %></th>
+            <th><%= Supply.model_name.human %></th>
+            <th class="text-right"><%= t("shared.fuel_day.quantity") %></th>
+            <th class="text-right"><%= t("shared.fuel_day.cost") %></th>
+            <th><%= t("shared.fuel_day.purchase") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% dispatches.each do |dispatch| %>
+            <% dispatch.lines.each do |line| %>
+              <tr>
+                <td class="whitespace-nowrap"><%= dispatch.vehicle.label %></td>
+                <td><%= line.supply.name %></td>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= t("shared.fuel_day.amount", quantity: number.(line.quantity), unit: line.supply.unit) %></td>
+                <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(cost_of.(line)) %></td>
+                <td><%= dispatch.purchase_id ? t("shared.fuel_day.purchase_number", number: dispatch.purchase_id) : "—" %></td>
+              </tr>
+            <% end %>
+          <% end %>
+        </tbody>
+        <tfoot>
+          <% dispatches.flat_map(&:lines).group_by(&:supply).each do |supply, lines| %>
+            <tr class="font-semibold">
+              <td><%= t("shared.fuel_day.total") %></td>
+              <td><%= supply.name %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= t("shared.fuel_day.amount", quantity: number.(lines.sum { it.quantity.to_d }), unit: supply.unit) %></td>
+              <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(lines.sum { cost_of.(it) }) %></td>
+              <td></td>
+            </tr>
+          <% end %>
+        </tfoot>
+      </table>
+    </div>
+  <% end %>
+</section>

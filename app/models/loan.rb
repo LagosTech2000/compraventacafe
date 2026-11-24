@@ -41,6 +41,8 @@ class Loan < ApplicationRecord
   # for the loans from the day the inventory started.
 
   before_validation :compute_principal
+  # Given an account, it moved money in the system: not the old portfolio anymore.
+  before_validation { self.outside_cash = false if money_account_id }
 
   scope :newest_first, -> { order(disbursed_on: :desc, id: :desc) }
   scope :paid_off, -> { where.not(paid_off_on: nil) }

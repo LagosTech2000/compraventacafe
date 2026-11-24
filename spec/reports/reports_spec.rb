@@ -195,9 +195,8 @@ RSpec.describe "Reports (data)" do
     expect(kpi(report, :average).value).to eq(8)
   end
 
-  # With coffee it enters the loans' account (Fernando, 2026-11-20); the
-  # payroll ones move no money.
-  it "puts together the money in and out, with the coffee payments" do
+  # With coffee or from a payroll no money moves (Fernando, 2026-11-23).
+  it "puts together the money in and out, without the coffee payments" do
     producer = create(:producer)
     paid = create(:invoice, producer:, purchases: [ create(:purchase, producer:) ])
     paid.mark_paid(method: "cash", on: today)
@@ -207,8 +206,8 @@ RSpec.describe "Reports (data)" do
     create(:payroll_expense, amount: 200, spent_on: today)
 
     report = run(CashMovementsReport, period: "today")
-    expect(report.total_count).to eq(5)
-    expect(kpi(report, :amount_in).value).to eq(1_500)
+    expect(report.total_count).to eq(4)
+    expect(kpi(report, :amount_in).value).to eq(1_000)
     expect(kpi(report, :amount_out).value).to eq(BigDecimal("4120.9") + 3_000 + 200)
 
     by_source = run(CashMovementsReport, period: "today", group: "source").page.first.to_h { |row| [ row.key, row["amount_out"] ] }

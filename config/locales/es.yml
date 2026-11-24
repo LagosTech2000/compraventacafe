@@ -226,6 +226,32 @@ es:
       no_account: "Sin cuenta"
       no_hauler: "Sin carrero"
       pick_hauler: "Selecciona el carrero"
+    daily_close_confirmation:
+      confirm: "Confirmar cierre"
+      confirm_question: "¿Confirmar el cierre del %{date}? Queda como revisado (no cierra nada con candado)."
+      confirmed: "✓ Confirmado por %{name} · %{at}"
+      pending: "Sin confirmar"
+      undo: "Quitar confirmación"
+      confirm_undo: "¿Quitar la confirmación de este cierre?"
+    fuel_day:
+      title: "Combustible del día"
+      add: "Registrar despacho"
+      close: "Cerrar combustible del día"
+      confirm_close: "¿Cerrar el combustible del %{date}? Es uno por día para todo el negocio: también sale cerrado en el otro cierre diario."
+      closed: "✓ Combustible cerrado por %{name} · %{at}"
+      reopen: "Reabrir"
+      confirm_reopen: "¿Reabrir el combustible de este día?"
+      empty: "No hay despachos de combustible a los vehículos este día."
+      quantity: "Cantidad"
+      cost: "Costo"
+      amount: "%{quantity} %{unit}"
+      purchase: "Compra"
+      purchase_number: "Compra %{number}"
+      total: "Total"
+    day_picker:
+      previous: "Día anterior"
+      next: "Día siguiente"
+      date: "Fecha"
     filters:
       title: "Filtros"
       active: "activos"
@@ -271,6 +297,16 @@ es:
       loading: "Cargando…"
 
 
+  daily_close_confirmations:
+    create:
+      success: "Cierre confirmado."
+    destroy:
+      success: "Se quitó la confirmación del cierre."
+  fuel_day_closes:
+    create:
+      success: "Combustible del día cerrado."
+    destroy:
+      success: "Combustible del día reabierto."
   sessions:
     new:
       title: "Iniciar sesión"
@@ -689,6 +725,22 @@ es:
         done:
           one: "Se puso la finca a 1 compra."
           other: "Se puso la finca a %{count} compras."
+      loans_to_cash_box:
+        title: "Quitar la cuenta de préstamos: lo prestado y cobrado pasa a la caja"
+        what: "Los préstamos en efectivo desde la apertura de la caja y los abonos en dinero pasan a la caja (la cuenta sugerida para efectivo). Los préstamos de antes de su apertura (la cartera que ya estaba) y los abonos con café quedan sin cuenta: no movieron dinero de la caja. La cuenta de préstamos se desactiva."
+        after: "Ninguna cuenta queda en negativo por los préstamos. Préstamos y abonos nuevos sugieren la cuenta de su forma de pago y el abono con café no lleva cuenta. Las cifras de dinero de los préstamos se ven en el Resumen de Préstamos."
+        risk: "Medio, se puede deshacer. La caja cambia de saldo: después hay que hacer un arqueo con lo que hay de verdad («Cuadrar cuentas»)."
+        title_section: "Cuenta de préstamos"
+        none: "No hay cuenta de préstamos: no hay nada que mover."
+        from_account: "%{account}: saldo hoy %{balance}."
+        to_box: "Pasa a %{box} (abierta el %{date})."
+        no_box: "ninguna cuenta sugerida para efectivo: crea o marca la caja primero"
+        loans_box: "%{count} préstamos desde la apertura de la caja → la caja (%{amount} en efectivo)."
+        loans_none: "%{count} préstamos de antes de la apertura → sin cuenta (%{amount})."
+        payments_box: "%{count} abonos en dinero → la caja (%{amount})."
+        payments_none: "%{count} abonos con café → sin cuenta (%{amount})."
+        box_after: "%{box} quedaría en %{balance} hasta su próximo arqueo."
+        done: "Listo: %{loans} préstamos y %{payments} abonos cambiaron de cuenta; la cuenta de préstamos quedó desactivada."
   money_movements:
     invoice: "Factura %{number}"
     processing_cost: "%{concept} · proceso %{number}"
@@ -1395,7 +1447,6 @@ es:
         over_available: "Los abonos no pueden pasar de %{available}, lo que le queda a la compra."
         paid_on: "Fecha del abono"
         paid_on_help: "El interés se calcula hasta esta fecha. Al cambiarla se actualiza lo que debe."
-        account_help: "Ahí entra el dinero de los abonos. Empieza con la cuenta de préstamos."
         open_loans: "Préstamos por cobrar"
         fill_all: "Abonar todo lo posible"
         loan: "Préstamo %{number}"
@@ -1859,6 +1910,26 @@ es:
         success: "Bodega actualizada."
       destroy:
         success: "Bodega «%{name}» borrada."
+    # «Cuadrar inventario» (Fernando, 2026-11-23).
+    stock_squares:
+      new:
+        title: "Cuadrar inventario"
+        help: "Cada estado del café de cada bodega en una sola página. Escribe las libras brutas que contaste donde pesaste; lo que dejes vacío no se cuenta. Todo queda como conteos con hora %{at} y el inventario se ajusta a lo contado."
+        state: "Estado del café"
+        system: "El sistema dice"
+        counted: "Contadas (lb brutas)"
+        counted_of: "Libras brutas contadas de %{state} en %{warehouse}"
+        sacks: "Sacos"
+        reason: "Motivo"
+        no_reason: "Sin diferencia"
+        reason_detail: "Detalle"
+        footer: "Si hay diferencia, elige el motivo. Se guardan todos o ninguno."
+        submit: "Guardar conteos"
+      create:
+        success:
+          one: "1 conteo guardado: el inventario quedó como se contó."
+          other: "%{count} conteos guardados: el inventario quedó como se contó."
+        nothing: "Escribe al menos un conteo."
     stock_counts:
       label: "Conteo %{number}"
       voided: "Anulado"
@@ -2483,8 +2554,11 @@ es:
         use: "A qué vehículo"
         vehicle_help: "Obligatorio para el combustible y el aceite de la empresa: el vehículo al que se le despachó."
         vehicle_missing: "Elige el vehículo al que se le despachó."
-        purchase_help: "Opcional: la compra a la que fue el vehículo (las de los últimos 15 días). Si la compra tiene vehículo, lo toma."
-        purchase_option: "%{producer} · %{date} · %{vehicle}"
+        purchase_help: "Opcional: la compra de ese día a la que fue el vehículo. Toma su vehículo."
+        no_purchases_that_day: "Ese día no hay compras con vehículo: el despacho queda solo como lo que se dio ese día."
+        purchase_option: "%{producer} · %{time} · %{vehicle}"
+        use_cost: "Costo del despacho"
+        use_cost_help: "Lo despachado al costo promedio de lo que ha entrado de cada insumo; sale en «Combustible» y en el cierre del día."
         no_vehicle_short: "sin vehículo"
         no_purchase: "Sin compra"
         submit: "Registrar salida"
@@ -3334,6 +3408,7 @@ es:
         transfer: "Trasladar café"
         warehouses: "Bodegas"
         new_count: "Contar bodega"
+        square: "Cuadrar inventario"
         batches: "Lotes"
         counts: "Conteos"
         reconciliation: "Cuadre del día"
@@ -3618,6 +3693,7 @@ es:
         role_help: "El rol dice su salario, cada cuánto se le paga y el valor de su hora extra."
         salary_override_placeholder: "El del rol"
         salary_override_help: "Opcional, mensual: si gana distinto que su rol (por ejemplo, un chofer 7,000 y otro 15,000). Manda sobre el salario del rol; la frecuencia y la hora extra siguen siendo las del rol."
+        drives_help: "Sale para elegir como motorista en las salidas. Los de rol «Chofer» o «Conductor» salen siempre."
         new_role: "Nuevo rol"
         ends_on_help: "Opcional: el último día que trabajó. Al desactivarlo sin fecha, queda el último día que trabajó o se le pagó: después de ese día ya no sale en la hoja de planilla."
         active: "Activo (sale en la planilla)"
@@ -3923,6 +3999,7 @@ es:
         bank_name_placeholder: "Por ejemplo: Banpaís, Davivienda, Lafise"
       index:
         opening_balances: "Saldos de apertura"
+        square: "Cuadrar cuentas"
         title: "Cuentas"
         help: "La caja y los bancos del negocio, con su saldo de hoy."
         new: "Nueva cuenta"
@@ -3974,6 +4051,23 @@ es:
         success: "Transferencia registrada."
       destroy:
         success: "Transferencia quitada."
+    # «Cuadrar cuentas» (Fernando, 2026-11-23).
+    account_squares:
+      new:
+        title: "Cuadrar cuentas"
+        help: "Todas las cuentas activas en una sola página: escribe lo que hay de verdad en cada una; lo que dejes vacío no se arquea. Cada una queda como arqueo y su saldo pasa a lo contado."
+        account: "Cuenta"
+        balance: "Saldo del sistema al %{date}"
+        counted: "Contado (L)"
+        counted_of: "Lo contado en %{account}"
+        observations: "Observaciones"
+        footer: "Se guardan todos los arqueos o ninguno."
+        submit: "Guardar arqueos"
+      create:
+        success:
+          one: "1 arqueo guardado: la cuenta quedó con lo contado."
+          other: "%{count} arqueos guardados: las cuentas quedaron con lo contado."
+        nothing: "Escribe al menos un monto contado."
     cash_counts:
       new:
         title: "Arqueo de caja"
@@ -4159,6 +4253,7 @@ es:
           owed: "Por cobrar hoy"
           lent: "Prestado (todos los préstamos)"
           collected: "Cobrado (todos los abonos)"
+          money: "Dinero de los préstamos"
         stats:
           open_loans: "Préstamos por cobrar"
           principal_owed: "Capital por cobrar"
@@ -4173,6 +4268,11 @@ es:
           cash_collected: "Capital cobrado en efectivo"
           supplies_collected: "Capital cobrado en insumos"
           interest_collected: "Interés cobrado"
+          cash_out: "Efectivo que salió de las cuentas"
+          money_in: "Abonos en dinero (entró a las cuentas)"
+          coffee_in: "Abonos con café (sin dinero)"
+          payroll_in: "Descontado en planilla (sin dinero)"
+          net: "Dinero neto de los préstamos"
         stats_go:
           open_loans: "Ver los préstamos por cobrar"
           principal_owed: "Ver los préstamos por cobrar"
@@ -4187,6 +4287,31 @@ es:
           cash_collected: "Ver los préstamos con efectivo"
           supplies_collected: "Ver los préstamos con insumos"
           interest_collected: "Ver los abonos (todos)"
+          cash_out: "Ver los préstamos con efectivo"
+          money_in: "Ver los abonos (todos)"
+          coffee_in: "Ver los abonos (todos)"
+          payroll_in: "Ver los abonos (todos)"
+          net: "Abonos en dinero − efectivo prestado"
+        stats_info_label: "Cómo se calcula: %{figure}"
+        stats_info:
+          open_loans: "Cuántos préstamos todavía deben algo hoy (al día y vencidos). Sale de los préstamos sin fecha de pagado: uno se marca pagado solo cuando sus abonos cubren capital e interés. Sirve para saber cuánta gente te debe."
+          principal_owed: "Capital por cobrar = lo prestado (efectivo + insumos) − el capital que han pagado los abonos, sumado de cada préstamo abierto. No incluye interés. Es el dinero tuyo que está afuera."
+          cash_owed: "La parte del capital por cobrar que se prestó en efectivo. Cada abono de capital se reparte en la proporción en que se prestó (efectivo e insumos). Sirve para saber cuánto efectivo falta que regrese."
+          supplies_owed: "La parte del capital por cobrar que se prestó en insumos (abono, fungicida…), repartida igual que el efectivo. Es el valor de los insumos que todavía no se han pagado."
+          interest_owed: "Interés acumulado a hoy de los préstamos abiertos: capital pendiente × tasa mensual × días ÷ 30, desde la fecha del préstamo (o desde el día 11 si es tipo intermediario), menos el interés ya pagado. Cambia cada día."
+          overdue_loans: "Préstamos abiertos cuya fecha límite ya pasó. No tienen recargo: siguen con la misma tasa. Son los primeros que hay que cobrar."
+          lent: "Todo lo prestado desde que se usa el sistema, también la cartera que ya existía: efectivo + insumos de cada préstamo (su capital). Pagado o no."
+          lent_cash: "La parte en efectivo de todo lo prestado, incluida la cartera vieja (antes del 30/09), que no salió de ninguna cuenta del sistema."
+          lent_supplies: "La parte en insumos de todo lo prestado: cantidad × precio de cada insumo del préstamo."
+          cash_out: "El efectivo prestado que salió de una cuenta del sistema (hoy, la Caja Principal). No incluye la cartera de antes del 30/09: ese dinero salió antes de que la caja existiera en el sistema. Es lo que bajó la caja por préstamos."
+          money_in: "Abonos en efectivo, transferencia o cheque: lo que entró a las cuentas por los préstamos (interés + capital). Es lo que subió la caja o el banco por cobrar."
+          coffee_in: "Abonos pagados con café de una compra: no entra dinero, se rebaja de lo que se le paga al productor en su factura. Por eso no está en ninguna cuenta."
+          payroll_in: "Abonos descontados del pago de una planilla: no entra dinero, el empleado recibe menos. Por eso no está en ninguna cuenta."
+          net: "Abonos en dinero − efectivo que salió de las cuentas. Negativo = ha salido más efectivo del que ha regresado; lo que falta está en «Por cobrar hoy». No es una cuenta: es el balance de caja de los préstamos."
+          principal_collected: "La parte de capital de todos los abonos (en dinero, con café o por planilla). Cada abono paga primero el interés acumulado y lo que sobra baja el capital; el reparto se guarda en cada abono."
+          cash_collected: "La parte del capital cobrado que corresponde a lo prestado en efectivo, en la proporción en que se prestó cada préstamo."
+          supplies_collected: "La parte del capital cobrado que corresponde a lo prestado en insumos, en la misma proporción."
+          interest_collected: "La parte de interés de todos los abonos: lo primero que paga cada abono. Es la ganancia cobrada de los préstamos."
         overdue: "Préstamos vencidos"
         overdue_help: "Pasaron su fecha límite y todavía deben. Los más atrasados primero."
         no_overdue: "No hay préstamos vencidos."
@@ -7189,10 +7314,12 @@ es:
             title: "Cierre diario"
             summary: "Resumen y detalle de las compras de un día."
             steps:
-              - "Elige la fecha: el cierre se actualiza solo."
+              - "Elige la fecha, o usa las flechas para ir al día anterior o al siguiente: el cierre se actualiza solo."
               - "Revisa los totales y «Estado de pago»: cuánto del total comprado está en facturas canceladas, con pago parcial, pendientes de pago y sin facturar, con su barra."
               - "En «Facturas con pago parcial» ves lo abonado y lo que falta de cada una; toca «Detalle» para registrar otro abono."
               - "En «Por productor» ves lo que vendió cada productor ese día; toca su nombre para ver sus compras."
+              - "En «Combustible del día» revisa lo que se despachó a los vehículos y toca «Cerrar combustible del día»."
+              - "Toca «Confirmar cierre» cuando lo revisaste: queda quién y cuándo."
               - "Toca «Imprimir» para sacar el reporte."
             tips:
               - "«Compras del día» y el reporte impreso agrupan las compras en canceladas, con pago parcial, pendientes de pago y sin facturar, cada grupo con su total."
@@ -7324,6 +7451,17 @@ es:
             summary: "Qué salió, por qué y, si fue venta, a quién, por cuánto y a qué cuenta entró."
             steps:
               - "«Quitar salida» devuelve lo que salió a la bodega y, si fue venta, saca su dinero de la cuenta."
+        stock_squares:
+          form:
+            title: "Cuadrar inventario"
+            summary: "Todas las bodegas y estados del café en una página, para contar y dejar el inventario como está de verdad."
+            steps:
+              - "Pesa cada estado del café en cada bodega."
+              - "Escribe las libras brutas contadas (y los sacos, si quieres) en su fila; deja vacío lo que no contaste."
+              - "Si una fila no coincide con lo que dice el sistema, elige el motivo."
+              - "Toca «Guardar conteos»: cada fila queda como un conteo y el inventario se ajusta."
+            tips:
+              - "Se guardan todos o ninguno: si una fila tiene un error, sale debajo de ella."
         fuel_dispatches:
           show:
             title: "Combustible de la empresa"
@@ -7848,10 +7986,22 @@ es:
             title: "Cierre diario de comercialización"
             summary: "Lo que salió, lo que se pesó en destino, lo que se vendió y se cobró en un día, y el inventario al cerrar."
             steps:
-              - "Elige la fecha."
+              - "Elige la fecha, o usa las flechas para ir al día anterior o al siguiente."
               - "Revisa las cifras, el inventario y las listas del día."
+              - "En «Combustible del día» revisa lo que se despachó a los vehículos y toca «Cerrar combustible del día» (es el mismo de Compra de café)."
+              - "Toca «Confirmar cierre» cuando lo revisaste: queda quién y cuándo."
               - "Toca «Imprimir» para sacar el cierre."
       finance:
+        account_squares:
+          form:
+            title: "Cuadrar cuentas"
+            summary: "Todas las cuentas activas en una página, para arquearlas de una vez."
+            steps:
+              - "Elige el día con las flechas o el calendario (hoy por defecto)."
+              - "Escribe lo que hay de verdad en cada cuenta; deja vacío lo que no arqueaste."
+              - "Toca «Guardar arqueos»: cada cuenta queda con lo contado y la diferencia entra a su saldo."
+            tips:
+              - "La diferencia del arqueo no sale en Movimientos: solo ajusta el saldo."
         home:
           index:
             title: "Resumen de Control financiero"
@@ -8399,7 +8549,8 @@ es:
             title: "Cierre diario de préstamos"
             summary: "Lo que se prestó y lo que se cobró en un día, por forma de pago y por cuenta."
             steps:
-              - "Elige la fecha (empieza en hoy)."
+              - "Elige la fecha (empieza en hoy), o usa las flechas para ir al día anterior o al siguiente."
+              - "Toca «Confirmar cierre» cuando lo revisaste: queda quién y cuándo."
               - "Revisa lo prestado en efectivo e insumos y lo cobrado, con lo que fue a interés."
               - "En «Dinero por cuenta», compara lo que salió y lo que entró de cada cuenta."
               - "Toca «Imprimir» para sacarlo en papel."
@@ -9402,6 +9553,12 @@ es:
       coffee_batch:
         one: "Lote"
         other: "Lotes"
+      daily_close_confirmation:
+        one: "Confirmación de cierre diario"
+        other: "Confirmaciones de cierre diario"
+      fuel_day_close:
+        one: "Cierre de combustible del día"
+        other: "Cierres de combustible del día"
       coffee_batch_invoice:
         one: "Factura del lote"
         other: "Facturas del lote"
@@ -9575,6 +9732,7 @@ es:
         overtime_hour_rate: "Valor de la hora extra (L)"
         active: "Activo"
       staff_member:
+        drives: "Maneja"
         person: "Empleado"
         person_id: "Empleado"
         role: "Rol"
@@ -10009,6 +10167,7 @@ es:
         vehicle_id: "Vehículo"
         purchase: "Para la compra"
         purchase_id: "Para la compra"
+        use_cost: "Costo del despacho"
         payment_method: "Forma de pago"
         money_account: "Cuenta"
         money_account_id: "Cuenta"
@@ -10030,6 +10189,15 @@ es:
         supply_id: "Insumo"
         quantity: "Cantidad"
         amount: "Costo (L)"
+      daily_close_confirmation:
+        module_key: "Módulo"
+        day: "Día"
+        confirmed_by: "Confirmado por"
+        confirmed_by_id: "Confirmado por"
+      fuel_day_close:
+        day: "Día"
+        closed_by: "Cerrado por"
+        closed_by_id: "Cerrado por"
       coffee_batch:
         closed_at: "Cerrado el"
         closed_by: "Cerrado por"
@@ -10434,6 +10602,7 @@ es:
       collaborator:
         person_id: "Persona"
       loan:
+        outside_cash: "Cartera previa (no movió dinero en el sistema)"
         money_account: "Cuenta"
         money_account_id: "Cuenta"
         interest_grace: "Días sin interés"
@@ -10765,6 +10934,8 @@ es:
               inactive: "está desactivado: elige otro"
             purchase:
               voided: "está anulada: elige otra"
+              other_day: "es de otro día: elige una compra del día del despacho"
+              no_vehicle: "no tiene vehículo: elige una que fue con vehículo"
         supply_exit_line:
           attributes:
             supply:
@@ -10849,6 +11020,14 @@ es:
               review_first: "Falta algo de la lista: marca que lo revisaste para cerrar el día así."
             closed_on:
               already_closed: "ya está cerrado: el negocio está cerrado hasta el %{date}"
+        fuel_day_close:
+          attributes:
+            day:
+              taken: "ya tiene su cierre de combustible: no se hace dos veces"
+        daily_close_confirmation:
+          attributes:
+            day:
+              taken: "ya está confirmado"
         stock_count:
           attributes:
             base:
@@ -10923,7 +11102,7 @@ es:
               inclusion: "tiene una forma de pago que no existe"
             base:
               one_for_loans: "Solo una cuenta puede ser la de préstamos, y ya lo es %{account}: quítaselo ahí primero."
-              loans_stays_active: "La cuenta de préstamos no se desactiva: a ella entran los abonos con café."
+              loans_stays_active: "La cuenta sugerida para préstamos no se desactiva: primero quítale «Préstamos» en «Se sugiere para»."
         expense_category:
           attributes:
             parent:
@@ -10974,6 +11153,8 @@ es:
           sold: "La salida está en la venta %{sale}: ya no cambia. Para corregirla, primero anula la venta."
           received: "La salida ya se pesó en destino: ya no cambia. Para corregirla, primero quita la báscula del comprador."
           attributes:
+            driver:
+              not_a_driver: "no maneja: elige un empleado con rol «Chofer» o «Conductor», o con «Maneja» marcado"
             weighings:
               blank: "faltan: agrega al menos una pesada"
             base:

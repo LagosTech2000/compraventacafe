@@ -185,7 +185,7 @@ RSpec.describe "Fingerprints" do
       hauler = create(:hauler, person: create(:person, :collaborator))
       producer = create(:producer)
       create(:purchase, producer:, hauler:)
-      member = create(:staff_member, person: hauler.person)
+      member = create(:staff_member, :driver, person: hauler.person)
       sign_in admin
 
       get person_panel_path(hauler.person)

@@ -11,7 +11,7 @@ module Maintenance
     Maintenance::Inventory Maintenance::Shipments Maintenance::ShipmentExpenseCandidates Maintenance::BatchesBackfill
     Maintenance::Sales Maintenance::SalesRecalculate
     Maintenance::Money Maintenance::CashCounts Maintenance::Expenses
-    Maintenance::SingleFarm Maintenance::PlotsFromLots
+    Maintenance::SingleFarm Maintenance::PlotsFromLots Maintenance::LoansToCashBox
   ].freeze
 
   def self.tasks = TASKS.map(&:constantize)

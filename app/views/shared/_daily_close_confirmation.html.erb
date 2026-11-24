@@ -1,0 +1,17 @@
+<%# «Confirmar cierre» of a module's daily close (Fernando, 2026-11-23):
+    marks the day reviewed (who and when), with no lock. %>
+<% confirmation = DailyCloseConfirmation.for(module_key, date) %>
+<div class="flex flex-wrap items-center gap-2" data-daily-close-confirmation="<%= confirmation ? "confirmed" : "open" %>">
+  <% if confirmation %>
+    <span class="badge badge-success"><%= t("shared.daily_close_confirmation.confirmed", name: confirmation.confirmed_by.name, at: l(confirmation.created_at, format: :short)) %></span>
+    <% if policy(confirmation).destroy? %>
+      <%= button_to t("shared.daily_close_confirmation.undo"), daily_close_confirmation_path(confirmation), method: :delete, class: "btn btn-sm print:hidden",
+            form: { data: { turbo_confirm: t("shared.daily_close_confirmation.confirm_undo") } } %>
+    <% end %>
+  <% elsif date <= Time.zone.today && policy(DailyCloseConfirmation.new(module_key: module_key.to_s)).create? %>
+    <%= button_to t("shared.daily_close_confirmation.confirm"), daily_close_confirmations_path(module_key:, day: date), class: "btn btn-primary print:hidden",
+          form: { data: { turbo_confirm: t("shared.daily_close_confirmation.confirm_question", date: l(date, format: :long)) } } %>
+  <% else %>
+    <span class="badge badge-neutral"><%= t("shared.daily_close_confirmation.pending") %></span>
+  <% end %>
+</div>

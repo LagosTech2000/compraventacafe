@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_22_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_23_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -296,6 +296,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_130000) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "daily_close_confirmations", force: :cascade do |t|
+    t.string "module_key", null: false
+    t.date "day", null: false
+    t.bigint "confirmed_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["confirmed_by_id"], name: "index_daily_close_confirmations_on_confirmed_by_id"
+    t.index ["module_key", "day"], name: "index_daily_close_confirmations_on_module_key_and_day", unique: true
+  end
+
   create_table "departments", force: :cascade do |t|
     t.string "code", null: false
     t.string "name", null: false
@@ -428,6 +438,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_130000) do
     t.index ["person_id"], name: "index_fingerprints_on_person_id"
   end
 
+  create_table "fuel_day_closes", force: :cascade do |t|
+    t.date "day", null: false
+    t.bigint "closed_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["closed_by_id"], name: "index_fuel_day_closes_on_closed_by_id"
+    t.index ["day"], name: "index_fuel_day_closes_on_day", unique: true
+  end
+
   create_table "harvest_entries", force: :cascade do |t|
     t.bigint "payroll_member_id", null: false
     t.date "worked_on", null: false
@@ -554,6 +573,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_130000) do
     t.integer "lock_version", default: 0, null: false
     t.bigint "money_account_id"
     t.boolean "interest_grace", default: false, null: false
+    t.boolean "outside_cash", default: false, null: false
     t.index ["created_by_id"], name: "index_loans_on_created_by_id"
     t.index ["disbursed_on"], name: "index_loans_on_disbursed_on"
     t.index ["due_on"], name: "index_loans_on_due_on"
@@ -1252,6 +1272,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_130000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.decimal "salary_override", precision: 12, scale: 2
+    t.boolean "drives", default: false, null: false
     t.index ["person_id"], name: "index_staff_members_on_person_id", unique: true
     t.index ["staff_role_id"], name: "index_staff_members_on_staff_role_id"
   end
@@ -1527,6 +1548,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_130000) do
   add_foreign_key "coffee_conversions", "warehouses"
   add_foreign_key "coffee_conversions", "warehouses", column: "output_warehouse_id"
   add_foreign_key "collaborators", "people"
+  add_foreign_key "daily_close_confirmations", "users", column: "confirmed_by_id"
   add_foreign_key "expense_categories", "expense_categories", column: "parent_id"
   add_foreign_key "expense_receipts", "expenses"
   add_foreign_key "expense_receipts", "shipment_costs"
@@ -1542,6 +1564,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_130000) do
   add_foreign_key "fingerprint_stations", "users", column: "created_by_id"
   add_foreign_key "fingerprints", "people"
   add_foreign_key "fingerprints", "users", column: "created_by_id"
+  add_foreign_key "fuel_day_closes", "users", column: "closed_by_id"
   add_foreign_key "harvest_entries", "payroll_members"
   add_foreign_key "hauler_payments", "haulers"
   add_foreign_key "hauler_payments", "money_accounts"
