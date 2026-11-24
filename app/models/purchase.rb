@@ -69,7 +69,7 @@ class Purchase < ApplicationRecord
   validate :farm_belongs_to_producer
   validate :plot_belongs_to_farm, if: -> { farm_plot_id && (will_save_change_to_farm_plot_id? || will_save_change_to_farm_id?) }
   validate :voided_not_invoiced
-  validate :invoiced_unchanged, on: :update, if: -> { invoice_id_in_database.present? && invoice_id == invoice_id_in_database && Current.maintenance.blank? }
+  validate :invoiced_unchanged, on: :update, if: -> { invoice_id_in_database.present? && invoice_id == invoice_id_in_database && !Current.unlocked? }
   # «Café corriente» (Fernando, 2026-11-12): only wet parchment; it will not
   # count in the end-of-season retention (an open point, not built yet).
   before_validation { self.common_coffee = false unless coffee_state == "wet_parchment" }

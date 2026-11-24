@@ -744,8 +744,14 @@ navegador puede revisar:
   sin cobros), salida pesada en destino o vendida y lotes de una salida
   vendida. Corregir = deshacer lo posterior y anular, y cada bloqueo dice
   en español qué hacer primero («Para corregirla, primero anula la
-  venta»). Solo una tarea de Mantenimiento de datos pasa por encima
-  (`Current.maintenance`).
+  venta»). Pasan por encima una tarea de Mantenimiento de datos
+  (`Current.maintenance`) y **el usuario principal (id 1)** (Fernando,
+  2026-11-22: «el único que pueda editar todo sin importar lo que sea»;
+  `Current.unlocked?` en los modelos, `ApplicationPolicy#unlocked?` en las
+  políticas): días cerrados, compra facturada o con abonos, salida pesada
+  o vendida, lotes de una salida vendida, procesados o cerrados, y
+  préstamo con abonos. Lo que no tiene pantalla de edición (factura,
+  venta, abonos y cobros) sigue igual.
 - **No sale más café del que hay, desde el primer conteo** de ese estado
   en esa bodega (`StockGuard`, ver «Conteo de bodega»).
 - **Motivo cuando una diferencia pasa su tolerancia** (Fernando,

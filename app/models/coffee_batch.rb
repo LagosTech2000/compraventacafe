@@ -80,7 +80,7 @@ class CoffeeBatch < ApplicationRecord
   # (Fernando, 2026-11-18: closed records are not edited; before, since
   # 2026-11-13, an administrator could). Outside a request and in a
   # data-maintenance task, nothing is locked.
-  def self.sold_editable? = Current.user.nil? || Current.maintenance.present?
+  def self.sold_editable? = Current.user.nil? || Current.unlocked?
 
   # { batch id => the last moment coffee of it came in }: its invoices'
   # purchases (not voided) and its processes' results. A lot only carries
@@ -135,7 +135,7 @@ class CoffeeBatch < ApplicationRecord
 
   # Taken by a shipment or a process of a closed day (BusinessDayClose):
   # its invoices and shares no longer change.
-  def closed_day? = !Current.maintenance && BusinessDayClose.locked?(DayLock.day(taken_at))
+  def closed_day? = !Current.unlocked? && BusinessDayClose.locked?(DayLock.day(taken_at))
 
   # Its purchases' pounds and value, in its share (a voided purchase does not count).
   def totals = @totals ||= Totals.for(self)
@@ -235,7 +235,7 @@ class CoffeeBatch < ApplicationRecord
     end
 
     def taker_day_open
-      return if Current.maintenance || BusinessDayClose.locked_through.nil?
+      return if Current.unlocked? || BusinessDayClose.locked_through.nil?
 
       takers = [ Shipment.find_by(id: shipment_id_in_database)&.departed_at, shipment&.departed_at,
                  CoffeeConversion.find_by(id: coffee_conversion_id_in_database)&.weighed_at, processing&.weighed_at ]

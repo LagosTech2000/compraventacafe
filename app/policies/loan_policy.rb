@@ -4,7 +4,7 @@ class LoanPolicy < ApplicationPolicy
   self.submodule_key = "loans"
 
   def update?
-    super && !with_payments?
+    super && (!with_payments? || unlocked?)
   end
 
   def destroy?

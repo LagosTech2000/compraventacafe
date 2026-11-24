@@ -149,6 +149,6 @@ class CoffeeBatchInvoice < ApplicationRecord
       # Its shipment or process is of a closed day (BusinessDayClose).
       errors.add(:base, :lot_closed_day) if coffee_batch&.closed_day?
       # Closed without a shipment (Fernando, 2026-11-22): its invoices stay as they are.
-      errors.add(:base, :lot_closed) if coffee_batch&.closed? && !Current.maintenance
+      errors.add(:base, :lot_closed) if coffee_batch&.closed? && !Current.unlocked?
     end
 end

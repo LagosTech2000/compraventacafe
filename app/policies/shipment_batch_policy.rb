@@ -10,5 +10,5 @@ class ShipmentBatchPolicy < ApplicationPolicy
   def destroy? = create?
 
   private
-    def open? = !record.is_a?(Shipment) || !(record.voided? || record.sold?)
+    def open? = unlocked? || !record.is_a?(Shipment) || !(record.voided? || record.sold?)
 end

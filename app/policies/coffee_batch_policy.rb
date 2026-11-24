@@ -15,5 +15,5 @@ class CoffeeBatchPolicy < ApplicationPolicy
   private
     def taken? = record.is_a?(CoffeeBatch) && record.taken?
     def closed? = record.is_a?(CoffeeBatch) && record.closed?
-    def open? = !record.is_a?(CoffeeBatch) || (!record.processed? && !record.shipment&.sold? && !record.closed?)
+    def open? = unlocked? || !record.is_a?(CoffeeBatch) || (!record.processed? && !record.shipment&.sold? && !record.closed?)
 end

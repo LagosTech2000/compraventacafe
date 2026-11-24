@@ -43,6 +43,6 @@ class ShipmentPolicy < ApplicationPolicy
     # Weighed or sold, it is not changed, except to complete a local scale
     # left empty (Fernando, 2026-11-12).
     def open?
-      !record.is_a?(Shipment) || !(record.voided? || ((record.sold? || record.received?) && !record.origin_missing?))
+      unlocked? || !record.is_a?(Shipment) || !(record.voided? || ((record.sold? || record.received?) && !record.origin_missing?))
     end
 end

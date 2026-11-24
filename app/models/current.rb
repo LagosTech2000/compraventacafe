@@ -14,4 +14,10 @@ class Current < ActiveSupport::CurrentAttributes
   # Who sees only what they registered (OwnedRecord): the user of the
   # request unless an administrator; nobody outside a request.
   def owner = (signed_in = user) && !signed_in.admin? ? signed_in : nil
+
+  # What is closed to everybody opens for a data-maintenance task and for
+  # the main user (Fernando, 2026-11-22: «el único que pueda editar todo
+  # sin importar lo que sea es el usuario id 1»): closed days, invoiced
+  # purchases, weighed or sold shipments, lots of sold shipments or closed.
+  def unlocked? = maintenance.present? || user&.data_exporter? || false
 end
