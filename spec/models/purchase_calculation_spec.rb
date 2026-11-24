@@ -78,4 +78,12 @@ RSpec.describe PurchaseCalculation do
     expect(result.net_weight).to eq(((BigDecimal("100.33") - 1) * BigDecimal("0.485")).round(2))
     expect(result.total).to eq((result.net_weight * BigDecimal("57.25")).round(2))
   end
+
+  # The buyers take off half a pound per sack (Fernando, 2026-11-23).
+  it "takes off the tare per sack given: the buyer's half a pound" do
+    calculation = described_class.new(coffee_state: "wet_parchment", gross_weight: 8_801.69, price_per_pound: 0, humidity_percent: 51,
+                                      damage_percent: 0, counted_sacks: 54, tare_per_sack: described_class::BUYER_TARE_PER_SACK)
+    expect(calculation.tare).to eq(27)
+    expect(calculation.net_weight).to eq(4_299.6)
+  end
 end

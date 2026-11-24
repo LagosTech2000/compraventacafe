@@ -56,4 +56,16 @@ RSpec.describe "The main user edits what is closed" do
     expect(LoanPolicy.new(admin, loan).update?).to be(false)
     expect(LoanPolicy.new(main, loan).update?).to be(true)
   end
+
+  # The buyer's scale of a sold shipment, its sale recalculated (Fernando, 2026-11-23).
+  it "weighs a sold shipment again on the buyer's scale and recalculates its sale" do
+    sale = create(:sale)
+    shipment = sale.shipments.first
+    expect(ShipmentPolicy.new(admin, shipment).receive?).to be(false)
+
+    sign_in main
+    patch sales_shipment_arrival_path(shipment), params: { shipment: { destination_gross_weight: "2000" } }
+    expect(shipment.reload.destination_gross_weight).to eq(2_000)
+    expect(sale.reload.net_weight).to eq(shipment.destination_net_weight)
+  end
 end

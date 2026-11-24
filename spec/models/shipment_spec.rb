@@ -63,4 +63,12 @@ RSpec.describe Shipment do
     expect(shipment.update(origin_gross_weight: 1_200)).to be(false)
     expect(shipment.reload.update(observations: "Llegó bien")).to be(true)
   end
+
+  # The buyers take off half a pound per sack (Fernando, 2026-11-23); the local scale, one.
+  it "takes off half a pound per sack on the buyer's scale" do
+    shipment = create(:shipment, origin_gross_weight: 8_900, origin_sacks: 54)
+    shipment.update!(received_on: Time.zone.today, destination_gross_weight: 8_801.69, destination_sacks: 54,
+                     destination_humidity_percent: 51, destination_damage_percent: 0)
+    expect(shipment).to have_attributes(origin_tare: 54, destination_tare: 27, destination_net_weight: 4_299.6)
+  end
 end

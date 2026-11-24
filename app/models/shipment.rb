@@ -375,7 +375,8 @@ class Shipment < ApplicationRecord
       calculation = PurchaseCalculation.new(coffee_state:, gross_weight: gross, price_per_pound: 0,
                                             humidity_percent: self["#{side}_humidity_percent"],
                                             damage_percent: self["#{side}_damage_percent"],
-                                            yield_factor: self["#{side}_yield_factor"], counted_sacks: sacks)
+                                            yield_factor: self["#{side}_yield_factor"], counted_sacks: sacks,
+                                            tare_per_sack: side == "destination" ? PurchaseCalculation::BUYER_TARE_PER_SACK : PurchaseCalculation::TARE_PER_SACK)
       self["#{side}_tare"] = calculation.tare
       self["#{side}_net_weight"] = calculation.net_weight
     end

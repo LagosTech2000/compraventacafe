@@ -109,6 +109,7 @@ RSpec.describe "Sales screens", type: :system do
     visit edit_sales_shipment_arrival_path(shipment)
 
     fill_in "shipment_destination_gross_weight", with: "980"
+    fill_in "shipment_destination_sacks", with: "12" # ½ lb of tare each
     fill_in "shipment_destination_damage_percent", with: "1"
     # (980 − 6) × 0.49 × 0.99 = 472.49: 14.57 lb (2.99 %) less than 487.06
     expect(page).to have_css("[data-weighing-calculator-target='difference']", text: "−14.57 lb (−2.99 %)")
@@ -131,6 +132,7 @@ RSpec.describe "Sales screens", type: :system do
     shipment = create(:shipment, buyer:)
     visit edit_sales_shipment_arrival_path(shipment, open_settle: 1)
     fill_in "shipment_destination_gross_weight", with: "980"
+    fill_in "shipment_destination_sacks", with: "12" # ½ lb of tare each
     fill_in "shipment_destination_damage_percent", with: "1"
     fill_in "settle_unit_price", with: "6000"
     # 472.49 lb ÷ 120 × L 6,000

@@ -750,8 +750,10 @@ navegador puede revisar:
   `Current.unlocked?` en los modelos, `ApplicationPolicy#unlocked?` en las
   políticas): días cerrados, compra facturada o con abonos, salida pesada
   o vendida, lotes de una salida vendida, procesados o cerrados, y
-  préstamo con abonos. Lo que no tiene pantalla de edición (factura,
-  venta, abonos y cobros) sigue igual.
+  préstamo con abonos, y **la báscula del comprador de una salida pesada o
+  vendida** («Editar» en su báscula; la venta se recalcula,
+  `Sale#recalculate_weights!`). Lo que no tiene pantalla de edición
+  (factura, venta, abonos y cobros) sigue igual.
 - **No sale más café del que hay, desde el primer conteo** de ese estado
   en esa bodega (`StockGuard`, ver «Conteo de bodega»).
 - **Motivo cuando una diferencia pasa su tolerancia** (Fernando,
@@ -1649,8 +1651,10 @@ contado/crédito, forma de pago) [CONFIRMADO]:
   2026-11-12). Lo que las salidas tenían escrito
   (transportista, placa) pasó a los catálogos en la migración. Se pesa en la **báscula local** (`origin_*`) y, al
   llegar, en la **del comprador** (`destination_*`, con nota de peso y
-  fecha; `ArrivalsController`). Cada neto usa **el mismo cálculo de la
-  compra** (`PurchaseCalculation` con sacos contados: bruto − 1 lb × saco,
+  fecha; `ArrivalsController`). **En la del comprador la tara es ½ lb por
+  saco** (Fernando, 2026-11-23: «siempre en todos los compradores restan
+  media libra por saco»; `PurchaseCalculation::BUYER_TARE_PER_SACK`), con
+  los sacos reales. Cada neto usa **el mismo cálculo de la compra** (`PurchaseCalculation` con sacos contados: bruto − 1 lb × saco,
   menos humedad y daño; uva × rendimiento), que guarda tara y neto y solo
   se recalcula si cambia una entrada. `weighing_calculator_controller.js`
   es la vista previa (y avisa, sin bloquear, si sale más que el
