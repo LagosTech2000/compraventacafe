@@ -15,5 +15,5 @@ class CoffeeBatchInvoicePolicy < ApplicationPolicy
     def reads_invoices? = user.can?("trading.invoices", :read)
     def batch = record.is_a?(CoffeeBatchInvoice) ? record.coffee_batch : nil
     # A lot that went to be processed keeps its invoices (Fernando, 2026-11-16).
-    def open? = !batch&.processed? && !batch&.shipment&.sold?
+    def open? = unlocked? || !batch&.processed? && !batch&.shipment&.sold?
 end

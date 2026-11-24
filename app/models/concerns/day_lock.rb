@@ -4,7 +4,8 @@
 # change on a closed day because of something done on an open one (the
 # payment status an invoice gets from a payment of today, the buyer's
 # scale of a shipment that left before, who it belongs to after merging
-# people). A data-maintenance task goes over it (Current.maintenance).
+# people). A data-maintenance task and the main user go over it
+# (Current.unlocked?, Fernando 2026-11-22).
 module DayLock
   extend ActiveSupport::Concern
 
@@ -26,7 +27,7 @@ module DayLock
 
   private
     def day_open
-      return if Current.maintenance
+      return if Current.unlocked?
       return unless (through = BusinessDayClose.locked_through)
 
       day_locks.each do |column, free|
@@ -38,7 +39,7 @@ module DayLock
     end
 
     def day_open_to_destroy
-      return if Current.maintenance
+      return if Current.unlocked?
       return unless (through = BusinessDayClose.locked_through)
 
       closed = day_locks.filter_map { |column, _| DayLock.day(attribute_in_database(column)) }.find { it <= through }

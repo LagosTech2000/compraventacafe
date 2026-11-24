@@ -56,6 +56,10 @@ class ApplicationPolicy
     # like voiding or editing a paid invoice or sale (Fernando, 2026-11-12).
     def admin? = user.present? && user.active? && user.admin?
 
+    # The main user edits what is closed to everybody else (Fernando,
+    # 2026-11-22; Current.unlocked? on the models).
+    def unlocked? = user.present? && user.data_exporter?
+
     # The permission, and the record theirs when the user sees only what
     # they registered (OwnedRecord, Fernando, 2026-11-13).
     def can?(action)

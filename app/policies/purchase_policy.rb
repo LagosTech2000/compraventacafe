@@ -22,6 +22,6 @@ class PurchasePolicy < ApplicationPolicy
 
   private
     def open?
-      !record.is_a?(Purchase) || !(record.invoiced? || record.voided? || record.loan_payments.any?)
+      unlocked? || !record.is_a?(Purchase) || !(record.invoiced? || record.voided? || record.loan_payments.any?)
     end
 end

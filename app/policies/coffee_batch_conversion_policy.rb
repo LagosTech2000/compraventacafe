@@ -13,5 +13,5 @@ class CoffeeBatchConversionPolicy < ApplicationPolicy
 
   private
     def batch = record.is_a?(CoffeeBatchConversion) ? record.coffee_batch : nil
-    def open? = !batch&.processed? && !batch&.shipment&.sold?
+    def open? = unlocked? || !batch&.processed? && !batch&.shipment&.sold?
 end

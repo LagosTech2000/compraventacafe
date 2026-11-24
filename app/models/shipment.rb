@@ -432,7 +432,7 @@ class Shipment < ApplicationRecord
     # buyer's scale is removed (#remove_destination!); sold, the sale is
     # voided first.
     def closed_once_weighed
-      return if @removing_destination
+      return if @removing_destination || Current.unlocked?
       return unless sold? || received_on_in_database.present?
 
       free = %w[updated_at lock_version observations carrier_id vehicle_id driver_id driver_name shrink_reason difference_reason]
