@@ -12,7 +12,12 @@ class MovementFilter < ListFilter
   field :to, :date, default: -> { Time.zone.today }
   field :q, :text
   field :account, :text
-  field :source, :choice, in: MoneyMovements::SOURCES
+  # Without the cash counts' adjustments (Fernando, 2026-11-23: «que en
+  # movimientos no tomara en cuenta lo que entró y salió por ajuste por
+  # arqueo»): they stay in the balances and the account statements.
+  SOURCES = MoneyMovements::SOURCES - %w[cash_counts]
+
+  field :source, :choice, in: SOURCES
   field :direction, :choice, in: DIRECTIONS
 
   # The date with its time (MoneyMovements::Movement#at).
@@ -55,7 +60,7 @@ class MovementFilter < ListFilter
   def movements
     @movements ||= begin
       list = MoneyMovements.new(range: from || to ? (from..to) : nil, account: account_id, owner: Current.owner,
-                                sources: MoneyMovements.sources_for(@user)).all
+                                sources: MoneyMovements.sources_for(@user) & SOURCES).all
       list = list.reject(&:transfer?) if account_id.nil?
       list = list.select { |movement| movement.source == source } if source
       list = list.select { |movement| movement.direction == direction } if direction

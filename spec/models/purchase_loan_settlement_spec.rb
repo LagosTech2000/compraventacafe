@@ -28,20 +28,11 @@ RSpec.describe PurchaseLoanSettlement do
     expect(purchase.reload.amount_to_pay).to eq(BigDecimal("1120.40"))
   end
 
-  # The account is chosen (Fernando, 2026-11-22), the loans' one at first.
-  it "puts the money in the loans' account, or in the one chosen" do
-    loans = create(:money_account, name: "Préstamos", default_for: [ MoneyAccount::LOANS ])
-    bank = create(:money_account, name: "Banco", kind: "bank")
-    expect(settle({}).money_account_id).to eq(loans.id)
-
+  # No money comes in (Fernando, 2026-11-23): no account, not even the loans' one.
+  it "puts its payments in no account" do
+    create(:money_account, name: "Préstamos", default_for: [ MoneyAccount::LOANS ])
     expect(settle({ first_due.id => "100" }).save).to be(true)
-    expect(settle({ later_due.id => "200" }, money_account_id: bank.id.to_s).save).to be(true)
-    expect(LoanPayment.where(purchase:).order(:id).map(&:money_account)).to eq([ loans, bank ])
-
-    bank.update!(active: false)
-    settlement = settle({ later_due.id => "50" }, money_account_id: bank.id.to_s)
-    expect(settlement.save).to be(false)
-    expect(settlement.errors.full_messages).to include("Esa cuenta ya no está activa: elige otra.")
+    expect(LoanPayment.where(purchase:).pluck(:money_account_id)).to eq([ nil ])
   end
 
   it "never takes more than the purchase has, counting earlier payments" do

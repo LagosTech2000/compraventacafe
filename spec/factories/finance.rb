@@ -65,6 +65,11 @@ FactoryBot.define do
     person { association(:person, :collaborator) }
     role { association(:staff_role) }
     starts_on { Time.zone.today.beginning_of_month }
+
+    # Shows among a shipment's drivers (Fernando, 2026-11-23).
+    trait :driver do
+      drives { true }
+    end
   end
 
   factory :staff_advance do

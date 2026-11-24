@@ -17,7 +17,7 @@ RSpec.describe "Control financiero" do
       create(:account_transfer, amount: 7)
 
       sources = described_class.new.all.map(&:source)
-      expect(sources.tally).to include("invoices" => 1, "loans" => 2, "loan_payments" => 2, "sale_payments" => 1,
+      expect(sources.tally).to include("invoices" => 1, "loans" => 2, "loan_payments" => 1, "sale_payments" => 1,
                                        "expenses" => 1, "investments" => 1, "other_incomes" => 1, "transfers" => 2)
       expect(described_class.new(account: bank.id).all.map(&:source)).to contain_exactly("invoices", "expenses")
       expect(described_class.new(account: :none).all.map(&:source)).not_to include("transfers", "expenses")

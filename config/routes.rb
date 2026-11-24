@@ -174,6 +174,8 @@ Rails.application.routes.draw do
     end
     resource :stock, only: :show
     # Physical counts with their adjustment, and the day's reconciliation (Fernando, 2026-11-18).
+    # «Cuadrar inventario»: every state of every warehouse at once (Fernando, 2026-11-23).
+    resource :stock_square, path: "counts/square", only: %i[ new create ]
     resources :stock_counts, path: "counts", only: %i[ index show new create ] do
       patch :void, on: :member
     end
@@ -227,6 +229,8 @@ Rails.application.routes.draw do
     resources :other_incomes, only: %i[ new create destroy ]
     # Cash counts ("arqueos"): what was counted against the system's balance.
     resources :cash_counts, only: %i[ new create destroy ]
+    # «Cuadrar cuentas»: every active account at once (Fernando, 2026-11-23).
+    resource :account_square, path: "accounts/square", only: %i[ new create ]
     resources :categories, only: %i[ index new create edit update ]
     resource :budget, only: %i[ show update ]
     # Giving an account to what was registered without one.
@@ -264,6 +268,10 @@ Rails.application.routes.draw do
     # Coffee varieties (Fernando, 2026-11-15), for farms and plots.
     resources :coffee_varieties, path: "varieties", only: %i[ index new create edit update ]
   end
+
+  # «Confirmar cierre» of a daily close and the day's fuel close (Fernando, 2026-11-23).
+  resources :daily_close_confirmations, only: %i[ create destroy ]
+  resources :fuel_day_closes, only: %i[ create destroy ]
 
   namespace :loans do
     root "home#index"

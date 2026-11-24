@@ -12,7 +12,7 @@
 </div>
 
 <% accounts = [ [ t("reports.types.cash_movements.no_account"), MovementFilter::NONE ] ] + MoneyAccount.alphabetical.pluck(:name, :id).map { |name, id| [ name, id.to_s ] } %>
-<% sources = MoneyMovements.sources_for(Current.user).map { [ t("reports.types.cash_movements.sources.#{it}"), it ] } %>
+<% sources = (MoneyMovements.sources_for(Current.user) & MovementFilter::SOURCES).map { [ t("reports.types.cash_movements.sources.#{it}"), it ] } %>
 <% directions = MovementFilter::DIRECTIONS.map { [ t("reports.types.cash_movements.directions.#{it}"), it ] } %>
 <div data-controller="live-filter">
   <%= render layout: "shared/filters", locals: { filter: @filter, url: finance_movements_path, frame: "movements-list", live: true } do |form| %>

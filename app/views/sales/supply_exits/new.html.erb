@@ -5,9 +5,10 @@
 <p class="mt-1 text-sm text-ink-muted"><%= t(".help") %></p>
 
 <% stock = SupplyStock.new %>
+<% unit_costs = Supply.average_costs %>
 <% supplies = Supply.active.or(Supply.where(id: @exit.lines.map(&:supply_id))).ordered.map do |supply|
      row = stock.for(supply)
-     [ supply.name, supply.id, { data: { price: supply.default_price.to_s, stock: (row&.in_warehouse || 0).to_s, unit: supply.unit, business: supply.business_use?.to_s } } ]
+     [ supply.name, supply.id, { data: { price: supply.default_price.to_s, stock: (row&.in_warehouse || 0).to_s, unit: supply.unit, business: supply.business_use?.to_s, cost: unit_costs[supply.id].to_d.round(4).to_s } } ]
    end %>
 <%= form_with model: @exit, url: sales_supply_exits_path, class: form_surface_class("mt-6 space-y-6"),
       data: { controller: "form-validation unsaved-changes supply-exit", action: unsaved_changes_actions,
@@ -29,7 +30,7 @@
 
   <div class="max-w-xs">
     <%= form.label :exited_on, class: "field-label" %>
-    <%= form.date_field :exited_on, required: true, class: "field-input" %>
+    <%= form.date_field :exited_on, required: true, class: "field-input", data: { supply_exit_target: "day", action: "supply-exit#filterPurchases" } %>
   </div>
 
   <%# Its supplies, one line each (Fernando, 2026-11-16), as an entry. %>
@@ -53,10 +54,13 @@
 
   <%# A use of the business: the vehicle it went into and, optional, the
       purchase it went for (Fernando, 2026-11-22: fuel of the business). The
-      vehicle is asked when a supply of the business goes. %>
+      vehicle is asked when a supply of the business goes. Only the purchases
+      of the dispatch's day that went with a vehicle (Fernando, 2026-11-23);
+      supply_exit_controller.js shows the ones of the day chosen. Without
+      one, the dispatch is only the quantity of that day, at its cost. %>
   <% vehicles = Vehicle.active.or(Vehicle.where(id: @exit.vehicle_id)).includes(:vehicle_type).order(own: :desc, plate: :asc) %>
-  <% purchases = Purchase.active.owned.where(purchased_at: 15.days.ago..).or(Purchase.where(id: @exit.purchase_id))
-                         .includes(:vehicle, producer: :person).order(purchased_at: :desc).limit(200) %>
+  <% purchases = Purchase.active.owned.where.not(vehicle_id: nil).where(purchased_at: 15.days.ago.beginning_of_day..)
+                         .includes(:vehicle, producer: :person).order(purchased_at: :desc).limit(300) %>
   <fieldset class="grid gap-5 sm:grid-cols-2" data-supply-exit-target="use">
     <legend class="sr-only"><%= t(".use") %></legend>
     <div>
@@ -68,11 +72,18 @@
     <div>
       <%= form.label :purchase_id, class: "field-label" %>
       <%= form.select :purchase_id, purchases.map { |purchase|
-            [ t(".purchase_option", producer: purchase.producer.full_name, date: l(purchase.purchased_at, format: :short), vehicle: purchase.vehicle&.plate || t(".no_vehicle_short")),
-              purchase.id, { data: { vehicle_id: purchase.vehicle_id } } ] },
+            [ t(".purchase_option", producer: purchase.producer.full_name, time: l(purchase.purchased_at, format: :hour), vehicle: purchase.vehicle.plate),
+              purchase.id, { data: { vehicle_id: purchase.vehicle_id, day: purchase.purchased_at.to_date.iso8601 } } ] },
             { include_blank: t(".no_purchase") }, class: "field-input",
             data: { supply_exit_target: "purchase", action: "supply-exit#pickPurchase" } %>
-      <p class="mt-1 text-xs text-ink-muted"><%= t(".purchase_help") %></p>
+      <p class="mt-1 text-xs text-ink-muted" data-supply-exit-target="purchaseHelp"><%= t(".purchase_help") %></p>
+      <p class="mt-1 text-xs text-ink-muted" data-supply-exit-target="noPurchases" hidden><%= t(".no_purchases_that_day") %></p>
+    </div>
+    <%# What it cost: each unit at the average cost of what came in (Supply.average_costs). %>
+    <div class="sm:col-span-2">
+      <p class="field-label"><%= t(".use_cost") %></p>
+      <p class="text-lg font-bold tabular-nums" data-supply-exit-target="useCost">L 0.00</p>
+      <p class="text-xs text-ink-muted"><%= t(".use_cost_help") %></p>
     </div>
   </fieldset>
 

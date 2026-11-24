@@ -16,7 +16,7 @@ RSpec.describe "Sales remissions" do
   it "prints original and copy with the booklet's fields, from the shipment's data" do
     paraiso = Department.find_by!(name: "El Paraíso")
     buyer = create(:buyer, name: "Beneficio Betafe", department: paraiso, municipality: paraiso.municipalities.find_by!(name: "El Paraíso"))
-    driver = create(:staff_member, person: create(:person, :collaborator, first_names: "Roberto", last_names: "Gallardo",
+    driver = create(:staff_member, :driver, person: create(:person, :collaborator, first_names: "Roberto", last_names: "Gallardo",
                                                                           phone: "99887766", dni: "0801199012345"))
     vehicle = create(:vehicle, vehicle_type: create(:vehicle_type, name: "Camión"), brand_model: "Isuzu NQR", color: "Blanco", plate: "JDE 6299")
     shipment = create(:shipment, buyer:, driver:, vehicle:, origin_sacks: 7,

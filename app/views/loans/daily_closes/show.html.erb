@@ -13,10 +13,8 @@
     <p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t(".help") %></p>
   </div>
   <div class="flex flex-wrap gap-2">
-    <%= form_with url: loans_daily_close_path, method: :get, class: "flex gap-2", data: { controller: "auto-submit" } do |form| %>
-      <%= form.date_field :date, value: close.date, aria: { label: t(".date") }, class: "field-input",
-            data: { action: "change->auto-submit#submit" } %>
-    <% end %>
+    <%= render "shared/day_picker", date: close.date, url: ->(date) { loans_daily_close_path(date:) } %>
+    <%= render "shared/daily_close_confirmation", module_key: :loans, date: close.date %>
     <div data-controller="print"><button type="button" class="btn" data-action="print#print"><%= t(".print") %></button></div>
   </div>
 </div>

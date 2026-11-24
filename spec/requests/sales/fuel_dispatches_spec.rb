@@ -87,4 +87,24 @@ RSpec.describe "Fuel of the business dispatched to the vehicles" do
     get sales_fuel_dispatches_path
     expect(response).to redirect_to(root_path)
   end
+
+  # Only a purchase of the dispatch's day that went with a vehicle (Fernando, 2026-11-23), and its cost.
+  it "takes only a purchase of its day with a vehicle, and says what it cost" do
+    yesterday = create(:purchase, vehicle: truck, purchased_at: 1.day.ago)
+    no_vehicle = create(:purchase)
+    get new_sales_supply_exit_path(kind: "business_use")
+    options = page.css("#supply_exit_purchase_id option[data-day]").map { it["value"].to_i }
+    expect(options).to include(yesterday.id)
+    expect(options).not_to include(no_vehicle.id)
+
+    dispatch(quantity: 10, purchase: yesterday)
+    expect(response.body).to include("es de otro día")
+    dispatch(quantity: 10, vehicle: truck, purchase: no_vehicle)
+    expect(response.body).to include("no tiene vehículo")
+
+    dispatch(quantity: 10, vehicle: truck)
+    expect(SupplyExit.last.use_cost).to eq(1_100)
+    get sales_supply_exit_path(SupplyExit.last)
+    expect(response.body).to include("Costo del despacho", "L 1,100.00")
+  end
 end

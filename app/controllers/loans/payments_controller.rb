@@ -5,7 +5,7 @@ module Loans
 
     def new
       # The loans' account first; changing the method does not move it.
-      @payment = authorize @loan.payments.build(paid_on: Time.zone.today, money_account: MoneyAccount.for_loans)
+      @payment = authorize @loan.payments.build(paid_on: Time.zone.today, money_account: MoneyAccount.for_loans || MoneyAccount.default_for("cash"))
       @balance = @loan.balance
     end
 

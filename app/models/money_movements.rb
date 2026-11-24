@@ -116,7 +116,7 @@ class MoneyMovements
     end
 
     def loans
-      narrowed(Loan.where("loans.cash_amount > 0").joins(:person), "loans.disbursed_on", "loans.money_account_id")
+      narrowed(Loan.where("loans.cash_amount > 0").where(outside_cash: false).joins(:person), "loans.disbursed_on", "loans.money_account_id")
         .pluck("loans.id", "loans.disbursed_on", "loans.cash_amount", Arel.sql(NAME), "loans.money_account_id", "loans.created_at")
         .map do |id, date, amount, name, account_id, created_at|
           movement(id:, date:, created_at:, source: "loans", description: I18n.t("money_movements.loan", number: id), person: name,

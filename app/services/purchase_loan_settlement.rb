@@ -8,20 +8,15 @@
 # Each payment is a normal LoanPayment (method "coffee", pointing to the
 # purchase): it covers the interest first and then the principal, and
 # settles the loan when it covers everything owed on that date.
-#
-# The money goes to the account chosen (Fernando, 2026-11-22: «que se pueda
-# elegir la cuenta en donde se va ir el dinero»), the loans' account at
-# first (MoneyAccount.for_loans).
 class PurchaseLoanSettlement
   include ActiveModel::Model
 
-  attr_reader :purchase, :paid_on, :amounts, :payments, :observations, :money_account_id
+  attr_reader :purchase, :paid_on, :amounts, :payments, :observations
 
   def self.model_name = ActiveModel::Name.new(self, nil, "PurchaseLoanSettlement")
 
-  def initialize(purchase:, user:, paid_on: nil, amounts: {}, observations: nil, money_account_id: :default)
+  def initialize(purchase:, user:, paid_on: nil, amounts: {}, observations: nil)
     @purchase = purchase
-    @money_account_id = money_account_id == :default ? MoneyAccount.for_loans&.id : money_account_id.presence&.to_i
     @user = user
     @paid_on = parse_date(paid_on) || Time.zone.today
     @amounts = amounts.to_h.transform_keys(&:to_i).transform_values { |value| parse_amount(value) }
@@ -54,11 +49,6 @@ class PurchaseLoanSettlement
     amounts.values.compact.sum(0.to_d)
   end
 
-  # The account the money goes to: the one chosen, or the loans' one.
-  def money_account
-    @money_account ||= money_account_id ? MoneyAccount.find_by(id: money_account_id) : MoneyAccount.for_loans
-  end
-
   def save
     return false unless valid_request?
 
@@ -75,7 +65,6 @@ class PurchaseLoanSettlement
       errors.add(:base, :nothing_to_pay) if total.zero?
       errors.add(:base, :over_purchase, available: money(purchase.available_for_loans)) if total > purchase.available_for_loans
       errors.add(:base, :unknown_loan) if (amounts.keys - open_loans.map(&:id)).any?
-      errors.add(:base, :unknown_account) if money_account_id && !money_account&.active?
       errors.empty?
     end
 
@@ -84,7 +73,7 @@ class PurchaseLoanSettlement
         amount = amount_for(loan)
         next unless amount&.positive?
 
-        payment = loan.payments.create(paid_on:, amount:, payment_method: LoanPayment::COFFEE, purchase:, money_account:,
+        payment = loan.payments.create(paid_on:, amount:, payment_method: LoanPayment::COFFEE, purchase:,
                                        observations:, created_by: @user)
         payment.errors.full_messages.each do |message|
           errors.add(:base, :loan_error, loan: loan.id, detail: message)

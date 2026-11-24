@@ -58,6 +58,12 @@ class SupplyExit < ApplicationRecord
 
   def kept_lines = lines.reject(&:marked_for_destruction?)
 
+  # What a use of the business cost: each unit at the average cost of what
+  # came in of its supply (Fernando, 2026-11-23).
+  def use_cost(costs = Supply.average_costs(kept_lines.map(&:supply_id)))
+    kept_lines.sum { (it.quantity.to_d * costs.fetch(it.supply_id, 0).to_d).round(2) }
+  end
+
   # It takes fuel or oil of the business: it goes to a vehicle.
   def business_supplies? = kept_lines.any? { it.supply&.business_use? }
 
@@ -98,6 +104,11 @@ class SupplyExit < ApplicationRecord
       errors.add(:vehicle, :blank) if vehicle.nil? && business_supplies?
       errors.add(:vehicle, :inactive) if will_save_change_to_vehicle_id? && vehicle && !vehicle.active?
       errors.add(:purchase, :voided) if will_save_change_to_purchase_id? && purchase&.voided?
+      # A purchase of its day that went with a vehicle (Fernando, 2026-11-23).
+      if purchase && (will_save_change_to_purchase_id? || will_save_change_to_exited_on?)
+        errors.add(:purchase, :other_day) if exited_on && purchase.purchased_at.to_date != exited_on
+        errors.add(:purchase, :no_vehicle) if purchase.vehicle_id.nil?
+      end
     end
 
     # Never more than is in the warehouse, adding the lines of each supply.

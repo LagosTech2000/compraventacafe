@@ -189,6 +189,21 @@
     line-height: 1.75rem;
   }
 
+  /* ⓘ with the explanation of a figure (info_tip, Fernando 2026-11-23):
+     the tooltip opens on hover or focus, above everything, never clipped. */
+  .info-tip {
+    @apply relative inline-flex cursor-help items-center text-ink-muted outline-none hover:text-primary focus-visible:text-primary;
+  }
+
+  .info-tip-text {
+    @apply pointer-events-none invisible absolute right-0 top-full z-50 mt-2 w-72 max-w-[80vw] rounded-xl bg-ink p-3 text-xs leading-relaxed font-normal tracking-normal normal-case whitespace-normal text-surface opacity-0 shadow-lg transition;
+  }
+
+  .info-tip:hover .info-tip-text,
+  .info-tip:focus .info-tip-text {
+    @apply visible opacity-100;
+  }
+
   /* Smaller figures (Préstamos → Resumen, Fernando 2026-11-22). */
   .stat-compact {
     @apply p-3;

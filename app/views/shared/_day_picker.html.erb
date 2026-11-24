@@ -1,0 +1,19 @@
+<%# The day of a daily close with arrows to the day before and after
+    (Fernando, 2026-11-23); none after today. `url` takes `date:`. %>
+<% today = Time.zone.today %>
+<div class="flex items-center gap-1" data-day-picker>
+  <%= link_to url.call(date - 1), class: "btn btn-sm", aria: { label: t("shared.day_picker.previous") }, title: t("shared.day_picker.previous"), data: { day_picker: "previous" } do %>
+    <%= icon(:chevron_left) %>
+  <% end %>
+  <%= form_with url: url.call(nil), method: :get, class: "flex", data: { controller: "auto-submit" } do |form| %>
+    <%= form.date_field :date, value: date, max: today, aria: { label: t("shared.day_picker.date") }, class: "field-input",
+          data: { action: "change->auto-submit#submit" } %>
+  <% end %>
+  <% if date < today %>
+    <%= link_to url.call(date + 1), class: "btn btn-sm", aria: { label: t("shared.day_picker.next") }, title: t("shared.day_picker.next"), data: { day_picker: "next" } do %>
+      <%= icon(:chevron_right) %>
+    <% end %>
+  <% else %>
+    <span class="btn btn-sm pointer-events-none opacity-40" aria-hidden="true"><%= icon(:chevron_right) %></span>
+  <% end %>
+</div>

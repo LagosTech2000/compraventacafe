@@ -10,12 +10,33 @@ import { Controller } from "@hotwired/stimulus"
 // says the vehicle (asked for fuel or oil of the business) and the purchase
 // it went for (Fernando, 2026-11-22).
 export default class extends Controller {
-  static targets = [ "kind", "sale", "lines", "line", "template", "empty", "destroy", "total", "use", "vehicle", "purchase" ]
+  static targets = [ "kind", "sale", "lines", "line", "template", "empty", "destroy", "total", "use", "vehicle", "purchase",
+                     "day", "purchaseHelp", "noPurchases", "useCost" ]
   static values = { stockText: String, overText: String }
 
   connect() {
     if (this.visibleLines().length === 0) this.add()
+    this.filterPurchases()
     this.toggle()
+  }
+
+  // Only the purchases of the dispatch's day that went with a vehicle
+  // (Fernando, 2026-11-23); one of another day is unpicked.
+  filterPurchases() {
+    if (!this.hasPurchaseTarget || !this.hasDayTarget) return
+    const day = this.dayTarget.value
+    let shown = 0
+    Array.from(this.purchaseTarget.options).forEach((option) => {
+      if (!option.value) return
+      const fits = option.dataset.day === day
+      option.hidden = !fits
+      option.disabled = !fits
+      if (fits) shown += 1
+      else if (option.selected) this.purchaseTarget.value = ""
+    })
+    this.purchaseTarget.disabled = shown === 0
+    this.noPurchasesTarget.hidden = shown > 0
+    this.purchaseHelpTarget.hidden = shown === 0
   }
 
   toggle() {
@@ -97,6 +118,11 @@ export default class extends Controller {
     })
     this.emptyTarget.hidden = lines.length > 0
     this.totalTarget.textContent = `L ${this.number(total, 2)}`
+    // A use of the business, at the average cost of what came in.
+    if (this.hasUseCostTarget) {
+      const cost = lines.reduce((sum, line) => sum + (parseFloat(this.field(line, "quantity").value) || 0) * (parseFloat(this.option(line)?.dataset.cost) || 0), 0)
+      this.useCostTarget.textContent = `L ${this.number(Math.round(cost * 100) / 100, 2)}`
+    }
     // Fuel or oil of the business goes to a vehicle.
     if (this.hasVehicleTarget) this.vehicleTarget.required = !this.isSale && lines.some((line) => this.option(line)?.dataset.business === "true")
   }

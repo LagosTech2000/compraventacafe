@@ -1,0 +1,49 @@
+<% content_for :title, t(".title") %>
+<%= render "finance/nav" %>
+
+<div class="flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold"><%= t(".title") %></h1>
+    <p class="mt-1 max-w-3xl text-sm text-ink-muted"><%= t(".help") %></p>
+  </div>
+  <%= render "shared/day_picker", date: @square.counted_on, url: ->(date) { new_finance_account_square_path(date:) } %>
+</div>
+
+<% entries = params.fetch(:entries, {}) %>
+<%= form_with url: finance_account_square_path(date: @square.counted_on), method: :post, class: "mt-6 space-y-4",
+      data: { controller: "form-validation unsaved-changes", action: unsaved_changes_actions } do |form| %>
+  <div class="overflow-x-auto panel">
+    <table class="data-table data-table-compact" data-account-square>
+      <thead>
+        <tr>
+          <th><%= t(".account") %></th>
+          <th class="text-right"><%= t(".balance", date: l(@square.counted_on, format: :short)) %></th>
+          <th class="w-48"><%= t(".counted") %></th>
+          <th><%= t(".observations") %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @square.rows.each do |row| %>
+          <% entry = entries[row.account.id.to_s] || {} %>
+          <tr id="<%= dom_id(row.account, :square) %>">
+            <td class="font-medium"><%= row.account.name %></td>
+            <td class="whitespace-nowrap text-right tabular-nums"><%= format_money(row.balance) %></td>
+            <td>
+              <%= text_field_tag "entries[#{row.account.id}][counted_amount]", entry[:counted_amount], inputmode: "decimal",
+                    class: "field-input text-right", aria: { label: t(".counted_of", account: row.account.name) } %>
+              <% if row.count&.errors&.any? %>
+                <p class="mt-1 text-xs font-semibold text-danger" role="alert"><%= row.count.errors.full_messages.to_sentence %></p>
+              <% end %>
+            </td>
+            <td><%= text_field_tag "entries[#{row.account.id}][observations]", entry[:observations], maxlength: 500, class: "field-input", aria: { label: t(".observations") } %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <p class="text-xs text-ink-muted"><%= t(".footer") %></p>
+  <div class="flex flex-wrap gap-3">
+    <%= form.submit t(".submit"), class: "btn btn-primary" %>
+    <%= cancel_button finance_money_accounts_path %>
+  </div>
+<% end %>
